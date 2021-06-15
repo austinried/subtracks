@@ -1,5 +1,5 @@
 import { DOMParser } from 'xmldom';
-import { GetArtistsResponse, GetIndexesResponse, SubsonicResponse } from './response';
+import { GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, SubsonicResponse } from './response';
 
 export class SubsonicApiClient {
   address: string;
@@ -50,26 +50,57 @@ export class SubsonicApiClient {
 
   async getArtists(): Promise<SubsonicResponse<GetArtistsResponse>> {
     const xml = await this.apiRequest('getArtists');
-    const data = new GetArtistsResponse(xml);
-    const response = new SubsonicResponse<GetArtistsResponse>(xml, data);
+    const response = new SubsonicResponse<GetArtistsResponse>(xml, new GetArtistsResponse(xml));
 
     return response;
   }
 
   async getIndexes(ifModifiedSince?: number): Promise<SubsonicResponse<GetIndexesResponse>> {
     const params = new URLSearchParams();
-    console.log(params);
     if (ifModifiedSince !== undefined) {
       params.append('ifModifiedSince', ifModifiedSince.toString());
     }
 
     const xml = await this.apiRequest('getIndexes', params);
-    const data = new GetIndexesResponse(xml);
-    const response = new SubsonicResponse<GetIndexesResponse>(xml, data);
+    const response = new SubsonicResponse<GetIndexesResponse>(xml, new GetIndexesResponse(xml));
     
     console.log(response.status);
     console.log(response.version);
     console.log(response.data.lastModified);
+
+    return response;
+  }
+
+  async getArtistInfo(id: string, count?: number, includeNotPresent?: boolean): Promise<SubsonicResponse<GetArtistInfoResponse>> {
+    const params = new URLSearchParams();
+    params.append('id', id);
+    if (count !== undefined) {
+      params.append('count', count.toString());
+    }
+    if (includeNotPresent !== undefined) {
+      params.append('includeNotPresent', includeNotPresent.toString());
+    }
+
+    const xml = await this.apiRequest('getArtistInfo', params);
+    const response = new SubsonicResponse<GetArtistInfoResponse>(xml, new GetArtistInfoResponse(xml));
+    console.log(response.data);
+
+    return response;
+  }
+
+  async getArtistInfo2(id: string, count?: number, includeNotPresent?: boolean): Promise<SubsonicResponse<GetArtistInfo2Response>> {
+    const params = new URLSearchParams();
+    params.append('id', id);
+    if (count !== undefined) {
+      params.append('count', count.toString());
+    }
+    if (includeNotPresent !== undefined) {
+      params.append('includeNotPresent', includeNotPresent.toString());
+    }
+
+    const xml = await this.apiRequest('getArtistInfo2', params);
+    const response = new SubsonicResponse<GetArtistInfo2Response>(xml, new GetArtistInfo2Response(xml));
+    console.log(response.data);
 
     return response;
   }
