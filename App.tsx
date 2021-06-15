@@ -12,7 +12,7 @@ const App = () => {
 
 export default App;
 
-import { SubsonicApiClient } from './src/subsonic/api';
+import { SubsonicApiClient } from './src/subsonic/client';
 import md5 from 'md5';
 
 const password = 'test';
@@ -21,5 +21,4 @@ const token = md5(password + salt);
 
 const client = new SubsonicApiClient('http://navidrome.home', 'austin', token, salt);
 
-client.ping();
-client.getArtists();
+client.getIndexes();
