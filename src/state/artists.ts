@@ -1,7 +1,7 @@
 import md5 from 'md5';
 import { atom, selector, useSetRecoilState } from 'recoil';
-import { SubsonicApiClient } from '../subsonic/client';
-import { MusicDb } from '../db/client';
+import { SubsonicApiClient } from '../subsonic/api';
+import { MusicDb } from '../storage/music';
 
 const db = new MusicDb();
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { RecoilRoot } from 'recoil';
-import ArtistsList from './src/components/ArtistsList';
+import SettingsView from './src/components/Settings';
 
 const App = () => (
   <RecoilRoot>
-    <ArtistsList />
+    <SettingsView />
   </RecoilRoot>
 );
 
