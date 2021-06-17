@@ -13,6 +13,7 @@
     "md5": "^2.3.0",
     "react": "17.0.1",
     "react-native": "0.64.1",
+    "react-native-sqlite-storage": "^5.0.0",
     "recoil": "^0.3.1",
     "xmldom": "^0.5.0"
   },
@@ -23,6 +24,7 @@
     "@types/jest": "^26.0.23",
     "@types/md5": "^2.3.0",
     "@types/react-native": "^0.64.5",
+    "@types/react-native-sqlite-storage": "^5.0.0",
     "@types/react-test-renderer": "^16.9.2",
     "@types/xmldom": "^0.1.30",
     "babel-jest": "^26.6.3",

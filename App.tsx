@@ -1,24 +1,11 @@
 import React from 'react';
 import { RecoilRoot } from 'recoil';
-import Layout from './src/components/NowPlayingLayout';
+import ArtistsList from './src/components/ArtistsList';
 
-const App = () => {
-  return (
-    <RecoilRoot>
-      <Layout />
-    </RecoilRoot>
-  );
-}
+const App = () => (
+  <RecoilRoot>
+    <ArtistsList />
+  </RecoilRoot>
+);
 
 export default App;
-
-import { SubsonicApiClient } from './src/subsonic/client';
-import md5 from 'md5';
-
-const password = 'test';
-const salt = 'salty';
-const token = md5(password + salt);
-
-const client = new SubsonicApiClient('http://navidrome.home', 'austin', token, salt);
-
-client.getIndexes();
