@@ -9,9 +9,9 @@ export abstract class DbStorage {
     this.dbParams = dbParams;
   }
 
-  // abstract createDb(): Promise<void>
+  abstract createDb(): Promise<void>
 
-  protected async createDb(scope: (tx: Transaction) => void): Promise<void> {
+  protected async initDb(scope: (tx: Transaction) => void): Promise<void> {
     await this.transaction(tx => {
       tx.executeSql(`
       CREATE TABLE db_version (

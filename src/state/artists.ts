@@ -1,15 +1,10 @@
 import md5 from 'md5';
-import { atom, selector, useSetRecoilState } from 'recoil';
+import { atom, selector, useRecoilValue, useSetRecoilState } from 'recoil';
 import { SubsonicApiClient } from '../subsonic/api';
 import { MusicDb } from '../storage/music';
+import { activeServer } from './settings'
 
 const db = new MusicDb();
-
-const password = 'test';
-const salt = 'salty';
-const token = md5(password + salt);
-
-const client = new SubsonicApiClient('http://navidrome.home', 'austin', token, salt);
 
 export interface ArtistState {
   id: string;
@@ -37,7 +32,14 @@ export const artistsState = atom<ArtistState[]>({
 
 export const useUpdateArtists = () => {
   const setArtists = useSetRecoilState(artistsState);
+  const server = useRecoilValue(activeServer);
+
   return async () => {
+    if (!server) {
+      return;
+    }
+
+    const client = new SubsonicApiClient(server.address, server.username, server.token, server.salt);
     const response = await client.getArtists();
 
     setArtists(response.data.artists.map(i => ({

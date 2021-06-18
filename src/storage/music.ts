@@ -6,7 +6,7 @@ export class MusicDb extends DbStorage {
   }
 
   async createDb(): Promise<void> {
-    super.createDb(tx => {
+    await this.initDb(tx => {
       tx.executeSql(`
       CREATE TABLE artists (
         id TEXT PRIMARY KEY NOT NULL,

@@ -1,29 +1,80 @@
-import React from 'react';
-import { Button, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Button, TextInput, View, Text } from 'react-native';
+import { useRecoilState } from 'recoil';
+import { v4 as uuidv4 } from 'uuid';
+import md5 from 'md5';
 import { musicDb, settingsDb } from '../clients';
+import { appSettingsState, serversState } from '../state/settings';
+import { DbStorage } from '../storage/db';
+import { StackScreenProps } from '@react-navigation/stack';
 
-const DbControls = () => {
+const RecreateDbButton: React.FC<{ db: DbStorage, title: string }> = ({ db, title }) => {
+  const [inProgress, setInProgress] = useState(false);
 
-  const recreateMusicDb = async () => {
-    try { await musicDb.deleteDb(); } catch {}
-    await musicDb.createDb();
-  }
-
-  const recreateSettingsDb = async () => {
-    try { await settingsDb.deleteDb(); } catch {}
-    await settingsDb.createDb();
+  const recreateDb = async () => {
+    setInProgress(true);
+    try{
+      try { await db.deleteDb(); } catch {}
+      await db.createDb();
+    } finally {
+      setInProgress(false);
+    }
   }
 
   return (
+    <Button
+      title={`Recreate ${title} DB`}
+      onPress={recreateDb}
+      disabled={inProgress}
+    />
+  )
+}
+
+const DbControls = () => {
+  return (
     <View>
-      <Button 
-        title='Recreate Music DB'
-        onPress={recreateMusicDb}
+      <RecreateDbButton db={musicDb} title='Music' />
+      <RecreateDbButton db={settingsDb} title='Settings' />
+    </View>
+  );
+}
+
+const ServerSettingsView = () => {
+  const [servers, setServers] = useRecoilState(serversState);
+  const [appSettings, setAppSettings] = useRecoilState(appSettingsState);
+
+  const bootstrapServer = () => {
+    if (servers.length !== 0) {
+      return;
+    }
+
+    const id = uuidv4();
+    const salt = uuidv4();
+    const address = 'http://demo.subsonic.org';
+
+    setServers([{
+      id, salt, address,
+      username: 'guest',
+      token: md5('guest' + salt),
+    }]);
+
+    setAppSettings({
+      server: id,
+    });
+  };
+
+  return (
+    <View>
+      <Button
+        title='Add default server'
+        onPress={bootstrapServer}
       />
-      <Button 
-        title='Recreate Settings DB'
-        onPress={recreateSettingsDb}
-      />
+      {servers.map(s => (
+        <View key={s.id}>
+          <Text>{s.address}</Text>
+          <Text>{s.username}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -31,6 +82,9 @@ const DbControls = () => {
 const SettingsView = () => (
   <View>
     <DbControls />
+    <React.Suspense fallback={<Text>Loading...</Text>}>
+      <ServerSettingsView />
+    </React.Suspense>
   </View>
 )
 

@@ -10,11 +10,21 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/bottom-tabs": "^5.11.11",
+    "@react-navigation/native": "^5.9.4",
+    "@react-navigation/stack": "^5.14.5",
     "md5": "^2.3.0",
     "react": "17.0.1",
     "react-native": "0.64.1",
+    "react-native-gesture-handler": "^1.10.3",
+    "react-native-get-random-values": "^1.7.0",
+    "react-native-reanimated": "^2.2.0",
+    "react-native-safe-area-context": "^3.2.0",
+    "react-native-screens": "^3.4.0",
     "react-native-sqlite-storage": "^5.0.0",
     "recoil": "^0.3.1",
+    "uuid": "^8.3.2",
     "xmldom": "^0.5.0"
   },
   "devDependencies": {
@@ -26,6 +36,7 @@
     "@types/react-native": "^0.64.5",
     "@types/react-native-sqlite-storage": "^5.0.0",
     "@types/react-test-renderer": "^16.9.2",
+    "@types/uuid": "^8.3.0",
     "@types/xmldom": "^0.1.30",
     "babel-jest": "^26.6.3",
     "eslint": "^7.14.0",
