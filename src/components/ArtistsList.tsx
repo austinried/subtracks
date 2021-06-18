@@ -29,7 +29,7 @@ const List = () => {
   );
 }
 
-const ArtistsList = () => {
+const ListPlusControls = () => {
   const resetArtists = useResetRecoilState(artistsState);
   const updateArtists = useUpdateArtists();
 
@@ -43,11 +43,17 @@ const ArtistsList = () => {
           title='Update from API'
           onPress={updateArtists}
         />
-    <React.Suspense fallback={<Text>Loading...</Text>}>
       <List />
-    </React.Suspense>
     </View>
   );
 }
+
+const ArtistsList = () => (
+  <View>
+    <React.Suspense fallback={<Text>Loading...</Text>}>
+      <ListPlusControls />
+    </React.Suspense>
+  </View>
+)
 
 export default ArtistsList;
