@@ -10,7 +10,15 @@ const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      tabBarOptions={{
+        style: {
+          backgroundColor: '#383838',
+          borderTopColor: '#383838',
+          height: 44,
+        },
+      }}
+    >
       <Tab.Screen
         name='Home'
         component={ArtistsList}

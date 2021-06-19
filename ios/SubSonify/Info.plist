@@ -63,6 +63,14 @@
 		<string>Lato-Regular.ttf</string>
 		<string>Lato-Thin.ttf</string>
 		<string>Lato-ThinItalic.ttf</string>
+		<string>Ubuntu-Bold.ttf</string>
+		<string>Ubuntu-BoldItalic.ttf</string>
+		<string>Ubuntu-Italic.ttf</string>
+		<string>Ubuntu-Light.ttf</string>
+		<string>Ubuntu-LightItalic.ttf</string>
+		<string>Ubuntu-Medium.ttf</string>
+		<string>Ubuntu-MediumItalic.ttf</string>
+		<string>Ubuntu-Regular.ttf</string>
 	</array>
 </dict>
 </plist>
