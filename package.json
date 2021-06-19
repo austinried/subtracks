@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/bottom-tabs": "^5.11.11",
+    "@react-navigation/material-top-tabs": "^5.3.15",
     "@react-navigation/native": "^5.9.4",
     "@react-navigation/stack": "^5.14.5",
     "md5": "^2.3.0",
@@ -23,6 +24,7 @@
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^3.4.0",
     "react-native-sqlite-storage": "^5.0.0",
+    "react-native-tab-view": "^2.16.0",
     "recoil": "^0.3.1",
     "uuid": "^8.3.2",
     "xmldom": "^0.5.0"

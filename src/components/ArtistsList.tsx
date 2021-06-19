@@ -1,9 +1,10 @@
 import React from 'react';
 import { Button, FlatList, Text, View } from 'react-native';
 import { useRecoilValue, useResetRecoilState } from 'recoil';
-import { artistsState, ArtistState, useUpdateArtists } from '../state/artists';
+import { artistsState, useUpdateArtists } from '../state/artists';
+import { Artist } from '../models/music';
 
-const ArtistItem: React.FC<{ item: ArtistState } > = ({ item }) => (
+const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View>
     <Text>{item.id}</Text>
     <Text style={{
@@ -16,7 +17,7 @@ const ArtistItem: React.FC<{ item: ArtistState } > = ({ item }) => (
 const List = () => {
   const artists = useRecoilValue(artistsState);
 
-  const renderItem: React.FC<{ item: ArtistState }> = ({ item }) => (
+  const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
     <ArtistItem item={item} />
   );
 

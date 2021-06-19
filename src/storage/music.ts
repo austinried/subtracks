@@ -1,3 +1,4 @@
+import { Artist } from '../models/music';
 import { DbStorage } from './db';
 
 export class MusicDb extends DbStorage {
@@ -14,6 +15,29 @@ export class MusicDb extends DbStorage {
         starred INTEGER NOT NULL
       );
       `);
+    });
+  }
+
+  async getArtists(): Promise<Artist[]> {
+    return (await this.executeSql(`
+    SELECT * FROM artists;
+    `))[0].rows.raw().map(x => ({
+      id: x.id,
+      name: x.name,
+    }));
+  }
+
+  async updateArtists(artists: Artist[]): Promise<void> {
+    await this.transaction((tx) => {
+      tx.executeSql(`
+      DELETE FROM artists
+      `);
+      for (const a of artists) {
+        tx.executeSql(`
+        INSERT INTO artists (id, name, starred)
+        VALUES (?, ?, ?);
+        `, [a.id, a.name, false]);
+      }
     });
   }
 }

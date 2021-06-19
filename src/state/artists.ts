@@ -1,33 +1,24 @@
-import md5 from 'md5';
-import { atom, selector, useRecoilValue, useSetRecoilState } from 'recoil';
+import { atom, DefaultValue, selector, useRecoilValue, useSetRecoilState } from 'recoil';
 import { SubsonicApiClient } from '../subsonic/api';
-import { MusicDb } from '../storage/music';
 import { activeServer } from './settings'
+import { Artist } from '../models/music';
+import { musicDb } from '../clients';
 
-const db = new MusicDb();
-
-export interface ArtistState {
-  id: string;
-  name: string;
-}
-
-export const artistsState = atom<ArtistState[]>({
+export const artistsState = atom<Artist[]>({
   key: 'artistsState',
   default: selector({
     key: 'artistsState/default',
-    get: async () => {
-      await prepopulate();
-
-      const results = await db.executeSql(`
-      SELECT * FROM artists;
-      `);
-
-      return results[0].rows.raw().map(i => ({
-        id: i.id,
-        name: i.name,
-      }));
-    },
+    get: () => musicDb.getArtists(),
   }),
+  effects_UNSTABLE: [
+    ({ onSet }) => {
+      onSet((newValue) => {
+        if (!(newValue instanceof DefaultValue)) {
+          musicDb.updateArtists(newValue);
+        }
+      });
+    }
+  ],
 });
 
 export const useUpdateArtists = () => {
@@ -48,20 +39,3 @@ export const useUpdateArtists = () => {
     })));
   };
 };
-
-async function prepopulate() {
-  try { await db.deleteDb() } catch {}
-  await db.createDb();
-  await db.executeSql(`
-    INSERT INTO artists (id, name, starred)
-    VALUES (?, ?, ?);
-    `,
-    [1, 'good guy', true]
-  );
-  await db.executeSql(`
-    INSERT INTO artists (id, name, starred)
-    VALUES (?, ?, ?);
-    `,
-    [2, 'bad guy', false]
-  );
-}

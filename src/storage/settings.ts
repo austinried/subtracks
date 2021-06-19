@@ -1,16 +1,5 @@
+import { AppSettings, ServerSettings } from '../models/settings';
 import { DbStorage } from './db';
-
-export interface ServerSettings {
-  id: string;
-  address: string;
-  username: string;
-  token: string;
-  salt: string;
-}
-
-export interface AppSettings {
-  server?: string;
-}
 
 export class SettingsDb extends DbStorage {
   constructor() {

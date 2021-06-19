@@ -1,5 +1,7 @@
 import React from 'react';
 import { Text, View, Image } from 'react-native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => {
   return (
@@ -14,9 +16,8 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => {
     }}>
       <Text style={{
         color: 'white',
-        fontSize: 34,
-        fontWeight: 'normal',
-        fontFamily: 'Rubik-VariableFont_wght',
+        fontSize: 22,
+        fontFamily: 'Lato-Black',
       }}>{title}</Text>
       <Image 
         style={{
@@ -24,25 +25,39 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => {
           height: 32,
           tintColor: 'white',
         }}
-        source={require('../../res/chevron_right.png')}
+        source={require('../../res/chevron_right-fill.png')}
       />
     </View>
   );
 }
 
-const AlbumCoverList = () => {
-  
-}
+const Tab = createMaterialTopTabNavigator();
+
+const Albums = () => (
+  <SectionHeader title='Albums' />
+);
+const Artists = () => (
+  <SectionHeader title='Artists' />
+);
+const Playlists = () => (
+  <SectionHeader title='Playlists' />
+);
 
 const Library = () => (
-  <View style={{
-    flex: 1,
-    backgroundColor: '#3b3b3b',
-  }}>
-    <SectionHeader title='Albums' />
-    <SectionHeader title='Artists' />
-    <SectionHeader title='Playlists' />
-  </View>
+  <Tab.Navigator>
+    <Tab.Screen
+      name='Albums'
+      component={Albums}
+    />
+    <Tab.Screen
+      name='Artists'
+      component={Artists}
+    />
+    <Tab.Screen
+      name='Playlists'
+      component={Playlists}
+    />
+  </Tab.Navigator>
 );
 
 export default Library;

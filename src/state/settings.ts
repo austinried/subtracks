@@ -1,6 +1,6 @@
 import { atom, DefaultValue, selector } from 'recoil';
 import { settingsDb } from '../clients';
-import { AppSettings, ServerSettings } from '../storage/settings';
+import { AppSettings, ServerSettings } from '../models/settings';
 
 export const serversState = atom<ServerSettings[]>({
   key: 'serverState',
