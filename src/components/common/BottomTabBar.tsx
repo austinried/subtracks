@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View, Image, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import textStyles from '../../styles/text';
+import colors from '../../styles/colors';
 
 const icons: {[key: string]: any} = {
   home: {
@@ -26,7 +27,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
   return (
     <View style={{
       height: 54,
-      backgroundColor: '#383838',
+      backgroundColor: colors.gradient.high,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-around',
@@ -70,13 +71,12 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               style={{
                 height: 24,
                 width: 24,
-                tintColor: isFocused ? 'white' : '#a0a0a0',
+                tintColor: isFocused ? colors.text.primary : colors.text.secondary,
               }}
             />
-            <Text style={{ 
+            <Text style={{
               ...textStyles.small,
-              color: isFocused ? 'white' : '#a0a0a0',
-              fontFamily: isFocused ? 'Ubuntu-Medium' : 'Ubuntu-Light',
+              color: isFocused ? colors.text.primary : colors.text.secondary,
             }}>
               {label}
             </Text>

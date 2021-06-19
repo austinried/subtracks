@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, ImageSourcePropType } from 'react-native';
-import { primary } from '../styles/colors';
+import colors from '../styles/colors';
 
 export type FocusableIconProps = {
   focused: boolean,
@@ -20,7 +20,7 @@ const FocusableIcon: React.FC<FocusableIconProps> = (props) => {
       style={{ 
         height: props.height,
         width: props.width,
-        tintColor: props.focused ? primary.focused : primary.blurred,
+        tintColor: props.focused ? colors.text.primary : colors.text.secondary,
       }}
       source={props.focused ? props.focusedSource : props.source}
     />

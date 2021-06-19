@@ -1,17 +1,16 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
-import { primary } from '../../styles/colors';
-import text from '../../styles/text';
+import colors from '../../styles/colors';
+import textStyles from '../../styles/text';
 
 const TopTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors }) => {
   return (
     <View style={{
-      height: 48,
-      backgroundColor: '#383838',
+      backgroundColor: colors.gradient.high,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-around',
+      justifyContent: 'space-evenly',
     }}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
@@ -23,24 +22,21 @@ const TopTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors }) => 
             : route.name;
         
         const isFocused = state.index === index;
-        const fontFamily = isFocused ? 'Ubuntu-Regular' : 'Ubuntu-Light';
-        const color = isFocused ? primary.focused : primary.blurred;
-        const borderBottomColor = isFocused ? primary.focused : '#383838';
+        const color = isFocused ? colors.text.primary : colors.text.secondary;
+        const borderBottomColor = isFocused ? colors.accent : colors.gradient.high;
 
         return (
-          <View style={{
+          <View key={route.key} style={{
             borderBottomColor,
-            borderBottomWidth: 2,
-            borderBottomLeftRadius: 2,
-            borderBottomEndRadius: 2,
-            paddingBottom: 5,
+            borderBottomWidth: 1.5,
+            paddingVertical: 8,
             width: 100,
+            height: 38,
             justifyContent: 'center',
-            flexDirection: 'row',
+            alignItems: 'center', 
           }}>
             <Text style={{
-              ...text.header,
-              fontFamily, color
+              ...textStyles.header, color,
             }}>{label}</Text>
           </View>
         );

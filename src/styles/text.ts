@@ -1,27 +1,24 @@
-import { StyleSheet, TextStyle } from "react-native";
+import { TextStyle } from "react-native";
+import colors from './colors';
 
-const regular: TextStyle = {
+const paragraph: TextStyle = {
   fontFamily: 'Ubuntu-Light',
-  fontSize: 18,
-  color: '#fff',
+  fontSize: 16,
+  color: colors.text.primary,
 };
 
 const header: TextStyle = {
-  ...regular,
-  fontSize: 22,
+  ...paragraph,
+  fontSize: 18,
 };
 
 const small: TextStyle = {
-  ...regular,
+  ...paragraph,
   fontSize: 11,
 };
 
-export type TextStyles = {
-  [key: string]: TextStyle,
-}
-
 export default {
-  regular,
+  paragraph,
   header,
   small,
 };

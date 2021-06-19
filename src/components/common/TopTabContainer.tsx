@@ -1,12 +1,11 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
+import colors from '../../styles/colors';
 
 const TopTabContainer: React.FC<{}> = ({ children }) => (
   <LinearGradient
-    colors={['#383838', '#000000']}
-    // colors={['#395266', '#06172d']}
-    // start={{x: 0.0, y: 0.25}} end={{x: 0.5, y: 1.0}}
-    locations={[0.05,0.75]}
+    colors={[colors.gradient.high, colors.gradient.mid, colors.gradient.low]}
+    locations={[0.03,0.3,0.7]}
     style={{
       flex: 1,
     }}
