@@ -11,6 +11,11 @@ const header: TextStyle = {
   fontSize: 22,
 };
 
+const small: TextStyle = {
+  ...regular,
+  fontSize: 11,
+};
+
 export type TextStyles = {
   [key: string]: TextStyle,
 }
@@ -18,4 +23,5 @@ export type TextStyles = {
 export default {
   regular,
   header,
+  small,
 };

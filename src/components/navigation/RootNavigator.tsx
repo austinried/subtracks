@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import TabNavigator from './TabNavigator';
-import NowPlayingLayout from './NowPlayingLayout';
+import NowPlayingLayout from '../NowPlayingLayout';
+import BottomTabNavigator from './BottomTabNavigator';
 
 const RootStack = createStackNavigator();
 
@@ -9,7 +9,7 @@ const RootNavigator = () => (
   <RootStack.Navigator>
     <RootStack.Screen
       name='Main'
-      component={TabNavigator}
+      component={BottomTabNavigator}
       options={{ headerShown: false }}
     />
     <RootStack.Screen
