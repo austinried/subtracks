@@ -1,4 +1,4 @@
-import { Artist, ArtistID3, BaseArtist } from "./element";
+import { AlbumID3Element, ArtistElement, ArtistID3Element, BaseArtistElement, ChildElement } from "./elements";
 
 export type ResponseStatus = 'ok' | 'failed';
 
@@ -14,16 +14,20 @@ export class SubsonicResponse<T> {
   }
 }
 
+// 
+// Browsing
+// 
+
 export class GetArtistsResponse {
   ignoredArticles: string;
-  artists: ArtistID3[] = [];
+  artists: ArtistID3Element[] = [];
 
   constructor(xml: Document) {
     this.ignoredArticles = xml.getElementsByTagName('artists')[0].getAttribute('ignoredArticles') as string;
 
     const artistElements = xml.getElementsByTagName('artist');
     for (let i = 0; i < artistElements.length; i++) {
-      this.artists.push(new ArtistID3(artistElements[i]));
+      this.artists.push(new ArtistID3Element(artistElements[i]));
     }
   }
 }
@@ -31,7 +35,7 @@ export class GetArtistsResponse {
 export class GetIndexesResponse {
   ignoredArticles: string;
   lastModified: number;
-  artists: Artist[] = [];
+  artists: ArtistElement[] = [];
 
   constructor(xml: Document) {
     const indexesElement = xml.getElementsByTagName('indexes')[0];
@@ -41,12 +45,12 @@ export class GetIndexesResponse {
 
     const artistElements = xml.getElementsByTagName('artist');
     for (let i = 0; i < artistElements.length; i++) {
-      this.artists.push(new Artist(artistElements[i]));
+      this.artists.push(new ArtistElement(artistElements[i]));
     }
   }
 }
 
-class BaseGetArtistInfoResponse<T extends BaseArtist> {
+class BaseGetArtistInfoResponse<T extends BaseArtistElement> {
   similarArtists: T[] = [];
   biography?: string;
   musicBrainzId?: string;
@@ -82,14 +86,41 @@ class BaseGetArtistInfoResponse<T extends BaseArtist> {
   }
 }
 
-export class GetArtistInfoResponse extends BaseGetArtistInfoResponse<Artist> {
+export class GetArtistInfoResponse extends BaseGetArtistInfoResponse<ArtistElement> {
   constructor(xml: Document) {
-    super(xml, Artist);
+    super(xml, ArtistElement);
   }
 }
 
-export class GetArtistInfo2Response extends BaseGetArtistInfoResponse<ArtistID3> {
+export class GetArtistInfo2Response extends BaseGetArtistInfoResponse<ArtistID3Element> {
   constructor(xml: Document) {
-    super(xml, ArtistID3);
+    super(xml, ArtistID3Element);
+  }
+}
+
+// 
+// Album/song lists
+// 
+
+class BaseGetAlbumListResponse<T> {
+  albums: T[] = [];
+
+  constructor(xml: Document, albumType: new (e: Element) => T) {
+    const albumElements = xml.getElementsByTagName('album');
+    for (let i = 0; i < albumElements.length; i++) {
+      this.albums.push(new albumType(albumElements[i]));
+    }
+  }
+}
+
+export class GetAlbumListResponse extends BaseGetAlbumListResponse<ChildElement> {
+  constructor(xml: Document) {
+    super(xml, ChildElement);
+  }
+}
+
+export class GetAlbumList2Response extends BaseGetAlbumListResponse<AlbumID3Element> {
+  constructor(xml: Document) {
+    super(xml, AlbumID3Element);
   }
 }

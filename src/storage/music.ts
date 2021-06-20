@@ -12,7 +12,7 @@ export class MusicDb extends DbStorage {
       CREATE TABLE artists (
         id TEXT PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
-        starred INTEGER NOT NULL,
+        starred TEXT,
         coverArt TEXT
       );
       `);
@@ -20,7 +20,7 @@ export class MusicDb extends DbStorage {
       CREATE TABLE albums (
         id TEXT PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
-        starred INTEGER NOT NULL
+        starred TEXT
       );
       `);
     });
@@ -45,7 +45,7 @@ export class MusicDb extends DbStorage {
         tx.executeSql(`
         INSERT INTO artists (id, name, starred, coverArt)
         VALUES (?, ?, ?, ?);
-        `, [a.id, a.name, false, a.coverArt || null]);
+        `, [a.id, a.name, null, a.coverArt || null]);
       }
     });
   }
@@ -68,7 +68,7 @@ export class MusicDb extends DbStorage {
         tx.executeSql(`
         INSERT INTO albums (id, name, starred)
         VALUES (?, ?, ?);
-        `, [a.id, a.name, false]);
+        `, [a.id, a.name, null]);
       }
     });
   }
