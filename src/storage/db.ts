@@ -4,6 +4,7 @@ SQLite.enablePromise(true);
 
 export abstract class DbStorage {
   private dbParams: DatabaseParams;
+  private db: SQLiteDatabase | undefined;
   
   constructor(dbParams: DatabaseParams) {
     this.dbParams = dbParams;
@@ -36,36 +37,23 @@ export abstract class DbStorage {
     return results[0].rows.length > 0;
   }
 
-  private async openDb(): Promise<SQLiteDatabase> {
-    return await SQLite.openDatabase({ ...this.dbParams });
+  async openDb(): Promise<void> {
+    this.db = await SQLite.openDatabase({ ...this.dbParams });
   }
 
   async deleteDb(): Promise<void> {
+    if (this.db) {
+      await this.db.close();
+    }
     await SQLite.deleteDatabase({ ...this.dbParams });
   }
 
   async executeSql(sql: string, params?: any[]): Promise<[ResultSet]> {
-    const db = await this.openDb();
-    try {
-      // https://github.com/andpor/react-native-sqlite-storage/issues/410
-      return await db.executeSql(sql, params);
-    } catch (err) {
-      try { await db.close(); } catch {}
-      throw err;
-    } finally {
-      try { await db.close(); } catch {}
-    }
+    // https://github.com/andpor/react-native-sqlite-storage/issues/410
+    return await (this.db as SQLiteDatabase).executeSql(sql, params);
   }
 
   async transaction(scope: (tx: Transaction) => void): Promise<void> {
-    const db = await this.openDb();
-    try {
-      await db.transaction(scope);
-    } catch (err) {
-      try { await db.close(); } catch {}
-      throw err;
-    } finally {
-      try { await db.close(); } catch {}
-    }
+    await (this.db as SQLiteDatabase).transaction(scope);
   }
 }

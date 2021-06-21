@@ -9,4 +9,5 @@ export default {
     low: '#000000',
   },
   accent: '#c260e5',
+  accentLow: '#50285e',
 }

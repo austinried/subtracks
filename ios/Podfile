@@ -12,6 +12,8 @@ target 'SubSonify' do
     :hermes_enabled => false
   )
 
+  pod 'RNFS', :path => '../node_modules/react-native-fs'
+
   target 'SubSonifyTests' do
     inherit! :complete
     # Pods for testing

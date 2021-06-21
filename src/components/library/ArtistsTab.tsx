@@ -27,7 +27,7 @@ const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   </View>
 );
 
-const ArtistsTab = () => {
+const ArtistsList = () => {
   const artists = useRecoilValue(artistsState);
 
   const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
@@ -35,14 +35,18 @@ const ArtistsTab = () => {
   );
 
   return (
-    <TopTabContainer>
-      <FlatList
-        data={artists}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-      />
-    </TopTabContainer>
+    <FlatList
+      data={artists}
+      renderItem={renderItem}
+      keyExtractor={item => item.id}
+    />
   );
 }
+
+const ArtistsTab = () => (
+  <TopTabContainer>
+    <ArtistsList />
+  </TopTabContainer>
+);
 
 export default ArtistsTab;

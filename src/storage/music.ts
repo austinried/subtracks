@@ -20,7 +20,8 @@ export class MusicDb extends DbStorage {
       CREATE TABLE albums (
         id TEXT PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
-        starred TEXT
+        starred TEXT,
+        coverArt TEXT
       );
       `);
     });
@@ -32,6 +33,7 @@ export class MusicDb extends DbStorage {
     `))[0].rows.raw().map(x => ({
       id: x.id,
       name: x.name,
+      starred: x.starred ? new Date(x.starred) : undefined,
       coverArt: x.coverArt || undefined,
     }));
   }
@@ -43,20 +45,56 @@ export class MusicDb extends DbStorage {
       `);
       for (const a of artists) {
         tx.executeSql(`
-        INSERT INTO artists (id, name, starred, coverArt)
+        INSERT INTO artists (
+          id,
+          name,
+          starred,
+          coverArt
+        )
         VALUES (?, ?, ?, ?);
-        `, [a.id, a.name, null, a.coverArt || null]);
+        `, [
+          a.id, 
+          a.name, 
+          a.starred ? a.starred.toISOString() : null, 
+          a.coverArt || null
+        ]);
       }
     });
   }
 
-  async getAlbums(): Promise<Album[]> {
-    return (await this.executeSql(`
-    SELECT * FROM albums;
-    `))[0].rows.raw().map(x => ({
+  async getAlbum(id: string): Promise<Album> {
+    const results = await this.executeSql(`
+    SELECT * FROM albums
+    WHERE id = ?;
+    `, [id]);
+    
+    const rows = results[0].rows.raw();
+    return rows.map(x => ({
       id: x.id,
       name: x.name,
-    }));
+      starred: x.starred ? new Date(x.starred) : undefined,
+      coverArt: x.coverArt || undefined,
+    }))[0];
+  }
+
+  async getAlbumIds(): Promise<string[]> {
+    return (await this.executeSql(`
+    SELECT id FROM albums;
+    `))[0].rows.raw().map(x => x.id);
+  }
+
+  async getAlbums(): Promise<{[id: string]: Album}> {
+    return (await this.executeSql(`
+    SELECT * FROM albums;
+    `))[0].rows.raw().reduce((acc, x) => {
+      acc[x.id] = {
+        id: x.id,
+        name: x.name,
+        starred: x.starred ? new Date(x.starred) : undefined,
+        coverArt: x.coverArt || undefined,
+      };
+      return acc;
+    }, {});
   }
 
   async updateAlbums(albums: Album[]): Promise<void> {
@@ -66,9 +104,19 @@ export class MusicDb extends DbStorage {
       `);
       for (const a of albums) {
         tx.executeSql(`
-        INSERT INTO albums (id, name, starred)
-        VALUES (?, ?, ?);
-        `, [a.id, a.name, null]);
+        INSERT INTO albums (
+          id,
+          name,
+          starred,
+          coverArt
+        )
+        VALUES (?, ?, ?, ?);
+        `, [
+          a.id, 
+          a.name, 
+          a.starred ? a.starred.toISOString() : null, 
+          a.coverArt || null
+        ]);
       }
     });
   }

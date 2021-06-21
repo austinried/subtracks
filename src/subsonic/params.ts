@@ -45,3 +45,12 @@ export type GetAlbumList2Params = {
 } | GetAlbumList2TypeByYear | GetAlbumList2TypeByGenre;
 
 export type GetAlbumListParams = GetAlbumList2Params;
+
+// 
+// Media retrieval
+// 
+
+export type GetCoverArtParams = {
+  id: string;
+  size?: string;
+}
