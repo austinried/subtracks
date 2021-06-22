@@ -1,8 +1,11 @@
 import { TextStyle } from "react-native";
 import colors from './colors';
 
+const fontRegular = 'Metropolis-Regular';
+const fontSemiBold = 'Metropolis-SemiBold';
+
 const paragraph: TextStyle = {
-  fontFamily: 'Metropolis-Regular',
+  fontFamily: fontRegular,
   fontSize: 16,
   color: colors.text.primary,
 };
@@ -10,13 +13,13 @@ const paragraph: TextStyle = {
 const header: TextStyle = {
   ...paragraph,
   fontSize: 20,
-  fontFamily: 'Metropolis-SemiBold',
+  fontFamily: fontSemiBold,
 };
 
 const itemTitle: TextStyle = {
   ...paragraph,
   fontSize: 13,
-  fontFamily: 'Metropolis-SemiBold',
+  fontFamily: fontSemiBold,
 };
 
 const itemSubtitle: TextStyle = {

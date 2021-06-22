@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import RNFS from 'react-native-fs';
+import TrackPlayer, { Track } from 'react-native-track-player';
 import { musicDb, settingsDb } from '../clients';
 
 async function mkdir(path: string): Promise<void> {
@@ -38,6 +39,37 @@ const SplashPage: React.FC<{}> = ({ children }) => {
     if (!(await settingsDb.dbExists())) {
       await settingsDb.createDb();
     }
+
+    await TrackPlayer.setupPlayer();
+    TrackPlayer.updateOptions({
+      capabilities: [
+        TrackPlayer.CAPABILITY_PLAY,
+        TrackPlayer.CAPABILITY_PAUSE,
+        TrackPlayer.CAPABILITY_STOP,
+        TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+        TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+      ],
+      compactCapabilities: [
+        TrackPlayer.CAPABILITY_PLAY,
+        TrackPlayer.CAPABILITY_PAUSE,
+        TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+        TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+      ],
+    });
+
+    const castlevania: Track = {
+      id: 'castlevania',
+      url: 'http://www.vgmuseum.com/mrp/cv1/music/03.mp3',
+      title: 'Stage 1: Castle Entrance',
+      artist: 'Kinuyo Yamashita and S.Terishima',
+      duration: 110,
+      artwork: 'https://webgames.host/uploads/2017/03/castlevania-3-draculas-curse.jpg',
+      genre: 'BGM',
+      date: new Date(1989, 1).toISOString(),
+    }
+
+    await TrackPlayer.add([castlevania]);
+    // TrackPlayer.play();
   }
 
   const promise = Promise.all([
