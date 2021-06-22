@@ -29,9 +29,9 @@ const TopTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors }) => 
           <View key={route.key} style={{
             borderBottomColor,
             borderBottomWidth: 1.5,
-            paddingVertical: 8,
-            width: 100,
-            height: 38,
+            // paddingVertical: 8,
+            width: 94,
+            height: 44,
             justifyContent: 'center',
             alignItems: 'center', 
           }}>

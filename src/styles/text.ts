@@ -2,20 +2,21 @@ import { TextStyle } from "react-native";
 import colors from './colors';
 
 const paragraph: TextStyle = {
-  fontFamily: 'Ubuntu-Light',
+  fontFamily: 'Metropolis-Regular',
   fontSize: 16,
   color: colors.text.primary,
 };
 
 const header: TextStyle = {
   ...paragraph,
-  fontSize: 18,
+  fontSize: 20,
+  fontFamily: 'Metropolis-SemiBold',
 };
 
 const itemTitle: TextStyle = {
   ...paragraph,
-  fontSize: 14,
-  // fontFamily: 'Ubuntu-Light',
+  fontSize: 13,
+  fontFamily: 'Metropolis-SemiBold',
 };
 
 const itemSubtitle: TextStyle = {
@@ -26,7 +27,7 @@ const itemSubtitle: TextStyle = {
 
 const xsmall: TextStyle = {
   ...paragraph,
-  fontSize: 11,
+  fontSize: 10,
 };
 
 export default {

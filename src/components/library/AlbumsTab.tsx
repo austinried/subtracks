@@ -63,7 +63,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
     <View style={{
       // flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 10,
+      marginVertical: 8,
       // marginLeft: 6,
       // width: size,
       flex: 1/3,
@@ -81,7 +81,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
         <Text
           style={{
             ...textStyles.itemTitle,
-            marginTop: 5,
+            marginTop: 4,
           }}
           numberOfLines={2}
         >
@@ -90,7 +90,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
         <Text
           style={{
             ...textStyles.itemSubtitle,
-            marginTop: 3,
+            // marginTop: 2,
           }}
           numberOfLines={1}
         >

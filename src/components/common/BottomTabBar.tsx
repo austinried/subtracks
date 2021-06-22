@@ -31,7 +31,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-around',
-      paddingHorizontal: 12,
+      paddingHorizontal: 28,
     }}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key] as any;
@@ -69,8 +69,8 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             <Image
               source={isFocused ? img.fill : img.regular}
               style={{
-                height: 24,
-                width: 24,
+                height: 26,
+                width: 26,
                 tintColor: isFocused ? colors.text.primary : colors.text.secondary,
               }}
             />

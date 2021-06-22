@@ -53,24 +53,24 @@
 	<false/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Lato-Black.ttf</string>
-		<string>Lato-BlackItalic.ttf</string>
-		<string>Lato-Bold.ttf</string>
-		<string>Lato-BoldItalic.ttf</string>
-		<string>Lato-Italic.ttf</string>
-		<string>Lato-Light.ttf</string>
-		<string>Lato-LightItalic.ttf</string>
-		<string>Lato-Regular.ttf</string>
-		<string>Lato-Thin.ttf</string>
-		<string>Lato-ThinItalic.ttf</string>
-		<string>Ubuntu-Bold.ttf</string>
-		<string>Ubuntu-BoldItalic.ttf</string>
-		<string>Ubuntu-Italic.ttf</string>
-		<string>Ubuntu-Light.ttf</string>
-		<string>Ubuntu-LightItalic.ttf</string>
-		<string>Ubuntu-Medium.ttf</string>
-		<string>Ubuntu-MediumItalic.ttf</string>
-		<string>Ubuntu-Regular.ttf</string>
+		<string>Metropolis-Black.otf</string>
+		<string>Metropolis-BlackItalic.otf</string>
+		<string>Metropolis-Bold.otf</string>
+		<string>Metropolis-BoldItalic.otf</string>
+		<string>Metropolis-ExtraBold.otf</string>
+		<string>Metropolis-ExtraBoldItalic.otf</string>
+		<string>Metropolis-ExtraLight.otf</string>
+		<string>Metropolis-ExtraLightItalic.otf</string>
+		<string>Metropolis-Light.otf</string>
+		<string>Metropolis-LightItalic.otf</string>
+		<string>Metropolis-Medium.otf</string>
+		<string>Metropolis-MediumItalic.otf</string>
+		<string>Metropolis-Regular.otf</string>
+		<string>Metropolis-RegularItalic.otf</string>
+		<string>Metropolis-SemiBold.otf</string>
+		<string>Metropolis-SemiBoldItalic.otf</string>
+		<string>Metropolis-Thin.otf</string>
+		<string>Metropolis-ThinItalic.otf</string>
 	</array>
 </dict>
 </plist>
