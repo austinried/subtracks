@@ -9,8 +9,8 @@ const TopTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors }) => 
     <View style={{
       backgroundColor: colors.gradient.high,
       flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-evenly',
+      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
     }}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];

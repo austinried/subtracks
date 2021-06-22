@@ -57,7 +57,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
   //   console.log(album.name);
   // });
 
-  const size = 180;
+  const size = 125;
 
   return (
     <View style={{
@@ -66,7 +66,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
       marginVertical: 10,
       // marginLeft: 6,
       // width: size,
-      flex: 1/2,
+      flex: 1/3,
     }}>
       <AlbumArt
         width={size}
@@ -136,7 +136,7 @@ const AlbumsList = () => {
         keyExtractor={item => item}
         onRefresh={refresh}
         refreshing={refreshing}
-        numColumns={2}
+        numColumns={3}
         removeClippedSubviews={false}
       />
     </View>
