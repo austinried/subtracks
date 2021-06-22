@@ -18,6 +18,38 @@ export class SubsonicApiError extends Error {
   }
 }
 
+type QueuePromise = () => Promise<any>;
+
+class Queue {
+  maxSimultaneously: number;
+
+  private active = 0;
+  private queue: QueuePromise[] = [];
+
+  constructor(maxSimultaneously = 1) {
+    this.maxSimultaneously = maxSimultaneously;
+  }
+
+  async enqueue(func: QueuePromise) {
+    if (++this.active > this.maxSimultaneously) {
+      await new Promise(resolve => this.queue.push(resolve as QueuePromise));
+    }
+
+    try {
+      return await func();
+    } catch (err) {
+      throw err;
+    } finally {
+      this.active--;
+      if (this.queue.length) {
+        (this.queue.shift() as QueuePromise)();
+      }
+    }
+  }
+}
+
+const downloadQueue = new Queue(1);
+
 export class SubsonicApiClient {
   address: string;
   username: string;
@@ -36,7 +68,7 @@ export class SubsonicApiClient {
     this.params.append('c', 'subsonify-cool-unique-app-string')
   }
 
-  private buildUrl(method: string, params?: {[key: string]: any}): string {
+  private buildUrl(method: string, params?: { [key: string]: any }): string {
     let query = this.params.toString();
     if (params) {
       const urlParams = this.obj2Params(params);
@@ -50,16 +82,19 @@ export class SubsonicApiClient {
     return url;
   }
 
-  private async apiDownload(method: string, path: string, params?: {[key: string]: any}): Promise<string> {
-    await RNFS.downloadFile({
+  private async apiDownload(method: string, path: string, params?: { [key: string]: any }): Promise<string> {
+    const download = RNFS.downloadFile({
       fromUrl: this.buildUrl(method, params),
       toFile: path,
     }).promise;
-    
+
+    await downloadQueue.enqueue(() => download);
+    await downloadQueue.enqueue(() => new Promise(resolve => setTimeout(resolve, 100)));
+
     return path;
   }
 
-  private async apiGetXml(method: string, params?: {[key: string]: any}): Promise<Document> {
+  private async apiGetXml(method: string, params?: { [key: string]: any }): Promise<Document> {
     const response = await fetch(this.buildUrl(method, params));
     const text = await response.text();
 
@@ -73,7 +108,7 @@ export class SubsonicApiClient {
     return xml;
   }
 
-  private obj2Params(obj: {[key: string]: any}): URLSearchParams | undefined {
+  private obj2Params(obj: { [key: string]: any }): URLSearchParams | undefined {
     const keys = Object.keys(obj);
     if (keys.length === 0) {
       return undefined;

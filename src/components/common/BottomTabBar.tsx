@@ -75,7 +75,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               }}
             />
             <Text style={{
-              ...textStyles.small,
+              ...textStyles.xsmall,
               color: isFocused ? colors.text.primary : colors.text.secondary,
             }}>
               {label}

@@ -12,7 +12,19 @@ const header: TextStyle = {
   fontSize: 18,
 };
 
-const small: TextStyle = {
+const itemTitle: TextStyle = {
+  ...paragraph,
+  fontSize: 14,
+  // fontFamily: 'Ubuntu-Light',
+};
+
+const itemSubtitle: TextStyle = {
+  ...paragraph,
+  fontSize: 12,
+  color: colors.text.secondary,
+};
+
+const xsmall: TextStyle = {
   ...paragraph,
   fontSize: 11,
 };
@@ -20,5 +32,7 @@ const small: TextStyle = {
 export default {
   paragraph,
   header,
-  small,
+  itemTitle,
+  itemSubtitle,
+  xsmall
 };

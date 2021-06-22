@@ -12,22 +12,42 @@ import LinearGradient from 'react-native-linear-gradient';
 const AlbumArt: React.FC<{ height: number, width: number, id?: string }> = ({ height, width, id }) => {
   const coverArtSource = useCoverArtUri(id);
 
-  return (
+  // useEffect(() => {
+  //   console.log(id);
+  // });
+
+  const Placeholder = (
     <LinearGradient
       colors={[colors.accent, colors.accentLow]}
       style={{
         height, width,
-        backgroundColor: 'white',
       }}
     >
       <Image
-        source={coverArtSource ? { uri: coverArtSource } : require('../../../res/record-m.png')}
+        source={require('../../../res/record-m.png')}
         style={{
           height, width,
+          resizeMode: 'contain',
         }}
       />
     </LinearGradient>
-  )
+  );
+
+  const CoverArt = (
+    <View style={{
+      height, width,
+    }}>
+      <Image
+        source={{ uri: coverArtSource }}
+        style={{
+          height, width,
+          resizeMode: 'contain',
+        }}
+      />
+    </View>
+  );
+
+  return coverArtSource ? CoverArt : Placeholder;
 }
 
 const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
@@ -37,23 +57,46 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
   //   console.log(album.name);
   // });
 
+  const size = 180;
+
   return (
     <View style={{
-      flexDirection: 'row',
+      // flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 6,
-      marginLeft: 6,
-      // height: 200,
+      marginVertical: 10,
+      // marginLeft: 6,
+      // width: size,
+      flex: 1/2,
     }}>
       <AlbumArt
-        width={56}
-        height={56}
+        width={size}
+        height={size}
         id={album.coverArt}
       />
-      <Text style={{
-        ...textStyles.paragraph,
-        marginLeft: 12,
-      }}>{album.name}</Text>
+      <View style={{
+        flex: 1,
+        width: size,
+        // alignItems: 'baseline',
+      }}>
+        <Text
+          style={{
+            ...textStyles.itemTitle,
+            marginTop: 5,
+          }}
+          numberOfLines={2}
+        >
+          {album.name}
+        </Text>
+        <Text
+          style={{
+            ...textStyles.itemSubtitle,
+            marginTop: 3,
+          }}
+          numberOfLines={1}
+        >
+          {album.name}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -83,26 +126,19 @@ const AlbumsList = () => {
     if (!refreshing && albumIds.length === 0) {
       refresh();
     }
-  })
+  });
 
   return (
     <View style={{ flex: 1 }}>
-      {/* <Button
-        title='Update'
-        onPress={updateAlbums}
-      /> */}
       <FlatList
         data={albumIds}
         renderItem={renderItem}
         keyExtractor={item => item}
         onRefresh={refresh}
         refreshing={refreshing}
+        numColumns={2}
+        removeClippedSubviews={false}
       />
-      {/* <ScrollView>
-        {Object.values(albums).map(item => (
-          <AlbumItem item={item} key={item.id} />
-        ))}
-      </ScrollView> */}
     </View>
   );
 }
