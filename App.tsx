@@ -1,18 +1,13 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { RecoilRoot } from 'recoil';
 import SplashPage from './src/components/SplashPage';
 import RootNavigator from './src/components/navigation/RootNavigator';
-
-import { enableScreens } from 'react-native-screens';
-enableScreens();
+import BottomTabNavigator from './src/components/navigation/BottomTabNavigator';
 
 const App = () => (
   <RecoilRoot>
     <SplashPage>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <BottomTabNavigator />
     </SplashPage>
   </RecoilRoot>
 );

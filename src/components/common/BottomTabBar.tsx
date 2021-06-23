@@ -1,8 +1,10 @@
 import React from 'react';
 import { Text, View, Image, Pressable } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import textStyles from '../../styles/text';
 import colors from '../../styles/colors';
+import { useContext } from 'react';
+import { NavigationContext } from 'navigation-react';
+import FastImage from 'react-native-fast-image';
 
 const icons: {[key: string]: any} = {
   home: {
@@ -23,7 +25,43 @@ const icons: {[key: string]: any} = {
   },
 }
 
-const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
+const BottomTabButton: React.FC<{
+  route: string,
+  title: string,
+  onPress: () => void,
+  isFocused: boolean,
+}> = ({ route, title, onPress, isFocused }) => {
+  const img = icons[route];
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        alignItems: 'center',
+        flex: 1,
+      }}
+    >
+      <FastImage
+        source={isFocused ? img.fill : img.regular}
+        style={{
+          height: 26,
+          width: 26,
+        }}
+        tintColor={isFocused ? colors.text.primary : colors.text.secondary}
+      />
+      <Text style={{
+        ...textStyles.xsmall,
+        color: isFocused ? colors.text.primary : colors.text.secondary,
+      }}>
+        {title}
+      </Text>
+    </Pressable>
+  );
+}
+
+const BottomTabBar = () => {
+  const { stateNavigator } = useContext(NavigationContext);
+
   return (
     <View style={{
       height: 54,
@@ -33,56 +71,19 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
       justifyContent: 'space-around',
       paddingHorizontal: 28,
     }}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key] as any;
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel as string
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
-        const isFocused = state.index === index;
-        const img = icons[options.icon];
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        return (
-          <Pressable
-            key={route.key}
-            onPress={onPress}
-            style={{
-              alignItems: 'center',
-              flex: 1,
-            }}
-          >
-            <Image
-              source={isFocused ? img.fill : img.regular}
-              style={{
-                height: 26,
-                width: 26,
-                tintColor: isFocused ? colors.text.primary : colors.text.secondary,
-              }}
-            />
-            <Text style={{
-              ...textStyles.xsmall,
-              color: isFocused ? colors.text.primary : colors.text.secondary,
-            }}>
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {Object.values(stateNavigator.states).map(state => (
+        <BottomTabButton 
+          key={state.key}
+          route={state.key}
+          title={state.title}
+          onPress={() => {
+            if (stateNavigator.stateContext.state.key !== state.key) {
+              stateNavigator.navigate(state.key);
+            }
+          }}
+          isFocused={stateNavigator.stateContext.state.key === state.key}
+        />
+      ))}
     </View>
   );
 }

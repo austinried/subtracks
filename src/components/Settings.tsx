@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button, TextInput, View, Text } from 'react-native';
 import { useRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,8 +6,7 @@ import md5 from 'md5';
 import { musicDb, settingsDb } from '../clients';
 import { appSettingsState, serversState } from '../state/settings';
 import { DbStorage } from '../storage/db';
-import { StackScreenProps } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/core';
+import { NavigationContext } from 'navigation-react';
 
 const RecreateDbButton: React.FC<{ db: DbStorage, title: string }> = ({ db, title }) => {
   const [inProgress, setInProgress] = useState(false);
@@ -32,14 +31,14 @@ const RecreateDbButton: React.FC<{ db: DbStorage, title: string }> = ({ db, titl
 }
 
 const DbControls = () => {
-  const navigation = useNavigation();
+  const { stateNavigator } = useContext(NavigationContext);
   return (
     <View>
       <RecreateDbButton db={musicDb} title='Music' />
       <RecreateDbButton db={settingsDb} title='Settings' />
       <Button
         title='Now Playing'
-        onPress={() => navigation.navigate('Now Playing')}
+        onPress={() => stateNavigator.navigate('nowplaying')}
       />
     </View>
   );
