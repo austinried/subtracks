@@ -2,6 +2,7 @@ import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
 import { GetAlbumList2Params, GetAlbumListParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams } from './params';
 import { GetAlbumList2Response, GetAlbumListResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, SubsonicResponse } from './responses';
+import { ServerSettings } from '../models/settings';
 
 export class SubsonicApiError extends Error {
   method: string;
@@ -56,14 +57,14 @@ export class SubsonicApiClient {
 
   private params: URLSearchParams
 
-  constructor(address: string, username: string, token: string, salt: string) {
-    this.address = address;
-    this.username = username;
+  constructor(server: ServerSettings) {
+    this.address = server.address;
+    this.username = server.username;
 
     this.params = new URLSearchParams();
-    this.params.append('u', username);
-    this.params.append('t', token);
-    this.params.append('s', salt);
+    this.params.append('u', server.username);
+    this.params.append('t', server.token);
+    this.params.append('s', server.salt);
     this.params.append('v', '1.15.0');
     this.params.append('c', 'subsonify-cool-unique-app-string')
   }

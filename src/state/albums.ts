@@ -1,4 +1,4 @@
-import { atom, DefaultValue, selector, selectorFamily, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { atom, DefaultValue, selector, selectorFamily, useRecoilValue, useSetRecoilState } from 'recoil';
 import { SubsonicApiClient } from '../subsonic/api';
 import { activeServer } from './settings'
 import { Album } from '../models/music';
@@ -23,21 +23,11 @@ export const albumsState = atom<{ [id: string]: Album }>({
   ],
 });
 
-export const albumIdsState = selector<string[]>({
-  key: 'albumIdsState',
-  get: ({get}) => Object.keys(get(albumsState)),
-});
-
 export const albumState = selectorFamily<Album, string>({
   key: 'albumState',
   get: id => ({ get }) => {
     return get(albumsState)[id];
   },
-  // set: id => ({ set, get }, newValue) => {
-  //   if (!(newValue instanceof DefaultValue)) {
-  //     set(albumsState, prevState => ({ ...prevState, [id]: newValue }));
-  //   }
-  // }
 });
 
 export const useUpdateAlbums = () => {
@@ -49,7 +39,7 @@ export const useUpdateAlbums = () => {
       return;
     }
 
-    const client = new SubsonicApiClient(server.address, server.username, server.token, server.salt);
+    const client = new SubsonicApiClient(server);
     const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 50 });
 
     const albums = response.data.albums.reduce((acc, x) => {
@@ -65,7 +55,7 @@ export const useUpdateAlbums = () => {
   };
 };
 
-export function useCoverArtUri(id: string | undefined): string | undefined {
+export function useCoverArtUri(id?: string): string | undefined {
   if (!id) {
     return undefined;
   }
@@ -100,7 +90,7 @@ export function useCoverArtUri(id: string | undefined): string | undefined {
       return;
     }
 
-    const client = new SubsonicApiClient(server.address, server.username, server.token, server.salt);
+    const client = new SubsonicApiClient(server);
     await client.getCoverArt({ id });
 
     setCoverArtSource(fileUri);

@@ -10,6 +10,4 @@ export interface Album {
   name: string;
   starred?: Date;
   coverArt?: string;
-  coverArtPath?: string;
-  coverArtModified?: Date;
 }

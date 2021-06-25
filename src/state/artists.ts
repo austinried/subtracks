@@ -30,7 +30,7 @@ export const useUpdateArtists = () => {
       return;
     }
 
-    const client = new SubsonicApiClient(server.address, server.username, server.token, server.salt);
+    const client = new SubsonicApiClient(server);
     const response = await client.getArtists();
 
     setArtists(response.data.artists.map(x => ({

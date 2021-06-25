@@ -3,6 +3,7 @@ import { Text, View, Image, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import textStyles from '../../styles/text';
 import colors from '../../styles/colors';
+import FastImage from 'react-native-fast-image';
 
 const icons: {[key: string]: any} = {
   home: {
@@ -66,13 +67,13 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               flex: 1,
             }}
           >
-            <Image
+            <FastImage
               source={isFocused ? img.fill : img.regular}
               style={{
                 height: 26,
                 width: 26,
-                tintColor: isFocused ? colors.text.primary : colors.text.secondary,
               }}
+              tintColor={isFocused ? colors.text.primary : colors.text.secondary}
             />
             <Text style={{
               ...textStyles.xsmall,

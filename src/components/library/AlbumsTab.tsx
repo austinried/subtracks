@@ -1,62 +1,45 @@
-import React, { memo, useEffect, useState } from 'react';
-import { View, Image, Text, FlatList, Button, ListRenderItem } from 'react-native';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { Album } from '../../models/music';
-import { albumsState, albumState, useUpdateAlbums, albumIdsState, useCoverArtUri } from '../../state/albums';
-import TopTabContainer from '../common/TopTabContainer';
-import textStyles from '../../styles/text';
-import { ScrollView } from 'react-native-gesture-handler';
-import colors from '../../styles/colors';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Text, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
+import { useRecoilValue } from 'recoil';
+import { Album } from '../../models/music';
+import { albumsState, useCoverArtUri, useUpdateAlbums } from '../../state/albums';
+import colors from '../../styles/colors';
+import textStyles from '../../styles/text';
+import TopTabContainer from '../common/TopTabContainer';
 
 const AlbumArt: React.FC<{ height: number, width: number, id?: string }> = ({ height, width, id }) => {
-  const coverArtSource = useCoverArtUri(id);
-
-  // useEffect(() => {
-  //   console.log(id);
-  // });
+  const coverArtUri = useCoverArtUri(id);
 
   const Placeholder = (
     <LinearGradient
       colors={[colors.accent, colors.accentLow]}
-      style={{
-        height, width,
-      }}
+      style={{ height, width }}
     >
-      <Image
+      <FastImage
         source={require('../../../res/record-m.png')}
-        style={{
-          height, width,
-          resizeMode: 'contain',
-        }}
+        style={{ height, width }}
+        resizeMode={FastImage.resizeMode.contain}
       />
     </LinearGradient>
   );
 
   const CoverArt = (
-    <View style={{
-      height, width,
-    }}>
-      <Image
-        source={{ uri: coverArtSource }}
-        style={{
-          height, width,
-          resizeMode: 'contain',
-        }}
+    <View style={{ height, width }}>
+      <FastImage
+        source={{ uri: coverArtUri }}
+        style={{ height, width }}
+        resizeMode={FastImage.resizeMode.contain}
       />
     </View>
   );
 
-  return coverArtSource ? CoverArt : Placeholder;
+  return coverArtUri ? CoverArt : Placeholder;
 }
+const MemoAlbumArt = React.memo(AlbumArt);
 
-const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
-  const album = useRecoilValue(albumState(id));
-  
-  // useEffect(() => {
-  //   console.log(album.name);
-  // });
-
+const AlbumItem: React.FC<{ name: string, coverArt?: string } > = ({ name, coverArt }) => {
   const size = 125;
 
   return (
@@ -68,10 +51,10 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
       // width: size,
       flex: 1/3,
     }}>
-      <AlbumArt
+      <MemoAlbumArt
         width={size}
         height={size}
-        id={album.coverArt}
+        id={coverArt}
       />
       <View style={{
         flex: 1,
@@ -85,7 +68,7 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
           }}
           numberOfLines={2}
         >
-          {album.name}
+          {name}
         </Text>
         <Text
           style={{
@@ -94,27 +77,23 @@ const AlbumItem: React.FC<{ id: string } > = ({ id }) => {
           }}
           numberOfLines={1}
         >
-          {album.name}
+          {name}
         </Text>
       </View>
     </View>
   );
 }
+const MemoAlbumItem = React.memo(AlbumItem);
 
-const MemoAlbumItem = memo(AlbumItem, (prev, next) => {
-  // console.log('prev: ' + JSON.stringify(prev) + ' next: ' + JSON.stringify(next))
-  return prev.id == next.id;
-});
+const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
+  <MemoAlbumItem name={item.name} coverArt={item.coverArt} />
+);
 
 const AlbumsList = () => {
-  const albumIds = useRecoilValue(albumIdsState);
+  const albums = useRecoilValue(albumsState);
   const updateAlbums = useUpdateAlbums();
 
   const [refreshing, setRefreshing] = useState(false);
-
-  const renderItem: React.FC<{ item: string }> = ({ item }) => (
-    <MemoAlbumItem id={item} />
-  );
 
   const refresh = async () => {
     setRefreshing(true);
@@ -123,7 +102,7 @@ const AlbumsList = () => {
   }
 
   useEffect(() => {
-    if (!refreshing && albumIds.length === 0) {
+    if (!refreshing && Object.keys(albums).length === 0) {
       refresh();
     }
   });
@@ -131,13 +110,13 @@ const AlbumsList = () => {
   return (
     <View style={{ flex: 1 }}>
       <FlatList
-        data={albumIds}
-        renderItem={renderItem}
-        keyExtractor={item => item}
+        data={Object.values(albums)}
+        renderItem={AlbumListRenderItem}
+        keyExtractor={item => item.id}
         onRefresh={refresh}
         refreshing={refreshing}
         numColumns={3}
-        removeClippedSubviews={false}
+        removeClippedSubviews={true}
       />
     </View>
   );
@@ -151,4 +130,4 @@ const AlbumsTab = () => (
   </TopTabContainer>
 );
 
-export default AlbumsTab;
+export default React.memo(AlbumsTab);
