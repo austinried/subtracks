@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button, FlatList, Text, View } from 'react-native';
 import { useRecoilValue, useResetRecoilState } from 'recoil';
 import { artistsState, useUpdateArtists } from '../state/artists';
@@ -20,12 +20,6 @@ const List = () => {
   const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
     <ArtistItem item={item} />
   );
-
-  console.log('rendering artists');
-
-  useEffect(() => {
-    console.log('mounting artists');
-  });
 
   return (
     <FlatList

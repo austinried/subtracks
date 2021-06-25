@@ -101,7 +101,7 @@ export function useCoverArtUri(id: string | undefined): string | undefined {
     }
 
     const client = new SubsonicApiClient(server.address, server.username, server.token, server.salt);
-    await client.getCoverArt({ id, size: '32' });
+    await client.getCoverArt({ id });
 
     setCoverArtSource(fileUri);
   }

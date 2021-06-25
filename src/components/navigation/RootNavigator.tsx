@@ -1,26 +1,23 @@
-import { StateNavigator } from 'navigation';
-import { NavigationHandler } from 'navigation-react';
-import { NavigationStack } from 'navigation-react-native';
 import React from 'react';
-import { View } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
 import NowPlayingLayout from '../NowPlayingLayout';
 import BottomTabNavigator from './BottomTabNavigator';
 
-const stateNavigator = new StateNavigator([
-  { key: 'main' },
-  { key: 'nowplaying', trackCrumbTrail: true },
-]);
-
-const { main, nowplaying } = stateNavigator.states;
-main.renderScene = () => <BottomTabNavigator />;
-nowplaying.renderScene = () => <NowPlayingLayout />;
+const RootStack = createStackNavigator();
 
 const RootNavigator = () => (
-  <NavigationHandler stateNavigator={stateNavigator}>
-    <NavigationStack />
-  </NavigationHandler>
+  <RootStack.Navigator>
+    <RootStack.Screen
+      name='Main'
+      component={BottomTabNavigator}
+      options={{ headerShown: false }}
+    />
+    <RootStack.Screen
+      name='Now Playing'
+      component={NowPlayingLayout}
+      options={{ headerShown: false }}
+    />
+  </RootStack.Navigator>
 );
-
-stateNavigator.navigate('main');
 
 export default RootNavigator;
