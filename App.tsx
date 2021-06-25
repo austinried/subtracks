@@ -3,10 +3,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { RecoilRoot } from 'recoil';
 import SplashPage from './src/components/SplashPage';
 import RootNavigator from './src/components/navigation/RootNavigator';
+import MusicManager from './src/components/MusicManager';
 
 const App = () => (
   <RecoilRoot>
     <SplashPage>
+      <MusicManager />
       <NavigationContainer>
         <RootNavigator />
       </NavigationContainer>

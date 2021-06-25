@@ -4,7 +4,7 @@ import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { useRecoilValue } from 'recoil';
 import { Album } from '../../models/music';
-import { albumsState, useCoverArtUri, useUpdateAlbums } from '../../state/albums';
+import { albumsState, useCoverArtUri } from '../../state/music';
 import colors from '../../styles/colors';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
@@ -91,30 +91,13 @@ const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
 
 const AlbumsList = () => {
   const albums = useRecoilValue(albumsState);
-  const updateAlbums = useUpdateAlbums();
-
-  const [refreshing, setRefreshing] = useState(false);
-
-  const refresh = async () => {
-    setRefreshing(true);
-    await updateAlbums();
-    setRefreshing(false);
-  }
-
-  useEffect(() => {
-    if (!refreshing && Object.keys(albums).length === 0) {
-      refresh();
-    }
-  });
 
   return (
     <View style={{ flex: 1 }}>
       <FlatList
-        data={Object.values(albums)}
+        data={albums}
         renderItem={AlbumListRenderItem}
         keyExtractor={item => item.id}
-        onRefresh={refresh}
-        refreshing={refreshing}
         numColumns={3}
         removeClippedSubviews={true}
       />

@@ -15,6 +15,14 @@ export type GetArtistInfoParams = {
 
 export type GetArtistInfo2Params = GetArtistInfoParams;
 
+export type GetMusicDirectoryParams = {
+  id: string;
+}
+
+export type GetAlbumParams = {
+  id: string;
+}
+
 
 // 
 // Album/song lists

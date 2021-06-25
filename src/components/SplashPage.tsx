@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import RNFS from 'react-native-fs';
 import TrackPlayer, { Track } from 'react-native-track-player';
 import { musicDb, settingsDb } from '../clients';
+import paths from '../paths';
 
 async function mkdir(path: string): Promise<void> {
   const exists = await RNFS.exists(path);
@@ -24,11 +25,9 @@ const SplashPage: React.FC<{}> = ({ children }) => {
   const minSplashTime = new Promise(resolve => setTimeout(resolve, 1));
 
   const prepare = async () => {
-    const filesPath = RNFS.DocumentDirectoryPath;
-
-    await mkdir(`${filesPath}/image_cache`);
-    await mkdir(`${filesPath}/song_cache`);
-    await mkdir(`${filesPath}/songs`);
+    await mkdir(paths.imageCache);
+    await mkdir(paths.songCache);
+    await mkdir(paths.songs);
 
     await musicDb.openDb();
     await settingsDb.openDb();

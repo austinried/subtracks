@@ -2,9 +2,9 @@ import React from 'react';
 import { Text, View, Image, FlatList } from 'react-native';
 import { Artist } from '../../models/music';
 import { useRecoilValue } from 'recoil';
-import { artistsState } from '../../state/artists';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
+import { artistsState } from '../../state/music';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View style={{

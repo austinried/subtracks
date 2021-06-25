@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, FlatList, Text, View } from 'react-native';
-import { useRecoilValue, useResetRecoilState } from 'recoil';
-import { artistsState, useUpdateArtists } from '../state/artists';
+import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
 import { Artist } from '../models/music';
+import { artistsState, isLibraryRefreshingState, libraryRefreshState } from '../state/music';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View>
@@ -32,7 +32,8 @@ const List = () => {
 
 const ListPlusControls = () => {
   const resetArtists = useResetRecoilState(artistsState);
-  const updateArtists = useUpdateArtists();
+  const setLibraryRefresh = useSetRecoilState(libraryRefreshState);
+  const isLibraryRefreshing = useRecoilValue(isLibraryRefreshingState);
 
   return (
     <View>
@@ -41,8 +42,9 @@ const ListPlusControls = () => {
           onPress={resetArtists}
         />
         <Button 
-          title='Update from API'
-          onPress={updateArtists}
+          title='Refresh Library'
+          onPress={() => setLibraryRefresh(true)}
+          disabled={isLibraryRefreshing}
         />
       <List />
     </View>

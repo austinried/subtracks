@@ -1,8 +1,9 @@
 import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
-import { GetAlbumList2Params, GetAlbumListParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams } from './params';
-import { GetAlbumList2Response, GetAlbumListResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, SubsonicResponse } from './responses';
+import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams } from './params';
+import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
 import { ServerSettings } from '../models/settings';
+import paths from '../paths';
 
 export class SubsonicApiError extends Error {
   method: string;
@@ -146,6 +147,16 @@ export class SubsonicApiClient {
     return new SubsonicResponse<GetIndexesResponse>(xml, new GetIndexesResponse(xml));
   }
 
+  async getMusicDirectory(params: GetMusicDirectoryParams): Promise<SubsonicResponse<GetMusicDirectoryResponse>> {
+    const xml = await this.apiGetXml('getMusicDirectory', params);
+    return new SubsonicResponse<GetMusicDirectoryResponse>(xml, new GetMusicDirectoryResponse(xml));
+  }
+
+  async getAlbum(params: GetAlbumParams): Promise<SubsonicResponse<GetAlbumResponse>> {
+    const xml = await this.apiGetXml('getAlbum', params);
+    return new SubsonicResponse<GetAlbumResponse>(xml, new GetAlbumResponse(xml));
+  }
+
   async getArtistInfo(params: GetArtistInfoParams): Promise<SubsonicResponse<GetArtistInfoResponse>> {
     const xml = await this.apiGetXml('getArtistInfo', params);
     return new SubsonicResponse<GetArtistInfoResponse>(xml, new GetArtistInfoResponse(xml));
@@ -175,7 +186,7 @@ export class SubsonicApiClient {
   // 
 
   async getCoverArt(params: GetCoverArtParams): Promise<string> {
-    const path = `${RNFS.DocumentDirectoryPath}/image_cache/${params.id}`;
+    const path = `${paths.songCache}/${params.id}`;
     return await this.apiDownload('getCoverArt', path, params);
   }
 }

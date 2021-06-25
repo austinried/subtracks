@@ -1,4 +1,4 @@
-import { AlbumID3Element, ArtistElement, ArtistID3Element, BaseArtistElement, ChildElement } from "./elements";
+import { AlbumID3Element, ArtistElement, ArtistID3Element, BaseArtistElement, ChildElement, DirectoryElement } from "./elements";
 
 export type ResponseStatus = 'ok' | 'failed';
 
@@ -95,6 +95,34 @@ export class GetArtistInfoResponse extends BaseGetArtistInfoResponse<ArtistEleme
 export class GetArtistInfo2Response extends BaseGetArtistInfoResponse<ArtistID3Element> {
   constructor(xml: Document) {
     super(xml, ArtistID3Element);
+  }
+}
+
+export class GetMusicDirectoryResponse {
+  directory: DirectoryElement;
+  children: ChildElement[] = [];
+
+  constructor(xml: Document) {
+    this.directory = new DirectoryElement(xml.getElementsByTagName('directory')[0]);
+
+    const childElements = xml.getElementsByTagName('child');
+    for (let i = 0; i < childElements.length; i++) {
+      this.children.push(new ChildElement(childElements[i]));
+    }
+  }
+}
+
+export class GetAlbumResponse {
+  album: AlbumID3Element;
+  songs: ChildElement[] = [];
+
+  constructor(xml: Document) {
+    this.album = new AlbumID3Element(xml.getElementsByTagName('album')[0]);
+
+    const childElements = xml.getElementsByTagName('song');
+    for (let i = 0; i < childElements.length; i++) {
+      this.songs.push(new ChildElement(childElements[i]));
+    }
   }
 }
 

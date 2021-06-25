@@ -72,6 +72,25 @@ export class ArtistElement extends BaseArtistElement {
   }
 }
 
+export class DirectoryElement {
+  id: string;
+  parent?: string;
+  name: string;
+  starred?: Date;
+  userRating?: number;
+  averageRating?: number;
+  playCount?: number;
+
+  constructor(e: Element) {
+    this.id = requiredString(e, 'id');
+    this.parent = optionalString(e, 'parent');
+    this.name = requiredString(e, 'name');
+    this.starred = optionalDate(e, 'starred');
+    this.userRating = optionalInt(e, 'userRating');
+    this.averageRating = optionalFloat(e, 'averageRating');
+  }
+}
+
 export class ChildElement {
   id: string;
   parent?: string;
