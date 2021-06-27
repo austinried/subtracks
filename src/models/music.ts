@@ -24,3 +24,33 @@ export interface Song {
   name: string;
   starred?: Date;
 }
+
+export type DownloadedSong = {
+  id: string;
+  type: 'song';
+  name: string;
+  album: string;
+  artist: string;
+};
+
+export type DownloadedAlbum = {
+  id: string;
+  type: 'album';
+  songs: string[];
+  name: string;
+  artist: string;
+};
+
+export type DownloadedArtist = {
+  id: string;
+  type: 'artist';
+  songs: string[];
+  name: string;
+};
+
+export type DownloadedPlaylist = {
+  id: string;
+  type: 'playlist';
+  songs: string[];
+  name: string;
+};

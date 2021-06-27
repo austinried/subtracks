@@ -10,7 +10,7 @@ export const appSettingsState = atom<AppSettings>({
   }),
   effects_UNSTABLE: [
     ({ onSet }) => {
-      onSet((newValue, oldValue) => {
+      onSet((newValue) => {
         if (!(newValue instanceof DefaultValue)) {
           setAppSettings(newValue);
         }

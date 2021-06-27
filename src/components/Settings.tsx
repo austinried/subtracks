@@ -1,41 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Button, TextInput, View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/core';
+import md5 from 'md5';
+import React from 'react';
+import { Button, Text, View } from 'react-native';
 import { useRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
-import md5 from 'md5';
-import { musicDb } from '../clients';
 import { appSettingsState } from '../state/settings';
-import { DbStorage } from '../storage/db';
-import { StackScreenProps } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/core';
 
-const RecreateDbButton: React.FC<{ db: DbStorage, title: string }> = ({ db, title }) => {
-  const [inProgress, setInProgress] = useState(false);
-
-  const recreateDb = async () => {
-    setInProgress(true);
-    try{
-      try { await db.deleteDb(); } catch {}
-      await db.createDb();
-    } finally {
-      setInProgress(false);
-    }
-  }
-
-  return (
-    <Button
-      title={`Recreate ${title} DB`}
-      onPress={recreateDb}
-      disabled={inProgress}
-    />
-  )
-}
-
-const DbControls = () => {
+const TestControls = () => {
   const navigation = useNavigation();
   return (
     <View>
-      <RecreateDbButton db={musicDb} title='Music' />
       <Button
         title='Now Playing'
         onPress={() => navigation.navigate('Now Playing')}
@@ -88,7 +62,7 @@ const ServerSettingsView = () => {
 
 const SettingsView = () => (
   <View>
-    <DbControls />
+    <TestControls />
     <React.Suspense fallback={<Text>Loading...</Text>}>
       <ServerSettingsView />
     </React.Suspense>

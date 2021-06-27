@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View, Image, FlatList } from 'react-native';
+import React, { useEffect } from 'react';
+import { FlatList, Image, Text, View } from 'react-native';
+import { useRecoilValue } from 'recoil';
 import { Artist } from '../../models/music';
-import { useRecoilValue, useResetRecoilState } from 'recoil';
+import { artistsState, artistsUpdatingState, useUpdateArtists } from '../../state/music';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
-import { artistsState, artistsUpdatingState, useUpdateArtists } from '../../state/music';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View style={{
