@@ -4,14 +4,16 @@ import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { useRecoilValue } from 'recoil';
 import { Album } from '../../models/music';
-import { albumsState, useCoverArtUri } from '../../state/music';
+import { albumsState, albumsUpdatingState, useCoverArtUri, useUpdateAlbums } from '../../state/music';
 import colors from '../../styles/colors';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
 
-const AlbumArt: React.FC<{ height: number, width: number, id?: string }> = ({ height, width, id }) => {
-  const coverArtUri = useCoverArtUri(id);
-
+const AlbumArt: React.FC<{
+  height: number,
+  width: number,
+  coverArtUri?: string
+}> = ({ height, width, coverArtUri }) => {
   const Placeholder = (
     <LinearGradient
       colors={[colors.accent, colors.accentLow]}
@@ -39,27 +41,27 @@ const AlbumArt: React.FC<{ height: number, width: number, id?: string }> = ({ he
 }
 const MemoAlbumArt = React.memo(AlbumArt);
 
-const AlbumItem: React.FC<{ name: string, coverArt?: string } > = ({ name, coverArt }) => {
+const AlbumItem: React.FC<{
+  name: string,
+  artist?: string,
+  coverArtUri?: string
+} > = ({ name, artist, coverArtUri }) => {
   const size = 125;
 
   return (
     <View style={{
-      // flexDirection: 'row',
       alignItems: 'center',
       marginVertical: 8,
-      // marginLeft: 6,
-      // width: size,
       flex: 1/3,
     }}>
       <MemoAlbumArt
         width={size}
         height={size}
-        id={coverArt}
+        coverArtUri={coverArtUri}
       />
       <View style={{
         flex: 1,
         width: size,
-        // alignItems: 'baseline',
       }}>
         <Text
           style={{
@@ -71,13 +73,10 @@ const AlbumItem: React.FC<{ name: string, coverArt?: string } > = ({ name, cover
           {name}
         </Text>
         <Text
-          style={{
-            ...textStyles.itemSubtitle,
-            // marginTop: 2,
-          }}
+          style={{ ...textStyles.itemSubtitle }}
           numberOfLines={1}
         >
-          {name}
+          {artist}
         </Text>
       </View>
     </View>
@@ -86,11 +85,19 @@ const AlbumItem: React.FC<{ name: string, coverArt?: string } > = ({ name, cover
 const MemoAlbumItem = React.memo(AlbumItem);
 
 const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
-  <MemoAlbumItem name={item.name} coverArt={item.coverArt} />
+  <MemoAlbumItem name={item.name} artist={item.artist} coverArtUri={item.coverArtThumbUri} />
 );
 
 const AlbumsList = () => {
   const albums = useRecoilValue(albumsState);
+  const updating = useRecoilValue(albumsUpdatingState);
+  const updateAlbums = useUpdateAlbums();
+
+  useEffect(() => {
+    if (albums.length === 0) {
+      updateAlbums();
+    }
+  });
 
   return (
     <View style={{ flex: 1 }}>
@@ -100,6 +107,8 @@ const AlbumsList = () => {
         keyExtractor={item => item.id}
         numColumns={3}
         removeClippedSubviews={true}
+        refreshing={updating}
+        onRefresh={updateAlbums}
       />
     </View>
   );

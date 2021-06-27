@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, View, Image, FlatList } from 'react-native';
 import { Artist } from '../../models/music';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useResetRecoilState } from 'recoil';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
-import { artistsState } from '../../state/music';
+import { artistsState, artistsUpdatingState, useUpdateArtists } from '../../state/music';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View style={{
@@ -29,6 +29,14 @@ const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
 
 const ArtistsList = () => {
   const artists = useRecoilValue(artistsState);
+  const updating = useRecoilValue(artistsUpdatingState);
+  const updateArtists = useUpdateArtists();
+
+  useEffect(() => {
+    if (artists.length === 0) {
+      updateArtists();
+    }
+  });
 
   const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
     <ArtistItem item={item} />
@@ -39,6 +47,8 @@ const ArtistsList = () => {
       data={artists}
       renderItem={renderItem}
       keyExtractor={item => item.id}
+      onRefresh={updateArtists}
+      refreshing={updating}
     />
   );
 }

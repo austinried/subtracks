@@ -3,8 +3,8 @@ import { Button, TextInput, View, Text } from 'react-native';
 import { useRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 import md5 from 'md5';
-import { musicDb, settingsDb } from '../clients';
-import { appSettingsState, serversState } from '../state/settings';
+import { musicDb } from '../clients';
+import { appSettingsState } from '../state/settings';
 import { DbStorage } from '../storage/db';
 import { StackScreenProps } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/core';
@@ -36,7 +36,6 @@ const DbControls = () => {
   return (
     <View>
       <RecreateDbButton db={musicDb} title='Music' />
-      <RecreateDbButton db={settingsDb} title='Settings' />
       <Button
         title='Now Playing'
         onPress={() => navigation.navigate('Now Playing')}
@@ -46,11 +45,10 @@ const DbControls = () => {
 }
 
 const ServerSettingsView = () => {
-  const [servers, setServers] = useRecoilState(serversState);
   const [appSettings, setAppSettings] = useRecoilState(appSettingsState);
 
   const bootstrapServer = () => {
-    if (servers.length !== 0) {
+    if (appSettings.servers.length !== 0) {
       return;
     }
 
@@ -58,14 +56,17 @@ const ServerSettingsView = () => {
     const salt = uuidv4();
     const address = 'http://demo.subsonic.org';
 
-    setServers([{
-      id, salt, address,
-      username: 'guest',
-      token: md5('guest' + salt),
-    }]);
-
     setAppSettings({
-      server: id,
+      ...appSettings,
+      servers: [
+        ...appSettings.servers,
+        {
+          id, salt, address,
+          username: 'guest',
+          token: md5('guest' + salt),
+        },
+      ],
+      activeServer: id,
     });
   };
 
@@ -75,7 +76,7 @@ const ServerSettingsView = () => {
         title='Add default server'
         onPress={bootstrapServer}
       />
-      {servers.map(s => (
+      {appSettings.servers.map(s => (
         <View key={s.id}>
           <Text>{s.address}</Text>
           <Text>{s.username}</Text>

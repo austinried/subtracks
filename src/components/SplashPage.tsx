@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import RNFS from 'react-native-fs';
 import TrackPlayer, { Track } from 'react-native-track-player';
-import { musicDb, settingsDb } from '../clients';
+import { musicDb } from '../clients';
 import paths from '../paths';
 
 async function mkdir(path: string): Promise<void> {
@@ -30,13 +30,9 @@ const SplashPage: React.FC<{}> = ({ children }) => {
     await mkdir(paths.songs);
 
     await musicDb.openDb();
-    await settingsDb.openDb();
 
     if (!(await musicDb.dbExists())) {
       await musicDb.createDb();
-    }
-    if (!(await settingsDb.dbExists())) {
-      await settingsDb.createDb();
     }
 
     await TrackPlayer.setupPlayer();

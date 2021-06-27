@@ -3,14 +3,18 @@ export interface Artist {
   name: string;
   starred?: Date;
   coverArt?: string;
+  coverArtUri?: string,
 }
 
 export interface Album {
   id: string;
-  artistId: string;
+  artistId?: string;
+  artist?: string;
   name: string;
   starred?: Date;
   coverArt?: string;
+  coverArtUri?: string,
+  coverArtThumbUri?: string,
 }
 
 export interface Song {

@@ -1,4 +1,4 @@
-export interface ServerSettings {
+export interface Server {
   id: string;
   address: string;
   username: string;
@@ -7,5 +7,6 @@ export interface ServerSettings {
 }
 
 export interface AppSettings {
-  server?: string;
+  servers: Server[],
+  activeServer?: string;
 }

@@ -2,7 +2,7 @@ import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
 import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams } from './params';
 import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
-import { ServerSettings } from '../models/settings';
+import { Server } from '../models/settings';
 import paths from '../paths';
 
 export class SubsonicApiError extends Error {
@@ -58,7 +58,7 @@ export class SubsonicApiClient {
 
   private params: URLSearchParams
 
-  constructor(server: ServerSettings) {
+  constructor(server: Server) {
     this.address = server.address;
     this.username = server.username;
 
@@ -80,7 +80,7 @@ export class SubsonicApiClient {
     }
 
     const url = `${this.address}/rest/${method}?${query}`;
-    console.log(url);
+    // console.log(url);
     return url;
   }
 
@@ -188,5 +188,9 @@ export class SubsonicApiClient {
   async getCoverArt(params: GetCoverArtParams): Promise<string> {
     const path = `${paths.songCache}/${params.id}`;
     return await this.apiDownload('getCoverArt', path, params);
+  }
+
+  getCoverArtUri(params: GetCoverArtParams): string {
+    return this.buildUrl('getCoverArt', params);
   }
 }
