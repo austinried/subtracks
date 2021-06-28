@@ -35,3 +35,20 @@ export async function multiSet(items: string[][]): Promise<void> {
     console.error(`multiSet error`, e);
   }
 }
+
+export async function getAllKeys(): Promise<string[]> {
+  try {
+    return await AsyncStorage.getAllKeys();
+  } catch (e) {
+    console.error(`getAllKeys error`, e);
+    return [];
+  }
+}
+
+export async function multiRemove(keys: string[]): Promise<void> {
+  try {
+    await AsyncStorage.multiRemove(keys);
+  } catch (e) {
+    console.error(`multiRemove error`, e);
+  }
+}

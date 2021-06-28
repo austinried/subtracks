@@ -5,11 +5,23 @@ import React from 'react';
 import { Button, Text, View } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import { appSettingsAtom } from '../state/settings';
+import { getAllKeys, multiRemove } from '../storage/asyncstorage';
+import text from '../styles/text';
 
 const TestControls = () => {
   const navigation = useNavigation();
+
+  const removeAllKeys = async () => {
+    const allKeys = await getAllKeys();
+    await multiRemove(allKeys);
+  }
+
   return (
     <View>
+      <Button
+        title='Remove all keys'
+        onPress={removeAllKeys}
+      />
       <Button
         title='Now Playing'
         onPress={() => navigation.navigate('Now Playing')}
@@ -52,8 +64,8 @@ const ServerSettingsView = () => {
       />
       {appSettings.servers.map(s => (
         <View key={s.id}>
-          <Text>{s.address}</Text>
-          <Text>{s.username}</Text>
+          <Text style={text.paragraph}>{s.address}</Text>
+          <Text style={text.paragraph}>{s.username}</Text>
         </View>
       ))}
     </View>
