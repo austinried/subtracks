@@ -1,6 +1,7 @@
+import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { Album } from '../../models/music';
@@ -42,18 +43,24 @@ const AlbumArt: React.FC<{
 const MemoAlbumArt = React.memo(AlbumArt);
 
 const AlbumItem: React.FC<{
+  id: string;
   name: string,
   artist?: string,
   coverArtUri?: string
-} > = ({ name, artist, coverArtUri }) => {
+} > = ({ id, name, artist, coverArtUri }) => {
+  const navigation = useNavigation();
+
   const size = 125;
 
   return (
-    <View style={{
-      alignItems: 'center',
-      marginVertical: 8,
-      flex: 1/3,
-    }}>
+    <Pressable
+      style={{
+        alignItems: 'center',
+        marginVertical: 8,
+        flex: 1/3,
+      }}
+      onPress={() => navigation.navigate('AlbumView', { id })}
+    >
       <MemoAlbumArt
         width={size}
         height={size}
@@ -79,13 +86,13 @@ const AlbumItem: React.FC<{
           {artist}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 const MemoAlbumItem = React.memo(AlbumItem);
 
 const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
-  <MemoAlbumItem name={item.name} artist={item.artist} coverArtUri={item.coverArtThumbUri} />
+  <MemoAlbumItem id={item.id} name={item.name} artist={item.artist} coverArtUri={item.coverArtThumbUri} />
 );
 
 const AlbumsList = () => {

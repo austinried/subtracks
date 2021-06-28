@@ -12,7 +12,7 @@ const paragraph: TextStyle = {
 
 const header: TextStyle = {
   ...paragraph,
-  fontSize: 20,
+  fontSize: 19,
   fontFamily: fontSemiBold,
 };
 

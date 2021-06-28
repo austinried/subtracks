@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { Album, Artist } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
 import { activeServerAtom } from './settings';
@@ -70,3 +70,19 @@ export const useUpdateAlbums = () => {
     setUpdating(false);
   }
 }
+
+export const albumAtomFamily = atomFamily((id: string) => atom<Album | undefined>(async (get) => {
+  const server = get(activeServerAtom);
+  if (!server) {
+    return undefined;
+  }
+
+  const client = new SubsonicApiClient(server);
+  const response = await client.getAlbum({ id });
+
+  return {
+    id,
+    name: response.data.album.name,
+    artist: response.data.album.artist,
+  };
+}));
