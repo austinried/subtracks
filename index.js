@@ -1,11 +1,6 @@
 import 'react-native-gesture-handler';
 import 'react-native-get-random-values';
 
-import { AppRegistry, LogBox } from 'react-native';
-// ignore recoil's timer warning on android:
-// https://github.com/facebookexperimental/Recoil/issues/1030
-LogBox.ignoreLogs(["timer"]);
-
 import { enableScreens } from 'react-native-screens';
 enableScreens();
 

@@ -1,10 +1,10 @@
+import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
-import { useRecoilValue } from 'recoil';
 import { Album } from '../../models/music';
-import { albumsState, albumsUpdatingState, useUpdateAlbums } from '../../state/music';
+import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music';
 import colors from '../../styles/colors';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
@@ -89,8 +89,8 @@ const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
 );
 
 const AlbumsList = () => {
-  const albums = useRecoilValue(albumsState);
-  const updating = useRecoilValue(albumsUpdatingState);
+  const albums = useAtomValue(albumsAtom);
+  const updating = useAtomValue(albumsUpdatingAtom);
   const updateAlbums = useUpdateAlbums();
 
   useEffect(() => {

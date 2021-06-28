@@ -1,26 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export async function getItem(key: string): Promise<string | null> {
+export async function getItem(key: string): Promise<any | null> {
   try {
-    return await AsyncStorage.getItem(key);
+    const item = await AsyncStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
   } catch (e) {
     console.error(`getItem error (key: ${key})`, e);
     return null;
   }
 }
 
-export async function multiGet(keys: string[]): Promise<[string, string | null][]> {
+export async function multiGet(keys: string[]): Promise<[string, any | null][]> {
   try {
-    return await AsyncStorage.multiGet(keys);
+    const items = await AsyncStorage.multiGet(keys);
+    return items.map(x => [x[0], x[1] ? JSON.parse(x[1]) : null]);
   } catch (e) {
     console.error(`multiGet error`, e);
     return [];
   }
 }
 
-export async function setItem(key: string, item: string): Promise<void> {
+export async function setItem(key: string, item: any): Promise<void> {
   try {
-    await AsyncStorage.setItem(key, item);
+    await AsyncStorage.setItem(key, JSON.stringify(item));
   } catch (e) {
     console.error(`setItem error (key: ${key})`, e);
   }
@@ -28,7 +30,7 @@ export async function setItem(key: string, item: string): Promise<void> {
 
 export async function multiSet(items: string[][]): Promise<void> {
   try {
-    await AsyncStorage.multiSet(items);
+    await AsyncStorage.multiSet(items.map(x => [x[0], JSON.stringify(x[1])]));
   } catch (e) {
     console.error(`multiSet error`, e);
   }

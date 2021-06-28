@@ -1,26 +1,20 @@
-import { atom, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { atom, useAtom } from 'jotai';
+import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { Album, Artist } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
-import { activeServer } from './settings';
+import { activeServerAtom } from './settings';
 
-export const artistsState = atom<Artist[]>({
-  key: 'artistsState',
-  default: [],
-});
-
-export const artistsUpdatingState = atom<boolean>({
-  key: 'artistsUpdatingState',
-  default: false,
-});
+export const artistsAtom = atom<Artist[]>([]);
+export const artistsUpdatingAtom = atom(false);
 
 export const useUpdateArtists = () => {
-  const server = useRecoilValue(activeServer);
+  const server = useAtomValue(activeServerAtom);
+  const [updating, setUpdating] = useAtom(artistsUpdatingAtom);
+  const setArtists = useUpdateAtom(artistsAtom);
+
   if (!server) {
     return () => Promise.resolve();
   }
-
-  const [updating, setUpdating] = useRecoilState(artistsUpdatingState);
-  const setArtists = useSetRecoilState(artistsState);
 
   return async () => {
     if (updating) {
@@ -42,24 +36,17 @@ export const useUpdateArtists = () => {
   }
 }
 
-export const albumsState = atom<Album[]>({
-  key: 'albumsState',
-  default: [],
-});
-
-export const albumsUpdatingState = atom<boolean>({
-  key: 'albumsUpdatingState',
-  default: false,
-});
+export const albumsAtom = atom<Album[]>([]);
+export const albumsUpdatingAtom = atom(false);
 
 export const useUpdateAlbums = () => {
-  const server = useRecoilValue(activeServer);
+  const server = useAtomValue(activeServerAtom);
+  const [updating, setUpdating] = useAtom(albumsUpdatingAtom);
+  const setAlbums = useUpdateAtom(albumsAtom);
+
   if (!server) {
     return () => Promise.resolve();
   }
-
-  const [updating, setUpdating] = useRecoilState(albumsUpdatingState);
-  const setAlbums = useSetRecoilState(albumsState);
 
   return async () => {
     if (updating) {

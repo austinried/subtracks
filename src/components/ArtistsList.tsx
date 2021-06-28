@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button, FlatList, Text, View } from 'react-native';
-import { useRecoilValue, useResetRecoilState } from 'recoil';
+import { FlatList, Text, View } from 'react-native';
+import { useAtomValue } from 'jotai/utils';
 import { Artist } from '../models/music';
-import { artistsState } from '../state/music';
+import { artistsAtom } from '../state/music';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View>
@@ -15,7 +15,7 @@ const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
 );
 
 const List = () => {
-  const artists = useRecoilValue(artistsState);
+  const artists = useAtomValue(artistsAtom);
 
   const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
     <ArtistItem item={item} />
@@ -30,24 +30,10 @@ const List = () => {
   );
 }
 
-const ListPlusControls = () => {
-  const resetArtists = useResetRecoilState(artistsState);
-
-  return (
-    <View>
-        <Button 
-          title='Reset to default'
-          onPress={resetArtists}
-        />
-      <List />
-    </View>
-  );
-}
-
 const ArtistsList = () => (
   <View>
     <React.Suspense fallback={<Text>Loading...</Text>}>
-      <ListPlusControls />
+      <List />
     </React.Suspense>
   </View>
 )

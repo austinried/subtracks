@@ -1,17 +1,17 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { RecoilRoot } from 'recoil';
 import SplashPage from './src/components/SplashPage';
 import RootNavigator from './src/components/navigation/RootNavigator';
+import { Provider } from 'jotai';
 
 const App = () => (
-  <RecoilRoot>
+  <Provider>
     <SplashPage>
       <NavigationContainer>
         <RootNavigator />
       </NavigationContainer>
     </SplashPage>
-  </RecoilRoot>
+  </Provider>
 );
 
 export default App;

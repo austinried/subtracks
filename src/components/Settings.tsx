@@ -1,10 +1,10 @@
 import { useNavigation } from '@react-navigation/core';
+import { useAtom } from 'jotai';
 import md5 from 'md5';
 import React from 'react';
 import { Button, Text, View } from 'react-native';
-import { useRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
-import { appSettingsState } from '../state/settings';
+import { appSettingsAtom } from '../state/settings';
 
 const TestControls = () => {
   const navigation = useNavigation();
@@ -19,7 +19,7 @@ const TestControls = () => {
 }
 
 const ServerSettingsView = () => {
-  const [appSettings, setAppSettings] = useRecoilState(appSettingsState);
+  const [appSettings, setAppSettings] = useAtom(appSettingsAtom);
 
   const bootstrapServer = () => {
     if (appSettings.servers.length !== 0) {

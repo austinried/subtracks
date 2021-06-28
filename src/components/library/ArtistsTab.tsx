@@ -1,8 +1,8 @@
+import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
 import { FlatList, Image, Text, View } from 'react-native';
-import { useRecoilValue } from 'recoil';
 import { Artist } from '../../models/music';
-import { artistsState, artistsUpdatingState, useUpdateArtists } from '../../state/music';
+import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
 import textStyles from '../../styles/text';
 import TopTabContainer from '../common/TopTabContainer';
 
@@ -28,8 +28,8 @@ const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
 );
 
 const ArtistsList = () => {
-  const artists = useRecoilValue(artistsState);
-  const updating = useRecoilValue(artistsUpdatingState);
+  const artists = useAtomValue(artistsAtom);
+  const updating = useAtomValue(artistsUpdatingAtom);
   const updateArtists = useUpdateArtists();
 
   useEffect(() => {
