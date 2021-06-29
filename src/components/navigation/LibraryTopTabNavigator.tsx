@@ -52,7 +52,7 @@ const LibraryTopTabNavigator = () => (
 
 type LibraryStackParamList = {
   LibraryTopTabs: undefined,
-  AlbumView: { id: string };
+  AlbumView: { id: string, title: string };
 }
 
 type AlbumScreenNavigationProp = StackNavigationProp<LibraryStackParamList, 'AlbumView'>;
@@ -63,7 +63,7 @@ type AlbumScreenProps = {
 };
 
 const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
-  <AlbumView id={route.params.id} />
+  <AlbumView id={route.params.id} title={route.params.title} />
 );
 
 const Stack = createStackNavigator<LibraryStackParamList>();
@@ -79,7 +79,8 @@ const LibraryStackNavigator = () => (
       <Stack.Screen
         name='AlbumView'
         component={AlbumScreen}
-        options={{ title: 'Album', 
+        options={{
+          title: '',
           headerStyle: { 
             height: 50,
             backgroundColor: colors.gradient.high,

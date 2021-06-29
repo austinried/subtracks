@@ -6,41 +6,9 @@ import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import { Album } from '../../models/music';
 import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music';
-import colors from '../../styles/colors';
 import textStyles from '../../styles/text';
+import AlbumCover from '../common/AlbumCover';
 import TopTabContainer from '../common/TopTabContainer';
-
-const AlbumArt: React.FC<{
-  height: number,
-  width: number,
-  coverArtUri?: string
-}> = ({ height, width, coverArtUri }) => {
-  const Placeholder = (
-    <LinearGradient
-      colors={[colors.accent, colors.accentLow]}
-      style={{ height, width }}
-    >
-      <FastImage
-        source={require('../../../res/record-m.png')}
-        style={{ height, width }}
-        resizeMode={FastImage.resizeMode.contain}
-      />
-    </LinearGradient>
-  );
-
-  const CoverArt = (
-    <View style={{ height, width }}>
-      <FastImage
-        source={{ uri: coverArtUri }}
-        style={{ height, width }}
-        resizeMode={FastImage.resizeMode.contain}
-      />
-    </View>
-  );
-
-  return coverArtUri ? CoverArt : Placeholder;
-}
-const MemoAlbumArt = React.memo(AlbumArt);
 
 const AlbumItem: React.FC<{
   id: string;
@@ -59,9 +27,9 @@ const AlbumItem: React.FC<{
         marginVertical: 8,
         flex: 1/3,
       }}
-      onPress={() => navigation.navigate('AlbumView', { id })}
+      onPress={() => navigation.navigate('AlbumView', { id, title: name })}
     >
-      <MemoAlbumArt
+      <AlbumCover
         width={size}
         height={size}
         coverArtUri={coverArtUri}

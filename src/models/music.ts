@@ -15,13 +15,32 @@ export interface Album {
   coverArt?: string;
   coverArtUri?: string,
   coverArtThumbUri?: string,
+  year?: number;
+}
+
+export interface AlbumWithSongs extends Album {
+  songs: Song[];
 }
 
 export interface Song {
   id: string;
-  albumId: string;
-  artistId: string;
-  name: string;
+  album?: string;
+  artist?: string;
+  title: string;
+  track?: number;
+  year?: number;
+  genre?: string;
+  coverArt?: string;
+  size?: number;
+  contentType?: string;
+  suffix?: string;
+  duration?: number;
+  bitRate?: number;
+  userRating?: number;
+  averageRating?: number;
+  playCount?: number;
+  discNumber?: number;
+  created?: Date;
   starred?: Date;
 }
 

@@ -1,7 +1,8 @@
 import { atom, useAtom } from 'jotai';
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils';
-import { Album, Artist } from '../models/music';
+import { Album as Album, AlbumWithSongs, Artist, Song } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
+import { AlbumID3Element, ChildElement } from '../subsonic/elements';
 import { activeServerAtom } from './settings';
 
 export const artistsAtom = atom<Artist[]>([]);
@@ -57,21 +58,12 @@ export const useUpdateAlbums = () => {
     const client = new SubsonicApiClient(server);
     const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 });
 
-    setAlbums(response.data.albums.map(x => ({
-      id: x.id,
-      artistId: x.artistId,
-      artist: x.artist,
-      name: x.name,
-      starred: x.starred,
-      coverArt: x.coverArt,
-      coverArtUri: x.coverArt ? client.getCoverArtUri({ id: x.coverArt }) : undefined,
-      coverArtThumbUri: x.coverArt ? client.getCoverArtUri({ id: x.coverArt, size: '128' }) : undefined,
-    })));
+    setAlbums(response.data.albums.map(a => mapAlbumID3(a, client)));
     setUpdating(false);
   }
 }
 
-export const albumAtomFamily = atomFamily((id: string) => atom<Album | undefined>(async (get) => {
+export const albumAtomFamily = atomFamily((id: string) => atom<AlbumWithSongs | undefined>(async (get) => {
   const server = get(activeServerAtom);
   if (!server) {
     return undefined;
@@ -79,10 +71,28 @@ export const albumAtomFamily = atomFamily((id: string) => atom<Album | undefined
 
   const client = new SubsonicApiClient(server);
   const response = await client.getAlbum({ id });
-
-  return {
-    id,
-    name: response.data.album.name,
-    artist: response.data.album.artist,
-  };
+  return mapAlbumID3WithSongs(response.data.album, response.data.songs, client);
 }));
+
+function mapAlbumID3(album: AlbumID3Element, client: SubsonicApiClient): Album {
+  return { 
+    ...album,
+    coverArtUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt }) : undefined,
+    coverArtThumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
+  }
+}
+
+function mapChild(child: ChildElement): Song {
+  return { ...child }
+}
+
+function mapAlbumID3WithSongs(
+  album: AlbumID3Element,
+  songs: ChildElement[],
+  client: SubsonicApiClient
+): AlbumWithSongs {
+  return {
+    ...mapAlbumID3(album, client),
+    songs: songs.map(s => mapChild(s)),
+  }
+}
