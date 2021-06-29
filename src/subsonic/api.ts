@@ -1,6 +1,6 @@
 import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
-import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams } from './params';
+import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams, StreamParams } from './params';
 import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
 import { Server } from '../models/settings';
 import paths from '../paths';
@@ -192,5 +192,9 @@ export class SubsonicApiClient {
 
   getCoverArtUri(params: GetCoverArtParams): string {
     return this.buildUrl('getCoverArt', params);
+  }
+
+  streamUri(params: StreamParams): string {
+    return this.buildUrl('stream', params);
   }
 }

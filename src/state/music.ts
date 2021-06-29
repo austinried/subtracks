@@ -82,8 +82,12 @@ function mapAlbumID3(album: AlbumID3Element, client: SubsonicApiClient): Album {
   }
 }
 
-function mapChild(child: ChildElement): Song {
-  return { ...child }
+function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
+  return {
+    ...child,
+    streamUri: client.streamUri({ id: child.id }),
+    coverArtUri: child.coverArt ? client.getCoverArtUri({ id: child.coverArt }) : undefined,
+  }
 }
 
 function mapAlbumID3WithSongs(
@@ -93,6 +97,6 @@ function mapAlbumID3WithSongs(
 ): AlbumWithSongs {
   return {
     ...mapAlbumID3(album, client),
-    songs: songs.map(s => mapChild(s)),
+    songs: songs.map(s => mapChildToSong(s, client)),
   }
 }

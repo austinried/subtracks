@@ -8,6 +8,6 @@ export default {
     mid: '#191919',
     low: '#000000',
   },
-  accent: '#c260e5',
-  accentLow: '#50285e',
+  accent: '#b134db',
+  accentLow: '#511c63',
 }

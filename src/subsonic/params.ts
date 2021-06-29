@@ -62,3 +62,10 @@ export type GetCoverArtParams = {
   id: string;
   size?: string;
 }
+
+export type StreamParams = {
+  id: string;
+  maxBitRate?: number;
+  format?: string;
+  estimateContentLength?: boolean;
+}

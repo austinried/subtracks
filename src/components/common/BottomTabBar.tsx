@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View, Image, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import textStyles from '../../styles/text';
 import colors from '../../styles/colors';
 import FastImage from 'react-native-fast-image';
+import { useNavigation } from '@react-navigation/native';
 
 const icons: {[key: string]: any} = {
   home: {
@@ -22,6 +23,57 @@ const icons: {[key: string]: any} = {
     regular: require('../../../res/settings.png'),
     fill: require('../../../res/settings-fill.png'),
   },
+}
+
+const BottomTabButton: React.FC<{
+  routeKey: string;
+  label: string;
+  name: string;
+  isFocused: boolean;
+  img: { regular: number, fill: number };
+  navigation: any;
+}> = ({ routeKey, label, name, isFocused, img, navigation }) => {
+  const [opacity, setOpacity] = useState(1);
+
+  const onPress = () => {
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: routeKey,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      navigation.navigate(name);
+    }
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => setOpacity(0.6)}
+      onPressOut={() => setOpacity(1)}
+      style={{
+        alignItems: 'center',
+        flex: 1,
+        opacity,
+      }}
+    >
+      <FastImage
+        source={isFocused ? img.fill : img.regular}
+        style={{
+          height: 26,
+          width: 26,
+        }}
+        tintColor={isFocused ? colors.text.primary : colors.text.secondary}
+      />
+      <Text style={{
+        ...textStyles.xsmall,
+        color: isFocused ? colors.text.primary : colors.text.secondary,
+      }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
 }
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
@@ -43,46 +95,15 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               ? options.title
               : route.name;
 
-        const isFocused = state.index === index;
-        const img = icons[options.icon];
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        return (
-          <Pressable
-            key={route.key}
-            onPress={onPress}
-            style={{
-              alignItems: 'center',
-              flex: 1,
-            }}
-          >
-            <FastImage
-              source={isFocused ? img.fill : img.regular}
-              style={{
-                height: 26,
-                width: 26,
-              }}
-              tintColor={isFocused ? colors.text.primary : colors.text.secondary}
-            />
-            <Text style={{
-              ...textStyles.xsmall,
-              color: isFocused ? colors.text.primary : colors.text.secondary,
-            }}>
-              {label}
-            </Text>
-          </Pressable>
-        );
+        return <BottomTabButton
+          key={route.key}
+          routeKey={route.key}
+          label={label}
+          name={route.name}
+          isFocused={state.index === index}
+          img={icons[options.icon]}
+          navigation={navigation}
+        />;
       })}
     </View>
   );

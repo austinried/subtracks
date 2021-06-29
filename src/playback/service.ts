@@ -17,5 +17,7 @@ module.exports = async function() {
       TrackPlayer.play();
     }
   });
-
+  
+  TrackPlayer.addEventListener('remote-next', () => TrackPlayer.skipToNext().catch(() => {}));
+  TrackPlayer.addEventListener('remote-previous', () => TrackPlayer.skipToPrevious().catch(() => {}));
 };

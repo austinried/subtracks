@@ -42,6 +42,9 @@ export interface Song {
   discNumber?: number;
   created?: Date;
   starred?: Date;
+
+  streamUri: string;
+  coverArtUri?: string,
 }
 
 export type DownloadedSong = {
