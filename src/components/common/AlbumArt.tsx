@@ -1,14 +1,21 @@
+import { useAtomValue } from 'jotai/utils';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
+import { albumArtAtomFamily } from '../../state/music';
 import colors from '../../styles/colors';
 import CoverArt from './CoverArt';
 
-const AlbumArt: React.FC<{
-  height: number,
-  width: number,
-  coverArtUri?: string
-}> = ({ height, width, coverArtUri }) => {
+interface AlbumArtProps {
+  id: string;
+  height: number;
+  width: number;
+}
+
+const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
+  const albumArt = useAtomValue(albumArtAtomFamily(id));
+
   const Placeholder = () => (
     <LinearGradient
       colors={[colors.accent, colors.accentLow]}
@@ -26,9 +33,25 @@ const AlbumArt: React.FC<{
       PlaceholderComponent={Placeholder}
       height={height}
       width={width}
-      coverArtUri={coverArtUri}
+      coverArtUri={width > 128 ? albumArt?.uri : albumArt?.thumbUri}
     />
   );
 }
 
-export default React.memo(AlbumArt);
+const AlbumArtFallback: React.FC<AlbumArtProps> = ({ height, width }) => (
+  <View style={{ 
+    height, width,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}>
+    <ActivityIndicator size='small' color={colors.accent} />
+  </View>
+);
+
+const AlbumArtLoader: React.FC<AlbumArtProps> = (props) => (
+  <React.Suspense fallback={<AlbumArtFallback { ...props } />}>
+    <AlbumArt { ...props } />
+  </React.Suspense>
+);
+
+export default React.memo(AlbumArtLoader);

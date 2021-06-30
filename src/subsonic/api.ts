@@ -100,7 +100,7 @@ export class SubsonicApiClient {
     const response = await fetch(this.buildUrl(method, params));
     const text = await response.text();
 
-    console.log(text);
+    // console.log(text);
 
     const xml = new DOMParser().parseFromString(text);
     if (xml.documentElement.getAttribute('status') !== 'ok') {

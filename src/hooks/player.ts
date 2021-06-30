@@ -61,16 +61,12 @@ export const useSetQueue = () => {
       const tracks1 = tracks.slice(0, playIndex);
       const tracks2 = tracks.slice(playIndex);
 
-      console.log('tracks1: ' + JSON.stringify(tracks1.map(t => t.title)));
-      console.log('tracks2: ' + JSON.stringify(tracks2.map(t => t.title)));
-
       await TrackPlayer.add(tracks2);
       await TrackPlayer.play();
 
       await TrackPlayer.add(tracks1, playId);
 
       const queue = await TrackPlayer.getQueue();
-      console.log('queue: ' + JSON.stringify(queue.map(t => t.title)));
     }
   }
 }

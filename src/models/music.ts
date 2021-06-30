@@ -12,6 +12,11 @@ export interface ArtistInfo extends Artist {
   coverArtUris: string[];
 }
 
+export interface ArtistArt {
+  uri?: string;
+  coverArtUris: string[];
+}
+
 export interface Album {
   id: string;
   artistId?: string;
@@ -22,6 +27,11 @@ export interface Album {
   coverArtUri?: string,
   coverArtThumbUri?: string,
   year?: number;
+}
+
+export interface AlbumArt {
+  uri?: string;
+  thumbUri?: string;
 }
 
 export interface AlbumWithSongs extends Album {

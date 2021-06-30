@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect, useState } from 'react';
-import { GestureResponderEvent, Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { GestureResponderEvent, Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useCurrentTrackId, useSetQueue } from '../../hooks/player';
 import { albumAtomFamily } from '../../state/music';
 import colors from '../../styles/colors';
@@ -100,12 +100,7 @@ const AlbumDetails: React.FC<{
         paddingTop: coverSize / 8,
       }}
     >
-      <AlbumArt
-        height={coverSize}
-        width={coverSize}
-        coverArtUri={album.coverArtUri}
-      />
-
+      <AlbumArt id={album.id} height={coverSize} width={coverSize} />
       <Text style={{
         ...text.title,
         marginTop: 12,

@@ -10,10 +10,9 @@ import GradientFlatList from '../common/GradientFlatList';
 
 const AlbumItem: React.FC<{
   id: string;
-  name: string,
-  artist?: string,
-  coverArtUri?: string
-} > = ({ id, name, artist, coverArtUri }) => {
+  name: string;
+  artist?: string;
+}> = ({ id, name, artist, }) => {
   const navigation = useNavigation();
 
   const size = 125;
@@ -27,11 +26,7 @@ const AlbumItem: React.FC<{
       }}
       onPress={() => navigation.navigate('AlbumView', { id, title: name })}
     >
-      <AlbumArt
-        width={size}
-        height={size}
-        coverArtUri={coverArtUri}
-      />
+      <AlbumArt id={id} height={size} width={size} />
       <View style={{
         flex: 1,
         width: size,
@@ -58,7 +53,7 @@ const AlbumItem: React.FC<{
 const MemoAlbumItem = React.memo(AlbumItem);
 
 const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
-  <MemoAlbumItem id={item.id} name={item.name} artist={item.artist} coverArtUri={item.coverArtThumbUri} />
+  <MemoAlbumItem id={item.id} name={item.name} artist={item.artist} />
 );
 
 const AlbumsList = () => {

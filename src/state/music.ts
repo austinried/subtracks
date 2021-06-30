@@ -1,6 +1,6 @@
 import { atom, useAtom } from 'jotai';
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils';
-import { Album as Album, AlbumWithSongs, Artist, ArtistInfo, Song } from '../models/music';
+import { Album, AlbumArt, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
 import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '../subsonic/elements';
 import { GetArtistResponse } from '../subsonic/responses';
@@ -73,6 +73,26 @@ export const albumAtomFamily = atomFamily((id: string) => atom<AlbumWithSongs | 
   return mapAlbumID3WithSongs(response.data.album, response.data.songs, client);
 }));
 
+export const albumArtAtomFamily = atomFamily((id: string) => atom<AlbumArt | undefined>(async (get) => {
+  const server = get(activeServerAtom);
+  if (!server) {
+    return undefined;
+  }
+
+  const albums = get(albumsAtom);
+  const album = albums.find(a => a.id === id);
+  if (!album) {
+    return undefined;
+  }
+
+  const client = new SubsonicApiClient(server);
+
+  return {
+    uri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt }) : undefined,
+    thumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
+  };
+}));
+
 export const artistInfoAtomFamily = atomFamily((id: string) => atom<ArtistInfo | undefined>(async (get) => {
   const server = get(activeServerAtom);
   if (!server) {
@@ -85,6 +105,29 @@ export const artistInfoAtomFamily = atomFamily((id: string) => atom<ArtistInfo |
     client.getArtistInfo2({ id }),
   ]);
   return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, client);
+}));
+
+export const artistArtAtomFamily = atomFamily((id: string) => atom<ArtistArt | undefined>(async (get) => {
+  const artistInfo = get(artistInfoAtomFamily(id));
+  if (!artistInfo) {
+    return undefined;
+  }
+
+  const coverArtUris = artistInfo.albums
+    .filter(a => a.coverArtThumbUri !== undefined)
+    .sort((a, b) => {
+      if (b.year && a.year) {
+        return b.year - a.year;
+      } else {
+        return a.name.localeCompare(b.name) - 9000;
+      }
+    })
+    .map(a => a.coverArtThumbUri) as string[];
+
+  return {
+    coverArtUris,
+    uri: artistInfo.mediumImageUrl,
+  };
 }));
 
 function mapArtistInfo(

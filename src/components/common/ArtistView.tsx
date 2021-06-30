@@ -25,12 +25,7 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
       }}
     >
       <Text style={text.paragraph}>{artist.name}</Text>
-      <ArtistArt
-        height={200}
-        width={200}
-        mediumImageUrl={artist.mediumImageUrl}
-        coverArtUris={artist.coverArtUris}
-      />
+      <ArtistArt id={artist.id} height={200} width={200} />
     </GradientScrollView>
   )
 }

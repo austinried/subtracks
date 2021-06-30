@@ -11,7 +11,6 @@ import GradientFlatList from '../common/GradientFlatList';
 
 const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
   const navigation = useNavigation();
-  const artistInfo = useAtomValue(artistInfoAtomFamily(item.id));
 
   return (
     <Pressable
@@ -23,19 +22,7 @@ const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
       }}
       onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}
     >
-      <ArtistArt
-        width={56}
-        height={56}
-        mediumImageUrl={artistInfo?.mediumImageUrl}
-        coverArtUris={artistInfo?.coverArtUris}
-      />
-      {/* <Image
-        source={{ uri: 'https://reactnative.dev/img/tiny_logo.png' }}
-        style={{
-          width: 56,
-          height: 56,
-        }}
-      /> */}
+      <ArtistArt id={item.id} width={56} height={56} />
       <Text style={{
         ...textStyles.paragraph,
         marginLeft: 12,
