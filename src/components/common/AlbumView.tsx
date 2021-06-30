@@ -8,7 +8,7 @@ import { albumAtomFamily } from '../../state/music';
 import colors from '../../styles/colors';
 import text from '../../styles/text';
 import AlbumCover from './AlbumCover';
-import TopTabContainer from './TopTabContainer';
+import GradientBackground from './GradientBackground';
 
 function secondsToTime(s: number): string {
   const seconds = s % 60;
@@ -142,7 +142,9 @@ const AlbumDetails: React.FC<{
         alignItems: 'center',
         paddingTop: coverSize / 8,
       }}
+      overScrollMode='never'
     >
+      <GradientBackground />
       <AlbumCover
         height={coverSize}
         width={coverSize}
@@ -213,11 +215,9 @@ const AlbumView: React.FC<{
   });
 
   return (
-    <TopTabContainer>
-      <React.Suspense fallback={<Text>Loading...</Text>}>
-        <AlbumDetails id={id} />
-      </React.Suspense>
-    </TopTabContainer>
+    <React.Suspense fallback={<Text>Loading...</Text>}>
+      <AlbumDetails id={id} />
+    </React.Suspense>
   );
 };
 

@@ -1,10 +1,10 @@
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
-import { FlatList, Image, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { Artist } from '../../models/music';
 import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
 import textStyles from '../../styles/text';
-import TopTabContainer from '../common/TopTabContainer';
+import GradientFlatList from '../common/GradientFlatList';
 
 const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
   <View style={{
@@ -43,20 +43,19 @@ const ArtistsList = () => {
   );
 
   return (
-    <FlatList
+    <GradientFlatList
       data={artists}
       renderItem={renderItem}
       keyExtractor={item => item.id}
       onRefresh={updateArtists}
       refreshing={updating}
+      overScrollMode='never'
     />
   );
 }
 
 const ArtistsTab = () => (
-  <TopTabContainer>
-    <ArtistsList />
-  </TopTabContainer>
+  <ArtistsList />
 );
 
 export default ArtistsTab;

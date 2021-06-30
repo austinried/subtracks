@@ -1,9 +1,8 @@
 import React from 'react';
-import TopTabContainer from '../common/TopTabContainer';
+import GradientBackground from '../common/GradientBackground';
 
 const PlaylistsTab = () => (
-  <TopTabContainer>
-  </TopTabContainer>
+  <GradientBackground />
 );
 
 export default PlaylistsTab;

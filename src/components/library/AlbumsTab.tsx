@@ -1,14 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
+import { Pressable, Text, View } from 'react-native';
 import { Album } from '../../models/music';
 import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music';
 import textStyles from '../../styles/text';
 import AlbumCover from '../common/AlbumCover';
-import TopTabContainer from '../common/TopTabContainer';
+import GradientFlatList from '../common/GradientFlatList';
 
 const AlbumItem: React.FC<{
   id: string;
@@ -76,7 +74,7 @@ const AlbumsList = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
+      <GradientFlatList
         data={albums}
         renderItem={AlbumListRenderItem}
         keyExtractor={item => item.id}
@@ -84,17 +82,16 @@ const AlbumsList = () => {
         removeClippedSubviews={true}
         refreshing={updating}
         onRefresh={updateAlbums}
+        overScrollMode='never'
       />
     </View>
   );
 }
 
 const AlbumsTab = () => (
-  <TopTabContainer>
-    <React.Suspense fallback={<Text>Loading...</Text>}>
-      <AlbumsList />
-    </React.Suspense>
-  </TopTabContainer>
+  <React.Suspense fallback={<Text>Loading...</Text>}>
+    <AlbumsList />
+  </React.Suspense>
 );
 
 export default React.memo(AlbumsTab);
