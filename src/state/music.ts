@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai';
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { Album, AlbumArt, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
-import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '../subsonic/elements';
+import { AlbumID3Element, ArtistInfo2Element, ChildElement } from '../subsonic/elements';
 import { GetArtistResponse } from '../subsonic/responses';
 import { activeServerAtom } from './settings';
 
@@ -36,7 +36,7 @@ export const useUpdateArtists = () => {
   }
 }
 
-export const albumsAtom = atom<Album[]>([]);
+export const albumsAtom = atom<Record<string, Album>>({});
 export const albumsUpdatingAtom = atom(false);
 
 export const useUpdateAlbums = () => {
@@ -57,7 +57,11 @@ export const useUpdateAlbums = () => {
     const client = new SubsonicApiClient(server);
     const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 });
 
-    setAlbums(response.data.albums.map(a => mapAlbumID3(a, client)));
+    setAlbums(response.data.albums.reduce((acc, next) => {
+      const album = mapAlbumID3(next, client);
+      acc[album.id] = album;
+      return acc;
+    }, {} as Record<string, Album>));
     setUpdating(false);
   }
 }
@@ -80,7 +84,7 @@ export const albumArtAtomFamily = atomFamily((id: string) => atom<AlbumArt | und
   }
 
   const albums = get(albumsAtom);
-  const album = albums.find(a => a.id === id);
+  const album = id in albums ? albums[id] : undefined;
   if (!album) {
     return undefined;
   }

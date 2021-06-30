@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect, useState } from 'react';
-import { GestureResponderEvent, Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, GestureResponderEvent, Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useCurrentTrackId, useSetQueue } from '../../hooks/player';
 import { albumAtomFamily } from '../../state/music';
 import colors from '../../styles/colors';
 import text from '../../styles/text';
 import AlbumArt from './AlbumArt';
 import Button from './Button';
+import GradientBackground from './GradientBackground';
 import GradientScrollView from './GradientScrollView';
 
 const SongItem: React.FC<{
@@ -153,6 +154,21 @@ const AlbumDetails: React.FC<{
   );
 }
 
+const AlbumViewFallback = () => {
+  const layout = useWindowDimensions();
+
+  const coverSize = layout.width - layout.width / 2.5;
+
+  return (
+    <GradientBackground style={{
+      alignItems: 'center',
+      paddingTop: coverSize / 8 + coverSize / 2 - 18,
+    }}>
+      <ActivityIndicator size='large' color={colors.accent} />
+    </GradientBackground>
+  );
+}
+
 const AlbumView: React.FC<{
   id: string,
   title: string;
@@ -164,8 +180,9 @@ const AlbumView: React.FC<{
   });
 
   return (
-    <React.Suspense fallback={<Text>Loading...</Text>}>
+    <React.Suspense fallback={<AlbumViewFallback />}>
       <AlbumDetails id={id} />
+      {/* <AlbumViewFallback /> */}
     </React.Suspense>
   );
 };

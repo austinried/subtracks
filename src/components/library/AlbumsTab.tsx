@@ -61,8 +61,10 @@ const AlbumsList = () => {
   const updating = useAtomValue(albumsUpdatingAtom);
   const updateAlbums = useUpdateAlbums();
 
+  const albumsList = Object.values(albums);
+
   useEffect(() => {
-    if (albums.length === 0) {
+    if (albumsList.length === 0) {
       updateAlbums();
     }
   });
@@ -70,7 +72,7 @@ const AlbumsList = () => {
   return (
     <View style={{ flex: 1 }}>
       <GradientFlatList
-        data={albums}
+        data={albumsList}
         renderItem={AlbumListRenderItem}
         keyExtractor={item => item.id}
         numColumns={3}
