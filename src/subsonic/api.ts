@@ -1,7 +1,7 @@
 import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
-import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams, StreamParams } from './params';
-import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
+import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetArtistParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams, StreamParams } from './params';
+import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
 import { Server } from '../models/settings';
 import paths from '../paths';
 
@@ -165,6 +165,11 @@ export class SubsonicApiClient {
   async getArtistInfo2(params: GetArtistInfo2Params): Promise<SubsonicResponse<GetArtistInfo2Response>> {
     const xml = await this.apiGetXml('getArtistInfo2', params);
     return new SubsonicResponse<GetArtistInfo2Response>(xml, new GetArtistInfo2Response(xml));
+  }
+
+  async getArtist(params: GetArtistParams): Promise<SubsonicResponse<GetArtistResponse>> {
+    const xml = await this.apiGetXml('getArtist', params);
+    return new SubsonicResponse<GetArtistResponse>(xml, new GetArtistResponse(xml));
   }
 
   // 

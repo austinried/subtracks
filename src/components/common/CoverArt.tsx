@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
 import colors from '../../styles/colors';
 
-const AlbumCover: React.FC<{
+const CoverArt: React.FC<{
+  PlaceholderComponent: () => JSX.Element,
   height: number,
   width: number,
   coverArtUri?: string
-}> = ({ height, width, coverArtUri }) => {
+}> = ({ PlaceholderComponent, height, width, coverArtUri }) => {
   const [placeholderVisible, setPlaceholderVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -16,23 +16,15 @@ const AlbumCover: React.FC<{
   const halfIndicatorHeight = indicatorSize === 'large' ? 18 : 10;
 
   const Placeholder: React.FC<{ visible: boolean }> = ({ visible }) => (
-    <LinearGradient
-      colors={[colors.accent, colors.accentLow]}
-      style={{
-        height, width,
-        opacity: visible ? 100 : 0,
-      }}
-    >
-      <FastImage
-        source={require('../../../res/record.png')}
-        style={{ height, width }}
-        resizeMode={FastImage.resizeMode.contain}
-      />
-    </LinearGradient>
+    <View style={{
+      opacity: visible ? 100 : 0,
+    }}>
+      <PlaceholderComponent />
+    </View>
   );
 
   const CoverArt = () => (
-    <View>
+    <>
       <Placeholder visible={placeholderVisible} />
       <ActivityIndicator
         animating={loading}
@@ -49,17 +41,20 @@ const AlbumCover: React.FC<{
           marginTop: -height - halfIndicatorHeight * 2,
         }}
         resizeMode={FastImage.resizeMode.contain}
-        onError={() => setPlaceholderVisible(true)}
+        onError={() => {
+          setLoading(false);
+          setPlaceholderVisible(true);
+        }}
         onLoadEnd={() => setLoading(false)}
       />
-    </View>
+    </>
   );
 
   return (
     <View style={{ height, width }}>
-      {!coverArtUri ? <Placeholder visible={placeholderVisible} /> : <CoverArt />}
+      {!coverArtUri ? <Placeholder visible={true} /> : <CoverArt />}
     </View>
   );
 }
 
-export default React.memo(AlbumCover);
+export default React.memo(CoverArt);

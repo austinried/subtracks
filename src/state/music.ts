@@ -1,8 +1,9 @@
 import { atom, useAtom } from 'jotai';
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils';
-import { Album as Album, AlbumWithSongs, Artist, Song } from '../models/music';
+import { Album as Album, AlbumWithSongs, Artist, ArtistInfo, Song } from '../models/music';
 import { SubsonicApiClient } from '../subsonic/api';
-import { AlbumID3Element, ChildElement } from '../subsonic/elements';
+import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '../subsonic/elements';
+import { GetArtistResponse } from '../subsonic/responses';
 import { activeServerAtom } from './settings';
 
 export const artistsAtom = atom<Artist[]>([]);
@@ -30,8 +31,6 @@ export const useUpdateArtists = () => {
       id: x.id,
       name: x.name,
       starred: x.starred,
-      coverArt: x.coverArt,
-      coverArtUri: x.coverArt ? client.getCoverArtUri({ id: x.coverArt }) : undefined,
     })));
     setUpdating(false);
   }
@@ -73,6 +72,49 @@ export const albumAtomFamily = atomFamily((id: string) => atom<AlbumWithSongs | 
   const response = await client.getAlbum({ id });
   return mapAlbumID3WithSongs(response.data.album, response.data.songs, client);
 }));
+
+export const artistInfoAtomFamily = atomFamily((id: string) => atom<ArtistInfo | undefined>(async (get) => {
+  const server = get(activeServerAtom);
+  if (!server) {
+    return undefined;
+  }
+
+  const client = new SubsonicApiClient(server);
+  const [artistResponse, artistInfoResponse] = await Promise.all([
+    client.getArtist({ id }),
+    client.getArtistInfo2({ id }),
+  ]);
+  return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, client);
+}));
+
+function mapArtistInfo(
+  artistResponse: GetArtistResponse,
+  artistInfo: ArtistInfo2Element,
+  client: SubsonicApiClient
+): ArtistInfo {
+  const info = { ...artistInfo } as any;
+  delete info.similarArtists;
+
+  const { artist, albums } = artistResponse
+
+  const mappedAlbums = albums.map(a => mapAlbumID3(a, client));
+  const coverArtUris = mappedAlbums
+    .sort((a, b) => {
+      if (a.year && b.year) {
+        return a.year - b.year;
+      } else {
+        return a.name.localeCompare(b.name) - 9000;
+      }
+    })
+    .map(a => a.coverArtThumbUri);
+
+  return {
+    ...artist,
+    ...info,
+    albums: mappedAlbums,
+    coverArtUris,
+  }
+}
 
 function mapAlbumID3(album: AlbumID3Element, client: SubsonicApiClient): Album {
   return { 

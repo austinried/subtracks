@@ -9,6 +9,7 @@ function mapSongToTrack(song: Song): Track {
     artist: song.artist || 'Unknown Artist',
     url: song.streamUri,
     artwork: song.coverArtUri,
+    duration: song.duration,
   }
 }
 

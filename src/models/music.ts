@@ -2,8 +2,14 @@ export interface Artist {
   id: string;
   name: string;
   starred?: Date;
-  coverArt?: string;
-  coverArtUri?: string,
+}
+
+export interface ArtistInfo extends Artist {
+  albums: Album[];
+
+  mediumImageUrl?: string;
+  largeImageUrl?: string;
+  coverArtUris: string[];
 }
 
 export interface Album {

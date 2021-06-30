@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Album } from '../../models/music';
 import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music';
 import textStyles from '../../styles/text';
-import AlbumCover from '../common/AlbumCover';
+import AlbumArt from '../common/AlbumArt';
 import GradientFlatList from '../common/GradientFlatList';
 
 const AlbumItem: React.FC<{
@@ -27,7 +27,7 @@ const AlbumItem: React.FC<{
       }}
       onPress={() => navigation.navigate('AlbumView', { id, title: name })}
     >
-      <AlbumCover
+      <AlbumArt
         width={size}
         height={size}
         coverArtUri={coverArtUri}

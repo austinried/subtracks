@@ -72,6 +72,53 @@ export class ArtistElement extends BaseArtistElement {
   }
 }
 
+export class BaseArtistInfoElement<T> {
+  similarArtists: T[] = [];
+  biography?: string;
+  musicBrainzId?: string;
+  lastFmUrl?: string;
+  smallImageUrl?: string;
+  mediumImageUrl?: string;
+  largeImageUrl?: string;
+
+  constructor(e: Element, artistType: new (e: Element) => T) {
+    if (e.getElementsByTagName('biography').length > 0) {
+      this.biography = e.getElementsByTagName('biography')[0].textContent as string;
+    }
+    if (e.getElementsByTagName('musicBrainzId').length > 0) {
+      this.musicBrainzId = e.getElementsByTagName('musicBrainzId')[0].textContent as string;
+    }
+    if (e.getElementsByTagName('lastFmUrl').length > 0) {
+      this.lastFmUrl = e.getElementsByTagName('lastFmUrl')[0].textContent as string;
+    }
+    if (e.getElementsByTagName('smallImageUrl').length > 0) {
+      this.smallImageUrl = e.getElementsByTagName('smallImageUrl')[0].textContent as string;
+    }
+    if (e.getElementsByTagName('mediumImageUrl').length > 0) {
+      this.mediumImageUrl = e.getElementsByTagName('mediumImageUrl')[0].textContent as string;
+    }
+    if (e.getElementsByTagName('largeImageUrl').length > 0) {
+      this.largeImageUrl = e.getElementsByTagName('largeImageUrl')[0].textContent as string;
+    }
+
+    const similarArtistElements = e.getElementsByTagName('similarArtist');
+    for (let i = 0; i < similarArtistElements.length; i++) {
+      this.similarArtists.push(new artistType(similarArtistElements[i]));
+    }
+  }
+}
+
+export class ArtistInfoElement extends BaseArtistInfoElement<ArtistElement> {
+  constructor(e: Element) {
+    super(e, ArtistElement);
+  }
+}
+export class ArtistInfo2Element extends BaseArtistInfoElement<ArtistID3Element> {
+  constructor(e: Element) {
+    super(e, ArtistID3Element);
+  }
+}
+
 export class DirectoryElement {
   id: string;
   parent?: string;

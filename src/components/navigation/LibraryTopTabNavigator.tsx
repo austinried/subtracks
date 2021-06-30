@@ -10,16 +10,12 @@ import { RouteProp } from '@react-navigation/native';
 import text from '../../styles/text';
 import colors from '../../styles/colors';
 import FastImage from 'react-native-fast-image';
+import ArtistView from '../common/ArtistView';
 
 const Tab = createMaterialTopTabNavigator();
 
 const LibraryTopTabNavigator = () => (
   <Tab.Navigator tabBarOptions={{
-    // scrollEnabled: true,
-    tabStyle: {
-      // width: 100,
-      // paddingHorizontal: 0,
-    },
     style: {
       height: 48,
       backgroundColor: colors.gradient.high,
@@ -53,6 +49,7 @@ const LibraryTopTabNavigator = () => (
 type LibraryStackParamList = {
   LibraryTopTabs: undefined,
   AlbumView: { id: string, title: string };
+  ArtistView: { id: string, title: string };
 }
 
 type AlbumScreenNavigationProp = StackNavigationProp<LibraryStackParamList, 'AlbumView'>;
@@ -66,7 +63,40 @@ const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
   <AlbumView id={route.params.id} title={route.params.title} />
 );
 
+type ArtistScreenNavigationProp = StackNavigationProp<LibraryStackParamList, 'ArtistView'>;
+type ArtistScreenRouteProp = RouteProp<LibraryStackParamList, 'ArtistView'>;
+type ArtistScreenProps = {
+  route: ArtistScreenRouteProp,
+  navigation: ArtistScreenNavigationProp,
+};
+
+const ArtistScreen: React.FC<ArtistScreenProps> = ({ route }) => (
+  <ArtistView id={route.params.id} title={route.params.title} />
+);
+
 const Stack = createStackNavigator<LibraryStackParamList>();
+
+const itemScreenOptions = {
+  title: '',
+  headerStyle: { 
+    height: 50,
+    backgroundColor: colors.gradient.high,
+  }, 
+  headerTitleContainerStyle: {
+    marginLeft: -14,
+  },
+  headerLeftContainerStyle: {
+    marginLeft: 8,
+  },
+  headerTitleStyle: {
+    ...text.header,
+  },
+  headerBackImage: () => <FastImage
+    source={require('../../../res/arrow_left-fill.png')}
+    tintColor={colors.text.primary}
+    style={{ height: 22, width: 22 }}
+  />,
+}
 
 const LibraryStackNavigator = () => (
   <View style={{ flex: 1 }}>
@@ -79,27 +109,12 @@ const LibraryStackNavigator = () => (
       <Stack.Screen
         name='AlbumView'
         component={AlbumScreen}
-        options={{
-          title: '',
-          headerStyle: { 
-            height: 50,
-            backgroundColor: colors.gradient.high,
-          }, 
-          headerTitleContainerStyle: {
-            marginLeft: -14,
-          },
-          headerLeftContainerStyle: {
-            marginLeft: 8,
-          },
-          headerTitleStyle: {
-            ...text.header,
-          },
-          headerBackImage: () => <FastImage
-            source={require('../../../res/arrow_left-fill.png')}
-            tintColor={colors.text.primary}
-            style={{ height: 22, width: 22 }}
-          />,
-        }}
+        options={itemScreenOptions}
+      />
+      <Stack.Screen
+        name='ArtistView'
+        component={ArtistScreen}
+        options={itemScreenOptions}
       />
     </Stack.Navigator>
   </View>

@@ -23,6 +23,10 @@ export type GetAlbumParams = {
   id: string;
 }
 
+export type GetArtistParams = {
+  id: string;
+}
+
 
 // 
 // Album/song lists

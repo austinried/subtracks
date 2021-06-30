@@ -2,56 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect, useState } from 'react';
 import { GestureResponderEvent, Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
-import { TrackPlayerEvents } from 'react-native-track-player';
 import { useCurrentTrackId, useSetQueue } from '../../hooks/player';
 import { albumAtomFamily } from '../../state/music';
 import colors from '../../styles/colors';
 import text from '../../styles/text';
-import AlbumCover from './AlbumCover';
-import GradientBackground from './GradientBackground';
-
-function secondsToTime(s: number): string {
-  const seconds = s % 60;
-  const minutes = Math.floor(s / 60) % 60;
-  const hours = Math.floor(s / 60 / 60);
-
-  let time = `${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(2, '0')}`;
-  if (hours > 0) {
-    time = `${hours}:${time}`;
-  }
-  return time;
-}
-
-const Button: React.FC<{
-  title: string;
-  onPress: (event: GestureResponderEvent) => void;
-}> = ({ title, onPress }) => {
-  const [opacity, setOpacity] = useState(1);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => setOpacity(0.6)}
-      onPressOut={() => setOpacity(1)}
-      onLongPress={() => setOpacity(1)}
-      style={{
-        backgroundColor: colors.accent,
-        paddingHorizontal: 24,
-        minHeight: 42,
-        justifyContent: 'center',
-        borderRadius: 1000,
-        opacity,
-      }}
-    >
-      <Text style={{ ...text.button }}>{title}</Text>
-    </Pressable>
-  );
-}
-
-const songEvents = [
-  TrackPlayerEvents.PLAYBACK_STATE,
-  TrackPlayerEvents.PLAYBACK_TRACK_CHANGED,
-]
+import AlbumArt from './AlbumArt';
+import Button from './Button';
+import GradientScrollView from './GradientScrollView';
 
 const SongItem: React.FC<{
   id: string;
@@ -134,7 +91,7 @@ const AlbumDetails: React.FC<{
   }
 
   return (
-    <ScrollView
+    <GradientScrollView
       style={{
         flex: 1,
       }}
@@ -142,10 +99,8 @@ const AlbumDetails: React.FC<{
         alignItems: 'center',
         paddingTop: coverSize / 8,
       }}
-      overScrollMode='never'
     >
-      <GradientBackground />
-      <AlbumCover
+      <AlbumArt
         height={coverSize}
         width={coverSize}
         coverArtUri={album.coverArtUri}
@@ -199,10 +154,9 @@ const AlbumDetails: React.FC<{
       ))}
       </View>
 
-    </ScrollView>
+    </GradientScrollView>
   );
 }
-
 
 const AlbumView: React.FC<{
   id: string,

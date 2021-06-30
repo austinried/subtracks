@@ -1,30 +1,53 @@
+import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
+import { Pressable } from 'react-native';
 import { Image, Text, View } from 'react-native';
 import { Artist } from '../../models/music';
-import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
+import { artistInfoAtomFamily, artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
 import textStyles from '../../styles/text';
+import ArtistArt from '../common/ArtistArt';
 import GradientFlatList from '../common/GradientFlatList';
 
-const ArtistItem: React.FC<{ item: Artist } > = ({ item }) => (
-  <View style={{
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 6,
-    marginLeft: 6,
-  }}>
-    <Image
-      source={item.coverArt ? { uri: 'https://reactnative.dev/img/tiny_logo.png'  } : require('../../../res/mic_on-fill.png')}
+const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
+  const navigation = useNavigation();
+  const artistInfo = useAtomValue(artistInfoAtomFamily(item.id));
+
+  return (
+    <Pressable
       style={{
-        width: 56,
-        height: 56,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 6,
+        marginLeft: 6,
       }}
-    />
-    <Text style={{
-      ...textStyles.paragraph,
-      marginLeft: 12,
-    }}>{item.name}</Text>
-  </View>
+      onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}
+    >
+      <ArtistArt
+        width={56}
+        height={56}
+        mediumImageUrl={artistInfo?.mediumImageUrl}
+        coverArtUris={artistInfo?.coverArtUris}
+      />
+      {/* <Image
+        source={{ uri: 'https://reactnative.dev/img/tiny_logo.png' }}
+        style={{
+          width: 56,
+          height: 56,
+        }}
+      /> */}
+      <Text style={{
+        ...textStyles.paragraph,
+        marginLeft: 12,
+      }}>{item.name}</Text>
+    </Pressable>
+  );
+};
+
+const ArtistItemLoader: React.FC<{ item: Artist }> = (props) => (
+  <React.Suspense fallback={<Text>Loading...</Text>}>
+    <ArtistItem { ...props } />
+  </React.Suspense>
 );
 
 const ArtistsList = () => {
@@ -39,7 +62,7 @@ const ArtistsList = () => {
   });
 
   const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
-    <ArtistItem item={item} />
+    <ArtistItemLoader item={item} />
   );
 
   return (
