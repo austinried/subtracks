@@ -1,5 +1,5 @@
 import { useState } from "react";
-import TrackPlayer, { STATE_NONE, STATE_STOPPED, Track, TrackPlayerEvents, useTrackPlayerEvents } from "react-native-track-player";
+import TrackPlayer, { Track, useTrackPlayerEvents, Event, State } from "react-native-track-player";
 import { Song } from "../models/music";
 
 function mapSongToTrack(song: Song): Track {
@@ -14,9 +14,9 @@ function mapSongToTrack(song: Song): Track {
 }
 
 const currentTrackEvents = [
-  TrackPlayerEvents.PLAYBACK_STATE,
-  TrackPlayerEvents.PLAYBACK_TRACK_CHANGED,
-  TrackPlayerEvents.REMOTE_STOP,
+  Event.PlaybackState,
+  Event.PlaybackTrackChanged,
+  Event.RemoteStop,
 ]
 
 export const useCurrentTrackId = () => {
@@ -24,18 +24,19 @@ export const useCurrentTrackId = () => {
 
   useTrackPlayerEvents(currentTrackEvents, async (event) => {
     switch (event.type) {
-      case TrackPlayerEvents.PLAYBACK_STATE:
+      case Event.PlaybackState:
         switch (event.state) {
-          case STATE_NONE:
-          case STATE_STOPPED:
+          case State.None:
+          case State.Stopped:
             setCurrentTrackId(null);
             break;
         }
         break;
-      case TrackPlayerEvents.PLAYBACK_TRACK_CHANGED:
-        setCurrentTrackId(await TrackPlayer.getCurrentTrack());
+      case Event.PlaybackTrackChanged:
+        const trackIndex = await TrackPlayer.getCurrentTrack()
+        setCurrentTrackId((await TrackPlayer.getTrack(trackIndex)).id);
         break;
-      case TrackPlayerEvents.REMOTE_STOP:
+      case Event.RemoteStop:
         setCurrentTrackId(null);
         break;
       default:
@@ -64,9 +65,10 @@ export const useSetQueue = () => {
       await TrackPlayer.add(tracks2);
       await TrackPlayer.play();
 
-      await TrackPlayer.add(tracks1, playId);
+      await TrackPlayer.add(tracks1, 0);
 
       const queue = await TrackPlayer.getQueue();
+      console.log(`queue: ${JSON.stringify(queue.map(x => x.title))}`);
     }
   }
 }

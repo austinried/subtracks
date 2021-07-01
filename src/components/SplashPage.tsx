@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import RNFS from 'react-native-fs';
-import TrackPlayer, { Track } from 'react-native-track-player';
+import TrackPlayer, { Capability, Track } from 'react-native-track-player';
 import paths from '../paths';
 
 async function mkdir(path: string): Promise<void> {
@@ -31,17 +31,17 @@ const SplashPage: React.FC<{}> = ({ children }) => {
     await TrackPlayer.setupPlayer();
     TrackPlayer.updateOptions({
       capabilities: [
-        TrackPlayer.CAPABILITY_PLAY,
-        TrackPlayer.CAPABILITY_PAUSE,
-        TrackPlayer.CAPABILITY_STOP,
-        TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
-        TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+        Capability.Play,
+        Capability.Pause,
+        Capability.Stop,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
       ],
       compactCapabilities: [
-        TrackPlayer.CAPABILITY_PLAY,
-        TrackPlayer.CAPABILITY_PAUSE,
-        TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
-        TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
       ],
     });
 

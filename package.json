@@ -29,7 +29,7 @@
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^3.4.0",
     "react-native-tab-view": "^2.16.0",
-    "react-native-track-player": "^1.2.7",
+    "react-native-track-player": "file:../../repos/react-native-track-player",
     "uuid": "^8.3.2",
     "xmldom": "^0.5.0"
   },
