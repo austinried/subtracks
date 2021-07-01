@@ -189,7 +189,20 @@ const AlbumView: React.FC<{
   const navigation = useNavigation();
 
   useEffect(() => {
-    navigation.setOptions({ title });
+    navigation.setOptions({
+      headerCenter: () => (
+        <View style={{ flex: 1, marginLeft: 16 }}>
+          <Text
+            style={{
+              width: 300,
+              ...text.header,
+            }}
+            numberOfLines={1}>
+            {title}
+          </Text>
+        </View>
+      ),
+    });
   });
 
   return (

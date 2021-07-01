@@ -7,7 +7,8 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "link": "rm -rf node_modules/react-native-track-player && wml start"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.5",
@@ -15,7 +16,6 @@
     "@react-navigation/bottom-tabs": "^5.11.11",
     "@react-navigation/material-top-tabs": "^5.3.15",
     "@react-navigation/native": "^5.9.4",
-    "@react-navigation/stack": "^5.14.5",
     "jotai": "^1.1.0",
     "md5": "^2.3.0",
     "react": "17.0.1",

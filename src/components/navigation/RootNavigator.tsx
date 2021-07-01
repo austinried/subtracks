@@ -1,9 +1,9 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from 'react-native-screens/native-stack';
 import NowPlayingLayout from '../NowPlayingLayout';
 import BottomTabNavigator from './BottomTabNavigator';
 
-const RootStack = createStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 const RootNavigator = () => (
   <RootStack.Navigator>
