@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Text, View, Image, Pressable } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import textStyles from '../../styles/text';
 import colors from '../../styles/colors';
 import FastImage from 'react-native-fast-image';
-import { useNavigation } from '@react-navigation/native';
 
-const icons: {[key: string]: any} = {
+const icons: { [key: string]: any } = {
   home: {
     regular: require('../../../res/home.png'),
     fill: require('../../../res/home-fill.png'),
@@ -23,14 +22,14 @@ const icons: {[key: string]: any} = {
     regular: require('../../../res/settings.png'),
     fill: require('../../../res/settings-fill.png'),
   },
-}
+};
 
 const BottomTabButton: React.FC<{
   routeKey: string;
   label: string;
   name: string;
   isFocused: boolean;
-  img: { regular: number, fill: number };
+  img: { regular: number; fill: number };
   navigation: any;
 }> = ({ routeKey, label, name, isFocused, img, navigation }) => {
   const [opacity, setOpacity] = useState(1);
@@ -56,8 +55,7 @@ const BottomTabButton: React.FC<{
         alignItems: 'center',
         flex: 1,
         opacity,
-      }}
-    >
+      }}>
       <FastImage
         source={isFocused ? img.fill : img.regular}
         style={{
@@ -66,47 +64,51 @@ const BottomTabButton: React.FC<{
         }}
         tintColor={isFocused ? colors.text.primary : colors.text.secondary}
       />
-      <Text style={{
-        ...textStyles.xsmall,
-        color: isFocused ? colors.text.primary : colors.text.secondary,
-      }}>
+      <Text
+        style={{
+          ...textStyles.xsmall,
+          color: isFocused ? colors.text.primary : colors.text.secondary,
+        }}>
         {label}
       </Text>
     </Pressable>
   );
-}
+};
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
-    <View style={{
-      height: 54,
-      backgroundColor: colors.gradient.high,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      paddingHorizontal: 28,
-    }}>
+    <View
+      style={{
+        height: 54,
+        backgroundColor: colors.gradient.high,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        paddingHorizontal: 28,
+      }}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key] as any;
         const label =
           options.tabBarLabel !== undefined
-            ? options.tabBarLabel as string
+            ? (options.tabBarLabel as string)
             : options.title !== undefined
-              ? options.title
-              : route.name;
+            ? options.title
+            : route.name;
 
-        return <BottomTabButton
-          key={route.key}
-          routeKey={route.key}
-          label={label}
-          name={route.name}
-          isFocused={state.index === index}
-          img={icons[options.icon]}
-          navigation={navigation}
-        />;
+        return (
+          <BottomTabButton
+            key={route.key}
+            routeKey={route.key}
+            label={label}
+            name={route.name}
+            isFocused={state.index === index}
+            img={icons[options.icon]}
+            navigation={navigation}
+          />
+        );
       })}
     </View>
   );
-}
+};
 
 export default BottomTabBar;

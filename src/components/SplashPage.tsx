@@ -37,12 +37,7 @@ const SplashPage: React.FC<{}> = ({ children }) => {
         Capability.SkipToNext,
         Capability.SkipToPrevious,
       ],
-      compactCapabilities: [
-        Capability.Play,
-        Capability.Pause,
-        Capability.SkipToNext,
-        Capability.SkipToPrevious,
-      ],
+      compactCapabilities: [Capability.Play, Capability.Pause, Capability.SkipToNext, Capability.SkipToPrevious],
     });
 
     const castlevania: Track = {
@@ -54,28 +49,24 @@ const SplashPage: React.FC<{}> = ({ children }) => {
       artwork: 'https://webgames.host/uploads/2017/03/castlevania-3-draculas-curse.jpg',
       genre: 'BGM',
       date: new Date(1989, 1).toISOString(),
-    }
+    };
 
     await TrackPlayer.add([castlevania]);
     // TrackPlayer.play();
-  }
+  };
 
-  const promise = Promise.all([
-    prepare(), minSplashTime,
-  ]);
+  const promise = Promise.all([prepare(), minSplashTime]);
 
   useEffect(() => {
     promise.then(() => {
       setReady(true);
     });
-  })
+  });
 
   if (!ready) {
-    return <Text>Loading THE GOOD SHIT...</Text>
+    return <Text>Loading THE GOOD SHIT...</Text>;
   }
-  return (
-    <View style={{ flex: 1 }}>{children}</View>
-  );
-}
+  return <View style={{ flex: 1 }}>{children}</View>;
+};
 
 export default SplashPage;

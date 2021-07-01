@@ -15,48 +15,40 @@ import ArtistView from '../common/ArtistView';
 const Tab = createMaterialTopTabNavigator();
 
 const LibraryTopTabNavigator = () => (
-  <Tab.Navigator tabBarOptions={{
-    style: {
-      height: 48,
-      backgroundColor: colors.gradient.high,
-      elevation: 0,
-    },
-    labelStyle: {
-      ...text.header,
-      textTransform: null as any,
-      marginTop: 0,
-      marginHorizontal: 2,
-    },
-    indicatorStyle: {
-      backgroundColor: colors.accent,
-    },
-  }}>
-    <Tab.Screen
-      name='Albums'
-      component={AlbumsTab}
-    />
-    <Tab.Screen
-      name='Artists'
-      component={ArtistsTab}
-    />
-    <Tab.Screen
-      name='Playlists'
-      component={PlaylistsTab}
-    />
+  <Tab.Navigator
+    tabBarOptions={{
+      style: {
+        height: 48,
+        backgroundColor: colors.gradient.high,
+        elevation: 0,
+      },
+      labelStyle: {
+        ...text.header,
+        textTransform: null as any,
+        marginTop: 0,
+        marginHorizontal: 2,
+      },
+      indicatorStyle: {
+        backgroundColor: colors.accent,
+      },
+    }}>
+    <Tab.Screen name="Albums" component={AlbumsTab} />
+    <Tab.Screen name="Artists" component={ArtistsTab} />
+    <Tab.Screen name="Playlists" component={PlaylistsTab} />
   </Tab.Navigator>
 );
 
 type LibraryStackParamList = {
-  LibraryTopTabs: undefined,
-  AlbumView: { id: string, title: string };
-  ArtistView: { id: string, title: string };
-}
+  LibraryTopTabs: undefined;
+  AlbumView: { id: string; title: string };
+  ArtistView: { id: string; title: string };
+};
 
 type AlbumScreenNavigationProp = StackNavigationProp<LibraryStackParamList, 'AlbumView'>;
 type AlbumScreenRouteProp = RouteProp<LibraryStackParamList, 'AlbumView'>;
 type AlbumScreenProps = {
-  route: AlbumScreenRouteProp,
-  navigation: AlbumScreenNavigationProp,
+  route: AlbumScreenRouteProp;
+  navigation: AlbumScreenNavigationProp;
 };
 
 const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
@@ -66,8 +58,8 @@ const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
 type ArtistScreenNavigationProp = StackNavigationProp<LibraryStackParamList, 'ArtistView'>;
 type ArtistScreenRouteProp = RouteProp<LibraryStackParamList, 'ArtistView'>;
 type ArtistScreenProps = {
-  route: ArtistScreenRouteProp,
-  navigation: ArtistScreenNavigationProp,
+  route: ArtistScreenRouteProp;
+  navigation: ArtistScreenNavigationProp;
 };
 
 const ArtistScreen: React.FC<ArtistScreenProps> = ({ route }) => (
@@ -78,10 +70,10 @@ const Stack = createStackNavigator<LibraryStackParamList>();
 
 const itemScreenOptions = {
   title: '',
-  headerStyle: { 
+  headerStyle: {
     height: 50,
     backgroundColor: colors.gradient.high,
-  }, 
+  },
   headerTitleContainerStyle: {
     marginLeft: -14,
   },
@@ -91,31 +83,21 @@ const itemScreenOptions = {
   headerTitleStyle: {
     ...text.header,
   },
-  headerBackImage: () => <FastImage
-    source={require('../../../res/arrow_left-fill.png')}
-    tintColor={colors.text.primary}
-    style={{ height: 22, width: 22 }}
-  />,
-}
+  headerBackImage: () => (
+    <FastImage
+      source={require('../../../res/arrow_left-fill.png')}
+      tintColor={colors.text.primary}
+      style={{ height: 22, width: 22 }}
+    />
+  ),
+};
 
 const LibraryStackNavigator = () => (
   <View style={{ flex: 1 }}>
     <Stack.Navigator>
-      <Stack.Screen
-        name='LibraryTopTabs'
-        component={LibraryTopTabNavigator}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name='AlbumView'
-        component={AlbumScreen}
-        options={itemScreenOptions}
-      />
-      <Stack.Screen
-        name='ArtistView'
-        component={ArtistScreen}
-        options={itemScreenOptions}
-      />
+      <Stack.Screen name="LibraryTopTabs" component={LibraryTopTabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
+      <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
     </Stack.Navigator>
   </View>
 );

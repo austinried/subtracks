@@ -14,21 +14,15 @@ const TestControls = () => {
   const removeAllKeys = async () => {
     const allKeys = await getAllKeys();
     await multiRemove(allKeys);
-  }
+  };
 
   return (
     <View>
-      <Button
-        title='Remove all keys'
-        onPress={removeAllKeys}
-      />
-      <Button
-        title='Now Playing'
-        onPress={() => navigation.navigate('Now Playing')}
-      />
+      <Button title="Remove all keys" onPress={removeAllKeys} />
+      <Button title="Now Playing" onPress={() => navigation.navigate('Now Playing')} />
     </View>
   );
-}
+};
 
 const ServerSettingsView = () => {
   const [appSettings, setAppSettings] = useAtom(appSettingsAtom);
@@ -47,7 +41,9 @@ const ServerSettingsView = () => {
       servers: [
         ...appSettings.servers,
         {
-          id, salt, address,
+          id,
+          salt,
+          address,
           username: 'guest',
           token: md5('guest' + salt),
         },
@@ -58,10 +54,7 @@ const ServerSettingsView = () => {
 
   return (
     <View>
-      <Button
-        title='Add default server'
-        onPress={bootstrapServer}
-      />
+      <Button title="Add default server" onPress={bootstrapServer} />
       {appSettings.servers.map(s => (
         <View key={s.id}>
           <Text style={text.paragraph}>{s.address}</Text>
@@ -70,7 +63,7 @@ const ServerSettingsView = () => {
       ))}
     </View>
   );
-}
+};
 
 const SettingsView = () => (
   <View>
@@ -79,6 +72,6 @@ const SettingsView = () => (
       <ServerSettingsView />
     </React.Suspense>
   </View>
-)
+);
 
 export default SettingsView;

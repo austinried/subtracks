@@ -4,10 +4,10 @@ import FastImage from 'react-native-fast-image';
 import colors from '../../styles/colors';
 
 const CoverArt: React.FC<{
-  PlaceholderComponent: () => JSX.Element,
-  height: number,
-  width: number,
-  coverArtUri?: string
+  PlaceholderComponent: () => JSX.Element;
+  height: number;
+  width: number;
+  coverArtUri?: string;
 }> = ({ PlaceholderComponent, height, width, coverArtUri }) => {
   const [placeholderVisible, setPlaceholderVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -16,14 +16,15 @@ const CoverArt: React.FC<{
   const halfIndicatorHeight = indicatorSize === 'large' ? 18 : 10;
 
   const Placeholder: React.FC<{ visible: boolean }> = ({ visible }) => (
-    <View style={{
-      opacity: visible ? 100 : 0,
-    }}>
+    <View
+      style={{
+        opacity: visible ? 100 : 0,
+      }}>
       <PlaceholderComponent />
     </View>
   );
 
-  const CoverArt = () => (
+  const Art = () => (
     <>
       <Placeholder visible={placeholderVisible} />
       <ActivityIndicator
@@ -37,7 +38,8 @@ const CoverArt: React.FC<{
       <FastImage
         source={{ uri: coverArtUri, priority: 'high' }}
         style={{
-          height, width,
+          height,
+          width,
           marginTop: -height - halfIndicatorHeight * 2,
         }}
         resizeMode={FastImage.resizeMode.contain}
@@ -50,11 +52,7 @@ const CoverArt: React.FC<{
     </>
   );
 
-  return (
-    <View style={{ height, width }}>
-      {!coverArtUri ? <Placeholder visible={true} /> : <CoverArt />}
-    </View>
-  );
-}
+  return <View style={{ height, width }}>{!coverArtUri ? <Placeholder visible={true} /> : <Art />}</View>;
+};
 
 export default React.memo(CoverArt);

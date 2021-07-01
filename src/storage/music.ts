@@ -26,10 +26,13 @@ export async function getDownloadedSongs(): Promise<DownloadedSong[]> {
 export async function setDownloadedSongs(items: DownloadedSong[]): Promise<void> {
   await multiSet([
     [key.downloadedSongKeys, JSON.stringify(items.map(x => x.id))],
-    ...items.map(x => [x.id, JSON.stringify({
-      name: x.name,
-      album: x.album,
-      artist: x.artist,
-    })]),
+    ...items.map(x => [
+      x.id,
+      JSON.stringify({
+        name: x.name,
+        album: x.album,
+        artist: x.artist,
+      }),
+    ]),
   ]);
 }

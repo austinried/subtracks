@@ -7,13 +7,13 @@ function GradientFlatList<ItemT>(props: FlatListProps<ItemT>) {
 
   return (
     <FlatList
-      { ...props }
-      ListHeaderComponent={() => <GradientBackground position='relative' />}
+      {...props}
+      ListHeaderComponent={() => <GradientBackground position="relative" />}
       ListHeaderComponentStyle={{
         marginBottom: -layout.height,
       }}
     />
   );
-};
+}
 
 export default GradientFlatList;

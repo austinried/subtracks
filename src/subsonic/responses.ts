@@ -1,4 +1,12 @@
-import { AlbumID3Element, ArtistElement, ArtistID3Element, ArtistInfo2Element, ArtistInfoElement, BaseArtistElement, BaseArtistInfoElement, ChildElement, DirectoryElement } from "./elements";
+import {
+  AlbumID3Element,
+  ArtistElement,
+  ArtistID3Element,
+  ArtistInfo2Element,
+  ArtistInfoElement,
+  ChildElement,
+  DirectoryElement,
+} from './elements';
 
 export type ResponseStatus = 'ok' | 'failed';
 
@@ -14,9 +22,9 @@ export class SubsonicResponse<T> {
   }
 }
 
-// 
+//
 // Browsing
-// 
+//
 
 export class GetArtistsResponse {
   ignoredArticles: string;
@@ -108,9 +116,9 @@ export class GetAlbumResponse {
   }
 }
 
-// 
+//
 // Album/song lists
-// 
+//
 
 class BaseGetAlbumListResponse<T> {
   albums: T[] = [];

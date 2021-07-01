@@ -7,6 +7,6 @@ export interface Server {
 }
 
 export interface AppSettings {
-  servers: Server[],
+  servers: Server[];
   activeServer?: string;
 }

@@ -10,4 +10,4 @@ export default {
   },
   accent: '#b134db',
   accentLow: '#511c63',
-}
+};

@@ -1,6 +1,6 @@
-import { useState } from "react";
-import TrackPlayer, { Track, useTrackPlayerEvents, Event, State } from "react-native-track-player";
-import { Song } from "../models/music";
+import { useState } from 'react';
+import TrackPlayer, { Track, useTrackPlayerEvents, Event, State } from 'react-native-track-player';
+import { Song } from '../models/music';
 
 function mapSongToTrack(song: Song): Track {
   return {
@@ -10,19 +10,15 @@ function mapSongToTrack(song: Song): Track {
     url: song.streamUri,
     artwork: song.coverArtUri,
     duration: song.duration,
-  }
+  };
 }
 
-const currentTrackEvents = [
-  Event.PlaybackState,
-  Event.PlaybackTrackChanged,
-  Event.RemoteStop,
-]
+const currentTrackEvents = [Event.PlaybackState, Event.PlaybackTrackChanged, Event.RemoteStop];
 
 export const useCurrentTrackId = () => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
-  useTrackPlayerEvents(currentTrackEvents, async (event) => {
+  useTrackPlayerEvents(currentTrackEvents, async event => {
     switch (event.type) {
       case Event.PlaybackState:
         switch (event.state) {
@@ -33,7 +29,7 @@ export const useCurrentTrackId = () => {
         }
         break;
       case Event.PlaybackTrackChanged:
-        const trackIndex = await TrackPlayer.getCurrentTrack()
+        const trackIndex = await TrackPlayer.getCurrentTrack();
         setCurrentTrackId((await TrackPlayer.getTrack(trackIndex)).id);
         break;
       case Event.RemoteStop:
@@ -45,7 +41,7 @@ export const useCurrentTrackId = () => {
   });
 
   return currentTrackId;
-}
+};
 
 export const useSetQueue = () => {
   return async (songs: Song[], playId?: string) => {
@@ -70,5 +66,5 @@ export const useSetQueue = () => {
       const queue = await TrackPlayer.getQueue();
       console.log(`queue: ${JSON.stringify(queue.map(x => x.title))}`);
     }
-  }
-}
+  };
+};

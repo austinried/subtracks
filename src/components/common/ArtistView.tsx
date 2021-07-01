@@ -22,16 +22,15 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
       contentContainerStyle={{
         alignItems: 'center',
         // paddingTop: coverSize / 8,
-      }}
-    >
+      }}>
       <Text style={text.paragraph}>{artist.name}</Text>
       <ArtistArt id={artist.id} height={200} width={200} />
     </GradientScrollView>
-  )
-}
+  );
+};
 
 const ArtistView: React.FC<{
-  id: string,
+  id: string;
   title: string;
 }> = ({ id, title }) => {
   const navigation = useNavigation();

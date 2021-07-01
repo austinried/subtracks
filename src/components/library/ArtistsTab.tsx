@@ -2,9 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import { useAtomValue } from 'jotai/utils';
 import React, { useEffect } from 'react';
 import { Pressable } from 'react-native';
-import { Image, Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { Artist } from '../../models/music';
-import { artistInfoAtomFamily, artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
+import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
 import textStyles from '../../styles/text';
 import ArtistArt from '../common/ArtistArt';
 import GradientFlatList from '../common/GradientFlatList';
@@ -20,20 +20,22 @@ const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
         marginVertical: 6,
         marginLeft: 6,
       }}
-      onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}
-    >
+      onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}>
       <ArtistArt id={item.id} width={56} height={56} />
-      <Text style={{
-        ...textStyles.paragraph,
-        marginLeft: 12,
-      }}>{item.name}</Text>
+      <Text
+        style={{
+          ...textStyles.paragraph,
+          marginLeft: 12,
+        }}>
+        {item.name}
+      </Text>
     </Pressable>
   );
 };
 
-const ArtistItemLoader: React.FC<{ item: Artist }> = (props) => (
+const ArtistItemLoader: React.FC<{ item: Artist }> = props => (
   <React.Suspense fallback={<Text>Loading...</Text>}>
-    <ArtistItem { ...props } />
+    <ArtistItem {...props} />
   </React.Suspense>
 );
 
@@ -48,9 +50,7 @@ const ArtistsList = () => {
     }
   });
 
-  const renderItem: React.FC<{ item: Artist }> = ({ item }) => (
-    <ArtistItemLoader item={item} />
-  );
+  const renderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItemLoader item={item} />;
 
   return (
     <GradientFlatList
@@ -59,13 +59,11 @@ const ArtistsList = () => {
       keyExtractor={item => item.id}
       onRefresh={updateArtists}
       refreshing={updating}
-      overScrollMode='never'
+      overScrollMode="never"
     />
   );
-}
+};
 
-const ArtistsTab = () => (
-  <ArtistsList />
-);
+const ArtistsTab = () => <ArtistsList />;
 
 export default ArtistsTab;

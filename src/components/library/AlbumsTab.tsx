@@ -12,7 +12,7 @@ const AlbumItem: React.FC<{
   id: string;
   name: string;
   artist?: string;
-}> = ({ id, name, artist, }) => {
+}> = ({ id, name, artist }) => {
   const navigation = useNavigation();
 
   const size = 125;
@@ -22,34 +22,30 @@ const AlbumItem: React.FC<{
       style={{
         alignItems: 'center',
         marginVertical: 8,
-        flex: 1/3,
+        flex: 1 / 3,
       }}
-      onPress={() => navigation.navigate('AlbumView', { id, title: name })}
-    >
+      onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
       <AlbumArt id={id} height={size} width={size} />
-      <View style={{
-        flex: 1,
-        width: size,
-      }}>
+      <View
+        style={{
+          flex: 1,
+          width: size,
+        }}>
         <Text
           style={{
             ...textStyles.itemTitle,
             marginTop: 4,
           }}
-          numberOfLines={2}
-        >
+          numberOfLines={2}>
           {name}
         </Text>
-        <Text
-          style={{ ...textStyles.itemSubtitle }}
-          numberOfLines={1}
-        >
+        <Text style={{ ...textStyles.itemSubtitle }} numberOfLines={1}>
           {artist}
         </Text>
       </View>
     </Pressable>
   );
-}
+};
 const MemoAlbumItem = React.memo(AlbumItem);
 
 const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
@@ -79,11 +75,11 @@ const AlbumsList = () => {
         removeClippedSubviews={true}
         refreshing={updating}
         onRefresh={updateAlbums}
-        overScrollMode='never'
+        overScrollMode="never"
       />
     </View>
   );
-}
+};
 
 const AlbumsTab = () => (
   <React.Suspense fallback={<Text>Loading...</Text>}>

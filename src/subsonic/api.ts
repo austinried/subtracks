@@ -1,7 +1,29 @@
 import { DOMParser } from 'xmldom';
 import RNFS from 'react-native-fs';
-import { GetAlbumList2Params, GetAlbumListParams, GetAlbumParams, GetArtistInfo2Params, GetArtistInfoParams, GetArtistParams, GetCoverArtParams, GetIndexesParams, GetMusicDirectoryParams, StreamParams } from './params';
-import { GetAlbumList2Response, GetAlbumListResponse, GetAlbumResponse, GetArtistInfo2Response, GetArtistInfoResponse, GetArtistResponse, GetArtistsResponse, GetIndexesResponse, GetMusicDirectoryResponse, SubsonicResponse } from './responses';
+import {
+  GetAlbumList2Params,
+  GetAlbumListParams,
+  GetAlbumParams,
+  GetArtistInfo2Params,
+  GetArtistInfoParams,
+  GetArtistParams,
+  GetCoverArtParams,
+  GetIndexesParams,
+  GetMusicDirectoryParams,
+  StreamParams,
+} from './params';
+import {
+  GetAlbumList2Response,
+  GetAlbumListResponse,
+  GetAlbumResponse,
+  GetArtistInfo2Response,
+  GetArtistInfoResponse,
+  GetArtistResponse,
+  GetArtistsResponse,
+  GetIndexesResponse,
+  GetMusicDirectoryResponse,
+  SubsonicResponse,
+} from './responses';
 import { Server } from '../models/settings';
 import paths from '../paths';
 
@@ -56,7 +78,7 @@ export class SubsonicApiClient {
   address: string;
   username: string;
 
-  private params: URLSearchParams
+  private params: URLSearchParams;
 
   constructor(server: Server) {
     this.address = server.address;
@@ -67,7 +89,7 @@ export class SubsonicApiClient {
     this.params.append('t', server.token);
     this.params.append('s', server.salt);
     this.params.append('v', '1.15.0');
-    this.params.append('c', 'subsonify-cool-unique-app-string')
+    this.params.append('c', 'subsonify-cool-unique-app-string');
   }
 
   private buildUrl(method: string, params?: { [key: string]: any }): string {
@@ -124,18 +146,18 @@ export class SubsonicApiClient {
     return params;
   }
 
-  // 
+  //
   // System
-  // 
+  //
 
   async ping(): Promise<SubsonicResponse<null>> {
     const xml = await this.apiGetXml('ping');
     return new SubsonicResponse<null>(xml, null);
   }
 
-  // 
+  //
   // Browsing
-  // 
+  //
 
   async getArtists(): Promise<SubsonicResponse<GetArtistsResponse>> {
     const xml = await this.apiGetXml('getArtists');
@@ -172,9 +194,9 @@ export class SubsonicApiClient {
     return new SubsonicResponse<GetArtistResponse>(xml, new GetArtistResponse(xml));
   }
 
-  // 
+  //
   // Album/song lists
-  // 
+  //
 
   async getAlbumList(params: GetAlbumListParams): Promise<SubsonicResponse<GetAlbumListResponse>> {
     const xml = await this.apiGetXml('getAlbumList', params);
@@ -186,9 +208,9 @@ export class SubsonicApiClient {
     return new SubsonicResponse<GetAlbumList2Response>(xml, new GetAlbumList2Response(xml));
   }
 
-  // 
+  //
   // Media retrieval
-  // 
+  //
 
   async getCoverArt(params: GetCoverArtParams): Promise<string> {
     const path = `${paths.songCache}/${params.id}`;

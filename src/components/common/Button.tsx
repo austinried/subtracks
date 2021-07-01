@@ -22,11 +22,10 @@ const Button: React.FC<{
         justifyContent: 'center',
         borderRadius: 1000,
         opacity,
-      }}
-    >
+      }}>
       <Text style={{ ...text.button }}>{title}</Text>
     </Pressable>
   );
-}
+};
 
 export default Button;

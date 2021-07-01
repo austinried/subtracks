@@ -17,9 +17,7 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
   const albumArt = useAtomValue(albumArtAtomFamily(id));
 
   const Placeholder = () => (
-    <LinearGradient
-      colors={[colors.accent, colors.accentLow]}
-    >
+    <LinearGradient colors={[colors.accent, colors.accentLow]}>
       <FastImage
         source={require('../../../res/record.png')}
         style={{ height, width }}
@@ -36,21 +34,23 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
       coverArtUri={width > 128 ? albumArt?.uri : albumArt?.thumbUri}
     />
   );
-}
+};
 
 const AlbumArtFallback: React.FC<AlbumArtProps> = ({ height, width }) => (
-  <View style={{ 
-    height, width,
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}>
-    <ActivityIndicator size='small' color={colors.accent} />
+  <View
+    style={{
+      height,
+      width,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+    <ActivityIndicator size="small" color={colors.accent} />
   </View>
 );
 
-const AlbumArtLoader: React.FC<AlbumArtProps> = (props) => (
-  <React.Suspense fallback={<AlbumArtFallback { ...props } />}>
-    <AlbumArt { ...props } />
+const AlbumArtLoader: React.FC<AlbumArtProps> = props => (
+  <React.Suspense fallback={<AlbumArtFallback {...props} />}>
+    <AlbumArt {...props} />
   </React.Suspense>
 );
 

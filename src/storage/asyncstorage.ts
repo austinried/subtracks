@@ -15,7 +15,7 @@ export async function multiGet(keys: string[]): Promise<[string, any | null][]> 
     const items = await AsyncStorage.multiGet(keys);
     return items.map(x => [x[0], x[1] ? JSON.parse(x[1]) : null]);
   } catch (e) {
-    console.error(`multiGet error`, e);
+    console.error('multiGet error', e);
     return [];
   }
 }
@@ -32,7 +32,7 @@ export async function multiSet(items: string[][]): Promise<void> {
   try {
     await AsyncStorage.multiSet(items.map(x => [x[0], JSON.stringify(x[1])]));
   } catch (e) {
-    console.error(`multiSet error`, e);
+    console.error('multiSet error', e);
   }
 }
 
@@ -40,7 +40,7 @@ export async function getAllKeys(): Promise<string[]> {
   try {
     return await AsyncStorage.getAllKeys();
   } catch (e) {
-    console.error(`getAllKeys error`, e);
+    console.error('getAllKeys error', e);
     return [];
   }
 }
@@ -49,6 +49,6 @@ export async function multiRemove(keys: string[]): Promise<void> {
   try {
     await AsyncStorage.multiRemove(keys);
   } catch (e) {
-    console.error(`multiRemove error`, e);
+    console.error('multiRemove error', e);
   }
 }

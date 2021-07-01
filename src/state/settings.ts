@@ -6,7 +6,7 @@ export const appSettingsAtom = atomWithAsyncStorage<AppSettings>('@appSettings',
   servers: [],
 });
 
-export const activeServerAtom = atom((get) => {
+export const activeServerAtom = atom(get => {
   const appSettings = get(appSettingsAtom);
-  return appSettings.servers.find(x => x.id == appSettings.activeServer);
+  return appSettings.servers.find(x => x.id === appSettings.activeServer);
 });

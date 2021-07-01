@@ -24,8 +24,8 @@ export interface Album {
   name: string;
   starred?: Date;
   coverArt?: string;
-  coverArtUri?: string,
-  coverArtThumbUri?: string,
+  coverArtUri?: string;
+  coverArtThumbUri?: string;
   year?: number;
 }
 
@@ -60,7 +60,7 @@ export interface Song {
   starred?: Date;
 
   streamUri: string;
-  coverArtUri?: string,
+  coverArtUri?: string;
 }
 
 export type DownloadedSong = {

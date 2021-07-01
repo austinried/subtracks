@@ -1,4 +1,3 @@
-import { useAtom } from 'jotai';
 import { useAtomValue } from 'jotai/utils';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -11,7 +10,7 @@ import CoverArt from './CoverArt';
 interface ArtistArtSizeProps {
   height: number;
   width: number;
-};
+}
 
 interface ArtistArtXUpProps extends ArtistArtSizeProps {
   coverArtUris: string[];
@@ -25,11 +24,11 @@ const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, chi
   <LinearGradient
     colors={[colors.accent, colors.accentLow]}
     style={{
-      height, width,
+      height,
+      width,
       alignItems: 'center',
       justifyContent: 'center',
-    }}
-  >
+    }}>
     {children}
   </LinearGradient>
 );
@@ -123,11 +122,7 @@ const TwoUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => 
 const OneUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
   return (
     <PlaceholderContainer height={height} width={width}>
-        <FastImage
-          source={{ uri: coverArtUris[0] }}
-          style={{ height, width }}
-          resizeMode={FastImage.resizeMode.cover}
-        />
+      <FastImage source={{ uri: coverArtUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
     </PlaceholderContainer>
   );
 };
@@ -135,14 +130,14 @@ const OneUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => 
 const NoneUp: React.FC<ArtistArtSizeProps> = ({ height, width }) => {
   return (
     <PlaceholderContainer height={height} width={width}>
-        <FastImage
-          source={require('../../../res/mic_on-fill.png')}
-          style={{
-            height: height - height / 4,
-            width: width - width / 4,
-          }}
-          resizeMode={FastImage.resizeMode.cover}
-        />
+      <FastImage
+        source={require('../../../res/mic_on-fill.png')}
+        style={{
+          height: height - height / 4,
+          width: width - width / 4,
+        }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
     </PlaceholderContainer>
   );
 };
@@ -172,36 +167,34 @@ const ArtistArt: React.FC<ArtistArtProps> = ({ id, height, width }) => {
     }
 
     return none;
-  }
+  };
 
   return (
-    <View style={{
-      borderRadius: height / 2,
-      overflow: 'hidden',
-    }}>
-      <CoverArt
-        PlaceholderComponent={Placeholder}
-        height={height}
-        width={width}
-        coverArtUri={artistArt?.uri}
-      />
+    <View
+      style={{
+        borderRadius: height / 2,
+        overflow: 'hidden',
+      }}>
+      <CoverArt PlaceholderComponent={Placeholder} height={height} width={width} coverArtUri={artistArt?.uri} />
     </View>
   );
-}
+};
 
 const ArtistArtFallback: React.FC<ArtistArtProps> = ({ height, width }) => (
-  <View style={{ 
-    height, width,
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}>
-    <ActivityIndicator size='small' color={colors.accent} />
+  <View
+    style={{
+      height,
+      width,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+    <ActivityIndicator size="small" color={colors.accent} />
   </View>
 );
 
-const ArtistArtLoader: React.FC<ArtistArtProps> = (props) => (
-  <React.Suspense fallback={<ArtistArtFallback { ...props } />}>
-    <ArtistArt { ...props } />
+const ArtistArtLoader: React.FC<ArtistArtProps> = props => (
+  <React.Suspense fallback={<ArtistArtFallback {...props} />}>
+    <ArtistArt {...props} />
   </React.Suspense>
 );
 
