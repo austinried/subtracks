@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import TrackPlayer, { Track, useTrackPlayerEvents, Event, State } from 'react-native-track-player';
+import { useUpdateAtom } from 'jotai/utils';
+import TrackPlayer, { Track } from 'react-native-track-player';
 import { Song } from '../models/music';
+import { currentTrackAtom } from '../state/trackplayer';
 
 function mapSongToTrack(song: Song): Track {
   return {
@@ -13,40 +14,16 @@ function mapSongToTrack(song: Song): Track {
   };
 }
 
-const currentTrackEvents = [Event.PlaybackState, Event.PlaybackTrackChanged, Event.RemoteStop];
-
-export const useCurrentTrackId = () => {
-  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
-
-  useTrackPlayerEvents(currentTrackEvents, async event => {
-    switch (event.type) {
-      case Event.PlaybackState:
-        switch (event.state) {
-          case State.None:
-          case State.Stopped:
-            setCurrentTrackId(null);
-            break;
-        }
-        break;
-      case Event.PlaybackTrackChanged:
-        const trackIndex = await TrackPlayer.getCurrentTrack();
-        setCurrentTrackId((await TrackPlayer.getTrack(trackIndex)).id);
-        break;
-      case Event.RemoteStop:
-        setCurrentTrackId(null);
-        break;
-      default:
-        break;
-    }
-  });
-
-  return currentTrackId;
-};
-
 export const useSetQueue = () => {
+  const setCurrentTrack = useUpdateAtom(currentTrackAtom);
+
   return async (songs: Song[], playId?: string) => {
     await TrackPlayer.reset();
     const tracks = songs.map(mapSongToTrack);
+
+    if (playId) {
+      setCurrentTrack(tracks.find(t => t.id === playId));
+    }
 
     if (!playId) {
       await TrackPlayer.add(tracks);
@@ -63,8 +40,8 @@ export const useSetQueue = () => {
 
       await TrackPlayer.add(tracks1, 0);
 
-      const queue = await TrackPlayer.getQueue();
-      console.log(`queue: ${JSON.stringify(queue.map(x => x.title))}`);
+      // const queue = await TrackPlayer.getQueue();
+      // console.log(`queue: ${JSON.stringify(queue.map(x => x.title))}`);
     }
   };
 };

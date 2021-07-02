@@ -10,8 +10,9 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { useCurrentTrackId, useSetQueue } from '../../hooks/player';
+import { useSetQueue } from '../../hooks/player';
 import { albumAtomFamily } from '../../state/music';
+import { currentTrackAtom } from '../../state/trackplayer';
 import colors from '../../styles/colors';
 import text from '../../styles/text';
 import AlbumArt from './AlbumArt';
@@ -27,7 +28,7 @@ const SongItem: React.FC<{
   onPress: (event: GestureResponderEvent) => void;
 }> = ({ id, title, artist, onPress }) => {
   const [opacity, setOpacity] = useState(1);
-  const currentTrackId = useCurrentTrackId();
+  const currentTrack = useAtomValue(currentTrackAtom);
 
   return (
     <View
@@ -50,7 +51,7 @@ const SongItem: React.FC<{
         <Text
           style={{
             ...text.songListTitle,
-            color: currentTrackId === id ? colors.accent : colors.text.primary,
+            color: currentTrack?.id === id ? colors.accent : colors.text.primary,
           }}>
           {title}
         </Text>
