@@ -7,8 +7,7 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "link": "rm -rf node_modules/react-native-track-player && wml start"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.5",
@@ -20,7 +19,7 @@
     "md5": "^2.3.0",
     "react": "17.0.1",
     "react-native": "0.64.1",
-    "react-native-fast-image": "^8.3.4",
+    "react-native-fast-image": "https://github.com/austinried/react-native-fast-image",
     "react-native-fs": "^2.18.0",
     "react-native-gesture-handler": "^1.10.3",
     "react-native-get-random-values": "^1.7.0",
@@ -29,7 +28,7 @@
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^3.4.0",
     "react-native-tab-view": "^2.16.0",
-    "react-native-track-player": "file:../../repos/react-native-track-player",
+    "react-native-track-player": "https://github.com/austinried/react-native-track-player",
     "uuid": "^8.3.2",
     "xmldom": "^0.5.0"
   },
