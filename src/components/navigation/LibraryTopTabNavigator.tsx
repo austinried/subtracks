@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StatusBar, View } from 'react-native';
+import { StatusBar, View } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import AlbumsTab from '../library/AlbumsTab';
 import ArtistsTab from '../library/ArtistsTab';
@@ -10,7 +10,6 @@ import { RouteProp } from '@react-navigation/native';
 import text from '../../styles/text';
 import colors from '../../styles/colors';
 import ArtistView from '../common/ArtistView';
-import FastImage from 'react-native-fast-image';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -72,70 +71,20 @@ const Stack = createNativeStackNavigator<LibraryStackParamList>();
 const itemScreenOptions = {
   title: '',
   headerStyle: {
-    height: 500,
     backgroundColor: colors.gradient.high,
   },
-  headerTitleContainerStyle: {
-    marginLeft: -14,
-  },
-  headerLeftContainerStyle: {
-    marginLeft: 8,
-  },
+  headerHideShadow: true,
+  headerTintColor: 'white',
   headerTitleStyle: {
     ...text.header,
-    color: colors.text.primary,
-  },
-  // headerBackImage: () => (
-  //   <FastImage
-  //     source={require('../../../res/arrow_left-fill.png')}
-  //     tintColor={colors.text.primary}
-  //     style={{ height: 22, width: 22 }}
-  //   />
-  // ),
+  } as any,
 };
 
 const LibraryStackNavigator = () => (
   <View style={{ flex: 1 }}>
     <Stack.Navigator>
       <Stack.Screen name="LibraryTopTabs" component={LibraryTopTabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen
-        name="AlbumView"
-        component={AlbumScreen}
-        options={{
-          title: '',
-          headerStyle: {
-            // height: 500,
-            backgroundColor: colors.gradient.high,
-          },
-          headerHideShadow: true,
-          // headerTitleContainerStyle: {
-          //   marginLeft: -14,
-          // },
-          // headerLeftContainerStyle: {
-          //   marginLeft: 8,
-          // },
-          // headerTitleStyle: {
-          //   ...text.header,
-          //   color: colors.text.primary,
-          // },
-          headerLeft: () => (
-            <Pressable>
-              <FastImage
-                source={require('../../../res/arrow_left-fill.png')}
-                tintColor="white"
-                style={{ height: 24, width: 24 }}
-              />
-            </Pressable>
-          ),
-          // headerBackImage: () => (
-          //   <FastImage
-          //     source={require('../../../res/arrow_left-fill.png')}
-          //     tintColor={colors.text.primary}
-          //     style={{ height: 22, width: 22 }}
-          //   />
-          // ),
-        }}
-      />
+      <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
       <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
     </Stack.Navigator>
   </View>

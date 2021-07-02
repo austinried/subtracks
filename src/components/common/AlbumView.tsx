@@ -23,6 +23,7 @@ const SongItem: React.FC<{
   id: string;
   title: string;
   artist?: string;
+  track?: number;
   onPress: (event: GestureResponderEvent) => void;
 }> = ({ id, title, artist, onPress }) => {
   const [opacity, setOpacity] = useState(1);
@@ -137,11 +138,6 @@ const AlbumDetails: React.FC<{
           flexDirection: 'row',
         }}>
         <Button title="Play Album" onPress={() => setQueue(album.songs, album.songs[0].id)} />
-        {/* <View style={{ width: 6, }}></View>
-        <Button
-          title='S'
-          onPress={() => null}
-        /> */}
       </View>
 
       <View
@@ -151,13 +147,20 @@ const AlbumDetails: React.FC<{
           marginBottom: 30,
         }}>
         {album.songs
-          .sort((a, b) => (a.track as number) - (b.track as number))
+          .sort((a, b) => {
+            if (b.track && a.track) {
+              return a.track - b.track;
+            } else {
+              return a.title.localeCompare(b.title);
+            }
+          })
           .map(s => (
             <SongItem
               key={s.id}
               id={s.id}
               title={s.title}
               artist={s.artist}
+              track={s.track}
               onPress={() => setQueue(album.songs, s.id)}
             />
           ))}
@@ -189,26 +192,12 @@ const AlbumView: React.FC<{
   const navigation = useNavigation();
 
   useEffect(() => {
-    navigation.setOptions({
-      headerCenter: () => (
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          <Text
-            style={{
-              width: 300,
-              ...text.header,
-            }}
-            numberOfLines={1}>
-            {title}
-          </Text>
-        </View>
-      ),
-    });
+    navigation.setOptions({ title });
   });
 
   return (
     <React.Suspense fallback={<AlbumViewFallback />}>
       <AlbumDetails id={id} />
-      {/* <AlbumViewFallback /> */}
     </React.Suspense>
   );
 };

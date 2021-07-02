@@ -134,7 +134,7 @@ export const artistArtAtomFamily = atomFamily((id: string) =>
         if (b.year && a.year) {
           return b.year - a.year;
         } else {
-          return a.name.localeCompare(b.name) - 9000;
+          return a.name.localeCompare(b.name);
         }
       })
       .map(a => a.coverArtThumbUri) as string[];
