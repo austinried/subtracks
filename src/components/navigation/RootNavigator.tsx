@@ -6,9 +6,12 @@ import BottomTabNavigator from './BottomTabNavigator';
 const RootStack = createNativeStackNavigator();
 
 const RootNavigator = () => (
-  <RootStack.Navigator>
-    <RootStack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
-    <RootStack.Screen name="Now Playing" component={NowPlayingLayout} options={{ headerShown: false }} />
+  <RootStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}>
+    <RootStack.Screen name="Main" component={BottomTabNavigator} />
+    <RootStack.Screen name="Now Playing" component={NowPlayingLayout} />
   </RootStack.Navigator>
 );
 

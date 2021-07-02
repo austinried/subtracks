@@ -1,11 +1,12 @@
 import { useUpdateAtom } from 'jotai/utils';
 import TrackPlayer, { Track } from 'react-native-track-player';
 import { Song } from '../models/music';
-import { currentTrackAtom } from '../state/trackplayer';
+import { currentQueueNameAtom, currentTrackAtom } from '../state/trackplayer';
 
-function mapSongToTrack(song: Song): Track {
+function mapSongToTrack(song: Song, queueName: string): Track {
   return {
     id: song.id,
+    queueName,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
     url: song.streamUri,
@@ -16,11 +17,13 @@ function mapSongToTrack(song: Song): Track {
 
 export const useSetQueue = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom);
+  const setCurrentQueueName = useUpdateAtom(currentQueueNameAtom);
 
-  return async (songs: Song[], playId?: string) => {
+  return async (songs: Song[], name: string, playId?: string) => {
     await TrackPlayer.reset();
-    const tracks = songs.map(mapSongToTrack);
+    const tracks = songs.map(s => mapSongToTrack(s, name));
 
+    setCurrentQueueName(name);
     if (playId) {
       setCurrentTrack(tracks.find(t => t.id === playId));
     }

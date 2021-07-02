@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { useSetQueue } from '../../hooks/player';
+import { useSetQueue } from '../../hooks/trackplayer';
 import { albumAtomFamily } from '../../state/music';
 import { currentTrackAtom } from '../../state/trackplayer';
 import colors from '../../styles/colors';
@@ -138,7 +138,7 @@ const AlbumDetails: React.FC<{
         style={{
           flexDirection: 'row',
         }}>
-        <Button title="Play Album" onPress={() => setQueue(album.songs, album.songs[0].id)} />
+        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
       </View>
 
       <View
@@ -162,7 +162,7 @@ const AlbumDetails: React.FC<{
               title={s.title}
               artist={s.artist}
               track={s.track}
-              onPress={() => setQueue(album.songs, s.id)}
+              onPress={() => setQueue(album.songs, album.name, s.id)}
             />
           ))}
       </View>

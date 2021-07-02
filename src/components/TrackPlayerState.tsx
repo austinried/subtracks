@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect } from 'react';
-import TrackPlayer, { Event, State, Track, useTrackPlayerEvents } from 'react-native-track-player';
+import TrackPlayer, { Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { useAppState } from '@react-native-community/hooks';
 import { useUpdateAtom, useAtomValue } from 'jotai/utils';
-import { currentTrackAtom } from '../state/trackplayer';
+import { currentQueueNameAtom, currentTrackAtom } from '../state/trackplayer';
 import { View } from 'react-native';
 
-const TrackPlayerState = () => {
+const CurrentTrackState = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom);
   const appState = useAppState();
 
-  const updateCurrentTrack = useCallback(async () => {
+  const update = useCallback(async () => {
     const index = await TrackPlayer.getCurrentTrack();
 
     if (index !== null && index >= 0) {
@@ -39,34 +39,59 @@ const TrackPlayerState = () => {
         setCurrentTrack(undefined);
         return;
       }
-      updateCurrentTrack();
+      update();
     },
   );
 
   useEffect(() => {
     if (appState === 'active') {
-      updateCurrentTrack();
+      update();
     }
-  }, [appState, updateCurrentTrack]);
+  }, [appState, update]);
 
   return <></>;
 };
 
-const CurrentTrack = () => {
-  const currentTrack = useAtomValue(currentTrackAtom);
+const CurrentQueueName = () => {
+  const setCurrentQueueName = useUpdateAtom(currentQueueNameAtom);
+  const appState = useAppState();
+
+  const update = useCallback(async () => {
+    const queue = await TrackPlayer.getQueue();
+
+    if (queue !== null && queue.length > 0) {
+      setCurrentQueueName(queue[0].queueName);
+      return;
+    }
+
+    setCurrentQueueName(undefined);
+  }, [setCurrentQueueName]);
 
   useEffect(() => {
-    console.log(currentTrack?.title);
-  }, [currentTrack]);
+    if (appState === 'active') {
+      update();
+    }
+  }, [appState, update]);
 
   return <></>;
 };
 
-const ASDFSADFSAF = () => (
+const Debug = () => {
+  const value = useAtomValue(currentQueueNameAtom);
+
+  useEffect(() => {
+    console.log(value);
+  }, [value]);
+
+  return <></>;
+};
+
+const TrackPlayerState = () => (
   <View>
-    <TrackPlayerState />
-    <CurrentTrack />
+    <CurrentTrackState />
+    <CurrentQueueName />
+    <Debug />
   </View>
 );
 
-export default ASDFSADFSAF;
+export default TrackPlayerState;
