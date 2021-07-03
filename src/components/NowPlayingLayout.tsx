@@ -1,13 +1,11 @@
 import { useAtomValue } from 'jotai/utils';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, StatusBar, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { currentQueueNameAtom, currentTrackAtom } from '../state/trackplayer';
-import colors from '../styles/colors';
 import text from '../styles/text';
 import CoverArt from './common/CoverArt';
-import GradientBackground from './common/GradientBackground';
-import ImageColors from 'react-native-image-colors';
+import ImageGradientBackground from './common/ImageGradientBackground';
 
 const NowPlayingHeader = () => {
   const queueName = useAtomValue(currentQueueNameAtom);
@@ -106,61 +104,8 @@ const infoStyles = StyleSheet.create({
   },
 });
 
-interface AndroidImageColors {
-  dominant?: string;
-  average?: string;
-  vibrant?: string;
-  darkVibrant?: string;
-  lightVibrant?: string;
-  darkMuted?: string;
-  lightMuted?: string;
-  muted?: string;
-  platform: 'android';
-}
-
-interface IOSImageColors {
-  background: string;
-  primary: string;
-  secondary: string;
-  detail: string;
-  quality: Config['quality'];
-  platform: 'ios';
-}
-
-interface Config {
-  fallback?: string;
-  pixelSpacing?: number;
-  quality?: 'lowest' | 'low' | 'high' | 'highest';
-  cache?: boolean;
-  key?: string;
-}
-
-declare type ImageColorsResult = AndroidImageColors | IOSImageColors;
-
 const NowPlayingLayout = () => {
   const track = useAtomValue(currentTrackAtom);
-  const [imageColors, setImageColors] = useState<ImageColorsResult | undefined>(undefined);
-  const ica = imageColors as AndroidImageColors;
-
-  useEffect(() => {
-    async function getColors() {
-      if (track?.artwork === undefined) {
-        return;
-      }
-
-      const cachedResult = ImageColors.cache.getItem(track.artwork as string);
-      if (cachedResult) {
-        setImageColors(cachedResult);
-        return;
-      }
-
-      const result = await ImageColors.getColors(track.artwork as string, {
-        cache: true,
-      });
-      setImageColors(result);
-    }
-    getColors();
-  }, [track]);
 
   return (
     <View
@@ -168,10 +113,7 @@ const NowPlayingLayout = () => {
         flex: 1,
         paddingTop: StatusBar.currentHeight,
       }}>
-      <GradientBackground
-        colors={[ica ? (ica.muted as string) : colors.gradient.high, colors.gradient.low]}
-        locations={[0.1, 1.0]}
-      />
+      <ImageGradientBackground imageUri={track?.artwork as string} />
       <NowPlayingHeader />
       <SongCoverArt />
       <SongInfo />

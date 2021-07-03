@@ -18,7 +18,7 @@ import text from '../../styles/text';
 import AlbumArt from './AlbumArt';
 import Button from './Button';
 import GradientBackground from './GradientBackground';
-import GradientScrollView from './GradientScrollView';
+import ImageGradientScrollView from './ImageGradientScrollView';
 
 const SongItem: React.FC<{
   id: string;
@@ -102,7 +102,8 @@ const AlbumDetails: React.FC<{
   }
 
   return (
-    <GradientScrollView
+    <ImageGradientScrollView
+      imageUri={album.coverArtUri}
       style={{
         flex: 1,
       }}
@@ -166,7 +167,7 @@ const AlbumDetails: React.FC<{
             />
           ))}
       </View>
-    </GradientScrollView>
+    </ImageGradientScrollView>
   );
 };
 
