@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { Track } from 'react-native-track-player';
+import { State, Track } from 'react-native-track-player';
 import equal from 'fast-deep-equal';
 
 type OptionalTrack = Track | undefined;
@@ -22,6 +22,16 @@ export const currentQueueNameAtom = atom<OptionalString, OptionalString>(
   (get, set, value) => {
     if (get(currentQueueName) !== value) {
       set(currentQueueName, value);
+    }
+  },
+);
+
+const playerState = atom<State>(State.None);
+export const playerStateAtom = atom<State, State>(
+  get => get(playerState),
+  (get, set, value) => {
+    if (get(playerState) !== value) {
+      set(playerState, value);
     }
   },
 );
