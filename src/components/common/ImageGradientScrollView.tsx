@@ -3,7 +3,7 @@ import { LayoutRectangle, ScrollView, ScrollViewProps } from 'react-native';
 import colors from '../../styles/colors';
 import ImageGradientBackground from './ImageGradientBackground';
 
-const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string }> = props => {
+const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; imageKey?: string }> = props => {
   const [layout, setLayout] = useState<LayoutRectangle | undefined>(undefined);
 
   props.style = props.style || {};
@@ -21,7 +21,7 @@ const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string }>
       onLayout={event => {
         setLayout(event.nativeEvent.layout);
       }}>
-      <ImageGradientBackground height={layout?.height} imageUri={props.imageUri} />
+      <ImageGradientBackground height={layout?.height} imageUri={props.imageUri} imageKey={props.imageKey} />
       {props.children}
     </ScrollView>
   );

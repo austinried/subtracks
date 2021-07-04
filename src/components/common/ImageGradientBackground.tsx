@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { ViewStyle } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import ImageColors from 'react-native-image-colors';
 import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/types';
 import colors from '../../styles/colors';
@@ -12,7 +13,8 @@ const ImageGradientBackground: React.FC<{
   position?: 'relative' | 'absolute';
   style?: ViewStyle;
   imageUri?: string;
-}> = ({ height, width, position, style, imageUri, children }) => {
+  imageKey?: string;
+}> = ({ height, width, position, style, imageUri, imageKey, children }) => {
   const [highColor, setHighColor] = useState<string>(colors.gradient.high);
   const navigation = useNavigation();
 
@@ -22,13 +24,16 @@ const ImageGradientBackground: React.FC<{
         return;
       }
 
+      const cachedResult = ImageColors.cache.getItem(imageKey ? imageKey : imageUri);
+
       let res: AndroidImageColors;
-      const cachedResult = ImageColors.cache.getItem(imageUri);
       if (cachedResult) {
         res = cachedResult as AndroidImageColors;
       } else {
-        res = (await ImageColors.getColors(imageUri, {
+        const path = await FastImage.getCachePath({ uri: imageUri });
+        res = (await ImageColors.getColors(path ? `file://${path}` : imageUri, {
           cache: true,
+          key: imageKey ? imageKey : imageUri,
         })) as AndroidImageColors;
       }
 
@@ -39,7 +44,7 @@ const ImageGradientBackground: React.FC<{
       }
     }
     getColors();
-  }, [imageUri]);
+  }, [imageUri, imageKey]);
 
   useEffect(() => {
     navigation.setOptions({

@@ -188,6 +188,7 @@ function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
     ...child,
     streamUri: client.streamUri({ id: child.id }),
     coverArtUri: child.coverArt ? client.getCoverArtUri({ id: child.coverArt }) : undefined,
+    coverArtThumbUri: child.coverArt ? client.getCoverArtUri({ id: child.coverArt, size: '256' }) : undefined,
   };
 }
 

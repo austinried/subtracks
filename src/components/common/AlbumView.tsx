@@ -103,7 +103,8 @@ const AlbumDetails: React.FC<{
 
   return (
     <ImageGradientScrollView
-      imageUri={album.coverArtUri}
+      imageUri={album.coverArtThumbUri}
+      imageKey={`${album.name}${album.artist}`}
       style={{
         flex: 1,
       }}

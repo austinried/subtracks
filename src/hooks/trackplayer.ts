@@ -11,6 +11,7 @@ function mapSongToTrack(song: Song, queueName: string): Track {
     artist: song.artist || 'Unknown Artist',
     url: song.streamUri,
     artwork: song.coverArtUri,
+    artworkThumb: song.coverArtThumbUri,
     duration: song.duration,
   };
 }

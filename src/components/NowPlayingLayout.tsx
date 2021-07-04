@@ -113,7 +113,7 @@ const NowPlayingLayout = () => {
         flex: 1,
         paddingTop: StatusBar.currentHeight,
       }}>
-      <ImageGradientBackground imageUri={track?.artwork as string} />
+      <ImageGradientBackground imageUri={track?.artworkThumb as string} imageKey={`${track?.album}${track?.artist}`} />
       <NowPlayingHeader />
       <SongCoverArt />
       <SongInfo />

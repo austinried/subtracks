@@ -61,6 +61,7 @@ export interface Song {
 
   streamUri: string;
   coverArtUri?: string;
+  coverArtThumbUri?: string;
 }
 
 export type DownloadedSong = {

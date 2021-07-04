@@ -5401,7 +5401,7 @@ react-native-codegen@^0.0.6:
 
 "react-native-fast-image@https://github.com/austinried/react-native-fast-image":
   version "8.3.4"
-  resolved "https://github.com/austinried/react-native-fast-image#65b70ba8f21971265c56e4adba4981a9bbb6499a"
+  resolved "https://github.com/austinried/react-native-fast-image#2aa1ec7425e70927e179640fc8eb2a7c268357a3"
 
 react-native-fs@^2.18.0:
   version "2.18.0"
