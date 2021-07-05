@@ -2,9 +2,11 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { Pressable, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
-import TrackPlayer, { State } from 'react-native-track-player'
+import TrackPlayer, { State, useProgress } from 'react-native-track-player'
 import { currentQueueNameAtom, currentTrackAtom, playerStateAtom } from '../state/trackplayer'
-import text from '../styles/text'
+import colors from '../styles/colors'
+import text, { Font } from '../styles/text'
+import { formatDuration } from '../util'
 import CoverArt from './common/CoverArt'
 import ImageGradientBackground from './common/ImageGradientBackground'
 
@@ -96,6 +98,69 @@ const infoStyles = StyleSheet.create({
   },
 })
 
+const SeekBar = () => {
+  const { position, duration } = useProgress(250)
+
+  let progress = 0
+  if (duration > 0) {
+    progress = position / duration
+  }
+
+  return (
+    <View style={seekStyles.container}>
+      <View style={seekStyles.barContainer}>
+        <View style={{ ...seekStyles.bars, ...seekStyles.barLeft, flex: progress }} />
+        <View style={{ ...seekStyles.indicator, opacity: progress ? 1 : 0 }} />
+        <View style={{ ...seekStyles.bars, ...seekStyles.barRight, flex: 1 - progress }} />
+      </View>
+      <View style={seekStyles.textContainer}>
+        <Text style={seekStyles.text}>{formatDuration(position)}</Text>
+        <Text style={seekStyles.text}>{formatDuration(duration)}</Text>
+      </View>
+    </View>
+  )
+}
+
+const seekStyles = StyleSheet.create({
+  container: {
+    width: '100%',
+    marginTop: 40,
+    paddingHorizontal: 20,
+  },
+  barContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  bars: {
+    backgroundColor: colors.text.primary,
+    height: 4,
+  },
+  barLeft: {
+    marginRight: -6,
+  },
+  barRight: {
+    opacity: 0.3,
+    marginLeft: -6,
+  },
+  indicator: {
+    height: 12,
+    width: 12,
+    borderRadius: 6,
+    backgroundColor: colors.text.primary,
+    elevation: 1,
+  },
+  textContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  text: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: colors.text.primary,
+  },
+})
+
 const PlayerControls = () => {
   const state = useAtomValue(playerStateAtom)
 
@@ -148,7 +213,7 @@ const controlsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 40,
+    marginTop: 10,
   },
   skip: {
     height: 40,
@@ -180,6 +245,7 @@ const NowPlayingLayout = () => {
       <NowPlayingHeader />
       <SongCoverArt />
       <SongInfo />
+      <SeekBar />
       <PlayerControls />
     </View>
   )
