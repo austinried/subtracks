@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { LayoutRectangle, ScrollView, ScrollViewProps } from 'react-native';
-import colors from '../../styles/colors';
-import ImageGradientBackground from './ImageGradientBackground';
+import React, { useState } from 'react'
+import { LayoutRectangle, ScrollView, ScrollViewProps } from 'react-native'
+import colors from '../../styles/colors'
+import ImageGradientBackground from './ImageGradientBackground'
 
 const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; imageKey?: string }> = props => {
-  const [layout, setLayout] = useState<LayoutRectangle | undefined>(undefined);
+  const [layout, setLayout] = useState<LayoutRectangle | undefined>(undefined)
 
-  props.style = props.style || {};
+  props.style = props.style || {}
   if (typeof props.style === 'object' && props.style !== null) {
     props.style = {
       ...props.style,
       backgroundColor: colors.gradient.low,
-    };
+    }
   }
 
   return (
@@ -19,12 +19,12 @@ const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; i
       overScrollMode="never"
       {...props}
       onLayout={event => {
-        setLayout(event.nativeEvent.layout);
+        setLayout(event.nativeEvent.layout)
       }}>
       <ImageGradientBackground height={layout?.height} imageUri={props.imageUri} imageKey={props.imageKey} />
       {props.children}
     </ScrollView>
-  );
-};
+  )
+}
 
-export default ImageGradientScrollView;
+export default ImageGradientScrollView

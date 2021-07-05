@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
-import { useAtomValue } from 'jotai/utils';
-import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native'
+import { useAtomValue } from 'jotai/utils'
+import React, { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -9,26 +9,26 @@ import {
   Text,
   useWindowDimensions,
   View,
-} from 'react-native';
-import { useSetQueue } from '../../hooks/trackplayer';
-import { albumAtomFamily } from '../../state/music';
-import { currentTrackAtom } from '../../state/trackplayer';
-import colors from '../../styles/colors';
-import text from '../../styles/text';
-import AlbumArt from './AlbumArt';
-import Button from './Button';
-import GradientBackground from './GradientBackground';
-import ImageGradientScrollView from './ImageGradientScrollView';
+} from 'react-native'
+import { useSetQueue } from '../../hooks/trackplayer'
+import { albumAtomFamily } from '../../state/music'
+import { currentTrackAtom } from '../../state/trackplayer'
+import colors from '../../styles/colors'
+import text from '../../styles/text'
+import AlbumArt from './AlbumArt'
+import Button from './Button'
+import GradientBackground from './GradientBackground'
+import ImageGradientScrollView from './ImageGradientScrollView'
 
 const SongItem: React.FC<{
-  id: string;
-  title: string;
-  artist?: string;
-  track?: number;
-  onPress: (event: GestureResponderEvent) => void;
+  id: string
+  title: string
+  artist?: string
+  track?: number
+  onPress: (event: GestureResponderEvent) => void
 }> = ({ id, title, artist, onPress }) => {
-  const [opacity, setOpacity] = useState(1);
-  const currentTrack = useAtomValue(currentTrackAtom);
+  const [opacity, setOpacity] = useState(1)
+  const currentTrack = useAtomValue(currentTrackAtom)
 
   return (
     <View
@@ -85,20 +85,20 @@ const SongItem: React.FC<{
         />
       </View>
     </View>
-  );
-};
+  )
+}
 
 const AlbumDetails: React.FC<{
-  id: string;
+  id: string
 }> = ({ id }) => {
-  const album = useAtomValue(albumAtomFamily(id));
-  const layout = useWindowDimensions();
-  const setQueue = useSetQueue();
+  const album = useAtomValue(albumAtomFamily(id))
+  const layout = useWindowDimensions()
+  const setQueue = useSetQueue()
 
-  const coverSize = layout.width - layout.width / 2.5;
+  const coverSize = layout.width - layout.width / 2.5
 
   if (!album) {
-    return <Text style={text.paragraph}>No Album</Text>;
+    return <Text style={text.paragraph}>No Album</Text>
   }
 
   return (
@@ -152,9 +152,9 @@ const AlbumDetails: React.FC<{
         {album.songs
           .sort((a, b) => {
             if (b.track && a.track) {
-              return a.track - b.track;
+              return a.track - b.track
             } else {
-              return a.title.localeCompare(b.title);
+              return a.title.localeCompare(b.title)
             }
           })
           .map(s => (
@@ -169,13 +169,13 @@ const AlbumDetails: React.FC<{
           ))}
       </View>
     </ImageGradientScrollView>
-  );
-};
+  )
+}
 
 const AlbumViewFallback = () => {
-  const layout = useWindowDimensions();
+  const layout = useWindowDimensions()
 
-  const coverSize = layout.width - layout.width / 2.5;
+  const coverSize = layout.width - layout.width / 2.5
 
   return (
     <GradientBackground
@@ -185,24 +185,24 @@ const AlbumViewFallback = () => {
       }}>
       <ActivityIndicator size="large" color={colors.accent} />
     </GradientBackground>
-  );
-};
+  )
+}
 
 const AlbumView: React.FC<{
-  id: string;
-  title: string;
+  id: string
+  title: string
 }> = ({ id, title }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
 
   useEffect(() => {
-    navigation.setOptions({ title });
-  });
+    navigation.setOptions({ title })
+  })
 
   return (
     <React.Suspense fallback={<AlbumViewFallback />}>
       <AlbumDetails id={id} />
     </React.Suspense>
-  );
-};
+  )
+}
 
-export default React.memo(AlbumView);
+export default React.memo(AlbumView)

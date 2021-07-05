@@ -1,58 +1,58 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { ViewStyle } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import ImageColors from 'react-native-image-colors';
-import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/types';
-import colors from '../../styles/colors';
-import GradientBackground from './GradientBackground';
+import { useNavigation } from '@react-navigation/native'
+import React, { useEffect, useState } from 'react'
+import { ViewStyle } from 'react-native'
+import FastImage from 'react-native-fast-image'
+import ImageColors from 'react-native-image-colors'
+import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/types'
+import colors from '../../styles/colors'
+import GradientBackground from './GradientBackground'
 
 const ImageGradientBackground: React.FC<{
-  height?: number | string;
-  width?: number | string;
-  position?: 'relative' | 'absolute';
-  style?: ViewStyle;
-  imageUri?: string;
-  imageKey?: string;
+  height?: number | string
+  width?: number | string
+  position?: 'relative' | 'absolute'
+  style?: ViewStyle
+  imageUri?: string
+  imageKey?: string
 }> = ({ height, width, position, style, imageUri, imageKey, children }) => {
-  const [highColor, setHighColor] = useState<string>(colors.gradient.high);
-  const navigation = useNavigation();
+  const [highColor, setHighColor] = useState<string>(colors.gradient.high)
+  const navigation = useNavigation()
 
   useEffect(() => {
     async function getColors() {
       if (imageUri === undefined) {
-        return;
+        return
       }
 
-      const cachedResult = ImageColors.cache.getItem(imageKey ? imageKey : imageUri);
+      const cachedResult = ImageColors.cache.getItem(imageKey ? imageKey : imageUri)
 
-      let res: AndroidImageColors;
+      let res: AndroidImageColors
       if (cachedResult) {
-        res = cachedResult as AndroidImageColors;
+        res = cachedResult as AndroidImageColors
       } else {
-        const path = await FastImage.getCachePath({ uri: imageUri });
+        const path = await FastImage.getCachePath({ uri: imageUri })
         res = (await ImageColors.getColors(path ? `file://${path}` : imageUri, {
           cache: true,
           key: imageKey ? imageKey : imageUri,
-        })) as AndroidImageColors;
+        })) as AndroidImageColors
       }
 
       if (res.muted && res.muted !== '#000000') {
-        setHighColor(res.muted);
+        setHighColor(res.muted)
       } else if (res.darkMuted && res.darkMuted !== '#000000') {
-        setHighColor(res.darkMuted);
+        setHighColor(res.darkMuted)
       }
     }
-    getColors();
-  }, [imageUri, imageKey]);
+    getColors()
+  }, [imageUri, imageKey])
 
   useEffect(() => {
     navigation.setOptions({
       headerStyle: {
         backgroundColor: highColor,
       },
-    });
-  }, [navigation, highColor]);
+    })
+  }, [navigation, highColor])
 
   return (
     <GradientBackground
@@ -64,7 +64,7 @@ const ImageGradientBackground: React.FC<{
       locations={[0.1, 1.0]}>
       {children}
     </GradientBackground>
-  );
-};
+  )
+}
 
-export default ImageGradientBackground;
+export default ImageGradientBackground

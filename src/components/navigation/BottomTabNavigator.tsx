@@ -1,12 +1,12 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import SettingsView from '../Settings';
-import NowPlayingLayout from '../NowPlayingLayout';
-import ArtistsList from '../ArtistsList';
-import LibraryTopTabNavigator from './LibraryTopTabNavigator';
-import BottomTabBar from '../common/BottomTabBar';
+import React from 'react'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import SettingsView from '../Settings'
+import NowPlayingLayout from '../NowPlayingLayout'
+import ArtistsList from '../ArtistsList'
+import LibraryTopTabNavigator from './LibraryTopTabNavigator'
+import BottomTabBar from '../common/BottomTabBar'
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = () => {
   return (
@@ -16,7 +16,7 @@ const BottomTabNavigator = () => {
       <Tab.Screen name="Search" component={NowPlayingLayout} options={{ icon: 'search' } as any} />
       <Tab.Screen name="Settings" component={SettingsView} options={{ icon: 'settings' } as any} />
     </Tab.Navigator>
-  );
-};
+  )
+}
 
-export default BottomTabNavigator;
+export default BottomTabNavigator

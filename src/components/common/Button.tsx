@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { GestureResponderEvent, Pressable, Text } from 'react-native';
-import colors from '../../styles/colors';
-import text from '../../styles/text';
+import React, { useState } from 'react'
+import { GestureResponderEvent, Pressable, Text } from 'react-native'
+import colors from '../../styles/colors'
+import text from '../../styles/text'
 
 const Button: React.FC<{
-  title: string;
-  onPress: (event: GestureResponderEvent) => void;
+  title: string
+  onPress: (event: GestureResponderEvent) => void
 }> = ({ title, onPress }) => {
-  const [opacity, setOpacity] = useState(1);
+  const [opacity, setOpacity] = useState(1)
 
   return (
     <Pressable
@@ -25,7 +25,7 @@ const Button: React.FC<{
       }}>
       <Text style={{ ...text.button }}>{title}</Text>
     </Pressable>
-  );
-};
+  )
+}
 
-export default Button;
+export default Button

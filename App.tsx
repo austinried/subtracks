@@ -1,14 +1,14 @@
-import React from 'react';
-import { DarkTheme, NavigationContainer } from '@react-navigation/native';
-import SplashPage from './src/components/SplashPage';
-import RootNavigator from './src/components/navigation/RootNavigator';
-import { Provider } from 'jotai';
-import { StatusBar, View } from 'react-native';
-import colors from './src/styles/colors';
-import TrackPlayerState from './src/components/TrackPlayerState';
+import React from 'react'
+import { DarkTheme, NavigationContainer } from '@react-navigation/native'
+import SplashPage from './src/components/SplashPage'
+import RootNavigator from './src/components/navigation/RootNavigator'
+import { Provider } from 'jotai'
+import { StatusBar, View } from 'react-native'
+import colors from './src/styles/colors'
+import TrackPlayerState from './src/components/TrackPlayerState'
 
-const theme = { ...DarkTheme };
-theme.colors.background = colors.gradient.high;
+const theme = { ...DarkTheme }
+theme.colors.background = colors.gradient.high
 
 const App = () => (
   <Provider>
@@ -22,6 +22,6 @@ const App = () => (
       </SplashPage>
     </View>
   </Provider>
-);
+)
 
-export default App;
+export default App

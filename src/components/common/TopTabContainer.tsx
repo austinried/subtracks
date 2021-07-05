@@ -1,6 +1,6 @@
-import React from 'react';
-import LinearGradient from 'react-native-linear-gradient';
-import colors from '../../styles/colors';
+import React from 'react'
+import LinearGradient from 'react-native-linear-gradient'
+import colors from '../../styles/colors'
 
 const TopTabContainer: React.FC<{}> = ({ children }) => (
   <LinearGradient
@@ -11,6 +11,6 @@ const TopTabContainer: React.FC<{}> = ({ children }) => (
     }}>
     {children}
   </LinearGradient>
-);
+)
 
-export default TopTabContainer;
+export default TopTabContainer

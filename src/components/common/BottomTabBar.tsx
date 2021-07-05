@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Text, View, Pressable } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import textStyles from '../../styles/text';
-import colors from '../../styles/colors';
-import FastImage from 'react-native-fast-image';
+import React, { useState } from 'react'
+import { Text, View, Pressable } from 'react-native'
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import textStyles from '../../styles/text'
+import colors from '../../styles/colors'
+import FastImage from 'react-native-fast-image'
 
 const icons: { [key: string]: any } = {
   home: {
@@ -22,29 +22,29 @@ const icons: { [key: string]: any } = {
     regular: require('../../../res/settings.png'),
     fill: require('../../../res/settings-fill.png'),
   },
-};
+}
 
 const BottomTabButton: React.FC<{
-  routeKey: string;
-  label: string;
-  name: string;
-  isFocused: boolean;
-  img: { regular: number; fill: number };
-  navigation: any;
+  routeKey: string
+  label: string
+  name: string
+  isFocused: boolean
+  img: { regular: number; fill: number }
+  navigation: any
 }> = ({ routeKey, label, name, isFocused, img, navigation }) => {
-  const [opacity, setOpacity] = useState(1);
+  const [opacity, setOpacity] = useState(1)
 
   const onPress = () => {
     const event = navigation.emit({
       type: 'tabPress',
       target: routeKey,
       canPreventDefault: true,
-    });
+    })
 
     if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(name);
+      navigation.navigate(name)
     }
-  };
+  }
 
   return (
     <Pressable
@@ -72,8 +72,8 @@ const BottomTabButton: React.FC<{
         {label}
       </Text>
     </Pressable>
-  );
-};
+  )
+}
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
@@ -87,13 +87,13 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
         paddingHorizontal: 28,
       }}>
       {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key] as any;
+        const { options } = descriptors[route.key] as any
         const label =
           options.tabBarLabel !== undefined
             ? (options.tabBarLabel as string)
             : options.title !== undefined
             ? options.title
-            : route.name;
+            : route.name
 
         return (
           <BottomTabButton
@@ -105,10 +105,10 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             img={icons[options.icon]}
             navigation={navigation}
           />
-        );
+        )
       })}
     </View>
-  );
-};
+  )
+}
 
-export default BottomTabBar;
+export default BottomTabBar

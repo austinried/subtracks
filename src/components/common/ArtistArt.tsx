@@ -1,23 +1,23 @@
-import { useAtomValue } from 'jotai/utils';
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
-import { artistArtAtomFamily } from '../../state/music';
-import colors from '../../styles/colors';
-import CoverArt from './CoverArt';
+import { useAtomValue } from 'jotai/utils'
+import React from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
+import LinearGradient from 'react-native-linear-gradient'
+import { artistArtAtomFamily } from '../../state/music'
+import colors from '../../styles/colors'
+import CoverArt from './CoverArt'
 
 interface ArtistArtSizeProps {
-  height: number;
-  width: number;
+  height: number
+  width: number
 }
 
 interface ArtistArtXUpProps extends ArtistArtSizeProps {
-  coverArtUris: string[];
+  coverArtUris: string[]
 }
 
 interface ArtistArtProps extends ArtistArtSizeProps {
-  id: string;
+  id: string
 }
 
 const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, children }) => (
@@ -31,11 +31,11 @@ const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, chi
     }}>
     {children}
   </LinearGradient>
-);
+)
 
 const FourUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
-  const halfHeight = height / 2;
-  const halfWidth = width / 2;
+  const halfHeight = height / 2
+  const halfWidth = width / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
@@ -64,12 +64,12 @@ const FourUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) =>
         />
       </View>
     </PlaceholderContainer>
-  );
-};
+  )
+}
 
 const ThreeUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
-  const halfHeight = height / 2;
-  const halfWidth = width / 2;
+  const halfHeight = height / 2
+  const halfWidth = width / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
@@ -93,11 +93,11 @@ const ThreeUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) =
         />
       </View>
     </PlaceholderContainer>
-  );
-};
+  )
+}
 
 const TwoUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
-  const halfHeight = height / 2;
+  const halfHeight = height / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
@@ -116,16 +116,16 @@ const TwoUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => 
         />
       </View>
     </PlaceholderContainer>
-  );
-};
+  )
+}
 
 const OneUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
   return (
     <PlaceholderContainer height={height} width={width}>
       <FastImage source={{ uri: coverArtUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
     </PlaceholderContainer>
-  );
-};
+  )
+}
 
 const NoneUp: React.FC<ArtistArtSizeProps> = ({ height, width }) => {
   return (
@@ -139,35 +139,35 @@ const NoneUp: React.FC<ArtistArtSizeProps> = ({ height, width }) => {
         resizeMode={FastImage.resizeMode.cover}
       />
     </PlaceholderContainer>
-  );
-};
+  )
+}
 
 const ArtistArt: React.FC<ArtistArtProps> = ({ id, height, width }) => {
-  const artistArt = useAtomValue(artistArtAtomFamily(id));
+  const artistArt = useAtomValue(artistArtAtomFamily(id))
 
   const Placeholder = () => {
-    const none = <NoneUp height={height} width={width} />;
+    const none = <NoneUp height={height} width={width} />
 
     if (!artistArt || !artistArt.coverArtUris) {
-      return none;
+      return none
     }
-    const { coverArtUris } = artistArt;
+    const { coverArtUris } = artistArt
 
     if (coverArtUris.length >= 4) {
-      return <FourUp height={height} width={width} coverArtUris={coverArtUris} />;
+      return <FourUp height={height} width={width} coverArtUris={coverArtUris} />
     }
     if (coverArtUris.length === 3) {
-      return <ThreeUp height={height} width={width} coverArtUris={coverArtUris} />;
+      return <ThreeUp height={height} width={width} coverArtUris={coverArtUris} />
     }
     if (coverArtUris.length === 2) {
-      return <TwoUp height={height} width={width} coverArtUris={coverArtUris} />;
+      return <TwoUp height={height} width={width} coverArtUris={coverArtUris} />
     }
     if (coverArtUris.length === 1) {
-      return <OneUp height={height} width={width} coverArtUris={coverArtUris} />;
+      return <OneUp height={height} width={width} coverArtUris={coverArtUris} />
     }
 
-    return none;
-  };
+    return none
+  }
 
   return (
     <View
@@ -177,8 +177,8 @@ const ArtistArt: React.FC<ArtistArtProps> = ({ id, height, width }) => {
       }}>
       <CoverArt PlaceholderComponent={Placeholder} height={height} width={width} coverArtUri={artistArt?.uri} />
     </View>
-  );
-};
+  )
+}
 
 const ArtistArtFallback: React.FC<ArtistArtProps> = ({ height, width }) => (
   <View
@@ -190,12 +190,12 @@ const ArtistArtFallback: React.FC<ArtistArtProps> = ({ height, width }) => (
     }}>
     <ActivityIndicator size="small" color={colors.accent} />
   </View>
-);
+)
 
 const ArtistArtLoader: React.FC<ArtistArtProps> = props => (
   <React.Suspense fallback={<ArtistArtFallback {...props} />}>
     <ArtistArt {...props} />
   </React.Suspense>
-);
+)
 
-export default React.memo(ArtistArtLoader);
+export default React.memo(ArtistArtLoader)

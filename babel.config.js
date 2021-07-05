@@ -4,4 +4,4 @@ module.exports = {
     // reanimated has to be listed last in plugins
     'react-native-reanimated/plugin',
   ],
-};
+}

@@ -1,21 +1,21 @@
-import { useNavigation } from '@react-navigation/native';
-import { useAtomValue } from 'jotai/utils';
-import React, { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { Album } from '../../models/music';
-import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music';
-import textStyles from '../../styles/text';
-import AlbumArt from '../common/AlbumArt';
-import GradientFlatList from '../common/GradientFlatList';
+import { useNavigation } from '@react-navigation/native'
+import { useAtomValue } from 'jotai/utils'
+import React, { useEffect } from 'react'
+import { Pressable, Text, View } from 'react-native'
+import { Album } from '../../models/music'
+import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '../../state/music'
+import textStyles from '../../styles/text'
+import AlbumArt from '../common/AlbumArt'
+import GradientFlatList from '../common/GradientFlatList'
 
 const AlbumItem: React.FC<{
-  id: string;
-  name: string;
-  artist?: string;
+  id: string
+  name: string
+  artist?: string
 }> = ({ id, name, artist }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
 
-  const size = 125;
+  const size = 125
 
   return (
     <Pressable
@@ -44,26 +44,26 @@ const AlbumItem: React.FC<{
         </Text>
       </View>
     </Pressable>
-  );
-};
-const MemoAlbumItem = React.memo(AlbumItem);
+  )
+}
+const MemoAlbumItem = React.memo(AlbumItem)
 
 const AlbumListRenderItem: React.FC<{ item: Album }> = ({ item }) => (
   <MemoAlbumItem id={item.id} name={item.name} artist={item.artist} />
-);
+)
 
 const AlbumsList = () => {
-  const albums = useAtomValue(albumsAtom);
-  const updating = useAtomValue(albumsUpdatingAtom);
-  const updateAlbums = useUpdateAlbums();
+  const albums = useAtomValue(albumsAtom)
+  const updating = useAtomValue(albumsUpdatingAtom)
+  const updateAlbums = useUpdateAlbums()
 
-  const albumsList = Object.values(albums);
+  const albumsList = Object.values(albums)
 
   useEffect(() => {
     if (albumsList.length === 0) {
-      updateAlbums();
+      updateAlbums()
     }
-  });
+  })
 
   return (
     <View style={{ flex: 1 }}>
@@ -78,13 +78,13 @@ const AlbumsList = () => {
         overScrollMode="never"
       />
     </View>
-  );
-};
+  )
+}
 
 const AlbumsTab = () => (
   <React.Suspense fallback={<Text>Loading...</Text>}>
     <AlbumsList />
   </React.Suspense>
-);
+)
 
-export default React.memo(AlbumsTab);
+export default React.memo(AlbumsTab)

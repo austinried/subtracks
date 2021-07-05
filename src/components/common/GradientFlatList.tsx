@@ -1,10 +1,10 @@
-import React from 'react';
-import { FlatList, FlatListProps, useWindowDimensions } from 'react-native';
-import colors from '../../styles/colors';
-import GradientBackground from './GradientBackground';
+import React from 'react'
+import { FlatList, FlatListProps, useWindowDimensions } from 'react-native'
+import colors from '../../styles/colors'
+import GradientBackground from './GradientBackground'
 
 function GradientFlatList<ItemT>(props: FlatListProps<ItemT>) {
-  const layout = useWindowDimensions();
+  const layout = useWindowDimensions()
 
   return (
     <FlatList
@@ -18,7 +18,7 @@ function GradientFlatList<ItemT>(props: FlatListProps<ItemT>) {
         marginBottom: -layout.height,
       }}
     />
-  );
+  )
 }
 
-export default GradientFlatList;
+export default GradientFlatList

@@ -1,16 +1,16 @@
-import { useNavigation } from '@react-navigation/native';
-import { useAtomValue } from 'jotai/utils';
-import React, { useEffect } from 'react';
-import { Pressable } from 'react-native';
-import { Text } from 'react-native';
-import { Artist } from '../../models/music';
-import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music';
-import textStyles from '../../styles/text';
-import ArtistArt from '../common/ArtistArt';
-import GradientFlatList from '../common/GradientFlatList';
+import { useNavigation } from '@react-navigation/native'
+import { useAtomValue } from 'jotai/utils'
+import React, { useEffect } from 'react'
+import { Pressable } from 'react-native'
+import { Text } from 'react-native'
+import { Artist } from '../../models/music'
+import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '../../state/music'
+import textStyles from '../../styles/text'
+import ArtistArt from '../common/ArtistArt'
+import GradientFlatList from '../common/GradientFlatList'
 
 const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
 
   return (
     <Pressable
@@ -30,27 +30,27 @@ const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
         {item.name}
       </Text>
     </Pressable>
-  );
-};
+  )
+}
 
 const ArtistItemLoader: React.FC<{ item: Artist }> = props => (
   <React.Suspense fallback={<Text>Loading...</Text>}>
     <ArtistItem {...props} />
   </React.Suspense>
-);
+)
 
 const ArtistsList = () => {
-  const artists = useAtomValue(artistsAtom);
-  const updating = useAtomValue(artistsUpdatingAtom);
-  const updateArtists = useUpdateArtists();
+  const artists = useAtomValue(artistsAtom)
+  const updating = useAtomValue(artistsUpdatingAtom)
+  const updateArtists = useUpdateArtists()
 
   useEffect(() => {
     if (artists.length === 0) {
-      updateArtists();
+      updateArtists()
     }
-  });
+  })
 
-  const renderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItemLoader item={item} />;
+  const renderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItemLoader item={item} />
 
   return (
     <GradientFlatList
@@ -61,9 +61,9 @@ const ArtistsList = () => {
       refreshing={updating}
       overScrollMode="never"
     />
-  );
-};
+  )
+}
 
-const ArtistsTab = () => <ArtistsList />;
+const ArtistsTab = () => <ArtistsList />
 
-export default ArtistsTab;
+export default ArtistsTab

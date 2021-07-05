@@ -1,17 +1,17 @@
-import React from 'react';
-import { useWindowDimensions, ViewStyle } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import colorStyles from '../../styles/colors';
+import React from 'react'
+import { useWindowDimensions, ViewStyle } from 'react-native'
+import LinearGradient from 'react-native-linear-gradient'
+import colorStyles from '../../styles/colors'
 
 const GradientBackground: React.FC<{
-  height?: number | string;
-  width?: number | string;
-  position?: 'relative' | 'absolute';
-  style?: ViewStyle;
-  colors?: string[];
-  locations?: number[];
+  height?: number | string
+  width?: number | string
+  position?: 'relative' | 'absolute'
+  style?: ViewStyle
+  colors?: string[]
+  locations?: number[]
 }> = ({ height, width, position, style, colors, locations, children }) => {
-  const layout = useWindowDimensions();
+  const layout = useWindowDimensions()
 
   return (
     <LinearGradient
@@ -25,7 +25,7 @@ const GradientBackground: React.FC<{
       }}>
       {children}
     </LinearGradient>
-  );
-};
+  )
+}
 
-export default GradientBackground;
+export default GradientBackground

@@ -1,20 +1,20 @@
-import { useAtomValue } from 'jotai/utils';
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
-import { albumArtAtomFamily } from '../../state/music';
-import colors from '../../styles/colors';
-import CoverArt from './CoverArt';
+import { useAtomValue } from 'jotai/utils'
+import React from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
+import LinearGradient from 'react-native-linear-gradient'
+import { albumArtAtomFamily } from '../../state/music'
+import colors from '../../styles/colors'
+import CoverArt from './CoverArt'
 
 interface AlbumArtProps {
-  id: string;
-  height: number;
-  width: number;
+  id: string
+  height: number
+  width: number
 }
 
 const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
-  const albumArt = useAtomValue(albumArtAtomFamily(id));
+  const albumArt = useAtomValue(albumArtAtomFamily(id))
 
   const Placeholder = () => (
     <LinearGradient colors={[colors.accent, colors.accentLow]}>
@@ -24,7 +24,7 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
         resizeMode={FastImage.resizeMode.contain}
       />
     </LinearGradient>
-  );
+  )
 
   return (
     <CoverArt
@@ -33,8 +33,8 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
       width={width}
       coverArtUri={width > 128 ? albumArt?.uri : albumArt?.thumbUri}
     />
-  );
-};
+  )
+}
 
 const AlbumArtFallback: React.FC<AlbumArtProps> = ({ height, width }) => (
   <View
@@ -46,12 +46,12 @@ const AlbumArtFallback: React.FC<AlbumArtProps> = ({ height, width }) => (
     }}>
     <ActivityIndicator size="small" color={colors.accent} />
   </View>
-);
+)
 
 const AlbumArtLoader: React.FC<AlbumArtProps> = props => (
   <React.Suspense fallback={<AlbumArtFallback {...props} />}>
     <AlbumArt {...props} />
   </React.Suspense>
-);
+)
 
-export default React.memo(AlbumArtLoader);
+export default React.memo(AlbumArtLoader)

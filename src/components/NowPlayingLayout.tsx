@@ -1,15 +1,15 @@
-import { useAtomValue } from 'jotai/utils';
-import React from 'react';
-import { Pressable, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import TrackPlayer, { State } from 'react-native-track-player';
-import { currentQueueNameAtom, currentTrackAtom, playerStateAtom } from '../state/trackplayer';
-import text from '../styles/text';
-import CoverArt from './common/CoverArt';
-import ImageGradientBackground from './common/ImageGradientBackground';
+import { useAtomValue } from 'jotai/utils'
+import React from 'react'
+import { Pressable, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
+import TrackPlayer, { State } from 'react-native-track-player'
+import { currentQueueNameAtom, currentTrackAtom, playerStateAtom } from '../state/trackplayer'
+import text from '../styles/text'
+import CoverArt from './common/CoverArt'
+import ImageGradientBackground from './common/ImageGradientBackground'
 
 const NowPlayingHeader = () => {
-  const queueName = useAtomValue(currentQueueNameAtom);
+  const queueName = useAtomValue(currentQueueNameAtom)
 
   return (
     <View style={headerStyles.container}>
@@ -19,8 +19,8 @@ const NowPlayingHeader = () => {
       </Text>
       <FastImage source={require('../../res/more_vertical.png')} style={headerStyles.icons} tintColor="white" />
     </View>
-  );
-};
+  )
+}
 
 const headerStyles = StyleSheet.create({
   container: {
@@ -38,13 +38,13 @@ const headerStyles = StyleSheet.create({
   queueName: {
     ...text.paragraph,
   },
-});
+})
 
 const SongCoverArt = () => {
-  const track = useAtomValue(currentTrackAtom);
-  const layout = useWindowDimensions();
+  const track = useAtomValue(currentTrackAtom)
+  const layout = useWindowDimensions()
 
-  const size = layout.width - layout.width / 7;
+  const size = layout.width - layout.width / 7
 
   return (
     <View style={coverArtStyles.container}>
@@ -55,8 +55,8 @@ const SongCoverArt = () => {
         coverArtUri={track?.artwork as string}
       />
     </View>
-  );
-};
+  )
+}
 
 const coverArtStyles = StyleSheet.create({
   container: {
@@ -64,18 +64,18 @@ const coverArtStyles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-});
+})
 
 const SongInfo = () => {
-  const track = useAtomValue(currentTrackAtom);
+  const track = useAtomValue(currentTrackAtom)
 
   return (
     <View style={infoStyles.container}>
       <Text style={infoStyles.title}>{track?.title}</Text>
       <Text style={infoStyles.artist}>{track?.artist}</Text>
     </View>
-  );
-};
+  )
+}
 
 const infoStyles = StyleSheet.create({
   container: {
@@ -94,33 +94,33 @@ const infoStyles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-});
+})
 
 const PlayerControls = () => {
-  const state = useAtomValue(playerStateAtom);
+  const state = useAtomValue(playerStateAtom)
 
-  let playPauseIcon: number;
-  let playPauseStyle: any;
-  let playPauseAction: () => void;
+  let playPauseIcon: number
+  let playPauseStyle: any
+  let playPauseAction: () => void
 
   switch (state) {
     case State.Playing:
     case State.Buffering:
     case State.Connecting:
-      playPauseIcon = require('../../res/pause_circle-fill.png');
-      playPauseStyle = controlsStyles.enabled;
-      playPauseAction = () => TrackPlayer.pause();
-      break;
+      playPauseIcon = require('../../res/pause_circle-fill.png')
+      playPauseStyle = controlsStyles.enabled
+      playPauseAction = () => TrackPlayer.pause()
+      break
     case State.Paused:
-      playPauseIcon = require('../../res/play_circle-fill.png');
-      playPauseStyle = controlsStyles.enabled;
-      playPauseAction = () => TrackPlayer.play();
-      break;
+      playPauseIcon = require('../../res/play_circle-fill.png')
+      playPauseStyle = controlsStyles.enabled
+      playPauseAction = () => TrackPlayer.play()
+      break
     default:
-      playPauseIcon = require('../../res/play_circle-fill.png');
-      playPauseStyle = controlsStyles.disabled;
-      playPauseAction = () => {};
-      break;
+      playPauseIcon = require('../../res/play_circle-fill.png')
+      playPauseStyle = controlsStyles.disabled
+      playPauseAction = () => {}
+      break
   }
 
   return (
@@ -139,8 +139,8 @@ const PlayerControls = () => {
         style={{ ...controlsStyles.skip, ...playPauseStyle }}
       />
     </View>
-  );
-};
+  )
+}
 
 const controlsStyles = StyleSheet.create({
   container: {
@@ -165,10 +165,10 @@ const controlsStyles = StyleSheet.create({
   disabled: {
     opacity: 0.35,
   },
-});
+})
 
 const NowPlayingLayout = () => {
-  const track = useAtomValue(currentTrackAtom);
+  const track = useAtomValue(currentTrackAtom)
 
   return (
     <View
@@ -182,7 +182,7 @@ const NowPlayingLayout = () => {
       <SongInfo />
       <PlayerControls />
     </View>
-  );
-};
+  )
+}
 
-export default NowPlayingLayout;
+export default NowPlayingLayout
