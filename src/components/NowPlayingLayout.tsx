@@ -13,35 +13,30 @@ const NowPlayingHeader = () => {
 
   return (
     <View style={headerStyles.container}>
-      <FastImage source={require('../../res/arrow_left-fill.png')} style={headerStyles.backArrow} tintColor="white" />
+      <FastImage source={require('../../res/arrow_left-fill.png')} style={headerStyles.icons} tintColor="white" />
       <Text numberOfLines={2} style={headerStyles.queueName}>
         {queueName || 'Nothing playing...'}
       </Text>
-      <FastImage source={require('../../res/more_vertical.png')} style={headerStyles.more} tintColor="white" />
+      <FastImage source={require('../../res/more_vertical.png')} style={headerStyles.icons} tintColor="white" />
     </View>
   );
 };
 
 const headerStyles = StyleSheet.create({
   container: {
-    height: 60,
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     // backgroundColor: 'green',
   },
-  backArrow: {
-    height: 24,
-    width: 24,
-    margin: 20,
+  icons: {
+    height: 22,
+    width: 22,
+    margin: 17,
   },
   queueName: {
     ...text.paragraph,
-  },
-  more: {
-    height: 24,
-    width: 24,
-    margin: 20,
   },
 });
 
@@ -110,6 +105,8 @@ const PlayerControls = () => {
 
   switch (state) {
     case State.Playing:
+    case State.Buffering:
+    case State.Connecting:
       playPauseIcon = require('../../res/pause_circle-fill.png');
       playPauseStyle = controlsStyles.enabled;
       playPauseAction = () => TrackPlayer.pause();
@@ -118,12 +115,6 @@ const PlayerControls = () => {
       playPauseIcon = require('../../res/play_circle-fill.png');
       playPauseStyle = controlsStyles.enabled;
       playPauseAction = () => TrackPlayer.play();
-      break;
-    case State.Buffering:
-    case State.Connecting:
-      playPauseIcon = require('../../res/pause_circle-fill.png');
-      playPauseStyle = controlsStyles.disabled;
-      playPauseAction = () => {};
       break;
     default:
       playPauseIcon = require('../../res/play_circle-fill.png');
