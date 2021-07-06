@@ -2,12 +2,16 @@ import { useAppState } from '@react-native-community/hooks'
 import { useAtomValue, useUpdateAtom } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { View } from 'react-native'
-import TrackPlayer, { Event, State, useTrackPlayerEvents } from 'react-native-track-player'
+import { Event, State, useProgress, useTrackPlayerEvents } from 'react-native-track-player'
 import {
   currentTrackAtom,
   playerStateAtom,
+  progressAtom,
+  progressSubsAtom,
   queueWriteAtom,
   useRefreshCurrentTrack,
+  useRefreshPlayerState,
+  useRefreshProgress,
   useRefreshQueue,
 } from '../state/trackplayer'
 
@@ -67,13 +71,14 @@ const CurrentTrackState = () => {
 
 const PlayerState = () => {
   const setPlayerState = useUpdateAtom(playerStateAtom)
+  const refreshPlayerState = useRefreshPlayerState()
 
   const update = async (payload?: Payload) => {
     if (payload?.type === Event.RemoteStop) {
       setPlayerState(State.None)
       return
     }
-    setPlayerState(payload?.state || (await TrackPlayer.getState()))
+    await refreshPlayerState()
   }
 
   return <TrackPlayerEventResponder events={[Event.PlaybackState, Event.RemoteStop]} update={update} />
@@ -94,6 +99,41 @@ const QueueState = () => {
   return <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
 }
 
+const ProgressHook = () => {
+  const setProgress = useUpdateAtom(progressAtom)
+  const progress = useProgress(250)
+
+  useEffect(() => {
+    setProgress(progress)
+  }, [setProgress, progress])
+
+  return <></>
+}
+
+const ProgressState = () => {
+  const setProgress = useUpdateAtom(progressAtom)
+  const refreshProgress = useRefreshProgress()
+  const progressSubs = useAtomValue(progressSubsAtom)
+
+  const update = async (payload?: Payload) => {
+    if (payload) {
+      setProgress({ position: 0, duration: 0, buffered: 0 })
+      return
+    }
+    await refreshProgress()
+  }
+
+  if (progressSubs > 0) {
+    return (
+      <>
+        <ProgressHook />
+        <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
+      </>
+    )
+  }
+  return <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
+}
+
 const Debug = () => {
   const value = useAtomValue(currentTrackAtom)
 
@@ -109,6 +149,7 @@ const TrackPlayerState = () => (
     <CurrentTrackState />
     <PlayerState />
     <QueueState />
+    <ProgressState />
     <Debug />
   </View>
 )

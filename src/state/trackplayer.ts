@@ -1,7 +1,8 @@
-import { atom } from 'jotai'
-import TrackPlayer, { State, Track } from 'react-native-track-player'
 import equal from 'fast-deep-equal'
-import { useUpdateAtom } from 'jotai/utils'
+import { atom } from 'jotai'
+import { useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { useEffect } from 'react'
+import TrackPlayer, { State, Track } from 'react-native-track-player'
 import { Song } from '../models/music'
 import { PromiseQueue } from '../util'
 
@@ -11,6 +12,12 @@ type TrackExt = Track & {
 }
 
 type OptionalTrackExt = TrackExt | undefined
+
+type Progress = {
+  position: number
+  duration: number
+  buffered: number
+}
 
 const playerState = atom<State>(State.None)
 export const playerStateAtom = atom<State, State>(
@@ -33,7 +40,7 @@ export const currentTrackAtom = atom<OptionalTrackExt, OptionalTrackExt>(
 )
 
 const _queue = atom<TrackExt[]>([])
-export const queueAtom = atom<TrackExt[]>(get => get(_queue))
+export const queueReadAtom = atom<TrackExt[]>(get => get(_queue))
 export const queueWriteAtom = atom<TrackExt[], TrackExt[]>(
   get => get(_queue),
   (get, set, update) => {
@@ -51,6 +58,25 @@ export const queueNameAtom = atom<string | undefined>(get => {
   return undefined
 })
 
+const _progress = atom<Progress>({ position: 0, duration: 0, buffered: 0 })
+export const progressAtom = atom<Progress, Progress>(
+  get => get(_progress),
+  (get, set, update) => {
+    if (!equal(get(_progress), update)) {
+      set(_progress, update)
+    }
+  },
+)
+
+const progressSubs = atom(0)
+export const progressSubsAtom = atom(get => get(progressSubs))
+const addProgressSub = atom(null, (get, set) => {
+  set(progressSubs, get(progressSubs) + 1)
+})
+const removeProgressSub = atom(null, (get, set) => {
+  set(progressSubs, get(progressSubs) - 1)
+})
+
 const trackPlayerCommands = new PromiseQueue(1)
 
 const getQueue = async (): Promise<TrackExt[]> => {
@@ -59,6 +85,23 @@ const getQueue = async (): Promise<TrackExt[]> => {
 
 const getTrack = async (index: number): Promise<TrackExt> => {
   return ((await TrackPlayer.getTrack(index)) as TrackExt) || undefined
+}
+
+const getPlayerState = async (): Promise<State> => {
+  return (await TrackPlayer.getState()) || State.None
+}
+
+const getProgress = async (): Promise<Progress> => {
+  const [position, duration, buffered] = await Promise.all([
+    TrackPlayer.getPosition(),
+    TrackPlayer.getDuration(),
+    TrackPlayer.getBufferedPosition(),
+  ])
+  return {
+    position: position || 0,
+    duration: duration || 0,
+    buffered: buffered || 0,
+  }
 }
 
 export const useRefreshQueue = () => {
@@ -81,6 +124,24 @@ export const useRefreshCurrentTrack = () => {
       } else {
         setCurrentTrack(undefined)
       }
+    })
+}
+
+export const useRefreshPlayerState = () => {
+  const setPlayerState = useUpdateAtom(playerStateAtom)
+
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
+      setPlayerState(await getPlayerState())
+    })
+}
+
+export const useRefreshProgress = () => {
+  const setProgress = useUpdateAtom(progressAtom)
+
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
+      setProgress(await getProgress())
     })
 }
 
@@ -177,6 +238,19 @@ export const useSetQueue = () => {
 
       setQueue(await getQueue())
     })
+}
+
+export const useProgress = () => {
+  const progress = useAtomValue(progressAtom)
+  const addSub = useUpdateAtom(addProgressSub)
+  const removeSub = useUpdateAtom(removeProgressSub)
+
+  useEffect(() => {
+    addSub()
+    return removeSub
+  }, [addSub, removeSub])
+
+  return progress
 }
 
 function mapSongToTrack(song: Song, queueName: string): TrackExt {

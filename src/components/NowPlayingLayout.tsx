@@ -2,8 +2,15 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
-import TrackPlayer, { State, useProgress } from 'react-native-track-player'
-import { queueNameAtom, currentTrackAtom, playerStateAtom, useNext, usePrevious } from '../state/trackplayer'
+import TrackPlayer, { State } from 'react-native-track-player'
+import {
+  queueNameAtom,
+  currentTrackAtom,
+  playerStateAtom,
+  useNext,
+  usePrevious,
+  useProgress,
+} from '../state/trackplayer'
 import colors from '../styles/colors'
 import text, { Font } from '../styles/text'
 import { formatDuration } from '../util'
@@ -100,7 +107,7 @@ const infoStyles = StyleSheet.create({
 })
 
 const SeekBar = () => {
-  const { position, duration } = useProgress(250)
+  const { position, duration } = useProgress()
 
   let progress = 0
   if (duration > 0) {
