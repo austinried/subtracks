@@ -3,6 +3,7 @@ import TrackPlayer, { State, Track } from 'react-native-track-player'
 import equal from 'fast-deep-equal'
 import { useUpdateAtom } from 'jotai/utils'
 import { Song } from '../models/music'
+import { PromiseQueue } from '../util'
 
 type TrackExt = Track & {
   id: string
@@ -36,7 +37,7 @@ export const queueAtom = atom<TrackExt[]>(get => get(_queue))
 export const queueWriteAtom = atom<TrackExt[], TrackExt[]>(
   get => get(_queue),
   (get, set, update) => {
-    if (get(_queue) !== update) {
+    if (!equal(get(_queue), update)) {
       set(_queue, update)
     }
   },
@@ -50,19 +51,44 @@ export const queueNameAtom = atom<string | undefined>(get => {
   return undefined
 })
 
-export const getQueue = async (): Promise<TrackExt[]> => {
+const trackPlayerCommands = new PromiseQueue(1)
+
+const getQueue = async (): Promise<TrackExt[]> => {
   return ((await TrackPlayer.getQueue()) as TrackExt[]) || []
 }
 
-export const getTrack = async (index: number): Promise<TrackExt> => {
+const getTrack = async (index: number): Promise<TrackExt> => {
   return ((await TrackPlayer.getTrack(index)) as TrackExt) || undefined
+}
+
+export const useRefreshQueue = () => {
+  const setQueue = useUpdateAtom(queueWriteAtom)
+
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
+      setQueue(await getQueue())
+    })
+}
+
+export const useRefreshCurrentTrack = () => {
+  const setCurrentTrack = useUpdateAtom(currentTrackAtom)
+
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
+      const index = await TrackPlayer.getCurrentTrack()
+      if (typeof index === 'number' && index >= 0) {
+        setCurrentTrack(await getTrack(index))
+      } else {
+        setCurrentTrack(undefined)
+      }
+    })
 }
 
 export const usePrevious = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
-  return async () => {
-    try {
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
       const [current, queue] = await Promise.all([await TrackPlayer.getCurrentTrack(), await getQueue()])
       if (current > 0) {
         await TrackPlayer.skipToPrevious()
@@ -71,15 +97,14 @@ export const usePrevious = () => {
         await TrackPlayer.seekTo(0)
       }
       await TrackPlayer.play()
-    } catch {}
-  }
+    })
 }
 
 export const useNext = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
-  return async () => {
-    try {
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
       const [current, queue] = await Promise.all([await TrackPlayer.getCurrentTrack(), await getQueue()])
       if (current >= queue.length - 1) {
         await TrackPlayer.skip(0)
@@ -90,64 +115,68 @@ export const useNext = () => {
         setCurrentTrack(queue[current + 1])
         await TrackPlayer.play()
       }
-    } catch {}
-  }
+    })
 }
 
 export const useAdd = () => {
   const setQueue = useUpdateAtom(queueWriteAtom)
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
-  return async (tracks: TrackExt | TrackExt[], insertBeforeindex?: number) => {
-    await TrackPlayer.add(tracks, insertBeforeindex)
+  return (tracks: TrackExt | TrackExt[], insertBeforeindex?: number) =>
+    trackPlayerCommands.enqueue(async () => {
+      await TrackPlayer.add(tracks, insertBeforeindex)
 
-    const queue = await getQueue()
-    setQueue(queue)
-    setCurrentTrack(queue.length > 0 ? queue[await TrackPlayer.getCurrentTrack()] : undefined)
-  }
+      const queue = await getQueue()
+      setQueue(queue)
+      setCurrentTrack(queue.length > 0 ? queue[await TrackPlayer.getCurrentTrack()] : undefined)
+    })
 }
 
-export const useReset = () => {
+export const useReset = (enqueue = true) => {
   const setQueue = useUpdateAtom(queueWriteAtom)
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
-  return async () => {
+  const reset = async () => {
     await TrackPlayer.reset()
     setQueue([])
     setCurrentTrack(undefined)
   }
+
+  return enqueue ? () => trackPlayerCommands.enqueue(reset) : reset
 }
 
 export const useSetQueue = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
   const setQueue = useUpdateAtom(queueWriteAtom)
+  const reset = useReset(false)
 
-  return async (songs: Song[], name: string, playId?: string) => {
-    await TrackPlayer.reset()
-    const tracks = songs.map(s => mapSongToTrack(s, name))
+  return async (songs: Song[], name: string, playId?: string) =>
+    trackPlayerCommands.enqueue(async () => {
+      await reset()
+      const tracks = songs.map(s => mapSongToTrack(s, name))
 
-    if (playId) {
-      setCurrentTrack(tracks.find(t => t.id === playId))
-    }
+      if (playId) {
+        setCurrentTrack(tracks.find(t => t.id === playId))
+      }
 
-    if (!playId) {
-      await TrackPlayer.add(tracks)
-    } else if (playId === tracks[0].id) {
-      await TrackPlayer.add(tracks)
-      await TrackPlayer.play()
-    } else {
-      const playIndex = tracks.findIndex(t => t.id === playId)
-      const tracks1 = tracks.slice(0, playIndex)
-      const tracks2 = tracks.slice(playIndex)
+      if (!playId) {
+        await TrackPlayer.add(tracks)
+      } else if (playId === tracks[0].id) {
+        await TrackPlayer.add(tracks)
+        await TrackPlayer.play()
+      } else {
+        const playIndex = tracks.findIndex(t => t.id === playId)
+        const tracks1 = tracks.slice(0, playIndex)
+        const tracks2 = tracks.slice(playIndex)
 
-      await TrackPlayer.add(tracks2)
-      await TrackPlayer.play()
+        await TrackPlayer.add(tracks2)
+        await TrackPlayer.play()
 
-      await TrackPlayer.add(tracks1, 0)
-    }
+        await TrackPlayer.add(tracks1, 0)
+      }
 
-    setQueue(await getQueue())
-  }
+      setQueue(await getQueue())
+    })
 }
 
 function mapSongToTrack(song: Song, queueName: string): TrackExt {

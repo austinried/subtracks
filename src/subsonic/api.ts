@@ -26,6 +26,7 @@ import {
 } from './responses'
 import { Server } from '../models/settings'
 import paths from '../paths'
+import { PromiseQueue } from '../util'
 
 export class SubsonicApiError extends Error {
   method: string
@@ -42,37 +43,7 @@ export class SubsonicApiError extends Error {
   }
 }
 
-type QueuePromise = () => Promise<any>
-
-class Queue {
-  maxSimultaneously: number
-
-  private active = 0
-  private queue: QueuePromise[] = []
-
-  constructor(maxSimultaneously = 1) {
-    this.maxSimultaneously = maxSimultaneously
-  }
-
-  async enqueue(func: QueuePromise) {
-    if (++this.active > this.maxSimultaneously) {
-      await new Promise(resolve => this.queue.push(resolve as QueuePromise))
-    }
-
-    try {
-      return await func()
-    } catch (err) {
-      throw err
-    } finally {
-      this.active--
-      if (this.queue.length) {
-        this.queue.shift()?.()
-      }
-    }
-  }
-}
-
-const downloadQueue = new Queue(1)
+const downloadQueue = new PromiseQueue(1)
 
 export class SubsonicApiClient {
   address: string

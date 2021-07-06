@@ -2,8 +2,14 @@ import { useAppState } from '@react-native-community/hooks'
 import { useAtomValue, useUpdateAtom } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { View } from 'react-native'
-import TrackPlayer, { Event, useTrackPlayerEvents } from 'react-native-track-player'
-import { currentTrackAtom, getQueue, getTrack, playerStateAtom, queueWriteAtom } from '../state/trackplayer'
+import TrackPlayer, { Event, State, useTrackPlayerEvents } from 'react-native-track-player'
+import {
+  currentTrackAtom,
+  playerStateAtom,
+  queueWriteAtom,
+  useRefreshCurrentTrack,
+  useRefreshQueue,
+} from '../state/trackplayer'
 
 const AppActiveResponder: React.FC<{
   update: () => void
@@ -32,23 +38,16 @@ const TrackPlayerEventResponder: React.FC<{
 
 const CurrentTrackState = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
+  const refreshCurrentTrack = useRefreshCurrentTrack()
 
   const update = async (payload?: Payload) => {
-    if (payload?.type === Event.PlaybackQueueEnded && 'track' in payload) {
+    const queueEnded = payload?.type === Event.PlaybackQueueEnded && 'track' in payload
+    const remoteStop = payload?.type === Event.RemoteStop
+    if (queueEnded || remoteStop) {
       setCurrentTrack(undefined)
       return
     }
-
-    const index = await TrackPlayer.getCurrentTrack()
-    if (index !== null && index >= 0) {
-      const track = await getTrack(index)
-      if (track !== null) {
-        setCurrentTrack(track)
-        return
-      }
-    }
-
-    setCurrentTrack(undefined)
+    await refreshCurrentTrack()
   }
 
   return (
@@ -70,31 +69,36 @@ const PlayerState = () => {
   const setPlayerState = useUpdateAtom(playerStateAtom)
 
   const update = async (payload?: Payload) => {
+    if (payload?.type === Event.RemoteStop) {
+      setPlayerState(State.None)
+      return
+    }
     setPlayerState(payload?.state || (await TrackPlayer.getState()))
   }
 
-  return <TrackPlayerEventResponder events={[Event.PlaybackState]} update={update} />
+  return <TrackPlayerEventResponder events={[Event.PlaybackState, Event.RemoteStop]} update={update} />
 }
 
 const QueueState = () => {
   const setQueue = useUpdateAtom(queueWriteAtom)
+  const refreshQueue = useRefreshQueue()
 
   const update = async (payload?: Payload) => {
     if (payload) {
       setQueue([])
       return
     }
-    setQueue(await getQueue())
+    await refreshQueue()
   }
 
   return <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
 }
 
 const Debug = () => {
-  const value = useAtomValue(queueWriteAtom)
+  const value = useAtomValue(currentTrackAtom)
 
   useEffect(() => {
-    console.log(value.map(t => t.title))
+    // ToastAndroid.show(value?.title || 'undefined', 1)
   }, [value])
 
   return <></>
