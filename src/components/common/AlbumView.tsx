@@ -10,9 +10,8 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { useSetQueue } from '../../hooks/trackplayer'
 import { albumAtomFamily } from '../../state/music'
-import { currentTrackAtom } from '../../state/trackplayer'
+import { currentTrackAtom, useSetQueue } from '../../state/trackplayer'
 import colors from '../../styles/colors'
 import text from '../../styles/text'
 import AlbumArt from './AlbumArt'

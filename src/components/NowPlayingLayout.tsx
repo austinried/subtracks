@@ -1,17 +1,18 @@
 import { useAtomValue } from 'jotai/utils'
 import React from 'react'
-import { Pressable, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import TrackPlayer, { State, useProgress } from 'react-native-track-player'
-import { currentQueueNameAtom, currentTrackAtom, playerStateAtom } from '../state/trackplayer'
+import { queueNameAtom, currentTrackAtom, playerStateAtom, useNext, usePrevious } from '../state/trackplayer'
 import colors from '../styles/colors'
 import text, { Font } from '../styles/text'
 import { formatDuration } from '../util'
 import CoverArt from './common/CoverArt'
 import ImageGradientBackground from './common/ImageGradientBackground'
+import PressableImage from './common/PressableImage'
 
 const NowPlayingHeader = () => {
-  const queueName = useAtomValue(currentQueueNameAtom)
+  const queueName = useAtomValue(queueNameAtom)
 
   return (
     <View style={headerStyles.container}>
@@ -163,45 +164,52 @@ const seekStyles = StyleSheet.create({
 
 const PlayerControls = () => {
   const state = useAtomValue(playerStateAtom)
+  const next = useNext()
+  const previous = usePrevious()
 
   let playPauseIcon: number
-  let playPauseStyle: any
-  let playPauseAction: () => void
+  let playPauseAction: undefined | (() => void)
+  let disabled: boolean
 
   switch (state) {
     case State.Playing:
     case State.Buffering:
     case State.Connecting:
+      disabled = false
       playPauseIcon = require('../../res/pause_circle-fill.png')
-      playPauseStyle = controlsStyles.enabled
       playPauseAction = () => TrackPlayer.pause()
       break
     case State.Paused:
+      disabled = false
       playPauseIcon = require('../../res/play_circle-fill.png')
-      playPauseStyle = controlsStyles.enabled
       playPauseAction = () => TrackPlayer.play()
       break
     default:
+      disabled = true
       playPauseIcon = require('../../res/play_circle-fill.png')
-      playPauseStyle = controlsStyles.disabled
-      playPauseAction = () => {}
+      playPauseAction = undefined
       break
   }
 
   return (
     <View style={controlsStyles.container}>
-      <FastImage
+      <PressableImage
+        onPress={disabled ? undefined : previous}
         source={require('../../res/previous-fill.png')}
-        tintColor="white"
-        style={{ ...controlsStyles.skip, ...playPauseStyle }}
+        style={controlsStyles.skip}
+        disabled={disabled}
       />
-      <Pressable onPress={playPauseAction}>
-        <FastImage source={playPauseIcon} tintColor="white" style={{ ...controlsStyles.play, ...playPauseStyle }} />
-      </Pressable>
-      <FastImage
+      <PressableImage
+        onPress={playPauseAction}
+        source={playPauseIcon}
+        style={controlsStyles.play}
+        disabled={disabled}
+      />
+      <PressableImage
+        onPress={disabled ? undefined : next}
         source={require('../../res/next-fill.png')}
-        tintColor="white"
-        style={{ ...controlsStyles.skip, ...playPauseStyle }}
+        style={controlsStyles.skip}
+        disabled={disabled}
       />
     </View>
   )
@@ -223,12 +231,6 @@ const controlsStyles = StyleSheet.create({
   play: {
     height: 90,
     width: 90,
-  },
-  enabled: {
-    opacity: 1,
-  },
-  disabled: {
-    opacity: 0.35,
   },
 })
 

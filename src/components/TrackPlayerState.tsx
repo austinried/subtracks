@@ -1,19 +1,47 @@
-import React, { useCallback, useEffect } from 'react'
-import TrackPlayer, { Event, State, useTrackPlayerEvents } from 'react-native-track-player'
 import { useAppState } from '@react-native-community/hooks'
-import { useUpdateAtom, useAtomValue } from 'jotai/utils'
-import { currentQueueNameAtom, currentTrackAtom, playerStateAtom } from '../state/trackplayer'
+import { useAtomValue, useUpdateAtom } from 'jotai/utils'
+import React, { useEffect } from 'react'
 import { View } from 'react-native'
+import TrackPlayer, { Event, useTrackPlayerEvents } from 'react-native-track-player'
+import { currentTrackAtom, getQueue, getTrack, playerStateAtom, queueWriteAtom } from '../state/trackplayer'
+
+const AppActiveResponder: React.FC<{
+  update: () => void
+}> = ({ update }) => {
+  const appState = useAppState()
+
+  useEffect(() => {
+    if (appState === 'active') {
+      update()
+    }
+  }, [appState, update])
+
+  return <></>
+}
+
+type Payload = { type: Event; [key: string]: any }
+
+const TrackPlayerEventResponder: React.FC<{
+  update: (payload?: Payload) => void
+  events: Event[]
+}> = ({ update, events }) => {
+  useTrackPlayerEvents(events, update)
+
+  return <AppActiveResponder update={update} />
+}
 
 const CurrentTrackState = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
-  const appState = useAppState()
 
-  const update = useCallback(async () => {
+  const update = async (payload?: Payload) => {
+    if (payload?.type === Event.PlaybackQueueEnded && 'track' in payload) {
+      setCurrentTrack(undefined)
+      return
+    }
+
     const index = await TrackPlayer.getCurrentTrack()
-
     if (index !== null && index >= 0) {
-      const track = await TrackPlayer.getTrack(index)
+      const track = await getTrack(index)
       if (track !== null) {
         setCurrentTrack(track)
         return
@@ -21,102 +49,52 @@ const CurrentTrackState = () => {
     }
 
     setCurrentTrack(undefined)
-  }, [setCurrentTrack])
+  }
 
-  useTrackPlayerEvents(
-    [
-      // Event.PlaybackState,
-      // Event.PlaybackTrackChanged,
-      Event.PlaybackQueueEnded,
-      Event.PlaybackMetadataReceived,
-      Event.RemoteDuck,
-      Event.RemoteNext,
-      Event.RemotePrevious,
-      Event.RemoteStop,
-    ],
-    event => {
-      if (event.type === Event.PlaybackQueueEnded && 'track' in event) {
-        setCurrentTrack(undefined)
-        return
-      }
-      update()
-    },
+  return (
+    <TrackPlayerEventResponder
+      events={[
+        Event.PlaybackQueueEnded,
+        Event.PlaybackMetadataReceived,
+        Event.RemoteDuck,
+        Event.RemoteNext,
+        Event.RemotePrevious,
+        Event.RemoteStop,
+      ]}
+      update={update}
+    />
   )
-
-  useEffect(() => {
-    if (appState === 'active') {
-      update()
-    }
-  }, [appState, update])
-
-  return <></>
-}
-
-const CurrentQueueName = () => {
-  const setCurrentQueueName = useUpdateAtom(currentQueueNameAtom)
-  const appState = useAppState()
-
-  const update = useCallback(async () => {
-    const queue = await TrackPlayer.getQueue()
-
-    if (queue !== null && queue.length > 0) {
-      setCurrentQueueName(queue[0].queueName)
-      return
-    }
-
-    setCurrentQueueName(undefined)
-  }, [setCurrentQueueName])
-
-  useTrackPlayerEvents(
-    [Event.PlaybackState, Event.PlaybackQueueEnded, Event.PlaybackMetadataReceived, Event.RemoteDuck, Event.RemoteStop],
-    event => {
-      if (event.type === Event.PlaybackState) {
-        if (event.state === State.Stopped || event.state === State.None) {
-          return
-        }
-      }
-      update()
-    },
-  )
-
-  useEffect(() => {
-    if (appState === 'active') {
-      update()
-    }
-  }, [appState, update])
-
-  return <></>
 }
 
 const PlayerState = () => {
   const setPlayerState = useUpdateAtom(playerStateAtom)
-  const appState = useAppState()
 
-  const update = useCallback(
-    async (state?: State) => {
-      setPlayerState(state || (await TrackPlayer.getState()))
-    },
-    [setPlayerState],
-  )
+  const update = async (payload?: Payload) => {
+    setPlayerState(payload?.state || (await TrackPlayer.getState()))
+  }
 
-  useTrackPlayerEvents([Event.PlaybackState], event => {
-    update(event.state)
-  })
+  return <TrackPlayerEventResponder events={[Event.PlaybackState]} update={update} />
+}
 
-  useEffect(() => {
-    if (appState === 'active') {
-      update()
+const QueueState = () => {
+  const setQueue = useUpdateAtom(queueWriteAtom)
+
+  const update = async (payload?: Payload) => {
+    if (payload) {
+      setQueue([])
+      return
     }
-  }, [appState, update])
+    setQueue(await getQueue())
+  }
 
-  return <></>
+  return <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
 }
 
 const Debug = () => {
-  const value = useAtomValue(currentQueueNameAtom)
+  const value = useAtomValue(queueWriteAtom)
 
   useEffect(() => {
-    console.log(value)
+    console.log(value.map(t => t.title))
   }, [value])
 
   return <></>
@@ -125,8 +103,8 @@ const Debug = () => {
 const TrackPlayerState = () => (
   <View>
     <CurrentTrackState />
-    <CurrentQueueName />
     <PlayerState />
+    <QueueState />
     <Debug />
   </View>
 )
