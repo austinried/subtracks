@@ -3,6 +3,11 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { StatusBar, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
+import IconFA from 'react-native-vector-icons/FontAwesome'
+import IconFA5 from 'react-native-vector-icons/FontAwesome5'
+import Icon from 'react-native-vector-icons/Ionicons'
+import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
+import IconMat from 'react-native-vector-icons/MaterialIcons'
 import {
   currentTrackAtom,
   playerStateAtom,
@@ -14,11 +19,11 @@ import {
   useProgress,
 } from '../state/trackplayer'
 import colors from '../styles/colors'
-import text, { Font } from '../styles/text'
+import { Font } from '../styles/text'
 import { formatDuration } from '../util'
 import CoverArt from './common/CoverArt'
 import ImageGradientBackground from './common/ImageGradientBackground'
-import PressableImage from './common/PressableImage'
+import PressableOpacity from './common/PressableOpacity'
 
 const NowPlayingHeader = () => {
   const queueName = useAtomValue(queueNameAtom)
@@ -26,27 +31,15 @@ const NowPlayingHeader = () => {
 
   return (
     <View style={headerStyles.container}>
-      <PressableImage
-        onPress={() => navigation.goBack()}
-        source={require('../../res/arrow_left-fill.png')}
-        style={headerStyles.icons}
-        tintColor="white"
-        hitSlop={12}
-        ripple={true}
-        padding={18}
-      />
-      <Text numberOfLines={2} style={headerStyles.queueName}>
+      <PressableOpacity onPress={() => navigation.goBack()} style={headerStyles.icons} ripple={true}>
+        <IconMat name="arrow-back" color="white" size={25} />
+      </PressableOpacity>
+      <Text numberOfLines={1} style={headerStyles.queueName}>
         {queueName || 'Nothing playing...'}
       </Text>
-      <PressableImage
-        onPress={() => {}}
-        source={require('../../res/more_vertical.png')}
-        style={headerStyles.icons}
-        tintColor="white"
-        hitSlop={12}
-        ripple={true}
-        padding={18}
-      />
+      <PressableOpacity onPress={undefined} style={headerStyles.icons} ripple={true}>
+        <IconMat name="more-vert" color="white" size={25} />
+      </PressableOpacity>
     </View>
   )
 }
@@ -54,6 +47,7 @@ const NowPlayingHeader = () => {
 const headerStyles = StyleSheet.create({
   container: {
     height: 58,
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -64,7 +58,11 @@ const headerStyles = StyleSheet.create({
     marginHorizontal: 8,
   },
   queueName: {
-    ...text.paragraph,
+    fontFamily: Font.bold,
+    fontSize: 16,
+    color: colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
   },
 })
 
@@ -87,7 +85,7 @@ const coverArtStyles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
+    paddingBottom: 20,
   },
 })
 
@@ -96,12 +94,19 @@ const SongInfo = () => {
 
   return (
     <View style={infoStyles.container}>
-      <Text numberOfLines={1} style={infoStyles.title}>
-        {track?.title}
-      </Text>
-      <Text numberOfLines={1} style={infoStyles.artist}>
-        {track?.artist}
-      </Text>
+      <View style={infoStyles.details}>
+        <Text numberOfLines={1} style={infoStyles.title}>
+          {track?.title}
+        </Text>
+        <Text numberOfLines={1} style={infoStyles.artist}>
+          {track?.artist}
+        </Text>
+      </View>
+      <View style={infoStyles.controls}>
+        <PressableOpacity onPress={undefined}>
+          <IconFA name="star-o" size={32} color={colors.text.secondary} />
+        </PressableOpacity>
+      </View>
     </View>
   )
 }
@@ -109,18 +114,26 @@ const SongInfo = () => {
 const infoStyles = StyleSheet.create({
   container: {
     width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    flexDirection: 'row',
+  },
+  details: {
+    flex: 1,
+    marginRight: 20,
+  },
+  controls: {
+    justifyContent: 'center',
   },
   title: {
-    ...text.songListTitle,
+    height: 28,
+    fontFamily: Font.bold,
     fontSize: 22,
-    textAlign: 'center',
+    color: colors.text.primary,
   },
   artist: {
-    ...text.songListSubtitle,
-    fontSize: 14,
-    textAlign: 'center',
+    height: 20,
+    fontFamily: Font.regular,
+    fontSize: 16,
+    color: colors.text.secondary,
   },
 })
 
@@ -151,7 +164,6 @@ const seekStyles = StyleSheet.create({
   container: {
     width: '100%',
     marginTop: 26,
-    paddingHorizontal: 20,
   },
   barContainer: {
     flexDirection: 'row',
@@ -194,7 +206,7 @@ const PlayerControls = () => {
   const next = useNext()
   const previous = usePrevious()
 
-  let playPauseIcon: number
+  let playPauseIcon: string
   let playPauseAction: undefined | (() => void)
   let disabled: boolean
 
@@ -203,41 +215,56 @@ const PlayerControls = () => {
     case State.Buffering:
     case State.Connecting:
       disabled = false
-      playPauseIcon = require('../../res/pause_circle-fill.png')
+      playPauseIcon = 'pause-circle'
       playPauseAction = pause
       break
     case State.Paused:
       disabled = false
-      playPauseIcon = require('../../res/play_circle-fill.png')
+      playPauseIcon = 'play-circle'
       playPauseAction = play
       break
     default:
       disabled = true
-      playPauseIcon = require('../../res/play_circle-fill.png')
+      playPauseIcon = 'play-circle'
       playPauseAction = undefined
       break
   }
 
   return (
     <View style={controlsStyles.container}>
-      <PressableImage
-        onPress={disabled ? undefined : previous}
-        source={require('../../res/previous-fill.png')}
-        style={controlsStyles.skip}
-        disabled={disabled}
-      />
-      <PressableImage
-        onPress={playPauseAction}
-        source={playPauseIcon}
-        style={controlsStyles.play}
-        disabled={disabled}
-      />
-      <PressableImage
-        onPress={disabled ? undefined : next}
-        source={require('../../res/next-fill.png')}
-        style={controlsStyles.skip}
-        disabled={disabled}
-      />
+      <View style={controlsStyles.top}>
+        <View style={controlsStyles.center}>
+          <PressableOpacity onPress={undefined} disabled={disabled}>
+            <Icon name="repeat" size={26} color="white" />
+          </PressableOpacity>
+        </View>
+
+        <View style={controlsStyles.center}>
+          <PressableOpacity onPress={previous} disabled={disabled}>
+            <IconFA5 name="step-backward" size={36} color="white" />
+          </PressableOpacity>
+          <PressableOpacity onPress={playPauseAction} disabled={disabled} style={controlsStyles.play}>
+            <IconFA name={playPauseIcon} size={82} color="white" />
+          </PressableOpacity>
+          <PressableOpacity onPress={next} disabled={disabled}>
+            <IconFA5 name="step-forward" size={36} color="white" />
+          </PressableOpacity>
+        </View>
+
+        <View style={controlsStyles.center}>
+          <PressableOpacity onPress={undefined} disabled={disabled}>
+            <Icon name="shuffle" size={26} color="white" />
+          </PressableOpacity>
+        </View>
+      </View>
+      <View style={controlsStyles.bottom}>
+        <PressableOpacity onPress={undefined} disabled={disabled}>
+          <IconMatCom name="cast-audio" size={20} color="white" />
+        </PressableOpacity>
+        <PressableOpacity onPress={undefined} disabled={disabled}>
+          <IconMatCom name="playlist-play" size={24} color="white" />
+        </PressableOpacity>
+      </View>
     </View>
   )
 }
@@ -245,19 +272,27 @@ const PlayerControls = () => {
 const controlsStyles = StyleSheet.create({
   container: {
     width: '100%',
+  },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+  },
+  bottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    paddingBottom: 34,
+  },
+  play: {
+    marginHorizontal: 30,
+  },
+  center: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 75,
-  },
-  skip: {
-    height: 40,
-    width: 40,
-    marginHorizontal: 18,
-  },
-  play: {
-    height: 90,
-    width: 90,
   },
 })
 
@@ -265,19 +300,28 @@ const NowPlayingLayout = () => {
   const track = useAtomValue(currentTrackAtom)
 
   return (
-    <View
-      style={{
-        flex: 1,
-        paddingTop: StatusBar.currentHeight,
-      }}>
+    <View style={styles.container}>
       <ImageGradientBackground imageUri={track?.artworkThumb as string} imageKey={`${track?.album}${track?.artist}`} />
       <NowPlayingHeader />
-      <SongCoverArt />
-      <SongInfo />
-      <SeekBar />
-      <PlayerControls />
+      <View style={styles.content}>
+        <SongCoverArt />
+        <SongInfo />
+        <SeekBar />
+        <PlayerControls />
+      </View>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: StatusBar.currentHeight,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 30,
+  },
+})
 
 export default NowPlayingLayout
