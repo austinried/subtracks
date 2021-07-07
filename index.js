@@ -22,7 +22,18 @@ async function start() {
       Capability.SkipToNext,
       Capability.SkipToPrevious,
     ],
-    compactCapabilities: [Capability.Play, Capability.Pause, Capability.SkipToNext, Capability.SkipToPrevious],
+    compactCapabilities: [
+      Capability.Play, //
+      Capability.Pause,
+      Capability.SkipToNext,
+      Capability.SkipToPrevious,
+    ],
+    playIcon: require('./res/notification/ic_stat_play.png'),
+    pauseIcon: require('./res/notification/ic_stat_pause.png'),
+    stopIcon: require('./res/notification/ic_stat_stop.png'),
+    nextIcon: require('./res/notification/ic_stat_next.png'),
+    previousIcon: require('./res/notification/ic_stat_previous.png'),
+    icon: require('./res/notification/ic_stat_play.png'),
   })
 }
 start()
