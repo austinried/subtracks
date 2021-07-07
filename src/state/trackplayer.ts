@@ -222,6 +222,7 @@ export const useSetQueue = () => {
 
   return async (songs: Song[], name: string, playId?: string) =>
     trackPlayerCommands.enqueue(async () => {
+      await TrackPlayer.setupPlayer()
       await reset()
       const tracks = songs.map(s => mapSongToTrack(s, name))
 

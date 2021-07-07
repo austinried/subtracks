@@ -6,8 +6,9 @@ import { currentTrackAtom, playerStateAtom, usePause, usePlay, useProgress } fro
 import CoverArt from './common/CoverArt'
 import colors from '../styles/colors'
 import { Font } from '../styles/text'
-import PressableImage from './common/PressableImage'
 import { State } from 'react-native-track-player'
+import PressableOpacity from './common/PressableOpacity'
+import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
 const ProgressBar = () => {
   const { position, duration } = useProgress()
@@ -45,18 +46,18 @@ const NowPlayingBar = () => {
   const play = usePlay()
   const pause = usePause()
 
-  let playPauseIcon: number
+  let playPauseIcon: string
   let playPauseAction: () => void
 
   switch (playerState) {
     case State.Playing:
     case State.Buffering:
     case State.Connecting:
-      playPauseIcon = require('../../res/pause-fill.png')
+      playPauseIcon = 'pause'
       playPauseAction = pause
       break
     default:
-      playPauseIcon = require('../../res/play-fill.png')
+      playPauseIcon = 'play'
       playPauseAction = play
       break
   }
@@ -82,13 +83,9 @@ const NowPlayingBar = () => {
           </Text>
         </View>
         <View style={styles.controls}>
-          <PressableImage
-            onPress={playPauseAction}
-            source={playPauseIcon}
-            style={styles.play}
-            tintColor="white"
-            hitSlop={14}
-          />
+          <PressableOpacity onPress={playPauseAction} hitSlop={14}>
+            <IconFA5 name={playPauseIcon} size={28} color="white" />
+          </PressableOpacity>
         </View>
       </View>
     </Pressable>
@@ -111,7 +108,6 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     marginLeft: 10,
-    // backgroundColor: 'green',
   },
   detailsTitle: {
     fontFamily: Font.semiBold,
@@ -128,12 +124,8 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 18,
     marginLeft: 12,
-  },
-  play: {
-    height: 32,
-    width: 32,
   },
 })
 

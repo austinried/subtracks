@@ -1,23 +1,18 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
-import React, { useEffect, useState } from 'react'
-import {
-  ActivityIndicator,
-  GestureResponderEvent,
-  Image,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native'
+import React, { useEffect } from 'react'
+import { ActivityIndicator, GestureResponderEvent, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import IconFA from 'react-native-vector-icons/FontAwesome'
+import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { albumAtomFamily } from '../../state/music'
 import { currentTrackAtom, useSetQueue } from '../../state/trackplayer'
 import colors from '../../styles/colors'
-import text from '../../styles/text'
+import text, { Font } from '../../styles/text'
 import AlbumArt from './AlbumArt'
 import Button from './Button'
 import GradientBackground from './GradientBackground'
 import ImageGradientScrollView from './ImageGradientScrollView'
+import PressableOpacity from './PressableOpacity'
 
 const SongItem: React.FC<{
   id: string
@@ -26,66 +21,58 @@ const SongItem: React.FC<{
   track?: number
   onPress: (event: GestureResponderEvent) => void
 }> = ({ id, title, artist, onPress }) => {
-  const [opacity, setOpacity] = useState(1)
   const currentTrack = useAtomValue(currentTrackAtom)
 
   return (
-    <View
-      style={{
-        marginTop: 20,
-        marginLeft: 4,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => setOpacity(0.6)}
-        onPressOut={() => setOpacity(1)}
-        onLongPress={() => setOpacity(1)}
-        style={{
-          flex: 1,
-          opacity,
-        }}>
-        <Text
-          style={{
-            ...text.songListTitle,
-            color: currentTrack?.id === id ? colors.accent : colors.text.primary,
-          }}>
+    <View style={songStyles.container}>
+      <PressableOpacity onPress={onPress} style={songStyles.text}>
+        <Text style={{ ...songStyles.title, color: currentTrack?.id === id ? colors.accent : colors.text.primary }}>
           {title}
         </Text>
-        <Text style={text.songListSubtitle}>{artist}</Text>
-      </Pressable>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginLeft: 10,
-        }}>
-        {/* <Text style={text.songListSubtitle}>{secondsToTime(duration || 0)}</Text> */}
-        <Image
-          source={require('../../../res/star.png')}
-          style={{
-            height: 28,
-            width: 28,
-            tintColor: colors.text.secondary,
-            marginLeft: 10,
-          }}
-        />
-        <Image
-          source={require('../../../res/more_vertical.png')}
-          style={{
-            height: 28,
-            width: 28,
-            tintColor: colors.text.secondary,
-            marginLeft: 12,
-            marginRight: 2,
-          }}
-        />
+        <Text style={songStyles.subtitle}>{artist}</Text>
+      </PressableOpacity>
+      <View style={songStyles.controls}>
+        <PressableOpacity onPress={undefined}>
+          <IconFA name="star-o" size={26} color={colors.text.primary} />
+        </PressableOpacity>
+        <PressableOpacity onPress={undefined} style={songStyles.more}>
+          <IconMat name="more-vert" size={32} color="white" />
+        </PressableOpacity>
       </View>
     </View>
   )
 }
+
+const songStyles = StyleSheet.create({
+  container: {
+    marginTop: 20,
+    marginLeft: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  text: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  title: {
+    fontSize: 16,
+    fontFamily: Font.semiBold,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: Font.regular,
+    color: colors.text.secondary,
+  },
+  controls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  more: {
+    marginLeft: 8,
+  },
+})
 
 const AlbumDetails: React.FC<{
   id: string
