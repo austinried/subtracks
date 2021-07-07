@@ -93,7 +93,6 @@ const coverArtStyles = StyleSheet.create({
 
 const SongInfo = () => {
   const track = useAtomValue(currentTrackAtom)
-  console.log(track?.artist)
 
   return (
     <View style={infoStyles.container}>

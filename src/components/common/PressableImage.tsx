@@ -38,7 +38,7 @@ const PressableImage: React.FC<{
       android_ripple={
         ripple
           ? {
-              color: 'rgba(0.5,0.5,0.5,0.26)',
+              color: 'rgba(255,255,255,0.26)',
               radius: dimensions ? dimensions.width / 2 : undefined,
             }
           : undefined

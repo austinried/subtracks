@@ -29,7 +29,7 @@ const LibraryTopTabNavigator = () => (
         marginHorizontal: 2,
       },
       indicatorStyle: {
-        backgroundColor: colors.accent,
+        backgroundColor: colors.text.primary,
       },
     }}>
     <Tab.Screen name="Albums" component={AlbumsTab} />

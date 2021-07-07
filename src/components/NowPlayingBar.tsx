@@ -27,7 +27,7 @@ const ProgressBar = () => {
 
 const progressStyles = StyleSheet.create({
   container: {
-    height: 1,
+    height: 2,
     flexDirection: 'row',
   },
   left: {
@@ -71,7 +71,7 @@ const NowPlayingBar = () => {
           PlaceholderComponent={() => <Text>hi</Text>}
           height={styles.subContainer.height}
           width={styles.subContainer.height}
-          coverArtUri={track?.artwork as string}
+          coverArtUri={track?.artworkThumb}
         />
         <View style={styles.detailsContainer}>
           <Text numberOfLines={1} style={styles.detailsTitle}>

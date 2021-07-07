@@ -9,6 +9,7 @@ import { PromiseQueue } from '../util'
 type TrackExt = Track & {
   id: string
   queueName: string
+  artworkThumb?: string
 }
 
 type OptionalTrackExt = TrackExt | undefined
