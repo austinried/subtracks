@@ -78,7 +78,7 @@ const removeProgressSub = atom(null, (get, set) => {
   set(progressSubs, get(progressSubs) - 1)
 })
 
-const trackPlayerCommands = new PromiseQueue(1)
+export const trackPlayerCommands = new PromiseQueue(1)
 
 const getQueue = async (): Promise<TrackExt[]> => {
   return ((await TrackPlayer.getQueue()) as TrackExt[]) || []

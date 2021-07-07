@@ -11,7 +11,7 @@ const RootNavigator = () => (
       headerShown: false,
     }}>
     <RootStack.Screen name="Main" component={BottomTabNavigator} />
-    <RootStack.Screen name="Now Playing" component={NowPlayingLayout} />
+    <RootStack.Screen name="NowPlaying" component={NowPlayingLayout} />
   </RootStack.Navigator>
 )
 

@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import { NativeStackScreenProps } from 'react-native-screens/lib/typescript/native-stack'
 import { State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -296,8 +297,20 @@ const controlsStyles = StyleSheet.create({
   },
 })
 
-const NowPlayingLayout = () => {
+type RootStackParamList = {
+  Main: undefined
+  NowPlaying: undefined
+}
+type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'NowPlaying'>
+
+const NowPlayingLayout: React.FC<NowPlayingProps> = ({ navigation }) => {
   const track = useAtomValue(currentTrackAtom)
+
+  useEffect(() => {
+    if (!track && navigation.canGoBack()) {
+      navigation.popToTop()
+    }
+  })
 
   return (
     <View style={styles.container}>

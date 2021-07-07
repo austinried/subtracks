@@ -19,7 +19,7 @@ const TestControls = () => {
   return (
     <View>
       <Button title="Remove all keys" onPress={removeAllKeys} />
-      <Button title="Now Playing" onPress={() => navigation.navigate('Now Playing')} />
+      <Button title="Now Playing" onPress={() => navigation.navigate('NowPlaying')} />
     </View>
   )
 }
