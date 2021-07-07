@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 18,
+    marginRight: 14,
     marginLeft: 12,
   },
   play: {

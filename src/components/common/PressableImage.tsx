@@ -9,14 +9,20 @@ const PressableImage: React.FC<{
   tintColor?: string
   disabled?: boolean
   hitSlop?: number
-}> = ({ source, onPress, style, tintColor, disabled, hitSlop }) => {
+  padding?: number
+  ripple?: boolean
+}> = ({ source, onPress, style, tintColor, disabled, hitSlop, padding, ripple }) => {
   const [opacity, setOpacity] = useState(1)
   const [dimensions, setDimensions] = useState<LayoutRectangle | undefined>(undefined)
 
   disabled = disabled === undefined ? false : disabled
+  padding = padding || 0
+  ripple = ripple === undefined ? false : ripple
   style = {
     ...(style || {}),
     opacity,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 
   useEffect(() => {
@@ -29,6 +35,14 @@ const PressableImage: React.FC<{
       onPress={onPress}
       disabled={disabled}
       hitSlop={hitSlop}
+      android_ripple={
+        ripple
+          ? {
+              color: 'rgba(0.5,0.5,0.5,0.26)',
+              radius: dimensions ? dimensions.width / 2 : undefined,
+            }
+          : undefined
+      }
       onPressIn={() => {
         if (!disabled) {
           setOpacity(0.4)
@@ -43,8 +57,8 @@ const PressableImage: React.FC<{
       <FastImage
         style={{
           display: dimensions ? 'flex' : 'none',
-          height: dimensions?.height,
-          width: dimensions?.width,
+          height: dimensions ? dimensions.height - padding : 0,
+          width: dimensions ? dimensions.width - padding : 0,
         }}
         source={source}
         tintColor={tintColor || 'white'}

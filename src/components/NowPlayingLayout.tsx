@@ -1,7 +1,7 @@
+import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React from 'react'
-import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
+import { StatusBar, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
 import {
   currentTrackAtom,
@@ -22,14 +22,31 @@ import PressableImage from './common/PressableImage'
 
 const NowPlayingHeader = () => {
   const queueName = useAtomValue(queueNameAtom)
+  const navigation = useNavigation()
 
   return (
     <View style={headerStyles.container}>
-      <FastImage source={require('../../res/arrow_left-fill.png')} style={headerStyles.icons} tintColor="white" />
+      <PressableImage
+        onPress={() => navigation.goBack()}
+        source={require('../../res/arrow_left-fill.png')}
+        style={headerStyles.icons}
+        tintColor="white"
+        hitSlop={12}
+        ripple={true}
+        padding={18}
+      />
       <Text numberOfLines={2} style={headerStyles.queueName}>
         {queueName || 'Nothing playing...'}
       </Text>
-      <FastImage source={require('../../res/more_vertical.png')} style={headerStyles.icons} tintColor="white" />
+      <PressableImage
+        onPress={() => {}}
+        source={require('../../res/more_vertical.png')}
+        style={headerStyles.icons}
+        tintColor="white"
+        hitSlop={12}
+        ripple={true}
+        padding={18}
+      />
     </View>
   )
 }
@@ -40,12 +57,11 @@ const headerStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // backgroundColor: 'green',
   },
   icons: {
-    height: 22,
-    width: 22,
-    margin: 17,
+    height: 42,
+    width: 42,
+    marginHorizontal: 8,
   },
   queueName: {
     ...text.paragraph,
@@ -54,16 +70,13 @@ const headerStyles = StyleSheet.create({
 
 const SongCoverArt = () => {
   const track = useAtomValue(currentTrackAtom)
-  const layout = useWindowDimensions()
-
-  const size = layout.width - layout.width / 7
 
   return (
     <View style={coverArtStyles.container}>
       <CoverArt
-        PlaceholderComponent={() => <View style={{ height: size, width: size }} />}
-        height={size}
-        width={size}
+        PlaceholderComponent={() => <View style={{ height: '100%', width: '100%' }} />}
+        height={'100%'}
+        width={'100%'}
         coverArtUri={track?.artwork as string}
       />
     </View>
@@ -72,19 +85,24 @@ const SongCoverArt = () => {
 
 const coverArtStyles = StyleSheet.create({
   container: {
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
-    marginTop: 10,
+    padding: 20,
   },
 })
 
 const SongInfo = () => {
   const track = useAtomValue(currentTrackAtom)
+  console.log(track?.artist)
 
   return (
     <View style={infoStyles.container}>
-      <Text style={infoStyles.title}>{track?.title}</Text>
-      <Text style={infoStyles.artist}>{track?.artist}</Text>
+      <Text numberOfLines={1} style={infoStyles.title}>
+        {track?.title}
+      </Text>
+      <Text numberOfLines={1} style={infoStyles.artist}>
+        {track?.artist}
+      </Text>
     </View>
   )
 }
@@ -93,7 +111,6 @@ const infoStyles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 20,
     paddingHorizontal: 20,
   },
   title: {
@@ -120,7 +137,7 @@ const SeekBar = () => {
     <View style={seekStyles.container}>
       <View style={seekStyles.barContainer}>
         <View style={{ ...seekStyles.bars, ...seekStyles.barLeft, flex: progress }} />
-        <View style={{ ...seekStyles.indicator, opacity: progress ? 1 : 0 }} />
+        <View style={{ ...seekStyles.indicator }} />
         <View style={{ ...seekStyles.bars, ...seekStyles.barRight, flex: 1 - progress }} />
       </View>
       <View style={seekStyles.textContainer}>
@@ -134,7 +151,7 @@ const SeekBar = () => {
 const seekStyles = StyleSheet.create({
   container: {
     width: '100%',
-    marginTop: 40,
+    marginTop: 26,
     paddingHorizontal: 20,
   },
   barContainer: {
@@ -232,7 +249,7 @@ const controlsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginBottom: 75,
   },
   skip: {
     height: 40,
