@@ -1,58 +1,63 @@
-import React, { useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import colors from '../../styles/colors'
 
 const CoverArt: React.FC<{
   PlaceholderComponent: () => JSX.Element
-  height: number
-  width: number
+  height?: string | number
+  width?: string | number
   coverArtUri?: string
 }> = ({ PlaceholderComponent, height, width, coverArtUri }) => {
   const [placeholderVisible, setPlaceholderVisible] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const indicatorSize = height > 130 ? 'large' : 'small'
-  const halfIndicatorHeight = indicatorSize === 'large' ? 18 : 10
+  useEffect(() => {
+    if (!coverArtUri) {
+      setLoading(false)
+    }
+  }, [coverArtUri, setLoading])
 
-  const Placeholder: React.FC<{ visible: boolean }> = ({ visible }) => (
-    <View
-      style={{
-        opacity: visible ? 100 : 0,
-      }}>
-      <PlaceholderComponent />
+  const Image = () => (
+    <FastImage
+      source={{ uri: coverArtUri, priority: 'high' }}
+      style={{ ...styles.image, opacity: placeholderVisible ? 0 : 1 }}
+      resizeMode={FastImage.resizeMode.contain}
+      onError={() => {
+        setLoading(false)
+        setPlaceholderVisible(true)
+      }}
+      onLoadEnd={() => setLoading(false)}
+    />
+  )
+
+  return (
+    <View style={{ ...styles.container, height, width }}>
+      {coverArtUri ? <Image /> : <></>}
+      <View style={{ ...styles.placeholderContainer, opacity: placeholderVisible ? 1 : 0 }}>
+        <PlaceholderComponent />
+      </View>
+      <ActivityIndicator style={styles.indicator} animating={loading} size={'large'} color={colors.accent} />
     </View>
   )
-
-  const Art = () => (
-    <>
-      <Placeholder visible={placeholderVisible} />
-      <ActivityIndicator
-        animating={loading}
-        size={indicatorSize}
-        color={colors.accent}
-        style={{
-          top: -height / 2 - halfIndicatorHeight,
-        }}
-      />
-      <FastImage
-        source={{ uri: coverArtUri, priority: 'high' }}
-        style={{
-          height,
-          width,
-          marginTop: -height - halfIndicatorHeight * 2,
-        }}
-        resizeMode={FastImage.resizeMode.contain}
-        onError={() => {
-          setLoading(false)
-          setPlaceholderVisible(true)
-        }}
-        onLoadEnd={() => setLoading(false)}
-      />
-    </>
-  )
-
-  return <View style={{ height, width }}>{!coverArtUri ? <Placeholder visible={true} /> : <Art />}</View>
 }
+
+const styles = StyleSheet.create({
+  container: {},
+  image: {
+    height: '100%',
+    width: '100%',
+  },
+  placeholderContainer: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
+  },
+  indicator: {
+    height: '100%',
+    width: '100%',
+    position: 'absolute',
+  },
+})
 
 export default React.memo(CoverArt)

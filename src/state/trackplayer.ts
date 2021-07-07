@@ -145,6 +145,14 @@ export const useRefreshProgress = () => {
     })
 }
 
+export const usePlay = () => {
+  return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
+}
+
+export const usePause = () => {
+  return () => trackPlayerCommands.enqueue(() => TrackPlayer.pause())
+}
+
 export const usePrevious = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
@@ -259,6 +267,7 @@ function mapSongToTrack(song: Song, queueName: string): TrackExt {
     queueName,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
+    album: song.album || 'Unknown Album',
     url: song.streamUri,
     artwork: song.coverArtUri,
     artworkThumb: song.coverArtThumbUri,

@@ -8,7 +8,8 @@ const PressableImage: React.FC<{
   style?: ViewStyle
   tintColor?: string
   disabled?: boolean
-}> = ({ source, onPress, style, tintColor, disabled }) => {
+  hitSlop?: number
+}> = ({ source, onPress, style, tintColor, disabled, hitSlop }) => {
   const [opacity, setOpacity] = useState(1)
   const [dimensions, setDimensions] = useState<LayoutRectangle | undefined>(undefined)
 
@@ -27,6 +28,7 @@ const PressableImage: React.FC<{
       style={style}
       onPress={onPress}
       disabled={disabled}
+      hitSlop={hitSlop}
       onPressIn={() => {
         if (!disabled) {
           setOpacity(0.4)

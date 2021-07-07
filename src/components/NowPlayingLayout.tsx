@@ -2,12 +2,14 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
-import TrackPlayer, { State } from 'react-native-track-player'
+import { State } from 'react-native-track-player'
 import {
-  queueNameAtom,
   currentTrackAtom,
   playerStateAtom,
+  queueNameAtom,
   useNext,
+  usePause,
+  usePlay,
   usePrevious,
   useProgress,
 } from '../state/trackplayer'
@@ -171,6 +173,8 @@ const seekStyles = StyleSheet.create({
 
 const PlayerControls = () => {
   const state = useAtomValue(playerStateAtom)
+  const play = usePlay()
+  const pause = usePause()
   const next = useNext()
   const previous = usePrevious()
 
@@ -184,12 +188,12 @@ const PlayerControls = () => {
     case State.Connecting:
       disabled = false
       playPauseIcon = require('../../res/pause_circle-fill.png')
-      playPauseAction = () => TrackPlayer.pause()
+      playPauseAction = pause
       break
     case State.Paused:
       disabled = false
       playPauseIcon = require('../../res/play_circle-fill.png')
-      playPauseAction = () => TrackPlayer.play()
+      playPauseAction = play
       break
     default:
       disabled = true

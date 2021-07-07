@@ -4,6 +4,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import textStyles from '../../styles/text'
 import colors from '../../styles/colors'
 import FastImage from 'react-native-fast-image'
+import NowPlayingBar from '../NowPlayingBar'
 
 const icons: { [key: string]: any } = {
   home: {
@@ -77,36 +78,39 @@ const BottomTabButton: React.FC<{
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
-    <View
-      style={{
-        height: 54,
-        backgroundColor: colors.gradient.high,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        paddingHorizontal: 28,
-      }}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key] as any
-        const label =
-          options.tabBarLabel !== undefined
-            ? (options.tabBarLabel as string)
-            : options.title !== undefined
-            ? options.title
-            : route.name
+    <View>
+      <NowPlayingBar />
+      <View
+        style={{
+          height: 54,
+          backgroundColor: colors.gradient.high,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          paddingHorizontal: 28,
+        }}>
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key] as any
+          const label =
+            options.tabBarLabel !== undefined
+              ? (options.tabBarLabel as string)
+              : options.title !== undefined
+              ? options.title
+              : route.name
 
-        return (
-          <BottomTabButton
-            key={route.key}
-            routeKey={route.key}
-            label={label}
-            name={route.name}
-            isFocused={state.index === index}
-            img={icons[options.icon]}
-            navigation={navigation}
-          />
-        )
-      })}
+          return (
+            <BottomTabButton
+              key={route.key}
+              routeKey={route.key}
+              label={label}
+              name={route.name}
+              isFocused={state.index === index}
+              img={icons[options.icon]}
+              navigation={navigation}
+            />
+          )
+        })}
+      </View>
     </View>
   )
 }

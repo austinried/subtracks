@@ -5,7 +5,6 @@ export default {
   },
   gradient: {
     high: '#2d2d2d',
-    mid: '#191919',
     low: '#000000',
   },
   accent: '#b134db',

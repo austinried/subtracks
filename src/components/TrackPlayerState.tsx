@@ -127,7 +127,7 @@ const ProgressState = () => {
     return (
       <>
         <ProgressHook />
-        <TrackPlayerEventResponder events={[Event.RemoteStop]} update={update} />
+        <TrackPlayerEventResponder events={[Event.RemoteStop, Event.PlaybackTrackChanged]} update={update} />
       </>
     )
   }
