@@ -1,12 +1,13 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Album } from '@app/models/music'
 import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '@app/state/music'
-import textStyles from '@app/styles/text'
+import font from '@app/styles/font'
 import AlbumArt from '@app/components/AlbumArt'
 import GradientFlatList from '@app/components/GradientFlatList'
+import colors from '@app/styles/colors'
 
 const AlbumItem: React.FC<{
   id: string
@@ -15,31 +16,14 @@ const AlbumItem: React.FC<{
 }> = ({ id, name, artist }) => {
   const navigation = useNavigation()
 
-  const size = 125
-
   return (
-    <Pressable
-      style={{
-        alignItems: 'center',
-        marginVertical: 8,
-        flex: 1 / 3,
-      }}
-      onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
-      <AlbumArt id={id} height={size} width={size} />
-      <View
-        style={{
-          flex: 1,
-          width: size,
-        }}>
-        <Text
-          style={{
-            ...textStyles.itemTitle,
-            marginTop: 4,
-          }}
-          numberOfLines={2}>
+    <Pressable style={styles.item} onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
+      <AlbumArt id={id} height={styles.art.height} width={styles.art.height} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.title} numberOfLines={2}>
           {name}
         </Text>
-        <Text style={{ ...textStyles.itemSubtitle }} numberOfLines={1}>
+        <Text style={styles.subtitle} numberOfLines={1}>
           {artist}
         </Text>
       </View>
@@ -66,7 +50,7 @@ const AlbumsList = () => {
   })
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <GradientFlatList
         data={albumsList}
         renderItem={AlbumListRenderItem}
@@ -86,5 +70,34 @@ const AlbumsTab = () => (
     <AlbumsList />
   </React.Suspense>
 )
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  item: {
+    alignItems: 'center',
+    marginVertical: 8,
+    flex: 1 / 3,
+  },
+  art: {
+    height: 125,
+  },
+  itemDetails: {
+    flex: 1,
+    width: 125,
+  },
+  title: {
+    fontSize: 13,
+    fontFamily: font.semiBold,
+    color: colors.text.primary,
+    marginTop: 4,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: font.regular,
+    color: colors.text.secondary,
+  },
+})
 
 export default React.memo(AlbumsTab)

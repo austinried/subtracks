@@ -1,11 +1,12 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { Text } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { artistInfoAtomFamily } from '@app/state/music'
-import text from '@app/styles/text'
 import ArtistArt from '@app/components/ArtistArt'
 import GradientScrollView from '@app/components/GradientScrollView'
+import font from '@app/styles/font'
+import colors from '@app/styles/colors'
 
 const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   const artist = useAtomValue(artistInfoAtomFamily(id))
@@ -15,15 +16,8 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   }
 
   return (
-    <GradientScrollView
-      style={{
-        flex: 1,
-      }}
-      contentContainerStyle={{
-        alignItems: 'center',
-        // paddingTop: coverSize / 8,
-      }}>
-      <Text style={text.paragraph}>{artist.name}</Text>
+    <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <Text style={styles.title}>{artist.name}</Text>
       <ArtistArt id={artist.id} height={200} width={200} />
     </GradientScrollView>
   )
@@ -45,5 +39,19 @@ const ArtistView: React.FC<{
     </React.Suspense>
   )
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    alignItems: 'center',
+  },
+  title: {
+    fontFamily: font.regular,
+    fontSize: 16,
+    color: colors.text.primary,
+  },
+})
 
 export default React.memo(ArtistView)

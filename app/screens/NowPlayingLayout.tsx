@@ -20,11 +20,12 @@ import {
   useProgress,
 } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
-import { Font } from '@app/styles/text'
+import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
 import CoverArt from '@app/components/CoverArt'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
+import dimensions from '@app/styles/dimensions'
 
 const NowPlayingHeader = () => {
   const queueName = useAtomValue(queueNameAtom)
@@ -47,7 +48,7 @@ const NowPlayingHeader = () => {
 
 const headerStyles = StyleSheet.create({
   container: {
-    height: 58,
+    height: dimensions.header,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -59,7 +60,7 @@ const headerStyles = StyleSheet.create({
     marginHorizontal: 8,
   },
   queueName: {
-    fontFamily: Font.bold,
+    fontFamily: font.bold,
     fontSize: 16,
     color: colors.text.primary,
     flex: 1,
@@ -126,13 +127,13 @@ const infoStyles = StyleSheet.create({
   },
   title: {
     height: 28,
-    fontFamily: Font.bold,
+    fontFamily: font.bold,
     fontSize: 22,
     color: colors.text.primary,
   },
   artist: {
     height: 20,
-    fontFamily: Font.regular,
+    fontFamily: font.regular,
     fontSize: 16,
     color: colors.text.secondary,
   },
@@ -194,7 +195,7 @@ const seekStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   text: {
-    fontFamily: Font.regular,
+    fontFamily: font.regular,
     fontSize: 15,
     color: colors.text.primary,
   },

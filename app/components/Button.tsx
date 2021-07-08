@@ -1,31 +1,33 @@
-import React, { useState } from 'react'
-import { GestureResponderEvent, Pressable, Text } from 'react-native'
 import colors from '@app/styles/colors'
-import text from '@app/styles/text'
+import font from '@app/styles/font'
+import React from 'react'
+import { GestureResponderEvent, StyleSheet, Text } from 'react-native'
+import PressableOpacity from './PressableOpacity'
 
 const Button: React.FC<{
   title: string
   onPress: (event: GestureResponderEvent) => void
 }> = ({ title, onPress }) => {
-  const [opacity, setOpacity] = useState(1)
-
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => setOpacity(0.6)}
-      onPressOut={() => setOpacity(1)}
-      onLongPress={() => setOpacity(1)}
-      style={{
-        backgroundColor: colors.accent,
-        paddingHorizontal: 24,
-        minHeight: 42,
-        justifyContent: 'center',
-        borderRadius: 1000,
-        opacity,
-      }}>
-      <Text style={{ ...text.button }}>{title}</Text>
-    </Pressable>
+    <PressableOpacity onPress={onPress} style={styles.container}>
+      <Text style={styles.text}>{title}</Text>
+    </PressableOpacity>
   )
 }
 
-export default Button
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 24,
+    minHeight: 42,
+    justifyContent: 'center',
+    borderRadius: 1000,
+  },
+  text: {
+    fontSize: 15,
+    fontFamily: font.bold,
+    color: colors.text.primary,
+  },
+})
+
+export default React.memo(Button)

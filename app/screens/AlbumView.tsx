@@ -1,13 +1,13 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { ActivityIndicator, GestureResponderEvent, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import { ActivityIndicator, GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { albumAtomFamily } from '@app/state/music'
 import { currentTrackAtom, useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
-import text, { Font } from '@app/styles/text'
+import font from '@app/styles/font'
 import AlbumArt from '@app/components/AlbumArt'
 import Button from '@app/components/Button'
 import GradientBackground from '@app/components/GradientBackground'
@@ -46,7 +46,6 @@ const SongItem: React.FC<{
 const songStyles = StyleSheet.create({
   container: {
     marginTop: 20,
-    marginLeft: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -54,14 +53,15 @@ const songStyles = StyleSheet.create({
   text: {
     flex: 1,
     alignItems: 'flex-start',
+    width: 100,
   },
   title: {
     fontSize: 16,
-    fontFamily: Font.semiBold,
+    fontFamily: font.semiBold,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: Font.regular,
+    fontFamily: font.regular,
     color: colors.text.secondary,
   },
   controls: {
@@ -78,101 +78,59 @@ const AlbumDetails: React.FC<{
   id: string
 }> = ({ id }) => {
   const album = useAtomValue(albumAtomFamily(id))
-  const layout = useWindowDimensions()
   const setQueue = useSetQueue()
 
-  const coverSize = layout.width - layout.width / 2.5
-
   if (!album) {
-    return <Text style={text.paragraph}>No Album</Text>
+    return <></>
   }
 
   return (
     <ImageGradientScrollView
       imageUri={album.coverArtThumbUri}
       imageKey={`${album.name}${album.artist}`}
-      style={{
-        flex: 1,
-      }}
-      contentContainerStyle={{
-        alignItems: 'center',
-        paddingTop: coverSize / 8,
-      }}>
-      <AlbumArt id={album.id} height={coverSize} width={coverSize} />
-      <Text
-        style={{
-          ...text.title,
-          marginTop: 12,
-          width: layout.width - layout.width / 8,
-          textAlign: 'center',
-        }}>
-        {album.name}
-      </Text>
-
-      <Text
-        style={{
-          ...text.itemSubtitle,
-          fontSize: 14,
-          marginTop: 4,
-          marginBottom: 20,
-          width: layout.width - layout.width / 8,
-          textAlign: 'center',
-        }}>
-        {album.artist}
-        {album.year ? ` • ${album.year}` : ''}
-      </Text>
-
-      <View
-        style={{
-          flexDirection: 'row',
-        }}>
-        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
-      </View>
-
-      <View
-        style={{
-          width: layout.width - layout.width / 20,
-          marginTop: 20,
-          marginBottom: 30,
-        }}>
-        {album.songs
-          .sort((a, b) => {
-            if (b.track && a.track) {
-              return a.track - b.track
-            } else {
-              return a.title.localeCompare(b.title)
-            }
-          })
-          .map(s => (
-            <SongItem
-              key={s.id}
-              id={s.id}
-              title={s.title}
-              artist={s.artist}
-              track={s.track}
-              onPress={() => setQueue(album.songs, album.name, s.id)}
-            />
-          ))}
+      style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.cover}>
+          <AlbumArt id={album.id} height="100%" width="100%" />
+        </View>
+        <Text style={styles.title}>{album.name}</Text>
+        <Text style={styles.subtitle}>
+          {album.artist}
+          {album.year ? ` • ${album.year}` : ''}
+        </Text>
+        <View style={styles.controls}>
+          <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
+        </View>
+        <View style={styles.songs}>
+          {album.songs
+            .sort((a, b) => {
+              if (b.track && a.track) {
+                return a.track - b.track
+              } else {
+                return a.title.localeCompare(b.title)
+              }
+            })
+            .map(s => (
+              <SongItem
+                key={s.id}
+                id={s.id}
+                title={s.title}
+                artist={s.artist}
+                track={s.track}
+                onPress={() => setQueue(album.songs, album.name, s.id)}
+              />
+            ))}
+        </View>
       </View>
     </ImageGradientScrollView>
   )
 }
 
-const AlbumViewFallback = () => {
-  const layout = useWindowDimensions()
-
-  const coverSize = layout.width - layout.width / 2.5
-
-  return (
-    <GradientBackground
-      style={{
-        alignItems: 'center',
-        paddingTop: coverSize / 8 + coverSize / 2 - 18,
-      }}>
-      <ActivityIndicator size="large" color={colors.accent} />
-    </GradientBackground>
-  )
-}
+const AlbumViewFallback = () => (
+  <GradientBackground style={styles.fallback}>
+    <ActivityIndicator size="large" color={colors.accent} />
+  </GradientBackground>
+)
 
 const AlbumView: React.FC<{
   id: string
@@ -190,5 +148,47 @@ const AlbumView: React.FC<{
     </React.Suspense>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: font.bold,
+    color: colors.text.primary,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: font.regular,
+    color: colors.text.secondary,
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  cover: {
+    height: 220,
+    width: 220,
+  },
+  controls: {
+    flexDirection: 'row',
+  },
+  songs: {
+    marginTop: 10,
+    marginBottom: 30,
+    width: '100%',
+  },
+  fallback: {
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+})
 
 export default React.memo(AlbumView)

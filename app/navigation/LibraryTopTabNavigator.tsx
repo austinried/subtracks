@@ -1,5 +1,5 @@
 import React from 'react'
-import { StatusBar, View } from 'react-native'
+import { StatusBar, StyleSheet, View } from 'react-native'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import AlbumsTab from '@app/screens/LibraryAlbums'
 import ArtistsTab from '@app/screens/LibraryArtists'
@@ -7,36 +7,10 @@ import PlaylistsTab from '@app/screens/LibraryPlaylists'
 import { createNativeStackNavigator, NativeStackNavigationProp } from 'react-native-screens/native-stack'
 import AlbumView from '@app/screens/AlbumView'
 import { RouteProp } from '@react-navigation/native'
-import text from '@app/styles/text'
+import font from '@app/styles/font'
 import colors from '@app/styles/colors'
 import ArtistView from '@app/screens/ArtistView'
-
-const Tab = createMaterialTopTabNavigator()
-
-const LibraryTopTabNavigator = () => (
-  <Tab.Navigator
-    tabBarOptions={{
-      style: {
-        height: 48,
-        backgroundColor: colors.gradient.high,
-        elevation: 0,
-        marginTop: StatusBar.currentHeight,
-      },
-      labelStyle: {
-        ...text.header,
-        textTransform: null as any,
-        marginTop: 0,
-        marginHorizontal: 2,
-      },
-      indicatorStyle: {
-        backgroundColor: colors.text.primary,
-      },
-    }}>
-    <Tab.Screen name="Albums" component={AlbumsTab} />
-    <Tab.Screen name="Artists" component={ArtistsTab} />
-    <Tab.Screen name="Playlists" component={PlaylistsTab} />
-  </Tab.Navigator>
-)
+import dimensions from '@app/styles/dimensions'
 
 type LibraryStackParamList = {
   LibraryTopTabs: undefined
@@ -66,28 +40,73 @@ const ArtistScreen: React.FC<ArtistScreenProps> = ({ route }) => (
   <ArtistView id={route.params.id} title={route.params.title} />
 )
 
+const Tab = createMaterialTopTabNavigator()
+
+const LibraryTopTabNavigator = () => (
+  <Tab.Navigator
+    tabBarOptions={{
+      style: styles.tabBar,
+      labelStyle: styles.tablabelStyle,
+      indicatorStyle: styles.tabindicatorStyle,
+    }}>
+    <Tab.Screen name="Albums" component={AlbumsTab} />
+    <Tab.Screen name="Artists" component={ArtistsTab} />
+    <Tab.Screen name="Playlists" component={PlaylistsTab} />
+  </Tab.Navigator>
+)
+
 const Stack = createNativeStackNavigator<LibraryStackParamList>()
 
-const itemScreenOptions = {
-  title: '',
-  headerStyle: {
-    backgroundColor: colors.gradient.high,
-  },
-  headerHideShadow: true,
-  headerTintColor: 'white',
-  headerTitleStyle: {
-    ...text.header,
-  } as any,
+const LibraryStackNavigator = () => {
+  const itemScreenOptions = {
+    title: '',
+    headerStyle: styles.stackheaderStyle,
+    headerHideShadow: true,
+    headerTintColor: 'white',
+    headerTitleStyle: styles.stackheaderTitleStyle,
+  }
+
+  return (
+    <View style={styles.stackContainer}>
+      <Stack.Navigator>
+        <Stack.Screen name="LibraryTopTabs" component={LibraryTopTabNavigator} options={{ headerShown: false }} />
+        <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
+        <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
+      </Stack.Navigator>
+    </View>
+  )
 }
 
-const LibraryStackNavigator = () => (
-  <View style={{ flex: 1 }}>
-    <Stack.Navigator>
-      <Stack.Screen name="LibraryTopTabs" component={LibraryTopTabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
-      <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
-    </Stack.Navigator>
-  </View>
-)
+const styles = StyleSheet.create({
+  stackContainer: {
+    flex: 1,
+  },
+  stackheaderStyle: {
+    backgroundColor: colors.gradient.high,
+  },
+  stackheaderTitleStyle: {
+    fontSize: 18,
+    fontFamily: font.semiBold,
+    color: colors.text.primary,
+  },
+  tabBar: {
+    height: dimensions.header,
+    marginTop: StatusBar.currentHeight,
+    backgroundColor: colors.gradient.high,
+    elevation: 0,
+    justifyContent: 'center',
+  },
+  tablabelStyle: {
+    fontSize: 18,
+    fontFamily: font.semiBold,
+    color: colors.text.primary,
+    textTransform: null as any,
+    marginTop: 0,
+    marginHorizontal: 2,
+  },
+  tabindicatorStyle: {
+    backgroundColor: colors.text.primary,
+  },
+})
 
 export default LibraryStackNavigator

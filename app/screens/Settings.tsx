@@ -2,11 +2,10 @@ import { useNavigation } from '@react-navigation/core'
 import { useAtom } from 'jotai'
 import md5 from 'md5'
 import React from 'react'
-import { Button, Text, View } from 'react-native'
+import { Button, StyleSheet, Text, View } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import { appSettingsAtom } from '@app/state/settings'
 import { getAllKeys, multiRemove } from '@app/storage/asyncstorage'
-import text from '@app/styles/text'
 
 const TestControls = () => {
   const navigation = useNavigation()
@@ -57,8 +56,8 @@ const ServerSettingsView = () => {
       <Button title="Add default server" onPress={bootstrapServer} />
       {appSettings.servers.map(s => (
         <View key={s.id}>
-          <Text style={text.paragraph}>{s.address}</Text>
-          <Text style={text.paragraph}>{s.username}</Text>
+          <Text style={styles.text}>{s.address}</Text>
+          <Text style={styles.text}>{s.username}</Text>
         </View>
       ))}
     </View>
@@ -73,5 +72,11 @@ const SettingsView = () => (
     </React.Suspense>
   </View>
 )
+
+const styles = StyleSheet.create({
+  text: {
+    color: 'white',
+  },
+})
 
 export default SettingsView

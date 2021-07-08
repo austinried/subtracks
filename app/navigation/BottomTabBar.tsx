@@ -1,12 +1,19 @@
-import React, { useState } from 'react'
-import { Text, View, Pressable } from 'react-native'
+import React from 'react'
+import { Text, View, StyleSheet } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import textStyles from '@app/styles/text'
 import colors from '@app/styles/colors'
 import FastImage from 'react-native-fast-image'
 import NowPlayingBar from '@app/components/NowPlayingBar'
+import PressableOpacity from '@app/components/PressableOpacity'
+import font from '@app/styles/font'
+import dimensions from '@app/styles/dimensions'
 
-const icons: { [key: string]: any } = {
+type TabButtonImage = {
+  regular: number
+  fill: number
+}
+
+const icons: { [key: string]: TabButtonImage } = {
   home: {
     regular: require('@res/icons/home.png'),
     fill: require('@res/icons/home-fill.png'),
@@ -30,11 +37,9 @@ const BottomTabButton: React.FC<{
   label: string
   name: string
   isFocused: boolean
-  img: { regular: number; fill: number }
+  img: TabButtonImage
   navigation: any
 }> = ({ routeKey, label, name, isFocused, img, navigation }) => {
-  const [opacity, setOpacity] = useState(1)
-
   const onPress = () => {
     const event = navigation.emit({
       type: 'tabPress',
@@ -48,47 +53,30 @@ const BottomTabButton: React.FC<{
   }
 
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => setOpacity(0.6)}
-      onPressOut={() => setOpacity(1)}
-      style={{
-        alignItems: 'center',
-        flex: 1,
-        opacity,
-      }}>
+    // <PressableOpacity onPress={onPress} style={styles.button} ripple={true} rippleColor="rgba(100,100,100,0.18)">
+    <PressableOpacity onPress={onPress} style={styles.button}>
       <FastImage
         source={isFocused ? img.fill : img.regular}
-        style={{
-          height: 26,
-          width: 26,
-        }}
+        style={styles.image}
         tintColor={isFocused ? colors.text.primary : colors.text.secondary}
       />
       <Text
         style={{
-          ...textStyles.xsmall,
+          ...styles.text,
           color: isFocused ? colors.text.primary : colors.text.secondary,
         }}>
         {label}
       </Text>
-    </Pressable>
+    </PressableOpacity>
   )
 }
+const MemoBottomTabButton = React.memo(BottomTabButton)
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
     <View>
       <NowPlayingBar />
-      <View
-        style={{
-          height: 54,
-          backgroundColor: colors.gradient.high,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          paddingHorizontal: 28,
-        }}>
+      <View style={styles.container}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key] as any
           const label =
@@ -99,7 +87,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               : route.name
 
           return (
-            <BottomTabButton
+            <MemoBottomTabButton
               key={route.key}
               routeKey={route.key}
               label={label}
@@ -114,5 +102,29 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    height: dimensions.tabBar,
+    backgroundColor: colors.gradient.high,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 28,
+  },
+  button: {
+    alignItems: 'center',
+    flex: 1,
+    height: '100%',
+  },
+  image: {
+    height: 26,
+    width: 26,
+  },
+  text: {
+    fontSize: 10,
+    fontFamily: font.regular,
+  },
+})
 
 export default BottomTabBar

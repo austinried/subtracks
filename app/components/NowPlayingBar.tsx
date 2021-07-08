@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai/utils'
 import { currentTrackAtom, playerStateAtom, usePause, usePlay, useProgress } from '@app/state/trackplayer'
 import CoverArt from '@app/components/CoverArt'
 import colors from '@app/styles/colors'
-import { Font } from '@app/styles/text'
+import font from '@app/styles/font'
 import { State } from 'react-native-track-player'
 import PressableOpacity from '@app/components/PressableOpacity'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -110,12 +110,12 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   detailsTitle: {
-    fontFamily: Font.semiBold,
+    fontFamily: font.semiBold,
     fontSize: 13,
     color: colors.text.primary,
   },
   detailsAlbum: {
-    fontFamily: Font.regular,
+    fontFamily: font.regular,
     fontSize: 13,
     color: colors.text.secondary,
   },

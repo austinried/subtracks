@@ -9,8 +9,8 @@ import CoverArt from '@app/components/CoverArt'
 
 interface AlbumArtProps {
   id: string
-  height: number
-  width: number
+  height: string | number
+  width: string | number
 }
 
 const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {

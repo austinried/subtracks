@@ -1,27 +1,26 @@
-import React, { useState } from 'react'
-import { LayoutRectangle, ScrollView, ScrollViewProps } from 'react-native'
-import colors from '@app/styles/colors'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
+import colors from '@app/styles/colors'
+import dimensions from '@app/styles/dimensions'
+import React from 'react'
+import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
 
 const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; imageKey?: string }> = props => {
-  const [layout, setLayout] = useState<LayoutRectangle | undefined>(undefined)
+  const layout = useWindowDimensions()
 
-  props.style = props.style || {}
-  if (typeof props.style === 'object' && props.style !== null) {
-    props.style = {
-      ...props.style,
-      backgroundColor: colors.gradient.low,
-    }
-  }
+  const minHeight = layout.height - (dimensions.top() + dimensions.bottom())
 
   return (
     <ScrollView
       overScrollMode="never"
       {...props}
-      onLayout={event => {
-        setLayout(event.nativeEvent.layout)
-      }}>
-      <ImageGradientBackground height={layout?.height} imageUri={props.imageUri} imageKey={props.imageKey} />
+      style={[
+        props.style,
+        {
+          backgroundColor: colors.gradient.low,
+        },
+      ]}
+      contentContainerStyle={[{ minHeight }, props.contentContainerStyle]}>
+      <ImageGradientBackground height={minHeight} imageUri={props.imageUri} imageKey={props.imageKey} />
       {props.children}
     </ScrollView>
   )

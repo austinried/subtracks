@@ -3,6 +3,7 @@ import { LayoutRectangle, Pressable, PressableProps } from 'react-native'
 
 type PressableOpacityProps = PressableProps & {
   ripple?: boolean
+  rippleColor?: string
 }
 
 const PressableOpacity: React.FC<PressableOpacityProps> = props => {
@@ -20,8 +21,9 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
       android_ripple={
         props.ripple
           ? {
-              color: 'rgba(255,255,255,0.26)',
+              color: props.rippleColor || 'rgba(255,255,255,0.26)',
               radius: dimensions ? dimensions.width / 2 : undefined,
+              borderless: true,
             }
           : undefined
       }
