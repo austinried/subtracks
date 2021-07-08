@@ -286,7 +286,7 @@ const controlsStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 10,
-    paddingBottom: 34,
+    paddingBottom: 54,
   },
   play: {
     marginHorizontal: 30,
