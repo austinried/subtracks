@@ -8,20 +8,20 @@ import NowPlayingBar from '@app/components/NowPlayingBar'
 
 const icons: { [key: string]: any } = {
   home: {
-    regular: require('../../res/home.png'),
-    fill: require('../../res/home-fill.png'),
+    regular: require('@res/icons/home.png'),
+    fill: require('@res/icons/home-fill.png'),
   },
   library: {
-    regular: require('../../res/library.png'),
-    fill: require('../../res/library-fill.png'),
+    regular: require('@res/icons/library.png'),
+    fill: require('@res/icons/library-fill.png'),
   },
   search: {
-    regular: require('../../res/search.png'),
-    fill: require('../../res/search-fill.png'),
+    regular: require('@res/icons/search.png'),
+    fill: require('@res/icons/search-fill.png'),
   },
   settings: {
-    regular: require('../../res/settings.png'),
-    fill: require('../../res/settings-fill.png'),
+    regular: require('@res/icons/settings.png'),
+    fill: require('@res/icons/settings-fill.png'),
   },
 }
 

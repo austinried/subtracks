@@ -131,7 +131,7 @@ const NoneUp: React.FC<ArtistArtSizeProps> = ({ height, width }) => {
   return (
     <PlaceholderContainer height={height} width={width}>
       <FastImage
-        source={require('../../res/mic_on-fill.png')}
+        source={require('@res/icons/mic_on-fill.png')}
         style={{
           height: height - height / 4,
           width: width - width / 4,

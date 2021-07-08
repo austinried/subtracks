@@ -19,7 +19,7 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
   const Placeholder = () => (
     <LinearGradient colors={[colors.accent, colors.accentLow]}>
       <FastImage
-        source={require('../../res/record.png')}
+        source={require('@res/icons/record.png')}
         style={{ height, width }}
         resizeMode={FastImage.resizeMode.contain}
       />

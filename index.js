@@ -10,7 +10,7 @@ import { name as appName } from '@app/app.json'
 import TrackPlayer, { Capability } from 'react-native-track-player'
 
 AppRegistry.registerComponent(appName, () => App)
-TrackPlayer.registerPlaybackService(() => require('./app/service'))
+TrackPlayer.registerPlaybackService(() => require('@app/service'))
 
 async function start() {
   await TrackPlayer.setupPlayer()
@@ -28,12 +28,12 @@ async function start() {
       Capability.SkipToNext,
       Capability.SkipToPrevious,
     ],
-    playIcon: require('./res/notification/ic_stat_play.png'),
-    pauseIcon: require('./res/notification/ic_stat_pause.png'),
-    stopIcon: require('./res/notification/ic_stat_stop.png'),
-    nextIcon: require('./res/notification/ic_stat_next.png'),
-    previousIcon: require('./res/notification/ic_stat_previous.png'),
-    icon: require('./res/notification/ic_stat_play.png'),
+    playIcon: require('@res/icons/notification/ic_stat_play.png'),
+    pauseIcon: require('@res/icons/notification/ic_stat_pause.png'),
+    stopIcon: require('@res/icons/notification/ic_stat_stop.png'),
+    nextIcon: require('@res/icons/notification/ic_stat_next.png'),
+    previousIcon: require('@res/icons/notification/ic_stat_previous.png'),
+    icon: require('@res/icons/notification/ic_stat_play.png'),
   })
 }
 start()
