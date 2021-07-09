@@ -37,11 +37,6 @@ export interface AlbumListItem {
   coverArtThumbUri?: string
 }
 
-export interface AlbumArt {
-  uri?: string
-  thumbUri?: string
-}
-
 export interface AlbumWithSongs extends Album {
   songs: Song[]
 }

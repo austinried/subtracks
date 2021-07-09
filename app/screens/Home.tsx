@@ -1,6 +1,7 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import PressableOpacity from '@app/components/PressableOpacity'
+import { AlbumListItem } from '@app/models/music'
 import { albumLists } from '@app/state/music'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -9,13 +10,38 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
 
-const Category: React.FC<{
-  name: string
-  stateKey: string
-}> = ({ name, stateKey }) => {
+const AlbumItem: React.FC<{
+  album: AlbumListItem
+}> = ({ album }) => {
   const navigation = useNavigation()
 
-  const state = albumLists[stateKey]
+  return (
+    <PressableOpacity
+      onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
+      key={album.id}
+      style={styles.item}>
+      <CoverArt
+        PlaceholderComponent={() => <></>}
+        coverArtUri={album.coverArtThumbUri}
+        height={styles.item.width}
+        width={styles.item.width}
+      />
+      <Text style={styles.title} numberOfLines={1}>
+        {album.name}
+      </Text>
+      <Text style={styles.subtitle} numberOfLines={1}>
+        {album.artist}
+      </Text>
+    </PressableOpacity>
+  )
+}
+const MemoAlbumItem = React.memo(AlbumItem)
+
+const Category: React.FC<{
+  name: string
+  type: string
+}> = ({ name, type }) => {
+  const state = albumLists[type]
   const list = useAtomValue(state.listAtom)
   const updating = useAtomValue(state.updatingAtom)
   const updateList = state.useUpdateList()
@@ -28,40 +54,26 @@ const Category: React.FC<{
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
+        overScrollMode={'never'}
         style={styles.artScroll}
         contentContainerStyle={styles.artScrollContent}>
         {list.map(album => (
-          <PressableOpacity
-            onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
-            key={album.id}
-            style={styles.item}>
-            <CoverArt
-              PlaceholderComponent={() => <></>}
-              coverArtUri={album.coverArtThumbUri}
-              height={styles.item.width}
-              width={styles.item.width}
-            />
-            <Text style={styles.title} numberOfLines={1}>
-              {album.name}
-            </Text>
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {album.artist}
-            </Text>
-          </PressableOpacity>
+          <MemoAlbumItem key={album.id} album={album} />
         ))}
       </ScrollView>
     </View>
   )
 }
+const MemoCategory = React.memo(Category)
 
 const Home = () => (
   <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
     <View style={styles.content}>
-      <Category name="Random Albums" stateKey="random" />
-      <Category name="Newest Albums" stateKey="newest" />
-      <Category name="Recent Albums" stateKey="recent" />
-      <Category name="Frequent Albums" stateKey="frequent" />
-      <Category name="Starred Albums" stateKey="starred" />
+      <MemoCategory name="Random Albums" type="random" />
+      <MemoCategory name="Newest Albums" type="newest" />
+      <MemoCategory name="Recent Albums" type="recent" />
+      <MemoCategory name="Frequent Albums" type="frequent" />
+      <MemoCategory name="Starred Albums" type="starred" />
     </View>
   </GradientScrollView>
 )

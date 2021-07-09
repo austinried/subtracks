@@ -4,7 +4,7 @@ import FastImage from 'react-native-fast-image'
 import colors from '@app/styles/colors'
 
 const CoverArt: React.FC<{
-  PlaceholderComponent: () => JSX.Element
+  PlaceholderComponent?: () => JSX.Element
   height?: string | number
   width?: string | number
   coverArtUri?: string
@@ -25,6 +25,7 @@ const CoverArt: React.FC<{
       resizeMode={FastImage.resizeMode.contain}
       onError={() => {
         setLoading(false)
+        console.log('asdfdsaf')
         setPlaceholderVisible(true)
       }}
       onLoadEnd={() => setLoading(false)}
@@ -35,7 +36,7 @@ const CoverArt: React.FC<{
     <View style={{ ...styles.container, height, width }}>
       {coverArtUri ? <Image /> : <></>}
       <View style={{ ...styles.placeholderContainer, opacity: placeholderVisible ? 1 : 0 }}>
-        <PlaceholderComponent />
+        {PlaceholderComponent ? <PlaceholderComponent /> : <></>}
       </View>
       <ActivityIndicator style={styles.indicator} animating={loading} size={'large'} color={colors.accent} />
     </View>

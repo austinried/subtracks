@@ -8,11 +8,11 @@ import { albumAtomFamily } from '@app/state/music'
 import { currentTrackAtom, useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import AlbumArt from '@app/components/AlbumArt'
 import Button from '@app/components/Button'
 import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
 import PressableOpacity from '@app/components/PressableOpacity'
+import CoverArt from '@app/components/CoverArt'
 
 const SongItem: React.FC<{
   id: string
@@ -91,7 +91,7 @@ const AlbumDetails: React.FC<{
       style={styles.container}>
       <View style={styles.content}>
         <View style={styles.cover}>
-          <AlbumArt id={album.id} height="100%" width="100%" />
+          <CoverArt coverArtUri={album.coverArtUri} height="100%" width="100%" />
         </View>
         <Text style={styles.title}>{album.name}</Text>
         <Text style={styles.subtitle}>

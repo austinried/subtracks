@@ -73,12 +73,7 @@ const SongCoverArt = () => {
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt
-        PlaceholderComponent={() => <View style={{ height: '100%', width: '100%' }} />}
-        height={'100%'}
-        width={'100%'}
-        coverArtUri={track?.artwork as string}
-      />
+      <CoverArt height="100%" width="100%" coverArtUri={track?.artwork as string} />
     </View>
   )
 }

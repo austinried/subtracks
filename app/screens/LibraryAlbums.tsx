@@ -1,14 +1,14 @@
+import CoverArt from '@app/components/CoverArt'
+import GradientFlatList from '@app/components/GradientFlatList'
+import PressableOpacity from '@app/components/PressableOpacity'
+import { Album } from '@app/models/music'
+import { albumLists } from '@app/state/music'
+import colors from '@app/styles/colors'
+import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
-import { Album } from '@app/models/music'
-import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '@app/state/music'
-import font from '@app/styles/font'
-import AlbumArt from '@app/components/AlbumArt'
-import GradientFlatList from '@app/components/GradientFlatList'
-import colors from '@app/styles/colors'
-import PressableOpacity from '@app/components/PressableOpacity'
 
 const AlbumItem: React.FC<{
   id: string
@@ -16,14 +16,15 @@ const AlbumItem: React.FC<{
   size: number
   height: number
   artist?: string
-}> = ({ id, name, artist, size, height }) => {
+  coverArtUri?: string
+}> = ({ id, name, artist, size, height, coverArtUri }) => {
   const navigation = useNavigation()
 
   return (
     <PressableOpacity
       style={[styles.item, { maxWidth: size, height }]}
       onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
-      <AlbumArt id={id} height={size} width={size} />
+      <CoverArt coverArtUri={coverArtUri} height={size} width={size} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {name}
@@ -42,6 +43,7 @@ const AlbumListRenderItem: React.FC<{
 }> = ({ item }) => (
   <MemoAlbumItem
     id={item.album.id}
+    coverArtUri={item.album.coverArtThumbUri}
     name={item.album.name}
     artist={item.album.artist}
     size={item.size}
@@ -50,19 +52,21 @@ const AlbumListRenderItem: React.FC<{
 )
 
 const AlbumsList = () => {
-  const albums = useAtomValue(albumsAtom)
-  const updating = useAtomValue(albumsUpdatingAtom)
-  const updateAlbums = useUpdateAlbums()
+  const state = albumLists.alphabeticalByArtist
+  const list = useAtomValue(state.listAtom)
+  const updating = useAtomValue(state.updatingAtom)
+  const updateList = state.useUpdateList()
+
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.item.marginHorizontal * 2
   const height = size + 44
 
-  const albumsList = Object.values(albums).map(album => ({ album, size, height }))
+  const albumsList = list.map(album => ({ album, size, height }))
 
   useEffect(() => {
     if (albumsList.length === 0) {
-      updateAlbums()
+      updateList()
     }
   })
 
@@ -75,7 +79,7 @@ const AlbumsList = () => {
         numColumns={3}
         removeClippedSubviews={true}
         refreshing={updating}
-        onRefresh={updateAlbums}
+        onRefresh={updateList}
         overScrollMode="never"
         getItemLayout={(_data, index) => ({
           length: height,
