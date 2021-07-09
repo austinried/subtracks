@@ -33,7 +33,6 @@ const Category: React.FC<{
         {list.map(album => (
           <PressableOpacity
             onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
-            unstable_pressDelay={50}
             key={album.id}
             style={styles.item}>
             <CoverArt

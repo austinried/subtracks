@@ -2,7 +2,6 @@ import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StatusBar, StyleSheet, Text, View } from 'react-native'
-import { NativeStackScreenProps } from 'react-native-screens/lib/typescript/native-stack'
 import { State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -26,6 +25,7 @@ import CoverArt from '@app/components/CoverArt'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import dimensions from '@app/styles/dimensions'
+import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 
 const NowPlayingHeader = () => {
   const queueName = useAtomValue(queueNameAtom)

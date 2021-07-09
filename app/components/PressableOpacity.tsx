@@ -15,6 +15,11 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
     props.disabled === true ? setOpacity(0.3) : setOpacity(1)
   }, [props.disabled])
 
+  props = {
+    ...props,
+    unstable_pressDelay: props.unstable_pressDelay === undefined ? 60 : props.unstable_pressDelay,
+  }
+
   return (
     <Pressable
       {...props}

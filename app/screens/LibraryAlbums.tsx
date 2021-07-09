@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import { Album } from '@app/models/music'
 import { albumsAtom, albumsUpdatingAtom, useUpdateAlbums } from '@app/state/music'
 import font from '@app/styles/font'
 import AlbumArt from '@app/components/AlbumArt'
 import GradientFlatList from '@app/components/GradientFlatList'
 import colors from '@app/styles/colors'
+import PressableOpacity from '@app/components/PressableOpacity'
 
 const AlbumItem: React.FC<{
   id: string
@@ -19,7 +20,7 @@ const AlbumItem: React.FC<{
   const navigation = useNavigation()
 
   return (
-    <Pressable
+    <PressableOpacity
       style={[styles.item, { maxWidth: size, height }]}
       onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
       <AlbumArt id={id} height={size} width={size} />
@@ -31,7 +32,7 @@ const AlbumItem: React.FC<{
           {artist}
         </Text>
       </View>
-    </Pressable>
+    </PressableOpacity>
   )
 }
 const MemoAlbumItem = React.memo(AlbumItem)
