@@ -4,6 +4,7 @@ import { LayoutRectangle, Pressable, PressableProps } from 'react-native'
 type PressableOpacityProps = PressableProps & {
   ripple?: boolean
   rippleColor?: string
+  unstable_pressDelay?: number
 }
 
 const PressableOpacity: React.FC<PressableOpacityProps> = props => {

@@ -29,6 +29,14 @@ export interface Album {
   year?: number
 }
 
+export interface AlbumListItem {
+  id: string
+  name: string
+  artist?: string
+  starred?: Date
+  coverArtThumbUri?: string
+}
+
 export interface AlbumArt {
   uri?: string
   thumbUri?: string

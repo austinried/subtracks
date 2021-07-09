@@ -1,10 +1,11 @@
-import { atom, useAtom } from 'jotai'
+import { Atom, atom, useAtom, WritableAtom } from 'jotai'
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils'
-import { Album, AlbumArt, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '@app/models/music'
+import { Album, AlbumArt, AlbumListItem, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '@app/models/music'
 import { SubsonicApiClient } from '@app/subsonic/api'
 import { AlbumID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
 import { GetArtistResponse } from '@app/subsonic/responses'
 import { activeServerAtom } from '@app/state/settings'
+import { GetAlbumList2Type } from '@app/subsonic/params'
 
 export const artistsAtom = atom<Artist[]>([])
 export const artistsUpdatingAtom = atom(false)
@@ -48,6 +49,112 @@ export const useUpdateAlbums = () => {
 
   if (!server) {
     return () => Promise.resolve()
+  }
+
+  return async () => {
+    if (updating) {
+      return
+    }
+    setUpdating(true)
+
+    const client = new SubsonicApiClient(server)
+    const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 })
+
+    setAlbums(
+      response.data.albums.reduce((acc, next) => {
+        const album = mapAlbumID3(next, client)
+        acc[album.id] = album
+        return acc
+      }, {} as Record<string, Album>),
+    )
+    setUpdating(false)
+  }
+}
+
+const useUpdateAlbumListBase = (
+  type: GetAlbumList2Type,
+  albumListAtom: WritableAtom<AlbumListItem[], AlbumListItem[]>,
+  updatingAtom: WritableAtom<boolean, boolean>,
+) => {
+  const server = useAtomValue(activeServerAtom)
+  const setAlbumList = useUpdateAtom(albumListAtom)
+  const [updating, setUpdating] = useAtom(updatingAtom)
+
+  if (!server) {
+    return async () => {}
+  }
+
+  return async () => {
+    if (updating) {
+      return
+    }
+    setUpdating(true)
+
+    const client = new SubsonicApiClient(server)
+    const response = await client.getAlbumList2({ type, size: 20 })
+
+    setAlbumList(response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)))
+    setUpdating(false)
+  }
+}
+
+function createAlbumList(type: GetAlbumList2Type) {
+  const listAtom = atom<AlbumListItem[]>([])
+  const listReadAtom = atom(get => get(listAtom))
+  const updatingAtom = atom(false)
+  const updatingReadAtom = atom(get => get(updatingAtom))
+  const useUpdateAlbumList = () => useUpdateAlbumListBase(type, listAtom, updatingAtom)
+
+  return { listAtom, listReadAtom, updatingAtom, updatingReadAtom, useUpdateAlbumList }
+}
+
+type ListState<T> = {
+  listAtom: Atom<T[]>
+  updatingAtom: Atom<boolean>
+  useUpdateList: () => () => Promise<void>
+}
+
+const recent = createAlbumList('recent')
+const starred = createAlbumList('starred')
+const frequent = createAlbumList('frequent')
+const random = createAlbumList('random')
+const newest = createAlbumList('newest')
+
+export const albumLists: { [key: string]: ListState<AlbumListItem> } = {
+  recent: {
+    listAtom: recent.listReadAtom,
+    updatingAtom: recent.updatingReadAtom,
+    useUpdateList: recent.useUpdateAlbumList,
+  },
+  starred: {
+    listAtom: starred.listReadAtom,
+    updatingAtom: starred.updatingReadAtom,
+    useUpdateList: starred.useUpdateAlbumList,
+  },
+  frequent: {
+    listAtom: frequent.listReadAtom,
+    updatingAtom: frequent.updatingReadAtom,
+    useUpdateList: frequent.useUpdateAlbumList,
+  },
+  random: {
+    listAtom: random.listReadAtom,
+    updatingAtom: random.updatingReadAtom,
+    useUpdateList: random.useUpdateAlbumList,
+  },
+  newest: {
+    listAtom: newest.listReadAtom,
+    updatingAtom: newest.updatingReadAtom,
+    useUpdateList: newest.useUpdateAlbumList,
+  },
+}
+
+export const useRecentAlbums = () => {
+  const server = useAtomValue(activeServerAtom)
+  const [updating, setUpdating] = useAtom(albumsUpdatingAtom)
+  const setAlbums = useUpdateAtom(albumsAtom)
+
+  if (!server) {
+    return async () => {}
   }
 
   return async () => {
@@ -179,6 +286,16 @@ function mapAlbumID3(album: AlbumID3Element, client: SubsonicApiClient): Album {
   return {
     ...album,
     coverArtUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt }) : undefined,
+    coverArtThumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
+  }
+}
+
+function mapAlbumID3toAlbumListItem(album: AlbumID3Element, client: SubsonicApiClient): AlbumListItem {
+  return {
+    id: album.id,
+    name: album.name,
+    artist: album.artist,
+    starred: album.starred,
     coverArtThumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
   }
 }

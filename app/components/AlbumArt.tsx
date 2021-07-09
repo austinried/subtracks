@@ -31,7 +31,7 @@ const AlbumArt: React.FC<AlbumArtProps> = ({ id, height, width }) => {
       PlaceholderComponent={Placeholder}
       height={height}
       width={width}
-      coverArtUri={width > 128 ? albumArt?.uri : albumArt?.thumbUri}
+      coverArtUri={width > 200 ? albumArt?.uri : albumArt?.thumbUri}
     />
   )
 }
