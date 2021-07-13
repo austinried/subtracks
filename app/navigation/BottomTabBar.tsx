@@ -32,14 +32,14 @@ const icons: { [key: string]: TabButtonImage } = {
   },
 }
 
-const BottomTabButton: React.FC<{
+const BottomTabButton = React.memo<{
   routeKey: string
   label: string
   name: string
   isFocused: boolean
   img: TabButtonImage
   navigation: any
-}> = ({ routeKey, label, name, isFocused, img, navigation }) => {
+}>(({ routeKey, label, name, isFocused, img, navigation }) => {
   const onPress = () => {
     const event = navigation.emit({
       type: 'tabPress',
@@ -69,8 +69,7 @@ const BottomTabButton: React.FC<{
       </Text>
     </PressableOpacity>
   )
-}
-const MemoBottomTabButton = React.memo(BottomTabButton)
+})
 
 const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
@@ -87,7 +86,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               : route.name
 
           return (
-            <MemoBottomTabButton
+            <BottomTabButton
               key={route.key}
               routeKey={route.key}
               label={label}

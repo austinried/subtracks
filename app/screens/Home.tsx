@@ -10,9 +10,9 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
 
-const AlbumItem: React.FC<{
+const AlbumItem = React.memo<{
   album: AlbumListItem
-}> = ({ album }) => {
+}>(({ album }) => {
   const navigation = useNavigation()
 
   return (
@@ -34,13 +34,12 @@ const AlbumItem: React.FC<{
       </Text>
     </PressableOpacity>
   )
-}
-const MemoAlbumItem = React.memo(AlbumItem)
+})
 
-const Category: React.FC<{
+const Category = React.memo<{
   name: string
   type: string
-}> = ({ name, type }) => {
+}>(({ name, type }) => {
   const state = albumLists[type]
   const list = useAtomValue(state.listAtom)
   const updating = useAtomValue(state.updatingAtom)
@@ -58,22 +57,21 @@ const Category: React.FC<{
         style={styles.artScroll}
         contentContainerStyle={styles.artScrollContent}>
         {list.map(album => (
-          <MemoAlbumItem key={album.id} album={album} />
+          <AlbumItem key={album.id} album={album} />
         ))}
       </ScrollView>
     </View>
   )
-}
-const MemoCategory = React.memo(Category)
+})
 
 const Home = () => (
   <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
     <View style={styles.content}>
-      <MemoCategory name="Random Albums" type="random" />
-      <MemoCategory name="Newest Albums" type="newest" />
-      <MemoCategory name="Recent Albums" type="recent" />
-      <MemoCategory name="Frequent Albums" type="frequent" />
-      <MemoCategory name="Starred Albums" type="starred" />
+      <Category name="Random Albums" type="random" />
+      <Category name="Newest Albums" type="newest" />
+      <Category name="Recent Albums" type="recent" />
+      <Category name="Frequent Albums" type="frequent" />
+      <Category name="Starred Albums" type="starred" />
     </View>
   </GradientScrollView>
 )

@@ -10,14 +10,14 @@ import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
-const AlbumItem: React.FC<{
+const AlbumItem = React.memo<{
   id: string
   name: string
   size: number
   height: number
   artist?: string
   coverArtUri?: string
-}> = ({ id, name, artist, size, height, coverArtUri }) => {
+}>(({ id, name, artist, size, height, coverArtUri }) => {
   const navigation = useNavigation()
 
   return (
@@ -35,13 +35,12 @@ const AlbumItem: React.FC<{
       </View>
     </PressableOpacity>
   )
-}
-const MemoAlbumItem = React.memo(AlbumItem)
+})
 
 const AlbumListRenderItem: React.FC<{
   item: { album: Album; size: number; height: number }
 }> = ({ item }) => (
-  <MemoAlbumItem
+  <AlbumItem
     id={item.album.id}
     coverArtUri={item.album.coverArtThumbUri}
     name={item.album.name}
