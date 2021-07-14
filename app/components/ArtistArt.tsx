@@ -1,11 +1,12 @@
 import { useAtomValue } from 'jotai/utils'
-import React from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import React, { useState } from 'react'
+import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import LinearGradient from 'react-native-linear-gradient'
 import { artistArtAtomFamily } from '@app/state/music'
 import colors from '@app/styles/colors'
 import CoverArt from '@app/components/CoverArt'
+import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
 interface ArtistArtSizeProps {
   height: number
@@ -20,26 +21,31 @@ interface ArtistArtProps extends ArtistArtSizeProps {
   id: string
 }
 
-const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, children }) => (
-  <LinearGradient
-    colors={[colors.accent, colors.accentLow]}
-    style={{
-      height,
-      width,
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-    {children}
-  </LinearGradient>
-)
+const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, children }) => {
+  const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
-const FourUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
+  const onLayout = (event: LayoutChangeEvent) => {
+    setLayout(event.nativeEvent.layout)
+  }
+
+  return (
+    <LinearGradient
+      onLayout={onLayout}
+      colors={[colors.accent, colors.accentLow]}
+      style={[styles.placeholderContainer, { height, width }]}>
+      <IconFA5 name="microphone" color="black" size={layout.width / 1.8} style={styles.placeholderIcon} />
+      {children}
+    </LinearGradient>
+  )
+}
+
+const FourUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
   const halfHeight = height / 2
   const halfWidth = width / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[0] }}
           style={{ height: halfHeight, width: halfWidth }}
@@ -51,7 +57,7 @@ const FourUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) =>
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[2] }}
           style={{ height: halfHeight, width: halfWidth }}
@@ -65,22 +71,22 @@ const FourUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) =>
       </View>
     </PlaceholderContainer>
   )
-}
+})
 
-const ThreeUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
+const ThreeUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
   const halfHeight = height / 2
   const halfWidth = width / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[0] }}
           style={{ height: halfHeight, width }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[1] }}
           style={{ height: halfHeight, width: halfWidth }}
@@ -94,21 +100,21 @@ const ThreeUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) =
       </View>
     </PlaceholderContainer>
   )
-}
+})
 
-const TwoUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
+const TwoUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
   const halfHeight = height / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[0] }}
           style={{ height: halfHeight, width }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
-      <View style={{ width, height: halfHeight, flexDirection: 'row' }}>
+      <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
           source={{ uri: coverArtUris[1] }}
           style={{ height: halfHeight, width }}
@@ -117,32 +123,19 @@ const TwoUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => 
       </View>
     </PlaceholderContainer>
   )
-}
+})
 
-const OneUp: React.FC<ArtistArtXUpProps> = ({ height, width, coverArtUris }) => {
-  return (
-    <PlaceholderContainer height={height} width={width}>
-      <FastImage source={{ uri: coverArtUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
-    </PlaceholderContainer>
-  )
-}
+const OneUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => (
+  <PlaceholderContainer height={height} width={width}>
+    <FastImage source={{ uri: coverArtUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
+  </PlaceholderContainer>
+))
 
-const NoneUp: React.FC<ArtistArtSizeProps> = ({ height, width }) => {
-  return (
-    <PlaceholderContainer height={height} width={width}>
-      <FastImage
-        source={require('@res/icons/mic_on-fill.png')}
-        style={{
-          height: height - height / 4,
-          width: width - width / 4,
-        }}
-        resizeMode={FastImage.resizeMode.cover}
-      />
-    </PlaceholderContainer>
-  )
-}
+const NoneUp = React.memo<ArtistArtSizeProps>(({ height, width }) => (
+  <PlaceholderContainer height={height} width={width} />
+))
 
-const ArtistArt: React.FC<ArtistArtProps> = ({ id, height, width }) => {
+const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width }) => {
   const artistArt = useAtomValue(artistArtAtomFamily(id))
 
   const Placeholder = () => {
@@ -170,32 +163,42 @@ const ArtistArt: React.FC<ArtistArtProps> = ({ id, height, width }) => {
   }
 
   return (
-    <View
-      style={{
-        borderRadius: height / 2,
-        overflow: 'hidden',
-      }}>
+    <View style={[styles.container, { borderRadius: height / 2 }]}>
       <CoverArt PlaceholderComponent={Placeholder} height={height} width={width} coverArtUri={artistArt?.uri} />
     </View>
   )
-}
+})
 
-const ArtistArtFallback: React.FC<ArtistArtProps> = ({ height, width }) => (
-  <View
-    style={{
-      height,
-      width,
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-    <ActivityIndicator size="small" color={colors.accent} />
+const ArtistArtFallback = React.memo<ArtistArtProps>(({ height, width }) => (
+  <View style={[styles.fallback, { height, width }]}>
+    <ActivityIndicator size="large" color={colors.accent} />
   </View>
-)
+))
 
 const ArtistArtLoader: React.FC<ArtistArtProps> = props => (
   <React.Suspense fallback={<ArtistArtFallback {...props} />}>
     <ArtistArt {...props} />
   </React.Suspense>
 )
+
+const styles = StyleSheet.create({
+  placeholderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderIcon: {
+    position: 'absolute',
+  },
+  artRow: {
+    flexDirection: 'row',
+  },
+  container: {
+    overflow: 'hidden',
+  },
+  fallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
 
 export default React.memo(ArtistArtLoader)

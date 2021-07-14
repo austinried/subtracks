@@ -21,12 +21,7 @@ const AlbumItem = React.memo<{
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
       key={album.id}
       style={styles.item}>
-      <CoverArt
-        PlaceholderComponent={() => <></>}
-        coverArtUri={album.coverArtThumbUri}
-        height={styles.item.width}
-        width={styles.item.width}
-      />
+      <CoverArt coverArtUri={album.coverArtThumbUri} height={styles.item.width} width={styles.item.width} />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
       </Text>
