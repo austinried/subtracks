@@ -1,11 +1,11 @@
-import { Atom, atom, useAtom, WritableAtom } from 'jotai'
-import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { Album, AlbumListItem, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '@app/models/music'
+import { activeServerAtom, homeListTypesAtom } from '@app/state/settings'
 import { SubsonicApiClient } from '@app/subsonic/api'
 import { AlbumID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
-import { GetArtistResponse } from '@app/subsonic/responses'
-import { activeServerAtom } from '@app/state/settings'
 import { GetAlbumList2Type } from '@app/subsonic/params'
+import { GetArtistResponse } from '@app/subsonic/responses'
+import { atom, useAtom } from 'jotai'
+import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils'
 
 export const artistsAtom = atom<Artist[]>([])
 export const artistsUpdatingAtom = atom(false)
@@ -39,15 +39,26 @@ export const useUpdateArtists = () => {
   }
 }
 
-const useUpdateAlbumListBase = (
-  type: GetAlbumList2Type,
-  albumListAtom: WritableAtom<AlbumListItem[], AlbumListItem[]>,
-  updatingAtom: WritableAtom<boolean, boolean>,
-  size: number,
-) => {
+export type HomeLists = { [key: string]: AlbumListItem[] }
+
+export const homeListsUpdatingAtom = atom(false)
+export const homeListsAtom = atom<HomeLists>({})
+const homeListsWriteAtom = atom<HomeLists, { type: string; albums: AlbumListItem[] }>(
+  get => get(homeListsAtom),
+  (get, set, { type, albums }) => {
+    const lists = get(homeListsAtom)
+    set(homeListsAtom, {
+      ...lists,
+      [type]: albums,
+    })
+  },
+)
+
+export const useUpdateHomeLists = () => {
   const server = useAtomValue(activeServerAtom)
-  const setAlbumList = useUpdateAtom(albumListAtom)
-  const [updating, setUpdating] = useAtom(updatingAtom)
+  const types = useAtomValue(homeListTypesAtom)
+  const updateHomeList = useUpdateAtom(homeListsWriteAtom)
+  const [updating, setUpdating] = useAtom(homeListsUpdatingAtom)
 
   if (!server) {
     return async () => {}
@@ -60,67 +71,45 @@ const useUpdateAlbumListBase = (
     setUpdating(true)
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getAlbumList2({ type, size })
 
-    setAlbumList(response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)))
+    const promises: Promise<any>[] = []
+    for (const type of types) {
+      promises.push(
+        client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
+          updateHomeList({ type, albums: response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)) })
+        }),
+      )
+    }
+    await Promise.all(promises)
+
     setUpdating(false)
   }
 }
 
-function createAlbumList(type: GetAlbumList2Type, size = 20) {
-  const listAtom = atom<AlbumListItem[]>([])
-  const listReadAtom = atom(get => get(listAtom))
-  const updatingAtom = atom(false)
-  const updatingReadAtom = atom(get => get(updatingAtom))
-  const useUpdateAlbumList = () => useUpdateAlbumListBase(type, listAtom, updatingAtom, size)
+export const albumListUpdatingAtom = atom(false)
+export const albumListAtom = atom<AlbumListItem[]>([])
 
-  return { listAtom, listReadAtom, updatingAtom, updatingReadAtom, useUpdateAlbumList }
-}
+export const useUpdateAlbumList = () => {
+  const server = useAtomValue(activeServerAtom)
+  const updateList = useUpdateAtom(albumListAtom)
+  const [updating, setUpdating] = useAtom(albumListUpdatingAtom)
 
-type ListState<T> = {
-  listAtom: Atom<T[]>
-  updatingAtom: Atom<boolean>
-  useUpdateList: () => () => Promise<void>
-}
+  if (!server) {
+    return async () => {}
+  }
 
-const alphabeticalByArtist = createAlbumList('alphabeticalByArtist', 500)
-const recent = createAlbumList('recent')
-const starred = createAlbumList('starred')
-const frequent = createAlbumList('frequent')
-const random = createAlbumList('random')
-const newest = createAlbumList('newest')
+  return async () => {
+    if (updating) {
+      return
+    }
+    setUpdating(true)
 
-export const albumLists: { [key: string]: ListState<AlbumListItem> } = {
-  alphabeticalByArtist: {
-    listAtom: alphabeticalByArtist.listReadAtom,
-    updatingAtom: alphabeticalByArtist.updatingReadAtom,
-    useUpdateList: alphabeticalByArtist.useUpdateAlbumList,
-  },
-  recent: {
-    listAtom: recent.listReadAtom,
-    updatingAtom: recent.updatingReadAtom,
-    useUpdateList: recent.useUpdateAlbumList,
-  },
-  starred: {
-    listAtom: starred.listReadAtom,
-    updatingAtom: starred.updatingReadAtom,
-    useUpdateList: starred.useUpdateAlbumList,
-  },
-  frequent: {
-    listAtom: frequent.listReadAtom,
-    updatingAtom: frequent.updatingReadAtom,
-    useUpdateList: frequent.useUpdateAlbumList,
-  },
-  random: {
-    listAtom: random.listReadAtom,
-    updatingAtom: random.updatingReadAtom,
-    useUpdateList: random.useUpdateAlbumList,
-  },
-  newest: {
-    listAtom: newest.listReadAtom,
-    updatingAtom: newest.updatingReadAtom,
-    useUpdateList: newest.useUpdateAlbumList,
-  },
+    const client = new SubsonicApiClient(server)
+    const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 })
+
+    updateList(response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)))
+    setUpdating(false)
+  }
 }
 
 export const albumAtomFamily = atomFamily((id: string) =>

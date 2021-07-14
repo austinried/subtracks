@@ -2,13 +2,14 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { AlbumListItem } from '@app/models/music'
-import { albumLists } from '@app/state/music'
+import { homeListsAtom, homeListsUpdatingAtom, useUpdateHomeLists } from '@app/state/music'
+import { homeListTypesAtom, useActiveServerRefresh } from '@app/state/settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React from 'react'
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
 
 const AlbumItem = React.memo<{
   album: AlbumListItem
@@ -38,25 +39,18 @@ const AlbumItem = React.memo<{
 
 const Category = React.memo<{
   name: string
-  type: string
-}>(({ name, type }) => {
-  const state = albumLists[type]
-  const list = useAtomValue(state.listAtom)
-  const updating = useAtomValue(state.updatingAtom)
-  const updateList = state.useUpdateList()
-
+  data: AlbumListItem[]
+}>(({ name, data }) => {
   return (
-    <View style={[styles.category, { backgroundColor: updating ? 'transparent' : 'transparent' }]}>
-      <PressableOpacity onPress={updateList} style={{ alignItems: 'flex-start' }}>
-        <Text style={styles.header}>{name}</Text>
-      </PressableOpacity>
+    <View style={styles.category}>
+      <Text style={styles.header}>{name}</Text>
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         overScrollMode={'never'}
         style={styles.artScroll}
         contentContainerStyle={styles.artScrollContent}>
-        {list.map(album => (
+        {data.map(album => (
           <AlbumItem key={album.id} album={album} />
         ))}
       </ScrollView>
@@ -64,17 +58,34 @@ const Category = React.memo<{
   )
 })
 
-const Home = () => (
-  <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
-    <View style={styles.content}>
-      <Category name="Random Albums" type="random" />
-      <Category name="Newest Albums" type="newest" />
-      <Category name="Recent Albums" type="recent" />
-      <Category name="Frequent Albums" type="frequent" />
-      <Category name="Starred Albums" type="starred" />
-    </View>
-  </GradientScrollView>
-)
+const Home = () => {
+  const types = useAtomValue(homeListTypesAtom)
+  const lists = useAtomValue(homeListsAtom)
+  const updating = useAtomValue(homeListsUpdatingAtom)
+  const update = useUpdateHomeLists()
+
+  useActiveServerRefresh(update)
+
+  return (
+    <GradientScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContentContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={updating}
+          onRefresh={update}
+          colors={[colors.accent, colors.accentLow]}
+          progressViewOffset={StatusBar.currentHeight}
+        />
+      }>
+      <View style={styles.content}>
+        {types.map(type => (
+          <Category key={type} name={type} data={type in lists ? lists[type] : []} />
+        ))}
+      </View>
+    </GradientScrollView>
+  )
+}
 
 const styles = StyleSheet.create({
   scroll: {

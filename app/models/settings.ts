@@ -8,5 +8,8 @@ export interface Server {
 
 export interface AppSettings {
   servers: Server[]
+  home: {
+    lists: string[]
+  }
   activeServer?: string
 }

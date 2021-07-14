@@ -2,7 +2,8 @@ import CoverArt from '@app/components/CoverArt'
 import GradientFlatList from '@app/components/GradientFlatList'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { Album } from '@app/models/music'
-import { albumLists } from '@app/state/music'
+import { albumListAtom, albumListUpdatingAtom, useUpdateAlbumList } from '@app/state/music'
+import { useActiveServerRefresh } from '@app/state/settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -51,15 +52,16 @@ const AlbumListRenderItem: React.FC<{
 )
 
 const AlbumsList = () => {
-  const state = albumLists.alphabeticalByArtist
-  const list = useAtomValue(state.listAtom)
-  const updating = useAtomValue(state.updatingAtom)
-  const updateList = state.useUpdateList()
+  const list = useAtomValue(albumListAtom)
+  const updating = useAtomValue(albumListUpdatingAtom)
+  const updateList = useUpdateAlbumList()
+
+  useActiveServerRefresh(updateList)
 
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.item.marginHorizontal * 2
-  const height = size + 44
+  const height = size + 38
 
   const albumsList = list.map(album => ({ album, size, height }))
 
@@ -105,15 +107,10 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginHorizontal: 2,
     flex: 1 / 3,
-    // backgroundColor: 'green',
-  },
-  art: {
-    // height: 125,
   },
   itemDetails: {
     flex: 1,
     width: '100%',
-    // width: 125,
   },
   title: {
     fontSize: 12,
