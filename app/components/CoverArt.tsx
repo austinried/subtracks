@@ -11,7 +11,8 @@ const CoverArt: React.FC<{
   height?: string | number
   width?: string | number
   coverArtUri?: string
-}> = ({ PlaceholderComponent, placeholderIcon, height, width, coverArtUri }) => {
+  resizeMode?: keyof typeof FastImage.resizeMode
+}> = ({ PlaceholderComponent, placeholderIcon, height, width, coverArtUri, resizeMode }) => {
   const [placeholderVisible, setPlaceholderVisible] = useState(false)
   const [loading, setLoading] = useState(true)
   const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
@@ -26,7 +27,7 @@ const CoverArt: React.FC<{
     <FastImage
       source={{ uri: coverArtUri, priority: 'high' }}
       style={{ ...styles.image, opacity: placeholderVisible ? 0 : 1 }}
-      resizeMode={FastImage.resizeMode.contain}
+      resizeMode={resizeMode || FastImage.resizeMode.contain}
       onError={() => {
         setLoading(false)
         setPlaceholderVisible(true)

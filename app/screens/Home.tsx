@@ -38,7 +38,7 @@ const Category = React.memo<{
 }>(({ name, data }) => {
   return (
     <View style={styles.category}>
-      <Text style={styles.header}>{name}</Text>
+      <Text style={styles.categoryHeader}>{name}</Text>
       <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   category: {
     marginTop: 12,
   },
-  header: {
+  categoryHeader: {
     fontFamily: font.bold,
     fontSize: 24,
     color: colors.text.primary,

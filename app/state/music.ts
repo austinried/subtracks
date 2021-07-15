@@ -1,7 +1,7 @@
 import { Album, AlbumListItem, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '@app/models/music'
 import { activeServerAtom, homeListTypesAtom } from '@app/state/settings'
 import { SubsonicApiClient } from '@app/subsonic/api'
-import { AlbumID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
+import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
 import { GetAlbumList2Type } from '@app/subsonic/params'
 import { GetArtistResponse } from '@app/subsonic/responses'
 import { atom, useAtom } from 'jotai'
@@ -28,13 +28,7 @@ export const useUpdateArtists = () => {
     const client = new SubsonicApiClient(server)
     const response = await client.getArtists()
 
-    setArtists(
-      response.data.artists.map(x => ({
-        id: x.id,
-        name: x.name,
-        starred: x.starred,
-      })),
-    )
+    setArtists(response.data.artists.map(mapArtistID3toArtist))
     setUpdating(false)
   }
 }
@@ -121,7 +115,7 @@ export const albumAtomFamily = atomFamily((id: string) =>
 
     const client = new SubsonicApiClient(server)
     const response = await client.getAlbum({ id })
-    return mapAlbumID3WithSongs(response.data.album, response.data.songs, client)
+    return mapAlbumID3WithSongstoAlbunWithSongs(response.data.album, response.data.songs, client)
   }),
 )
 
@@ -161,45 +155,56 @@ export const artistArtAtomFamily = atomFamily((id: string) =>
 
     return {
       coverArtUris,
-      uri: artistInfo.mediumImageUrl,
+      uri: artistInfo.largeImageUrl,
     }
   }),
 )
 
+function mapArtistID3toArtist(artist: ArtistID3Element): Artist {
+  return {
+    id: artist.id,
+    name: artist.name,
+    starred: artist.starred,
+  }
+}
+
 function mapArtistInfo(
   artistResponse: GetArtistResponse,
-  artistInfo: ArtistInfo2Element,
+  info: ArtistInfo2Element,
   client: SubsonicApiClient,
 ): ArtistInfo {
-  const info = { ...artistInfo } as any
-  delete info.similarArtists
-
   const { artist, albums } = artistResponse
 
-  const mappedAlbums = albums.map(a => mapAlbumID3(a, client))
+  const mappedAlbums = albums.map(a => mapAlbumID3toAlbum(a, client))
   const coverArtUris = mappedAlbums
     .sort((a, b) => {
       if (a.year && b.year) {
-        return a.year - b.year
+        return b.year - a.year
       } else {
         return a.name.localeCompare(b.name) - 9000
       }
     })
     .map(a => a.coverArtThumbUri)
+    .filter(a => a !== undefined) as string[]
 
   return {
-    ...artist,
-    ...info,
+    ...mapArtistID3toArtist(artist),
     albums: mappedAlbums,
     coverArtUris,
+    mediumImageUrl: info.mediumImageUrl,
+    largeImageUrl: info.largeImageUrl,
   }
 }
 
-function mapAlbumID3(album: AlbumID3Element, client: SubsonicApiClient): Album {
+function mapCoverArtUri(item: { coverArt?: string }, client: SubsonicApiClient) {
   return {
-    ...album,
-    coverArtUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt }) : undefined,
-    coverArtThumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
+    coverArtUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt }) : undefined,
+  }
+}
+
+function mapCoverArtThumbUri(item: { coverArt?: string }, client: SubsonicApiClient) {
+  return {
+    coverArtThumbUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt, size: '256' }) : undefined,
   }
 }
 
@@ -209,26 +214,41 @@ function mapAlbumID3toAlbumListItem(album: AlbumID3Element, client: SubsonicApiC
     name: album.name,
     artist: album.artist,
     starred: album.starred,
-    coverArtThumbUri: album.coverArt ? client.getCoverArtUri({ id: album.coverArt, size: '256' }) : undefined,
+    ...mapCoverArtThumbUri(album, client),
+  }
+}
+
+function mapAlbumID3toAlbum(album: AlbumID3Element, client: SubsonicApiClient): Album {
+  return {
+    ...mapAlbumID3toAlbumListItem(album, client),
+    ...mapCoverArtUri(album, client),
+    ...mapCoverArtThumbUri(album, client),
+    year: album.year,
   }
 }
 
 function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
   return {
-    ...child,
+    id: child.id,
+    album: child.album,
+    artist: child.artist,
+    title: child.title,
+    track: child.track,
+    duration: child.duration,
+    starred: child.starred,
     streamUri: client.streamUri({ id: child.id }),
-    coverArtUri: child.coverArt ? client.getCoverArtUri({ id: child.coverArt }) : undefined,
-    coverArtThumbUri: child.coverArt ? client.getCoverArtUri({ id: child.coverArt, size: '256' }) : undefined,
+    ...mapCoverArtUri(child, client),
+    ...mapCoverArtThumbUri(child, client),
   }
 }
 
-function mapAlbumID3WithSongs(
+function mapAlbumID3WithSongstoAlbunWithSongs(
   album: AlbumID3Element,
   songs: ChildElement[],
   client: SubsonicApiClient,
 ): AlbumWithSongs {
   return {
-    ...mapAlbumID3(album, client),
+    ...mapAlbumID3toAlbum(album, client),
     songs: songs.map(s => mapChildToSong(s, client)),
   }
 }

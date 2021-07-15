@@ -19,13 +19,6 @@ type TabStackParamList = {
   ArtistView: { id: string; title: string }
 }
 
-type TabMainScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'TabMain'>
-type TabMainScreenRouteProp = RouteProp<TabStackParamList, 'TabMain'>
-type TabMainScreenProps = {
-  route: TabMainScreenRouteProp
-  navigation: TabMainScreenNavigationProp
-}
-
 type AlbumScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'AlbumView'>
 type AlbumScreenRouteProp = RouteProp<TabStackParamList, 'AlbumView'>
 type AlbumScreenProps = {

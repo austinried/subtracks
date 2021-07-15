@@ -164,7 +164,13 @@ const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width }) => {
 
   return (
     <View style={[styles.container, { borderRadius: height / 2 }]}>
-      <CoverArt PlaceholderComponent={Placeholder} height={height} width={width} coverArtUri={artistArt?.uri} />
+      <CoverArt
+        PlaceholderComponent={Placeholder}
+        height={height}
+        width={width}
+        coverArtUri={artistArt?.uri}
+        resizeMode={FastImage.resizeMode.cover}
+      />
     </View>
   )
 })

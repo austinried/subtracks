@@ -17,12 +17,14 @@ const GradientBackground: React.FC<{
     <LinearGradient
       colors={colors || [colorStyles.gradient.high, colorStyles.gradient.low]}
       locations={locations || [0.01, 0.7]}
-      style={{
-        ...style,
-        width: width || '100%',
-        height: height || layout.height,
-        position: position || 'absolute',
-      }}>
+      style={[
+        style,
+        {
+          width: width || '100%',
+          height: height || layout.height,
+          position: position || 'absolute',
+        },
+      ]}>
       {children}
     </LinearGradient>
   )

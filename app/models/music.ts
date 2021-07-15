@@ -17,24 +17,17 @@ export interface ArtistArt {
   coverArtUris: string[]
 }
 
-export interface Album {
-  id: string
-  artistId?: string
-  artist?: string
-  name: string
-  starred?: Date
-  coverArt?: string
-  coverArtUri?: string
-  coverArtThumbUri?: string
-  year?: number
-}
-
 export interface AlbumListItem {
   id: string
   name: string
   artist?: string
   starred?: Date
   coverArtThumbUri?: string
+}
+
+export interface Album extends AlbumListItem {
+  coverArtUri?: string
+  year?: number
 }
 
 export interface AlbumWithSongs extends Album {
@@ -47,19 +40,7 @@ export interface Song {
   artist?: string
   title: string
   track?: number
-  year?: number
-  genre?: string
-  coverArt?: string
-  size?: number
-  contentType?: string
-  suffix?: string
   duration?: number
-  bitRate?: number
-  userRating?: number
-  averageRating?: number
-  playCount?: number
-  discNumber?: number
-  created?: Date
   starred?: Date
 
   streamUri: string

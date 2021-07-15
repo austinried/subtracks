@@ -4,7 +4,11 @@ import dimensions from '@app/styles/dimensions'
 import React from 'react'
 import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
 
-const GradientScrollView: React.FC<ScrollViewProps> = props => {
+const GradientScrollView: React.FC<
+  ScrollViewProps & {
+    offset?: number
+  }
+> = props => {
   const layout = useWindowDimensions()
 
   const minHeight = layout.height - (dimensions.top() + dimensions.bottom())
@@ -15,7 +19,7 @@ const GradientScrollView: React.FC<ScrollViewProps> = props => {
       {...props}
       style={[props.style, { backgroundColor: colors.gradient.low }]}
       contentContainerStyle={[props.contentContainerStyle, { minHeight }]}>
-      <GradientBackground />
+      <GradientBackground style={{ top: props.offset }} />
       {props.children}
     </ScrollView>
   )
