@@ -116,6 +116,17 @@ export class GetAlbumResponse {
   }
 }
 
+export class GetTopSongsResponse {
+  songs: ChildElement[] = []
+
+  constructor(xml: Document) {
+    const childElements = xml.getElementsByTagName('song')
+    for (let i = 0; i < childElements.length; i++) {
+      this.songs.push(new ChildElement(childElements[i]))
+    }
+  }
+}
+
 //
 // Album/song lists
 //

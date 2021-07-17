@@ -1,6 +1,7 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import PressableOpacity from '@app/components/PressableOpacity'
+import SongItem from '@app/components/SongItem'
 import { Album } from '@app/models/music'
 import { artistInfoAtomFamily } from '@app/state/music'
 import colors from '@app/styles/colors'
@@ -22,7 +23,6 @@ const AlbumItem = React.memo<{
   return (
     <PressableOpacity
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
-      key={album.id}
       style={[styles.albumItem, { width }]}>
       <CoverArt coverArtUri={album.coverArtThumbUri} height={height} width={width} />
       <Text style={styles.albumTitle}>{album.name}</Text>
@@ -52,6 +52,10 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
         <Text style={styles.title}>{artist.name}</Text>
       </View>
       <View style={styles.container}>
+        <Text style={styles.header}>Top Songs</Text>
+        {artist.topSongs.map(s => (
+          <SongItem key={s.id} song={s} showArt={true} subtitle="album" />
+        ))}
         <Text style={styles.header}>Albums</Text>
         <View style={styles.albums} onLayout={layout.onLayout}>
           {artist.albums.map(a => (
@@ -112,7 +116,8 @@ const styles = StyleSheet.create({
     fontFamily: font.bold,
     fontSize: 24,
     color: colors.text.primary,
-    marginTop: 14,
+    marginTop: 20,
+    marginBottom: 14,
   },
   artistImage: {
     position: 'absolute',
@@ -120,7 +125,6 @@ const styles = StyleSheet.create({
     height: artistImageHeight,
   },
   albums: {
-    marginTop: 14,
     width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',

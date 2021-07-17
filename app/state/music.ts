@@ -131,7 +131,9 @@ export const artistInfoAtomFamily = atomFamily((id: string) =>
       client.getArtist({ id }),
       client.getArtistInfo2({ id }),
     ])
-    return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, client)
+    const topSongsResponse = await client.getTopSongs({ artist: artistResponse.data.artist.name, count: 50 })
+
+    return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, topSongsResponse.data.songs, client)
   }),
 )
 
@@ -142,7 +144,7 @@ export const artistArtAtomFamily = atomFamily((id: string) =>
       return undefined
     }
 
-    const coverArtUris = artistInfo.albums
+    const albumCoverUris = artistInfo.albums
       .filter(a => a.coverArtThumbUri !== undefined)
       .sort((a, b) => {
         if (b.year && a.year) {
@@ -154,7 +156,7 @@ export const artistArtAtomFamily = atomFamily((id: string) =>
       .map(a => a.coverArtThumbUri) as string[]
 
     return {
-      coverArtUris,
+      albumCoverUris,
       uri: artistInfo.largeImageUrl,
     }
   }),
@@ -171,12 +173,13 @@ function mapArtistID3toArtist(artist: ArtistID3Element): Artist {
 function mapArtistInfo(
   artistResponse: GetArtistResponse,
   info: ArtistInfo2Element,
+  topSongs: ChildElement[],
   client: SubsonicApiClient,
 ): ArtistInfo {
   const { artist, albums } = artistResponse
 
   const mappedAlbums = albums.map(a => mapAlbumID3toAlbum(a, client))
-  const coverArtUris = mappedAlbums
+  const albumCoverUris = mappedAlbums
     .sort((a, b) => {
       if (a.year && b.year) {
         return b.year - a.year
@@ -190,9 +193,10 @@ function mapArtistInfo(
   return {
     ...mapArtistID3toArtist(artist),
     albums: mappedAlbums,
-    coverArtUris,
+    albumCoverUris,
     mediumImageUrl: info.mediumImageUrl,
     largeImageUrl: info.largeImageUrl,
+    topSongs: topSongs.map(c => mapChildToSong(c, client)).slice(0, 5),
   }
 }
 

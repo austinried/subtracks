@@ -9,12 +9,14 @@ export interface ArtistInfo extends Artist {
 
   mediumImageUrl?: string
   largeImageUrl?: string
-  coverArtUris: string[]
+  albumCoverUris: string[]
+
+  topSongs: Song[]
 }
 
 export interface ArtistArt {
   uri?: string
-  coverArtUris: string[]
+  albumCoverUris: string[]
 }
 
 export interface AlbumListItem {

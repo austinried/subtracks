@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import colors from '@app/styles/colors'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -12,7 +12,8 @@ const CoverArt: React.FC<{
   width?: string | number
   coverArtUri?: string
   resizeMode?: keyof typeof FastImage.resizeMode
-}> = ({ PlaceholderComponent, placeholderIcon, height, width, coverArtUri, resizeMode }) => {
+  style?: ViewStyle
+}> = ({ PlaceholderComponent, placeholderIcon, height, width, coverArtUri, resizeMode, style }) => {
   const [placeholderVisible, setPlaceholderVisible] = useState(false)
   const [loading, setLoading] = useState(true)
   const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
@@ -47,7 +48,7 @@ const CoverArt: React.FC<{
   }
 
   return (
-    <View style={{ ...styles.container, height, width }} onLayout={onLayout}>
+    <View style={[style, { height, width }]} onLayout={onLayout}>
       {coverArtUri ? <Image /> : <></>}
       <View style={{ ...styles.placeholderContainer, opacity: placeholderVisible ? 1 : 0 }}>
         {PlaceholderComponent ? <PlaceholderComponent /> : <Placeholder />}

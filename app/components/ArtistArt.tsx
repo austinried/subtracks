@@ -14,7 +14,7 @@ interface ArtistArtSizeProps {
 }
 
 interface ArtistArtXUpProps extends ArtistArtSizeProps {
-  coverArtUris: string[]
+  albumCoverUris: string[]
 }
 
 interface ArtistArtProps extends ArtistArtSizeProps {
@@ -39,7 +39,7 @@ const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, chi
   )
 }
 
-const FourUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
+const FourUp = React.memo<ArtistArtXUpProps>(({ height, width, albumCoverUris }) => {
   const halfHeight = height / 2
   const halfWidth = width / 2
 
@@ -47,24 +47,24 @@ const FourUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) =
     <PlaceholderContainer height={height} width={width}>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[0] }}
+          source={{ uri: albumCoverUris[0] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
         <FastImage
-          source={{ uri: coverArtUris[1] }}
+          source={{ uri: albumCoverUris[1] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[2] }}
+          source={{ uri: albumCoverUris[2] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
         <FastImage
-          source={{ uri: coverArtUris[3] }}
+          source={{ uri: albumCoverUris[3] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
@@ -73,7 +73,7 @@ const FourUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) =
   )
 })
 
-const ThreeUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
+const ThreeUp = React.memo<ArtistArtXUpProps>(({ height, width, albumCoverUris }) => {
   const halfHeight = height / 2
   const halfWidth = width / 2
 
@@ -81,19 +81,19 @@ const ThreeUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) 
     <PlaceholderContainer height={height} width={width}>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[0] }}
+          source={{ uri: albumCoverUris[0] }}
           style={{ height: halfHeight, width }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[1] }}
+          source={{ uri: albumCoverUris[1] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
         <FastImage
-          source={{ uri: coverArtUris[2] }}
+          source={{ uri: albumCoverUris[2] }}
           style={{ height: halfHeight, width: halfWidth }}
           resizeMode={FastImage.resizeMode.cover}
         />
@@ -102,21 +102,21 @@ const ThreeUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) 
   )
 })
 
-const TwoUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => {
+const TwoUp = React.memo<ArtistArtXUpProps>(({ height, width, albumCoverUris }) => {
   const halfHeight = height / 2
 
   return (
     <PlaceholderContainer height={height} width={width}>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[0] }}
+          source={{ uri: albumCoverUris[0] }}
           style={{ height: halfHeight, width }}
           resizeMode={FastImage.resizeMode.cover}
         />
       </View>
       <View style={[styles.artRow, { width, height: halfHeight }]}>
         <FastImage
-          source={{ uri: coverArtUris[1] }}
+          source={{ uri: albumCoverUris[1] }}
           style={{ height: halfHeight, width }}
           resizeMode={FastImage.resizeMode.cover}
         />
@@ -125,9 +125,9 @@ const TwoUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) =>
   )
 })
 
-const OneUp = React.memo<ArtistArtXUpProps>(({ height, width, coverArtUris }) => (
+const OneUp = React.memo<ArtistArtXUpProps>(({ height, width, albumCoverUris }) => (
   <PlaceholderContainer height={height} width={width}>
-    <FastImage source={{ uri: coverArtUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
+    <FastImage source={{ uri: albumCoverUris[0] }} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
   </PlaceholderContainer>
 ))
 
@@ -141,22 +141,22 @@ const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width }) => {
   const Placeholder = () => {
     const none = <NoneUp height={height} width={width} />
 
-    if (!artistArt || !artistArt.coverArtUris) {
+    if (!artistArt || !artistArt.albumCoverUris) {
       return none
     }
-    const { coverArtUris } = artistArt
+    const { albumCoverUris } = artistArt
 
-    if (coverArtUris.length >= 4) {
-      return <FourUp height={height} width={width} coverArtUris={coverArtUris} />
+    if (albumCoverUris.length >= 4) {
+      return <FourUp height={height} width={width} albumCoverUris={albumCoverUris} />
     }
-    if (coverArtUris.length === 3) {
-      return <ThreeUp height={height} width={width} coverArtUris={coverArtUris} />
+    if (albumCoverUris.length === 3) {
+      return <ThreeUp height={height} width={width} albumCoverUris={albumCoverUris} />
     }
-    if (coverArtUris.length === 2) {
-      return <TwoUp height={height} width={width} coverArtUris={coverArtUris} />
+    if (albumCoverUris.length === 2) {
+      return <TwoUp height={height} width={width} albumCoverUris={albumCoverUris} />
     }
-    if (coverArtUris.length === 1) {
-      return <OneUp height={height} width={width} coverArtUris={coverArtUris} />
+    if (albumCoverUris.length === 1) {
+      return <OneUp height={height} width={width} albumCoverUris={albumCoverUris} />
     }
 
     return none

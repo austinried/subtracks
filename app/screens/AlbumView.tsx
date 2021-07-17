@@ -1,78 +1,16 @@
+import Button from '@app/components/Button'
+import CoverArt from '@app/components/CoverArt'
+import GradientBackground from '@app/components/GradientBackground'
+import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
+import SongItem from '@app/components/SongItem'
+import { albumAtomFamily } from '@app/state/music'
+import { useSetQueue } from '@app/state/trackplayer'
+import colors from '@app/styles/colors'
+import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { ActivityIndicator, GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
-import IconFA from 'react-native-vector-icons/FontAwesome'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
-import { albumAtomFamily } from '@app/state/music'
-import { currentTrackAtom, useSetQueue } from '@app/state/trackplayer'
-import colors from '@app/styles/colors'
-import font from '@app/styles/font'
-import Button from '@app/components/Button'
-import GradientBackground from '@app/components/GradientBackground'
-import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
-import PressableOpacity from '@app/components/PressableOpacity'
-import CoverArt from '@app/components/CoverArt'
-
-const SongItem: React.FC<{
-  id: string
-  title: string
-  artist?: string
-  track?: number
-  onPress: (event: GestureResponderEvent) => void
-}> = ({ id, title, artist, onPress }) => {
-  const currentTrack = useAtomValue(currentTrackAtom)
-
-  return (
-    <View style={songStyles.container}>
-      <PressableOpacity onPress={onPress} style={songStyles.text}>
-        <Text style={{ ...songStyles.title, color: currentTrack?.id === id ? colors.accent : colors.text.primary }}>
-          {title}
-        </Text>
-        <Text style={songStyles.subtitle}>{artist}</Text>
-      </PressableOpacity>
-      <View style={songStyles.controls}>
-        <PressableOpacity onPress={undefined}>
-          <IconFA name="star-o" size={26} color={colors.text.primary} />
-        </PressableOpacity>
-        <PressableOpacity onPress={undefined} style={songStyles.more}>
-          <IconMat name="more-vert" size={32} color="white" />
-        </PressableOpacity>
-      </View>
-    </View>
-  )
-}
-
-const songStyles = StyleSheet.create({
-  container: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  text: {
-    flex: 1,
-    alignItems: 'flex-start',
-    width: 100,
-  },
-  title: {
-    fontSize: 16,
-    fontFamily: font.semiBold,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: font.regular,
-    color: colors.text.secondary,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  more: {
-    marginLeft: 8,
-  },
-})
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 const AlbumDetails: React.FC<{
   id: string
@@ -111,14 +49,7 @@ const AlbumDetails: React.FC<{
               }
             })
             .map(s => (
-              <SongItem
-                key={s.id}
-                id={s.id}
-                title={s.title}
-                artist={s.artist}
-                track={s.track}
-                onPress={() => setQueue(album.songs, album.name, s.id)}
-              />
+              <SongItem key={s.id} song={s} onPress={() => setQueue(album.songs, album.name, s.id)} />
             ))}
         </View>
       </View>
@@ -181,7 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   songs: {
-    marginTop: 10,
+    marginTop: 26,
     marginBottom: 30,
     width: '100%',
   },

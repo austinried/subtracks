@@ -27,6 +27,11 @@ export type GetArtistParams = {
   id: string
 }
 
+export type GetTopSongsParams = {
+  artist: string
+  count?: number
+}
+
 //
 // Album/song lists
 //
