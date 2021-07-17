@@ -19,6 +19,7 @@ interface ArtistArtXUpProps extends ArtistArtSizeProps {
 
 interface ArtistArtProps extends ArtistArtSizeProps {
   id: string
+  round?: boolean
 }
 
 const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, children }) => {
@@ -135,8 +136,10 @@ const NoneUp = React.memo<ArtistArtSizeProps>(({ height, width }) => (
   <PlaceholderContainer height={height} width={width} />
 ))
 
-const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width }) => {
+const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width, round }) => {
   const artistArt = useAtomValue(artistArtAtomFamily(id))
+
+  round = round === undefined ? true : round
 
   const Placeholder = () => {
     const none = <NoneUp height={height} width={width} />
@@ -163,7 +166,7 @@ const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width }) => {
   }
 
   return (
-    <View style={[styles.container, { borderRadius: height / 2 }]}>
+    <View style={[styles.container, round ? { borderRadius: height / 2 } : {}]}>
       <CoverArt
         PlaceholderComponent={Placeholder}
         height={height}

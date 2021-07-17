@@ -1,9 +1,11 @@
+import ArtistArt from '@app/components/ArtistArt'
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import PressableOpacity from '@app/components/PressableOpacity'
 import SongItem from '@app/components/SongItem'
 import { Album } from '@app/models/music'
 import { artistInfoAtomFamily } from '@app/state/music'
+import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
@@ -33,33 +35,60 @@ const AlbumItem = React.memo<{
 
 const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   const artist = useAtomValue(artistInfoAtomFamily(id))
-  const layout = useLayout()
+  const setQueue = useSetQueue()
+  const albumsLayout = useLayout()
+  const coverLayout = useLayout()
 
-  const size = layout.width / 2 - styles.container.paddingHorizontal / 2
+  const albumSize = albumsLayout.width / 2 - styles.container.paddingHorizontal / 2
 
   if (!artist) {
     return <></>
   }
 
+  const TopSongs = () => (
+    <>
+      <Text style={styles.header}>Top Songs</Text>
+      {artist.topSongs.map(s => (
+        <SongItem
+          key={s.id}
+          song={s}
+          showArt={true}
+          subtitle="album"
+          onPress={() => setQueue(artist.topSongs, `Top Songs: ${artist.name}`, s.id)}
+        />
+      ))}
+    </>
+  )
+
+  const ArtistCoverFallback = () => (
+    <View style={styles.artistCover}>
+      <ArtistArt id={artist.id} round={false} height={artistCoverHeight} width={coverLayout.width} />
+    </View>
+  )
+
   return (
-    <GradientScrollView offset={artistImageHeight} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-      <FastImage
-        style={[styles.artistImage]}
-        source={{ uri: artist.largeImageUrl }}
+    <GradientScrollView
+      onLayout={coverLayout.onLayout}
+      offset={artistCoverHeight}
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}>
+      <CoverArt
+        PlaceholderComponent={ArtistCoverFallback}
+        coverArtUri={artist.largeImageUrl}
+        style={styles.artistCover}
+        height={artistCoverHeight}
+        width={coverLayout.width}
         resizeMode={FastImage.resizeMode.cover}
       />
       <View style={styles.titleContainer}>
         <Text style={styles.title}>{artist.name}</Text>
       </View>
       <View style={styles.container}>
-        <Text style={styles.header}>Top Songs</Text>
-        {artist.topSongs.map(s => (
-          <SongItem key={s.id} song={s} showArt={true} subtitle="album" />
-        ))}
+        {artist.topSongs.length > 0 ? <TopSongs /> : <></>}
         <Text style={styles.header}>Albums</Text>
-        <View style={styles.albums} onLayout={layout.onLayout}>
+        <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {artist.albums.map(a => (
-            <AlbumItem key={a.id} album={a} height={size} width={size} />
+            <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
           ))}
         </View>
       </View>
@@ -84,7 +113,7 @@ const ArtistView: React.FC<{
   )
 }
 
-const artistImageHeight = 280
+const artistCoverHeight = 280
 
 const styles = StyleSheet.create({
   scroll: {
@@ -99,18 +128,19 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     width: '100%',
-    height: artistImageHeight,
+    height: artistCoverHeight,
     justifyContent: 'flex-end',
   },
   title: {
     fontFamily: font.bold,
     fontSize: 44,
     color: colors.text.primary,
-    textAlign: 'left',
+    textAlign: 'center',
     textShadowColor: 'black',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
     paddingHorizontal: 10,
+    marginBottom: 10,
   },
   header: {
     fontFamily: font.bold,
@@ -119,10 +149,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 14,
   },
-  artistImage: {
+  artistCover: {
     position: 'absolute',
     width: '100%',
-    height: artistImageHeight,
+    height: artistCoverHeight,
   },
   albums: {
     width: '100%',
