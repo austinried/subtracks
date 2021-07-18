@@ -15,7 +15,7 @@ const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
 
   return (
     <Pressable style={styles.item} onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}>
-      <ArtistArt id={item.id} width={56} height={56} />
+      <ArtistArt id={item.id} width={70} height={70} />
       <Text style={styles.title}>{item.name}</Text>
     </Pressable>
   )
@@ -59,13 +59,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 6,
-    marginLeft: 6,
+    marginLeft: 10,
   },
   title: {
-    fontFamily: font.regular,
+    fontFamily: font.semiBold,
     fontSize: 16,
     color: colors.text.primary,
-    marginLeft: 12,
+    marginLeft: 14,
   },
 })
 
