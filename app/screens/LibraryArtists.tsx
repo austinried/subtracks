@@ -1,23 +1,25 @@
+import ArtistArt from '@app/components/ArtistArt'
+import GradientFlatList from '@app/components/GradientFlatList'
+import PressableOpacity from '@app/components/PressableOpacity'
+import { Artist } from '@app/models/music'
+import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '@app/state/music'
+import colors from '@app/styles/colors'
+import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
-import { Pressable, StyleSheet } from 'react-native'
-import { Text } from 'react-native'
-import { Artist } from '@app/models/music'
-import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '@app/state/music'
-import font from '@app/styles/font'
-import ArtistArt from '@app/components/ArtistArt'
-import GradientFlatList from '@app/components/GradientFlatList'
-import colors from '@app/styles/colors'
+import { StyleSheet, Text } from 'react-native'
 
 const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
   const navigation = useNavigation()
 
   return (
-    <Pressable style={styles.item} onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}>
+    <PressableOpacity
+      style={styles.item}
+      onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}>
       <ArtistArt id={item.id} width={70} height={70} />
       <Text style={styles.title}>{item.name}</Text>
-    </Pressable>
+    </PressableOpacity>
   )
 }
 
@@ -58,6 +60,7 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     marginVertical: 6,
     marginLeft: 10,
   },
