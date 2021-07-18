@@ -28,9 +28,7 @@ const AlbumDetails: React.FC<{
       imageKey={`${album.name}${album.artist}`}
       style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.cover}>
-          <CoverArt coverArtUri={album.coverArtUri} height="100%" width="100%" />
-        </View>
+        <CoverArt coverArtUri={album.coverArtUri} style={styles.cover} />
         <Text style={styles.title}>{album.name}</Text>
         <Text style={styles.subtitle}>
           {album.artist}

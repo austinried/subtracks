@@ -1,11 +1,12 @@
-import { useAtomValue } from 'jotai/utils'
-import React, { useState } from 'react'
-import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
-import LinearGradient from 'react-native-linear-gradient'
+import CoverArt from '@app/components/CoverArt'
 import { artistArtAtomFamily } from '@app/state/music'
 import colors from '@app/styles/colors'
-import CoverArt from '@app/components/CoverArt'
+import { useLayout } from '@react-native-community/hooks'
+import { useAtomValue } from 'jotai/utils'
+import React from 'react'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
+import LinearGradient from 'react-native-linear-gradient'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
 interface ArtistArtSizeProps {
@@ -23,15 +24,11 @@ interface ArtistArtProps extends ArtistArtSizeProps {
 }
 
 const PlaceholderContainer: React.FC<ArtistArtSizeProps> = ({ height, width, children }) => {
-  const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
-
-  const onLayout = (event: LayoutChangeEvent) => {
-    setLayout(event.nativeEvent.layout)
-  }
+  const layout = useLayout()
 
   return (
     <LinearGradient
-      onLayout={onLayout}
+      onLayout={layout.onLayout}
       colors={[colors.accent, colors.accentLow]}
       style={[styles.placeholderContainer, { height, width }]}>
       <IconFA5 name="microphone" color="black" size={layout.width / 1.8} style={styles.placeholderIcon} />
@@ -142,10 +139,8 @@ const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width, round }) => {
   round = round === undefined ? true : round
 
   const Placeholder = () => {
-    const none = <NoneUp height={height} width={width} />
-
-    if (!artistArt || !artistArt.albumCoverUris) {
-      return none
+    if (!artistArt) {
+      return <NoneUp height={height} width={width} />
     }
     const { albumCoverUris } = artistArt
 
@@ -162,15 +157,14 @@ const ArtistArt = React.memo<ArtistArtProps>(({ id, height, width, round }) => {
       return <OneUp height={height} width={width} albumCoverUris={albumCoverUris} />
     }
 
-    return none
+    return <NoneUp height={height} width={width} />
   }
 
   return (
     <View style={[styles.container, round ? { borderRadius: height / 2 } : {}]}>
       <CoverArt
-        PlaceholderComponent={Placeholder}
-        height={height}
-        width={width}
+        FallbackComponent={Placeholder}
+        style={{ height, width }}
         coverArtUri={artistArt?.uri}
         resizeMode={FastImage.resizeMode.cover}
       />

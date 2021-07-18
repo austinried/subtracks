@@ -26,7 +26,7 @@ const AlbumItem = React.memo<{
     <PressableOpacity
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
       style={[styles.albumItem, { width }]}>
-      <CoverArt coverArtUri={album.coverArtThumbUri} height={height} width={width} />
+      <CoverArt coverArtUri={album.coverArtThumbUri} style={{ height, width }} />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </PressableOpacity>
@@ -73,11 +73,9 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}>
       <CoverArt
-        PlaceholderComponent={ArtistCoverFallback}
+        FallbackComponent={ArtistCoverFallback}
         coverArtUri={artist.largeImageUrl}
         style={styles.artistCover}
-        height={artistCoverHeight}
-        width={coverLayout.width}
         resizeMode={FastImage.resizeMode.cover}
       />
       <View style={styles.titleContainer}>
@@ -151,8 +149,8 @@ const styles = StyleSheet.create({
   },
   artistCover: {
     position: 'absolute',
-    width: '100%',
     height: artistCoverHeight,
+    width: '100%',
   },
   albums: {
     width: '100%',

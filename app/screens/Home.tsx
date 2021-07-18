@@ -6,10 +6,18 @@ import { homeListsAtom, homeListsUpdatingAtom, useUpdateHomeLists } from '@app/s
 import { homeListTypesAtom, useActiveServerRefresh } from '@app/state/settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+
+const titles: { [key in GetAlbumListType]?: string } = {
+  recent: 'Recent Albums',
+  random: 'Random Albums',
+  frequent: 'Frequent Albums',
+  starred: 'Starred Albums',
+}
 
 const AlbumItem = React.memo<{
   album: AlbumListItem
@@ -21,7 +29,7 @@ const AlbumItem = React.memo<{
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
       key={album.id}
       style={styles.item}>
-      <CoverArt coverArtUri={album.coverArtThumbUri} height={styles.item.width} width={styles.item.width} />
+      <CoverArt coverArtUri={album.coverArtThumbUri} style={{ height: styles.item.width, width: styles.item.width }} />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
       </Text>
@@ -33,7 +41,7 @@ const AlbumItem = React.memo<{
 })
 
 const Category = React.memo<{
-  name: string
+  name?: string
   data: AlbumListItem[]
 }>(({ name, data }) => {
   return (
@@ -75,7 +83,7 @@ const Home = () => {
       }>
       <View style={styles.content}>
         {types.map(type => (
-          <Category key={type} name={type} data={type in lists ? lists[type] : []} />
+          <Category key={type} name={titles[type as GetAlbumListType]} data={type in lists ? lists[type] : []} />
         ))}
       </View>
     </GradientScrollView>

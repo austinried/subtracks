@@ -73,7 +73,7 @@ const SongCoverArt = () => {
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt height="100%" width="100%" coverArtUri={track?.artwork as string} />
+      <CoverArt coverArtUri={track?.artwork as string} style={coverArtStyles.image} />
     </View>
   )
 }
@@ -83,6 +83,10 @@ const coverArtStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingBottom: 20,
+  },
+  image: {
+    height: '100%',
+    width: '100%',
   },
 })
 

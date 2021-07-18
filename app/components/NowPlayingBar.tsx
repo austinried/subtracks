@@ -69,8 +69,7 @@ const NowPlayingBar = () => {
       <ProgressBar />
       <View style={styles.subContainer}>
         <CoverArt
-          height={styles.subContainer.height}
-          width={styles.subContainer.height}
+          style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
           coverArtUri={track?.artworkThumb}
         />
         <View style={styles.detailsContainer}>

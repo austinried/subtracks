@@ -23,7 +23,7 @@ const SongItem: React.FC<{
   return (
     <View style={styles.container}>
       <PressableOpacity onPress={onPress} style={styles.item}>
-        {showArt ? <CoverArt coverArtUri={song.coverArtThumbUri} style={styles.art} height={50} width={50} /> : <></>}
+        {showArt ? <CoverArt coverArtUri={song.coverArtThumbUri} style={styles.art} /> : <></>}
         <View style={styles.text}>
           <Text style={[styles.title, { color: currentTrack?.id === song.id ? colors.accent : colors.text.primary }]}>
             {song.title}
@@ -58,6 +58,8 @@ const styles = StyleSheet.create({
   },
   art: {
     marginRight: 10,
+    height: 50,
+    width: 50,
   },
   text: {
     flex: 1,

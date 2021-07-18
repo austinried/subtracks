@@ -1,77 +1,84 @@
-import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
-import FastImage from 'react-native-fast-image'
 import colors from '@app/styles/colors'
-import IconFA5 from 'react-native-vector-icons/FontAwesome5'
+import React, { useState } from 'react'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import FastImage, { ImageStyle } from 'react-native-fast-image'
 import LinearGradient from 'react-native-linear-gradient'
 
+type CoverImageProps = {
+  uri?: string
+  style?: ImageStyle
+  resizeMode?: keyof typeof FastImage.resizeMode
+  onProgress?: () => void
+  onLoadEnd?: () => void
+  onError?: () => void
+}
+
+const CoverImage = React.memo<CoverImageProps>(({ uri, style, resizeMode, onProgress, onLoadEnd, onError }) => (
+  <FastImage
+    source={{ uri }}
+    style={style}
+    resizeMode={resizeMode || FastImage.resizeMode.contain}
+    onProgress={onProgress}
+    onLoadEnd={onLoadEnd}
+    onError={onError}
+  />
+))
+
+const Fallback = React.memo<{}>(({}) => {
+  return <LinearGradient colors={[colors.accent, colors.accentLow]} style={styles.fallback} />
+})
+
 const CoverArt: React.FC<{
-  PlaceholderComponent?: () => JSX.Element
+  FallbackComponent?: () => JSX.Element
   placeholderIcon?: string
   height?: string | number
   width?: string | number
   coverArtUri?: string
   resizeMode?: keyof typeof FastImage.resizeMode
-  style?: ViewStyle
-}> = ({ PlaceholderComponent, placeholderIcon, height, width, coverArtUri, resizeMode, style }) => {
-  const [placeholderVisible, setPlaceholderVisible] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  style?: ImageStyle
+}> = ({ FallbackComponent, coverArtUri, resizeMode, style }) => {
+  const [loading, setLoading] = useState(false)
+  const [fallbackVisible, setFallbackVisible] = useState(false)
 
-  useEffect(() => {
-    if (!coverArtUri) {
-      setLoading(false)
-    }
-  }, [coverArtUri, setLoading])
-
-  const Image = () => (
-    <FastImage
-      source={{ uri: coverArtUri, priority: 'high' }}
-      style={{ ...styles.image, opacity: placeholderVisible ? 0 : 1 }}
-      resizeMode={resizeMode || FastImage.resizeMode.contain}
-      onError={() => {
-        setLoading(false)
-        setPlaceholderVisible(true)
-      }}
-      onLoadEnd={() => setLoading(false)}
-    />
-  )
-
-  const Placeholder = () => (
-    <LinearGradient colors={[colors.accent, colors.accentLow]} style={styles.placeholder}>
-      <IconFA5 name={placeholderIcon || 'record-vinyl'} color="black" size={layout.width / 1.5} />
-    </LinearGradient>
-  )
-
-  const onLayout = (event: LayoutChangeEvent) => {
-    setLayout(event.nativeEvent.layout)
-  }
+  const enableLoading = React.useCallback(() => setLoading(true), [])
+  const disableLoading = React.useCallback(() => setLoading(false), [])
+  const enableFallback = React.useCallback(() => setFallbackVisible(true), [])
 
   return (
-    <View style={[style, { height, width }]} onLayout={onLayout}>
-      {coverArtUri ? <Image /> : <></>}
-      <View style={{ ...styles.placeholderContainer, opacity: placeholderVisible ? 1 : 0 }}>
-        {PlaceholderComponent ? <PlaceholderComponent /> : <Placeholder />}
-      </View>
-      <ActivityIndicator style={styles.indicator} animating={loading} size={'large'} color={colors.accent} />
+    <View style={style}>
+      <CoverImage
+        uri={coverArtUri}
+        style={style}
+        resizeMode={resizeMode}
+        onProgress={enableLoading}
+        onLoadEnd={disableLoading}
+        onError={enableFallback}
+      />
+      {fallbackVisible ? (
+        FallbackComponent ? (
+          <View style={styles.fallback}>
+            <FallbackComponent />
+          </View>
+        ) : (
+          <Fallback />
+        )
+      ) : (
+        <></>
+      )}
+      <ActivityIndicator animating={loading} size="large" color={colors.accent} style={styles.indicator} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {},
   image: {
     height: '100%',
     width: '100%',
   },
-  placeholderContainer: {
+  fallback: {
     height: '100%',
     width: '100%',
     position: 'absolute',
-  },
-  placeholder: {
-    height: '100%',
-    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
