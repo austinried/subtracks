@@ -2,6 +2,7 @@ import Button from '@app/components/Button'
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
+import NothingHere from '@app/components/NothingHere'
 import SongItem from '@app/components/SongItem'
 import { playlistAtomFamily } from '@app/state/music'
 import { useSetQueue } from '@app/state/trackplayer'
@@ -22,6 +23,19 @@ const PlaylistDetails: React.FC<{
     return <></>
   }
 
+  const Songs = () => (
+    <>
+      <View style={styles.controls}>
+        <Button title="Play Playlist" onPress={() => setQueue(playlist.songs, playlist.name, playlist.songs[0].id)} />
+      </View>
+      <View style={styles.songs}>
+        {playlist.songs.map((s, index) => (
+          <SongItem key={index} song={s} showArt={true} onPress={() => setQueue(playlist.songs, playlist.name, s.id)} />
+        ))}
+      </View>
+    </>
+  )
+
   return (
     <ImageGradientScrollView
       imageUri={playlist.coverArtThumbUri}
@@ -31,19 +45,7 @@ const PlaylistDetails: React.FC<{
         <CoverArt coverArtUri={playlist.coverArtUri} style={styles.cover} />
         <Text style={styles.title}>{playlist.name}</Text>
         {playlist.comment ? <Text style={styles.subtitle}>{playlist.comment}</Text> : <></>}
-        <View style={styles.controls}>
-          <Button title="Play Playlist" onPress={() => setQueue(playlist.songs, playlist.name, playlist.songs[0].id)} />
-        </View>
-        <View style={styles.songs}>
-          {playlist.songs.map((s, index) => (
-            <SongItem
-              key={index}
-              song={s}
-              showArt={true}
-              onPress={() => setQueue(playlist.songs, playlist.name, s.id)}
-            />
-          ))}
-        </View>
+        {playlist.songs.length > 0 ? <Songs /> : <NothingHere height={350} width={250} />}
       </View>
     </ImageGradientScrollView>
   )
@@ -99,9 +101,14 @@ const styles = StyleSheet.create({
     height: 160,
     width: 160,
   },
-  controls: {
+  songsContainer: {
+    width: '100%',
     marginTop: 18,
+    alignItems: 'center',
+  },
+  controls: {
     flexDirection: 'row',
+    marginTop: 20,
   },
   songs: {
     marginTop: 26,
@@ -111,6 +118,12 @@ const styles = StyleSheet.create({
   fallback: {
     alignItems: 'center',
     paddingTop: 100,
+  },
+  nothingContainer: {
+    height: 400,
+    backgroundColor: 'green',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })
 

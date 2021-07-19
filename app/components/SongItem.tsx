@@ -6,7 +6,6 @@ import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
 import IconFA from 'react-native-vector-icons/FontAwesome'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
 
@@ -33,10 +32,7 @@ const SongItem: React.FC<{
       </PressableOpacity>
       <View style={styles.controls}>
         <PressableOpacity onPress={undefined}>
-          <IconFA name="star-o" size={26} color={colors.text.primary} />
-        </PressableOpacity>
-        <PressableOpacity onPress={undefined} style={styles.more}>
-          <IconMat name="more-vert" size={32} color="white" />
+          <IconFA name="star-o" size={26} color={colors.text.secondary} />
         </PressableOpacity>
       </View>
     </View>
@@ -76,7 +72,7 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    marginLeft: 16,
   },
   more: {
     marginLeft: 8,

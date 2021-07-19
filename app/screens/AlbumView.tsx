@@ -2,6 +2,7 @@ import Button from '@app/components/Button'
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
+import NothingHere from '@app/components/NothingHere'
 import SongItem from '@app/components/SongItem'
 import { albumAtomFamily } from '@app/state/music'
 import { useSetQueue } from '@app/state/trackplayer'
@@ -22,6 +23,27 @@ const AlbumDetails: React.FC<{
     return <></>
   }
 
+  const Songs = () => (
+    <>
+      <View style={styles.controls}>
+        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
+      </View>
+      <View style={styles.songs}>
+        {album.songs
+          .sort((a, b) => {
+            if (b.track && a.track) {
+              return a.track - b.track
+            } else {
+              return a.title.localeCompare(b.title)
+            }
+          })
+          .map(s => (
+            <SongItem key={s.id} song={s} onPress={() => setQueue(album.songs, album.name, s.id)} />
+          ))}
+      </View>
+    </>
+  )
+
   return (
     <ImageGradientScrollView
       imageUri={album.coverArtThumbUri}
@@ -34,22 +56,7 @@ const AlbumDetails: React.FC<{
           {album.artist}
           {album.year ? ` • ${album.year}` : ''}
         </Text>
-        <View style={styles.controls}>
-          <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
-        </View>
-        <View style={styles.songs}>
-          {album.songs
-            .sort((a, b) => {
-              if (b.track && a.track) {
-                return a.track - b.track
-              } else {
-                return a.title.localeCompare(b.title)
-              }
-            })
-            .map(s => (
-              <SongItem key={s.id} song={s} onPress={() => setQueue(album.songs, album.name, s.id)} />
-            ))}
-        </View>
+        {album.songs.length > 0 ? <Songs /> : <NothingHere height={300} width={250} />}
       </View>
     </ImageGradientScrollView>
   )

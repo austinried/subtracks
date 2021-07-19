@@ -1,5 +1,6 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
+import NothingHere from '@app/components/NothingHere'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { AlbumListItem } from '@app/models/music'
 import { homeListsAtom, homeListsUpdatingAtom, useUpdateHomeLists } from '@app/state/music'
@@ -44,19 +45,29 @@ const Category = React.memo<{
   name?: string
   data: AlbumListItem[]
 }>(({ name, data }) => {
+  const Albums = () => (
+    <ScrollView
+      horizontal={true}
+      showsHorizontalScrollIndicator={false}
+      overScrollMode={'never'}
+      style={styles.artScroll}
+      contentContainerStyle={styles.artScrollContent}>
+      {data.map(album => (
+        <AlbumItem key={album.id} album={album} />
+      ))}
+    </ScrollView>
+  )
+
+  const Nothing = () => (
+    <View style={styles.nothingHereContent}>
+      <NothingHere height={styles.nothingHereContent.height} />
+    </View>
+  )
+
   return (
     <View style={styles.category}>
       <Text style={styles.categoryHeader}>{name}</Text>
-      <ScrollView
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
-        overScrollMode={'never'}
-        style={styles.artScroll}
-        contentContainerStyle={styles.artScrollContent}>
-        {data.map(album => (
-          <AlbumItem key={album.id} album={album} />
-        ))}
-      </ScrollView>
+      {data.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )
 })
@@ -109,6 +120,12 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     paddingHorizontal: 20,
     marginTop: 4,
+  },
+  nothingHereContent: {
+    width: '100%',
+    height: 190,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   artScroll: {
     marginTop: 10,
