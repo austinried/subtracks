@@ -10,6 +10,8 @@ import {
   GetCoverArtParams,
   GetIndexesParams,
   GetMusicDirectoryParams,
+  GetPlaylistParams,
+  GetPlaylistsParams,
   GetTopSongsParams,
   StreamParams,
 } from '@app/subsonic/params'
@@ -23,6 +25,8 @@ import {
   GetArtistsResponse,
   GetIndexesResponse,
   GetMusicDirectoryResponse,
+  GetPlaylistResponse,
+  GetPlaylistsResponse,
   GetTopSongsResponse,
   SubsonicResponse,
 } from '@app/subsonic/responses'
@@ -75,7 +79,7 @@ export class SubsonicApiClient {
     }
 
     const url = `${this.address}/rest/${method}?${query}`
-    // console.log(url);
+    // console.log(url)
     return url
   }
 
@@ -95,7 +99,7 @@ export class SubsonicApiClient {
     const response = await fetch(this.buildUrl(method, params))
     const text = await response.text()
 
-    // console.log(text);
+    // console.log(text)
 
     const xml = new DOMParser().parseFromString(text)
     if (xml.documentElement.getAttribute('status') !== 'ok') {
@@ -187,6 +191,20 @@ export class SubsonicApiClient {
   }
 
   //
+  // Playlists
+  //
+
+  async getPlaylists(params?: GetPlaylistsParams): Promise<SubsonicResponse<GetPlaylistsResponse>> {
+    const xml = await this.apiGetXml('getPlaylists', params)
+    return new SubsonicResponse<GetPlaylistsResponse>(xml, new GetPlaylistsResponse(xml))
+  }
+
+  async getPlaylist(params: GetPlaylistParams): Promise<SubsonicResponse<GetPlaylistResponse>> {
+    const xml = await this.apiGetXml('getPlaylist', params)
+    return new SubsonicResponse<GetPlaylistResponse>(xml, new GetPlaylistResponse(xml))
+  }
+
+  //
   // Media retrieval
   //
 
@@ -195,7 +213,7 @@ export class SubsonicApiClient {
     return await this.apiDownload('getCoverArt', path, params)
   }
 
-  getCoverArtUri(params: GetCoverArtParams): string {
+  getCoverArtUri(params?: GetCoverArtParams): string {
     return this.buildUrl('getCoverArt', params)
   }
 

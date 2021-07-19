@@ -1,7 +1,24 @@
-import { Album, AlbumListItem, AlbumWithSongs, Artist, ArtistArt, ArtistInfo, Song } from '@app/models/music'
+import {
+  Album,
+  AlbumListItem,
+  AlbumWithSongs,
+  Artist,
+  ArtistArt,
+  ArtistInfo,
+  PlaylistListItem,
+  PlaylistWithSongs,
+  Song,
+} from '@app/models/music'
 import { activeServerAtom, homeListTypesAtom } from '@app/state/settings'
 import { SubsonicApiClient } from '@app/subsonic/api'
-import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
+import {
+  AlbumID3Element,
+  ArtistID3Element,
+  ArtistInfo2Element,
+  ChildElement,
+  PlaylistElement,
+  PlaylistWithSongsElement,
+} from '@app/subsonic/elements'
 import { GetAlbumList2Type } from '@app/subsonic/params'
 import { GetArtistResponse } from '@app/subsonic/responses'
 import { atom, useAtom } from 'jotai'
@@ -79,6 +96,45 @@ export const useUpdateHomeLists = () => {
     setUpdating(false)
   }
 }
+
+export const playlistsUpdatingAtom = atom(false)
+export const playlistsAtom = atom<PlaylistListItem[]>([])
+
+export const useUpdatePlaylists = () => {
+  const server = useAtomValue(activeServerAtom)
+  const updateList = useUpdateAtom(playlistsAtom)
+  const [updating, setUpdating] = useAtom(playlistsUpdatingAtom)
+
+  if (!server) {
+    return async () => {}
+  }
+
+  return async () => {
+    if (updating) {
+      return
+    }
+    setUpdating(true)
+
+    const client = new SubsonicApiClient(server)
+    const response = await client.getPlaylists()
+
+    updateList(response.data.playlists.map(a => mapPlaylistListItem(a, client)))
+    setUpdating(false)
+  }
+}
+
+export const playlistAtomFamily = atomFamily((id: string) =>
+  atom<PlaylistWithSongs | undefined>(async get => {
+    const server = get(activeServerAtom)
+    if (!server) {
+      return undefined
+    }
+
+    const client = new SubsonicApiClient(server)
+    const response = await client.getPlaylist({ id })
+    return mapPlaylistWithSongs(response.data.playlist, client)
+  }),
+)
 
 export const albumListUpdatingAtom = atom(false)
 export const albumListAtom = atom<AlbumListItem[]>([])
@@ -202,13 +258,15 @@ function mapArtistInfo(
 
 function mapCoverArtUri(item: { coverArt?: string }, client: SubsonicApiClient) {
   return {
-    coverArtUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt }) : undefined,
+    coverArtUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt }) : client.getCoverArtUri({ id: '-1' }),
   }
 }
 
 function mapCoverArtThumbUri(item: { coverArt?: string }, client: SubsonicApiClient) {
   return {
-    coverArtThumbUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt, size: '256' }) : undefined,
+    coverArtThumbUri: item.coverArt
+      ? client.getCoverArtUri({ id: item.coverArt, size: '256' })
+      : client.getCoverArtUri({ id: '-1', size: '256' }),
   }
 }
 
@@ -254,5 +312,22 @@ function mapAlbumID3WithSongstoAlbunWithSongs(
   return {
     ...mapAlbumID3toAlbum(album, client),
     songs: songs.map(s => mapChildToSong(s, client)),
+  }
+}
+
+function mapPlaylistListItem(playlist: PlaylistElement, client: SubsonicApiClient): PlaylistListItem {
+  return {
+    id: playlist.id,
+    name: playlist.name,
+    comment: playlist.comment,
+    ...mapCoverArtThumbUri(playlist, client),
+  }
+}
+
+function mapPlaylistWithSongs(playlist: PlaylistWithSongsElement, client: SubsonicApiClient): PlaylistWithSongs {
+  return {
+    ...mapPlaylistListItem(playlist, client),
+    songs: playlist.songs.map(s => mapChildToSong(s, client)),
+    ...mapCoverArtUri(playlist, client),
   }
 }

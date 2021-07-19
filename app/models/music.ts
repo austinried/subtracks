@@ -36,6 +36,18 @@ export interface AlbumWithSongs extends Album {
   songs: Song[]
 }
 
+export interface PlaylistListItem {
+  id: string
+  name: string
+  comment?: string
+  coverArtThumbUri?: string
+}
+
+export interface PlaylistWithSongs extends PlaylistListItem {
+  songs: Song[]
+  coverArtUri?: string
+}
+
 export interface Song {
   id: string
   album?: string

@@ -74,6 +74,7 @@ const AlbumsList = () => {
   return (
     <View style={styles.container}>
       <GradientFlatList
+        contentContainerStyle={styles.listContent}
         data={albumsList}
         renderItem={AlbumListRenderItem}
         keyExtractor={item => item.album.id}
@@ -99,6 +100,9 @@ const AlbumsTab = () => (
 )
 
 const styles = StyleSheet.create({
+  listContent: {
+    minHeight: '100%',
+  },
   container: {
     flex: 1,
   },

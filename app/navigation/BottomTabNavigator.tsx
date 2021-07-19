@@ -4,6 +4,7 @@ import AlbumView from '@app/screens/AlbumView'
 import ArtistsList from '@app/screens/ArtistsList'
 import ArtistView from '@app/screens/ArtistView'
 import Home from '@app/screens/Home'
+import PlaylistView from '@app/screens/PlaylistView'
 import SettingsView from '@app/screens/Settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -17,6 +18,7 @@ type TabStackParamList = {
   TabMain: { toTop?: boolean }
   AlbumView: { id: string; title: string }
   ArtistView: { id: string; title: string }
+  PlaylistView: { id: string; title: string }
 }
 
 type AlbumScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'AlbumView'>
@@ -39,6 +41,17 @@ type ArtistScreenProps = {
 
 const ArtistScreen: React.FC<ArtistScreenProps> = ({ route }) => (
   <ArtistView id={route.params.id} title={route.params.title} />
+)
+
+type PlaylistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'PlaylistView'>
+type PlaylistScreenRouteProp = RouteProp<TabStackParamList, 'PlaylistView'>
+type PlaylistScreenProps = {
+  route: PlaylistScreenRouteProp
+  navigation: PlaylistScreenNavigationProp
+}
+
+const PlaylistScreen: React.FC<PlaylistScreenProps> = ({ route }) => (
+  <PlaylistView id={route.params.id} title={route.params.title} />
 )
 
 const styles = StyleSheet.create({
@@ -75,6 +88,7 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
         <Stack.Screen name="TabMain" component={Component} options={{ headerShown: false }} />
         <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
         <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
+        <Stack.Screen name="PlaylistView" component={PlaylistScreen} options={itemScreenOptions} />
       </Stack.Navigator>
     )
   }

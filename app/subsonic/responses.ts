@@ -6,6 +6,8 @@ import {
   ArtistInfoElement,
   ChildElement,
   DirectoryElement,
+  PlaylistElement,
+  PlaylistWithSongsElement,
 } from '@app/subsonic/elements'
 
 export type ResponseStatus = 'ok' | 'failed'
@@ -151,5 +153,28 @@ export class GetAlbumListResponse extends BaseGetAlbumListResponse<ChildElement>
 export class GetAlbumList2Response extends BaseGetAlbumListResponse<AlbumID3Element> {
   constructor(xml: Document) {
     super(xml, AlbumID3Element)
+  }
+}
+
+//
+// Playlists
+//
+
+export class GetPlaylistsResponse {
+  playlists: PlaylistElement[] = []
+
+  constructor(xml: Document) {
+    const playlistElements = xml.getElementsByTagName('playlist')
+    for (let i = 0; i < playlistElements.length; i++) {
+      this.playlists.push(new PlaylistElement(playlistElements[i]))
+    }
+  }
+}
+
+export class GetPlaylistResponse {
+  playlist: PlaylistWithSongsElement
+
+  constructor(xml: Document) {
+    this.playlist = new PlaylistWithSongsElement(xml.getElementsByTagName('playlist')[0])
   }
 }

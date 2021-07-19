@@ -10,24 +10,20 @@ import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StyleSheet, Text } from 'react-native'
 
-const ArtistItem: React.FC<{ item: Artist }> = ({ item }) => {
+const ArtistItem = React.memo<{ item: Artist }>(({ item }) => {
   const navigation = useNavigation()
 
   return (
     <PressableOpacity
       style={styles.item}
       onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}>
-      <ArtistArt id={item.id} width={70} height={70} />
+      <ArtistArt id={item.id} width={styles.art.width} height={styles.art.height} />
       <Text style={styles.title}>{item.name}</Text>
     </PressableOpacity>
   )
-}
+})
 
-const ArtistItemLoader: React.FC<{ item: Artist }> = props => (
-  <React.Suspense fallback={<Text>Loading...</Text>}>
-    <ArtistItem {...props} />
-  </React.Suspense>
-)
+const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItem item={item} />
 
 const ArtistsList = () => {
   const artists = useAtomValue(artistsAtom)
@@ -40,12 +36,11 @@ const ArtistsList = () => {
     }
   })
 
-  const renderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItemLoader item={item} />
-
   return (
     <GradientFlatList
+      contentContainerStyle={styles.listContent}
       data={artists}
-      renderItem={renderItem}
+      renderItem={ArtistRenderItem}
       keyExtractor={item => item.id}
       onRefresh={updateArtists}
       refreshing={updating}
@@ -54,9 +49,10 @@ const ArtistsList = () => {
   )
 }
 
-const ArtistsTab = () => <ArtistsList />
-
 const styles = StyleSheet.create({
+  listContent: {
+    minHeight: '100%',
+  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -68,8 +64,12 @@ const styles = StyleSheet.create({
     fontFamily: font.semiBold,
     fontSize: 16,
     color: colors.text.primary,
-    marginLeft: 14,
+    marginLeft: 10,
+  },
+  art: {
+    height: 70,
+    width: 70,
   },
 })
 
-export default ArtistsTab
+export default ArtistsList

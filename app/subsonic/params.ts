@@ -73,6 +73,18 @@ export type GetAlbumList2Params =
 export type GetAlbumListParams = GetAlbumList2Params
 
 //
+// Playlists
+//
+
+export type GetPlaylistsParams = {
+  username?: string
+}
+
+export type GetPlaylistParams = {
+  id: string
+}
+
+//
 // Media retrieval
 //
 

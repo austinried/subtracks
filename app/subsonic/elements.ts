@@ -235,3 +235,46 @@ export class AlbumID3Element {
     this.genre = optionalString(e, 'genre')
   }
 }
+
+export class PlaylistElement {
+  allowedUser: string[] = []
+  id: string
+  name: string
+  comment?: string
+  owner?: string
+  public?: boolean
+  songCount: number
+  duration: number
+  created: Date
+  changed: Date
+  coverArt?: string
+
+  constructor(e: Element) {
+    for (let i = 0; i < e.getElementsByTagName('allowedUser').length; i++) {
+      this.allowedUser.push(e.getElementsByTagName('allowedUser')[i].textContent as string)
+    }
+
+    this.id = requiredString(e, 'id')
+    this.name = requiredString(e, 'name')
+    this.comment = optionalString(e, 'comment')
+    this.owner = optionalString(e, 'owner')
+    this.public = optionalBoolean(e, 'public')
+    this.songCount = requiredInt(e, 'songCount')
+    this.duration = requiredInt(e, 'duration')
+    this.created = requiredDate(e, 'created')
+    this.changed = requiredDate(e, 'changed')
+    this.coverArt = optionalString(e, 'coverArt')
+  }
+}
+
+export class PlaylistWithSongsElement extends PlaylistElement {
+  songs: ChildElement[] = []
+
+  constructor(e: Element) {
+    super(e)
+
+    for (let i = 0; i < e.getElementsByTagName('entry').length; i++) {
+      this.songs.push(new ChildElement(e.getElementsByTagName('entry')[i]))
+    }
+  }
+}
