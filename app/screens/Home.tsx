@@ -60,7 +60,7 @@ const Category = React.memo<{
 
   const Nothing = () => (
     <View style={styles.nothingHereContent}>
-      <NothingHere height={styles.nothingHereContent.height} />
+      <NothingHere height={160} width={160} />
     </View>
   )
 
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   nothingHereContent: {
     width: '100%',
-    height: 190,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
   },
