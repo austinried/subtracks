@@ -8,7 +8,7 @@ import {
   playerStateAtom,
   progressAtom,
   progressSubsAtom,
-  queueWriteAtom,
+  queueAtom,
   useRefreshCurrentTrack,
   useRefreshPlayerState,
   useRefreshProgress,
@@ -85,7 +85,7 @@ const PlayerState = () => {
 }
 
 const QueueState = () => {
-  const setQueue = useUpdateAtom(queueWriteAtom)
+  const setQueue = useUpdateAtom(queueAtom)
   const refreshQueue = useRefreshQueue()
 
   const update = async (payload?: Payload) => {

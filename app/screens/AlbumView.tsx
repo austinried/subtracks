@@ -26,7 +26,8 @@ const AlbumDetails: React.FC<{
   const Songs = () => (
     <>
       <View style={styles.controls}>
-        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, album.songs[0].id)} />
+        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, undefined, false)} />
+        <Button title="Shuffle" onPress={() => setQueue(album.songs, album.name, undefined, true)} />
       </View>
       <View style={styles.songs}>
         {album.songs
@@ -37,8 +38,8 @@ const AlbumDetails: React.FC<{
               return a.title.localeCompare(b.title)
             }
           })
-          .map(s => (
-            <SongItem key={s.id} song={s} onPress={() => setQueue(album.songs, album.name, s.id)} />
+          .map((s, i) => (
+            <SongItem key={i} song={s} onPress={() => setQueue(album.songs, album.name, i)} />
           ))}
       </View>
     </>

@@ -26,11 +26,11 @@ const PlaylistDetails: React.FC<{
   const Songs = () => (
     <>
       <View style={styles.controls}>
-        <Button title="Play Playlist" onPress={() => setQueue(playlist.songs, playlist.name, playlist.songs[0].id)} />
+        <Button title="Play Playlist" onPress={() => setQueue(playlist.songs, playlist.name)} />
       </View>
       <View style={styles.songs}>
-        {playlist.songs.map((s, index) => (
-          <SongItem key={index} song={s} showArt={true} onPress={() => setQueue(playlist.songs, playlist.name, s.id)} />
+        {playlist.songs.map((s, i) => (
+          <SongItem key={i} song={s} showArt={true} onPress={() => setQueue(playlist.songs, playlist.name, i)} />
         ))}
       </View>
     </>

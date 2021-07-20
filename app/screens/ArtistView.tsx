@@ -48,13 +48,13 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   const TopSongs = () => (
     <>
       <Text style={styles.header}>Top Songs</Text>
-      {artist.topSongs.map(s => (
+      {artist.topSongs.map((s, i) => (
         <SongItem
-          key={s.id}
+          key={i}
           song={s}
           showArt={true}
           subtitle="album"
-          onPress={() => setQueue(artist.topSongs, `Top Songs: ${artist.name}`, s.id)}
+          onPress={() => setQueue(artist.topSongs, `Top Songs: ${artist.name}`, i)}
         />
       ))}
     </>
