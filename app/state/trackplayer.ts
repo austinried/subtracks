@@ -1,15 +1,14 @@
+import { Song } from '@app/models/music'
+import atomWithAsyncStorage from '@app/storage/atomWithAsyncStorage'
+import PromiseQueue from '@app/util/PromiseQueue'
 import equal from 'fast-deep-equal'
 import { atom } from 'jotai'
 import { useAtomCallback, useAtomValue, useUpdateAtom } from 'jotai/utils'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import TrackPlayer, { State, Track } from 'react-native-track-player'
-import { Song } from '@app/models/music'
-import PromiseQueue from '@app/util/PromiseQueue'
 
 type TrackExt = Track & {
   id: string
-  queueName: string
-  queueIndex?: number
   artworkThumb?: string
 }
 
@@ -20,6 +19,42 @@ type Progress = {
   duration: number
   buffered: number
 }
+
+type QueueExt = {
+  name?: string
+  shuffleOrder?: number[]
+}
+
+const queueExtAtom = atomWithAsyncStorage<QueueExt>('@queue', {})
+
+export const queueNameAtom = atom<string | undefined>(get => get(queueExtAtom).name)
+export const queueShuffledAtom = atom<boolean>(get => get(queueExtAtom).shuffleOrder !== undefined)
+
+const queueShuffleOrderAtom = atom<number[] | undefined, number[] | undefined>(
+  get => get(queueExtAtom).shuffleOrder,
+  (get, set, update) => {
+    const queueExt = get(queueExtAtom)
+    if (!equal(queueExt.shuffleOrder, update)) {
+      set(queueExtAtom, {
+        ...queueExt,
+        shuffleOrder: update,
+      })
+    }
+  },
+)
+
+const queueNameWriteAtom = atom<string | undefined, string | undefined>(
+  get => get(queueExtAtom).name,
+  (get, set, update) => {
+    const queueExt = get(queueExtAtom)
+    if (!equal(queueExt.name, update)) {
+      set(queueExtAtom, {
+        ...queueExt,
+        name: update,
+      })
+    }
+  },
+)
 
 const playerState = atom<State>(State.None)
 export const playerStateAtom = atom<State, State>(
@@ -51,26 +86,6 @@ export const queueAtom = atom<TrackExt[], TrackExt[]>(
   },
 )
 
-export const queueNameAtom = atom<string | undefined>(get => {
-  const queue = get(_queue)
-  return queue.length > 0 ? queue[0].queueName : undefined
-})
-
-export const queueShuffledAtom = atom<boolean>(get => {
-  const queue = get(_queue)
-  return queue.length > 0 ? queue[0].queueIndex !== undefined : false
-})
-
-export const orderedQueueAtom = atom<TrackExt[]>(get => {
-  const queue = get(_queue)
-
-  if (queue.length === 0 || queue[0].queueIndex === undefined) {
-    return queue
-  }
-
-  return queue.map(t => t.queueIndex as number).map(i => queue[i])
-})
-
 const _progress = atom<Progress>({ position: 0, duration: 0, buffered: 0 })
 export const progressAtom = atom<Progress, Progress>(
   get => get(_progress),
@@ -98,6 +113,11 @@ const getQueue = async (): Promise<TrackExt[]> => {
 
 const getTrack = async (index: number): Promise<TrackExt> => {
   return ((await TrackPlayer.getTrack(index)) as TrackExt) || undefined
+}
+
+const getCurrentTrack = async (): Promise<number | undefined> => {
+  const current = await TrackPlayer.getCurrentTrack()
+  return typeof current === 'number' ? current : undefined
 }
 
 const getPlayerState = async (): Promise<State> => {
@@ -200,92 +220,132 @@ export const useNext = () => {
     })
 }
 
-// export const useAdd = () => {
-//   const setQueue = useUpdateAtom(queueAtom)
-//   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
-
-//   return (tracks: TrackExt | TrackExt[], insertBeforeindex?: number) =>
-//     trackPlayerCommands.enqueue(async () => {
-//       await TrackPlayer.add(tracks, insertBeforeindex)
-
-//       const queue = await getQueue()
-//       setQueue(queue)
-//       setCurrentTrack(queue.length > 0 ? queue[await TrackPlayer.getCurrentTrack()] : undefined)
-//     })
-// }
-
 export const useReset = (enqueue = true) => {
   const setQueue = useUpdateAtom(queueAtom)
+  const setQueueExt = useUpdateAtom(queueExtAtom)
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
 
   const reset = async () => {
     await TrackPlayer.reset()
     setQueue([])
+    setQueueExt({})
     setCurrentTrack(undefined)
   }
 
   return enqueue ? () => trackPlayerCommands.enqueue(reset) : reset
 }
 
+function shuffleTracks(tracks: TrackExt[], firstTrack?: number) {
+  if (tracks.length === 0) {
+    return { tracks, shuffleOrder: [] }
+  }
+
+  const trackIndexes = tracks.map((_t, i) => i)
+  let shuffleOrder: number[] = []
+
+  for (let i = trackIndexes.length; i--; i > 0) {
+    const randi = Math.floor(Math.random() * (i + 1))
+    shuffleOrder.push(trackIndexes.splice(randi, 1)[0])
+  }
+
+  if (firstTrack !== undefined) {
+    shuffleOrder.splice(shuffleOrder.indexOf(firstTrack), 1)
+    shuffleOrder = [firstTrack, ...shuffleOrder]
+  }
+
+  tracks = shuffleOrder.map(i => tracks[i])
+
+  return { tracks, shuffleOrder }
+}
+
+function unshuffleTracks(tracks: TrackExt[], shuffleOrder: number[]): TrackExt[] {
+  if (tracks.length === 0 || shuffleOrder.length === 0) {
+    return tracks
+  }
+
+  return shuffleOrder.map((_v, i) => tracks[shuffleOrder.indexOf(i)])
+}
+
+export const useToggleShuffle = () => {
+  const setQueue = useUpdateAtom(queueAtom)
+  const setQueueShuffleOrder = useUpdateAtom(queueShuffleOrderAtom)
+  const getQueueShuffleOrder = useAtomCallback(useCallback(get => get(queueShuffleOrderAtom), []))
+
+  return async () => {
+    return trackPlayerCommands.enqueue(async () => {
+      const queue = await getQueue()
+      const current = await getCurrentTrack()
+      const queueShuffleOrder = await getQueueShuffleOrder()
+
+      await TrackPlayer.remove(queue.map((_t, i) => i).filter(i => i !== current))
+
+      if (queueShuffleOrder === undefined) {
+        let { tracks, shuffleOrder } = shuffleTracks(queue, current)
+        if (tracks.length > 0) {
+          tracks = tracks.slice(1)
+        }
+
+        await TrackPlayer.add(tracks)
+        setQueueShuffleOrder(shuffleOrder)
+      } else {
+        const tracks = unshuffleTracks(queue, queueShuffleOrder)
+
+        if (current !== undefined) {
+          const shuffledCurrent = queueShuffleOrder[current]
+          const tracks1 = tracks.slice(0, shuffledCurrent)
+          const tracks2 = tracks.slice(shuffledCurrent + 1)
+
+          await TrackPlayer.add(tracks2)
+          await TrackPlayer.add(tracks1, 0)
+        } else {
+          await TrackPlayer.add(tracks)
+        }
+
+        setQueueShuffleOrder(undefined)
+      }
+
+      setQueue(await getQueue())
+    })
+  }
+}
+
 export const useSetQueue = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
   const setQueue = useUpdateAtom(queueAtom)
+  const setQueueShuffleOrder = useUpdateAtom(queueShuffleOrderAtom)
+  const setQueueName = useUpdateAtom(queueNameWriteAtom)
   const reset = useReset(false)
-  const getShuffled = useAtomCallback(get => get(queueShuffledAtom))
+  const getQueueShuffled = useAtomCallback(useCallback(get => get(queueShuffledAtom), []))
 
   return async (songs: Song[], name: string, playTrack?: number, shuffle?: boolean) =>
     trackPlayerCommands.enqueue(async () => {
-      const shuffleTracks = shuffle !== undefined ? shuffle : await getShuffled()
+      const shuffled = shuffle !== undefined ? shuffle : await getQueueShuffled()
 
       await TrackPlayer.setupPlayer()
       await reset()
 
       if (songs.length === 0) {
-        setCurrentTrack(undefined)
-        setQueue([])
         return
       }
 
-      let tracks = songs.map(s => mapSongToTrack(s, name))
-      console.log(tracks.map(t => t.title))
+      let queue = songs.map(mapSongToTrack)
 
-      if (shuffleTracks) {
-        let trackIndexes = tracks.map((_t, i) => i)
-        const shuffleOrder: number[] = []
-
-        for (let i = trackIndexes.length; i--; i > 0) {
-          tracks[i].queueIndex = i
-
-          const randi = Math.floor(Math.random() * (i + 1))
-          shuffleOrder.push(trackIndexes[randi])
-          trackIndexes.splice(randi, 1)
-        }
-
-        tracks = shuffleOrder.map(i => tracks[i])
-
-        if (playTrack !== undefined) {
-          tracks = [
-            tracks.splice(
-              tracks.findIndex(t => t.queueIndex === playTrack),
-              1,
-            )[0],
-            ...tracks,
-          ]
-          playTrack = 0
-        }
+      if (shuffled) {
+        const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
+        setQueueShuffleOrder(shuffleOrder)
+        queue = tracks
+        playTrack = 0
       }
 
-      console.log(tracks.map(t => t.title))
-
       playTrack = playTrack || 0
-      setCurrentTrack(tracks[playTrack])
+      setCurrentTrack(queue[playTrack])
 
       if (playTrack === 0) {
-        await TrackPlayer.add(tracks)
+        await TrackPlayer.add(queue)
         await TrackPlayer.play()
       } else {
-        const tracks1 = tracks.slice(0, playTrack)
-        const tracks2 = tracks.slice(playTrack)
+        const tracks1 = queue.slice(0, playTrack)
+        const tracks2 = queue.slice(playTrack)
 
         await TrackPlayer.add(tracks2)
         await TrackPlayer.play()
@@ -294,6 +354,7 @@ export const useSetQueue = () => {
       }
 
       setQueue(await getQueue())
+      setQueueName(name)
     })
 }
 
@@ -310,10 +371,9 @@ export const useProgress = () => {
   return progress
 }
 
-function mapSongToTrack(song: Song, queueName: string): TrackExt {
+function mapSongToTrack(song: Song): TrackExt {
   return {
     id: song.id,
-    queueName,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
     album: song.album || 'Unknown Album',

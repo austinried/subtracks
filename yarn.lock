@@ -4145,9 +4145,9 @@ joi@^17.2.1:
     "@sideway/pinpoint" "^2.0.0"
 
 jotai@^1.1.0:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/jotai/-/jotai-1.1.2.tgz#3f211e0c03c74e95ea6fd7a69c1d2b65731009bf"
-  integrity sha512-dni4wtgYGG+s9YbOJN7lcfrrhxiD6bH1SN00Pnl0F2htgOXmjxqkGlFzw02OK0Rw35wGNzBfDTJVtbGD9wHOhg==
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-1.2.2.tgz#631fd7ad44e9ac26cdf9874d52282c1cfe032807"
+  integrity sha512-iqkkUdWsH2Mk4HY1biba/8kA77+8liVBy8E0d8Nce29qow4h9mzdDhpTasAruuFYPycw6JvfZgL5RB0JJuIZjw==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"

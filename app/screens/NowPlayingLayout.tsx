@@ -12,11 +12,13 @@ import {
   currentTrackAtom,
   playerStateAtom,
   queueNameAtom,
+  queueShuffledAtom,
   useNext,
   usePause,
   usePlay,
   usePrevious,
   useProgress,
+  useToggleShuffle,
 } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -206,6 +208,8 @@ const PlayerControls = () => {
   const pause = usePause()
   const next = useNext()
   const previous = usePrevious()
+  const shuffle = useAtomValue(queueShuffledAtom)
+  const toggleShuffle = useToggleShuffle()
 
   let playPauseIcon: string
   let playPauseAction: undefined | (() => void)
@@ -253,8 +257,8 @@ const PlayerControls = () => {
         </View>
 
         <View style={controlsStyles.center}>
-          <PressableOpacity onPress={undefined} disabled={disabled}>
-            <Icon name="shuffle" size={26} color="white" />
+          <PressableOpacity onPress={() => toggleShuffle()} disabled={disabled}>
+            <Icon name="shuffle" size={26} color={shuffle ? colors.accent : 'white'} />
           </PressableOpacity>
         </View>
       </View>

@@ -135,10 +135,10 @@ const ProgressState = () => {
 }
 
 const Debug = () => {
-  const value = useAtomValue(currentTrackAtom)
+  const value = useAtomValue(queueAtom)
 
   useEffect(() => {
-    // ToastAndroid.show(value?.title || 'undefined', 1)
+    console.log(value.map(t => t.title))
   }, [value])
 
   return <></>
