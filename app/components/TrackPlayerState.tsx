@@ -58,10 +58,9 @@ const CurrentTrackState = () => {
     <TrackPlayerEventResponder
       events={[
         Event.PlaybackQueueEnded,
+        Event.PlaybackTrackChanged,
         Event.PlaybackMetadataReceived,
         Event.RemoteDuck,
-        Event.RemoteNext,
-        Event.RemotePrevious,
         Event.RemoteStop,
       ]}
       update={update}
