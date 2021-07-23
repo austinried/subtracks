@@ -1,7 +1,7 @@
-import Button from '@app/components/Button'
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
+import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
 import SongItem from '@app/components/SongItem'
 import { albumAtomFamily } from '@app/state/music'
@@ -25,10 +25,7 @@ const AlbumDetails: React.FC<{
 
   const Songs = () => (
     <>
-      <View style={styles.controls}>
-        <Button title="Play Album" onPress={() => setQueue(album.songs, album.name, undefined, false)} />
-        <Button title="Shuffle" onPress={() => setQueue(album.songs, album.name, undefined, true)} />
-      </View>
+      <ListPlayerControls songs={album.songs} typeName="Album" queueName={album.name} />
       <View style={styles.songs}>
         {album.songs
           .sort((a, b) => {
@@ -113,9 +110,6 @@ const styles = StyleSheet.create({
   cover: {
     height: 220,
     width: 220,
-  },
-  controls: {
-    flexDirection: 'row',
   },
   songs: {
     marginTop: 26,
