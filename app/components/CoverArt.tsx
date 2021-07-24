@@ -1,69 +1,124 @@
+import { artistInfoAtomFamily, useCoverArtUri } from '@app/state/music'
 import colors from '@app/styles/colors'
-import React, { useState } from 'react'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { useAtomValue } from 'jotai/utils'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, StyleSheet, View, ViewStyle } from 'react-native'
 import FastImage, { ImageStyle } from 'react-native-fast-image'
-import LinearGradient from 'react-native-linear-gradient'
 
-type CoverImageProps = {
-  uri?: string
-  style?: ImageStyle
+type BaseProps = {
+  imageSize?: 'thumbnail' | 'original'
+  style?: ViewStyle
+  imageStyle?: ImageStyle
   resizeMode?: keyof typeof FastImage.resizeMode
-  onProgress?: () => void
-  onLoadEnd?: () => void
-  onError?: () => void
+  round?: boolean
 }
 
-const CoverImage = React.memo<CoverImageProps>(({ uri, style, resizeMode, onProgress, onLoadEnd, onError }) => (
-  <FastImage
-    source={{ uri }}
-    style={style}
-    resizeMode={resizeMode || FastImage.resizeMode.contain}
-    onProgress={onProgress}
-    onLoadEnd={onLoadEnd}
-    onError={onError}
-  />
-))
+type BaseImageProps = BaseProps & {
+  enableLoading: () => void
+  disableLoading: () => void
+}
 
-const Fallback = React.memo<{}>(({}) => {
-  return <LinearGradient colors={[colors.accent, colors.accentLow]} style={styles.fallback} />
+type ArtistIdProp = {
+  artistId: string
+}
+
+type CoverArtProp = {
+  coverArt?: string
+}
+
+type ArtistIdImageProps = BaseImageProps & ArtistIdProp
+type CoverArtImageProps = BaseImageProps & CoverArtProp
+
+type CoverArtProps = BaseProps & CoverArtProp & Partial<ArtistIdProp>
+
+const ArtistIdImageLoaded = React.memo<ArtistIdImageProps>(
+  ({ artistId, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading }) => {
+    const artistInfo = useAtomValue(artistInfoAtomFamily(artistId))
+
+    const uri = imageSize === 'thumbnail' ? artistInfo?.smallImageUrl : artistInfo?.largeImageUrl
+
+    return (
+      <FastImage
+        source={{ uri }}
+        style={[{ height: style?.height, width: style?.width }, imageStyle]}
+        resizeMode={resizeMode || FastImage.resizeMode.contain}
+        onProgress={enableLoading}
+        onLoadEnd={disableLoading}
+      />
+    )
+  },
+)
+
+const ArtistIdImageFallback: React.FC<{
+  enableLoading: () => void
+}> = ({ enableLoading }) => {
+  useEffect(() => {
+    enableLoading()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return <></>
+}
+
+const ArtistIdImage = React.memo<ArtistIdImageProps>(props => {
+  return (
+    <React.Suspense fallback={<ArtistIdImageFallback enableLoading={props.enableLoading} />}>
+      <ArtistIdImageLoaded {...props} />
+    </React.Suspense>
+  )
 })
 
-const CoverArt: React.FC<{
-  FallbackComponent?: () => JSX.Element
-  placeholderIcon?: string
-  height?: string | number
-  width?: string | number
-  coverArtUri?: string
-  resizeMode?: keyof typeof FastImage.resizeMode
-  style?: ImageStyle
-}> = ({ FallbackComponent, coverArtUri, resizeMode, style }) => {
+const CoverArtImage = React.memo<CoverArtImageProps>(
+  ({ coverArt, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading }) => {
+    const coverArtUri = useCoverArtUri()
+
+    return (
+      <FastImage
+        source={{ uri: coverArtUri(coverArt, imageSize) }}
+        style={[{ height: style?.height, width: style?.width }, imageStyle]}
+        resizeMode={resizeMode || FastImage.resizeMode.contain}
+        onProgress={enableLoading}
+        onLoadEnd={disableLoading}
+      />
+    )
+  },
+)
+
+const CoverArt: React.FC<CoverArtProps> = ({ coverArt, artistId, resizeMode, imageSize, style, imageStyle, round }) => {
   const [loading, setLoading] = useState(false)
-  const [fallbackVisible, setFallbackVisible] = useState(false)
 
   const enableLoading = React.useCallback(() => setLoading(true), [])
   const disableLoading = React.useCallback(() => setLoading(false), [])
-  const enableFallback = React.useCallback(() => setFallbackVisible(true), [])
+
+  imageSize = imageSize === undefined ? 'thumbnail' : 'original'
+  round = round === undefined ? artistId !== undefined : round
+
+  const viewStyles = [style]
+  if (round) {
+    viewStyles.push(styles.round)
+  }
 
   return (
-    <View style={style}>
-      <CoverImage
-        uri={coverArtUri}
-        style={style}
-        resizeMode={resizeMode}
-        onProgress={enableLoading}
-        onLoadEnd={disableLoading}
-        onError={enableFallback}
-      />
-      {fallbackVisible ? (
-        FallbackComponent ? (
-          <View style={styles.fallback}>
-            <FallbackComponent />
-          </View>
-        ) : (
-          <Fallback />
-        )
+    <View style={viewStyles}>
+      {artistId ? (
+        <ArtistIdImage
+          artistId={artistId}
+          imageSize={imageSize}
+          style={style}
+          imageStyle={imageStyle}
+          resizeMode={resizeMode}
+          enableLoading={enableLoading}
+          disableLoading={disableLoading}
+        />
       ) : (
-        <></>
+        <CoverArtImage
+          coverArt={coverArt}
+          imageSize={imageSize}
+          style={style}
+          imageStyle={imageStyle}
+          resizeMode={resizeMode}
+          enableLoading={enableLoading}
+          disableLoading={disableLoading}
+        />
       )}
       <ActivityIndicator animating={loading} size="large" color={colors.accent} style={styles.indicator} />
     </View>
@@ -71,16 +126,9 @@ const CoverArt: React.FC<{
 }
 
 const styles = StyleSheet.create({
-  image: {
-    height: '100%',
-    width: '100%',
-  },
-  fallback: {
-    height: '100%',
-    width: '100%',
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
+  round: {
+    overflow: 'hidden',
+    borderRadius: 1000,
   },
   indicator: {
     height: '100%',

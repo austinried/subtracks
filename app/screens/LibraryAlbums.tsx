@@ -17,15 +17,15 @@ const AlbumItem = React.memo<{
   size: number
   height: number
   artist?: string
-  coverArtUri?: string
-}>(({ id, name, artist, size, height, coverArtUri }) => {
+  coverArt?: string
+}>(({ id, name, artist, size, height, coverArt }) => {
   const navigation = useNavigation()
 
   return (
     <PressableOpacity
       style={[styles.item, { maxWidth: size, height }]}
       onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
-      <CoverArt coverArtUri={coverArtUri} style={{ height: size, width: size }} />
+      <CoverArt coverArt={coverArt} style={{ height: size, width: size }} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {name}
@@ -43,7 +43,7 @@ const AlbumListRenderItem: React.FC<{
 }> = ({ item }) => (
   <AlbumItem
     id={item.album.id}
-    coverArtUri={item.album.coverArtThumbUri}
+    coverArt={item.album.coverArt}
     name={item.album.name}
     artist={item.album.artist}
     size={item.size}

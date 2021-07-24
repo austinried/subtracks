@@ -1,34 +1,32 @@
 export interface Artist {
+  itemType: 'artist'
   id: string
   name: string
   starred?: Date
+  coverArt?: string
 }
 
 export interface ArtistInfo extends Artist {
   albums: Album[]
 
+  smallImageUrl?: string
   mediumImageUrl?: string
   largeImageUrl?: string
-  albumCoverUris: string[]
 
   topSongs: Song[]
 }
 
-export interface ArtistArt {
-  uri?: string
-  albumCoverUris: string[]
-}
-
 export interface AlbumListItem {
+  itemType: 'album'
   id: string
   name: string
   artist?: string
   starred?: Date
-  coverArtThumbUri?: string
+  coverArt?: string
 }
 
 export interface Album extends AlbumListItem {
-  coverArtUri?: string
+  coverArt?: string
   year?: number
 }
 
@@ -36,19 +34,27 @@ export interface AlbumWithSongs extends Album {
   songs: Song[]
 }
 
+export interface SearchResults {
+  artists: Artist[]
+  albums: AlbumListItem[]
+  songs: Song[]
+}
+
 export interface PlaylistListItem {
+  itemType: 'playlist'
   id: string
   name: string
   comment?: string
-  coverArtThumbUri?: string
+  coverArt?: string
 }
 
 export interface PlaylistWithSongs extends PlaylistListItem {
   songs: Song[]
-  coverArtUri?: string
+  coverArt?: string
 }
 
 export interface Song {
+  itemType: 'song'
   id: string
   album?: string
   artist?: string
@@ -58,8 +64,7 @@ export interface Song {
   starred?: Date
 
   streamUri: string
-  coverArtUri?: string
-  coverArtThumbUri?: string
+  coverArt?: string
 }
 
 export type DownloadedSong = {

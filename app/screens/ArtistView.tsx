@@ -1,8 +1,8 @@
-import ArtistArt from '@app/components/ArtistArt'
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
+import Header from '@app/components/Header'
 import PressableOpacity from '@app/components/PressableOpacity'
-import SongItem from '@app/components/SongItem'
+import ListItem from '@app/components/ListItem'
 import { Album } from '@app/models/music'
 import { artistInfoAtomFamily } from '@app/state/music'
 import { useSetQueue } from '@app/state/trackplayer'
@@ -26,7 +26,7 @@ const AlbumItem = React.memo<{
     <PressableOpacity
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
       style={[styles.albumItem, { width }]}>
-      <CoverArt coverArtUri={album.coverArtThumbUri} style={{ height, width }} />
+      <CoverArt coverArt={album.coverArt} style={{ height, width }} />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </PressableOpacity>
@@ -47,23 +47,17 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
 
   const TopSongs = () => (
     <>
-      <Text style={styles.header}>Top Songs</Text>
+      <Header>Top Songs</Header>
       {artist.topSongs.map((s, i) => (
-        <SongItem
+        <ListItem
           key={i}
-          song={s}
+          item={s}
           showArt={true}
-          subtitle="album"
+          subtitle={s.album}
           onPress={() => setQueue(artist.topSongs, `Top Songs: ${artist.name}`, i)}
         />
       ))}
     </>
-  )
-
-  const ArtistCoverFallback = () => (
-    <View style={styles.artistCover}>
-      <ArtistArt id={artist.id} round={false} height={artistCoverHeight} width={coverLayout.width} />
-    </View>
   )
 
   return (
@@ -73,17 +67,18 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}>
       <CoverArt
-        FallbackComponent={ArtistCoverFallback}
-        coverArtUri={artist.largeImageUrl}
+        artistId={artist.id}
         style={styles.artistCover}
         resizeMode={FastImage.resizeMode.cover}
+        round={false}
+        imageSize="original"
       />
       <View style={styles.titleContainer}>
         <Text style={styles.title}>{artist.name}</Text>
       </View>
       <View style={styles.container}>
         {artist.topSongs.length > 0 ? <TopSongs /> : <></>}
-        <Text style={styles.header}>Albums</Text>
+        <Header>Albums</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {artist.albums.map(a => (
             <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
@@ -139,13 +134,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 16,
     paddingHorizontal: 10,
     marginBottom: 10,
-  },
-  header: {
-    fontFamily: font.bold,
-    fontSize: 24,
-    color: colors.text.primary,
-    marginTop: 20,
-    marginBottom: 14,
   },
   artistCover: {
     position: 'absolute',

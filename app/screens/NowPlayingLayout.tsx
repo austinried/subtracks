@@ -75,7 +75,7 @@ const SongCoverArt = () => {
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt coverArtUri={track?.artwork as string} style={coverArtStyles.image} />
+      <CoverArt coverArt={track?.coverArt} style={coverArtStyles.image} imageSize="original" />
     </View>
   )
 }
@@ -318,7 +318,7 @@ const NowPlayingLayout: React.FC<NowPlayingProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ImageGradientBackground imageUri={track?.artworkThumb as string} imageKey={`${track?.album}${track?.artist}`} />
+      <ImageGradientBackground imageUri={track?.artwork as string} imageKey={`${track?.album}${track?.artist}`} />
       <NowPlayingHeader />
       <View style={styles.content}>
         <SongCoverArt />

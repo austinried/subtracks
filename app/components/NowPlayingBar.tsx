@@ -70,7 +70,7 @@ const NowPlayingBar = () => {
       <View style={styles.subContainer}>
         <CoverArt
           style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
-          coverArtUri={track?.artworkThumb}
+          coverArt={track?.coverArt || '-1'}
         />
         <View style={styles.detailsContainer}>
           <Text numberOfLines={1} style={styles.detailsTitle}>

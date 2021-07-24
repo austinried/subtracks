@@ -6,10 +6,11 @@ import { atom } from 'jotai'
 import { useAtomCallback, useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { useCallback, useEffect } from 'react'
 import TrackPlayer, { State, Track } from 'react-native-track-player'
+import { useCoverArtUri } from './music'
 
 type TrackExt = Track & {
   id: string
-  artworkThumb?: string
+  coverArt?: string
 }
 
 type OptionalTrackExt = TrackExt | undefined
@@ -316,6 +317,7 @@ export const useSetQueue = () => {
   const setQueueName = useUpdateAtom(queueNameWriteAtom)
   const reset = useReset(false)
   const getQueueShuffled = useAtomCallback(useCallback(get => get(queueShuffledAtom), []))
+  const coverArtUri = useCoverArtUri()
 
   return async (songs: Song[], name: string, playTrack?: number, shuffle?: boolean) =>
     trackPlayerCommands.enqueue(async () => {
@@ -328,7 +330,7 @@ export const useSetQueue = () => {
         return
       }
 
-      let queue = songs.map(mapSongToTrack)
+      let queue = songs.map(s => mapSongToTrack(s, coverArtUri))
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
@@ -371,15 +373,15 @@ export const useProgress = () => {
   return progress
 }
 
-function mapSongToTrack(song: Song): TrackExt {
+function mapSongToTrack(song: Song, coverArtUri: (coverArt?: string) => string | undefined): TrackExt {
   return {
     id: song.id,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
     album: song.album || 'Unknown Album',
     url: song.streamUri,
-    artwork: song.coverArtUri,
-    artworkThumb: song.coverArtThumbUri,
+    artwork: coverArtUri(song.coverArt),
+    coverArt: song.coverArt,
     duration: song.duration,
   }
 }

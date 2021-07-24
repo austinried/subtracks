@@ -3,10 +3,10 @@ import {
   AlbumListItem,
   AlbumWithSongs,
   Artist,
-  ArtistArt,
   ArtistInfo,
   PlaylistListItem,
   PlaylistWithSongs,
+  SearchResults,
   Song,
 } from '@app/models/music'
 import { activeServerAtom, homeListTypesAtom } from '@app/state/settings'
@@ -19,7 +19,7 @@ import {
   PlaylistElement,
   PlaylistWithSongsElement,
 } from '@app/subsonic/elements'
-import { GetAlbumList2Type } from '@app/subsonic/params'
+import { GetAlbumList2Type, GetCoverArtParams } from '@app/subsonic/params'
 import { GetArtistResponse } from '@app/subsonic/responses'
 import { atom, useAtom } from 'jotai'
 import { atomFamily, useAtomValue, useUpdateAtom } from 'jotai/utils'
@@ -87,12 +87,46 @@ export const useUpdateHomeLists = () => {
     for (const type of types) {
       promises.push(
         client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
-          updateHomeList({ type, albums: response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)) })
+          updateHomeList({ type, albums: response.data.albums.map(mapAlbumID3toAlbumListItem) })
         }),
       )
     }
     await Promise.all(promises)
 
+    setUpdating(false)
+  }
+}
+
+export const searchResultsUpdatingAtom = atom(false)
+export const searchResultsAtom = atom<SearchResults>({
+  artists: [],
+  albums: [],
+  songs: [],
+})
+
+export const useUpdateSearchResults = () => {
+  const server = useAtomValue(activeServerAtom)
+  const updateList = useUpdateAtom(searchResultsAtom)
+  const [updating, setUpdating] = useAtom(searchResultsUpdatingAtom)
+
+  if (!server) {
+    return async () => {}
+  }
+
+  return async (query: string) => {
+    if (updating) {
+      return
+    }
+    setUpdating(true)
+
+    const client = new SubsonicApiClient(server)
+    const response = await client.search3({ query })
+
+    updateList({
+      artists: response.data.artists.map(mapArtistID3toArtist),
+      albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
+      songs: response.data.songs.map(a => mapChildToSong(a, client)),
+    })
     setUpdating(false)
   }
 }
@@ -118,7 +152,7 @@ export const useUpdatePlaylists = () => {
     const client = new SubsonicApiClient(server)
     const response = await client.getPlaylists()
 
-    updateList(response.data.playlists.map(a => mapPlaylistListItem(a, client)))
+    updateList(response.data.playlists.map(mapPlaylistListItem))
     setUpdating(false)
   }
 }
@@ -157,7 +191,7 @@ export const useUpdateAlbumList = () => {
     const client = new SubsonicApiClient(server)
     const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 })
 
-    updateList(response.data.albums.map(a => mapAlbumID3toAlbumListItem(a, client)))
+    updateList(response.data.albums.map(mapAlbumID3toAlbumListItem))
     setUpdating(false)
   }
 }
@@ -193,36 +227,32 @@ export const artistInfoAtomFamily = atomFamily((id: string) =>
   }),
 )
 
-export const artistArtAtomFamily = atomFamily((id: string) =>
-  atom<ArtistArt | undefined>(async get => {
-    const artistInfo = get(artistInfoAtomFamily(id))
-    if (!artistInfo) {
-      return undefined
+export const useCoverArtUri = () => {
+  const server = useAtomValue(activeServerAtom)
+
+  if (!server) {
+    return () => undefined
+  }
+
+  const client = new SubsonicApiClient(server)
+
+  return (coverArt?: string, size: 'thumbnail' | 'original' = 'thumbnail') => {
+    const params: GetCoverArtParams = { id: coverArt || '-1' }
+    if (size === 'thumbnail') {
+      params.size = '256'
     }
 
-    const albumCoverUris = artistInfo.albums
-      .filter(a => a.coverArtThumbUri !== undefined)
-      .sort((a, b) => {
-        if (b.year && a.year) {
-          return b.year - a.year
-        } else {
-          return a.name.localeCompare(b.name)
-        }
-      })
-      .map(a => a.coverArtThumbUri) as string[]
-
-    return {
-      albumCoverUris,
-      uri: artistInfo.largeImageUrl,
-    }
-  }),
-)
+    return client.getCoverArtUri(params)
+  }
+}
 
 function mapArtistID3toArtist(artist: ArtistID3Element): Artist {
   return {
+    itemType: 'artist',
     id: artist.id,
     name: artist.name,
     starred: artist.starred,
+    coverArt: artist.coverArt,
   }
 }
 
@@ -234,63 +264,40 @@ function mapArtistInfo(
 ): ArtistInfo {
   const { artist, albums } = artistResponse
 
-  const mappedAlbums = albums.map(a => mapAlbumID3toAlbum(a, client))
-  const albumCoverUris = mappedAlbums
-    .sort((a, b) => {
-      if (a.year && b.year) {
-        return b.year - a.year
-      } else {
-        return a.name.localeCompare(b.name) - 9000
-      }
-    })
-    .map(a => a.coverArtThumbUri)
-    .filter(a => a !== undefined) as string[]
+  const mappedAlbums = albums.map(mapAlbumID3toAlbum)
 
   return {
     ...mapArtistID3toArtist(artist),
     albums: mappedAlbums,
-    albumCoverUris,
+    smallImageUrl: info.smallImageUrl,
     mediumImageUrl: info.mediumImageUrl,
     largeImageUrl: info.largeImageUrl,
-    topSongs: topSongs.map(c => mapChildToSong(c, client)).slice(0, 5),
+    topSongs: topSongs.map(s => mapChildToSong(s, client)).slice(0, 5),
   }
 }
 
-function mapCoverArtUri(item: { coverArt?: string }, client: SubsonicApiClient) {
+function mapAlbumID3toAlbumListItem(album: AlbumID3Element): AlbumListItem {
   return {
-    coverArtUri: item.coverArt ? client.getCoverArtUri({ id: item.coverArt }) : client.getCoverArtUri({ id: '-1' }),
-  }
-}
-
-function mapCoverArtThumbUri(item: { coverArt?: string }, client: SubsonicApiClient) {
-  return {
-    coverArtThumbUri: item.coverArt
-      ? client.getCoverArtUri({ id: item.coverArt, size: '256' })
-      : client.getCoverArtUri({ id: '-1', size: '256' }),
-  }
-}
-
-function mapAlbumID3toAlbumListItem(album: AlbumID3Element, client: SubsonicApiClient): AlbumListItem {
-  return {
+    itemType: 'album',
     id: album.id,
     name: album.name,
     artist: album.artist,
     starred: album.starred,
-    ...mapCoverArtThumbUri(album, client),
+    coverArt: album.coverArt,
   }
 }
 
-function mapAlbumID3toAlbum(album: AlbumID3Element, client: SubsonicApiClient): Album {
+function mapAlbumID3toAlbum(album: AlbumID3Element): Album {
   return {
-    ...mapAlbumID3toAlbumListItem(album, client),
-    ...mapCoverArtUri(album, client),
-    ...mapCoverArtThumbUri(album, client),
+    ...mapAlbumID3toAlbumListItem(album),
+    coverArt: album.coverArt,
     year: album.year,
   }
 }
 
 function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
   return {
+    itemType: 'song',
     id: child.id,
     album: child.album,
     artist: child.artist,
@@ -298,9 +305,8 @@ function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
     track: child.track,
     duration: child.duration,
     starred: child.starred,
+    coverArt: child.coverArt,
     streamUri: client.streamUri({ id: child.id }),
-    ...mapCoverArtUri(child, client),
-    ...mapCoverArtThumbUri(child, client),
   }
 }
 
@@ -310,24 +316,25 @@ function mapAlbumID3WithSongstoAlbunWithSongs(
   client: SubsonicApiClient,
 ): AlbumWithSongs {
   return {
-    ...mapAlbumID3toAlbum(album, client),
+    ...mapAlbumID3toAlbum(album),
     songs: songs.map(s => mapChildToSong(s, client)),
   }
 }
 
-function mapPlaylistListItem(playlist: PlaylistElement, client: SubsonicApiClient): PlaylistListItem {
+function mapPlaylistListItem(playlist: PlaylistElement): PlaylistListItem {
   return {
+    itemType: 'playlist',
     id: playlist.id,
     name: playlist.name,
     comment: playlist.comment,
-    ...mapCoverArtThumbUri(playlist, client),
+    coverArt: playlist.coverArt,
   }
 }
 
 function mapPlaylistWithSongs(playlist: PlaylistWithSongsElement, client: SubsonicApiClient): PlaylistWithSongs {
   return {
-    ...mapPlaylistListItem(playlist, client),
+    ...mapPlaylistListItem(playlist),
     songs: playlist.songs.map(s => mapChildToSong(s, client)),
-    ...mapCoverArtUri(playlist, client),
+    coverArt: playlist.coverArt,
   }
 }

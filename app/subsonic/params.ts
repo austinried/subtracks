@@ -99,3 +99,18 @@ export type StreamParams = {
   format?: string
   estimateContentLength?: boolean
 }
+
+//
+// Searching
+//
+
+export type Search3Params = {
+  query: string
+  artistCount?: number
+  artistOffset?: number
+  albumCount?: number
+  albumOffset?: number
+  songCount?: number
+  songOffset?: number
+  musicFolderId?: string
+}

@@ -3,8 +3,8 @@ import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
-import SongItem from '@app/components/SongItem'
-import { albumAtomFamily } from '@app/state/music'
+import ListItem from '@app/components/ListItem'
+import { albumAtomFamily, useCoverArtUri } from '@app/state/music'
 import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -17,6 +17,7 @@ const AlbumDetails: React.FC<{
   id: string
 }> = ({ id }) => {
   const album = useAtomValue(albumAtomFamily(id))
+  const coverArtUri = useCoverArtUri()
   const setQueue = useSetQueue()
 
   if (!album) {
@@ -36,7 +37,7 @@ const AlbumDetails: React.FC<{
             }
           })
           .map((s, i) => (
-            <SongItem key={i} song={s} onPress={() => setQueue(album.songs, album.name, i)} />
+            <ListItem key={i} item={s} subtitle={s.artist} onPress={() => setQueue(album.songs, album.name, i)} />
           ))}
       </View>
     </>
@@ -44,11 +45,11 @@ const AlbumDetails: React.FC<{
 
   return (
     <ImageGradientScrollView
-      imageUri={album.coverArtThumbUri}
+      imageUri={coverArtUri(album.coverArt)}
       imageKey={`${album.name}${album.artist}`}
       style={styles.container}>
       <View style={styles.content}>
-        <CoverArt coverArtUri={album.coverArtUri} style={styles.cover} />
+        <CoverArt coverArt={album.coverArt} style={styles.cover} imageSize="original" />
         <Text style={styles.title}>{album.name}</Text>
         <Text style={styles.subtitle}>
           {album.artist}

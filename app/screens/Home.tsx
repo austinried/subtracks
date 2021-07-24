@@ -1,5 +1,6 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
+import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { AlbumListItem } from '@app/models/music'
@@ -30,7 +31,7 @@ const AlbumItem = React.memo<{
       onPress={() => navigation.navigate('AlbumView', { id: album.id, title: album.name })}
       key={album.id}
       style={styles.item}>
-      <CoverArt coverArtUri={album.coverArtThumbUri} style={{ height: styles.item.width, width: styles.item.width }} />
+      <CoverArt coverArt={album.coverArt} style={{ height: styles.item.width, width: styles.item.width }} />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
       </Text>
@@ -66,7 +67,7 @@ const Category = React.memo<{
 
   return (
     <View style={styles.category}>
-      <Text style={styles.categoryHeader}>{name}</Text>
+      <Header style={styles.header}>{name}</Header>
       {data.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )
@@ -111,24 +112,19 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 20,
   },
-  category: {
-    marginTop: 12,
-  },
-  categoryHeader: {
-    fontFamily: font.bold,
-    fontSize: 24,
-    color: colors.text.primary,
+  header: {
     paddingHorizontal: 20,
-    marginTop: 4,
+  },
+  category: {
+    // marginTop: 12,
   },
   nothingHereContent: {
     width: '100%',
-    height: 200,
+    height: 190,
     justifyContent: 'center',
     alignItems: 'center',
   },
   artScroll: {
-    marginTop: 10,
     height: 190,
   },
   artScrollContent: {

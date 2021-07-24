@@ -1,10 +1,10 @@
 import BottomTabBar from '@app/navigation/BottomTabBar'
 import LibraryTopTabNavigator from '@app/navigation/LibraryTopTabNavigator'
 import AlbumView from '@app/screens/AlbumView'
-import ArtistsList from '@app/screens/ArtistsList'
 import ArtistView from '@app/screens/ArtistView'
 import Home from '@app/screens/Home'
 import PlaylistView from '@app/screens/PlaylistView'
+import Search from '@app/screens/Search'
 import SettingsView from '@app/screens/Settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -98,7 +98,7 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
 
 const HomeTab = createTabStackNavigator(Home)
 const LibraryTab = createTabStackNavigator(LibraryTopTabNavigator)
-const SearchTab = createTabStackNavigator(ArtistsList)
+const SearchTab = createTabStackNavigator(Search)
 
 const Tab = createBottomTabNavigator()
 

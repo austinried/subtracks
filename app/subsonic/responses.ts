@@ -178,3 +178,30 @@ export class GetPlaylistResponse {
     this.playlist = new PlaylistWithSongsElement(xml.getElementsByTagName('playlist')[0])
   }
 }
+
+//
+// Searching
+//
+
+export class Search3Response {
+  artists: ArtistID3Element[] = []
+  albums: AlbumID3Element[] = []
+  songs: ChildElement[] = []
+
+  constructor(xml: Document) {
+    const artistElements = xml.getElementsByTagName('artist')
+    for (let i = 0; i < artistElements.length; i++) {
+      this.artists.push(new ArtistID3Element(artistElements[i]))
+    }
+
+    const albumElements = xml.getElementsByTagName('album')
+    for (let i = 0; i < albumElements.length; i++) {
+      this.albums.push(new AlbumID3Element(albumElements[i]))
+    }
+
+    const songElements = xml.getElementsByTagName('song')
+    for (let i = 0; i < songElements.length; i++) {
+      this.songs.push(new ChildElement(songElements[i]))
+    }
+  }
+}

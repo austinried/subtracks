@@ -3,8 +3,8 @@ import GradientBackground from '@app/components/GradientBackground'
 import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
-import SongItem from '@app/components/SongItem'
-import { playlistAtomFamily } from '@app/state/music'
+import ListItem from '@app/components/ListItem'
+import { playlistAtomFamily, useCoverArtUri } from '@app/state/music'
 import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -18,6 +18,7 @@ const PlaylistDetails: React.FC<{
 }> = ({ id }) => {
   const playlist = useAtomValue(playlistAtomFamily(id))
   const setQueue = useSetQueue()
+  const coverArtUri = useCoverArtUri()
 
   if (!playlist) {
     return <></>
@@ -33,7 +34,13 @@ const PlaylistDetails: React.FC<{
       />
       <View style={styles.songs}>
         {playlist.songs.map((s, i) => (
-          <SongItem key={i} song={s} showArt={true} onPress={() => setQueue(playlist.songs, playlist.name, i)} />
+          <ListItem
+            key={i}
+            item={s}
+            subtitle={s.artist}
+            showArt={true}
+            onPress={() => setQueue(playlist.songs, playlist.name, i)}
+          />
         ))}
       </View>
     </>
@@ -41,11 +48,11 @@ const PlaylistDetails: React.FC<{
 
   return (
     <ImageGradientScrollView
-      imageUri={playlist.coverArtThumbUri}
+      imageUri={coverArtUri(playlist.coverArt)}
       imageKey={`${playlist.id}${playlist.name}`}
       style={styles.container}>
       <View style={styles.content}>
-        <CoverArt coverArtUri={playlist.coverArtUri} style={styles.cover} />
+        <CoverArt coverArt={playlist.coverArt} style={styles.cover} imageSize="original" />
         <Text style={styles.title}>{playlist.name}</Text>
         {playlist.comment ? <Text style={styles.subtitle}>{playlist.comment}</Text> : <></>}
         {playlist.songs.length > 0 ? <Songs /> : <NothingHere height={350} width={250} />}

@@ -13,6 +13,7 @@ import {
   GetPlaylistParams,
   GetPlaylistsParams,
   GetTopSongsParams,
+  Search3Params,
   StreamParams,
 } from '@app/subsonic/params'
 import {
@@ -28,6 +29,7 @@ import {
   GetPlaylistResponse,
   GetPlaylistsResponse,
   GetTopSongsResponse,
+  Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import { Server } from '@app/models/settings'
@@ -219,5 +221,14 @@ export class SubsonicApiClient {
 
   streamUri(params: StreamParams): string {
     return this.buildUrl('stream', params)
+  }
+
+  //
+  // Searching
+  //
+
+  async search3(params: Search3Params): Promise<SubsonicResponse<Search3Response>> {
+    const xml = await this.apiGetXml('search3', params)
+    return new SubsonicResponse<Search3Response>(xml, new Search3Response(xml))
   }
 }
