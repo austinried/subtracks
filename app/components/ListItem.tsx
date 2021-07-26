@@ -1,4 +1,4 @@
-import { AlbumListItem, Artist, PlaylistListItem, Song } from '@app/models/music'
+import { ListableItem } from '@app/models/music'
 import { currentTrackAtom } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -37,7 +37,7 @@ const TitleText = React.memo<{
 })
 
 const ListItem: React.FC<{
-  item: Song | AlbumListItem | Artist | PlaylistListItem
+  item: ListableItem
   onPress?: (event: GestureResponderEvent) => void
   showArt?: boolean
   showStar?: boolean

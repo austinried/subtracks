@@ -67,6 +67,8 @@ export interface Song {
   coverArt?: string
 }
 
+export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
+
 export type DownloadedSong = {
   id: string
   type: 'song'

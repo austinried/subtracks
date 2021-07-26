@@ -114,7 +114,7 @@ export const useUpdateSearchResults = () => {
   }
 
   return async (query: string) => {
-    if (updating) {
+    if (updating || query.length < 2) {
       return
     }
     setUpdating(true)

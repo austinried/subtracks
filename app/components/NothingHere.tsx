@@ -1,17 +1,18 @@
 import font from '@app/styles/font'
 import React from 'react'
-import { Text, View, StyleSheet } from 'react-native'
+import { Text, View, StyleSheet, ViewStyle } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const NothingHere = React.memo<{
   height?: number
   width?: number
-}>(({ height, width }) => {
+  style?: ViewStyle
+}>(({ height, width, style }) => {
   height = height || 200
   width = width || 200
 
   return (
-    <View style={[styles.container, { height, width }]}>
+    <View style={[styles.container, { height, width }, style]}>
       <Icon name="music-rest-quarter" color={styles.text.color} size={width / 2} />
       <Text style={[styles.text, { fontSize: width / 8 }]}>Nothing here...</Text>
     </View>

@@ -1,12 +1,14 @@
-import React from 'react'
-import { Text, View, StyleSheet } from 'react-native'
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import colors from '@app/styles/colors'
-import FastImage from 'react-native-fast-image'
 import NowPlayingBar from '@app/components/NowPlayingBar'
 import PressableOpacity from '@app/components/PressableOpacity'
-import font from '@app/styles/font'
+import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
+import font from '@app/styles/font'
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import { BottomTabNavigationEventMap } from '@react-navigation/bottom-tabs/lib/typescript/src/types'
+import { NavigationHelpers, ParamListBase } from '@react-navigation/native'
+import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
 
 type TabButtonImage = {
   regular: number
@@ -38,7 +40,7 @@ const BottomTabButton = React.memo<{
   name: string
   isFocused: boolean
   img: TabButtonImage
-  navigation: any
+  navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>
 }>(({ routeKey, label, name, isFocused, img, navigation }) => {
   const onPress = () => {
     const event = navigation.emit({
@@ -53,7 +55,6 @@ const BottomTabButton = React.memo<{
   }
 
   return (
-    // <PressableOpacity onPress={onPress} style={styles.button} ripple={true} rippleColor="rgba(100,100,100,0.18)">
     <PressableOpacity onPress={onPress} style={styles.button}>
       <FastImage
         source={isFocused ? img.fill : img.regular}
