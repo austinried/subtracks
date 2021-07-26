@@ -57,6 +57,7 @@ const PlaylistScreen: React.FC<PlaylistScreenProps> = ({ route }) => (
 const styles = StyleSheet.create({
   stackheaderStyle: {
     backgroundColor: colors.gradient.high,
+    // backgroundColor: 'transparent',
   },
   stackheaderTitleStyle: {
     fontSize: 18,
@@ -71,6 +72,7 @@ const itemScreenOptions = {
   headerHideShadow: true,
   headerTintColor: 'white',
   headerTitleStyle: styles.stackheaderTitleStyle,
+  // headerTranslucent: true,
 }
 
 function createTabStackNavigator(Component: React.ComponentType<any>) {

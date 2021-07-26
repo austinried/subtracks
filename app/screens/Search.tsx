@@ -2,8 +2,9 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
-import { ListableItem, SearchResults } from '@app/models/music'
+import { ListableItem, SearchResults, Song } from '@app/models/music'
 import { searchResultsAtom, searchResultsUpdatingAtom, useUpdateSearchResults } from '@app/state/music'
+import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useAtomValue } from 'jotai/utils'
@@ -11,17 +12,18 @@ import debounce from 'lodash.debounce'
 import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react-native'
 
-function getSubtitle(item: ListableItem) {
-  switch (item.itemType) {
-    case 'playlist':
-      return item.comment
-    case 'album':
-    case 'song':
-      return item.artist
-    default:
-      return undefined
-  }
-}
+const SongItem = React.memo<{ item: Song }>(({ item }) => {
+  const setQueue = useSetQueue()
+
+  return (
+    <ListItem
+      item={item}
+      showArt={true}
+      showStar={false}
+      onPress={() => setQueue([item], `Search: ${item.title}`, 0)}
+    />
+  )
+})
 
 const ResultsCategory = React.memo<{
   name: string
@@ -34,9 +36,13 @@ const ResultsCategory = React.memo<{
   return (
     <>
       <Header>{name}</Header>
-      {items.map(a => (
-        <ListItem key={a.id} item={a} showArt={true} showStar={false} subtitle={getSubtitle(a)} />
-      ))}
+      {items.map(a =>
+        a.itemType === 'song' ? (
+          <SongItem key={a.id} item={a} />
+        ) : (
+          <ListItem key={a.id} item={a} showArt={true} showStar={false} />
+        ),
+      )}
     </>
   )
 })

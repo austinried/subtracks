@@ -2,26 +2,13 @@ import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { Artist } from '@app/models/music'
 import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '@app/state/music'
-import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 
-const ArtistItem = React.memo<{ item: Artist }>(({ item }) => {
-  const navigation = useNavigation()
-
-  return (
-    <ListItem
-      item={item}
-      showArt={true}
-      showStar={false}
-      listStyle="big"
-      onPress={() => navigation.navigate('ArtistView', { id: item.id, title: item.name })}
-    />
-  )
-})
-
-const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => <ArtistItem item={item} />
+const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
+  <ListItem item={item} showArt={true} showStar={false} listStyle="big" />
+)
 
 const ArtistsList = () => {
   const artists = useAtomValue(artistsAtom)

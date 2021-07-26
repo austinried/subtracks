@@ -2,6 +2,7 @@ import { ListableItem } from '@app/models/music'
 import { currentTrackAtom } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
 import React, { useState } from 'react'
 import { GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
@@ -45,12 +46,39 @@ const ListItem: React.FC<{
   subtitle?: string
 }> = ({ item, onPress, showArt, showStar, subtitle, listStyle }) => {
   const [starred, setStarred] = useState(false)
+  const navigation = useNavigation()
 
   showStar = showStar === undefined ? true : showStar
   listStyle = listStyle || 'small'
 
   const artSource = item.itemType === 'artist' ? { artistId: item.id } : { coverArt: item.coverArt }
   const sizeStyle = listStyle === 'big' ? bigStyles : smallStyles
+
+  if (!onPress) {
+    switch (item.itemType) {
+      case 'album':
+        onPress = () => navigation.navigate('AlbumView', { id: item.id, title: item.name })
+        break
+      case 'artist':
+        onPress = () => navigation.navigate('ArtistView', { id: item.id, title: item.name })
+        break
+      case 'playlist':
+        onPress = () => navigation.navigate('PlaylistView', { id: item.id, title: item.name })
+        break
+    }
+  }
+
+  if (!subtitle) {
+    switch (item.itemType) {
+      case 'song':
+      case 'album':
+        subtitle = item.artist
+        break
+      case 'playlist':
+        subtitle = item.comment
+        break
+    }
+  }
 
   return (
     <View style={[styles.container, sizeStyle.container]}>
