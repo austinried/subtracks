@@ -16,6 +16,7 @@ type BaseProps = {
 type BaseImageProps = BaseProps & {
   enableLoading: () => void
   disableLoading: () => void
+  fallbackError: () => void
 }
 
 type ArtistIdProp = {
@@ -32,7 +33,7 @@ type CoverArtImageProps = BaseImageProps & CoverArtProp
 type CoverArtProps = BaseProps & CoverArtProp & Partial<ArtistIdProp>
 
 const ArtistIdImageLoaded = React.memo<ArtistIdImageProps>(
-  ({ artistId, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading }) => {
+  ({ artistId, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading, fallbackError }) => {
     const artistInfo = useAtomValue(artistInfoAtomFamily(artistId))
 
     const uri = imageSize === 'thumbnail' ? artistInfo?.smallImageUrl : artistInfo?.largeImageUrl
@@ -44,6 +45,7 @@ const ArtistIdImageLoaded = React.memo<ArtistIdImageProps>(
         resizeMode={resizeMode || FastImage.resizeMode.contain}
         onProgress={enableLoading}
         onLoadEnd={disableLoading}
+        onError={fallbackError}
       />
     )
   },
@@ -68,7 +70,7 @@ const ArtistIdImage = React.memo<ArtistIdImageProps>(props => {
 })
 
 const CoverArtImage = React.memo<CoverArtImageProps>(
-  ({ coverArt, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading }) => {
+  ({ coverArt, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading, fallbackError }) => {
     const coverArtUri = useCoverArtUri()
 
     return (
@@ -78,6 +80,7 @@ const CoverArtImage = React.memo<CoverArtImageProps>(
         resizeMode={resizeMode || FastImage.resizeMode.contain}
         onProgress={enableLoading}
         onLoadEnd={disableLoading}
+        onError={fallbackError}
       />
     )
   },
@@ -85,9 +88,14 @@ const CoverArtImage = React.memo<CoverArtImageProps>(
 
 const CoverArt: React.FC<CoverArtProps> = ({ coverArt, artistId, resizeMode, imageSize, style, imageStyle, round }) => {
   const [loading, setLoading] = useState(false)
+  const [fallback, setFallback] = useState(false)
 
   const enableLoading = React.useCallback(() => setLoading(true), [])
   const disableLoading = React.useCallback(() => setLoading(false), [])
+  const fallbackError = React.useCallback(() => {
+    setFallback(true)
+    setLoading(false)
+  }, [])
 
   imageSize = imageSize === undefined ? 'thumbnail' : 'original'
   round = round === undefined ? artistId !== undefined : round
@@ -97,29 +105,47 @@ const CoverArt: React.FC<CoverArtProps> = ({ coverArt, artistId, resizeMode, ima
     viewStyles.push(styles.round)
   }
 
+  let ImageComponent
+  if (artistId) {
+    ImageComponent = (
+      <ArtistIdImage
+        artistId={artistId}
+        imageSize={imageSize}
+        style={style}
+        imageStyle={imageStyle}
+        resizeMode={resizeMode}
+        enableLoading={enableLoading}
+        disableLoading={disableLoading}
+        fallbackError={fallbackError}
+      />
+    )
+  } else {
+    ImageComponent = (
+      <CoverArtImage
+        coverArt={coverArt}
+        imageSize={imageSize}
+        style={style}
+        imageStyle={imageStyle}
+        resizeMode={resizeMode}
+        enableLoading={enableLoading}
+        disableLoading={disableLoading}
+        fallbackError={fallbackError}
+      />
+    )
+  }
+
+  if (fallback) {
+    ImageComponent = (
+      <FastImage
+        source={require('@res/fallback.png')}
+        style={[{ height: style?.height, width: style?.width }, imageStyle]}
+      />
+    )
+  }
+
   return (
     <View style={viewStyles}>
-      {artistId ? (
-        <ArtistIdImage
-          artistId={artistId}
-          imageSize={imageSize}
-          style={style}
-          imageStyle={imageStyle}
-          resizeMode={resizeMode}
-          enableLoading={enableLoading}
-          disableLoading={disableLoading}
-        />
-      ) : (
-        <CoverArtImage
-          coverArt={coverArt}
-          imageSize={imageSize}
-          style={style}
-          imageStyle={imageStyle}
-          resizeMode={resizeMode}
-          enableLoading={enableLoading}
-          disableLoading={disableLoading}
-        />
-      )}
+      {ImageComponent}
       <ActivityIndicator animating={loading} size="large" color={colors.accent} style={styles.indicator} />
     </View>
   )

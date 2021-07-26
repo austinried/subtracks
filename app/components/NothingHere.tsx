@@ -12,7 +12,7 @@ const NothingHere = React.memo<{
 
   return (
     <View style={[styles.container, { height, width }]}>
-      <Icon name="music-note-outline" color={styles.text.color} size={width / 2} />
+      <Icon name="music-rest-quarter" color={styles.text.color} size={width / 2} />
       <Text style={[styles.text, { fontSize: width / 8 }]}>Nothing here...</Text>
     </View>
   )
