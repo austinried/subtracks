@@ -6718,6 +6718,11 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
+uri-scheme@^1.0.91:
+  version "1.0.91"
+  resolved "https://registry.yarnpkg.com/uri-scheme/-/uri-scheme-1.0.91.tgz#9169b7d4ab421f29fc6576885b30a7be4e39780e"
+  integrity sha512-/vy0dGnTgiojTGiV9QzmTy79HT4Xn2x1ee+rs8Geiav0w16Ayme2aRg5W71GcARB2ck/fYrxDZBIPlntVbwKuQ==
+
 urix@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/urix/-/urix-0.1.0.tgz#da937f7a62e21fec1fd18d49b35c2935067a6c72"

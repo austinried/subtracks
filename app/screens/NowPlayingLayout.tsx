@@ -1,7 +1,6 @@
-import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
-import React, { useEffect } from 'react'
-import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import React, { useCallback, useEffect } from 'react'
+import { BackHandler, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -28,14 +27,17 @@ import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import dimensions from '@app/styles/dimensions'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
+import { useFocusEffect } from '@react-navigation/native'
 
-const NowPlayingHeader = () => {
+// eslint-disable-next-line no-spaced-func
+const NowPlayingHeader = React.memo<{
+  backHandler: () => void
+}>(({ backHandler }) => {
   const queueName = useAtomValue(queueNameAtom)
-  const navigation = useNavigation()
 
   return (
     <View style={headerStyles.container}>
-      <PressableOpacity onPress={() => navigation.goBack()} style={headerStyles.icons} ripple={true}>
+      <PressableOpacity onPress={backHandler} style={headerStyles.icons} ripple={true}>
         <IconMat name="arrow-back" color="white" size={25} />
       </PressableOpacity>
       <Text numberOfLines={1} style={headerStyles.queueName}>
@@ -46,7 +48,7 @@ const NowPlayingHeader = () => {
       </PressableOpacity>
     </View>
   )
-}
+})
 
 const headerStyles = StyleSheet.create({
   container: {
@@ -302,24 +304,41 @@ const controlsStyles = StyleSheet.create({
 })
 
 type RootStackParamList = {
-  Main: undefined
-  NowPlaying: undefined
+  main: undefined
+  'now-playing': undefined
 }
-type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'NowPlaying'>
+type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'now-playing'>
 
 const NowPlayingLayout: React.FC<NowPlayingProps> = ({ navigation }) => {
   const track = useAtomValue(currentTrackAtom)
 
-  useEffect(() => {
-    if (!track && navigation.canGoBack()) {
+  const back = useCallback(() => {
+    if (navigation.canGoBack()) {
       navigation.popToTop()
+    } else {
+      navigation.navigate('main')
+    }
+    return true
+  }, [navigation])
+
+  useEffect(() => {
+    if (!track) {
+      back()
     }
   })
+
+  useFocusEffect(
+    useCallback(() => {
+      BackHandler.addEventListener('hardwareBackPress', back)
+
+      return () => BackHandler.removeEventListener('hardwareBackPress', back)
+    }, [back]),
+  )
 
   return (
     <View style={styles.container}>
       <ImageGradientBackground imageUri={track?.artwork as string} imageKey={`${track?.album}${track?.artist}`} />
-      <NowPlayingHeader />
+      <NowPlayingHeader backHandler={back} />
       <View style={styles.content}>
         <SongCoverArt />
         <SongInfo />

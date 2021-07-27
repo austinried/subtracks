@@ -64,7 +64,7 @@ const NowPlayingBar = () => {
 
   return (
     <Pressable
-      onPress={() => navigation.navigate('NowPlaying')}
+      onPress={() => navigation.navigate('now-playing')}
       style={{ ...styles.container, display: track ? 'flex' : 'none' }}>
       <ProgressBar />
       <View style={styles.subContainer}>

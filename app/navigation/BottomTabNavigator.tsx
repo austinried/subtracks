@@ -15,14 +15,14 @@ import { StyleSheet } from 'react-native'
 import { createNativeStackNavigator, NativeStackNavigationProp } from 'react-native-screens/native-stack'
 
 type TabStackParamList = {
-  TabMain: { toTop?: boolean }
-  AlbumView: { id: string; title: string }
-  ArtistView: { id: string; title: string }
-  PlaylistView: { id: string; title: string }
+  main: { toTop?: boolean }
+  album: { id: string; title: string }
+  artist: { id: string; title: string }
+  playlist: { id: string; title: string }
 }
 
-type AlbumScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'AlbumView'>
-type AlbumScreenRouteProp = RouteProp<TabStackParamList, 'AlbumView'>
+type AlbumScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'album'>
+type AlbumScreenRouteProp = RouteProp<TabStackParamList, 'album'>
 type AlbumScreenProps = {
   route: AlbumScreenRouteProp
   navigation: AlbumScreenNavigationProp
@@ -32,8 +32,8 @@ const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
   <AlbumView id={route.params.id} title={route.params.title} />
 )
 
-type ArtistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'ArtistView'>
-type ArtistScreenRouteProp = RouteProp<TabStackParamList, 'ArtistView'>
+type ArtistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'artist'>
+type ArtistScreenRouteProp = RouteProp<TabStackParamList, 'artist'>
 type ArtistScreenProps = {
   route: ArtistScreenRouteProp
   navigation: ArtistScreenNavigationProp
@@ -43,8 +43,8 @@ const ArtistScreen: React.FC<ArtistScreenProps> = ({ route }) => (
   <ArtistView id={route.params.id} title={route.params.title} />
 )
 
-type PlaylistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'PlaylistView'>
-type PlaylistScreenRouteProp = RouteProp<TabStackParamList, 'PlaylistView'>
+type PlaylistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'playlist'>
+type PlaylistScreenRouteProp = RouteProp<TabStackParamList, 'playlist'>
 type PlaylistScreenProps = {
   route: PlaylistScreenRouteProp
   navigation: PlaylistScreenNavigationProp
@@ -86,11 +86,11 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
     })
 
     return (
-      <Stack.Navigator>
-        <Stack.Screen name="TabMain" component={Component} options={{ headerShown: false }} />
-        <Stack.Screen name="AlbumView" component={AlbumScreen} options={itemScreenOptions} />
-        <Stack.Screen name="ArtistView" component={ArtistScreen} options={itemScreenOptions} />
-        <Stack.Screen name="PlaylistView" component={PlaylistScreen} options={itemScreenOptions} />
+      <Stack.Navigator initialRouteName="main">
+        <Stack.Screen name="main" component={Component} options={{ headerShown: false }} />
+        <Stack.Screen name="album" component={AlbumScreen} options={itemScreenOptions} />
+        <Stack.Screen name="artist" component={ArtistScreen} options={itemScreenOptions} />
+        <Stack.Screen name="playlist" component={PlaylistScreen} options={itemScreenOptions} />
       </Stack.Navigator>
     )
   }
@@ -106,11 +106,11 @@ const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = () => {
   return (
-    <Tab.Navigator tabBar={BottomTabBar}>
-      <Tab.Screen name="Home" component={HomeTab} options={{ icon: 'home' } as any} />
-      <Tab.Screen name="Library" component={LibraryTab} options={{ icon: 'library' } as any} />
-      <Tab.Screen name="Search" component={SearchTab} options={{ icon: 'search' } as any} />
-      <Tab.Screen name="Settings" component={SettingsView} options={{ icon: 'settings' } as any} />
+    <Tab.Navigator tabBar={BottomTabBar} initialRouteName="home">
+      <Tab.Screen name="home" component={HomeTab} options={{ icon: 'home' } as any} />
+      <Tab.Screen name="library" component={LibraryTab} options={{ icon: 'library' } as any} />
+      <Tab.Screen name="search" component={SearchTab} options={{ icon: 'search' } as any} />
+      <Tab.Screen name="settings" component={SettingsView} options={{ icon: 'settings' } as any} />
     </Tab.Navigator>
   )
 }

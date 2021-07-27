@@ -1,18 +1,40 @@
+import BottomTabNavigator from '@app/navigation/BottomTabNavigator'
+import NowPlayingLayout from '@app/screens/NowPlayingLayout'
+import colors from '@app/styles/colors'
+import { DarkTheme, NavigationContainer } from '@react-navigation/native'
 import React from 'react'
 import { createNativeStackNavigator } from 'react-native-screens/native-stack'
-import NowPlayingLayout from '@app/screens/NowPlayingLayout'
-import BottomTabNavigator from '@app/navigation/BottomTabNavigator'
 
 const RootStack = createNativeStackNavigator()
 
+const theme = { ...DarkTheme }
+theme.colors.background = colors.gradient.high
+
 const RootNavigator = () => (
-  <RootStack.Navigator
-    screenOptions={{
-      headerShown: false,
+  <NavigationContainer
+    theme={theme}
+    linking={{
+      prefixes: ['trackplayer'],
+      config: {
+        screens: {
+          main: {
+            path: ':/main',
+          },
+          'now-playing': {
+            path: ':/notification.click',
+          },
+        },
+      },
     }}>
-    <RootStack.Screen name="Main" component={BottomTabNavigator} />
-    <RootStack.Screen name="NowPlaying" component={NowPlayingLayout} />
-  </RootStack.Navigator>
+    <RootStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+      initialRouteName="main">
+      <RootStack.Screen name="main" component={BottomTabNavigator} />
+      <RootStack.Screen name="now-playing" component={NowPlayingLayout} />
+    </RootStack.Navigator>
+  </NavigationContainer>
 )
 
 export default RootNavigator

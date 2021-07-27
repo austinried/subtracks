@@ -16,10 +16,11 @@ const LibraryTopTabNavigator = () => (
       style: styles.tabBar,
       labelStyle: styles.tablabelStyle,
       indicatorStyle: styles.tabindicatorStyle,
-    }}>
-    <Tab.Screen name="Albums" component={AlbumsTab} />
-    <Tab.Screen name="Artists" component={ArtistsTab} />
-    <Tab.Screen name="Playlists" component={PlaylistsTab} />
+    }}
+    initialRouteName="albums">
+    <Tab.Screen name="albums" component={AlbumsTab} />
+    <Tab.Screen name="artists" component={ArtistsTab} />
+    <Tab.Screen name="playlists" component={PlaylistsTab} />
   </Tab.Navigator>
 )
 

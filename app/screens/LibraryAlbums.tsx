@@ -24,7 +24,7 @@ const AlbumItem = React.memo<{
   return (
     <PressableOpacity
       style={[styles.item, { maxWidth: size, height }]}
-      onPress={() => navigation.navigate('AlbumView', { id, title: name })}>
+      onPress={() => navigation.navigate('album', { id, title: name })}>
       <CoverArt coverArt={coverArt} style={{ height: size, width: size }} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
