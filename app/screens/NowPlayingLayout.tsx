@@ -225,15 +225,10 @@ const PlayerControls = () => {
       playPauseIcon = 'pause-circle'
       playPauseAction = pause
       break
-    case State.Paused:
+    default:
       disabled = false
       playPauseIcon = 'play-circle'
       playPauseAction = play
-      break
-    default:
-      disabled = true
-      playPauseIcon = 'play-circle'
-      playPauseAction = undefined
       break
   }
 
