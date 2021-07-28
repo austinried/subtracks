@@ -93,7 +93,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               label={label}
               name={route.name}
               isFocused={state.index === index}
-              img={icons[options.icon]}
+              img={icons[route.name]}
               navigation={navigation}
             />
           )

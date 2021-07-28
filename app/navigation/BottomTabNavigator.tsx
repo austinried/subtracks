@@ -107,10 +107,10 @@ const Tab = createBottomTabNavigator()
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator tabBar={BottomTabBar} initialRouteName="home">
-      <Tab.Screen name="home" component={HomeTab} options={{ icon: 'home' } as any} />
-      <Tab.Screen name="library" component={LibraryTab} options={{ icon: 'library' } as any} />
-      <Tab.Screen name="search" component={SearchTab} options={{ icon: 'search' } as any} />
-      <Tab.Screen name="settings" component={SettingsView} options={{ icon: 'settings' } as any} />
+      <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: 'Library' }} />
+      <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: 'Search' }} />
+      <Tab.Screen name="settings" component={SettingsView} options={{ tabBarLabel: 'Settings' }} />
     </Tab.Navigator>
   )
 }
