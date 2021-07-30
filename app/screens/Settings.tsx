@@ -4,10 +4,10 @@ import Header from '@app/components/Header'
 import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
 import { Server } from '@app/models/settings'
+import { useSetActiveServer } from '@app/state/server'
 import { activeServerAtom, appSettingsAtom } from '@app/state/settings'
 import colors from '@app/styles/colors'
 import { useNavigation } from '@react-navigation/core'
-import { useAtom } from 'jotai'
 import { useAtomValue } from 'jotai/utils'
 import React, { useCallback } from 'react'
 import { StatusBar, StyleSheet, View } from 'react-native'
@@ -16,15 +16,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 const ServerItem = React.memo<{
   server: Server
 }>(({ server }) => {
-  const [activeServer, setActiveServer] = useAtom(activeServerAtom)
+  const activeServer = useAtomValue(activeServerAtom)
+  const setActiveServer = useSetActiveServer()
   const navigation = useNavigation()
 
   const setActive = useCallback(() => {
-    if (activeServer?.id === server.id) {
-      return
-    }
     setActiveServer(server.id)
-  }, [activeServer?.id, server.id, setActiveServer])
+  }, [server.id, setActiveServer])
 
   return (
     <SettingsItem

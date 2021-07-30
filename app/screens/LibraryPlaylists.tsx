@@ -2,8 +2,9 @@ import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { PlaylistListItem } from '@app/models/music'
 import { playlistsAtom, playlistsUpdatingAtom, useUpdatePlaylists } from '@app/state/music'
+import { useActiveListRefresh } from '@app/state/server'
 import { useAtomValue } from 'jotai/utils'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { StyleSheet } from 'react-native'
 
 const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
@@ -15,11 +16,7 @@ const PlaylistsList = () => {
   const updating = useAtomValue(playlistsUpdatingAtom)
   const updatePlaylists = useUpdatePlaylists()
 
-  useEffect(() => {
-    if (playlists.length === 0) {
-      updatePlaylists()
-    }
-  })
+  useActiveListRefresh(playlists, updatePlaylists)
 
   return (
     <GradientFlatList

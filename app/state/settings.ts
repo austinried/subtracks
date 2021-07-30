@@ -1,8 +1,6 @@
 import { atom } from 'jotai'
 import { AppSettings, Server } from '@app/models/settings'
 import atomWithAsyncStorage from '@app/storage/atomWithAsyncStorage'
-import { useEffect } from 'react'
-import { useAtomValue } from 'jotai/utils'
 import equal from 'fast-deep-equal'
 
 export const appSettingsAtom = atomWithAsyncStorage<AppSettings>('@appSettings', {
@@ -44,16 +42,5 @@ export const serversAtom = atom<Server[], Server[]>(
     }
   },
 )
-
-export const useActiveServerRefresh = (update: () => any) => {
-  const activeServer = useAtomValue(activeServerAtom)
-
-  useEffect(() => {
-    if (activeServer) {
-      update()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeServer])
-}
 
 export const homeListTypesAtom = atom(get => get(appSettingsAtom).home.lists)

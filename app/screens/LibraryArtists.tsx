@@ -2,8 +2,9 @@ import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { Artist } from '@app/models/music'
 import { artistsAtom, artistsUpdatingAtom, useUpdateArtists } from '@app/state/music'
+import { useActiveListRefresh } from '@app/state/server'
 import { useAtomValue } from 'jotai/utils'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { StyleSheet } from 'react-native'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
@@ -15,11 +16,7 @@ const ArtistsList = () => {
   const updating = useAtomValue(artistsUpdatingAtom)
   const updateArtists = useUpdateArtists()
 
-  useEffect(() => {
-    if (artists.length === 0) {
-      updateArtists()
-    }
-  })
+  useActiveListRefresh(artists, updateArtists)
 
   return (
     <GradientFlatList

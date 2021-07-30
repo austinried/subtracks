@@ -43,10 +43,13 @@ export const useUpdateArtists = () => {
     setUpdating(true)
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getArtists()
 
-    setArtists(response.data.artists.map(mapArtistID3toArtist))
-    setUpdating(false)
+    try {
+      const response = await client.getArtists()
+      setArtists(response.data.artists.map(mapArtistID3toArtist))
+    } finally {
+      setUpdating(false)
+    }
   }
 }
 
@@ -83,17 +86,19 @@ export const useUpdateHomeLists = () => {
 
     const client = new SubsonicApiClient(server)
 
-    const promises: Promise<any>[] = []
-    for (const type of types) {
-      promises.push(
-        client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
-          updateHomeList({ type, albums: response.data.albums.map(mapAlbumID3toAlbumListItem) })
-        }),
-      )
+    try {
+      const promises: Promise<any>[] = []
+      for (const type of types) {
+        promises.push(
+          client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
+            updateHomeList({ type, albums: response.data.albums.map(mapAlbumID3toAlbumListItem) })
+          }),
+        )
+      }
+      await Promise.all(promises)
+    } finally {
+      setUpdating(false)
     }
-    await Promise.all(promises)
-
-    setUpdating(false)
   }
 }
 
@@ -120,14 +125,17 @@ export const useUpdateSearchResults = () => {
     setUpdating(true)
 
     const client = new SubsonicApiClient(server)
-    const response = await client.search3({ query })
 
-    updateList({
-      artists: response.data.artists.map(mapArtistID3toArtist),
-      albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
-      songs: response.data.songs.map(a => mapChildToSong(a, client)),
-    })
-    setUpdating(false)
+    try {
+      const response = await client.search3({ query })
+      updateList({
+        artists: response.data.artists.map(mapArtistID3toArtist),
+        albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
+        songs: response.data.songs.map(a => mapChildToSong(a, client)),
+      })
+    } finally {
+      setUpdating(false)
+    }
   }
 }
 
@@ -150,10 +158,13 @@ export const useUpdatePlaylists = () => {
     setUpdating(true)
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getPlaylists()
 
-    updateList(response.data.playlists.map(mapPlaylistListItem))
-    setUpdating(false)
+    try {
+      const response = await client.getPlaylists()
+      updateList(response.data.playlists.map(mapPlaylistListItem))
+    } finally {
+      setUpdating(false)
+    }
   }
 }
 
@@ -165,8 +176,13 @@ export const playlistAtomFamily = atomFamily((id: string) =>
     }
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getPlaylist({ id })
-    return mapPlaylistWithSongs(response.data.playlist, client)
+
+    try {
+      const response = await client.getPlaylist({ id })
+      return mapPlaylistWithSongs(response.data.playlist, client)
+    } catch {
+      return undefined
+    }
   }),
 )
 
@@ -189,10 +205,13 @@ export const useUpdateAlbumList = () => {
     setUpdating(true)
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 })
 
-    updateList(response.data.albums.map(mapAlbumID3toAlbumListItem))
-    setUpdating(false)
+    try {
+      const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size: 500 })
+      updateList(response.data.albums.map(mapAlbumID3toAlbumListItem))
+    } finally {
+      setUpdating(false)
+    }
   }
 }
 
@@ -204,8 +223,13 @@ export const albumAtomFamily = atomFamily((id: string) =>
     }
 
     const client = new SubsonicApiClient(server)
-    const response = await client.getAlbum({ id })
-    return mapAlbumID3WithSongstoAlbunWithSongs(response.data.album, response.data.songs, client)
+
+    try {
+      const response = await client.getAlbum({ id })
+      return mapAlbumID3WithSongstoAlbunWithSongs(response.data.album, response.data.songs, client)
+    } catch {
+      return undefined
+    }
   }),
 )
 
@@ -217,13 +241,17 @@ export const artistInfoAtomFamily = atomFamily((id: string) =>
     }
 
     const client = new SubsonicApiClient(server)
-    const [artistResponse, artistInfoResponse] = await Promise.all([
-      client.getArtist({ id }),
-      client.getArtistInfo2({ id }),
-    ])
-    const topSongsResponse = await client.getTopSongs({ artist: artistResponse.data.artist.name, count: 50 })
 
-    return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, topSongsResponse.data.songs, client)
+    try {
+      const [artistResponse, artistInfoResponse] = await Promise.all([
+        client.getArtist({ id }),
+        client.getArtistInfo2({ id }),
+      ])
+      const topSongsResponse = await client.getTopSongs({ artist: artistResponse.data.artist.name, count: 50 })
+      return mapArtistInfo(artistResponse.data, artistInfoResponse.data.artistInfo, topSongsResponse.data.songs, client)
+    } catch {
+      return undefined
+    }
   }),
 )
 

@@ -3,12 +3,12 @@ import GradientFlatList from '@app/components/GradientFlatList'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { Album } from '@app/models/music'
 import { albumListAtom, albumListUpdatingAtom, useUpdateAlbumList } from '@app/state/music'
-import { useActiveServerRefresh } from '@app/state/settings'
+import { useActiveListRefresh } from '@app/state/server'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import { useAtomValue } from 'jotai/utils'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
@@ -56,7 +56,7 @@ const AlbumsList = () => {
   const updating = useAtomValue(albumListUpdatingAtom)
   const updateList = useUpdateAlbumList()
 
-  useActiveServerRefresh(updateList)
+  useActiveListRefresh(list, updateList)
 
   const layout = useWindowDimensions()
 
@@ -64,12 +64,6 @@ const AlbumsList = () => {
   const height = size + 38
 
   const albumsList = list.map(album => ({ album, size, height }))
-
-  useEffect(() => {
-    if (albumsList.length === 0) {
-      updateList()
-    }
-  })
 
   return (
     <View style={styles.container}>
