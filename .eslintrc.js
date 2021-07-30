@@ -6,5 +6,6 @@ module.exports = {
     radix: 0,
     '@typescript-eslint/no-unused-vars': ['warn'],
     semi: 0,
+    'no-spaced-func': 0,
   },
 }

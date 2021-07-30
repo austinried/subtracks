@@ -29,7 +29,6 @@ import dimensions from '@app/styles/dimensions'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { useFocusEffect } from '@react-navigation/native'
 
-// eslint-disable-next-line no-spaced-func
 const NowPlayingHeader = React.memo<{
   backHandler: () => void
 }>(({ backHandler }) => {

@@ -23,7 +23,7 @@ const ListPlayerControls = React.memo<{
           {downloaded ? (
             <IconMat name="file-download-done" size={26} color={colors.text.primary} />
           ) : (
-            <IconMat name="file-download" size={26} color={colors.text.secondary} />
+            <IconMat name="file-download" size={26} color={colors.text.primary} />
           )}
         </Button>
       </View>

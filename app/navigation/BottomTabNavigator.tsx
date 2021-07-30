@@ -5,6 +5,7 @@ import ArtistView from '@app/screens/ArtistView'
 import Home from '@app/screens/Home'
 import PlaylistView from '@app/screens/PlaylistView'
 import Search from '@app/screens/Search'
+import ServerView from '@app/screens/ServerView'
 import SettingsView from '@app/screens/Settings'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -15,7 +16,7 @@ import { StyleSheet } from 'react-native'
 import { createNativeStackNavigator, NativeStackNavigationProp } from 'react-native-screens/native-stack'
 
 type TabStackParamList = {
-  main: { toTop?: boolean }
+  main: undefined
   album: { id: string; title: string }
   artist: { id: string; title: string }
   playlist: { id: string; title: string }
@@ -83,7 +84,8 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
       return navigation.addListener('tabPress', () => {
         navigation.dispatch(StackActions.popToTop())
       })
-    })
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
       <Stack.Navigator initialRouteName="main">
@@ -102,6 +104,41 @@ const HomeTab = createTabStackNavigator(Home)
 const LibraryTab = createTabStackNavigator(LibraryTopTabNavigator)
 const SearchTab = createTabStackNavigator(Search)
 
+type SettingsStackParamList = {
+  main: undefined
+  server?: { id?: string }
+}
+
+type ServerScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'server'>
+type ServerScreenRouteProp = RouteProp<SettingsStackParamList, 'server'>
+type ServerScreenProps = {
+  route: ServerScreenRouteProp
+  navigation: ServerScreenNavigationProp
+}
+
+const ServerScreen: React.FC<ServerScreenProps> = ({ route }) => <ServerView id={route.params?.id} />
+
+const SettingsStack = createNativeStackNavigator()
+
+const SettingsTab = () => {
+  return (
+    <SettingsStack.Navigator initialRouteName="main">
+      <SettingsStack.Screen name="main" component={SettingsView} options={{ headerShown: false }} />
+      <SettingsStack.Screen
+        name="server"
+        component={ServerScreen}
+        options={{
+          title: 'Edit Server',
+          headerStyle: styles.stackheaderStyle,
+          headerHideShadow: true,
+          headerTintColor: 'white',
+          headerTitleStyle: styles.stackheaderTitleStyle,
+        }}
+      />
+    </SettingsStack.Navigator>
+  )
+}
+
 const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = () => {
@@ -110,7 +147,7 @@ const BottomTabNavigator = () => {
       <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: 'Library' }} />
       <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: 'Search' }} />
-      <Tab.Screen name="settings" component={SettingsView} options={{ tabBarLabel: 'Settings' }} />
+      <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: 'Settings' }} />
     </Tab.Navigator>
   )
 }
