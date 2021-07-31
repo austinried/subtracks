@@ -1,11 +1,12 @@
 import { Song } from '@app/models/music'
-import atomWithAsyncStorage from '@app/storage/atomWithAsyncStorage'
 import PromiseQueue from '@app/util/PromiseQueue'
 import equal from 'fast-deep-equal'
 import { atom } from 'jotai'
 import { useAtomCallback, useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { atomWithStore } from 'jotai/zustand'
 import { useCallback, useEffect } from 'react'
 import TrackPlayer, { State, Track } from 'react-native-track-player'
+import create from 'zustand'
 import { useCoverArtUri } from './music'
 
 type TrackExt = Track & {
@@ -21,41 +22,41 @@ type Progress = {
   buffered: number
 }
 
-type QueueExt = {
+type QueueStore = {
   name?: string
+  setName: (name?: string) => void
   shuffleOrder?: number[]
+  setShuffleOrder: (shuffleOrder?: number[]) => void
+  shuffled: () => boolean
+  reset: () => void
 }
 
-const queueExtAtom = atomWithAsyncStorage<QueueExt>('@queue', {})
+const useStore = create<QueueStore>((set, get) => ({
+  name: undefined,
+  setName: (name?: string) => set({ name }),
+  shuffleOrder: undefined,
+  setShuffleOrder: (shuffleOrder?: number[]) => set({ shuffleOrder }),
+  shuffled: () => !!get().shuffleOrder,
+  reset: () => set({ name: undefined, shuffleOrder: undefined }),
+}))
 
-export const queueNameAtom = atom<string | undefined>(get => get(queueExtAtom).name)
-export const queueShuffledAtom = atom<boolean>(get => get(queueExtAtom).shuffleOrder !== undefined)
+const queueStoreAtom = atomWithStore(useStore)
+
+export const queueNameAtom = atom<string | undefined, string | undefined>(
+  get => get(queueStoreAtom).name,
+  (get, set, update) => {
+    get(queueStoreAtom).setName(update)
+  },
+)
 
 const queueShuffleOrderAtom = atom<number[] | undefined, number[] | undefined>(
-  get => get(queueExtAtom).shuffleOrder,
+  get => get(queueStoreAtom).shuffleOrder,
   (get, set, update) => {
-    const queueExt = get(queueExtAtom)
-    if (!equal(queueExt.shuffleOrder, update)) {
-      set(queueExtAtom, {
-        ...queueExt,
-        shuffleOrder: update,
-      })
-    }
+    get(queueStoreAtom).setShuffleOrder(update)
   },
 )
 
-const queueNameWriteAtom = atom<string | undefined, string | undefined>(
-  get => get(queueExtAtom).name,
-  (get, set, update) => {
-    const queueExt = get(queueExtAtom)
-    if (!equal(queueExt.name, update)) {
-      set(queueExtAtom, {
-        ...queueExt,
-        name: update,
-      })
-    }
-  },
-)
+export const queueShuffledAtom = atom<boolean>(get => get(queueStoreAtom).shuffled())
 
 const playerState = atom<State>(State.None)
 export const playerStateAtom = atom<State, State>(
@@ -223,14 +224,14 @@ export const useNext = () => {
 
 export const useReset = (enqueue = true) => {
   const setQueue = useUpdateAtom(queueAtom)
-  const setQueueExt = useUpdateAtom(queueExtAtom)
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
+  const resetQueueStore = useStore(state => state.reset)
 
   const reset = async () => {
     await TrackPlayer.reset()
     setQueue([])
-    setQueueExt({})
     setCurrentTrack(undefined)
+    resetQueueStore()
   }
 
   return enqueue ? () => trackPlayerCommands.enqueue(reset) : reset
@@ -314,7 +315,7 @@ export const useSetQueue = () => {
   const setCurrentTrack = useUpdateAtom(currentTrackAtom)
   const setQueue = useUpdateAtom(queueAtom)
   const setQueueShuffleOrder = useUpdateAtom(queueShuffleOrderAtom)
-  const setQueueName = useUpdateAtom(queueNameWriteAtom)
+  const setQueueName = useUpdateAtom(queueNameAtom)
   const reset = useReset(false)
   const getQueueShuffled = useAtomCallback(useCallback(get => get(queueShuffledAtom), []))
   const coverArtUri = useCoverArtUri()
