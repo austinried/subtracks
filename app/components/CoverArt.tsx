@@ -1,6 +1,5 @@
-import { artistInfoAtomFamily, useCoverArtUri } from '@app/state/music'
+import { useArtistInfo, useCoverArtUri } from '@app/hooks/music'
 import colors from '@app/styles/colors'
-import { useAtomValue } from 'jotai/utils'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, View, ViewStyle } from 'react-native'
 import FastImage, { ImageStyle } from 'react-native-fast-image'
@@ -32,9 +31,23 @@ type CoverArtImageProps = BaseImageProps & CoverArtProp
 
 type CoverArtProps = BaseProps & CoverArtProp & Partial<ArtistIdProp>
 
-const ArtistIdImageLoaded = React.memo<ArtistIdImageProps>(
+const ArtistImageFallback: React.FC<{
+  enableLoading: () => void
+}> = ({ enableLoading }) => {
+  useEffect(() => {
+    enableLoading()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return <></>
+}
+
+const ArtistImage = React.memo<ArtistIdImageProps>(
   ({ artistId, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading, fallbackError }) => {
-    const artistInfo = useAtomValue(artistInfoAtomFamily(artistId))
+    const artistInfo = useArtistInfo(artistId)
+
+    if (!artistInfo) {
+      return <ArtistImageFallback enableLoading={enableLoading} />
+    }
 
     const uri = imageSize === 'thumbnail' ? artistInfo?.smallImageUrl : artistInfo?.largeImageUrl
 
@@ -50,24 +63,6 @@ const ArtistIdImageLoaded = React.memo<ArtistIdImageProps>(
     )
   },
 )
-
-const ArtistIdImageFallback: React.FC<{
-  enableLoading: () => void
-}> = ({ enableLoading }) => {
-  useEffect(() => {
-    enableLoading()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  return <></>
-}
-
-const ArtistIdImage = React.memo<ArtistIdImageProps>(props => {
-  return (
-    <React.Suspense fallback={<ArtistIdImageFallback enableLoading={props.enableLoading} />}>
-      <ArtistIdImageLoaded {...props} />
-    </React.Suspense>
-  )
-})
 
 const CoverArtImage = React.memo<CoverArtImageProps>(
   ({ coverArt, imageSize, style, imageStyle, resizeMode, enableLoading, disableLoading, fallbackError }) => {
@@ -108,7 +103,7 @@ const CoverArt: React.FC<CoverArtProps> = ({ coverArt, artistId, resizeMode, ima
   let ImageComponent
   if (artistId) {
     ImageComponent = (
-      <ArtistIdImage
+      <ArtistImage
         artistId={artistId}
         imageSize={imageSize}
         style={style}

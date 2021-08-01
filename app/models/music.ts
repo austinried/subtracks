@@ -1,3 +1,14 @@
+import { SubsonicApiClient } from '@app/subsonic/api'
+import {
+  AlbumID3Element,
+  ArtistID3Element,
+  ArtistInfo2Element,
+  ChildElement,
+  PlaylistElement,
+  PlaylistWithSongsElement,
+} from '@app/subsonic/elements'
+import { GetArtistResponse } from '@app/subsonic/responses'
+
 export interface Artist {
   itemType: 'artist'
   id: string
@@ -97,4 +108,97 @@ export type DownloadedPlaylist = {
   type: 'playlist'
   songs: string[]
   name: string
+}
+
+export function mapArtistID3toArtist(artist: ArtistID3Element): Artist {
+  return {
+    itemType: 'artist',
+    id: artist.id,
+    name: artist.name,
+    starred: artist.starred,
+    coverArt: artist.coverArt,
+  }
+}
+
+export function mapArtistInfo(
+  artistResponse: GetArtistResponse,
+  info: ArtistInfo2Element,
+  topSongs: ChildElement[],
+  client: SubsonicApiClient,
+): ArtistInfo {
+  const { artist, albums } = artistResponse
+
+  const mappedAlbums = albums.map(mapAlbumID3toAlbum)
+
+  return {
+    ...mapArtistID3toArtist(artist),
+    albums: mappedAlbums,
+    smallImageUrl: info.smallImageUrl,
+    mediumImageUrl: info.mediumImageUrl,
+    largeImageUrl: info.largeImageUrl,
+    topSongs: topSongs.map(s => mapChildToSong(s, client)).slice(0, 5),
+  }
+}
+
+export function mapAlbumID3toAlbumListItem(album: AlbumID3Element): AlbumListItem {
+  return {
+    itemType: 'album',
+    id: album.id,
+    name: album.name,
+    artist: album.artist,
+    starred: album.starred,
+    coverArt: album.coverArt,
+  }
+}
+
+export function mapAlbumID3toAlbum(album: AlbumID3Element): Album {
+  return {
+    ...mapAlbumID3toAlbumListItem(album),
+    coverArt: album.coverArt,
+    year: album.year,
+  }
+}
+
+export function mapChildToSong(child: ChildElement, client: SubsonicApiClient): Song {
+  return {
+    itemType: 'song',
+    id: child.id,
+    album: child.album,
+    artist: child.artist,
+    title: child.title,
+    track: child.track,
+    duration: child.duration,
+    starred: child.starred,
+    coverArt: child.coverArt,
+    streamUri: client.streamUri({ id: child.id }),
+  }
+}
+
+export function mapAlbumID3WithSongstoAlbunWithSongs(
+  album: AlbumID3Element,
+  songs: ChildElement[],
+  client: SubsonicApiClient,
+): AlbumWithSongs {
+  return {
+    ...mapAlbumID3toAlbum(album),
+    songs: songs.map(s => mapChildToSong(s, client)),
+  }
+}
+
+export function mapPlaylistListItem(playlist: PlaylistElement): PlaylistListItem {
+  return {
+    itemType: 'playlist',
+    id: playlist.id,
+    name: playlist.name,
+    comment: playlist.comment,
+    coverArt: playlist.coverArt,
+  }
+}
+
+export function mapPlaylistWithSongs(playlist: PlaylistWithSongsElement, client: SubsonicApiClient): PlaylistWithSongs {
+  return {
+    ...mapPlaylistListItem(playlist),
+    songs: playlist.songs.map(s => mapChildToSong(s, client)),
+    coverArt: playlist.coverArt,
+  }
 }

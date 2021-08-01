@@ -303,7 +303,7 @@ type RootStackParamList = {
 }
 type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'now-playing'>
 
-const NowPlayingLayout: React.FC<NowPlayingProps> = ({ navigation }) => {
+const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
   const track = useAtomValue(currentTrackAtom)
 
   const back = useCallback(() => {
@@ -354,4 +354,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default NowPlayingLayout
+export default NowPlayingView

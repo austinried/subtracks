@@ -1,16 +1,15 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
-import PressableOpacity from '@app/components/PressableOpacity'
 import ListItem from '@app/components/ListItem'
-import { Album } from '@app/models/music'
-import { artistInfoAtomFamily } from '@app/state/music'
+import PressableOpacity from '@app/components/PressableOpacity'
+import { useArtistInfo } from '@app/hooks/music'
+import { Album, Song } from '@app/models/music'
 import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
-import { useAtomValue } from 'jotai/utils'
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
@@ -33,9 +32,30 @@ const AlbumItem = React.memo<{
   )
 })
 
-const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
-  const artist = useAtomValue(artistInfoAtomFamily(id))
+const TopSongs = React.memo<{
+  songs: Song[]
+  name: string
+}>(({ songs, name }) => {
   const setQueue = useSetQueue()
+
+  return (
+    <>
+      <Header>Top Songs</Header>
+      {songs.map((s, i) => (
+        <ListItem
+          key={i}
+          item={s}
+          showArt={true}
+          subtitle={s.album}
+          onPress={() => setQueue(songs, `Top Songs: ${name}`, i)}
+        />
+      ))}
+    </>
+  )
+})
+
+const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
+  const artist = useArtistInfo(id)
   const albumsLayout = useLayout()
   const coverLayout = useLayout()
 
@@ -44,21 +64,6 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   if (!artist) {
     return <></>
   }
-
-  const TopSongs = () => (
-    <>
-      <Header>Top Songs</Header>
-      {artist.topSongs.map((s, i) => (
-        <ListItem
-          key={i}
-          item={s}
-          showArt={true}
-          subtitle={s.album}
-          onPress={() => setQueue(artist.topSongs, `Top Songs: ${artist.name}`, i)}
-        />
-      ))}
-    </>
-  )
 
   return (
     <GradientScrollView
@@ -77,7 +82,7 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
         <Text style={styles.title}>{artist.name}</Text>
       </View>
       <View style={styles.container}>
-        {artist.topSongs.length > 0 ? <TopSongs /> : <></>}
+        {artist.topSongs.length > 0 ? <TopSongs songs={artist.topSongs} name={artist.name} /> : <></>}
         <Header>Albums</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {artist.albums.map(a => (
@@ -89,22 +94,18 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   )
 }
 
-const ArtistView: React.FC<{
+const ArtistView = React.memo<{
   id: string
   title: string
-}> = ({ id, title }) => {
+}>(({ id, title }) => {
   const navigation = useNavigation()
 
   useEffect(() => {
     navigation.setOptions({ title })
   })
 
-  return (
-    <React.Suspense fallback={<Text>Loading...</Text>}>
-      <ArtistDetails id={id} />
-    </React.Suspense>
-  )
-}
+  return <ArtistDetails id={id} />
+})
 
 const artistCoverHeight = 280
 
@@ -164,4 +165,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default React.memo(ArtistView)
+export default ArtistView

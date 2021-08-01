@@ -1,9 +1,8 @@
 import BottomTabBar from '@app/navigation/BottomTabBar'
 import LibraryTopTabNavigator from '@app/navigation/LibraryTopTabNavigator'
-import AlbumView from '@app/screens/AlbumView'
+import SongListView from '@app/screens/SongListView'
 import ArtistView from '@app/screens/ArtistView'
 import Home from '@app/screens/Home'
-import PlaylistView from '@app/screens/PlaylistView'
 import Search from '@app/screens/Search'
 import ServerView from '@app/screens/ServerView'
 import SettingsView from '@app/screens/Settings'
@@ -30,7 +29,7 @@ type AlbumScreenProps = {
 }
 
 const AlbumScreen: React.FC<AlbumScreenProps> = ({ route }) => (
-  <AlbumView id={route.params.id} title={route.params.title} />
+  <SongListView id={route.params.id} title={route.params.title} type="album" />
 )
 
 type ArtistScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'artist'>
@@ -52,7 +51,7 @@ type PlaylistScreenProps = {
 }
 
 const PlaylistScreen: React.FC<PlaylistScreenProps> = ({ route }) => (
-  <PlaylistView id={route.params.id} title={route.params.title} />
+  <SongListView id={route.params.id} title={route.params.title} type="playlist" />
 )
 
 const styles = StyleSheet.create({

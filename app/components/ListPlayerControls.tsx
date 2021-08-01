@@ -3,7 +3,7 @@ import { Song } from '@app/models/music'
 import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
-import { StyleSheet, View, ViewStyle } from 'react-native'
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 
@@ -11,7 +11,7 @@ const ListPlayerControls = React.memo<{
   songs: Song[]
   typeName: string
   queueName: string
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
 }>(({ songs, typeName, queueName, style }) => {
   const [downloaded, setDownloaded] = useState(false)
   const setQueue = useSetQueue()

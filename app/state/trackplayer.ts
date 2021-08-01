@@ -1,3 +1,4 @@
+import { useCoverArtUri } from '@app/hooks/music'
 import { Song } from '@app/models/music'
 import PromiseQueue from '@app/util/PromiseQueue'
 import equal from 'fast-deep-equal'
@@ -7,7 +8,6 @@ import { atomWithStore } from 'jotai/zustand'
 import { useCallback, useEffect } from 'react'
 import TrackPlayer, { State, Track } from 'react-native-track-player'
 import create from 'zustand'
-import { useCoverArtUri } from './music'
 
 type TrackExt = Track & {
   id: string

@@ -1,9 +1,10 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientFlatList from '@app/components/GradientFlatList'
 import PressableOpacity from '@app/components/PressableOpacity'
+import { useUpdateAlbumList } from '@app/hooks/music'
+import { useActiveListRefresh } from '@app/hooks/server'
 import { Album } from '@app/models/music'
-import { albumListAtom, albumListUpdatingAtom, useUpdateAlbumList } from '@app/state/music'
-import { useActiveListRefresh } from '@app/state/server'
+import { albumListAtom, albumListUpdatingAtom } from '@app/state/music'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -87,12 +88,6 @@ const AlbumsList = () => {
   )
 }
 
-const AlbumsTab = () => (
-  <React.Suspense fallback={<Text>Loading...</Text>}>
-    <AlbumsList />
-  </React.Suspense>
-)
-
 const styles = StyleSheet.create({
   listContent: {
     minHeight: '100%',
@@ -123,4 +118,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default React.memo(AlbumsTab)
+export default React.memo(AlbumsList)

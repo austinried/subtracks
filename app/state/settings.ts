@@ -1,46 +1,47 @@
-import { atom } from 'jotai'
 import { AppSettings, Server } from '@app/models/settings'
-import atomWithAsyncStorage from '@app/storage/atomWithAsyncStorage'
-import equal from 'fast-deep-equal'
+import { Store } from '@app/state/store'
+import produce from 'immer'
+import { GetState, SetState } from 'zustand'
 
-export const appSettingsAtom = atomWithAsyncStorage<AppSettings>('@appSettings', {
-  servers: [],
-  home: {
-    lists: ['recent', 'random', 'frequent', 'starred'],
+export type SettingsSlice = {
+  settings: AppSettings
+  setActiveServer: (id?: string) => void
+  setServers: (servers: Server[]) => void
+}
+
+export const createSettingsSlice = (set: SetState<Store>, _get: GetState<Store>): SettingsSlice => ({
+  settings: {
+    servers: [],
+    home: {
+      lists: ['recent', 'random', 'frequent', 'starred'],
+    },
   },
+  setActiveServer: id =>
+    set(
+      produce<Store>(state => {
+        if (!state.settings.servers.find(s => s.id === id)) {
+          console.log('could not find')
+          return
+        }
+        if (state.settings.activeServer === id) {
+          console.log('already active')
+          return
+        }
+        state.settings.activeServer = id
+      }),
+    ),
+  setServers: servers =>
+    set(
+      produce<Store>(state => {
+        state.settings.servers = servers
+      }),
+    ),
 })
 
-export const activeServerAtom = atom<Server | undefined, string>(
-  get => {
-    const appSettings = get(appSettingsAtom)
-    return appSettings.servers.find(x => x.id === appSettings.activeServer)
-  },
-  (get, set, update) => {
-    const appSettings = get(appSettingsAtom)
-    if (!appSettings.servers.find(s => s.id === update)) {
-      return
-    }
-    if (appSettings.activeServer === update) {
-      return
-    }
-    set(appSettingsAtom, {
-      ...appSettings,
-      activeServer: update,
-    })
-  },
-)
-
-export const serversAtom = atom<Server[], Server[]>(
-  get => get(appSettingsAtom).servers,
-  (get, set, update) => {
-    const settings = get(appSettingsAtom)
-    if (!equal(settings.servers, update)) {
-      set(appSettingsAtom, {
-        ...settings,
-        servers: update,
-      })
-    }
-  },
-)
-
-export const homeListTypesAtom = atom(get => get(appSettingsAtom).home.lists)
+export const selectSettings = {
+  activeServer: (state: Store) => state.settings.servers.find(s => s.id === state.settings.activeServer),
+  setActiveServer: (state: Store) => state.setActiveServer,
+  servers: (state: Store) => state.settings.servers,
+  setServers: (state: Store) => state.setServers,
+  homeLists: (state: Store) => state.settings.home.lists,
+}

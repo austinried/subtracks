@@ -3,10 +3,12 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
 import PressableOpacity from '@app/components/PressableOpacity'
+import { useUpdateHomeLists } from '@app/hooks/music'
+import { useActiveServerRefresh } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
-import { homeListsAtom, homeListsUpdatingAtom, useUpdateHomeLists } from '@app/state/music'
-import { useActiveServerRefresh } from '@app/state/server'
-import { homeListTypesAtom } from '@app/state/settings'
+import { homeListsAtom, homeListsUpdatingAtom } from '@app/state/music'
+import { selectSettings } from '@app/state/settings'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumListType } from '@app/subsonic/params'
@@ -75,7 +77,7 @@ const Category = React.memo<{
 })
 
 const Home = () => {
-  const types = useAtomValue(homeListTypesAtom)
+  const types = useStore(selectSettings.homeLists)
   const lists = useAtomValue(homeListsAtom)
   const updating = useAtomValue(homeListsUpdatingAtom)
   const update = useUpdateHomeLists()

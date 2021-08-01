@@ -3,12 +3,12 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
+import { useSwitchActiveServer } from '@app/hooks/server'
 import { Server } from '@app/models/settings'
-import { useSetActiveServer } from '@app/state/server'
-import { activeServerAtom, appSettingsAtom } from '@app/state/settings'
+import { selectSettings } from '@app/state/settings'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import { useNavigation } from '@react-navigation/core'
-import { useAtomValue } from 'jotai/utils'
 import React, { useCallback } from 'react'
 import { StatusBar, StyleSheet, View } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
@@ -16,13 +16,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 const ServerItem = React.memo<{
   server: Server
 }>(({ server }) => {
-  const activeServer = useAtomValue(activeServerAtom)
-  const setActiveServer = useSetActiveServer()
+  const activeServer = useStore(selectSettings.activeServer)
+  const switchActiveServer = useSwitchActiveServer()
   const navigation = useNavigation()
 
   const setActive = useCallback(() => {
-    setActiveServer(server.id)
-  }, [server.id, setActiveServer])
+    switchActiveServer(server.id)
+  }, [server.id, switchActiveServer])
 
   return (
     <SettingsItem
@@ -41,21 +41,26 @@ const ServerItem = React.memo<{
 })
 
 const SettingsContent = React.memo(() => {
-  const settings = useAtomValue(appSettingsAtom)
+  const servers = useStore(selectSettings.servers)
   const navigation = useNavigation()
 
   return (
     <View style={styles.content}>
       <Header>Servers</Header>
-      {settings.servers.map(s => (
+      {servers.map(s => (
         <ServerItem key={s.id} server={s} />
       ))}
-      <Button title="Add Server" onPress={() => navigation.navigate('server')} buttonStyle="hollow" />
-      <Header>Network</Header>
+      <Button
+        style={styles.button}
+        title="Add Server"
+        onPress={() => navigation.navigate('server')}
+        buttonStyle="hollow"
+      />
+      <Header style={styles.header}>Network</Header>
       <SettingsItem title="Max bitrate (Wi-Fi)" subtitle="Unlimited" />
       <SettingsItem title="Max bitrate (mobile)" subtitle="192kbps" />
-      <Header>Reset</Header>
-      <Button title="Reset everything to default" onPress={() => {}} buttonStyle="hollow" />
+      <Header style={styles.header}>Reset</Header>
+      <Button style={styles.button} title="Reset everything to default" onPress={() => {}} buttonStyle="hollow" />
     </View>
   )
 })
@@ -63,9 +68,7 @@ const SettingsContent = React.memo(() => {
 const Settings = () => {
   return (
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
-      <React.Suspense fallback={() => <></>}>
-        <SettingsContent />
-      </React.Suspense>
+      <SettingsContent />
     </GradientScrollView>
   )
 }
@@ -85,6 +88,12 @@ const styles = StyleSheet.create({
   },
   serverActive: {
     paddingLeft: 12,
+  },
+  header: {
+    marginTop: 26,
+  },
+  button: {
+    marginVertical: 10,
   },
 })
 

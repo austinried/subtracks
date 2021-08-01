@@ -2,11 +2,11 @@ import Button from '@app/components/Button'
 import GradientScrollView from '@app/components/GradientScrollView'
 import SettingsItem from '@app/components/SettingsItem'
 import { Server } from '@app/models/settings'
-import { activeServerAtom, serversAtom } from '@app/state/settings'
+import { selectSettings } from '@app/state/settings'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import { useAtom } from 'jotai'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, View } from 'react-native'
@@ -23,8 +23,10 @@ const ServerView: React.FC<{
   id?: string
 }> = ({ id }) => {
   const navigation = useNavigation()
-  const [activeServer, setActiveServer] = useAtom(activeServerAtom)
-  const [servers, setServers] = useAtom(serversAtom)
+  const activeServer = useStore(selectSettings.activeServer)
+  const setActiveServer = useStore(selectSettings.setActiveServer)
+  const servers = useStore(selectSettings.servers)
+  const setServers = useStore(selectSettings.setServers)
   const server = id ? servers.find(s => s.id === id) : undefined
 
   const [address, setAddress] = useState(server?.address || '')

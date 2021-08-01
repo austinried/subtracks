@@ -1,5 +1,5 @@
 import BottomTabNavigator from '@app/navigation/BottomTabNavigator'
-import NowPlayingLayout from '@app/screens/NowPlayingLayout'
+import NowPlayingView from '@app/screens/NowPlayingView'
 import colors from '@app/styles/colors'
 import { DarkTheme, NavigationContainer } from '@react-navigation/native'
 import React from 'react'
@@ -32,7 +32,7 @@ const RootNavigator = () => (
       }}
       initialRouteName="main">
       <RootStack.Screen name="main" component={BottomTabNavigator} />
-      <RootStack.Screen name="now-playing" component={NowPlayingLayout} />
+      <RootStack.Screen name="now-playing" component={NowPlayingView} />
     </RootStack.Navigator>
   </NavigationContainer>
 )

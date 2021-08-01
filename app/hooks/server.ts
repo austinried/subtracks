@@ -1,12 +1,13 @@
-import { useAtom } from 'jotai'
-import { useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { albumListAtom, artistsAtom, homeListsAtom, playlistsAtom, searchResultsAtom } from '@app/state/music'
+import { selectSettings } from '@app/state/settings'
+import { useStore } from '@app/state/store'
+import { useReset } from '@app/state/trackplayer'
+import { useUpdateAtom } from 'jotai/utils'
 import { useEffect } from 'react'
-import { albumListAtom, artistsAtom, homeListsAtom, playlistsAtom, searchResultsAtom } from './music'
-import { activeServerAtom } from './settings'
-import { useReset } from './trackplayer'
 
-export const useSetActiveServer = () => {
-  const [activeServer, setActiveServer] = useAtom(activeServerAtom)
+export const useSwitchActiveServer = () => {
+  const activeServer = useStore(selectSettings.activeServer)
+  const setActiveServer = useStore(selectSettings.setActiveServer)
   const setArtists = useUpdateAtom(artistsAtom)
   const setHomeLists = useUpdateAtom(homeListsAtom)
   const setSearchResults = useUpdateAtom(searchResultsAtom)
@@ -32,7 +33,7 @@ export const useSetActiveServer = () => {
 }
 
 export const useActiveListRefresh = (list: unknown[], update: () => void) => {
-  const activeServer = useAtomValue(activeServerAtom)
+  const activeServer = useStore(selectSettings.activeServer)
 
   useEffect(() => {
     if (list.length === 0) {
@@ -43,7 +44,7 @@ export const useActiveListRefresh = (list: unknown[], update: () => void) => {
 }
 
 export const useActiveServerRefresh = (update: () => void) => {
-  const activeServer = useAtomValue(activeServerAtom)
+  const activeServer = useStore(selectSettings.activeServer)
 
   useEffect(() => {
     if (activeServer) {
