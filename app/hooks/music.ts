@@ -31,36 +31,33 @@ const selectors = {
 }
 
 export const useArtistInfo = (id: string) => {
-  const server = useStore(selectSettings.activeServer)
   const artistInfo = useStore(useCallback((state: Store) => state.artistInfo[id], [id]))
   const fetchArtistInfo = useStore(selectors.fetchArtistInfo)
 
-  if (server && !artistInfo) {
-    fetchArtistInfo(server, id)
+  if (!artistInfo) {
+    fetchArtistInfo(id)
   }
 
   return artistInfo
 }
 
 export const useAlbumWithSongs = (id: string) => {
-  const server = useStore(selectSettings.activeServer)
   const album = useStore(useCallback((state: Store) => state.albums[id], [id]))
   const fetchAlbum = useStore(selectors.fetchAlbum)
 
-  if (server && !album) {
-    fetchAlbum(server, id)
+  if (!album) {
+    fetchAlbum(id)
   }
 
   return album
 }
 
 export const usePlaylistWithSongs = (id: string) => {
-  const server = useStore(selectSettings.activeServer)
   const playlist = useStore(useCallback((state: Store) => state.playlists[id], [id]))
   const fetchPlaylist = useStore(selectors.fetchPlaylist)
 
-  if (server && !playlist) {
-    fetchPlaylist(server, id)
+  if (!playlist) {
+    fetchPlaylist(id)
   }
 
   return playlist

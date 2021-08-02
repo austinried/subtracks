@@ -34,9 +34,11 @@ export const useStore = create<Store>(
       name: '@appStore',
       getStorage: () => storage,
       whitelist: ['settings'],
-      // onRehydrateStorage: state => {
-      //   return (state, error) => {}
-      // },
+      onRehydrateStorage: _preState => {
+        return (postState, _error) => {
+          postState?.createClient()
+        }
+      },
     },
   ),
 )

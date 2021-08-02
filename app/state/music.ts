@@ -10,9 +10,7 @@ import {
   PlaylistWithSongs,
   SearchResults,
 } from '@app/models/music'
-import { Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
-import { SubsonicApiClient } from '@app/subsonic/api'
 import produce from 'immer'
 import { atom } from 'jotai'
 import { GetState, SetState } from 'zustand'
@@ -25,12 +23,12 @@ export type MusicSlice = {
   albumsCache: string[]
   playlists: { [id: string]: PlaylistWithSongs | undefined }
   playlistsCache: string[]
-  fetchArtistInfo: (server: Server, id: string) => Promise<ArtistInfo | undefined>
-  fetchAlbum: (server: Server, id: string) => Promise<AlbumWithSongs | undefined>
-  fetchPlaylist: (server: Server, id: string) => Promise<PlaylistWithSongs | undefined>
+  fetchArtistInfo: (id: string) => Promise<ArtistInfo | undefined>
+  fetchAlbum: (id: string) => Promise<AlbumWithSongs | undefined>
+  fetchPlaylist: (id: string) => Promise<PlaylistWithSongs | undefined>
 }
 
-export const createMusicSlice = (set: SetState<Store>, _get: GetState<Store>): MusicSlice => ({
+export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): MusicSlice => ({
   cacheSize: 100,
   artistInfo: {},
   artistInfoCache: [],
@@ -38,8 +36,11 @@ export const createMusicSlice = (set: SetState<Store>, _get: GetState<Store>): M
   albumsCache: [],
   playlists: {},
   playlistsCache: [],
-  fetchArtistInfo: async (server, id) => {
-    const client = new SubsonicApiClient(server)
+  fetchArtistInfo: async id => {
+    const client = get().client
+    if (!client) {
+      return undefined
+    }
 
     try {
       const [artistResponse, artistInfoResponse] = await Promise.all([
@@ -68,8 +69,11 @@ export const createMusicSlice = (set: SetState<Store>, _get: GetState<Store>): M
       return undefined
     }
   },
-  fetchAlbum: async (server, id) => {
-    const client = new SubsonicApiClient(server)
+  fetchAlbum: async id => {
+    const client = get().client
+    if (!client) {
+      return undefined
+    }
 
     try {
       const response = await client.getAlbum({ id })
@@ -89,8 +93,11 @@ export const createMusicSlice = (set: SetState<Store>, _get: GetState<Store>): M
       return undefined
     }
   },
-  fetchPlaylist: async (server, id) => {
-    const client = new SubsonicApiClient(server)
+  fetchPlaylist: async id => {
+    const client = get().client
+    if (!client) {
+      return undefined
+    }
 
     try {
       const response = await client.getPlaylist({ id })

@@ -1,35 +1,55 @@
 import { AppSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
+import { SubsonicApiClient } from '@app/subsonic/api'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
 export type SettingsSlice = {
   settings: AppSettings
+  client?: SubsonicApiClient
+  createClient: () => void
   setActiveServer: (id?: string) => void
   setServers: (servers: Server[]) => void
 }
 
-export const createSettingsSlice = (set: SetState<Store>, _get: GetState<Store>): SettingsSlice => ({
+export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
   settings: {
     servers: [],
     home: {
       lists: ['recent', 'random', 'frequent', 'starred'],
     },
   },
-  setActiveServer: id =>
+  createClient: () => {
+    const server = get().settings.servers.find(s => s.id === get().settings.activeServer)
+    if (!server) {
+      return
+    }
+
     set(
       produce<Store>(state => {
-        if (!state.settings.servers.find(s => s.id === id)) {
-          console.log('could not find')
-          return
-        }
-        if (state.settings.activeServer === id) {
-          console.log('already active')
-          return
-        }
+        state.client = new SubsonicApiClient(server)
+      }),
+    )
+  },
+  setActiveServer: id => {
+    const servers = get().settings.servers
+    const currentActiveServerId = get().settings.activeServer
+
+    if (!servers.find(s => s.id === id)) {
+      return
+    }
+    if (currentActiveServerId === id) {
+      return
+    }
+
+    set(
+      produce<Store>(state => {
         state.settings.activeServer = id
       }),
-    ),
+    )
+
+    get().createClient()
+  },
   setServers: servers =>
     set(
       produce<Store>(state => {
