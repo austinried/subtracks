@@ -143,6 +143,41 @@ const Debug = () => {
   return <></>
 }
 
+// const DebugEvents = () => {
+//   const update = (payload?: Payload) => {
+//     console.log(`${payload?.type}: ${JSON.stringify(payload)}`)
+//   }
+
+//   return (
+//     <TrackPlayerEventResponder
+//       events={[
+//         Event.PlaybackError,
+//         Event.PlaybackMetadataReceived,
+//         Event.PlaybackQueueEnded,
+//         Event.PlaybackState,
+//         Event.PlaybackTrackChanged,
+//         Event.RemoteBookmark,
+//         Event.RemoteDislike,
+//         Event.RemoteDuck,
+//         Event.RemoteJumpBackward,
+//         Event.RemoteJumpForward,
+//         Event.RemoteLike,
+//         Event.RemoteNext,
+//         Event.RemotePause,
+//         Event.RemotePlay,
+//         Event.RemotePlayId,
+//         Event.RemotePlaySearch,
+//         Event.RemotePrevious,
+//         Event.RemoteSeek,
+//         Event.RemoteSetRating,
+//         Event.RemoteSkip,
+//         Event.RemoteStop,
+//       ]}
+//       update={update}
+//     />
+//   )
+// }
+
 const TrackPlayerState = () => (
   <View>
     <CurrentTrackState />
@@ -150,6 +185,7 @@ const TrackPlayerState = () => (
     <QueueState />
     <ProgressState />
     <Debug />
+    {/* <DebugEvents /> */}
   </View>
 )
 
