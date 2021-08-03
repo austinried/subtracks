@@ -1,14 +1,13 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientFlatList from '@app/components/GradientFlatList'
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useUpdateAlbumList } from '@app/hooks/music'
-import { useActiveListRefresh } from '@app/hooks/server'
+import { useActiveListRefresh2 } from '@app/hooks/server'
 import { Album } from '@app/models/music'
-import { albumListAtom, albumListUpdatingAtom } from '@app/state/music'
+import { selectMusic } from '@app/state/music'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import { useAtomValue } from 'jotai/utils'
 import React from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
@@ -53,11 +52,11 @@ const AlbumListRenderItem: React.FC<{
 )
 
 const AlbumsList = () => {
-  const list = useAtomValue(albumListAtom)
-  const updating = useAtomValue(albumListUpdatingAtom)
-  const updateList = useUpdateAlbumList()
+  const list = useStore(selectMusic.albums)
+  const updating = useStore(selectMusic.albumsUpdating)
+  const updateList = useStore(selectMusic.fetchAlbums)
 
-  useActiveListRefresh(list, updateList)
+  useActiveListRefresh2(updateList)
 
   const layout = useWindowDimensions()
 

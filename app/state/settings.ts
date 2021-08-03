@@ -7,7 +7,7 @@ import { GetState, SetState } from 'zustand'
 export type SettingsSlice = {
   settings: AppSettings
   client?: SubsonicApiClient
-  createClient: () => void
+  createClient: (id?: string) => void
   setActiveServer: (id?: string) => void
   setServers: (servers: Server[]) => void
 }
@@ -19,23 +19,26 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       lists: ['recent', 'random', 'frequent', 'starred'],
     },
   },
-  createClient: () => {
-    const server = get().settings.servers.find(s => s.id === get().settings.activeServer)
-    if (!server) {
+  createClient: (id?: string) => {
+    if (!id) {
+      set({ client: undefined })
       return
     }
 
-    set(
-      produce<Store>(state => {
-        state.client = new SubsonicApiClient(server)
-      }),
-    )
+    const server = get().settings.servers.find(s => s.id === id)
+    if (!server) {
+      set({ client: undefined })
+      return
+    }
+
+    set({ client: new SubsonicApiClient(server) })
   },
   setActiveServer: id => {
     const servers = get().settings.servers
     const currentActiveServerId = get().settings.activeServer
+    const newActiveServer = servers.find(s => s.id === id)
 
-    if (!servers.find(s => s.id === id)) {
+    if (!newActiveServer) {
       return
     }
     if (currentActiveServerId === id) {
@@ -43,25 +46,24 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     }
 
     set(
-      produce<Store>(state => {
+      produce<SettingsSlice>(state => {
         state.settings.activeServer = id
+        state.client = new SubsonicApiClient(newActiveServer)
       }),
     )
-
-    get().createClient()
   },
   setServers: servers =>
     set(
-      produce<Store>(state => {
+      produce<SettingsSlice>(state => {
         state.settings.servers = servers
       }),
     ),
 })
 
 export const selectSettings = {
-  activeServer: (state: Store) => state.settings.servers.find(s => s.id === state.settings.activeServer),
-  setActiveServer: (state: Store) => state.setActiveServer,
-  servers: (state: Store) => state.settings.servers,
-  setServers: (state: Store) => state.setServers,
-  homeLists: (state: Store) => state.settings.home.lists,
+  activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
+  setActiveServer: (state: SettingsSlice) => state.setActiveServer,
+  servers: (state: SettingsSlice) => state.settings.servers,
+  setServers: (state: SettingsSlice) => state.setServers,
+  homeLists: (state: SettingsSlice) => state.settings.home.lists,
 }

@@ -36,7 +36,7 @@ export const useStore = create<Store>(
       whitelist: ['settings'],
       onRehydrateStorage: _preState => {
         return (postState, _error) => {
-          postState?.createClient()
+          postState?.createClient(postState.settings.activeServer)
         }
       },
     },

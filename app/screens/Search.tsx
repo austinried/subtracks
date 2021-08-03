@@ -2,13 +2,13 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
-import { useUpdateSearchResults } from '@app/hooks/music'
+import { useActiveListRefresh2 } from '@app/hooks/server'
 import { ListableItem, SearchResults, Song } from '@app/models/music'
-import { searchResultsAtom, searchResultsUpdatingAtom } from '@app/state/music'
+import { selectMusic } from '@app/state/music'
+import { useStore } from '@app/state/store'
 import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { useAtomValue } from 'jotai/utils'
 import debounce from 'lodash.debounce'
 import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react-native'
@@ -61,10 +61,19 @@ const Results = React.memo<{
 })
 
 const Search = () => {
+  const updateSearch = useStore(selectMusic.fetchSearchResults)
+  const clearSearch = useStore(selectMusic.clearSearchResults)
+  const updating = useStore(selectMusic.searchResultsUpdating)
+  const results = useStore(selectMusic.searchResults)
+
+  useActiveListRefresh2(
+    useCallback(() => {
+      setText('')
+      clearSearch()
+    }, [clearSearch]),
+  )
+
   const [text, setText] = useState('')
-  const updateSearch = useUpdateSearchResults()
-  const updating = useAtomValue(searchResultsUpdatingAtom)
-  const results = useAtomValue(searchResultsAtom)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedonUpdateSearch = useMemo(() => debounce(updateSearch, 400), [])

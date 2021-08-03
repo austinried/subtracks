@@ -80,6 +80,8 @@ export interface Song {
 
 export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 
+export type HomeLists = { [key: string]: AlbumListItem[] }
+
 export type DownloadedSong = {
   id: string
   type: 'song'

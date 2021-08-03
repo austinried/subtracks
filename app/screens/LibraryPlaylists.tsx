@@ -1,10 +1,9 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useUpdatePlaylists } from '@app/hooks/music'
-import { useActiveListRefresh } from '@app/hooks/server'
+import { useActiveListRefresh2 } from '@app/hooks/server'
 import { PlaylistListItem } from '@app/models/music'
-import { playlistsAtom, playlistsUpdatingAtom } from '@app/state/music'
-import { useAtomValue } from 'jotai/utils'
+import { selectMusic } from '@app/state/music'
+import { useStore } from '@app/state/store'
 import React from 'react'
 import { StyleSheet } from 'react-native'
 
@@ -13,11 +12,11 @@ const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
 )
 
 const PlaylistsList = () => {
-  const playlists = useAtomValue(playlistsAtom)
-  const updating = useAtomValue(playlistsUpdatingAtom)
-  const updatePlaylists = useUpdatePlaylists()
+  const playlists = useStore(selectMusic.playlists)
+  const updating = useStore(selectMusic.playlistsUpdating)
+  const updatePlaylists = useStore(selectMusic.fetchPlaylists)
 
-  useActiveListRefresh(playlists, updatePlaylists)
+  useActiveListRefresh2(updatePlaylists)
 
   return (
     <GradientFlatList

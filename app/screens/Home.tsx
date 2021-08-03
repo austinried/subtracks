@@ -3,18 +3,16 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useUpdateHomeLists } from '@app/hooks/music'
-import { useActiveServerRefresh } from '@app/hooks/server'
+import { useActiveListRefresh2 } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
-import { homeListsAtom, homeListsUpdatingAtom } from '@app/state/music'
+import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import { useAtomValue } from 'jotai/utils'
-import React from 'react'
+import React, { useCallback } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
 
 const titles: { [key in GetAlbumListType]?: string } = {
@@ -78,11 +76,17 @@ const Category = React.memo<{
 
 const Home = () => {
   const types = useStore(selectSettings.homeLists)
-  const lists = useAtomValue(homeListsAtom)
-  const updating = useAtomValue(homeListsUpdatingAtom)
-  const update = useUpdateHomeLists()
+  const lists = useStore(selectMusic.homeLists)
+  const updating = useStore(selectMusic.homeListsUpdating)
+  const update = useStore(selectMusic.fetchHomeLists)
+  const clear = useStore(selectMusic.clearHomeLists)
 
-  useActiveServerRefresh(update)
+  useActiveListRefresh2(
+    useCallback(() => {
+      clear()
+      update()
+    }, [clear, update]),
+  )
 
   return (
     <GradientScrollView
