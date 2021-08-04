@@ -33,13 +33,9 @@ const Songs = React.memo<{
 
   if (type === 'album') {
     typeName = 'Album'
-    _songs.sort((a, b) => {
-      if (b.track && a.track) {
-        return a.track - b.track
-      } else {
-        return a.title.localeCompare(b.title)
-      }
-    })
+    _songs
+      .sort((a, b) => a.title.localeCompare(b.title)) //
+      .sort((a, b) => (a.track || 0) - (b.track || 0))
   } else {
     typeName = 'Playlist'
   }
@@ -150,8 +146,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cover: {
-    height: 220,
-    width: 220,
+    height: 240,
+    width: 240,
   },
   songs: {
     marginTop: 26,

@@ -25,7 +25,7 @@ const AlbumItem = React.memo<{
     <PressableOpacity
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
       style={[styles.albumItem, { width }]}>
-      <CoverArt coverArt={album.coverArt} style={{ height, width }} />
+      <CoverArt coverArt={album.coverArt} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </PressableOpacity>
@@ -65,6 +65,10 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
     return <></>
   }
 
+  const _albums = [...artist.albums]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => (b.year || 0) - (a.year || 0))
+
   return (
     <GradientScrollView
       onLayout={coverLayout.onLayout}
@@ -85,7 +89,7 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
         {artist.topSongs.length > 0 ? <TopSongs songs={artist.topSongs} name={artist.name} /> : <></>}
         <Header>Albums</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
-          {artist.albums.map(a => (
+          {_albums.map(a => (
             <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
           ))}
         </View>

@@ -6,6 +6,7 @@ import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React, { useState } from 'react'
 import { GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
@@ -83,7 +84,15 @@ const ListItem: React.FC<{
   return (
     <View style={[styles.container, sizeStyle.container]}>
       <PressableOpacity onPress={onPress} style={styles.item}>
-        {showArt ? <CoverArt {...artSource} style={{ ...styles.art, ...sizeStyle.art }} resizeMode="cover" /> : <></>}
+        {showArt ? (
+          <CoverArt
+            {...artSource}
+            style={{ ...styles.art, ...sizeStyle.art }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        ) : (
+          <></>
+        )}
         <View style={styles.text}>
           {item.itemType === 'song' ? (
             <TitleTextSong id={item.id} title={item.title} />

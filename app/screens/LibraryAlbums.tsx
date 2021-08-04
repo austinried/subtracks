@@ -10,6 +10,7 @@ import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
 
 const AlbumItem = React.memo<{
   id: string
@@ -25,7 +26,7 @@ const AlbumItem = React.memo<{
     <PressableOpacity
       style={[styles.item, { maxWidth: size, height }]}
       onPress={() => navigation.navigate('album', { id, title: name })}>
-      <CoverArt coverArt={coverArt} style={{ height: size, width: size }} />
+      <CoverArt coverArt={coverArt} style={{ height: size, width: size }} resizeMode={FastImage.resizeMode.cover} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {name}
@@ -61,7 +62,7 @@ const AlbumsList = () => {
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.item.marginHorizontal * 2
-  const height = size + 38
+  const height = size + 36
 
   const albumsList = list.map(album => ({ album, size, height }))
 
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
   item: {
     alignItems: 'center',
     marginVertical: 4,
-    marginHorizontal: 2,
+    marginHorizontal: 3,
     flex: 1 / 3,
   },
   itemDetails: {
