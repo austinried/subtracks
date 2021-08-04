@@ -4,6 +4,7 @@ export interface Server {
   username: string
   token: string
   salt: string
+  scrobble: boolean
 }
 
 export interface AppSettings {

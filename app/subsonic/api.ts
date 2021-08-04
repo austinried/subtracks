@@ -13,6 +13,7 @@ import {
   GetPlaylistParams,
   GetPlaylistsParams,
   GetTopSongsParams,
+  ScrobbleParams,
   Search3Params,
   StreamParams,
 } from '@app/subsonic/params'
@@ -221,6 +222,15 @@ export class SubsonicApiClient {
 
   streamUri(params: StreamParams): string {
     return this.buildUrl('stream', params)
+  }
+
+  //
+  // Media annotation
+  //
+
+  async scrobble(params: ScrobbleParams): Promise<SubsonicResponse<undefined>> {
+    const xml = await this.apiGetXml('scrobble', params)
+    return new SubsonicResponse<undefined>(xml, undefined)
   }
 
   //

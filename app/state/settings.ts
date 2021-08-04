@@ -9,6 +9,7 @@ export type SettingsSlice = {
   client?: SubsonicApiClient
   createClient: (id?: string) => void
   setActiveServer: (id?: string) => void
+  getActiveServer: () => Server | undefined
   setServers: (servers: Server[]) => void
 }
 
@@ -25,7 +26,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    const server = get().settings.servers.find(s => s.id === id)
+    const server = get().getActiveServer()
     if (!server) {
       set({ client: undefined })
       return
@@ -52,10 +53,15 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       }),
     )
   },
+  getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
   setServers: servers =>
     set(
       produce<SettingsSlice>(state => {
         state.settings.servers = servers
+        const activeServer = servers.find(s => s.id === state.settings.activeServer)
+        if (activeServer) {
+          state.client = new SubsonicApiClient(activeServer)
+        }
       }),
     ),
 })

@@ -101,6 +101,16 @@ export type StreamParams = {
 }
 
 //
+// Media annotation
+//
+
+export type ScrobbleParams = {
+  id: string
+  time?: Date
+  submission?: boolean
+}
+
+//
 // Searching
 //
 

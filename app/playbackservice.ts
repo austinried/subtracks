@@ -1,8 +1,36 @@
-import { getCurrentTrack, getPlayerState, trackPlayerCommands } from '@app/state/trackplayer'
-import TrackPlayer, { Event } from 'react-native-track-player'
+import { getCurrentTrack, getPlayerState, TrackExt, trackPlayerCommands } from '@app/state/trackplayer'
+import TrackPlayer, { Event, State } from 'react-native-track-player'
 import { useStore } from './state/store'
+import { unstable_batchedUpdates } from 'react-native'
+
+const reset = () => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().reset()
+  })
+}
+
+const setPlayerState = (state: State) => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().setPlayerState(state)
+  })
+}
+
+const setCurrentTrackIdx = (idx?: number) => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().setCurrentTrackIdx(idx)
+  })
+}
 
 module.exports = async function () {
+  const unsubCurrentTrack = useStore.subscribe(
+    (currentTrack?: TrackExt) => {
+      if (currentTrack) {
+        useStore.getState().scrobbleTrack(currentTrack.id)
+      }
+    },
+    state => state.currentTrack,
+  )
+
   TrackPlayer.addEventListener(Event.RemotePlay, () => trackPlayerCommands.enqueue(TrackPlayer.play))
   TrackPlayer.addEventListener(Event.RemotePause, () => trackPlayerCommands.enqueue(TrackPlayer.pause))
 
@@ -27,30 +55,31 @@ module.exports = async function () {
   })
 
   TrackPlayer.addEventListener(Event.RemoteStop, () => {
-    useStore.getState().reset()
+    unsubCurrentTrack()
+    reset()
     trackPlayerCommands.enqueue(TrackPlayer.destroy)
   })
 
   TrackPlayer.addEventListener(Event.PlaybackState, () => {
     trackPlayerCommands.enqueue(async () => {
-      useStore.getState().setPlayerState(await getPlayerState())
+      setPlayerState(await getPlayerState())
     })
   })
 
   TrackPlayer.addEventListener(Event.PlaybackTrackChanged, () => {
     useStore.getState().setProgress({ position: 0, duration: 0, buffered: 0 })
     trackPlayerCommands.enqueue(async () => {
-      useStore.getState().setCurrentTrackIdx(await getCurrentTrack())
+      setCurrentTrackIdx(await getCurrentTrack())
     })
   })
 
   TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
     trackPlayerCommands.enqueue(async () => {
-      useStore.getState().setCurrentTrackIdx(await getCurrentTrack())
+      setCurrentTrackIdx(await getCurrentTrack())
     })
   })
 
   TrackPlayer.addEventListener(Event.PlaybackMetadataReceived, () => {
-    useStore.getState().setCurrentTrackIdx(useStore.getState().currentTrackIdx)
+    setCurrentTrackIdx(useStore.getState().currentTrackIdx)
   })
 }

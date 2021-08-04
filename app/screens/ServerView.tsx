@@ -32,6 +32,7 @@ const ServerView: React.FC<{
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
   const [password, setPassword] = useState(server?.token ? 'password' : '')
+  const [scrobble, setScrobble] = useState(server?.scrobble || false)
 
   const validate = useCallback(() => {
     return !!address && !!username && !!password
@@ -49,7 +50,7 @@ const ServerView: React.FC<{
     }
   }, [navigation])
 
-  const save = () => {
+  const save = useCallback(() => {
     if (!validate()) {
       return
     }
@@ -68,6 +69,7 @@ const ServerView: React.FC<{
       username,
       salt,
       token,
+      scrobble,
     }
 
     if (server) {
@@ -87,7 +89,20 @@ const ServerView: React.FC<{
     }
 
     exit()
-  }
+  }, [
+    activeServer,
+    address,
+    exit,
+    id,
+    password,
+    scrobble,
+    server,
+    servers,
+    setActiveServer,
+    setServers,
+    username,
+    validate,
+  ])
 
   const remove = useCallback(() => {
     if (!canRemove()) {
@@ -140,14 +155,17 @@ const ServerView: React.FC<{
           value={password}
           onChangeText={setPassword}
         />
-        <SettingsItem title="Scrobble" subtitle="Don't scrobble play history">
+        <SettingsItem
+          title="Scrobble plays"
+          subtitle={scrobble ? 'Scrobble play history' : "Don't scrobble play history"}>
           <Switch
             trackColor={{
               false: colors.accentLow,
               true: colors.accent,
             }}
             thumbColor={colors.text.primary}
-            value={false}
+            value={scrobble}
+            onValueChange={setScrobble}
           />
         </SettingsItem>
         <Button

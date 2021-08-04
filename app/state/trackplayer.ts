@@ -35,6 +35,8 @@ export type TrackPlayerSlice = {
   progress: Progress
   setProgress: (progress: Progress) => void
 
+  scrobbleTrack: (id: string) => Promise<void>
+
   reset: () => void
 }
 
@@ -59,12 +61,14 @@ export const selectTrackPlayer = {
   progress: (store: TrackPlayerSlice) => store.progress,
   setProgress: (store: TrackPlayerSlice) => store.setProgress,
 
+  scrobbleTrack: (store: TrackPlayerSlice) => store.scrobbleTrack,
+
   reset: (store: TrackPlayerSlice) => store.reset,
 }
 
 export const trackPlayerCommands = new PromiseQueue(1)
 
-export const createTrackPlayerSlice = (set: SetState<Store>, _get: GetState<Store>): TrackPlayerSlice => ({
+export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerSlice => ({
   name: undefined,
   setName: name => set({ name }),
 
@@ -90,6 +94,21 @@ export const createTrackPlayerSlice = (set: SetState<Store>, _get: GetState<Stor
 
   progress: { position: 0, duration: 0, buffered: 0 },
   setProgress: progress => set({ progress }),
+
+  scrobbleTrack: async id => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    if (!get().getActiveServer()?.scrobble) {
+      return
+    }
+
+    try {
+      await client.scrobble({ id })
+    } catch {}
+  },
 
   reset: () => {
     set({
