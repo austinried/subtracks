@@ -22,14 +22,28 @@ const setCurrentTrackIdx = (idx?: number) => {
 }
 
 module.exports = async function () {
-  const unsubCurrentTrack = useStore.subscribe(
-    (currentTrack?: TrackExt) => {
-      if (currentTrack) {
-        useStore.getState().scrobbleTrack(currentTrack.id)
-      }
-    },
-    state => state.currentTrack,
+  const unsubs: (() => void)[] = []
+
+  unsubs.push(
+    useStore.subscribe(
+      (currentTrack?: TrackExt) => {
+        if (currentTrack) {
+          useStore.getState().scrobbleTrack(currentTrack.id)
+        }
+      },
+      state => state.currentTrack,
+    ),
   )
+
+  const { emitter } = TrackPlayer.addEventListener(Event.RemoteStop, () => {
+    for (const unsub of unsubs) {
+      unsub()
+    }
+    reset()
+    trackPlayerCommands.enqueue(TrackPlayer.destroy)
+  })
+
+  unsubs.push(() => emitter.removeAllListeners())
 
   TrackPlayer.addEventListener(Event.RemotePlay, () => trackPlayerCommands.enqueue(TrackPlayer.play))
   TrackPlayer.addEventListener(Event.RemotePause, () => trackPlayerCommands.enqueue(TrackPlayer.pause))
@@ -52,12 +66,6 @@ module.exports = async function () {
     } else {
       trackPlayerCommands.enqueue(TrackPlayer.play)
     }
-  })
-
-  TrackPlayer.addEventListener(Event.RemoteStop, () => {
-    unsubCurrentTrack()
-    reset()
-    trackPlayerCommands.enqueue(TrackPlayer.destroy)
   })
 
   TrackPlayer.addEventListener(Event.PlaybackState, () => {
