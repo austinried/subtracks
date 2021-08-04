@@ -1,4 +1,3 @@
-import { useAtomValue } from 'jotai/utils'
 import React, { useCallback, useEffect } from 'react'
 import { BackHandler, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
@@ -7,18 +6,6 @@ import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
-import {
-  currentTrackAtom,
-  playerStateAtom,
-  queueNameAtom,
-  queueShuffledAtom,
-  useNext,
-  usePause,
-  usePlay,
-  usePrevious,
-  useProgress,
-  useToggleShuffle,
-} from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
@@ -28,11 +15,14 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import dimensions from '@app/styles/dimensions'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { useFocusEffect } from '@react-navigation/native'
+import { useStore } from '@app/state/store'
+import { selectTrackPlayer } from '@app/state/trackplayer'
+import { useNext, usePause, usePlay, usePrevious, useToggleShuffle } from '@app/hooks/trackplayer'
 
 const NowPlayingHeader = React.memo<{
   backHandler: () => void
 }>(({ backHandler }) => {
-  const queueName = useAtomValue(queueNameAtom)
+  const queueName = useStore(selectTrackPlayer.name)
 
   return (
     <View style={headerStyles.container}>
@@ -72,7 +62,7 @@ const headerStyles = StyleSheet.create({
 })
 
 const SongCoverArt = () => {
-  const track = useAtomValue(currentTrackAtom)
+  const track = useStore(selectTrackPlayer.currentTrack)
 
   return (
     <View style={coverArtStyles.container}>
@@ -94,7 +84,7 @@ const coverArtStyles = StyleSheet.create({
 })
 
 const SongInfo = () => {
-  const track = useAtomValue(currentTrackAtom)
+  const track = useStore(selectTrackPlayer.currentTrack)
 
   return (
     <View style={infoStyles.container}>
@@ -142,7 +132,7 @@ const infoStyles = StyleSheet.create({
 })
 
 const SeekBar = () => {
-  const { position, duration } = useProgress()
+  const { position, duration } = useStore(selectTrackPlayer.progress)
 
   let progress = 0
   if (duration > 0) {
@@ -204,12 +194,12 @@ const seekStyles = StyleSheet.create({
 })
 
 const PlayerControls = () => {
-  const state = useAtomValue(playerStateAtom)
+  const state = useStore(selectTrackPlayer.playerState)
   const play = usePlay()
   const pause = usePause()
   const next = useNext()
   const previous = usePrevious()
-  const shuffle = useAtomValue(queueShuffledAtom)
+  const shuffled = useStore(selectTrackPlayer.shuffled)
   const toggleShuffle = useToggleShuffle()
 
   let playPauseIcon: string
@@ -254,7 +244,7 @@ const PlayerControls = () => {
 
         <View style={controlsStyles.center}>
           <PressableOpacity onPress={() => toggleShuffle()} disabled={disabled}>
-            <Icon name="shuffle" size={26} color={shuffle ? colors.accent : 'white'} />
+            <Icon name="shuffle" size={26} color={shuffled ? colors.accent : 'white'} />
           </PressableOpacity>
         </View>
       </View>
@@ -304,7 +294,7 @@ type RootStackParamList = {
 type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'now-playing'>
 
 const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
-  const track = useAtomValue(currentTrackAtom)
+  const track = useStore(selectTrackPlayer.currentTrack)
 
   const back = useCallback(() => {
     if (navigation.canGoBack()) {

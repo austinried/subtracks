@@ -13,7 +13,7 @@ import { name as appName } from '@app/app.json'
 import TrackPlayer, { Capability } from 'react-native-track-player'
 
 AppRegistry.registerComponent(appName, () => App)
-TrackPlayer.registerPlaybackService(() => require('@app/service'))
+TrackPlayer.registerPlaybackService(() => require('@app/playbackservice'))
 
 async function start() {
   await TrackPlayer.setupPlayer()

@@ -3,8 +3,14 @@ import { createSettingsSlice, SettingsSlice } from '@app/state/settings'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import create from 'zustand'
 import { persist, StateStorage } from 'zustand/middleware'
+import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 
-export type Store = SettingsSlice & MusicSlice
+export type Store = SettingsSlice &
+  MusicSlice &
+  TrackPlayerSlice & {
+    hydrated: boolean
+    setHydrated: (hydrated: boolean) => void
+  }
 
 const storage: StateStorage = {
   getItem: async name => {
@@ -29,6 +35,10 @@ export const useStore = create<Store>(
     (set, get) => ({
       ...createSettingsSlice(set, get),
       ...createMusicSlice(set, get),
+      ...createTrackPlayerSlice(set, get),
+
+      hydrated: false,
+      setHydrated: hydrated => set({ hydrated }),
     }),
     {
       name: '@appStore',
@@ -37,6 +47,7 @@ export const useStore = create<Store>(
       onRehydrateStorage: _preState => {
         return (postState, _error) => {
           postState?.createClient(postState.settings.activeServer)
+          postState?.setHydrated(true)
         }
       },
     },

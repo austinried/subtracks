@@ -36,8 +36,7 @@ const ArtistImageFallback: React.FC<{
 }> = ({ enableLoading }) => {
   useEffect(() => {
     enableLoading()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [enableLoading])
   return <></>
 }
 

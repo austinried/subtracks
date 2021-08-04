@@ -1,6 +1,6 @@
 import Button from '@app/components/Button'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Song } from '@app/models/music'
-import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'

@@ -5,8 +5,8 @@ import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
 import { useAlbumWithSongs, useCoverArtUri, usePlaylistWithSongs } from '@app/hooks/music'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
-import { useSetQueue } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -46,7 +46,7 @@ const Songs = React.memo<{
 
   return (
     <>
-      <ListPlayerControls style={styles.controls} songs={songs} typeName={typeName} queueName={name} />
+      <ListPlayerControls style={styles.controls} songs={_songs} typeName={typeName} queueName={name} />
       <View style={styles.songs}>
         {_songs.map((s, i) => (
           <ListItem

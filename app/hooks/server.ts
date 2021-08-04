@@ -1,6 +1,6 @@
+import { useReset } from '@app/hooks/trackplayer'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
-import { useReset } from '@app/state/trackplayer'
 import { useEffect } from 'react'
 
 export const useSwitchActiveServer = () => {

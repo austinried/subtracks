@@ -1,9 +1,9 @@
 import { ListableItem } from '@app/models/music'
-import { currentTrackAtom } from '@app/state/trackplayer'
+import { useStore } from '@app/state/store'
+import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import { useAtomValue } from 'jotai/utils'
 import React, { useState } from 'react'
 import { GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
 import IconFA from 'react-native-vector-icons/FontAwesome'
@@ -16,7 +16,7 @@ const TitleTextSong = React.memo<{
   id: string
   title?: string
 }>(({ id, title }) => {
-  const currentTrack = useAtomValue(currentTrackAtom)
+  const currentTrack = useStore(selectTrackPlayer.currentTrack)
   const playing = currentTrack?.id === id
 
   return (

@@ -1,17 +1,18 @@
-import React from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
-import { useAtomValue } from 'jotai/utils'
-import { currentTrackAtom, playerStateAtom, usePause, usePlay, useProgress } from '@app/state/trackplayer'
 import CoverArt from '@app/components/CoverArt'
+import PressableOpacity from '@app/components/PressableOpacity'
+import { usePause, usePlay } from '@app/hooks/trackplayer'
+import { useStore } from '@app/state/store'
+import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { useNavigation } from '@react-navigation/native'
+import React from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
-import PressableOpacity from '@app/components/PressableOpacity'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
 const ProgressBar = () => {
-  const { position, duration } = useProgress()
+  const { position, duration } = useStore(selectTrackPlayer.progress)
 
   let progress = 0
   if (duration > 0) {
@@ -41,8 +42,8 @@ const progressStyles = StyleSheet.create({
 
 const NowPlayingBar = () => {
   const navigation = useNavigation()
-  const track = useAtomValue(currentTrackAtom)
-  const playerState = useAtomValue(playerStateAtom)
+  const track = useStore(selectTrackPlayer.currentTrack)
+  const playerState = useStore(selectTrackPlayer.playerState)
   const play = usePlay()
   const pause = usePause()
 
