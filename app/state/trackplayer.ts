@@ -1,6 +1,6 @@
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
-import TrackPlayer, { State, Track } from 'react-native-track-player'
+import TrackPlayer, { RepeatMode, State, Track } from 'react-native-track-player'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
@@ -21,6 +21,9 @@ export type TrackPlayerSlice = {
 
   shuffleOrder?: number[]
   setShuffleOrder: (shuffleOrder?: number[]) => void
+
+  repeatMode: RepeatMode
+  setRepeatMode: (repeatMode: RepeatMode) => void
 
   playerState: State
   setPlayerState: (playerState: State) => void
@@ -48,6 +51,9 @@ export const selectTrackPlayer = {
   setShuffleOrder: (store: TrackPlayerSlice) => store.setShuffleOrder,
   shuffled: (store: TrackPlayerSlice) => !!store.shuffleOrder,
 
+  repeatMode: (store: TrackPlayerSlice) => store.repeatMode,
+  setRepeatMode: (store: TrackPlayerSlice) => store.setRepeatMode,
+
   playerState: (store: TrackPlayerSlice) => store.playerState,
   setPlayerState: (store: TrackPlayerSlice) => store.setPlayerState,
 
@@ -74,6 +80,9 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
 
   shuffleOrder: undefined,
   setShuffleOrder: shuffleOrder => set({ shuffleOrder }),
+
+  repeatMode: RepeatMode.Off,
+  setRepeatMode: repeatMode => set({ repeatMode }),
 
   playerState: State.None,
   setPlayerState: playerState => set({ playerState }),
@@ -114,6 +123,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
     set({
       name: undefined,
       shuffleOrder: undefined,
+      repeatMode: RepeatMode.Off,
       playerState: State.None,
       currentTrack: undefined,
       currentTrackIdx: undefined,
@@ -133,6 +143,9 @@ export const getCurrentTrack = async (): Promise<number | undefined> => {
 }
 
 export const getPlayerState = async (): Promise<State> => {
-  const state = await TrackPlayer.getState()
-  return state || State.None
+  return (await TrackPlayer.getState()) || State.None
+}
+
+export const getRepeatMode = async (): Promise<RepeatMode> => {
+  return (await TrackPlayer.getRepeatMode()) || RepeatMode.Off
 }

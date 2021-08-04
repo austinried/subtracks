@@ -1,9 +1,16 @@
 import { useCoverArtUri } from '@app/hooks/music'
 import { Song } from '@app/models/music'
 import { useStore } from '@app/state/store'
-import { getCurrentTrack, getQueue, selectTrackPlayer, TrackExt, trackPlayerCommands } from '@app/state/trackplayer'
+import {
+  getCurrentTrack,
+  getQueue,
+  getRepeatMode,
+  selectTrackPlayer,
+  TrackExt,
+  trackPlayerCommands,
+} from '@app/state/trackplayer'
 import { useCallback } from 'react'
-import TrackPlayer from 'react-native-track-player'
+import TrackPlayer, { RepeatMode } from 'react-native-track-player'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -14,14 +21,11 @@ export const usePause = () => {
 }
 
 export const usePrevious = () => {
-  // const setCurrentTrackIdx = useStore(selectTrackPlayer.setCurrentTrackIdx)
-
   return () =>
     trackPlayerCommands.enqueue(async () => {
       const [current] = await Promise.all([await TrackPlayer.getCurrentTrack(), await getQueue()])
       if (current > 0) {
         await TrackPlayer.skipToPrevious()
-        // setCurrentTrackIdx(current - 1)
       } else {
         await TrackPlayer.seekTo(0)
       }
@@ -30,20 +34,41 @@ export const usePrevious = () => {
 }
 
 export const useNext = () => {
-  // const setCurrentTrack = useUpdateAtom(currentTrackAtom)
-
   return () =>
     trackPlayerCommands.enqueue(async () => {
       const [current, queue] = await Promise.all([await TrackPlayer.getCurrentTrack(), await getQueue()])
       if (current >= queue.length - 1) {
         await TrackPlayer.skip(0)
         await TrackPlayer.pause()
-        // setCurrentTrack(queue[0])
       } else {
         await TrackPlayer.skipToNext()
-        // setCurrentTrack(queue[current + 1])
         await TrackPlayer.play()
       }
+    })
+}
+
+export const useToggleRepeat = () => {
+  const setRepeatMode = useStore(selectTrackPlayer.setRepeatMode)
+
+  return () =>
+    trackPlayerCommands.enqueue(async () => {
+      const repeatMode = await getRepeatMode()
+      let nextMode = RepeatMode.Off
+
+      switch (repeatMode) {
+        case RepeatMode.Off:
+          nextMode = RepeatMode.Queue
+          break
+        case RepeatMode.Queue:
+          nextMode = RepeatMode.Track
+          break
+        default:
+          nextMode = RepeatMode.Off
+          break
+      }
+
+      await TrackPlayer.setRepeatMode(nextMode)
+      setRepeatMode(nextMode)
     })
 }
 

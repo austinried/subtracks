@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react'
 import { BackHandler, StatusBar, StyleSheet, Text, View } from 'react-native'
-import { State } from 'react-native-track-player'
+import { RepeatMode, State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { useFocusEffect } from '@react-navigation/native'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
-import { useNext, usePause, usePlay, usePrevious, useToggleShuffle } from '@app/hooks/trackplayer'
+import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
 
 const NowPlayingHeader = React.memo<{
   backHandler: () => void
@@ -201,6 +201,8 @@ const PlayerControls = () => {
   const previous = usePrevious()
   const shuffled = useStore(selectTrackPlayer.shuffled)
   const toggleShuffle = useToggleShuffle()
+  const repeatMode = useStore(selectTrackPlayer.repeatMode)
+  const toggleRepeat = useToggleRepeat()
 
   let playPauseIcon: string
   let playPauseAction: undefined | (() => void)
@@ -225,8 +227,9 @@ const PlayerControls = () => {
     <View style={controlsStyles.container}>
       <View style={controlsStyles.top}>
         <View style={controlsStyles.center}>
-          <PressableOpacity onPress={undefined} disabled={disabled}>
-            <Icon name="repeat" size={26} color="white" />
+          <PressableOpacity onPress={() => toggleRepeat()} disabled={disabled}>
+            <Icon name="repeat" size={26} color={repeatMode === RepeatMode.Off ? 'white' : colors.accent} />
+            <Text style={[controlsStyles.repeatExt, repeatMode === RepeatMode.Track ? { opacity: 1 } : {}]}>1</Text>
           </PressableOpacity>
         </View>
 
@@ -284,6 +287,14 @@ const controlsStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  repeatExt: {
+    color: colors.accent,
+    fontFamily: font.bold,
+    fontSize: 14,
+    position: 'absolute',
+    top: 26,
+    opacity: 0,
   },
 })
 
