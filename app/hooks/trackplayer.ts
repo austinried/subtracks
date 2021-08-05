@@ -118,12 +118,15 @@ export const useToggleShuffle = () => {
   const setQueue = useStore(selectTrackPlayer.setQueue)
   const setShuffleOrder = useStore(selectTrackPlayer.setShuffleOrder)
   const getShuffleOrder = useCallback(() => useStore.getState().shuffleOrder, [])
+  const setProgress = useStore(selectTrackPlayer.setProgress)
+  const getProgress = useCallback(() => useStore.getState().progress, [])
 
   return async () => {
     return trackPlayerCommands.enqueue(async () => {
       const queue = await getQueue()
       const current = await getCurrentTrack()
       const queueShuffleOrder = getShuffleOrder()
+      const progress = getProgress()
 
       await TrackPlayer.remove(queue.map((_t, i) => i).filter(i => i !== current))
 
@@ -153,6 +156,7 @@ export const useToggleShuffle = () => {
       }
 
       setQueue(await getQueue())
+      setProgress(progress)
     })
   }
 }
