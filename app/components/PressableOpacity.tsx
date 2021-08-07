@@ -43,6 +43,12 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
         if (!props.disabled) {
           setOpacity(1)
         }
+      }}
+      onLongPress={data => {
+        if (!props.disabled) {
+          setOpacity(1)
+          props.onLongPress ? props.onLongPress(data) : null
+        }
       }}>
       {props.children}
     </Pressable>

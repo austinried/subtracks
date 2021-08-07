@@ -32,6 +32,7 @@ export interface AlbumListItem {
   id: string
   name: string
   artist?: string
+  artistId?: string
   starred?: Date
   coverArt?: string
 }
@@ -148,6 +149,7 @@ export function mapAlbumID3toAlbumListItem(album: AlbumID3Element): AlbumListIte
     id: album.id,
     name: album.name,
     artist: album.artist,
+    artistId: album.artistId,
     starred: album.starred,
     coverArt: album.coverArt,
   }

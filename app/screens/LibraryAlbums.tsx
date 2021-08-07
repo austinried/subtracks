@@ -1,8 +1,8 @@
+import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
 import GradientFlatList from '@app/components/GradientFlatList'
-import PressableOpacity from '@app/components/PressableOpacity'
 import { useActiveListRefresh2 } from '@app/hooks/server'
-import { Album } from '@app/models/music'
+import { Album, AlbumListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -13,44 +13,37 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 
 const AlbumItem = React.memo<{
-  id: string
-  name: string
+  album: AlbumListItem
   size: number
   height: number
-  artist?: string
-  coverArt?: string
-}>(({ id, name, artist, size, height, coverArt }) => {
+}>(({ album, size, height }) => {
   const navigation = useNavigation()
 
   return (
-    <PressableOpacity
-      style={[styles.item, { maxWidth: size, height }]}
-      onPress={() => navigation.navigate('album', { id, title: name })}>
-      <CoverArt coverArt={coverArt} style={{ height: size, width: size }} resizeMode={FastImage.resizeMode.cover} />
+    <AlbumContextPressable
+      album={album}
+      triggerWrapperStyle={[styles.item, { maxWidth: size, height }]}
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
+      <CoverArt
+        coverArt={album.coverArt}
+        style={{ height: size, width: size }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
-          {name}
+          {album.name}
         </Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {artist}
+          {album.artist}
         </Text>
       </View>
-    </PressableOpacity>
+    </AlbumContextPressable>
   )
 })
 
 const AlbumListRenderItem: React.FC<{
   item: { album: Album; size: number; height: number }
-}> = ({ item }) => (
-  <AlbumItem
-    id={item.album.id}
-    coverArt={item.album.coverArt}
-    name={item.album.name}
-    artist={item.album.artist}
-    size={item.size}
-    height={item.height}
-  />
-)
+}> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
 
 const AlbumsList = () => {
   const list = useStore(selectMusic.albums)
@@ -96,14 +89,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   item: {
-    alignItems: 'center',
+    // alignItems: 'center',
     marginVertical: 4,
     marginHorizontal: 3,
     flex: 1 / 3,
   },
   itemDetails: {
     flex: 1,
-    width: '100%',
+    // width: '100%',
   },
   title: {
     fontSize: 12,

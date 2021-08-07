@@ -1,15 +1,16 @@
-import { ListableItem } from '@app/models/music'
+import { AlbumListItem, ListableItem } from '@app/models/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import React, { useState } from 'react'
-import { GestureResponderEvent, StyleSheet, Text, View } from 'react-native'
+import React, { useCallback, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
+import { AlbumContextPressable } from './ContextMenu'
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
 
@@ -40,7 +41,7 @@ const TitleText = React.memo<{
 
 const ListItem: React.FC<{
   item: ListableItem
-  onPress?: (event: GestureResponderEvent) => void
+  onPress?: () => void
   showArt?: boolean
   showStar?: boolean
   listStyle?: 'big' | 'small'
@@ -81,9 +82,31 @@ const ListItem: React.FC<{
     }
   }
 
+  const itemPressable = useCallback(
+    ({ children }) => (
+      <PressableOpacity onPress={onPress} style={styles.item}>
+        {children}
+      </PressableOpacity>
+    ),
+    [onPress],
+  )
+  const albumPressable = useCallback(
+    ({ children }) => (
+      <AlbumContextPressable album={item as AlbumListItem} onPress={onPress} triggerWrapperStyle={styles.item}>
+        {children}
+      </AlbumContextPressable>
+    ),
+    [item, onPress],
+  )
+
+  let PressableComponent = itemPressable
+  if (item.itemType === 'album') {
+    PressableComponent = albumPressable
+  }
+
   return (
     <View style={[styles.container, sizeStyle.container]}>
-      <PressableOpacity onPress={onPress} style={styles.item}>
+      <PressableComponent>
         {showArt ? (
           <CoverArt
             {...artSource}
@@ -117,7 +140,7 @@ const ListItem: React.FC<{
             <></>
           )}
         </View>
-      </PressableOpacity>
+      </PressableComponent>
       <View style={styles.controls}>
         {showStar ? (
           <PressableOpacity onPress={() => setStarred(!starred)} style={styles.controlItem}>
@@ -146,6 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-start',
+    alignItems: 'center',
   },
   art: {
     marginRight: 10,

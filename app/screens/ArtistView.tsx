@@ -1,8 +1,9 @@
+import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
+import GradientBackground from '@app/components/GradientBackground'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
-import PressableOpacity from '@app/components/PressableOpacity'
 import { useArtistInfo } from '@app/hooks/music'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/music'
@@ -11,7 +12,7 @@ import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 
 const AlbumItem = React.memo<{
@@ -21,14 +22,20 @@ const AlbumItem = React.memo<{
 }>(({ album, height, width }) => {
   const navigation = useNavigation()
 
+  if (height <= 0 || width <= 0) {
+    return <></>
+  }
+
   return (
-    <PressableOpacity
+    <AlbumContextPressable
+      album={album}
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
-      style={[styles.albumItem, { width }]}>
+      menuStyle={[styles.albumItem, { width }]}
+      triggerOuterWrapperStyle={{ width }}>
       <CoverArt coverArt={album.coverArt} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
-    </PressableOpacity>
+    </AlbumContextPressable>
   )
 })
 
@@ -54,6 +61,12 @@ const TopSongs = React.memo<{
   )
 })
 
+const ArtistDetailsFallback = React.memo(() => (
+  <GradientBackground style={styles.fallback}>
+    <ActivityIndicator size="large" color={colors.accent} />
+  </GradientBackground>
+))
+
 const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   const artist = useArtistInfo(id)
   const albumsLayout = useLayout()
@@ -62,7 +75,7 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
   const albumSize = albumsLayout.width / 2 - styles.container.paddingHorizontal / 2
 
   if (!artist) {
-    return <></>
+    return <ArtistDetailsFallback />
   }
 
   const _albums = [...artist.albums]
@@ -116,6 +129,10 @@ const artistCoverHeight = 280
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
+  },
+  fallback: {
+    alignItems: 'center',
+    paddingTop: 100,
   },
   scrollContent: {
     alignItems: 'center',

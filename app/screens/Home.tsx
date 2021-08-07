@@ -1,8 +1,8 @@
+import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import PressableOpacity from '@app/components/PressableOpacity'
 import { useActiveListRefresh2 } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
@@ -14,6 +14,7 @@ import { GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+import FastImage from 'react-native-fast-image'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recent Albums',
@@ -28,18 +29,22 @@ const AlbumItem = React.memo<{
   const navigation = useNavigation()
 
   return (
-    <PressableOpacity
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
-      key={album.id}
-      style={styles.item}>
-      <CoverArt coverArt={album.coverArt} style={{ height: styles.item.width, width: styles.item.width }} />
+    <AlbumContextPressable
+      album={album}
+      triggerWrapperStyle={styles.item}
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
+      <CoverArt
+        coverArt={album.coverArt}
+        style={{ height: styles.item.width, width: styles.item.width }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
       </Text>
       <Text style={styles.subtitle} numberOfLines={1}>
         {album.artist}
       </Text>
-    </PressableOpacity>
+    </AlbumContextPressable>
   )
 })
 
@@ -138,9 +143,9 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
   },
   item: {
+    flex: 1,
     marginRight: 10,
     width: 150,
-    alignItems: 'flex-start',
   },
   title: {
     fontFamily: font.semiBold,
