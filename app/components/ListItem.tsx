@@ -1,4 +1,4 @@
-import { AlbumListItem, ListableItem } from '@app/models/music'
+import { AlbumListItem, ListableItem, Song } from '@app/models/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
@@ -10,7 +10,7 @@ import FastImage from 'react-native-fast-image'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
-import { AlbumContextPressable } from './ContextMenu'
+import { AlbumContextPressable, SongContextPressable } from './ContextMenu'
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
 
@@ -98,10 +98,20 @@ const ListItem: React.FC<{
     ),
     [item, onPress],
   )
+  const songPressable = useCallback(
+    ({ children }) => (
+      <SongContextPressable song={item as Song} onPress={onPress} triggerWrapperStyle={styles.item}>
+        {children}
+      </SongContextPressable>
+    ),
+    [item, onPress],
+  )
 
   let PressableComponent = itemPressable
   if (item.itemType === 'album') {
     PressableComponent = albumPressable
+  } else if (item.itemType === 'song') {
+    PressableComponent = songPressable
   }
 
   return (

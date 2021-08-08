@@ -69,7 +69,9 @@ export interface Song {
   itemType: 'song'
   id: string
   album?: string
+  albumId?: string
   artist?: string
+  artistId?: string
   title: string
   track?: number
   duration?: number
@@ -168,7 +170,9 @@ export function mapChildToSong(child: ChildElement, client: SubsonicApiClient): 
     itemType: 'song',
     id: child.id,
     album: child.album,
+    albumId: child.albumId,
     artist: child.artist,
+    artistId: child.artistId,
     title: child.title,
     track: child.track,
     duration: child.duration,
