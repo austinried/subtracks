@@ -110,6 +110,12 @@ export type ScrobbleParams = {
   submission?: boolean
 }
 
+export type StarParams = {
+  id?: string
+  albumId?: string
+  artistId?: string
+}
+
 //
 // Searching
 //

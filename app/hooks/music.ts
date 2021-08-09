@@ -38,6 +38,21 @@ export const usePlaylistWithSongs = (id: string) => {
   return playlist
 }
 
+export const useStarred = (id: string, type: string) => {
+  const starred = useStore(
+    useCallback(
+      (state: Store) => {
+        if (!(type in state.starred)) {
+          return false
+        }
+        return !!state.starred[type][id]
+      },
+      [type, id],
+    ),
+  )
+  return starred
+}
+
 export const useCoverArtUri = () => {
   const server = useStore(selectSettings.activeServer)
 

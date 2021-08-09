@@ -16,7 +16,7 @@ import {
   SearchResults,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
-import { GetAlbumList2Type } from '@app/subsonic/params'
+import { GetAlbumList2Type, StarParams } from '@app/subsonic/params'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
@@ -24,18 +24,13 @@ export type MusicSlice = {
   //
   // family-style state
   //
-  cacheSize: number
-
-  artistInfo: { [id: string]: ArtistInfo | undefined }
-  artistInfoCache: string[]
+  artistInfo: { [id: string]: ArtistInfo }
   fetchArtistInfo: (id: string) => Promise<ArtistInfo | undefined>
 
-  albumsWithSongs: { [id: string]: AlbumWithSongs | undefined }
-  albumsWithSongsCache: string[]
+  albumsWithSongs: { [id: string]: AlbumWithSongs }
   fetchAlbumWithSongs: (id: string) => Promise<AlbumWithSongs | undefined>
 
-  playlistsWithSongs: { [id: string]: PlaylistWithSongs | undefined }
-  playlistsWithSongsCache: string[]
+  playlistsWithSongs: { [id: string]: PlaylistWithSongs }
   fetchPlaylistWithSongs: (id: string) => Promise<PlaylistWithSongs | undefined>
 
   //
@@ -62,6 +57,9 @@ export type MusicSlice = {
   homeListsUpdating: boolean
   fetchHomeLists: () => Promise<void>
   clearHomeLists: () => void
+
+  starred: { [type: string]: { [id: string]: boolean } }
+  starItem: (id: string, type: string, unstar?: boolean) => Promise<void>
 }
 
 export const selectMusic = {
@@ -90,13 +88,25 @@ export const selectMusic = {
   homeListsUpdating: (store: MusicSlice) => store.homeListsUpdating,
   fetchHomeLists: (store: MusicSlice) => store.fetchHomeLists,
   clearHomeLists: (store: MusicSlice) => store.clearHomeLists,
+
+  starItem: (store: MusicSlice) => store.starItem,
+}
+
+function reduceStarred(
+  starredType: { [id: string]: boolean },
+  items: { id: string; starred?: Date }[],
+): { [id: string]: boolean } {
+  return {
+    ...starredType,
+    ...items.reduce((acc, val) => {
+      acc[val.id] = !!val.starred
+      return acc
+    }, {} as { [id: string]: boolean }),
+  }
 }
 
 export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): MusicSlice => ({
-  cacheSize: 100,
-
   artistInfo: {},
-  artistInfoCache: [],
 
   fetchArtistInfo: async id => {
     const client = get().client
@@ -119,11 +129,10 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
       set(
         produce<MusicSlice>(state => {
-          if (state.artistInfoCache.length >= state.cacheSize) {
-            delete state.albumsWithSongs[state.artistInfoCache.shift() as string]
-          }
           state.artistInfo[id] = artistInfo
-          state.artistInfoCache.push(id)
+          state.starred.song = reduceStarred(state.starred.song, artistInfo.topSongs)
+          state.starred.artist = reduceStarred(state.starred.artist, [artistInfo])
+          state.starred.album = reduceStarred(state.starred.album, artistInfo.albums)
         }),
       )
       return artistInfo
@@ -133,7 +142,6 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
   },
 
   albumsWithSongs: {},
-  albumsWithSongsCache: [],
 
   fetchAlbumWithSongs: async id => {
     const client = get().client
@@ -147,11 +155,9 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
       set(
         produce<MusicSlice>(state => {
-          if (state.albumsWithSongsCache.length >= state.cacheSize) {
-            delete state.albumsWithSongs[state.albumsWithSongsCache.shift() as string]
-          }
           state.albumsWithSongs[id] = album
-          state.albumsWithSongsCache.push(id)
+          state.starred.song = reduceStarred(state.starred.song, album.songs)
+          state.starred.album = reduceStarred(state.starred.album, [album])
         }),
       )
       return album
@@ -161,7 +167,6 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
   },
 
   playlistsWithSongs: {},
-  playlistsWithSongsCache: [],
 
   fetchPlaylistWithSongs: async id => {
     const client = get().client
@@ -175,11 +180,8 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
       set(
         produce<MusicSlice>(state => {
-          if (state.playlistsWithSongsCache.length >= state.cacheSize) {
-            delete state.playlistsWithSongs[state.playlistsWithSongsCache.shift() as string]
-          }
           state.playlistsWithSongs[id] = playlist
-          state.playlistsWithSongsCache.push(id)
+          state.starred.song = reduceStarred(state.starred.song, playlist.songs)
         }),
       )
       return playlist
@@ -204,7 +206,12 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getArtists()
-      set({ artists: response.data.artists.map(mapArtistID3toArtist) })
+      set(
+        produce<MusicSlice>(state => {
+          state.artists = response.data.artists.map(mapArtistID3toArtist)
+          state.starred.artist = reduceStarred(state.starred.artist, state.artists)
+        }),
+      )
     } finally {
       set({ artistsUpdating: false })
     }
@@ -248,7 +255,12 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size, offset })
-      set({ albums: response.data.albums.map(mapAlbumID3toAlbumListItem) })
+      set(
+        produce<MusicSlice>(state => {
+          state.albums = response.data.albums.map(mapAlbumID3toAlbumListItem)
+          state.starred.albums = reduceStarred(state.starred.albums, state.albums)
+        }),
+      )
     } finally {
       set({ albumsUpdating: false })
     }
@@ -279,13 +291,18 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.search3({ query })
-      set({
-        searchResults: {
-          artists: response.data.artists.map(mapArtistID3toArtist),
-          albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
-          songs: response.data.songs.map(a => mapChildToSong(a, client)),
-        },
-      })
+      set(
+        produce<MusicSlice>(state => {
+          state.searchResults = {
+            artists: response.data.artists.map(mapArtistID3toArtist),
+            albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
+            songs: response.data.songs.map(a => mapChildToSong(a, client)),
+          }
+          state.starred.song = reduceStarred(state.starred.song, state.searchResults.songs)
+          state.starred.artist = reduceStarred(state.starred.artist, state.searchResults.artists)
+          state.starred.album = reduceStarred(state.starred.album, state.searchResults.albums)
+        }),
+      )
     } finally {
       set({ searchResultsUpdating: false })
     }
@@ -324,6 +341,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
             set(
               produce<MusicSlice>(state => {
                 state.homeLists[type] = response.data.albums.map(mapAlbumID3toAlbumListItem)
+                state.starred.album = reduceStarred(state.starred.album, state.homeLists[type])
               }),
             )
           }),
@@ -337,5 +355,55 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
   clearHomeLists: () => {
     set({ homeLists: {} })
+  },
+
+  starred: {
+    song: {},
+    album: {},
+    artist: {},
+  },
+
+  starItem: async (id, type, unstar = false) => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    let params: StarParams
+    switch (type) {
+      case 'song':
+        params = { id }
+        break
+      case 'album':
+        params = { albumId: id }
+        break
+      case 'artist':
+        params = { artistId: id }
+        break
+      default:
+        return
+    }
+
+    const setStarred = (starred: boolean) => {
+      set(
+        produce<MusicSlice>(state => {
+          state.starred[type] = {
+            ...state.starred[type],
+            [id]: starred,
+          }
+        }),
+      )
+    }
+
+    try {
+      setStarred(!unstar)
+      if (unstar) {
+        await client.unstar(params)
+      } else {
+        await client.star(params)
+      }
+    } catch {
+      setStarred(unstar)
+    }
   },
 })

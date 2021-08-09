@@ -1,10 +1,12 @@
+import { useStarred } from '@app/hooks/music'
 import { AlbumListItem, Artist, ListableItem, Song } from '@app/models/music'
+import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 import IconFA from 'react-native-vector-icons/FontAwesome'
@@ -47,8 +49,8 @@ const ListItem: React.FC<{
   listStyle?: 'big' | 'small'
   subtitle?: string
 }> = ({ item, onPress, showArt, showStar, subtitle, listStyle }) => {
-  const [starred, setStarred] = useState(false)
   const navigation = useNavigation()
+  const starred = useStarred(item.id, item.itemType)
 
   showStar = showStar === undefined ? true : showStar
   listStyle = listStyle || 'small'
@@ -124,6 +126,11 @@ const ListItem: React.FC<{
     PressableComponent = artistPressable
   }
 
+  const starItem = useStore(selectMusic.starItem)
+  const toggleStarred = useCallback(() => {
+    starItem(item.id, item.itemType, starred)
+  }, [item.id, item.itemType, starItem, starred])
+
   return (
     <View style={[styles.container, sizeStyle.container]}>
       <PressableComponent>
@@ -163,7 +170,7 @@ const ListItem: React.FC<{
       </PressableComponent>
       <View style={styles.controls}>
         {showStar ? (
-          <PressableOpacity onPress={() => setStarred(!starred)} style={styles.controlItem}>
+          <PressableOpacity onPress={toggleStarred} style={styles.controlItem}>
             {starred ? (
               <IconFA name="star" size={26} color={colors.accent} />
             ) : (

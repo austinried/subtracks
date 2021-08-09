@@ -15,6 +15,7 @@ import {
   GetTopSongsParams,
   ScrobbleParams,
   Search3Params,
+  StarParams,
   StreamParams,
 } from '@app/subsonic/params'
 import {
@@ -230,6 +231,16 @@ export class SubsonicApiClient {
 
   async scrobble(params: ScrobbleParams): Promise<SubsonicResponse<undefined>> {
     const xml = await this.apiGetXml('scrobble', params)
+    return new SubsonicResponse<undefined>(xml, undefined)
+  }
+
+  async star(params: StarParams): Promise<SubsonicResponse<undefined>> {
+    const xml = await this.apiGetXml('star', params)
+    return new SubsonicResponse<undefined>(xml, undefined)
+  }
+
+  async unstar(params: StarParams): Promise<SubsonicResponse<undefined>> {
+    const xml = await this.apiGetXml('unstar', params)
     return new SubsonicResponse<undefined>(xml, undefined)
   }
 
