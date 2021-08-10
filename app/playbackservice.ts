@@ -21,29 +21,21 @@ const setCurrentTrackIdx = (idx?: number) => {
   })
 }
 
-module.exports = async function () {
-  const unsubs: (() => void)[] = []
-
-  unsubs.push(
-    useStore.subscribe(
-      (currentTrack?: TrackExt) => {
-        if (currentTrack) {
-          useStore.getState().scrobbleTrack(currentTrack.id)
-        }
-      },
-      state => state.currentTrack,
-    ),
+let serviceCreated = false
+const createService = async () => {
+  useStore.subscribe(
+    (currentTrack?: TrackExt) => {
+      if (currentTrack) {
+        useStore.getState().scrobbleTrack(currentTrack.id)
+      }
+    },
+    state => state.currentTrack,
   )
 
-  const { emitter } = TrackPlayer.addEventListener(Event.RemoteStop, () => {
-    for (const unsub of unsubs) {
-      unsub()
-    }
+  TrackPlayer.addEventListener(Event.RemoteStop, () => {
     reset()
     trackPlayerCommands.enqueue(TrackPlayer.destroy)
   })
-
-  unsubs.push(() => emitter.removeAllListeners())
 
   TrackPlayer.addEventListener(Event.RemotePlay, () => trackPlayerCommands.enqueue(TrackPlayer.play))
   TrackPlayer.addEventListener(Event.RemotePause, () => trackPlayerCommands.enqueue(TrackPlayer.pause))
@@ -90,4 +82,11 @@ module.exports = async function () {
   TrackPlayer.addEventListener(Event.PlaybackMetadataReceived, () => {
     setCurrentTrackIdx(useStore.getState().currentTrackIdx)
   })
+}
+
+module.exports = async function () {
+  if (!serviceCreated) {
+    createService()
+    serviceCreated = true
+  }
 }
