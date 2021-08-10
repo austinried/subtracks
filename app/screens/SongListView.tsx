@@ -25,7 +25,8 @@ const Songs = React.memo<{
   songs: Song[]
   name: string
   type: SongListType
-}>(({ songs, name, type }) => {
+  itemId: string
+}>(({ songs, name, type, itemId }) => {
   const setQueue = useSetQueue()
 
   const _songs = [...songs]
@@ -42,14 +43,21 @@ const Songs = React.memo<{
 
   return (
     <>
-      <ListPlayerControls style={styles.controls} songs={_songs} typeName={typeName} queueName={name} />
+      <ListPlayerControls
+        style={styles.controls}
+        songs={_songs}
+        typeName={typeName}
+        queueName={name}
+        queueContextId={itemId}
+        queueContextType={type}
+      />
       <View style={styles.songs}>
         {_songs.map((s, i) => (
           <ListItem
             key={i}
             item={s}
             subtitle={s.artist}
-            onPress={() => setQueue(songs, name, i)}
+            onPress={() => setQueue(songs, name, type, itemId, i)}
             showArt={type === 'playlist'}
           />
         ))}
@@ -76,7 +84,7 @@ const SongListDetails = React.memo<{
         <Text style={styles.title}>{songList.name}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
         {songList.songs.length > 0 ? (
-          <Songs songs={songList.songs} name={songList.name} type={type} />
+          <Songs songs={songList.songs} name={songList.name} type={type} itemId={songList.id} />
         ) : (
           <NothingHere height={300} width={250} />
         )}

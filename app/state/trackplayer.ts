@@ -15,9 +15,17 @@ export type Progress = {
   buffered: number
 }
 
+export type QueueContextType = 'album' | 'playlist' | 'song' | 'artist'
+
 export type TrackPlayerSlice = {
   name?: string
   setName: (name?: string) => void
+
+  queueContextType?: QueueContextType
+  setQueueContextType: (queueContextType?: QueueContextType) => void
+
+  queueContextId?: string
+  setQueueContextId: (queueContextId?: string) => void
 
   shuffleOrder?: number[]
   setShuffleOrder: (shuffleOrder?: number[]) => void
@@ -46,6 +54,12 @@ export type TrackPlayerSlice = {
 export const selectTrackPlayer = {
   name: (store: TrackPlayerSlice) => store.name,
   setName: (store: TrackPlayerSlice) => store.setName,
+
+  queueContextType: (store: TrackPlayerSlice) => store.queueContextType,
+  setQueueContextType: (store: TrackPlayerSlice) => store.setQueueContextType,
+
+  queueContextId: (store: TrackPlayerSlice) => store.queueContextId,
+  setQueueContextId: (store: TrackPlayerSlice) => store.setQueueContextId,
 
   shuffleOrder: (store: TrackPlayerSlice) => store.shuffleOrder,
   setShuffleOrder: (store: TrackPlayerSlice) => store.setShuffleOrder,
@@ -77,6 +91,12 @@ export const trackPlayerCommands = new PromiseQueue(1)
 export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerSlice => ({
   name: undefined,
   setName: name => set({ name }),
+
+  queueContextType: undefined,
+  setQueueContextType: queueContextType => set({ queueContextType }),
+
+  queueContextId: undefined,
+  setQueueContextId: queueContextId => set({ queueContextId }),
 
   shuffleOrder: undefined,
   setShuffleOrder: shuffleOrder => set({ shuffleOrder }),
@@ -122,6 +142,8 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
   reset: () => {
     set({
       name: undefined,
+      queueContextType: undefined,
+      queueContextId: undefined,
       shuffleOrder: undefined,
       repeatMode: RepeatMode.Off,
       playerState: State.None,

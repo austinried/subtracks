@@ -5,6 +5,7 @@ import {
   getCurrentTrack,
   getQueue,
   getRepeatMode,
+  QueueContextType,
   selectTrackPlayer,
   TrackExt,
   trackPlayerCommands,
@@ -179,9 +180,18 @@ export const useSetQueue = () => {
   const setShuffleOrder = useStore(selectTrackPlayer.setShuffleOrder)
   const setQueueName = useStore(selectTrackPlayer.setName)
   const getQueueShuffled = useCallback(() => !!useStore.getState().shuffleOrder, [])
+  const setQueueContextType = useStore(selectTrackPlayer.setQueueContextType)
+  const setQueueContextId = useStore(selectTrackPlayer.setQueueContextId)
   const coverArtUri = useCoverArtUri()
 
-  return async (songs: Song[], name: string, playTrack?: number, shuffle?: boolean) =>
+  return async (
+    songs: Song[],
+    name: string,
+    contextType: QueueContextType,
+    contextId: string,
+    playTrack?: number,
+    shuffle?: boolean,
+  ) =>
     trackPlayerCommands.enqueue(async () => {
       const shuffled = shuffle !== undefined ? shuffle : getQueueShuffled()
 
@@ -208,6 +218,8 @@ export const useSetQueue = () => {
       setQueue(queue)
       setCurrentTrackIdx(playTrack)
       setQueueName(name)
+      setQueueContextType(contextType)
+      setQueueContextId(contextId)
 
       if (playTrack === 0) {
         await TrackPlayer.add(queue)

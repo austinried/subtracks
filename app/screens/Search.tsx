@@ -21,7 +21,7 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
       item={item}
       showArt={true}
       showStar={false}
-      onPress={() => setQueue([item], `Search: ${item.title}`, 0)}
+      onPress={() => setQueue([item], item.title, 'song', item.id, 0)}
     />
   )
 })

@@ -6,7 +6,7 @@ import { useStarred } from '@app/hooks/music'
 import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
+import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
@@ -22,20 +22,63 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 
-const NowPlayingHeader = React.memo<{
-  backHandler: () => void
-}>(({ backHandler }) => {
+function getContextName(type?: QueueContextType) {
+  switch (type) {
+    case 'album':
+      return 'Album'
+    case 'artist':
+      return 'Top Songs'
+    case 'playlist':
+      return 'Playlist'
+    case 'song':
+      return 'Search Results'
+    default:
+      return undefined
+  }
+}
+
+const NowPlayingHeader = React.memo(() => {
+  const navigation = useNavigation()
   const queueName = useStore(selectTrackPlayer.name)
+  const queueContextType = useStore(selectTrackPlayer.queueContextType)
+  const queueContextId = useStore(selectTrackPlayer.queueContextId)
+
+  let contextName = getContextName(queueContextType)
+
+  const back = useCallback(() => {
+    navigation.navigate('top')
+  }, [navigation])
+
+  const goToContext = useCallback(() => {
+    if (!queueContextType || !queueContextId || queueContextType === 'song') {
+      return
+    }
+    navigation.navigate('library')
+    navigation.navigate(queueContextType, { id: queueContextId, title: queueName })
+  }, [navigation, queueContextId, queueContextType, queueName])
 
   return (
     <View style={headerStyles.container}>
-      <PressableOpacity onPress={backHandler} style={headerStyles.icons} ripple={true}>
+      <PressableOpacity onPress={back} style={headerStyles.icons} ripple={true}>
         <IconMat name="arrow-back" color="white" size={25} />
       </PressableOpacity>
-      <Text numberOfLines={1} style={headerStyles.queueName}>
-        {queueName || 'Nothing playing...'}
-      </Text>
-      <PressableOpacity onPress={undefined} style={headerStyles.icons} ripple={true}>
+      <View style={headerStyles.center}>
+        {contextName ? (
+          <Text numberOfLines={1} style={headerStyles.queueType}>
+            {contextName}
+          </Text>
+        ) : (
+          <></>
+        )}
+        <Text numberOfLines={1} style={headerStyles.queueName}>
+          {queueName || 'Nothing playing...'}
+        </Text>
+      </View>
+      <PressableOpacity
+        onPress={goToContext}
+        style={headerStyles.icons}
+        disabled={queueContextType === 'song'}
+        ripple={true}>
         <IconMat name="more-vert" color="white" size={25} />
       </PressableOpacity>
     </View>
@@ -55,11 +98,21 @@ const headerStyles = StyleSheet.create({
     width: 42,
     marginHorizontal: 8,
   },
+  center: {
+    flex: 1,
+  },
+  queueType: {
+    fontFamily: font.regular,
+    fontSize: 14,
+    color: colors.text.primary,
+    // flex: 1,
+    textAlign: 'center',
+  },
   queueName: {
     fontFamily: font.bold,
     fontSize: 16,
     color: colors.text.primary,
-    flex: 1,
+    // flex: 1,
     textAlign: 'center',
   },
 })
@@ -315,20 +368,16 @@ type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'main'>
 const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
   const track = useStore(selectTrackPlayer.currentTrack)
 
-  const back = useCallback(() => {
-    navigation.navigate('top')
-  }, [navigation])
-
   useEffect(() => {
     if (!track) {
-      back()
+      navigation.navigate('top')
     }
   })
 
   return (
     <View style={styles.container}>
       <ImageGradientBackground imageUri={track?.artwork as string} imageKey={`${track?.album}${track?.artist}`} />
-      <NowPlayingHeader backHandler={back} />
+      <NowPlayingHeader />
       <View style={styles.content}>
         <SongCoverArt />
         <SongInfo />

@@ -42,7 +42,8 @@ const AlbumItem = React.memo<{
 const TopSongs = React.memo<{
   songs: Song[]
   name: string
-}>(({ songs, name }) => {
+  artistId: string
+}>(({ songs, name, artistId }) => {
   const setQueue = useSetQueue()
 
   return (
@@ -54,7 +55,7 @@ const TopSongs = React.memo<{
           item={s}
           showArt={true}
           subtitle={s.album}
-          onPress={() => setQueue(songs, `Top Songs: ${name}`, i)}
+          onPress={() => setQueue(songs, name, 'artist', artistId, i)}
         />
       ))}
     </>
@@ -99,7 +100,11 @@ const ArtistDetails: React.FC<{ id: string }> = ({ id }) => {
         <Text style={styles.title}>{artist.name}</Text>
       </View>
       <View style={styles.container}>
-        {artist.topSongs.length > 0 ? <TopSongs songs={artist.topSongs} name={artist.name} /> : <></>}
+        {artist.topSongs.length > 0 ? (
+          <TopSongs songs={artist.topSongs} name={artist.name} artistId={artist.id} />
+        ) : (
+          <></>
+        )}
         <Header>Albums</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {_albums.map(a => (
