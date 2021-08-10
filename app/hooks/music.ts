@@ -39,18 +39,23 @@ export const usePlaylistWithSongs = (id: string) => {
 }
 
 export const useStarred = (id: string, type: string) => {
-  const starred = useStore(
+  return useStore(
     useCallback(
       (state: Store) => {
-        if (!(type in state.starred)) {
-          return false
+        switch (type) {
+          case 'song':
+            return state.starredSongs[id]
+          case 'album':
+            return state.starredAlbums[id]
+          case 'artist':
+            return state.starredArtists[id]
+          default:
+            return false
         }
-        return !!state.starred[type][id]
       },
       [type, id],
     ),
   )
-  return starred
 }
 
 export const useCoverArtUri = () => {

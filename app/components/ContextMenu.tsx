@@ -1,5 +1,8 @@
 import PressableOpacity from '@app/components/PressableOpacity'
+import { useStarred } from '@app/hooks/music'
 import { AlbumListItem, Artist, Song } from '@app/models/music'
+import { selectMusic } from '@app/state/music'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
@@ -12,6 +15,7 @@ import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import CoverArt from './CoverArt'
+import Star from './Star'
 
 const { SlideInMenu } = renderers
 
@@ -20,7 +24,7 @@ type ContextMenuProps = {
   triggerWrapperStyle?: StyleProp<ViewStyle>
   triggerOuterWrapperStyle?: StyleProp<ViewStyle>
   triggerTouchableStyle?: StyleProp<ViewStyle>
-  onPress?: () => void
+  onPress?: () => any
 }
 
 type InternalContextMenuProps = ContextMenuProps & {
@@ -70,7 +74,7 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
 }
 
 type ContextMenuOptionProps = {
-  onSelect?: () => void
+  onSelect?: () => any
 }
 
 const ContextMenuOption: React.FC<ContextMenuOptionProps> = ({ onSelect, children }) => (
@@ -80,22 +84,31 @@ const ContextMenuOption: React.FC<ContextMenuOptionProps> = ({ onSelect, childre
 )
 
 type ContextMenuIconTextOptionProps = ContextMenuOptionProps & {
-  IconComponent: ReactComponentLike
-  name: string
-  size: number
+  IconComponent?: ReactComponentLike
+  IconComponentRaw?: React.ReactNode
+  name?: string
+  size?: number
   color?: string
   text: string
 }
 
 const ContextMenuIconTextOption = React.memo<ContextMenuIconTextOptionProps>(
-  ({ onSelect, IconComponent, name, color, size, text }) => (
-    <ContextMenuOption onSelect={onSelect}>
-      <View style={styles.icon}>
-        <IconComponent name={name} size={size} color={color || colors.text.primary} />
-      </View>
-      <Text style={styles.optionText}>{text}</Text>
-    </ContextMenuOption>
-  ),
+  ({ onSelect, IconComponent, IconComponentRaw, name, color, size, text }) => {
+    let Icon: React.ReactNode
+    if (IconComponentRaw) {
+      Icon = IconComponentRaw
+    } else if (IconComponent) {
+      Icon = <IconComponent name={name} size={size} color={color || colors.text.primary} />
+    } else {
+      Icon = <></>
+    }
+    return (
+      <ContextMenuOption onSelect={onSelect}>
+        <View style={styles.icon}>{Icon}</View>
+        <Text style={styles.optionText}>{text}</Text>
+      </ContextMenuOption>
+    )
+  },
 )
 
 const MenuHeader = React.memo<{
@@ -121,9 +134,21 @@ const MenuHeader = React.memo<{
   </View>
 ))
 
-const OptionStar = React.memo(() => (
-  <ContextMenuIconTextOption IconComponent={IconFA} name="star-o" size={26} text="Star" />
-))
+const OptionStar = React.memo<{
+  id: string
+  type: string
+}>(({ id, type }) => {
+  const starred = useStarred(id, type)
+  const setStarred = useStore(selectMusic.starItem)
+
+  return (
+    <ContextMenuIconTextOption
+      IconComponentRaw={<Star starred={starred} size={26} />}
+      text={starred ? 'Unstar' : 'Star'}
+      onSelect={() => setStarred(id, type, starred)}
+    />
+  )
+})
 
 const OptionViewArtist = React.memo<{
   navigation: NavigationProp<any>
@@ -185,7 +210,7 @@ export const AlbumContextPressable: React.FC<AlbumContextPressableProps> = props
       menuHeader={<MenuHeader title={album.name} subtitle={album.artist} coverArt={album.coverArt} />}
       menuOptions={
         <>
-          <OptionStar />
+          <OptionStar id={album.id} type={album.itemType} />
           <OptionViewArtist artist={album.artist} artistId={album.artistId} navigation={navigation} />
           <OptionDownload itemType={album.itemType} />
         </>
@@ -209,7 +234,7 @@ export const SongContextPressable: React.FC<SongContextPressableProps> = props =
       menuHeader={<MenuHeader title={song.title} subtitle={song.artist} coverArt={song.coverArt} />}
       menuOptions={
         <>
-          <OptionStar />
+          <OptionStar id={song.id} type={song.itemType} />
           <OptionViewArtist artist={song.artist} artistId={song.artistId} navigation={navigation} />
           <OptionViewAlbum album={song.album} albumId={song.albumId} navigation={navigation} />
           <OptionDownload itemType={song.itemType} />
@@ -233,7 +258,7 @@ export const ArtistContextPressable: React.FC<ArtistContextPressableProps> = pro
       menuHeader={<MenuHeader title={artist.name} artistId={artist.id} />}
       menuOptions={
         <>
-          <OptionStar />
+          <OptionStar id={artist.id} type={artist.itemType} />
           <OptionDownload itemType={artist.itemType} />
         </>
       }>

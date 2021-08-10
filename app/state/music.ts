@@ -58,7 +58,9 @@ export type MusicSlice = {
   fetchHomeLists: () => Promise<void>
   clearHomeLists: () => void
 
-  starred: { [type: string]: { [id: string]: boolean } }
+  starredSongs: { [id: string]: boolean }
+  starredAlbums: { [id: string]: boolean }
+  starredArtists: { [id: string]: boolean }
   starItem: (id: string, type: string, unstar?: boolean) => Promise<void>
 }
 
@@ -94,7 +96,7 @@ export const selectMusic = {
 
 function reduceStarred(
   starredType: { [id: string]: boolean },
-  items: { id: string; starred?: Date }[],
+  items: { id: string; starred?: Date | boolean }[],
 ): { [id: string]: boolean } {
   return {
     ...starredType,
@@ -130,9 +132,9 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       set(
         produce<MusicSlice>(state => {
           state.artistInfo[id] = artistInfo
-          state.starred.song = reduceStarred(state.starred.song, artistInfo.topSongs)
-          state.starred.artist = reduceStarred(state.starred.artist, [artistInfo])
-          state.starred.album = reduceStarred(state.starred.album, artistInfo.albums)
+          state.starredSongs = reduceStarred(state.starredSongs, artistInfo.topSongs)
+          state.starredArtists = reduceStarred(state.starredArtists, [artistInfo])
+          state.starredAlbums = reduceStarred(state.starredAlbums, artistInfo.albums)
         }),
       )
       return artistInfo
@@ -156,8 +158,8 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       set(
         produce<MusicSlice>(state => {
           state.albumsWithSongs[id] = album
-          state.starred.song = reduceStarred(state.starred.song, album.songs)
-          state.starred.album = reduceStarred(state.starred.album, [album])
+          state.starredSongs = reduceStarred(state.starredSongs, album.songs)
+          state.starredAlbums = reduceStarred(state.starredAlbums, [album])
         }),
       )
       return album
@@ -181,7 +183,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       set(
         produce<MusicSlice>(state => {
           state.playlistsWithSongs[id] = playlist
-          state.starred.song = reduceStarred(state.starred.song, playlist.songs)
+          state.starredSongs = reduceStarred(state.starredSongs, playlist.songs)
         }),
       )
       return playlist
@@ -209,7 +211,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       set(
         produce<MusicSlice>(state => {
           state.artists = response.data.artists.map(mapArtistID3toArtist)
-          state.starred.artist = reduceStarred(state.starred.artist, state.artists)
+          state.starredArtists = reduceStarred(state.starredArtists, state.artists)
         }),
       )
     } finally {
@@ -258,7 +260,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       set(
         produce<MusicSlice>(state => {
           state.albums = response.data.albums.map(mapAlbumID3toAlbumListItem)
-          state.starred.albums = reduceStarred(state.starred.albums, state.albums)
+          state.starredAlbums = reduceStarred(state.starredAlbums, state.albums)
         }),
       )
     } finally {
@@ -298,9 +300,9 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
             albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
             songs: response.data.songs.map(a => mapChildToSong(a, client)),
           }
-          state.starred.song = reduceStarred(state.starred.song, state.searchResults.songs)
-          state.starred.artist = reduceStarred(state.starred.artist, state.searchResults.artists)
-          state.starred.album = reduceStarred(state.starred.album, state.searchResults.albums)
+          state.starredSongs = reduceStarred(state.starredSongs, state.searchResults.songs)
+          state.starredArtists = reduceStarred(state.starredArtists, state.searchResults.artists)
+          state.starredAlbums = reduceStarred(state.starredAlbums, state.searchResults.albums)
         }),
       )
     } finally {
@@ -341,7 +343,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
             set(
               produce<MusicSlice>(state => {
                 state.homeLists[type] = response.data.albums.map(mapAlbumID3toAlbumListItem)
-                state.starred.album = reduceStarred(state.starred.album, state.homeLists[type])
+                state.starredAlbums = reduceStarred(state.starredAlbums, state.homeLists[type])
               }),
             )
           }),
@@ -357,11 +359,9 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     set({ homeLists: {} })
   },
 
-  starred: {
-    song: {},
-    album: {},
-    artist: {},
-  },
+  starredSongs: {},
+  starredAlbums: {},
+  starredArtists: {},
 
   starItem: async (id, type, unstar = false) => {
     const client = get().client
@@ -370,29 +370,41 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     }
 
     let params: StarParams
+    let setStarred: (starred: boolean) => void
+
     switch (type) {
       case 'song':
         params = { id }
+        setStarred = starred => {
+          set(
+            produce<MusicSlice>(state => {
+              state.starredSongs = reduceStarred(state.starredSongs, [{ id, starred }])
+            }),
+          )
+        }
         break
       case 'album':
         params = { albumId: id }
+        setStarred = starred => {
+          set(
+            produce<MusicSlice>(state => {
+              state.starredAlbums = reduceStarred(state.starredAlbums, [{ id, starred }])
+            }),
+          )
+        }
         break
       case 'artist':
         params = { artistId: id }
+        setStarred = starred => {
+          set(
+            produce<MusicSlice>(state => {
+              state.starredArtists = reduceStarred(state.starredArtists, [{ id, starred }])
+            }),
+          )
+        }
         break
       default:
         return
-    }
-
-    const setStarred = (starred: boolean) => {
-      set(
-        produce<MusicSlice>(state => {
-          state.starred[type] = {
-            ...state.starred[type],
-            [id]: starred,
-          }
-        }),
-      )
     }
 
     try {

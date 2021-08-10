@@ -18,6 +18,9 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
+import Star from '@app/components/Star'
+import { useStarred } from '@app/hooks/music'
+import { selectMusic } from '@app/state/music'
 
 const NowPlayingHeader = React.memo<{
   backHandler: () => void
@@ -85,6 +88,10 @@ const coverArtStyles = StyleSheet.create({
 
 const SongInfo = () => {
   const track = useStore(selectTrackPlayer.currentTrack)
+  const id = track?.id || '-1'
+  const type = 'song'
+  const starred = useStarred(id, type)
+  const setStarred = useStore(selectMusic.starItem)
 
   return (
     <View style={infoStyles.container}>
@@ -97,8 +104,8 @@ const SongInfo = () => {
         </Text>
       </View>
       <View style={infoStyles.controls}>
-        <PressableOpacity onPress={undefined}>
-          <IconFA name="star-o" size={32} color={colors.text.secondary} />
+        <PressableOpacity onPress={() => setStarred(id, type, starred)}>
+          <Star size={32} starred={starred} />
         </PressableOpacity>
       </View>
     </View>

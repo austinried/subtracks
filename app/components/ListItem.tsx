@@ -9,12 +9,12 @@ import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
-import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } from './ContextMenu'
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
+import Star from './Star'
 
 const TitleTextSong = React.memo<{
   id: string
@@ -171,11 +171,7 @@ const ListItem: React.FC<{
       <View style={styles.controls}>
         {showStar ? (
           <PressableOpacity onPress={toggleStarred} style={styles.controlItem}>
-            {starred ? (
-              <IconFA name="star" size={26} color={colors.accent} />
-            ) : (
-              <IconFA name="star-o" size={26} color={colors.text.secondary} />
-            )}
+            <Star size={26} starred={starred} />
           </PressableOpacity>
         ) : (
           <></>
