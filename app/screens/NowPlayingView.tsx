@@ -260,7 +260,7 @@ const PlayerControls = () => {
         </View>
       </View>
       <View style={controlsStyles.bottom}>
-        <PressableOpacity onPress={undefined} disabled={disabled}>
+        <PressableOpacity onPress={undefined} disabled={true}>
           <IconMatCom name="cast-audio" size={20} color="white" />
         </PressableOpacity>
         <PressableOpacity onPress={() => navigation.navigate('queue')} disabled={disabled}>
