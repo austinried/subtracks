@@ -30,6 +30,7 @@ const createService = async () => {
       }
     },
     state => state.currentTrack,
+    (prev, next) => prev?.id === next?.id,
   )
 
   TrackPlayer.addEventListener(Event.RemoteStop, () => {
