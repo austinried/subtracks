@@ -82,6 +82,12 @@ const createService = async () => {
   TrackPlayer.addEventListener(Event.PlaybackMetadataReceived, () => {
     setCurrentTrackIdx(useStore.getState().currentTrackIdx)
   })
+
+  TrackPlayer.addEventListener(Event.RemoteSeek, data => {
+    trackPlayerCommands.enqueue(async () => {
+      await TrackPlayer.seekTo(data.position)
+    })
+  })
 }
 
 module.exports = async function () {

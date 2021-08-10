@@ -21,8 +21,8 @@ const ProgressBar = () => {
 
   return (
     <View style={progressStyles.container}>
-      <View style={{ ...progressStyles.left, flex: progress }} />
-      <View style={{ ...progressStyles.right, flex: 1 - progress }} />
+      <View style={[progressStyles.left, { flex: progress }]} />
+      <View style={[progressStyles.right, { flex: 1 - progress }]} />
     </View>
   )
 }
@@ -52,8 +52,6 @@ const NowPlayingBar = () => {
 
   switch (playerState) {
     case State.Playing:
-    case State.Buffering:
-    case State.Connecting:
       playPauseIcon = 'pause'
       playPauseAction = pause
       break

@@ -60,6 +60,13 @@ export const useSkipTo = () => {
     })
 }
 
+export const useSeekTo = () => {
+  return (position: number) =>
+    trackPlayerCommands.enqueue(async () => {
+      await TrackPlayer.seekTo(position)
+    })
+}
+
 export const useToggleRepeat = () => {
   const setRepeatMode = useStore(selectTrackPlayer.setRepeatMode)
 

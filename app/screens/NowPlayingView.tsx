@@ -3,7 +3,15 @@ import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import Star from '@app/components/Star'
 import { useStarred } from '@app/hooks/music'
-import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
+import {
+  useNext,
+  usePause,
+  usePlay,
+  usePrevious,
+  useSeekTo,
+  useToggleRepeat,
+  useToggleShuffle,
+} from '@app/hooks/trackplayer'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
@@ -12,7 +20,7 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { StatusBar, StyleSheet, Text, View } from 'react-native'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
@@ -21,6 +29,7 @@ import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
+import Slider from '@react-native-community/slider'
 
 function getContextName(type?: QueueContextType) {
   switch (type) {
@@ -131,7 +140,8 @@ const coverArtStyles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingBottom: 20,
+    paddingBottom: 10,
+    paddingHorizontal: 10,
   },
   image: {
     height: '100%',
@@ -169,6 +179,7 @@ const infoStyles = StyleSheet.create({
   container: {
     width: '100%',
     flexDirection: 'row',
+    paddingHorizontal: 10,
   },
   details: {
     flex: 1,
@@ -193,21 +204,46 @@ const infoStyles = StyleSheet.create({
 
 const SeekBar = () => {
   const { position, duration } = useStore(selectTrackPlayer.progress)
+  const seekTo = useSeekTo()
+  const [value, setValue] = useState(0)
+  const [sliding, setSliding] = useState(false)
 
-  let progress = 0
-  if (duration > 0) {
-    progress = position / duration
-  }
+  useEffect(() => {
+    if (sliding) {
+      return
+    }
+
+    setValue(position)
+  }, [position, sliding])
+
+  const onSlidingStart = useCallback(() => {
+    setSliding(true)
+  }, [])
+
+  const onSlidingComplete = useCallback(
+    async (val: number) => {
+      await seekTo(val)
+      setSliding(false)
+    },
+    [seekTo],
+  )
 
   return (
     <View style={seekStyles.container}>
       <View style={seekStyles.barContainer}>
-        <View style={{ ...seekStyles.bars, ...seekStyles.barLeft, flex: progress }} />
-        <View style={{ ...seekStyles.indicator }} />
-        <View style={{ ...seekStyles.bars, ...seekStyles.barRight, flex: 1 - progress }} />
+        <Slider
+          style={seekStyles.slider}
+          minimumTrackTintColor="white"
+          maximumTrackTintColor={colors.text.secondary}
+          thumbTintColor="white"
+          maximumValue={duration}
+          value={value}
+          onSlidingStart={onSlidingStart}
+          onSlidingComplete={onSlidingComplete}
+        />
       </View>
       <View style={seekStyles.textContainer}>
-        <Text style={seekStyles.text}>{formatDuration(position)}</Text>
+        <Text style={seekStyles.text}>{formatDuration(value)}</Text>
         <Text style={seekStyles.text}>{formatDuration(duration)}</Text>
       </View>
     </View>
@@ -217,16 +253,20 @@ const SeekBar = () => {
 const seekStyles = StyleSheet.create({
   container: {
     width: '100%',
-    marginTop: 26,
+    marginTop: 16,
   },
   barContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 0,
   },
   bars: {
     backgroundColor: colors.text.primary,
     height: 4,
+  },
+  slider: {
+    flex: 1,
+    height: 40,
   },
   barLeft: {
     marginRight: -6,
@@ -245,6 +285,7 @@ const seekStyles = StyleSheet.create({
   textContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
   text: {
     fontFamily: font.regular,
@@ -271,8 +312,6 @@ const PlayerControls = () => {
 
   switch (state) {
     case State.Playing:
-    case State.Buffering:
-    case State.Connecting:
       disabled = false
       playPauseIcon = 'pause-circle'
       playPauseAction = pause
@@ -327,6 +366,7 @@ const PlayerControls = () => {
 const controlsStyles = StyleSheet.create({
   container: {
     width: '100%',
+    paddingHorizontal: 10,
   },
   top: {
     flexDirection: 'row',
@@ -395,7 +435,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
   },
 })
 

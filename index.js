@@ -24,6 +24,7 @@ async function start() {
       Capability.Stop,
       Capability.SkipToNext,
       Capability.SkipToPrevious,
+      Capability.SeekTo,
     ],
     compactCapabilities: [
       Capability.Play, //
