@@ -5,7 +5,7 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import { useArtistInfo } from '@app/hooks/music'
-import { useSetQueue } from '@app/hooks/trackplayer'
+import { useIsPlaying, useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/music'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -45,6 +45,7 @@ const TopSongs = React.memo<{
   artistId: string
 }>(({ songs, name, artistId }) => {
   const setQueue = useSetQueue()
+  const isPlaying = useIsPlaying()
 
   return (
     <>
@@ -53,6 +54,7 @@ const TopSongs = React.memo<{
         <ListItem
           key={i}
           item={s}
+          isPlaying={() => isPlaying(artistId, i)}
           showArt={true}
           subtitle={s.album}
           onPress={() => setQueue(songs, name, 'artist', artistId, i)}

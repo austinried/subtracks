@@ -243,6 +243,18 @@ export const useSetQueue = () => {
     })
 }
 
+export const useIsPlaying = () => {
+  const queueContextId = useStore(selectTrackPlayer.queueContextId)
+  const currentTrackIdx = useStore(selectTrackPlayer.currentTrackIdx)
+
+  return (contextId: string | undefined, track: number) => {
+    if (contextId === undefined) {
+      return track === currentTrackIdx
+    }
+    return contextId === queueContextId && track === currentTrackIdx
+  }
+}
+
 function mapSongToTrack(song: Song, coverArtUri: (coverArt?: string) => string | undefined): TrackExt {
   return {
     id: song.id,

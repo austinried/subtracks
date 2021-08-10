@@ -2,7 +2,6 @@ import { useStarred } from '@app/hooks/music'
 import { AlbumListItem, Artist, ListableItem, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -17,16 +16,23 @@ import PressableOpacity from './PressableOpacity'
 import Star from './Star'
 
 const TitleTextSong = React.memo<{
-  id: string
+  isPlaying?: () => boolean
   title?: string
-}>(({ id, title }) => {
-  const currentTrack = useStore(selectTrackPlayer.currentTrack)
-  const playing = currentTrack?.id === id
+}>(({ isPlaying, title }) => {
+  const playing = () => isPlaying && isPlaying()
 
   return (
     <View style={styles.textLine}>
-      {playing ? <IconFA5 name="play" size={10} color={colors.accent} style={styles.playingIcon} /> : <></>}
-      <Text style={[styles.title, { color: playing ? colors.accent : colors.text.primary }]}>{title}</Text>
+      <Text style={[styles.title, { color: playing() ? colors.accent : colors.text.primary }]}>
+        {playing() ? (
+          <View style={styles.playingIcon}>
+            <IconFA5 name="play" size={9} color={colors.accent} />
+          </View>
+        ) : (
+          <></>
+        )}
+        {title}
+      </Text>
     </View>
   )
 })
@@ -43,12 +49,13 @@ const TitleText = React.memo<{
 
 const ListItem: React.FC<{
   item: ListableItem
+  isPlaying?: () => boolean
   onPress?: () => void
   showArt?: boolean
   showStar?: boolean
   listStyle?: 'big' | 'small'
   subtitle?: string
-}> = ({ item, onPress, showArt, showStar, subtitle, listStyle }) => {
+}> = ({ item, isPlaying, onPress, showArt, showStar, subtitle, listStyle }) => {
   const navigation = useNavigation()
   const starred = useStarred(item.id, item.itemType)
 
@@ -145,7 +152,7 @@ const ListItem: React.FC<{
         )}
         <View style={styles.text}>
           {item.itemType === 'song' ? (
-            <TitleTextSong id={item.id} title={item.title} />
+            <TitleTextSong isPlaying={isPlaying} title={item.title} />
           ) : (
             <TitleText title={item.name} />
           )}
@@ -211,8 +218,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   playingIcon: {
-    marginRight: 5,
-    marginLeft: 1,
+    paddingRight: 4,
+    paddingBottom: 1,
   },
   downloadedIcon: {
     marginRight: 2,

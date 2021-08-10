@@ -5,7 +5,7 @@ import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
 import { useAlbumWithSongs, useCoverArtUri, usePlaylistWithSongs } from '@app/hooks/music'
-import { useSetQueue } from '@app/hooks/trackplayer'
+import { useIsPlaying, useSetQueue } from '@app/hooks/trackplayer'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -28,6 +28,7 @@ const Songs = React.memo<{
   itemId: string
 }>(({ songs, name, type, itemId }) => {
   const setQueue = useSetQueue()
+  const isPlaying = useIsPlaying()
 
   const _songs = [...songs]
   let typeName = ''
@@ -56,6 +57,7 @@ const Songs = React.memo<{
           <ListItem
             key={i}
             item={s}
+            isPlaying={() => isPlaying(itemId, i)}
             subtitle={s.artist}
             onPress={() => setQueue(songs, name, type, itemId, i)}
             showArt={type === 'playlist'}
