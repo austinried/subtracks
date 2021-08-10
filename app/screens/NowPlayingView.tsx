@@ -1,26 +1,26 @@
+import CoverArt from '@app/components/CoverArt'
+import ImageGradientBackground from '@app/components/ImageGradientBackground'
+import PressableOpacity from '@app/components/PressableOpacity'
+import Star from '@app/components/Star'
+import { useStarred } from '@app/hooks/music'
+import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
+import { selectMusic } from '@app/state/music'
+import { useStore } from '@app/state/store'
+import { selectTrackPlayer } from '@app/state/trackplayer'
+import colors from '@app/styles/colors'
+import dimensions from '@app/styles/dimensions'
+import font from '@app/styles/font'
+import formatDuration from '@app/util/formatDuration'
+import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect } from 'react'
-import { BackHandler, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
-import colors from '@app/styles/colors'
-import font from '@app/styles/font'
-import formatDuration from '@app/util/formatDuration'
-import CoverArt from '@app/components/CoverArt'
-import ImageGradientBackground from '@app/components/ImageGradientBackground'
-import PressableOpacity from '@app/components/PressableOpacity'
-import dimensions from '@app/styles/dimensions'
-import { NativeStackScreenProps } from 'react-native-screens/native-stack'
-import { useFocusEffect } from '@react-navigation/native'
-import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
-import { useNext, usePause, usePlay, usePrevious, useToggleRepeat, useToggleShuffle } from '@app/hooks/trackplayer'
-import Star from '@app/components/Star'
-import { useStarred } from '@app/hooks/music'
-import { selectMusic } from '@app/state/music'
 
 const NowPlayingHeader = React.memo<{
   backHandler: () => void
@@ -210,6 +210,7 @@ const PlayerControls = () => {
   const toggleShuffle = useToggleShuffle()
   const repeatMode = useStore(selectTrackPlayer.repeatMode)
   const toggleRepeat = useToggleRepeat()
+  const navigation = useNavigation()
 
   let playPauseIcon: string
   let playPauseAction: undefined | (() => void)
@@ -262,7 +263,7 @@ const PlayerControls = () => {
         <PressableOpacity onPress={undefined} disabled={disabled}>
           <IconMatCom name="cast-audio" size={20} color="white" />
         </PressableOpacity>
-        <PressableOpacity onPress={undefined} disabled={disabled}>
+        <PressableOpacity onPress={() => navigation.navigate('queue')} disabled={disabled}>
           <IconMatCom name="playlist-play" size={24} color="white" />
         </PressableOpacity>
       </View>
@@ -306,21 +307,16 @@ const controlsStyles = StyleSheet.create({
 })
 
 type RootStackParamList = {
+  top: undefined
   main: undefined
-  'now-playing': undefined
 }
-type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'now-playing'>
+type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'main'>
 
 const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
   const track = useStore(selectTrackPlayer.currentTrack)
 
   const back = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.popToTop()
-    } else {
-      navigation.navigate('main')
-    }
-    return true
+    navigation.navigate('top')
   }, [navigation])
 
   useEffect(() => {
@@ -328,14 +324,6 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
       back()
     }
   })
-
-  useFocusEffect(
-    useCallback(() => {
-      BackHandler.addEventListener('hardwareBackPress', back)
-
-      return () => BackHandler.removeEventListener('hardwareBackPress', back)
-    }, [back]),
-  )
 
   return (
     <View style={styles.container}>

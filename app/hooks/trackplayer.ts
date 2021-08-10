@@ -47,6 +47,18 @@ export const useNext = () => {
     })
 }
 
+export const useSkipTo = () => {
+  return (track: number) =>
+    trackPlayerCommands.enqueue(async () => {
+      const queue = await getQueue()
+      if (track < 0 || track >= queue.length) {
+        return
+      }
+      await TrackPlayer.skip(track)
+      await TrackPlayer.play()
+    })
+}
+
 export const useToggleRepeat = () => {
   const setRepeatMode = useStore(selectTrackPlayer.setRepeatMode)
 
@@ -209,10 +221,6 @@ export const useSetQueue = () => {
 
         await TrackPlayer.add(tracks1, 0)
       }
-
-      // setQueue(await getQueue())
-      // setCurrentTrackIdx(playTrack)
-      // setQueueName(name)
     })
 }
 
@@ -226,5 +234,18 @@ function mapSongToTrack(song: Song, coverArtUri: (coverArt?: string) => string |
     artwork: coverArtUri(song.coverArt),
     coverArt: song.coverArt,
     duration: song.duration,
+  }
+}
+
+export function mapTrackExtToSong(track: TrackExt): Song {
+  return {
+    itemType: 'song',
+    id: track.id,
+    title: track.title as string,
+    artist: track.artist,
+    album: track.album,
+    streamUri: track.url as string,
+    coverArt: track.coverArt,
+    duration: track.duration,
   }
 }
