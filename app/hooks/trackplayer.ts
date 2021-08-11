@@ -246,10 +246,15 @@ export const useSetQueue = () => {
 export const useIsPlaying = () => {
   const queueContextId = useStore(selectTrackPlayer.queueContextId)
   const currentTrackIdx = useStore(selectTrackPlayer.currentTrackIdx)
+  const shuffleOrder = useStore(selectTrackPlayer.shuffleOrder)
 
   return (contextId: string | undefined, track: number) => {
     if (contextId === undefined) {
       return track === currentTrackIdx
+    }
+    if (shuffleOrder) {
+      const shuffledTrack = shuffleOrder.findIndex(i => i === track)
+      track = shuffledTrack !== undefined ? shuffledTrack : -1
     }
     return contextId === queueContextId && track === currentTrackIdx
   }
