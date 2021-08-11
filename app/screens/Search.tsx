@@ -3,7 +3,7 @@ import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import { useActiveListRefresh2 } from '@app/hooks/server'
-import { useIsPlaying, useSetQueue } from '@app/hooks/trackplayer'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { ListableItem, SearchResults, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
@@ -15,12 +15,12 @@ import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
   const setQueue = useSetQueue()
-  const isPlaying = useIsPlaying()
 
   return (
     <ListItem
       item={item}
-      isPlaying={() => isPlaying(item.id, 0)}
+      contextId={item.id}
+      queueId={0}
       showArt={true}
       showStar={false}
       onPress={() => setQueue([item], item.title, 'song', item.id, 0)}

@@ -135,6 +135,7 @@ function unshuffleTracks(tracks: TrackExt[], shuffleOrder: number[]): TrackExt[]
 }
 
 export const useToggleShuffle = () => {
+  const setCurrentTrackIdx = useStore(selectTrackPlayer.setCurrentTrackIdx)
   const setQueue = useStore(selectTrackPlayer.setQueue)
   const setShuffleOrder = useStore(selectTrackPlayer.setShuffleOrder)
   const getShuffleOrder = useCallback(() => useStore.getState().shuffleOrder, [])
@@ -176,6 +177,7 @@ export const useToggleShuffle = () => {
       }
 
       setQueue(await getQueue())
+      setCurrentTrackIdx(await getCurrentTrack())
       setProgress(progress)
     })
   }
@@ -243,21 +245,23 @@ export const useSetQueue = () => {
     })
 }
 
-export const useIsPlaying = () => {
+export const useIsPlaying = (contextId: string | undefined, track: number) => {
   const queueContextId = useStore(selectTrackPlayer.queueContextId)
   const currentTrackIdx = useStore(selectTrackPlayer.currentTrackIdx)
   const shuffleOrder = useStore(selectTrackPlayer.shuffleOrder)
 
-  return (contextId: string | undefined, track: number) => {
-    if (contextId === undefined) {
-      return track === currentTrackIdx
-    }
-    if (shuffleOrder) {
-      const shuffledTrack = shuffleOrder.findIndex(i => i === track)
-      track = shuffledTrack !== undefined ? shuffledTrack : -1
-    }
-    return contextId === queueContextId && track === currentTrackIdx
+  if (contextId === undefined) {
+    console.log(currentTrackIdx)
+    return track === currentTrackIdx
   }
+
+  if (shuffleOrder) {
+    console.log('asdf')
+    const shuffledTrack = shuffleOrder.findIndex(i => i === track)
+    track = shuffledTrack !== undefined ? shuffledTrack : -1
+  }
+
+  return contextId === queueContextId && track === currentTrackIdx
 }
 
 function mapSongToTrack(song: Song, coverArtUri: (coverArt?: string) => string | undefined): TrackExt {

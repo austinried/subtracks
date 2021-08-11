@@ -327,7 +327,7 @@ const PlayerControls = () => {
     <View style={controlsStyles.container}>
       <View style={controlsStyles.top}>
         <View style={controlsStyles.center}>
-          <PressableOpacity onPress={() => toggleRepeat()} disabled={disabled}>
+          <PressableOpacity onPress={() => toggleRepeat()} disabled={disabled} hitSlop={16}>
             <Icon name="repeat" size={26} color={repeatMode === RepeatMode.Off ? 'white' : colors.accent} />
             <Text style={[controlsStyles.repeatExt, repeatMode === RepeatMode.Track ? { opacity: 1 } : {}]}>1</Text>
           </PressableOpacity>
@@ -346,16 +346,16 @@ const PlayerControls = () => {
         </View>
 
         <View style={controlsStyles.center}>
-          <PressableOpacity onPress={() => toggleShuffle()} disabled={disabled}>
+          <PressableOpacity onPress={() => toggleShuffle()} disabled={disabled} hitSlop={16}>
             <Icon name="shuffle" size={26} color={shuffled ? colors.accent : 'white'} />
           </PressableOpacity>
         </View>
       </View>
       <View style={controlsStyles.bottom}>
-        <PressableOpacity onPress={undefined} disabled={true}>
+        <PressableOpacity onPress={undefined} disabled={true} hitSlop={16}>
           <IconMatCom name="cast-audio" size={20} color="white" />
         </PressableOpacity>
-        <PressableOpacity onPress={() => navigation.navigate('queue')} disabled={disabled}>
+        <PressableOpacity onPress={() => navigation.navigate('queue')} disabled={disabled} hitSlop={16}>
           <IconMatCom name="playlist-play" size={24} color="white" />
         </PressableOpacity>
       </View>

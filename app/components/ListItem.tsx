@@ -1,4 +1,5 @@
 import { useStarred } from '@app/hooks/music'
+import { useIsPlaying } from '@app/hooks/trackplayer'
 import { AlbumListItem, Artist, ListableItem, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
@@ -16,15 +17,16 @@ import PressableOpacity from './PressableOpacity'
 import Star from './Star'
 
 const TitleTextSong = React.memo<{
-  isPlaying?: () => boolean
+  contextId?: string
+  queueId: number
   title?: string
-}>(({ isPlaying, title }) => {
-  const playing = () => isPlaying && isPlaying()
+}>(({ contextId, queueId, title }) => {
+  const playing = useIsPlaying(contextId, queueId)
 
   return (
     <View style={styles.textLine}>
-      <Text style={[styles.title, { color: playing() ? colors.accent : colors.text.primary }]}>
-        {playing() ? (
+      <Text style={[styles.title, { color: playing ? colors.accent : colors.text.primary }]}>
+        {playing ? (
           <View style={styles.playingIcon}>
             <IconFA5 name="play" size={9} color={colors.accent} />
           </View>
@@ -49,13 +51,14 @@ const TitleText = React.memo<{
 
 const ListItem: React.FC<{
   item: ListableItem
-  isPlaying?: () => boolean
+  contextId?: string
+  queueId?: number
   onPress?: () => void
   showArt?: boolean
   showStar?: boolean
   listStyle?: 'big' | 'small'
   subtitle?: string
-}> = ({ item, isPlaying, onPress, showArt, showStar, subtitle, listStyle }) => {
+}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle }) => {
   const navigation = useNavigation()
   const starred = useStarred(item.id, item.itemType)
 
@@ -138,6 +141,13 @@ const ListItem: React.FC<{
     starItem(item.id, item.itemType, starred)
   }, [item.id, item.itemType, starItem, starred])
 
+  let title = <></>
+  if (item.itemType === 'song' && queueId !== undefined) {
+    title = <TitleTextSong contextId={contextId} queueId={queueId} title={item.title} />
+  } else if (item.itemType !== 'song') {
+    title = <TitleText title={item.name} />
+  }
+
   return (
     <View style={[styles.container, sizeStyle.container]}>
       <PressableComponent>
@@ -151,11 +161,7 @@ const ListItem: React.FC<{
           <></>
         )}
         <View style={styles.text}>
-          {item.itemType === 'song' ? (
-            <TitleTextSong isPlaying={isPlaying} title={item.title} />
-          ) : (
-            <TitleText title={item.name} />
-          )}
+          {title}
           {subtitle ? (
             <View style={styles.textLine}>
               {starred ? (
