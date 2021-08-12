@@ -3,8 +3,8 @@ import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
+import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
-import PressableOpacity from '@app/components/PressableOpacity'
 import { useArtistInfo } from '@app/hooks/music'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/music'
@@ -13,11 +13,10 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback } from 'react'
-import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
+import React from 'react'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
-import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
+import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
 const AlbumItem = React.memo<{
   album: Album
@@ -74,62 +73,6 @@ const ArtistDetailsFallback = React.memo(() => (
   </GradientBackground>
 ))
 
-const NowPlayingHeader = React.memo<{ title: string; animatedOpacity: { opacity: number } }>(
-  ({ title, animatedOpacity }) => {
-    const navigation = useNavigation()
-
-    const back = useCallback(() => {
-      navigation.goBack()
-    }, [navigation])
-
-    return (
-      <Animated.View style={[headerStyles.container, animatedOpacity]}>
-        <PressableOpacity onPress={back} style={headerStyles.icons} ripple={true}>
-          <IconMat name="arrow-back" color="white" size={25} />
-        </PressableOpacity>
-        <View style={headerStyles.center}>
-          <Text numberOfLines={1} style={headerStyles.queueName}>
-            {title}
-          </Text>
-        </View>
-        {/* <PressableOpacity style={headerStyles.icons} ripple={true}>
-          <IconMat name="more-vert" color="white" size={25} />
-        </PressableOpacity> */}
-      </Animated.View>
-    )
-  },
-)
-
-const headerStyles = StyleSheet.create({
-  container: {
-    height: dimensions.top(),
-    paddingTop: StatusBar.currentHeight,
-    backgroundColor: colors.gradient.high,
-    width: '100%',
-    position: 'absolute',
-    zIndex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  icons: {
-    height: 42,
-    width: 42,
-    marginHorizontal: 8,
-  },
-  center: {
-    flex: 1,
-  },
-  queueName: {
-    fontFamily: font.semiBold,
-    fontSize: 18,
-    color: colors.text.primary,
-    flex: 1,
-    textAlignVertical: 'center',
-    paddingLeft: 14,
-  },
-})
-
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
   const artist = useArtistInfo(id)
   const albumsLayout = useLayout()
@@ -160,7 +103,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 
   return (
     <View style={{ flex: 1 }}>
-      <NowPlayingHeader title={title} animatedOpacity={animatedOpacity} />
+      <HeaderBar title={title} headerStyle={[styles.header, animatedOpacity]} />
       <GradientScrollView
         onLayout={coverLayout.onLayout}
         offset={artistCoverHeight}
@@ -198,13 +141,9 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 const artistCoverHeight = 350
 
 const styles = StyleSheet.create({
-  headerText: {
-    flex: 1,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    fontFamily: font.semiBold,
-    fontSize: 22,
-    color: colors.text.primary,
+  header: {
+    position: 'absolute',
+    zIndex: 1,
   },
   scroll: {
     flex: 1,

@@ -1,4 +1,5 @@
 import CoverArt from '@app/components/CoverArt'
+import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import Star from '@app/components/Star'
@@ -16,20 +17,18 @@ import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
-import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
+import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
-import Slider from '@react-native-community/slider'
 
 function getContextName(type?: QueueContextType) {
   switch (type) {
@@ -54,10 +53,6 @@ const NowPlayingHeader = React.memo(() => {
 
   let contextName = getContextName(queueContextType)
 
-  const back = useCallback(() => {
-    navigation.navigate('top')
-  }, [navigation])
-
   const goToContext = useCallback(() => {
     if (!queueContextType || !queueContextId || queueContextType === 'song') {
       return
@@ -67,61 +62,42 @@ const NowPlayingHeader = React.memo(() => {
   }, [navigation, queueContextId, queueContextType, queueName])
 
   return (
-    <View style={headerStyles.container}>
-      <PressableOpacity onPress={back} style={headerStyles.icons} ripple={true}>
-        <IconMat name="arrow-back" color="white" size={25} />
-      </PressableOpacity>
-      <View style={headerStyles.center}>
-        {contextName ? (
-          <Text numberOfLines={1} style={headerStyles.queueType}>
-            {contextName}
+    <HeaderBar
+      headerStyle={{ backgroundColor: 'transparent' }}
+      onMore={goToContext}
+      HeaderCenter={() => (
+        <View style={headerStyles.center}>
+          {contextName ? (
+            <Text numberOfLines={1} style={headerStyles.queueType}>
+              {contextName}
+            </Text>
+          ) : (
+            <></>
+          )}
+          <Text numberOfLines={1} style={headerStyles.queueName}>
+            {queueName || 'Nothing playing...'}
           </Text>
-        ) : (
-          <></>
-        )}
-        <Text numberOfLines={1} style={headerStyles.queueName}>
-          {queueName || 'Nothing playing...'}
-        </Text>
-      </View>
-      <PressableOpacity
-        onPress={goToContext}
-        style={headerStyles.icons}
-        disabled={queueContextType === 'song'}
-        ripple={true}>
-        <IconMat name="more-vert" color="white" size={25} />
-      </PressableOpacity>
-    </View>
+        </View>
+      )}
+    />
   )
 })
 
 const headerStyles = StyleSheet.create({
-  container: {
-    height: dimensions.header,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  icons: {
-    height: 42,
-    width: 42,
-    marginHorizontal: 8,
-  },
   center: {
     flex: 1,
+    justifyContent: 'center',
   },
   queueType: {
     fontFamily: font.regular,
     fontSize: 14,
     color: colors.text.primary,
-    // flex: 1,
     textAlign: 'center',
   },
   queueName: {
     fontFamily: font.bold,
     fontSize: 16,
     color: colors.text.primary,
-    // flex: 1,
     textAlign: 'center',
   },
 })
@@ -431,7 +407,7 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight,
+    // paddingTop: StatusBar.currentHeight,
   },
   content: {
     flex: 1,
