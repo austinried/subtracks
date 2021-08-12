@@ -2,10 +2,11 @@ import GradientBackground from '@app/components/GradientBackground'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import React from 'react'
-import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
+import { ScrollViewProps, useWindowDimensions } from 'react-native'
+import Animated from 'react-native-reanimated'
 
 const GradientScrollView: React.FC<
-  ScrollViewProps & {
+  Animated.AnimateProps<ScrollViewProps> & {
     offset?: number
   }
 > = props => {
@@ -14,14 +15,14 @@ const GradientScrollView: React.FC<
   const minHeight = layout.height - (dimensions.top() + dimensions.bottom())
 
   return (
-    <ScrollView
+    <Animated.ScrollView
       overScrollMode="never"
       {...props}
       style={[props.style, { backgroundColor: colors.gradient.low }]}
-      contentContainerStyle={[props.contentContainerStyle, { minHeight }]}>
+      contentContainerStyle={[props.contentContainerStyle as any, { minHeight }]}>
       <GradientBackground style={{ top: props.offset }} />
       {props.children}
-    </ScrollView>
+    </Animated.ScrollView>
   )
 }
 
