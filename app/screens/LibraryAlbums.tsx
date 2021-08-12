@@ -22,7 +22,8 @@ const AlbumItem = React.memo<{
   return (
     <AlbumContextPressable
       album={album}
-      triggerWrapperStyle={[styles.item, { maxWidth: size, height }]}
+      menuStyle={[styles.itemMenu, { width: size }]}
+      triggerWrapperStyle={[styles.itemWrapper, { height }]}
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
       <CoverArt
         coverArt={album.coverArt}
@@ -54,7 +55,7 @@ const AlbumsList = () => {
 
   const layout = useWindowDimensions()
 
-  const size = layout.width / 3 - styles.item.marginHorizontal * 2
+  const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
 
   const albumsList = list.map(album => ({ album, size, height }))
@@ -88,15 +89,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  item: {
-    // alignItems: 'center',
-    marginVertical: 4,
-    marginHorizontal: 3,
+  itemMenu: {
     flex: 1 / 3,
+  },
+  itemWrapper: {
+    marginVertical: 4,
+    marginHorizontal: 2,
   },
   itemDetails: {
     flex: 1,
-    // width: '100%',
   },
   title: {
     fontSize: 12,
