@@ -63,16 +63,32 @@ export const useStarred = (id: string, type: string) => {
 }
 
 export const useCoverArtFile = (coverArt: string = '-1') => {
-  const file = useStore(useCallback((state: Store) => state.cachedCoverArt[coverArt], [coverArt]))
+  const existing = useStore(
+    useCallback(
+      (state: Store) => {
+        const activeServerId = state.settings.activeServer
+        if (!activeServerId) {
+          return
+        }
+        return state.cache[activeServerId].files.coverArt[coverArt]
+      },
+      [coverArt],
+    ),
+  )
+  const progress = useStore(useCallback((state: Store) => state.cachedCoverArt[coverArt], [coverArt]))
   const cacheCoverArt = useStore(selectCache.cacheCoverArt)
 
   useEffect(() => {
-    if (!file) {
+    if (!existing) {
       cacheCoverArt(coverArt)
     }
   })
 
-  return file
+  if (existing && progress && progress.promise !== undefined) {
+    return
+  }
+
+  return existing
 }
 
 export const useArtistCoverArtFile = (artistId: string) => {

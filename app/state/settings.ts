@@ -61,11 +61,21 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
 
     set(
       produce<Store>(state => {
-        state.settings.activeServer = id
+        state.settings.activeServer = newActiveServer.id
         state.client = new SubsonicApiClient(newActiveServer)
         state.coverArtDir = coverArtDir
         state.artistArtDir = artistArtDir
         state.songsDir = songsDir
+        state.cache[newActiveServer.id] = state.cache[newActiveServer.id] || {
+          files: {
+            coverArt: {},
+            artistArt: {},
+            songs: {},
+          },
+          songs: {},
+          albums: {},
+          artists: {},
+        }
       }),
     )
   },

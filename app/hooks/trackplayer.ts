@@ -211,7 +211,7 @@ export const useSetQueue = () => {
         return
       }
 
-      const coverArtPaths: { [coverArt: string]: string } = {}
+      const coverArtPaths: { [coverArt: string]: string | undefined } = {}
       for (const s of songs) {
         if (!s.coverArt) {
           continue
@@ -271,14 +271,17 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
-function mapSongToTrack(song: Song, coverArtPaths: { [coverArt: string]: string }): TrackExt {
+function mapSongToTrack(song: Song, coverArtPaths: { [coverArt: string]: string | undefined }): TrackExt {
   return {
     id: song.id,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
     album: song.album || 'Unknown Album',
     url: song.streamUri,
-    artwork: song.coverArt ? `file://${coverArtPaths[song.coverArt]}` : require('@res/fallback.png'),
+    artwork:
+      song.coverArt && coverArtPaths[song.coverArt]
+        ? `file://${coverArtPaths[song.coverArt]}`
+        : require('@res/fallback.png'),
     coverArt: song.coverArt,
     duration: song.duration,
   }

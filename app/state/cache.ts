@@ -1,4 +1,11 @@
-import { Song } from '@app/models/music'
+import {
+  CachedFile,
+  DownloadedAlbum,
+  DownloadedArtist,
+  DownloadedPlaylist,
+  DownloadedSong,
+  Song,
+} from '@app/models/music'
 import PromiseQueue from '@app/util/PromiseQueue'
 import { SetState, GetState } from 'zustand'
 import { Store } from './store'
@@ -7,31 +14,40 @@ import RNFS from 'react-native-fs'
 
 const imageDownloadQueue = new PromiseQueue(10)
 
-export type DownloadFile = {
-  path: string
-  date: number
+type DownloadProgress = {
   progress: number
   promise?: Promise<void>
 }
+
+export type CacheDownload = CachedFile & DownloadProgress
 
 export type CacheSlice = {
   coverArtDir?: string
   artistArtDir?: string
   songsDir?: string
 
-  cachedCoverArt: { [coverArt: string]: DownloadFile }
-  downloadedCoverArt: { [coverArt: string]: DownloadFile }
+  cache: {
+    [serverId: string]: {
+      files: {
+        coverArt: { [coverArt: string]: CachedFile }
+        artistArt: { [artistId: string]: CachedFile }
+        songs: { [songId: string]: CachedFile }
+      }
+      songs: { [songId: string]: DownloadedSong }
+      albums: { [albumId: string]: DownloadedAlbum }
+      artists: { [songId: string]: DownloadedArtist }
+      playlists: { [playlistId: string]: DownloadedPlaylist }
+    }
+  }
 
+  cachedCoverArt: { [coverArt: string]: DownloadProgress }
   cacheCoverArt: (coverArt: string) => Promise<void>
-  getCoverArtPath: (coverArt: string) => Promise<string>
+  getCoverArtPath: (coverArt: string) => Promise<string | undefined>
 
-  cachedArtistArt: { [artistId: string]: DownloadFile }
-  downloadedArtistArt: { [artistId: string]: DownloadFile }
-
+  cachedArtistArt: { [artistId: string]: CacheDownload }
   cacheArtistArt: (artistId: string, url?: string) => Promise<void>
 
-  cachedSongs: { [id: string]: DownloadFile }
-  downloadedSongs: { [id: string]: DownloadFile }
+  cachedSongs: { [id: string]: CacheDownload }
 
   albumCoverArt: { [id: string]: string | undefined }
   albumCoverArtRequests: { [id: string]: Promise<void> }
@@ -49,8 +65,9 @@ export const selectCache = {
 }
 
 export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): CacheSlice => ({
+  cache: {},
+
   cachedCoverArt: {},
-  downloadedCoverArt: {},
 
   cacheCoverArt: async coverArt => {
     const client = get().client
@@ -58,16 +75,26 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const path = `${get().coverArtDir}/${coverArt}`
+    const activeServerId = get().settings.activeServer
+    if (!activeServerId) {
+      return
+    }
 
-    const existing = get().cachedCoverArt[coverArt]
-    if (existing) {
-      if (existing.promise !== undefined) {
-        return await existing.promise
+    const inProgress = get().cachedCoverArt[coverArt]
+    if (inProgress) {
+      if (inProgress.promise !== undefined) {
+        return await inProgress.promise
       } else {
         return
       }
     }
+
+    const existing = get().cache[activeServerId].files.coverArt[coverArt]
+    if (existing) {
+      return
+    }
+
+    const path = `${get().coverArtDir}/${coverArt}`
 
     const promise = imageDownloadQueue
       .enqueue(
@@ -86,10 +113,13 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
         )
       })
     set(
-      produce<CacheSlice>(state => {
-        state.cachedCoverArt[coverArt] = {
+      produce<Store>(state => {
+        state.cache[activeServerId].files.coverArt[coverArt] = {
           path,
           date: Date.now(),
+          permanent: false,
+        }
+        state.cachedCoverArt[coverArt] = {
           progress: 0,
           promise,
         }
@@ -99,20 +129,25 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
   },
 
   getCoverArtPath: async coverArt => {
-    const existing = get().cachedCoverArt[coverArt]
-    if (existing) {
-      if (existing.promise) {
-        await existing.promise
+    const activeServerId = get().settings.activeServer
+    if (!activeServerId) {
+      return
+    }
+
+    const existing = get().cache[activeServerId].files.coverArt[coverArt]
+    const inProgress = get().cachedCoverArt[coverArt]
+    if (existing && inProgress) {
+      if (inProgress.promise) {
+        await inProgress.promise
       }
       return existing.path
     }
 
     await get().cacheCoverArt(coverArt)
-    return get().cachedCoverArt[coverArt].path
+    return get().cache[activeServerId].files.coverArt[coverArt].path
   },
 
   cachedArtistArt: {},
-  downloadedArtistArt: {},
 
   cacheArtistArt: async (artistId, url) => {
     if (!url) {
@@ -157,6 +192,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
           path,
           date: Date.now(),
           progress: 0,
+          permanent: false,
           promise,
         }
       }),
@@ -164,7 +200,6 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
   },
 
   cachedSongs: {},
-  downloadedSongs: {},
 
   albumCoverArt: {},
   albumCoverArtRequests: {},

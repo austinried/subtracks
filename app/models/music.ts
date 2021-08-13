@@ -19,11 +19,7 @@ export interface Artist {
 
 export interface ArtistInfo extends Artist {
   albums: Album[]
-
-  smallImageUrl?: string
-  mediumImageUrl?: string
   largeImageUrl?: string
-
   topSongs: Song[]
 }
 
@@ -62,7 +58,6 @@ export interface PlaylistListItem {
 
 export interface PlaylistWithSongs extends PlaylistListItem {
   songs: Song[]
-  coverArt?: string
 }
 
 export interface Song {
@@ -85,35 +80,26 @@ export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 
 export type HomeLists = { [key: string]: AlbumListItem[] }
 
-export type DownloadedSong = {
-  id: string
-  type: 'song'
-  name: string
-  album: string
-  artist: string
+export type CachedFile = {
+  path: string
+  date: number
+  permanent: boolean
 }
 
-export type DownloadedAlbum = {
-  id: string
-  type: 'album'
+export type DownloadedAlbum = Album & {
   songs: string[]
-  name: string
-  artist: string
 }
 
-export type DownloadedArtist = {
-  id: string
-  type: 'artist'
+export type DownloadedPlaylist = PlaylistListItem & {
   songs: string[]
-  name: string
 }
 
-export type DownloadedPlaylist = {
-  id: string
-  type: 'playlist'
-  songs: string[]
-  name: string
+export type DownloadedArtist = Artist & {
+  topSongs: string[]
+  albums: string[]
 }
+
+export type DownloadedSong = Song
 
 export function mapArtistID3toArtist(artist: ArtistID3Element): Artist {
   return {
@@ -138,8 +124,6 @@ export function mapArtistInfo(
   return {
     ...mapArtistID3toArtist(artist),
     albums: mappedAlbums,
-    smallImageUrl: info.smallImageUrl,
-    mediumImageUrl: info.mediumImageUrl,
     largeImageUrl: info.largeImageUrl,
     topSongs: topSongs.map(s => mapChildToSong(s, client)).slice(0, 5),
   }

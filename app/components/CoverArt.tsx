@@ -1,5 +1,5 @@
 import { useArtistCoverArtFile, useCoverArtFile } from '@app/hooks/music'
-import { DownloadFile } from '@app/state/cache'
+import { CachedFile } from '@app/models/music'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, View, ViewStyle } from 'react-native'
@@ -22,11 +22,11 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const Image = React.memo<{ file?: DownloadFile } & BaseProps>(({ file, style, imageStyle, resizeMode }) => {
+const Image = React.memo<{ file?: CachedFile } & BaseProps>(({ file, style, imageStyle, resizeMode }) => {
   const [error, setError] = useState(false)
 
   let source
-  if (!error && file && file.progress === 1) {
+  if (!error && file) {
     source = { uri: `file://${file.path}` }
   } else {
     source = require('@res/fallback.png')
@@ -40,12 +40,7 @@ const Image = React.memo<{ file?: DownloadFile } & BaseProps>(({ file, style, im
         style={[{ height: style?.height, width: style?.width }, imageStyle]}
         onError={() => setError(true)}
       />
-      <ActivityIndicator
-        animating={file && file.progress < 1}
-        size="large"
-        color={colors.accent}
-        style={styles.indicator}
-      />
+      <ActivityIndicator animating={!file} size="large" color={colors.accent} style={styles.indicator} />
     </>
   )
 })
