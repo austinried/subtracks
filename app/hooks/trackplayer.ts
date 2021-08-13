@@ -1,5 +1,5 @@
 import { Song } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
+import { selectCache } from '@app/state/cache'
 import { useStore } from '@app/state/store'
 import {
   getCurrentTrack,
@@ -191,7 +191,7 @@ export const useSetQueue = () => {
   const getQueueShuffled = useCallback(() => !!useStore.getState().shuffleOrder, [])
   const setQueueContextType = useStore(selectTrackPlayer.setQueueContextType)
   const setQueueContextId = useStore(selectTrackPlayer.setQueueContextId)
-  const getCoverArtPath = useStore(selectMusic.getCoverArtPath)
+  const getCoverArtPath = useStore(selectCache.getCoverArtPath)
 
   return async (
     songs: Song[],

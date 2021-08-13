@@ -1,15 +1,17 @@
+import { selectCache } from '@app/state/cache'
 import { selectMusic } from '@app/state/music'
 import { Store, useStore } from '@app/state/store'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 
 export const useArtistInfo = (id: string) => {
   const artistInfo = useStore(useCallback((state: Store) => state.artistInfo[id], [id]))
   const fetchArtistInfo = useStore(selectMusic.fetchArtistInfo)
 
-  if (!artistInfo) {
-    fetchArtistInfo(id)
-    return undefined
-  }
+  useEffect(() => {
+    if (!artistInfo) {
+      fetchArtistInfo(id)
+    }
+  })
 
   return artistInfo
 }
@@ -18,9 +20,11 @@ export const useAlbumWithSongs = (id: string) => {
   const album = useStore(useCallback((state: Store) => state.albumsWithSongs[id], [id]))
   const fetchAlbum = useStore(selectMusic.fetchAlbumWithSongs)
 
-  if (!album) {
-    fetchAlbum(id)
-  }
+  useEffect(() => {
+    if (!album) {
+      fetchAlbum(id)
+    }
+  })
 
   return album
 }
@@ -29,9 +33,11 @@ export const usePlaylistWithSongs = (id: string) => {
   const playlist = useStore(useCallback((state: Store) => state.playlistsWithSongs[id], [id]))
   const fetchPlaylist = useStore(selectMusic.fetchPlaylistWithSongs)
 
-  if (!playlist) {
-    fetchPlaylist(id)
-  }
+  useEffect(() => {
+    if (!playlist) {
+      fetchPlaylist(id)
+    }
+  })
 
   return playlist
 }
@@ -58,12 +64,13 @@ export const useStarred = (id: string, type: string) => {
 
 export const useCoverArtFile = (coverArt: string = '-1') => {
   const file = useStore(useCallback((state: Store) => state.cachedCoverArt[coverArt], [coverArt]))
-  const cacheCoverArt = useStore(selectMusic.cacheCoverArt)
+  const cacheCoverArt = useStore(selectCache.cacheCoverArt)
 
-  if (!file) {
-    cacheCoverArt(coverArt)
-    return undefined
-  }
+  useEffect(() => {
+    if (!file) {
+      cacheCoverArt(coverArt)
+    }
+  })
 
   return file
 }
@@ -71,16 +78,13 @@ export const useCoverArtFile = (coverArt: string = '-1') => {
 export const useArtistCoverArtFile = (artistId: string) => {
   const artistInfo = useArtistInfo(artistId)
   const file = useStore(useCallback((state: Store) => state.cachedArtistArt[artistId], [artistId]))
-  const cacheArtistArt = useStore(selectMusic.cacheArtistArt)
+  const cacheArtistArt = useStore(selectCache.cacheArtistArt)
 
-  if (!artistInfo) {
-    return undefined
-  }
-
-  if (!file) {
-    cacheArtistArt(artistId, artistInfo.largeImageUrl)
-    return undefined
-  }
+  useEffect(() => {
+    if (!file && artistInfo) {
+      cacheArtistArt(artistId, artistInfo.largeImageUrl)
+    }
+  })
 
   return file
 }

@@ -1,7 +1,7 @@
 import { useArtistCoverArtFile, useCoverArtFile } from '@app/hooks/music'
-import { DownloadFile } from '@app/state/music'
+import { DownloadFile } from '@app/state/cache'
 import colors from '@app/styles/colors'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, View, ViewStyle } from 'react-native'
 import FastImage, { ImageStyle } from 'react-native-fast-image'
 
@@ -22,16 +22,15 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const Image: React.FC<{ file?: DownloadFile } & BaseProps> = ({ file, style, imageStyle, resizeMode }) => {
-  const [source, setSource] = useState<number | { uri: string }>(
-    file && file.progress === 1 ? { uri: `file://${file.path}` } : require('@res/fallback.png'),
-  )
+const Image = React.memo<{ file?: DownloadFile } & BaseProps>(({ file, style, imageStyle, resizeMode }) => {
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
-    if (file && file.progress === 1) {
-      setSource({ uri: `file://${file.path}` })
-    }
-  }, [file])
+  let source
+  if (!error && file && file.progress === 1) {
+    source = { uri: `file://${file.path}` }
+  } else {
+    source = require('@res/fallback.png')
+  }
 
   return (
     <>
@@ -39,9 +38,7 @@ const Image: React.FC<{ file?: DownloadFile } & BaseProps> = ({ file, style, ima
         source={source}
         resizeMode={resizeMode || FastImage.resizeMode.contain}
         style={[{ height: style?.height, width: style?.width }, imageStyle]}
-        onError={() => {
-          setSource(require('@res/fallback.png'))
-        }}
+        onError={() => setError(true)}
       />
       <ActivityIndicator
         animating={file && file.progress < 1}
@@ -51,7 +48,7 @@ const Image: React.FC<{ file?: DownloadFile } & BaseProps> = ({ file, style, ima
       />
     </>
   )
-}
+})
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
   const file = useArtistCoverArtFile(props.artistId)
@@ -65,31 +62,24 @@ const CoverArtImage = React.memo<CoverArtProps>(props => {
   return <Image file={file} {...props} />
 })
 
-const CoverArt: React.FC<CoverArtProps | ArtistCoverArtProps> = props => {
+const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {
   const viewStyles = [props.style]
   if (props.round) {
     viewStyles.push(styles.round)
   }
 
-  const coverArtImage = useCallback(() => <CoverArtImage {...(props as CoverArtProps)} />, [props])
-  const artistImage = useCallback(() => <ArtistImage {...(props as ArtistCoverArtProps)} />, [props])
-
-  let ImageComponent
+  let imageComponent
   switch (props.type) {
     case 'artist':
-      ImageComponent = artistImage
+      imageComponent = <ArtistImage {...(props as ArtistCoverArtProps)} />
       break
     default:
-      ImageComponent = coverArtImage
+      imageComponent = <CoverArtImage {...(props as CoverArtProps)} />
       break
   }
 
-  return (
-    <View style={viewStyles}>
-      <ImageComponent />
-    </View>
-  )
-}
+  return <View style={viewStyles}>{imageComponent}</View>
+})
 
 const styles = StyleSheet.create({
   round: {
@@ -103,4 +93,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default React.memo(CoverArt)
+export default CoverArt
