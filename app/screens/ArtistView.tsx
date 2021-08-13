@@ -35,7 +35,12 @@ const AlbumItem = React.memo<{
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
       menuStyle={[styles.albumItem, { width }]}
       triggerOuterWrapperStyle={{ width }}>
-      <CoverArt coverArt={album.coverArt} style={{ height, width }} resizeMode={FastImage.resizeMode.cover} />
+      <CoverArt
+        type="cover"
+        coverArt={album.coverArt}
+        style={{ height, width }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </AlbumContextPressable>
@@ -111,11 +116,10 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         contentContainerStyle={styles.scrollContent}
         onScroll={onScroll}>
         <CoverArt
+          type="artist"
           artistId={artist.id}
           style={styles.artistCover}
           resizeMode={FastImage.resizeMode.cover}
-          round={false}
-          imageSize="original"
         />
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>

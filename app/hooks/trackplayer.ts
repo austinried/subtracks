@@ -1,5 +1,5 @@
-import { useCoverArtUri } from '@app/hooks/music'
 import { Song } from '@app/models/music'
+import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import {
   getCurrentTrack,
@@ -191,7 +191,7 @@ export const useSetQueue = () => {
   const getQueueShuffled = useCallback(() => !!useStore.getState().shuffleOrder, [])
   const setQueueContextType = useStore(selectTrackPlayer.setQueueContextType)
   const setQueueContextId = useStore(selectTrackPlayer.setQueueContextId)
-  const coverArtUri = useCoverArtUri()
+  const getCoverArtPath = useStore(selectMusic.getCoverArtPath)
 
   return async (
     songs: Song[],
@@ -211,7 +211,16 @@ export const useSetQueue = () => {
         return
       }
 
-      let queue = songs.map(s => mapSongToTrack(s, coverArtUri))
+      const coverArtPaths: { [coverArt: string]: string } = {}
+      for (const s of songs) {
+        if (!s.coverArt) {
+          continue
+        }
+
+        coverArtPaths[s.coverArt] = await getCoverArtPath(s.coverArt)
+      }
+
+      let queue = songs.map(s => mapSongToTrack(s, coverArtPaths))
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
@@ -251,12 +260,10 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   const shuffleOrder = useStore(selectTrackPlayer.shuffleOrder)
 
   if (contextId === undefined) {
-    console.log(currentTrackIdx)
     return track === currentTrackIdx
   }
 
   if (shuffleOrder) {
-    console.log('asdf')
     const shuffledTrack = shuffleOrder.findIndex(i => i === track)
     track = shuffledTrack !== undefined ? shuffledTrack : -1
   }
@@ -264,14 +271,14 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
-function mapSongToTrack(song: Song, coverArtUri: (coverArt?: string) => string | undefined): TrackExt {
+function mapSongToTrack(song: Song, coverArtPaths: { [coverArt: string]: string }): TrackExt {
   return {
     id: song.id,
     title: song.title,
     artist: song.artist || 'Unknown Artist',
     album: song.album || 'Unknown Album',
     url: song.streamUri,
-    artwork: coverArtUri(song.coverArt),
+    artwork: song.coverArt ? `file://${coverArtPaths[song.coverArt]}` : require('@res/fallback.png'),
     coverArt: song.coverArt,
     duration: song.duration,
   }

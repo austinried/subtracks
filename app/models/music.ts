@@ -182,7 +182,7 @@ export function mapChildToSong(child: ChildElement, client: SubsonicApiClient): 
   }
 }
 
-export function mapAlbumID3WithSongstoAlbunWithSongs(
+export function mapAlbumID3WithSongstoAlbumWithSongs(
   album: AlbumID3Element,
   songs: ChildElement[],
   client: SubsonicApiClient,

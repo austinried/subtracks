@@ -26,6 +26,7 @@ const AlbumItem = React.memo<{
       triggerWrapperStyle={[styles.itemWrapper, { height }]}
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
       <CoverArt
+        type="cover"
         coverArt={album.coverArt}
         style={{ height: size, width: size }}
         resizeMode={FastImage.resizeMode.cover}

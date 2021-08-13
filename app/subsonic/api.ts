@@ -83,7 +83,7 @@ export class SubsonicApiClient {
     }
 
     const url = `${this.address}/rest/${method}?${query}`
-    // console.log(url)
+    console.log(`${method}: ${url}`)
     return url
   }
 

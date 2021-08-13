@@ -45,8 +45,8 @@ export const useStore = create<Store>(
       getStorage: () => storage,
       whitelist: ['settings'],
       onRehydrateStorage: _preState => {
-        return (postState, _error) => {
-          postState?.createClient(postState.settings.activeServer)
+        return async (postState, _error) => {
+          await postState?.setActiveServer(postState.settings.activeServer, true)
           postState?.setHydrated(true)
         }
       },

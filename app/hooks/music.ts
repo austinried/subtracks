@@ -1,8 +1,5 @@
 import { selectMusic } from '@app/state/music'
-import { selectSettings } from '@app/state/settings'
 import { Store, useStore } from '@app/state/store'
-import { SubsonicApiClient } from '@app/subsonic/api'
-import { GetCoverArtParams } from '@app/subsonic/params'
 import { useCallback } from 'react'
 
 export const useArtistInfo = (id: string) => {
@@ -11,6 +8,7 @@ export const useArtistInfo = (id: string) => {
 
   if (!artistInfo) {
     fetchArtistInfo(id)
+    return undefined
   }
 
   return artistInfo
@@ -58,21 +56,31 @@ export const useStarred = (id: string, type: string) => {
   )
 }
 
-export const useCoverArtUri = () => {
-  const server = useStore(selectSettings.activeServer)
+export const useCoverArtFile = (coverArt: string = '-1') => {
+  const file = useStore(useCallback((state: Store) => state.cachedCoverArt[coverArt], [coverArt]))
+  const cacheCoverArt = useStore(selectMusic.cacheCoverArt)
 
-  if (!server) {
-    return () => undefined
+  if (!file) {
+    cacheCoverArt(coverArt)
+    return undefined
   }
 
-  const client = new SubsonicApiClient(server)
+  return file
+}
 
-  return (coverArt?: string, size: 'thumbnail' | 'original' = 'thumbnail') => {
-    const params: GetCoverArtParams = { id: coverArt || '-1' }
-    if (size === 'thumbnail') {
-      params.size = '256'
-    }
+export const useArtistCoverArtFile = (artistId: string) => {
+  const artistInfo = useArtistInfo(artistId)
+  const file = useStore(useCallback((state: Store) => state.cachedArtistArt[artistId], [artistId]))
+  const cacheArtistArt = useStore(selectMusic.cacheArtistArt)
 
-    return client.getCoverArtUri(params)
+  if (!artistInfo) {
+    return undefined
   }
+
+  if (!file) {
+    cacheArtistArt(artistId, artistInfo.largeImageUrl)
+    return undefined
+  }
+
+  return file
 }

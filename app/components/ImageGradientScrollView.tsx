@@ -4,7 +4,7 @@ import dimensions from '@app/styles/dimensions'
 import React from 'react'
 import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
 
-const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; imageKey?: string }> = props => {
+const ImageGradientScrollView: React.FC<ScrollViewProps & { imagePath?: string }> = props => {
   const layout = useWindowDimensions()
 
   const minHeight = layout.height - (dimensions.top() + dimensions.bottom())
@@ -20,7 +20,7 @@ const ImageGradientScrollView: React.FC<ScrollViewProps & { imageUri?: string; i
         },
       ]}
       contentContainerStyle={[{ minHeight }, props.contentContainerStyle]}>
-      <ImageGradientBackground height={minHeight} imageUri={props.imageUri} imageKey={props.imageKey} />
+      <ImageGradientBackground height={minHeight} imagePath={props.imagePath} />
       {props.children}
     </ScrollView>
   )

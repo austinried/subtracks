@@ -5,7 +5,7 @@ import {
   ArtistInfo,
   HomeLists,
   mapAlbumID3toAlbumListItem,
-  mapAlbumID3WithSongstoAlbunWithSongs,
+  mapAlbumID3WithSongstoAlbumWithSongs,
   mapArtistID3toArtist,
   mapArtistInfo,
   mapChildToSong,
@@ -14,11 +14,23 @@ import {
   PlaylistListItem,
   PlaylistWithSongs,
   SearchResults,
+  Song,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
 import { GetAlbumList2Type, StarParams } from '@app/subsonic/params'
+import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
+import RNFS from 'react-native-fs'
 import { GetState, SetState } from 'zustand'
+
+const imageDownloadQueue = new PromiseQueue(5)
+
+export type DownloadFile = {
+  path: string
+  date: number
+  progress: number
+  promise?: Promise<void>
+}
 
 export type MusicSlice = {
   //
@@ -58,10 +70,42 @@ export type MusicSlice = {
   fetchHomeLists: () => Promise<void>
   clearHomeLists: () => void
 
+  //
+  // downloads
+  //
+  coverArtDir?: string
+  artistArtDir?: string
+  songsDir?: string
+
+  cachedCoverArt: { [coverArt: string]: DownloadFile }
+  downloadedCoverArt: { [coverArt: string]: DownloadFile }
+
+  coverArtRequests: { [coverArt: string]: Promise<void> }
+
+  cacheCoverArt: (coverArt: string) => Promise<void>
+  getCoverArtPath: (coverArt: string) => Promise<string>
+
+  cachedArtistArt: { [artistId: string]: DownloadFile }
+  downloadedArtistArt: { [artistId: string]: DownloadFile }
+
+  cacheArtistArt: (artistId: string, url?: string) => Promise<void>
+
+  cachedSongs: { [id: string]: DownloadFile }
+  downloadedSongs: { [id: string]: DownloadFile }
+
+  //
+  // actions, etc.
+  //
   starredSongs: { [id: string]: boolean }
   starredAlbums: { [id: string]: boolean }
   starredArtists: { [id: string]: boolean }
   starItem: (id: string, type: string, unstar?: boolean) => Promise<void>
+
+  albumCoverArt: { [id: string]: string | undefined }
+  albumCoverArtRequests: { [id: string]: Promise<void> }
+  fetchAlbumCoverArt: (id: string) => Promise<void>
+  getAlbumCoverArt: (id: string | undefined) => Promise<string | undefined>
+  mapSongCoverArtFromAlbum: (songs: Song[]) => Promise<Song[]>
 }
 
 export const selectMusic = {
@@ -91,7 +135,12 @@ export const selectMusic = {
   fetchHomeLists: (store: MusicSlice) => store.fetchHomeLists,
   clearHomeLists: (store: MusicSlice) => store.clearHomeLists,
 
+  cacheCoverArt: (store: MusicSlice) => store.cacheCoverArt,
+  getCoverArtPath: (store: MusicSlice) => store.getCoverArtPath,
+  cacheArtistArt: (store: MusicSlice) => store.cacheArtistArt,
+
   starItem: (store: MusicSlice) => store.starItem,
+  fetchAlbumCoverArt: (store: MusicSlice) => store.fetchAlbumCoverArt,
 }
 
 function reduceStarred(
@@ -129,9 +178,12 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
         client,
       )
 
+      artistInfo.topSongs = await get().mapSongCoverArtFromAlbum(artistInfo.topSongs)
+
       set(
         produce<MusicSlice>(state => {
           state.artistInfo[id] = artistInfo
+
           state.starredSongs = reduceStarred(state.starredSongs, artistInfo.topSongs)
           state.starredArtists = reduceStarred(state.starredArtists, [artistInfo])
           state.starredAlbums = reduceStarred(state.starredAlbums, artistInfo.albums)
@@ -153,7 +205,9 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getAlbum({ id })
-      const album = mapAlbumID3WithSongstoAlbunWithSongs(response.data.album, response.data.songs, client)
+      const album = mapAlbumID3WithSongstoAlbumWithSongs(response.data.album, response.data.songs, client)
+
+      album.songs = await get().mapSongCoverArtFromAlbum(album.songs)
 
       set(
         produce<MusicSlice>(state => {
@@ -179,6 +233,8 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     try {
       const response = await client.getPlaylist({ id })
       const playlist = mapPlaylistWithSongs(response.data.playlist, client)
+
+      playlist.songs = await get().mapSongCoverArtFromAlbum(playlist.songs)
 
       set(
         produce<MusicSlice>(state => {
@@ -293,12 +349,13 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.search3({ query })
+      const songs = await get().mapSongCoverArtFromAlbum(response.data.songs.map(a => mapChildToSong(a, client)))
       set(
         produce<MusicSlice>(state => {
           state.searchResults = {
             artists: response.data.artists.map(mapArtistID3toArtist),
             albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
-            songs: response.data.songs.map(a => mapChildToSong(a, client)),
+            songs: songs,
           }
           state.starredSongs = reduceStarred(state.starredSongs, state.searchResults.songs)
           state.starredArtists = reduceStarred(state.starredArtists, state.searchResults.artists)
@@ -359,6 +416,110 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     set({ homeLists: {} })
   },
 
+  cachedCoverArt: {},
+  downloadedCoverArt: {},
+
+  coverArtRequests: {},
+
+  cacheCoverArt: async coverArt => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const path = `${get().coverArtDir}/${coverArt}`
+
+    const existing = get().cachedCoverArt[coverArt]
+    if (existing) {
+      if (existing.promise !== undefined) {
+        return await existing.promise
+      } else {
+        return
+      }
+    }
+
+    const promise = imageDownloadQueue
+      .enqueue<void>(() =>
+        RNFS.downloadFile({
+          fromUrl: client.getCoverArtUri({ id: coverArt }),
+          toFile: path,
+        }).promise.then(() => new Promise(resolve => setTimeout(resolve, 100))),
+      )
+      .then(() => {
+        set(
+          produce<MusicSlice>(state => {
+            state.cachedCoverArt[coverArt].progress = 1
+            delete state.cachedCoverArt[coverArt].promise
+          }),
+        )
+      })
+    set(
+      produce<MusicSlice>(state => {
+        state.cachedCoverArt[coverArt] = {
+          path,
+          date: Date.now(),
+          progress: 0,
+          promise,
+        }
+      }),
+    )
+    return await promise
+  },
+
+  getCoverArtPath: async coverArt => {
+    const existing = get().cachedCoverArt[coverArt]
+    if (existing) {
+      if (existing.promise) {
+        await existing.promise
+      }
+      return existing.path
+    }
+
+    await get().cacheCoverArt(coverArt)
+    return get().cachedCoverArt[coverArt].path
+  },
+
+  cachedArtistArt: {},
+  downloadedArtistArt: {},
+
+  cacheArtistArt: async (artistId, url) => {
+    if (!url) {
+      return
+    }
+
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const path = `${get().artistArtDir}/${artistId}`
+
+    set(
+      produce<MusicSlice>(state => {
+        state.cachedArtistArt[artistId] = {
+          path,
+          date: Date.now(),
+          progress: 0,
+        }
+      }),
+    )
+    await imageDownloadQueue.enqueue(
+      () =>
+        RNFS.downloadFile({
+          fromUrl: url,
+          toFile: path,
+        }).promise,
+    )
+    set(
+      produce<MusicSlice>(state => {
+        state.cachedArtistArt[artistId].progress = 1
+      }),
+    )
+  },
+
+  cachedSongs: {},
+  downloadedSongs: {},
+
   starredSongs: {},
   starredAlbums: {},
   starredArtists: {},
@@ -417,5 +578,71 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     } catch {
       setStarred(unstar)
     }
+  },
+
+  albumCoverArt: {},
+  albumCoverArtRequests: {},
+
+  fetchAlbumCoverArt: async id => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const inProgress = get().albumCoverArtRequests[id]
+    if (inProgress !== undefined) {
+      return await inProgress
+    }
+
+    const promise = new Promise<void>(async resolve => {
+      try {
+        const response = await client.getAlbum({ id })
+        set(
+          produce<MusicSlice>(state => {
+            state.albumCoverArt[id] = response.data.album.coverArt
+          }),
+        )
+      } finally {
+        resolve()
+      }
+    }).then(() => {
+      set(
+        produce<MusicSlice>(state => {
+          delete state.albumCoverArtRequests[id]
+        }),
+      )
+    })
+    set(
+      produce<MusicSlice>(state => {
+        state.albumCoverArtRequests[id] = promise
+      }),
+    )
+
+    return await promise
+  },
+
+  getAlbumCoverArt: async id => {
+    if (!id) {
+      return
+    }
+
+    const existing = get().albumCoverArt[id]
+    if (existing) {
+      return existing
+    }
+
+    await get().fetchAlbumCoverArt(id)
+    return get().albumCoverArt[id]
+  },
+
+  mapSongCoverArtFromAlbum: async songs => {
+    const mapped: Song[] = []
+    for (const s of songs) {
+      mapped.push({
+        ...s,
+        coverArt: await get().getAlbumCoverArt(s.albumId),
+      })
+    }
+    return mapped
   },
 })

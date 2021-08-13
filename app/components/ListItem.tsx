@@ -65,7 +65,6 @@ const ListItem: React.FC<{
   showStar = showStar === undefined ? true : showStar
   listStyle = listStyle || 'small'
 
-  const artSource = item.itemType === 'artist' ? { artistId: item.id } : { coverArt: item.coverArt }
   const sizeStyle = listStyle === 'big' ? bigStyles : smallStyles
 
   if (!onPress) {
@@ -148,18 +147,19 @@ const ListItem: React.FC<{
     title = <TitleText title={item.name} />
   }
 
+  const artStyle = { ...styles.art, ...sizeStyle.art }
+  const resizeMode = FastImage.resizeMode.cover
+  let coverArt = <></>
+  if (item.itemType === 'artist') {
+    coverArt = <CoverArt type="artist" artistId={item.id} round={true} style={artStyle} resizeMode={resizeMode} />
+  } else {
+    coverArt = <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} />
+  }
+
   return (
     <View style={[styles.container, sizeStyle.container]}>
       <PressableComponent>
-        {showArt ? (
-          <CoverArt
-            {...artSource}
-            style={{ ...styles.art, ...sizeStyle.art }}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-        ) : (
-          <></>
-        )}
+        {showArt ? coverArt : <></>}
         <View style={styles.text}>
           {title}
           {subtitle ? (

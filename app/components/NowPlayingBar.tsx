@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
-const ProgressBar = () => {
+const ProgressBar = React.memo(() => {
   const { position, duration } = useStore(selectTrackPlayer.progress)
 
   let progress = 0
@@ -25,7 +25,7 @@ const ProgressBar = () => {
       <View style={[progressStyles.right, { flex: 1 - progress }]} />
     </View>
   )
-}
+})
 
 const progressStyles = StyleSheet.create({
   container: {
@@ -40,9 +40,7 @@ const progressStyles = StyleSheet.create({
   },
 })
 
-const NowPlayingBar = () => {
-  const navigation = useNavigation()
-  const track = useStore(selectTrackPlayer.currentTrack)
+const Controls = React.memo(() => {
   const playerState = useStore(selectTrackPlayer.playerState)
   const play = usePlay()
   const pause = usePause()
@@ -62,14 +60,28 @@ const NowPlayingBar = () => {
   }
 
   return (
+    <View style={styles.controls}>
+      <PressableOpacity onPress={playPauseAction} hitSlop={14}>
+        <IconFA5 name={playPauseIcon} size={28} color="white" />
+      </PressableOpacity>
+    </View>
+  )
+})
+
+const NowPlayingBar = React.memo(() => {
+  const navigation = useNavigation()
+  const track = useStore(selectTrackPlayer.currentTrack)
+
+  return (
     <Pressable
       onPress={() => navigation.navigate('now-playing')}
       style={{ ...styles.container, display: track ? 'flex' : 'none' }}>
       <ProgressBar />
       <View style={styles.subContainer}>
         <CoverArt
+          type="cover"
           style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
-          coverArt={track?.coverArt || '-1'}
+          coverArt={track?.coverArt}
         />
         <View style={styles.detailsContainer}>
           <Text numberOfLines={1} style={styles.detailsTitle}>
@@ -79,15 +91,11 @@ const NowPlayingBar = () => {
             {track?.artist}
           </Text>
         </View>
-        <View style={styles.controls}>
-          <PressableOpacity onPress={playPauseAction} hitSlop={14}>
-            <IconFA5 name={playPauseIcon} size={28} color="white" />
-          </PressableOpacity>
-        </View>
+        <Controls />
       </View>
     </Pressable>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

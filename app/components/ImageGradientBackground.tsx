@@ -1,7 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
 import { ViewStyle } from 'react-native'
-import FastImage from 'react-native-fast-image'
 import ImageColors from 'react-native-image-colors'
 import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/types'
 import colors from '@app/styles/colors'
@@ -12,28 +11,27 @@ const ImageGradientBackground: React.FC<{
   width?: number | string
   position?: 'relative' | 'absolute'
   style?: ViewStyle
-  imageUri?: string
-  imageKey?: string
-}> = ({ height, width, position, style, imageUri, imageKey, children }) => {
+  imagePath?: string
+}> = ({ height, width, position, style, imagePath, children }) => {
   const [highColor, setHighColor] = useState<string>(colors.gradient.high)
   const navigation = useNavigation()
 
   useEffect(() => {
     async function getColors() {
-      if (imageUri === undefined) {
+      if (imagePath === undefined) {
         return
       }
 
-      const cachedResult = ImageColors.cache.getItem(imageKey ? imageKey : imageUri)
+      const cachedResult = ImageColors.cache.getItem(imagePath)
 
       let res: AndroidImageColors
       if (cachedResult) {
         res = cachedResult as AndroidImageColors
       } else {
-        const path = await FastImage.getCachePath({ uri: imageUri })
-        res = (await ImageColors.getColors(path ? `file://${path}` : imageUri, {
+        const path = `file://${imagePath}`
+        res = (await ImageColors.getColors(path, {
           cache: true,
-          key: imageKey ? imageKey : imageUri,
+          key: imagePath,
         })) as AndroidImageColors
       }
 
@@ -44,7 +42,7 @@ const ImageGradientBackground: React.FC<{
       }
     }
     getColors()
-  }, [imageUri, imageKey])
+  }, [imagePath])
 
   useEffect(() => {
     navigation.setOptions({

@@ -107,7 +107,7 @@ const SongCoverArt = () => {
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt coverArt={track?.coverArt} style={coverArtStyles.image} imageSize="original" />
+      <CoverArt type="cover" coverArt={track?.coverArt} style={coverArtStyles.image} />
     </View>
   )
 }
@@ -390,9 +390,11 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
     }
   })
 
+  const imagePath = typeof track?.artwork === 'string' ? track?.artwork.replace('file://', '') : undefined
+
   return (
     <View style={styles.container}>
-      <ImageGradientBackground imageUri={track?.artwork as string} imageKey={`${track?.album}${track?.artist}`} />
+      <ImageGradientBackground imagePath={imagePath} />
       <NowPlayingHeader />
       <View style={styles.content}>
         <SongCoverArt />
