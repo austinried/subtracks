@@ -14,6 +14,7 @@ import {
   PlaylistListItem,
   PlaylistWithSongs,
   SearchResults,
+  Song,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
 import { GetAlbumList2Type, StarParams } from '@app/subsonic/params'
@@ -65,6 +66,12 @@ export type MusicSlice = {
   starredAlbums: { [id: string]: boolean }
   starredArtists: { [id: string]: boolean }
   starItem: (id: string, type: string, unstar?: boolean) => Promise<void>
+
+  albumIdCoverArt: { [id: string]: string | undefined }
+  albumIdCoverArtRequests: { [id: string]: Promise<void> }
+  fetchAlbumCoverArt: (id: string) => Promise<void>
+  getAlbumCoverArt: (id: string | undefined) => Promise<string | undefined>
+  mapSongCoverArtFromAlbum: (songs: Song[]) => Promise<Song[]>
 }
 
 export const selectMusic = {
@@ -428,5 +435,71 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     } catch {
       setStarred(unstar)
     }
+  },
+
+  albumIdCoverArt: {},
+  albumIdCoverArtRequests: {},
+
+  fetchAlbumCoverArt: async id => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const inProgress = get().albumIdCoverArtRequests[id]
+    if (inProgress !== undefined) {
+      return await inProgress
+    }
+
+    const promise = new Promise<void>(async resolve => {
+      try {
+        const response = await client.getAlbum({ id })
+        set(
+          produce<MusicSlice>(state => {
+            state.albumIdCoverArt[id] = response.data.album.coverArt
+          }),
+        )
+      } finally {
+        resolve()
+      }
+    }).then(() => {
+      set(
+        produce<MusicSlice>(state => {
+          delete state.albumIdCoverArtRequests[id]
+        }),
+      )
+    })
+    set(
+      produce<MusicSlice>(state => {
+        state.albumIdCoverArtRequests[id] = promise
+      }),
+    )
+
+    return await promise
+  },
+
+  getAlbumCoverArt: async id => {
+    if (!id) {
+      return
+    }
+
+    const existing = get().albumIdCoverArt[id]
+    if (existing) {
+      return existing
+    }
+
+    await get().fetchAlbumCoverArt(id)
+    return get().albumIdCoverArt[id]
+  },
+
+  mapSongCoverArtFromAlbum: async songs => {
+    const mapped: Song[] = []
+    for (const s of songs) {
+      mapped.push({
+        ...s,
+        coverArt: await get().getAlbumCoverArt(s.albumId),
+      })
+    }
+    return mapped
   },
 })

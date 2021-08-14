@@ -1,4 +1,4 @@
-import { CacheFileType } from '@app/models/music'
+import { CacheItemType } from '@app/models/music'
 import { AppSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
@@ -50,7 +50,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    for (const type in CacheFileType) {
+    for (const type in CacheItemType) {
       await mkdir(`${RNFS.DocumentDirectoryPath}/servers/${id}/${type}`)
     }
 

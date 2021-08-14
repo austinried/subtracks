@@ -80,13 +80,13 @@ export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 
 export type HomeLists = { [key: string]: AlbumListItem[] }
 
-export enum CacheFileType {
+export enum CacheItemType {
   coverArt,
   artistArt,
   song,
 }
 
-export type CacheFileTypeKey = keyof typeof CacheFileType
+export type CacheItemTypeKey = keyof typeof CacheItemType
 
 export type CacheFile = {
   path: string

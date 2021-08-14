@@ -1,4 +1,4 @@
-import { CacheFileTypeKey } from '@app/models/music'
+import { CacheItemTypeKey } from '@app/models/music'
 import { selectCache } from '@app/state/cache'
 import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
@@ -64,7 +64,7 @@ export const useStarred = (id: string, type: string) => {
   )
 }
 
-const useFileRequest = (key: CacheFileTypeKey, id: string) => {
+const useFileRequest = (key: CacheItemTypeKey, id: string) => {
   const file = useStore(
     useCallback(
       (store: Store) => {
