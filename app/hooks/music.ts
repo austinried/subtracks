@@ -1,5 +1,7 @@
+import { CacheFileTypeKey } from '@app/models/music'
 import { selectCache } from '@app/state/cache'
 import { selectMusic } from '@app/state/music'
+import { selectSettings } from '@app/state/settings'
 import { Store, useStore } from '@app/state/store'
 import { useCallback, useEffect } from 'react'
 
@@ -62,45 +64,70 @@ export const useStarred = (id: string, type: string) => {
   )
 }
 
-export const useCoverArtFile = (coverArt: string = '-1') => {
-  const existing = useStore(
+const useFileRequest = (key: CacheFileTypeKey, id: string) => {
+  const file = useStore(
     useCallback(
-      (state: Store) => {
-        const activeServerId = state.settings.activeServer
+      (store: Store) => {
+        const activeServerId = store.settings.activeServer
         if (!activeServerId) {
           return
         }
-        return state.cache[activeServerId].files.coverArt[coverArt]
+
+        return store.cacheFiles[activeServerId][key][id]
       },
-      [coverArt],
+      [key, id],
     ),
   )
-  const progress = useStore(useCallback((state: Store) => state.cachedCoverArt[coverArt], [coverArt]))
-  const cacheCoverArt = useStore(selectCache.cacheCoverArt)
+  const request = useStore(
+    useCallback(
+      (store: Store) => {
+        const activeServerId = store.settings.activeServer
+        if (!activeServerId) {
+          return
+        }
 
-  useEffect(() => {
-    if (!existing) {
-      cacheCoverArt(coverArt)
-    }
-  })
+        return store.cacheRequests[activeServerId][key][id]
+      },
+      [key, id],
+    ),
+  )
 
-  if (existing && progress && progress.promise !== undefined) {
-    return
-  }
-
-  return existing
+  return { file, request }
 }
 
-export const useArtistCoverArtFile = (artistId: string) => {
-  const artistInfo = useArtistInfo(artistId)
-  const file = useStore(useCallback((state: Store) => state.cachedArtistArt[artistId], [artistId]))
-  const cacheArtistArt = useStore(selectCache.cacheArtistArt)
+export const useCoverArtFile = (coverArt: string = '-1') => {
+  const { file, request } = useFileRequest('coverArt', coverArt)
+  const client = useStore(selectSettings.client)
+  const cacheItem = useStore(selectCache.cacheItem)
 
   useEffect(() => {
-    if (!file && artistInfo) {
-      cacheArtistArt(artistId, artistInfo.largeImageUrl)
+    if (!file && client) {
+      cacheItem('coverArt', coverArt, () => client.getCoverArtUri({ id: coverArt }))
     }
-  })
+  }, [cacheItem, client, coverArt, file])
 
-  return file
+  // if (file && request && request.promise !== undefined) {
+  //   return
+  // }
+
+  return { file, request }
+}
+
+export const useArtistArtFile = (artistId: string) => {
+  const artistInfo = useArtistInfo(artistId)
+  const { file, request } = useFileRequest('artistArt', artistId)
+  const cacheItem = useStore(selectCache.cacheItem)
+
+  useEffect(() => {
+    if (!file && artistInfo && artistInfo.largeImageUrl) {
+      console.log(artistInfo.largeImageUrl)
+      cacheItem('artistArt', artistId, artistInfo.largeImageUrl)
+    }
+  }, [artistId, artistInfo, artistInfo?.largeImageUrl, cacheItem, file])
+
+  // if (file && request && request.promise !== undefined) {
+  //   return
+  // }
+
+  return { file, request }
 }

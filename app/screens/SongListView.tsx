@@ -80,7 +80,7 @@ const SongListDetails = React.memo<{
   }
 
   return (
-    <ImageGradientScrollView imagePath={coverArtFile?.path} style={styles.container}>
+    <ImageGradientScrollView imagePath={coverArtFile?.file?.path} style={styles.container}>
       <View style={styles.content}>
         <CoverArt type="cover" coverArt={songList.coverArt} style={styles.cover} />
         <Text style={styles.title}>{songList.name}</Text>

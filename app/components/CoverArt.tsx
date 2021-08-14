@@ -1,5 +1,5 @@
-import { useArtistCoverArtFile, useCoverArtFile } from '@app/hooks/music'
-import { CachedFile } from '@app/models/music'
+import { useArtistArtFile, useCoverArtFile } from '@app/hooks/music'
+import { CacheFile, CacheRequest } from '@app/models/music'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, View, ViewStyle } from 'react-native'
@@ -22,39 +22,46 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const Image = React.memo<{ file?: CachedFile } & BaseProps>(({ file, style, imageStyle, resizeMode }) => {
-  const [error, setError] = useState(false)
+const Image = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequest } } & BaseProps>(
+  ({ cache, style, imageStyle, resizeMode }) => {
+    const [error, setError] = useState(false)
 
-  let source
-  if (!error && file) {
-    source = { uri: `file://${file.path}` }
-  } else {
-    source = require('@res/fallback.png')
-  }
+    let source
+    if (!error && cache?.file && !cache?.request?.promise) {
+      source = { uri: `file://${cache.file.path}` }
+    } else {
+      source = require('@res/fallback.png')
+    }
 
-  return (
-    <>
-      <FastImage
-        source={source}
-        resizeMode={resizeMode || FastImage.resizeMode.contain}
-        style={[{ height: style?.height, width: style?.width }, imageStyle]}
-        onError={() => setError(true)}
-      />
-      <ActivityIndicator animating={!file} size="large" color={colors.accent} style={styles.indicator} />
-    </>
-  )
-})
+    return (
+      <>
+        <FastImage
+          source={source}
+          resizeMode={resizeMode || FastImage.resizeMode.contain}
+          style={[{ height: style?.height, width: style?.width }, imageStyle]}
+          onError={() => setError(true)}
+        />
+        <ActivityIndicator
+          animating={!!cache?.request?.promise}
+          size="large"
+          color={colors.accent}
+          style={styles.indicator}
+        />
+      </>
+    )
+  },
+)
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
-  const file = useArtistCoverArtFile(props.artistId)
+  const cache = useArtistArtFile(props.artistId)
 
-  return <Image file={file} {...props} />
+  return <Image cache={cache} {...props} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
-  const file = useCoverArtFile(props.coverArt)
+  const cache = useCoverArtFile(props.coverArt)
 
-  return <Image file={file} {...props} />
+  return <Image cache={cache} {...props} />
 })
 
 const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {

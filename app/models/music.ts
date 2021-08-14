@@ -80,10 +80,23 @@ export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 
 export type HomeLists = { [key: string]: AlbumListItem[] }
 
-export type CachedFile = {
+export enum CacheFileType {
+  coverArt,
+  artistArt,
+  song,
+}
+
+export type CacheFileTypeKey = keyof typeof CacheFileType
+
+export type CacheFile = {
   path: string
   date: number
   permanent: boolean
+}
+
+export type CacheRequest = {
+  progress: number
+  promise?: Promise<void>
 }
 
 export type DownloadedAlbum = Album & {

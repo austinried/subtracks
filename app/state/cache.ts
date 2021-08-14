@@ -1,53 +1,37 @@
-import {
-  CachedFile,
-  DownloadedAlbum,
-  DownloadedArtist,
-  DownloadedPlaylist,
-  DownloadedSong,
-  Song,
-} from '@app/models/music'
+import { CacheFile, CacheFileTypeKey, CacheRequest, Song } from '@app/models/music'
 import PromiseQueue from '@app/util/PromiseQueue'
-import { SetState, GetState } from 'zustand'
-import { Store } from './store'
 import produce from 'immer'
 import RNFS from 'react-native-fs'
+import { GetState, SetState } from 'zustand'
+import { Store } from './store'
 
 const imageDownloadQueue = new PromiseQueue(10)
 
-type DownloadProgress = {
-  progress: number
-  promise?: Promise<void>
-}
+export type CacheDownload = CacheFile & CacheRequest
 
-export type CacheDownload = CachedFile & DownloadProgress
+export type CacheDirsByServer = Record<string, Record<CacheFileTypeKey, string>>
+export type CacheFilesByServer = Record<string, Record<CacheFileTypeKey, Record<string, CacheFile>>>
+export type CacheRequestsByServer = Record<string, Record<CacheFileTypeKey, Record<string, CacheRequest>>>
+
+// export type CacheItemsDb = Record<
+//   string,
+//   {
+//     songs: { [songId: string]: DownloadedSong }
+//     albums: { [albumId: string]: DownloadedAlbum }
+//     artists: { [songId: string]: DownloadedArtist }
+//     playlists: { [playlistId: string]: DownloadedPlaylist }
+//   }
+// >
 
 export type CacheSlice = {
-  coverArtDir?: string
-  artistArtDir?: string
-  songsDir?: string
+  cacheItem: (key: CacheFileTypeKey, itemId: string, url: string | (() => string | Promise<string>)) => Promise<void>
 
-  cache: {
-    [serverId: string]: {
-      files: {
-        coverArt: { [coverArt: string]: CachedFile }
-        artistArt: { [artistId: string]: CachedFile }
-        songs: { [songId: string]: CachedFile }
-      }
-      songs: { [songId: string]: DownloadedSong }
-      albums: { [albumId: string]: DownloadedAlbum }
-      artists: { [songId: string]: DownloadedArtist }
-      playlists: { [playlistId: string]: DownloadedPlaylist }
-    }
-  }
+  // cache: CacheItemsDb
+  cacheDirs: CacheDirsByServer
+  cacheFiles: CacheFilesByServer
+  cacheRequests: CacheRequestsByServer
 
-  cachedCoverArt: { [coverArt: string]: DownloadProgress }
-  cacheCoverArt: (coverArt: string) => Promise<void>
   getCoverArtPath: (coverArt: string) => Promise<string | undefined>
-
-  cachedArtistArt: { [artistId: string]: CacheDownload }
-  cacheArtistArt: (artistId: string, url?: string) => Promise<void>
-
-  cachedSongs: { [id: string]: CacheDownload }
 
   albumCoverArt: { [id: string]: string | undefined }
   albumCoverArtRequests: { [id: string]: Promise<void> }
@@ -57,19 +41,20 @@ export type CacheSlice = {
 }
 
 export const selectCache = {
-  cacheCoverArt: (store: CacheSlice) => store.cacheCoverArt,
   getCoverArtPath: (store: CacheSlice) => store.getCoverArtPath,
-  cacheArtistArt: (store: CacheSlice) => store.cacheArtistArt,
+  cacheItem: (store: CacheSlice) => store.cacheItem,
 
   fetchAlbumCoverArt: (store: CacheSlice) => store.fetchAlbumCoverArt,
 }
 
 export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): CacheSlice => ({
-  cache: {},
+  // cache: {},
 
-  cachedCoverArt: {},
+  cacheDirs: {},
+  cacheFiles: {},
+  cacheRequests: {},
 
-  cacheCoverArt: async coverArt => {
+  cacheItem: async (key, itemId, url) => {
     const client = get().client
     if (!client) {
       return
@@ -80,7 +65,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const inProgress = get().cachedCoverArt[coverArt]
+    const inProgress = get().cacheRequests[activeServerId][key][itemId]
     if (inProgress) {
       if (inProgress.promise !== undefined) {
         return await inProgress.promise
@@ -89,37 +74,39 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       }
     }
 
-    const existing = get().cache[activeServerId].files.coverArt[coverArt]
+    const existing = get().cacheFiles[activeServerId][key][itemId]
     if (existing) {
       return
     }
 
-    const path = `${get().coverArtDir}/${coverArt}`
+    const path = `${get().cacheDirs[activeServerId][key]}/${itemId}`
+    const urlResult = typeof url === 'string' ? url : url()
+    const fromUrl = typeof urlResult === 'string' ? urlResult : await urlResult
 
     const promise = imageDownloadQueue
       .enqueue(
         () =>
           RNFS.downloadFile({
-            fromUrl: client.getCoverArtUri({ id: coverArt }),
+            fromUrl,
             toFile: path,
           }).promise,
       )
       .then(() => {
         set(
           produce<CacheSlice>(state => {
-            state.cachedCoverArt[coverArt].progress = 1
-            delete state.cachedCoverArt[coverArt].promise
+            state.cacheRequests[activeServerId][key][itemId].progress = 1
+            delete state.cacheRequests[activeServerId][key][itemId].promise
           }),
         )
       })
     set(
       produce<Store>(state => {
-        state.cache[activeServerId].files.coverArt[coverArt] = {
+        state.cacheFiles[activeServerId][key][itemId] = {
           path,
           date: Date.now(),
           permanent: false,
         }
-        state.cachedCoverArt[coverArt] = {
+        state.cacheRequests[activeServerId][key][itemId] = {
           progress: 0,
           promise,
         }
@@ -129,13 +116,18 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
   },
 
   getCoverArtPath: async coverArt => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
     const activeServerId = get().settings.activeServer
     if (!activeServerId) {
       return
     }
 
-    const existing = get().cache[activeServerId].files.coverArt[coverArt]
-    const inProgress = get().cachedCoverArt[coverArt]
+    const existing = get().cacheFiles[activeServerId].coverArt[coverArt]
+    const inProgress = get().cacheRequests[activeServerId].coverArt[coverArt]
     if (existing && inProgress) {
       if (inProgress.promise) {
         await inProgress.promise
@@ -143,63 +135,9 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return existing.path
     }
 
-    await get().cacheCoverArt(coverArt)
-    return get().cache[activeServerId].files.coverArt[coverArt].path
+    await get().cacheItem('coverArt', coverArt, () => client.getCoverArtUri({ id: coverArt }))
+    return get().cacheFiles[activeServerId].coverArt[coverArt].path
   },
-
-  cachedArtistArt: {},
-
-  cacheArtistArt: async (artistId, url) => {
-    if (!url) {
-      return
-    }
-
-    const client = get().client
-    if (!client) {
-      return
-    }
-
-    const path = `${get().artistArtDir}/${artistId}`
-
-    const existing = get().cachedArtistArt[artistId]
-    if (existing) {
-      if (existing.promise !== undefined) {
-        return await existing.promise
-      } else {
-        return
-      }
-    }
-
-    const promise = imageDownloadQueue
-      .enqueue(
-        () =>
-          RNFS.downloadFile({
-            fromUrl: url,
-            toFile: path,
-          }).promise,
-      )
-      .then(() => {
-        set(
-          produce<CacheSlice>(state => {
-            state.cachedArtistArt[artistId].progress = 1
-            delete state.cachedArtistArt[artistId].promise
-          }),
-        )
-      })
-    set(
-      produce<CacheSlice>(state => {
-        state.cachedArtistArt[artistId] = {
-          path,
-          date: Date.now(),
-          progress: 0,
-          permanent: false,
-          promise,
-        }
-      }),
-    )
-  },
-
-  cachedSongs: {},
 
   albumCoverArt: {},
   albumCoverArtRequests: {},

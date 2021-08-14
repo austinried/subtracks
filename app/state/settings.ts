@@ -1,3 +1,4 @@
+import { CacheFileType } from '@app/models/music'
 import { AppSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
@@ -42,9 +43,6 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     if (!newActiveServer) {
       set({
         client: undefined,
-        coverArtDir: undefined,
-        artistArtDir: undefined,
-        songsDir: undefined,
       })
       return
     }
@@ -52,29 +50,35 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    const coverArtDir = `${RNFS.DocumentDirectoryPath}/cover-art/${id}`
-    const artistArtDir = `${RNFS.DocumentDirectoryPath}/artist-art/${id}`
-    const songsDir = `${RNFS.DocumentDirectoryPath}/songs/${id}`
-    await mkdir(coverArtDir)
-    await mkdir(artistArtDir)
-    await mkdir(songsDir)
+    for (const type in CacheFileType) {
+      await mkdir(`${RNFS.DocumentDirectoryPath}/servers/${id}/${type}`)
+    }
 
     set(
       produce<Store>(state => {
         state.settings.activeServer = newActiveServer.id
         state.client = new SubsonicApiClient(newActiveServer)
-        state.coverArtDir = coverArtDir
-        state.artistArtDir = artistArtDir
-        state.songsDir = songsDir
-        state.cache[newActiveServer.id] = state.cache[newActiveServer.id] || {
-          files: {
+
+        if (!state.cacheDirs[newActiveServer.id]) {
+          state.cacheDirs[newActiveServer.id] = {
+            song: `${RNFS.DocumentDirectoryPath}/servers/${id}/song`,
+            coverArt: `${RNFS.DocumentDirectoryPath}/servers/${id}/coverArt`,
+            artistArt: `${RNFS.DocumentDirectoryPath}/servers/${id}/artistArt`,
+          }
+        }
+        if (!state.cacheFiles[newActiveServer.id]) {
+          state.cacheFiles[newActiveServer.id] = {
+            song: {},
             coverArt: {},
             artistArt: {},
-            songs: {},
-          },
-          songs: {},
-          albums: {},
-          artists: {},
+          }
+        }
+        if (!state.cacheRequests[newActiveServer.id]) {
+          state.cacheRequests[newActiveServer.id] = {
+            song: {},
+            coverArt: {},
+            artistArt: {},
+          }
         }
       }),
     )
@@ -92,6 +96,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
 })
 
 export const selectSettings = {
+  client: (state: SettingsSlice) => state.client,
   activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
   setActiveServer: (state: SettingsSlice) => state.setActiveServer,
   servers: (state: SettingsSlice) => state.settings.servers,
