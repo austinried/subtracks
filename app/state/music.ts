@@ -4,17 +4,9 @@ import {
   Artist,
   ArtistInfo,
   HomeLists,
-  mapAlbumID3toAlbumListItem,
-  mapAlbumID3WithSongstoAlbumWithSongs,
-  mapArtistID3toArtist,
-  mapArtistInfo,
-  mapChildToSong,
-  mapPlaylistListItem,
-  mapPlaylistWithSongs,
   PlaylistListItem,
   PlaylistWithSongs,
   SearchResults,
-  Song,
   StarrableItemType,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
@@ -72,7 +64,6 @@ export type MusicSlice = {
   albumIdCoverArtRequests: { [id: string]: Promise<void> }
   fetchAlbumCoverArt: (id: string) => Promise<void>
   getAlbumCoverArt: (id: string | undefined) => Promise<string | undefined>
-  mapSongCoverArtFromAlbum: (songs: Song[]) => Promise<Song[]>
 }
 
 export const selectMusic = {
@@ -133,14 +124,11 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
         client.getArtistInfo2({ id }),
       ])
       const topSongsResponse = await client.getTopSongs({ artist: artistResponse.data.artist.name, count: 50 })
-      const artistInfo = mapArtistInfo(
+      const artistInfo = await get().mapArtistInfo(
         artistResponse.data,
         artistInfoResponse.data.artistInfo,
         topSongsResponse.data.songs,
-        client,
       )
-
-      artistInfo.topSongs = await get().mapSongCoverArtFromAlbum(artistInfo.topSongs)
 
       set(
         produce<MusicSlice>(state => {
@@ -167,9 +155,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getAlbum({ id })
-      const album = mapAlbumID3WithSongstoAlbumWithSongs(response.data.album, response.data.songs, client)
-
-      album.songs = await get().mapSongCoverArtFromAlbum(album.songs)
+      const album = await get().mapAlbumID3WithSongstoAlbumWithSongs(response.data.album, response.data.songs)
 
       set(
         produce<MusicSlice>(state => {
@@ -194,9 +180,7 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getPlaylist({ id })
-      const playlist = mapPlaylistWithSongs(response.data.playlist, client)
-
-      playlist.songs = await get().mapSongCoverArtFromAlbum(playlist.songs)
+      const playlist = await get().mapPlaylistWithSongs(response.data.playlist)
 
       set(
         produce<MusicSlice>(state => {
@@ -226,9 +210,11 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getArtists()
+      const artists = response.data.artists.map(get().mapArtistID3toArtist)
+
       set(
         produce<MusicSlice>(state => {
-          state.artists = response.data.artists.map(mapArtistID3toArtist)
+          state.artists = artists
           state.starredArtists = reduceStarred(state.starredArtists, state.artists)
         }),
       )
@@ -253,7 +239,8 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getPlaylists()
-      set({ playlists: response.data.playlists.map(mapPlaylistListItem) })
+      const playlists = response.data.playlists.map(get().mapPlaylistListItem)
+      set({ playlists })
     } finally {
       set({ playlistsUpdating: false })
     }
@@ -275,9 +262,10 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size, offset })
+      const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
       set(
         produce<MusicSlice>(state => {
-          state.albums = response.data.albums.map(mapAlbumID3toAlbumListItem)
+          state.albums = albums
           state.starredAlbums = reduceStarred(state.starredAlbums, state.albums)
         }),
       )
@@ -311,14 +299,14 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     try {
       const response = await client.search3({ query })
-      const songs = await get().mapSongCoverArtFromAlbum(response.data.songs.map(a => mapChildToSong(a, client)))
+
+      const artists = response.data.artists.map(get().mapArtistID3toArtist)
+      const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
+      const songs = await get().mapChildrenToSongs(response.data.songs)
+
       set(
         produce<MusicSlice>(state => {
-          state.searchResults = {
-            artists: response.data.artists.map(mapArtistID3toArtist),
-            albums: response.data.albums.map(mapAlbumID3toAlbumListItem),
-            songs: songs,
-          }
+          state.searchResults = { artists, albums, songs }
           state.starredSongs = reduceStarred(state.starredSongs, state.searchResults.songs)
           state.starredArtists = reduceStarred(state.starredArtists, state.searchResults.artists)
           state.starredAlbums = reduceStarred(state.starredAlbums, state.searchResults.albums)
@@ -359,9 +347,10 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       for (const type of types) {
         promises.push(
           client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
+            const list = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
             set(
               produce<MusicSlice>(state => {
-                state.homeLists[type] = response.data.albums.map(mapAlbumID3toAlbumListItem)
+                state.homeLists[type] = list
                 state.starredAlbums = reduceStarred(state.starredAlbums, state.homeLists[type])
               }),
             )
@@ -491,16 +480,5 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
     await get().fetchAlbumCoverArt(id)
     return get().albumIdCoverArt[id]
-  },
-
-  mapSongCoverArtFromAlbum: async songs => {
-    const mapped: Song[] = []
-    for (const s of songs) {
-      mapped.push({
-        ...s,
-        coverArt: await get().getAlbumCoverArt(s.albumId),
-      })
-    }
-    return mapped
   },
 })

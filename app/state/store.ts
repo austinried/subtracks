@@ -4,10 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import create from 'zustand'
 import { persist, StateStorage } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
+import { createMusicMapSlice, MusicMapSlice } from './musicmap'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 
 export type Store = SettingsSlice &
   MusicSlice &
+  MusicMapSlice &
   TrackPlayerSlice &
   CacheSlice & {
     hydrated: boolean
@@ -37,6 +39,7 @@ export const useStore = create<Store>(
     (set, get) => ({
       ...createSettingsSlice(set, get),
       ...createMusicSlice(set, get),
+      ...createMusicMapSlice(set, get),
       ...createTrackPlayerSlice(set, get),
       ...createCacheSlice(set, get),
 
