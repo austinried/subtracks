@@ -1,6 +1,5 @@
 import Button from '@app/components/Button'
 import GradientScrollView from '@app/components/GradientScrollView'
-import SettingsItem from '@app/components/SettingsItem'
 import { Server } from '@app/models/settings'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
@@ -10,7 +9,6 @@ import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, View } from 'react-native'
-import { Switch } from 'react-native-gesture-handler'
 import { v4 as uuidv4 } from 'uuid'
 
 function replaceIndex<T>(array: T[], index: number, replacement: T): T[] {
@@ -32,7 +30,6 @@ const ServerView: React.FC<{
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
   const [password, setPassword] = useState(server?.token ? 'password' : '')
-  const [scrobble, setScrobble] = useState(server?.scrobble || false)
 
   const validate = useCallback(() => {
     return !!address && !!username && !!password
@@ -69,7 +66,6 @@ const ServerView: React.FC<{
       username,
       salt,
       token,
-      scrobble,
     }
 
     if (server) {
@@ -89,20 +85,7 @@ const ServerView: React.FC<{
     }
 
     exit()
-  }, [
-    activeServer,
-    address,
-    exit,
-    id,
-    password,
-    scrobble,
-    server,
-    servers,
-    setActiveServer,
-    setServers,
-    username,
-    validate,
-  ])
+  }, [activeServer, address, exit, id, password, server, servers, setActiveServer, setServers, username, validate])
 
   const remove = useCallback(() => {
     if (!canRemove()) {
@@ -155,19 +138,6 @@ const ServerView: React.FC<{
           value={password}
           onChangeText={setPassword}
         />
-        <SettingsItem
-          title="Scrobble plays"
-          subtitle={scrobble ? 'Scrobble play history' : "Don't scrobble play history"}>
-          <Switch
-            trackColor={{
-              false: colors.accentLow,
-              true: colors.accent,
-            }}
-            thumbColor={colors.text.primary}
-            value={scrobble}
-            onValueChange={setScrobble}
-          />
-        </SettingsItem>
         <Button
           disabled={!validate()}
           style={styles.button}

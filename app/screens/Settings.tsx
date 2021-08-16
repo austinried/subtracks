@@ -3,14 +3,17 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
+import SettingsSwitch from '@app/components/SettingsSwitch'
 import { useSwitchActiveServer } from '@app/hooks/server'
 import { Server } from '@app/models/settings'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
+import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
-import React, { useCallback } from 'react'
-import { StatusBar, StyleSheet, View } from 'react-native'
+import React, { useCallback, useState } from 'react'
+import { Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { ScrollView } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const ServerItem = React.memo<{
@@ -40,8 +43,105 @@ const ServerItem = React.memo<{
   )
 })
 
+const ModalChoice = React.memo<{
+  text: string
+  value: any
+  setValue: (value: any) => void
+  current: boolean
+  closeModal?: () => void
+}>(({ text, value, setValue, current, closeModal }) => {
+  const onPress = useCallback(() => {
+    setValue(value)
+    if (closeModal) {
+      closeModal()
+    }
+  }, [closeModal, setValue, value])
+
+  return (
+    <PressableOpacity onPress={onPress} style={styles.modalChoice}>
+      <View style={styles.modalRadio}>
+        {current ? (
+          <Icon name="checkbox-marked-circle" size={30} color={colors.accent} />
+        ) : (
+          <Icon name="checkbox-blank-circle-outline" size={30} color={colors.text.secondary} />
+        )}
+      </View>
+      <Text style={styles.modalChoiceText}>{text}</Text>
+    </PressableOpacity>
+  )
+})
+
+function bitrateString(bitrate: number): string {
+  return bitrate === 0 ? 'Unlimited' : `${bitrate}kbps`
+}
+
+const BitrateModal = React.memo<{
+  title: string
+  bitrate: number
+  setBitrate: (bitrate: number) => void
+}>(({ title, bitrate, setBitrate }) => {
+  const [visible, setVisible] = useState(false)
+
+  const toggleModal = useCallback(() => setVisible(!visible), [visible])
+
+  const BitrateChoice: React.FC<{ value: number }> = useCallback(
+    ({ value }) => {
+      const text = bitrateString(value)
+      return (
+        <ModalChoice
+          text={text}
+          value={value}
+          setValue={setBitrate}
+          closeModal={toggleModal}
+          current={bitrate === value}
+        />
+      )
+    },
+    [bitrate, toggleModal, setBitrate],
+  )
+
+  return (
+    <>
+      <SettingsItem title={title} subtitle={bitrateString(bitrate)} onPress={toggleModal} />
+      <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={toggleModal}>
+        <Pressable style={{ flex: 1 }} onPress={toggleModal}>
+          <View style={styles.centeredView}>
+            <Pressable style={styles.modalView}>
+              <Header style={styles.modalHeader}>{title}</Header>
+              <ScrollView style={styles.modalScroll}>
+                <BitrateChoice value={24} />
+                <BitrateChoice value={32} />
+                <BitrateChoice value={48} />
+                <BitrateChoice value={64} />
+                <BitrateChoice value={96} />
+                <BitrateChoice value={128} />
+                <BitrateChoice value={160} />
+                <BitrateChoice value={192} />
+                <BitrateChoice value={256} />
+                <BitrateChoice value={320} />
+                <BitrateChoice value={0} />
+              </ScrollView>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  )
+})
+
 const SettingsContent = React.memo(() => {
   const servers = useStore(selectSettings.servers)
+  const scrobble = useStore(selectSettings.scrobble)
+  const setScrobble = useStore(selectSettings.setScrobble)
+  const estimateContentLength = useStore(selectSettings.estimateContentLength)
+  const setEstimateContentLength = useStore(selectSettings.setEstimateContentLength)
+
+  const maxBitrateWifi = useStore(selectSettings.maxBitrateWifi)
+  const setMaxBitrateWifi = useStore(selectSettings.setMaxBitrateWifi)
+
+  const maxBitrateMobile = useStore(selectSettings.maxBitrateMobile)
+  const setMaxBitrateMobile = useStore(selectSettings.setMaxBitrateMobile)
+
   const navigation = useNavigation()
 
   return (
@@ -57,9 +157,23 @@ const SettingsContent = React.memo(() => {
         buttonStyle="hollow"
       />
       <Header style={styles.header}>Network</Header>
-      <SettingsItem title="Max bitrate (Wi-Fi)" subtitle="Unlimited" />
-      <SettingsItem title="Max bitrate (mobile)" subtitle="192kbps" />
+      <BitrateModal title="Max bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
+      <BitrateModal title="Max bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
+      <SettingsSwitch
+        title="Estimate content length"
+        subtitle='Send the "estimateContentLength" flag when streaming. Helps fix issues with seeking when the server is transcoding songs.'
+        value={estimateContentLength}
+        setValue={setEstimateContentLength}
+      />
+      <Header style={styles.header}>Music</Header>
+      <SettingsSwitch
+        title="Scrobble plays"
+        subtitle={scrobble ? 'Scrobble play history' : "Don't scrobble play history"}
+        value={scrobble}
+        setValue={setScrobble}
+      />
       <Header style={styles.header}>Reset</Header>
+      <Button style={styles.button} title="Clear image cache" onPress={() => {}} buttonStyle="hollow" />
       <Button style={styles.button} title="Reset everything to default" onPress={() => {}} buttonStyle="hollow" />
     </View>
   )
@@ -82,6 +196,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   text: {
     color: 'white',
@@ -93,7 +208,42 @@ const styles = StyleSheet.create({
     marginTop: 26,
   },
   button: {
-    marginVertical: 10,
+    marginTop: 16,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    backgroundColor: colors.gradient.high,
+    elevation: 5,
+  },
+  modalChoice: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingRight: 15,
+    flexDirection: 'row',
+    flex: 1,
+  },
+  modalChoiceText: {
+    fontFamily: font.regular,
+    fontSize: 18,
+    color: colors.text.primary,
+    textAlign: 'left',
+    flex: 1,
+  },
+  modalRadio: {
+    height: 30,
+    width: 30,
+    marginRight: 20,
+  },
+  modalHeader: {
+    marginVertical: 20,
+    marginHorizontal: 30,
+  },
+  modalScroll: {
+    maxHeight: 475,
   },
 })
 

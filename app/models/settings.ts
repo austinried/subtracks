@@ -4,7 +4,6 @@ export interface Server {
   username: string
   token: string
   salt: string
-  scrobble: boolean
 }
 
 export interface AppSettings {
@@ -13,4 +12,8 @@ export interface AppSettings {
     lists: string[]
   }
   activeServer?: string
+  scrobble: boolean
+  estimateContentLength: boolean
+  maxBitrateWifi: number
+  maxBitrateMobile: number
 }

@@ -23,9 +23,38 @@ async function mkdir(path: string): Promise<void> {
 export type SettingsSlice = {
   settings: AppSettings
   client?: SubsonicApiClient
+
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
   getActiveServer: () => Server | undefined
   setServers: (servers: Server[]) => void
+
+  setScrobble: (scrobble: boolean) => void
+  setEstimateContentLength: (estimateContentLength: boolean) => void
+  setMaxBitrateWifi: (maxBitrateWifi: number) => void
+  setMaxBitrateMobile: (maxBitrateMobile: number) => void
+}
+
+export const selectSettings = {
+  client: (state: SettingsSlice) => state.client,
+
+  activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
+  setActiveServer: (state: SettingsSlice) => state.setActiveServer,
+
+  servers: (state: SettingsSlice) => state.settings.servers,
+  setServers: (state: SettingsSlice) => state.setServers,
+
+  homeLists: (state: SettingsSlice) => state.settings.home.lists,
+
+  scrobble: (state: SettingsSlice) => state.settings.scrobble,
+  setScrobble: (state: SettingsSlice) => state.setScrobble,
+
+  estimateContentLength: (state: SettingsSlice) => state.settings.estimateContentLength,
+  setEstimateContentLength: (state: SettingsSlice) => state.setEstimateContentLength,
+
+  maxBitrateWifi: (state: SettingsSlice) => state.settings.maxBitrateWifi,
+  setMaxBitrateWifi: (state: SettingsSlice) => state.setMaxBitrateWifi,
+  maxBitrateMobile: (state: SettingsSlice) => state.settings.maxBitrateMobile,
+  setMaxBitrateMobile: (state: SettingsSlice) => state.setMaxBitrateMobile,
 }
 
 export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
@@ -34,7 +63,12 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     home: {
       lists: ['recent', 'random', 'frequent', 'starred'],
     },
+    scrobble: false,
+    estimateContentLength: true,
+    maxBitrateWifi: 0,
+    maxBitrateMobile: 192,
   },
+
   setActiveServer: async (id, force) => {
     const servers = get().settings.servers
     const currentActiveServerId = get().settings.activeServer
@@ -83,7 +117,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       }),
     )
   },
+
   getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
+
   setServers: servers => {
     set(
       produce<SettingsSlice>(state => {
@@ -93,13 +129,36 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     const activeServer = servers.find(s => s.id === get().settings.activeServer)
     get().setActiveServer(activeServer?.id)
   },
-})
 
-export const selectSettings = {
-  client: (state: SettingsSlice) => state.client,
-  activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
-  setActiveServer: (state: SettingsSlice) => state.setActiveServer,
-  servers: (state: SettingsSlice) => state.settings.servers,
-  setServers: (state: SettingsSlice) => state.setServers,
-  homeLists: (state: SettingsSlice) => state.settings.home.lists,
-}
+  setScrobble: scrobble => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.scrobble = scrobble
+      }),
+    )
+  },
+
+  setEstimateContentLength: estimateContentLength => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.estimateContentLength = estimateContentLength
+      }),
+    )
+  },
+
+  setMaxBitrateWifi: maxBitrateWifi => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.maxBitrateWifi = maxBitrateWifi
+      }),
+    )
+  },
+
+  setMaxBitrateMobile: maxBitrateMobile => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.maxBitrateMobile = maxBitrateMobile
+      }),
+    )
+  },
+})

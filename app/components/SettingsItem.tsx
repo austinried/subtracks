@@ -4,11 +4,13 @@ import React from 'react'
 import { StyleSheet, View, Text } from 'react-native'
 import PressableOpacity from './PressableOpacity'
 
-const SettingsItem: React.FC<{
+export type SettingsItemProps = {
   title: string
   subtitle?: string
   onPress?: () => void
-}> = ({ title, subtitle, onPress, children }) => {
+}
+
+const SettingsItem: React.FC<SettingsItemProps> = ({ title, subtitle, onPress, children }) => {
   return (
     <View style={styles.item}>
       <PressableOpacity style={styles.itemText} onPress={onPress}>
@@ -22,13 +24,13 @@ const SettingsItem: React.FC<{
 
 const styles = StyleSheet.create({
   item: {
-    height: 60,
     marginBottom: 10,
     alignItems: 'stretch',
     flexDirection: 'row',
   },
   itemText: {
     flex: 1,
+    paddingVertical: 10,
     alignSelf: 'stretch',
     alignItems: 'flex-start',
   },

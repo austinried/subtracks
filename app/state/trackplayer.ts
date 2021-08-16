@@ -132,7 +132,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       return
     }
 
-    if (!get().getActiveServer()?.scrobble) {
+    if (!get().settings.scrobble) {
       return
     }
 
