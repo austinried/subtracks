@@ -80,6 +80,8 @@ export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 
 export type HomeLists = { [key: string]: AlbumListItem[] }
 
+export type StarrableItemType = 'song' | 'album' | 'artist'
+
 export enum CacheItemType {
   coverArt,
   artistArt,

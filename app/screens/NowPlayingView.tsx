@@ -5,6 +5,7 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import Star from '@app/components/Star'
 import { useStarred } from '@app/hooks/music'
 import {
+  mapTrackExtToSong,
   useNext,
   usePause,
   usePlay,
@@ -15,7 +16,7 @@ import {
 } from '@app/hooks/trackplayer'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
-import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
+import { QueueContextType, selectTrackPlayer, TrackExt } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
@@ -45,34 +46,28 @@ function getContextName(type?: QueueContextType) {
   }
 }
 
-const NowPlayingHeader = React.memo(() => {
-  const navigation = useNavigation()
+const NowPlayingHeader = React.memo<{
+  track?: TrackExt
+}>(({ track }) => {
   const queueName = useStore(selectTrackPlayer.name)
   const queueContextType = useStore(selectTrackPlayer.queueContextType)
-  const queueContextId = useStore(selectTrackPlayer.queueContextId)
+
+  if (!track) {
+    return <></>
+  }
 
   let contextName = getContextName(queueContextType)
-
-  const goToContext = useCallback(() => {
-    if (!queueContextType || !queueContextId || queueContextType === 'song') {
-      return
-    }
-    navigation.navigate('library')
-    navigation.navigate(queueContextType, { id: queueContextId, title: queueName })
-  }, [navigation, queueContextId, queueContextType, queueName])
 
   return (
     <HeaderBar
       headerStyle={{ backgroundColor: 'transparent' }}
-      onMore={goToContext}
+      contextItem={mapTrackExtToSong(track)}
       HeaderCenter={() => (
         <View style={headerStyles.center}>
-          {contextName ? (
+          {contextName !== undefined && (
             <Text numberOfLines={1} style={headerStyles.queueType}>
               {contextName}
             </Text>
-          ) : (
-            <></>
           )}
           <Text numberOfLines={1} style={headerStyles.queueName}>
             {queueName || 'Nothing playing...'}
@@ -395,7 +390,7 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <ImageGradientBackground imagePath={imagePath} />
-      <NowPlayingHeader />
+      <NowPlayingHeader track={track} />
       <View style={styles.content}>
         <SongCoverArt />
         <SongInfo />

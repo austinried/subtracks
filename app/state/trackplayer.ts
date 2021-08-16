@@ -7,6 +7,8 @@ import { Store } from './store'
 export type TrackExt = Track & {
   id: string
   coverArt?: string
+  artistId?: string
+  albumId?: string
 }
 
 export type Progress = {

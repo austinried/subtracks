@@ -116,7 +116,6 @@ export const useArtistArtFile = (artistId: string) => {
 
   useEffect(() => {
     if (!file && artistInfo && artistInfo.largeImageUrl) {
-      console.log(artistInfo.largeImageUrl)
       cacheItem('artistArt', artistId, artistInfo.largeImageUrl)
     }
   }, [artistId, artistInfo, artistInfo?.largeImageUrl, cacheItem, file])

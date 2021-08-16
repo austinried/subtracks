@@ -15,6 +15,7 @@ import {
   PlaylistWithSongs,
   SearchResults,
   Song,
+  StarrableItemType,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
 import { GetAlbumList2Type, StarParams } from '@app/subsonic/params'
@@ -65,7 +66,7 @@ export type MusicSlice = {
   starredSongs: { [id: string]: boolean }
   starredAlbums: { [id: string]: boolean }
   starredArtists: { [id: string]: boolean }
-  starItem: (id: string, type: string, unstar?: boolean) => Promise<void>
+  starItem: (id: string, type: StarrableItemType, unstar?: boolean) => Promise<void>
 
   albumIdCoverArt: { [id: string]: string | undefined }
   albumIdCoverArtRequests: { [id: string]: Promise<void> }

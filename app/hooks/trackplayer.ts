@@ -279,11 +279,11 @@ function mapSongToTrack(song: Song, coverArtPaths: { [coverArt: string]: string 
     album: song.album || 'Unknown Album',
     url: song.streamUri,
     artwork:
-      song.coverArt && coverArtPaths[song.coverArt]
-        ? `file://${coverArtPaths[song.coverArt]}`
-        : require('@res/fallback.png'),
+      song.coverArt && coverArtPaths[song.coverArt] ? coverArtPaths[song.coverArt] : require('@res/fallback.png'),
     coverArt: song.coverArt,
     duration: song.duration,
+    artistId: song.artistId,
+    albumId: song.albumId,
   }
 }
 
@@ -297,5 +297,7 @@ export function mapTrackExtToSong(track: TrackExt): Song {
     streamUri: track.url as string,
     coverArt: track.coverArt,
     duration: track.duration,
+    artistId: track.artistId,
+    albumId: track.albumId,
   }
 }

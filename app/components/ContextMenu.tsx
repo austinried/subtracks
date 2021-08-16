@@ -1,6 +1,6 @@
 import PressableOpacity from '@app/components/PressableOpacity'
 import { useStarred } from '@app/hooks/music'
-import { AlbumListItem, Artist, Song } from '@app/models/music'
+import { AlbumListItem, Artist, Song, StarrableItemType } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -25,6 +25,7 @@ type ContextMenuProps = {
   triggerOuterWrapperStyle?: StyleProp<ViewStyle>
   triggerTouchableStyle?: StyleProp<ViewStyle>
   onPress?: () => any
+  triggerOnLongPress?: boolean
 }
 
 type InternalContextMenuProps = ContextMenuProps & {
@@ -41,6 +42,7 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   menuHeader,
   menuOptions,
   children,
+  triggerOnLongPress,
 }) => {
   menuStyle = menuStyle || { flex: 1 }
   triggerWrapperStyle = triggerWrapperStyle || { flex: 1 }
@@ -49,7 +51,7 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   return (
     <Menu renderer={SlideInMenu} style={menuStyle}>
       <MenuTrigger
-        triggerOnLongPress={true}
+        triggerOnLongPress={triggerOnLongPress === undefined ? true : triggerOnLongPress}
         customStyles={{
           triggerOuterWrapper: triggerOuterWrapperStyle,
           triggerWrapper: triggerWrapperStyle,
@@ -146,15 +148,16 @@ const MenuHeader = React.memo<{
 
 const OptionStar = React.memo<{
   id: string
-  type: string
-}>(({ id, type }) => {
+  type: StarrableItemType
+  additionalText?: string
+}>(({ id, type, additionalText: text }) => {
   const starred = useStarred(id, type)
   const setStarred = useStore(selectMusic.starItem)
 
   return (
     <ContextMenuIconTextOption
       IconComponentRaw={<Star starred={starred} size={26} />}
-      text={starred ? 'Unstar' : 'Star'}
+      text={(starred ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
       onSelect={() => setStarred(id, type, starred)}
     />
   )
@@ -270,6 +273,30 @@ export const ArtistContextPressable: React.FC<ArtistContextPressableProps> = pro
         <>
           <OptionStar id={artist.id} type={artist.itemType} />
           {/* <OptionDownload itemType={artist.itemType} /> */}
+        </>
+      }>
+      {children}
+    </ContextMenu>
+  )
+}
+
+export type NowPlayingContextPressableProps = ContextMenuProps & {
+  song: Song
+}
+
+export const NowPlayingContextPressable: React.FC<NowPlayingContextPressableProps> = props => {
+  const navigation = useNavigation()
+  const { song, children } = props
+
+  return (
+    <ContextMenu
+      {...props}
+      menuHeader={<MenuHeader title={song.title} subtitle={song.artist} coverArt={song.coverArt} />}
+      menuOptions={
+        <>
+          <OptionStar id={song.id} type={song.itemType} />
+          <OptionViewArtist artist={song.artist} artistId={song.artistId} navigation={navigation} />
+          <OptionViewAlbum album={song.album} albumId={song.albumId} navigation={navigation} />
         </>
       }>
       {children}
