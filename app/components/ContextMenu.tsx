@@ -13,7 +13,7 @@ import FastImage from 'react-native-fast-image'
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
+// import IconMat from 'react-native-vector-icons/MaterialIcons'
 import CoverArt from './CoverArt'
 import Star from './Star'
 
@@ -200,11 +200,11 @@ const OptionViewAlbum = React.memo<{
   )
 })
 
-const OptionDownload = React.memo<{
-  itemType: string
-}>(({ itemType }) => (
-  <ContextMenuIconTextOption IconComponent={IconMat} name="file-download" size={26} text={`Download ${itemType}`} />
-))
+// const OptionDownload = React.memo<{
+//   itemType: string
+// }>(({ itemType }) => (
+//   <ContextMenuIconTextOption IconComponent={IconMat} name="file-download" size={26} text={`Download ${itemType}`} />
+// ))
 
 export type AlbumContextPressableProps = ContextMenuProps & {
   album: AlbumListItem
@@ -222,7 +222,7 @@ export const AlbumContextPressable: React.FC<AlbumContextPressableProps> = props
         <>
           <OptionStar id={album.id} type={album.itemType} />
           <OptionViewArtist artist={album.artist} artistId={album.artistId} navigation={navigation} />
-          <OptionDownload itemType={album.itemType} />
+          {/* <OptionDownload itemType={album.itemType} /> */}
         </>
       }>
       {children}
@@ -247,7 +247,7 @@ export const SongContextPressable: React.FC<SongContextPressableProps> = props =
           <OptionStar id={song.id} type={song.itemType} />
           <OptionViewArtist artist={song.artist} artistId={song.artistId} navigation={navigation} />
           <OptionViewAlbum album={song.album} albumId={song.albumId} navigation={navigation} />
-          <OptionDownload itemType={song.itemType} />
+          {/* <OptionDownload itemType={song.itemType} /> */}
         </>
       }>
       {children}
@@ -269,7 +269,7 @@ export const ArtistContextPressable: React.FC<ArtistContextPressableProps> = pro
       menuOptions={
         <>
           <OptionStar id={artist.id} type={artist.itemType} />
-          <OptionDownload itemType={artist.itemType} />
+          {/* <OptionDownload itemType={artist.itemType} /> */}
         </>
       }>
       {children}

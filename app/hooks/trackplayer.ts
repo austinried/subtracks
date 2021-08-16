@@ -191,7 +191,7 @@ export const useSetQueue = () => {
   const getQueueShuffled = useCallback(() => !!useStore.getState().shuffleOrder, [])
   const setQueueContextType = useStore(selectTrackPlayer.setQueueContextType)
   const setQueueContextId = useStore(selectTrackPlayer.setQueueContextId)
-  const getCoverArtPath = useStore(selectCache.getCoverArtPath)
+  const fetchCoverArtFilePath = useStore(selectCache.fetchCoverArtFilePath)
 
   return async (
     songs: Song[],
@@ -217,7 +217,7 @@ export const useSetQueue = () => {
           continue
         }
 
-        coverArtPaths[s.coverArt] = await getCoverArtPath(s.coverArt)
+        coverArtPaths[s.coverArt] = await fetchCoverArtFilePath(s.coverArt)
       }
 
       let queue = songs.map(s => mapSongToTrack(s, coverArtPaths))

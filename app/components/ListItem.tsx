@@ -26,12 +26,10 @@ const TitleTextSong = React.memo<{
   return (
     <View style={styles.textLine}>
       <Text style={[styles.title, { color: playing ? colors.accent : colors.text.primary }]}>
-        {playing ? (
+        {playing && (
           <View style={styles.playingIcon}>
             <IconFA5 name="play" size={9} color={colors.accent} />
           </View>
-        ) : (
-          <></>
         )}
         {title}
       </Text>
@@ -159,35 +157,29 @@ const ListItem: React.FC<{
   return (
     <View style={[styles.container, sizeStyle.container]}>
       <PressableComponent>
-        {showArt ? coverArt : <></>}
+        {showArt && coverArt}
         <View style={styles.text}>
           {title}
-          {subtitle ? (
+          {subtitle !== undefined && (
             <View style={styles.textLine}>
-              {starred ? (
+              {false && (
                 <IconMat
                   name="file-download-done"
                   size={17}
                   color={colors.text.secondary}
                   style={styles.downloadedIcon}
                 />
-              ) : (
-                <></>
               )}
               <Text style={styles.subtitle}>{subtitle}</Text>
             </View>
-          ) : (
-            <></>
           )}
         </View>
       </PressableComponent>
       <View style={styles.controls}>
-        {showStar ? (
+        {showStar && (
           <PressableOpacity onPress={toggleStarred} style={styles.controlItem}>
             <Star size={26} starred={starred} />
           </PressableOpacity>
-        ) : (
-          <></>
         )}
       </View>
     </View>

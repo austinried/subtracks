@@ -22,7 +22,10 @@ const ListPlayerControls = React.memo<{
   return (
     <View style={[styles.controls, style]}>
       <View style={styles.controlsSide}>
-        <Button buttonStyle={downloaded ? 'highlight' : 'hollow'} onPress={() => setDownloaded(!downloaded)}>
+        <Button
+          disabled={true}
+          buttonStyle={downloaded ? 'highlight' : 'hollow'}
+          onPress={() => setDownloaded(!downloaded)}>
           {downloaded ? (
             <IconMat name="file-download-done" size={26} color={colors.text.primary} />
           ) : (

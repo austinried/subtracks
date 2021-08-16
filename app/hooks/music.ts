@@ -106,10 +106,6 @@ export const useCoverArtFile = (coverArt: string = '-1') => {
     }
   }, [cacheItem, client, coverArt, file])
 
-  // if (file && request && request.promise !== undefined) {
-  //   return
-  // }
-
   return { file, request }
 }
 
@@ -124,10 +120,6 @@ export const useArtistArtFile = (artistId: string) => {
       cacheItem('artistArt', artistId, artistInfo.largeImageUrl)
     }
   }, [artistId, artistInfo, artistInfo?.largeImageUrl, cacheItem, file])
-
-  // if (file && request && request.promise !== undefined) {
-  //   return
-  // }
 
   return { file, request }
 }

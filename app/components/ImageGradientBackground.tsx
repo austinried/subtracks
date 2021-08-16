@@ -18,6 +18,7 @@ const ImageGradientBackground: React.FC<{
 
   useEffect(() => {
     async function getColors() {
+      console.log(`imagePath: ${imagePath}`)
       if (imagePath === undefined) {
         return
       }
@@ -26,6 +27,7 @@ const ImageGradientBackground: React.FC<{
 
       let res: AndroidImageColors
       if (cachedResult) {
+        console.log(`cachedResult: ${JSON.stringify(cachedResult)}`)
         res = cachedResult as AndroidImageColors
       } else {
         const path = `file://${imagePath}`
@@ -33,12 +35,21 @@ const ImageGradientBackground: React.FC<{
           cache: true,
           key: imagePath,
         })) as AndroidImageColors
+        console.log(`res: ${JSON.stringify(res)}`)
       }
 
       if (res.muted && res.muted !== '#000000') {
         setHighColor(res.muted)
       } else if (res.darkMuted && res.darkMuted !== '#000000') {
         setHighColor(res.darkMuted)
+      } else if (res.lightMuted && res.lightMuted !== '#000000') {
+        setHighColor(res.lightMuted)
+      } else if (res.vibrant && res.vibrant !== '#000000') {
+        setHighColor(res.vibrant)
+      } else if (res.darkVibrant && res.darkVibrant !== '#000000') {
+        setHighColor(res.darkVibrant)
+      } else if (res.lightVibrant && res.lightVibrant !== '#000000') {
+        setHighColor(res.lightVibrant)
       }
     }
     getColors()
