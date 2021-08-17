@@ -55,8 +55,8 @@ export type TrackPlayerSlice = {
   netState: 'mobile' | 'wifi'
   setNetState: (netState: 'mobile' | 'wifi') => Promise<void>
 
+  rebuildQueue: () => Promise<void>
   buildStreamUri: (id: string) => string
-
   reset: () => void
 }
 
@@ -157,9 +157,11 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       return
     }
     set({ netState })
-    ToastAndroid.show('switched netState to ' + netState, ToastAndroid.SHORT)
+    get().rebuildQueue()
+  },
 
-    await trackPlayerCommands.enqueue(async () => {
+  rebuildQueue: async () => {
+    return trackPlayerCommands.enqueue(async () => {
       const queue = await getQueue()
       if (!queue.length) {
         return

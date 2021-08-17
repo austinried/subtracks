@@ -144,6 +144,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.estimateContentLength = estimateContentLength
       }),
     )
+    get().rebuildQueue()
   },
 
   setMaxBitrateWifi: maxBitrateWifi => {
@@ -152,6 +153,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.maxBitrateWifi = maxBitrateWifi
       }),
     )
+    if (get().netState === 'wifi') {
+      get().rebuildQueue()
+    }
   },
 
   setMaxBitrateMobile: maxBitrateMobile => {
@@ -160,5 +164,8 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.maxBitrateMobile = maxBitrateMobile
       }),
     )
+    if (get().netState === 'mobile') {
+      get().rebuildQueue()
+    }
   },
 })
