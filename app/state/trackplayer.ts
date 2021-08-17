@@ -1,5 +1,7 @@
+import { NoClientError } from '@app/models/error'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
+import { ToastAndroid } from 'react-native'
 import TrackPlayer, { RepeatMode, State, Track } from 'react-native-track-player'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
@@ -20,8 +22,8 @@ export type Progress = {
 export type QueueContextType = 'album' | 'playlist' | 'song' | 'artist'
 
 export type TrackPlayerSlice = {
-  name?: string
-  setName: (name?: string) => void
+  queueName?: string
+  setQueueName: (name?: string) => void
 
   queueContextType?: QueueContextType
   setQueueContextType: (queueContextType?: QueueContextType) => void
@@ -50,12 +52,17 @@ export type TrackPlayerSlice = {
 
   scrobbleTrack: (id: string) => Promise<void>
 
+  netState: 'mobile' | 'wifi'
+  setNetState: (netState: 'mobile' | 'wifi') => Promise<void>
+
+  buildStreamUri: (id: string) => string
+
   reset: () => void
 }
 
 export const selectTrackPlayer = {
-  name: (store: TrackPlayerSlice) => store.name,
-  setName: (store: TrackPlayerSlice) => store.setName,
+  queueName: (store: TrackPlayerSlice) => store.queueName,
+  setQueueName: (store: TrackPlayerSlice) => store.setQueueName,
 
   queueContextType: (store: TrackPlayerSlice) => store.queueContextType,
   setQueueContextType: (store: TrackPlayerSlice) => store.setQueueContextType,
@@ -85,14 +92,17 @@ export const selectTrackPlayer = {
 
   scrobbleTrack: (store: TrackPlayerSlice) => store.scrobbleTrack,
 
+  setNetState: (store: TrackPlayerSlice) => store.setNetState,
+  buildStreamUri: (store: TrackPlayerSlice) => store.buildStreamUri,
+
   reset: (store: TrackPlayerSlice) => store.reset,
 }
 
 export const trackPlayerCommands = new PromiseQueue(1)
 
 export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerSlice => ({
-  name: undefined,
-  setName: name => set({ name }),
+  queueName: undefined,
+  setQueueName: name => set({ queueName: name }),
 
   queueContextType: undefined,
   setQueueContextType: queueContextType => set({ queueContextType }),
@@ -141,9 +151,73 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
     } catch {}
   },
 
+  netState: 'mobile',
+  setNetState: async netState => {
+    if (netState === get().netState) {
+      return
+    }
+    set({ netState })
+    ToastAndroid.show('switched netState to ' + netState, ToastAndroid.SHORT)
+
+    await trackPlayerCommands.enqueue(async () => {
+      const queue = await getQueue()
+      if (!queue.length) {
+        return
+      }
+
+      const currentTrack = await getCurrentTrack()
+      const state = await getPlayerState()
+      const position = (await TrackPlayer.getPosition()) || 0
+
+      const queueName = get().queueName
+      const queueContextId = get().queueContextId
+      const queueContextType = get().queueContextType
+
+      await TrackPlayer.reset()
+
+      try {
+        for (const track of queue) {
+          track.url = get().buildStreamUri(track.id)
+        }
+      } catch {
+        return
+      }
+
+      set({
+        queue,
+        queueName,
+        queueContextId,
+        queueContextType,
+      })
+      get().setCurrentTrackIdx(currentTrack)
+
+      await TrackPlayer.add(queue)
+      if (currentTrack) {
+        await TrackPlayer.skip(currentTrack)
+      }
+      await TrackPlayer.seekTo(position)
+      if (state === State.Playing) {
+        await TrackPlayer.play()
+      }
+    })
+  },
+
+  buildStreamUri: id => {
+    const client = get().client
+    if (!client) {
+      throw new NoClientError()
+    }
+
+    return client.streamUri({
+      id,
+      estimateContentLength: get().settings.estimateContentLength,
+      maxBitRate: get().netState === 'mobile' ? get().settings.maxBitrateMobile : get().settings.maxBitrateWifi,
+    })
+  },
+
   reset: () => {
     set({
-      name: undefined,
+      queueName: undefined,
       queueContextType: undefined,
       queueContextId: undefined,
       shuffleOrder: undefined,

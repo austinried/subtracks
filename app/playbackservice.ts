@@ -2,6 +2,7 @@ import { getCurrentTrack, getPlayerState, TrackExt, trackPlayerCommands } from '
 import TrackPlayer, { Event, State } from 'react-native-track-player'
 import { useStore } from './state/store'
 import { unstable_batchedUpdates } from 'react-native'
+import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
 
 const reset = () => {
   unstable_batchedUpdates(() => {
@@ -21,6 +22,12 @@ const setCurrentTrackIdx = (idx?: number) => {
   })
 }
 
+const setNetState = (netState: 'mobile' | 'wifi') => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().setNetState(netState)
+  })
+}
+
 let serviceCreated = false
 const createService = async () => {
   useStore.subscribe(
@@ -32,6 +39,14 @@ const createService = async () => {
     state => state.currentTrack,
     (prev, next) => prev?.id === next?.id,
   )
+
+  NetInfo.addEventListener(state => {
+    const currentType = useStore.getState().netState
+    const newType = state.type === NetInfoStateType.cellular ? 'mobile' : 'wifi'
+    if (currentType !== newType) {
+      setNetState(newType)
+    }
+  })
 
   TrackPlayer.addEventListener(Event.RemoteStop, () => {
     reset()

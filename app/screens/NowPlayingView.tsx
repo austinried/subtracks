@@ -49,7 +49,7 @@ function getContextName(type?: QueueContextType) {
 const NowPlayingHeader = React.memo<{
   track?: TrackExt
 }>(({ track }) => {
-  const queueName = useStore(selectTrackPlayer.name)
+  const queueName = useStore(selectTrackPlayer.queueName)
   const queueContextType = useStore(selectTrackPlayer.queueContextType)
 
   if (!track) {

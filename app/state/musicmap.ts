@@ -35,19 +35,8 @@ export type MusicMapSlice = {
   mapPlaylistWithSongs: (playlist: PlaylistWithSongsElement) => Promise<PlaylistWithSongs>
 }
 
-class NoClientError extends Error {
-  constructor() {
-    super('no client in state')
-  }
-}
-
 export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>): MusicMapSlice => ({
   mapChildToSong: async child => {
-    const client = get().client
-    if (!client) {
-      throw new NoClientError()
-    }
-
     return {
       itemType: 'song',
       id: child.id,
@@ -60,7 +49,7 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
       duration: child.duration,
       starred: child.starred,
       coverArt: await get().getAlbumCoverArt(child.albumId),
-      streamUri: client.streamUri({ id: child.id }),
+      streamUri: get().buildStreamUri(child.id),
     }
   },
 

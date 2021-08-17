@@ -187,11 +187,12 @@ export const useSetQueue = () => {
   const setCurrentTrackIdx = useStore(selectTrackPlayer.setCurrentTrackIdx)
   const setQueue = useStore(selectTrackPlayer.setQueue)
   const setShuffleOrder = useStore(selectTrackPlayer.setShuffleOrder)
-  const setQueueName = useStore(selectTrackPlayer.setName)
+  const setQueueName = useStore(selectTrackPlayer.setQueueName)
   const getQueueShuffled = useCallback(() => !!useStore.getState().shuffleOrder, [])
   const setQueueContextType = useStore(selectTrackPlayer.setQueueContextType)
   const setQueueContextId = useStore(selectTrackPlayer.setQueueContextId)
   const fetchCoverArtFilePath = useStore(selectCache.fetchCoverArtFilePath)
+  const buildStreamUri = useStore(selectTrackPlayer.buildStreamUri)
 
   return async (
     songs: Song[],
@@ -221,6 +222,14 @@ export const useSetQueue = () => {
       }
 
       let queue = songs.map(s => mapSongToTrack(s, coverArtPaths))
+
+      try {
+        for (const t of queue) {
+          t.url = buildStreamUri(t.id)
+        }
+      } catch {
+        return
+      }
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
