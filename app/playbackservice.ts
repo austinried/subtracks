@@ -89,9 +89,17 @@ const createService = async () => {
     })
   })
 
-  TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
+  TrackPlayer.addEventListener(Event.PlaybackQueueEnded, event => {
+    const { position, track } = event
+
+    // bogus event that fires when queue is changed
+    if (!track && position === 0) {
+      return
+    }
+
     trackPlayerCommands.enqueue(async () => {
-      setCurrentTrackIdx(await getCurrentTrack())
+      await TrackPlayer.stop()
+      await TrackPlayer.skip(0)
     })
   })
 

@@ -73,7 +73,7 @@ const TopSongs = React.memo<{
   )
 })
 
-const ArtistDetailsFallback = React.memo(() => (
+const ArtistViewFallback = React.memo(() => (
   <GradientBackground style={styles.fallback}>
     <ActivityIndicator size="large" color={colors.accent} />
   </GradientBackground>
@@ -100,7 +100,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
   const albumSize = albumsLayout.width / 2 - styles.container.paddingHorizontal / 2
 
   if (!artist) {
-    return <ArtistDetailsFallback />
+    return <ArtistViewFallback />
   }
 
   const _albums = [...artist.albums]
@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
+    minHeight: artistCoverHeight * 2,
     width: '100%',
     paddingHorizontal: 20,
   },

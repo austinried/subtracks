@@ -39,14 +39,14 @@ const ImageGradientBackground: React.FC<{
         setHighColor(res.muted)
       } else if (res.darkMuted && res.darkMuted !== '#000000') {
         setHighColor(res.darkMuted)
-      } else if (res.lightMuted && res.lightMuted !== '#000000') {
-        setHighColor(res.lightMuted)
       } else if (res.vibrant && res.vibrant !== '#000000') {
         setHighColor(res.vibrant)
       } else if (res.darkVibrant && res.darkVibrant !== '#000000') {
         setHighColor(res.darkVibrant)
       } else if (res.lightVibrant && res.lightVibrant !== '#000000') {
         setHighColor(res.lightVibrant)
+      } else if (res.lightMuted && res.lightMuted !== '#000000') {
+        setHighColor(res.lightMuted)
       }
     }
     getColors()
