@@ -1,14 +1,16 @@
 import GradientScrollView from '@app/components/GradientScrollView'
 import ListItem from '@app/components/ListItem'
 import NowPlayingBar from '@app/components/NowPlayingBar'
-import { mapTrackExtToSong, useSkipTo } from '@app/hooks/trackplayer'
+import { useSkipTo } from '@app/hooks/trackplayer'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
+import { selectTrackPlayerMap } from '@app/state/trackplayermap'
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
 const NowPlayingQueue = React.memo<{}>(() => {
   const queue = useStore(selectTrackPlayer.queue)
+  const mapTrackExtToSong = useStore(selectTrackPlayerMap.mapTrackExtToSong)
   const skipTo = useSkipTo()
 
   return (

@@ -6,11 +6,13 @@ import { persist, StateStorage } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
 import { createMusicMapSlice, MusicMapSlice } from './musicmap'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
+import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
 
 export type Store = SettingsSlice &
   MusicSlice &
   MusicMapSlice &
   TrackPlayerSlice &
+  TrackPlayerMapSlice &
   CacheSlice & {
     hydrated: boolean
     setHydrated: (hydrated: boolean) => void
@@ -41,6 +43,7 @@ export const useStore = create<Store>(
       ...createMusicSlice(set, get),
       ...createMusicMapSlice(set, get),
       ...createTrackPlayerSlice(set, get),
+      ...createTrackPlayerMapSlice(set, get),
       ...createCacheSlice(set, get),
 
       hydrated: false,

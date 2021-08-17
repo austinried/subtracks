@@ -6,7 +6,7 @@ import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
 
 const reset = () => {
   unstable_batchedUpdates(() => {
-    useStore.getState().reset()
+    useStore.getState().resetTrackPlayerState()
   })
 }
 

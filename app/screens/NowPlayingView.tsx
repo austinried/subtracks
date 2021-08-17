@@ -4,19 +4,11 @@ import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import Star from '@app/components/Star'
 import { useStarred } from '@app/hooks/music'
-import {
-  mapTrackExtToSong,
-  useNext,
-  usePause,
-  usePlay,
-  usePrevious,
-  useSeekTo,
-  useToggleRepeat,
-  useToggleShuffle,
-} from '@app/hooks/trackplayer'
+import { useNext, usePause, usePlay, usePrevious, useSeekTo } from '@app/hooks/trackplayer'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import { QueueContextType, selectTrackPlayer, TrackExt } from '@app/state/trackplayer'
+import { selectTrackPlayerMap } from '@app/state/trackplayermap'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
@@ -51,6 +43,7 @@ const NowPlayingHeader = React.memo<{
 }>(({ track }) => {
   const queueName = useStore(selectTrackPlayer.queueName)
   const queueContextType = useStore(selectTrackPlayer.queueContextType)
+  const mapTrackExtToSong = useStore(selectTrackPlayerMap.mapTrackExtToSong)
 
   if (!track) {
     return <></>
@@ -272,9 +265,9 @@ const PlayerControls = () => {
   const next = useNext()
   const previous = usePrevious()
   const shuffled = useStore(selectTrackPlayer.shuffled)
-  const toggleShuffle = useToggleShuffle()
+  const toggleShuffle = useStore(selectTrackPlayer.toggleShuffle)
   const repeatMode = useStore(selectTrackPlayer.repeatMode)
-  const toggleRepeat = useToggleRepeat()
+  const toggleRepeat = useStore(selectTrackPlayer.toggleRepeatMode)
   const navigation = useNavigation()
 
   let playPauseIcon: string

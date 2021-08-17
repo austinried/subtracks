@@ -1,7 +1,7 @@
 import Button from '@app/components/Button'
-import { useSetQueue } from '@app/hooks/trackplayer'
 import { Song } from '@app/models/music'
-import { QueueContextType } from '@app/state/trackplayer'
+import { useStore } from '@app/state/store'
+import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
@@ -17,7 +17,7 @@ const ListPlayerControls = React.memo<{
   style?: StyleProp<ViewStyle>
 }>(({ songs, typeName, queueName, queueContextType, queueContextId, style }) => {
   const [downloaded, setDownloaded] = useState(false)
-  const setQueue = useSetQueue()
+  const setQueue = useStore(selectTrackPlayer.setQueue)
 
   return (
     <View style={[styles.controls, style]}>

@@ -3,10 +3,10 @@ import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import { useActiveListRefresh2 } from '@app/hooks/server'
-import { useSetQueue } from '@app/hooks/trackplayer'
 import { ListableItem, SearchResults, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
+import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import debounce from 'lodash.debounce'
@@ -14,7 +14,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react-native'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const setQueue = useSetQueue()
+  const setQueue = useStore(selectTrackPlayer.setQueue)
 
   return (
     <ListItem

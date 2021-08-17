@@ -135,7 +135,9 @@ const ListItem: React.FC<{
 
   const starItem = useStore(selectMusic.starItem)
   const toggleStarred = useCallback(() => {
-    starItem(item.id, item.itemType, starred)
+    if (item.itemType !== 'playlist') {
+      starItem(item.id, item.itemType, starred)
+    }
   }, [item.id, item.itemType, starItem, starred])
 
   let title = <></>
