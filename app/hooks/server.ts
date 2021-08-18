@@ -18,32 +18,12 @@ export const useSwitchActiveServer = () => {
   }
 }
 
-export const useActiveListRefresh = (list: unknown[], update: () => void) => {
-  const activeServer = useStore(selectSettings.activeServer)
-
-  useEffect(() => {
-    if (list.length === 0) {
-      update()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeServer])
-}
-
-export const useActiveListRefresh2 = (update: () => void) => {
-  const activeServer = useStore(selectSettings.activeServer)
-
-  useEffect(() => {
-    update()
-  }, [activeServer, update])
-}
-
-export const useActiveServerRefresh = (update: () => void) => {
+export const useActiveServerRefresh = (refresh: () => void) => {
   const activeServer = useStore(selectSettings.activeServer)
 
   useEffect(() => {
     if (activeServer) {
-      update()
+      refresh()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeServer])
+  }, [activeServer, refresh])
 }

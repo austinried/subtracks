@@ -3,7 +3,7 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useActiveListRefresh2 } from '@app/hooks/server'
+import { useActiveServerRefresh } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
@@ -87,7 +87,7 @@ const Home = () => {
   const update = useStore(selectMusic.fetchHomeLists)
   const clear = useStore(selectMusic.clearHomeLists)
 
-  useActiveListRefresh2(
+  useActiveServerRefresh(
     useCallback(() => {
       clear()
       update()

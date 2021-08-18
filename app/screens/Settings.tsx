@@ -199,13 +199,6 @@ const SettingsContent = React.memo(() => {
         onPress={clear}
         buttonStyle="hollow"
       />
-      {/* <Button
-        disabled={clearing}
-        style={styles.button}
-        title="Reset everything to default"
-        onPress={() => {}}
-        buttonStyle="hollow"
-      /> */}
     </View>
   )
 })

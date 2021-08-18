@@ -30,17 +30,9 @@ export type MusicSlice = {
   //
   // lists-style state
   //
-  artists: Artist[]
-  artistsUpdating: boolean
-  fetchArtists: () => Promise<void>
-
-  playlists: PlaylistListItem[]
-  playlistsUpdating: boolean
-  fetchPlaylists: () => Promise<void>
-
-  albums: AlbumListItem[]
-  albumsUpdating: boolean
-  fetchAlbums: (size?: number, offset?: number) => Promise<void>
+  fetchArtists: (size?: number, offset?: number) => Promise<Artist[]>
+  fetchPlaylists: () => Promise<PlaylistListItem[]>
+  fetchAlbums: () => Promise<AlbumListItem[]>
 
   searchResults: SearchResults
   searchResultsUpdating: boolean
@@ -71,16 +63,8 @@ export const selectMusic = {
   fetchAlbumWithSongs: (state: Store) => state.fetchAlbumWithSongs,
   fetchPlaylistWithSongs: (state: Store) => state.fetchPlaylistWithSongs,
 
-  artists: (store: MusicSlice) => store.artists,
-  artistsUpdating: (store: MusicSlice) => store.artistsUpdating,
   fetchArtists: (store: MusicSlice) => store.fetchArtists,
-
-  playlists: (store: MusicSlice) => store.playlists,
-  playlistsUpdating: (store: MusicSlice) => store.playlistsUpdating,
   fetchPlaylists: (store: MusicSlice) => store.fetchPlaylists,
-
-  albums: (store: MusicSlice) => store.albums,
-  albumsUpdating: (store: MusicSlice) => store.albumsUpdating,
   fetchAlbums: (store: MusicSlice) => store.fetchAlbums,
 
   searchResults: (store: MusicSlice) => store.searchResults,
@@ -194,19 +178,11 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     }
   },
 
-  artists: [],
-  artistsUpdating: false,
-
   fetchArtists: async () => {
     const client = get().client
     if (!client) {
-      return
+      return []
     }
-
-    if (get().artistsUpdating) {
-      return
-    }
-    set({ artistsUpdating: true })
 
     try {
       const response = await client.getArtists()
@@ -214,63 +190,49 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
       set(
         produce<MusicSlice>(state => {
-          state.artists = artists
-          state.starredArtists = reduceStarred(state.starredArtists, state.artists)
+          state.starredArtists = reduceStarred(state.starredArtists, artists)
         }),
       )
-    } finally {
-      set({ artistsUpdating: false })
+
+      return artists
+    } catch {
+      return []
     }
   },
-
-  playlists: [],
-  playlistsUpdating: false,
 
   fetchPlaylists: async () => {
     const client = get().client
     if (!client) {
-      return
+      return []
     }
-
-    if (get().playlistsUpdating) {
-      return
-    }
-    set({ playlistsUpdating: true })
 
     try {
       const response = await client.getPlaylists()
-      const playlists = response.data.playlists.map(get().mapPlaylistListItem)
-      set({ playlists })
-    } finally {
-      set({ playlistsUpdating: false })
+      return response.data.playlists.map(get().mapPlaylistListItem)
+    } catch {
+      return []
     }
   },
-
-  albums: [],
-  albumsUpdating: false,
 
   fetchAlbums: async (size = 500, offset = 0) => {
     const client = get().client
     if (!client) {
-      return
+      return []
     }
-
-    if (get().albumsUpdating) {
-      return
-    }
-    set({ albumsUpdating: true })
 
     try {
       const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size, offset })
       const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
+
       set(
         produce<MusicSlice>(state => {
-          state.albums = albums
-          state.starredAlbums = reduceStarred(state.starredAlbums, state.albums)
+          state.starredAlbums = reduceStarred(state.starredAlbums, albums)
         }),
       )
-    } finally {
-      set({ albumsUpdating: false })
+
+      return albums
+    } catch {
+      return []
     }
   },
 

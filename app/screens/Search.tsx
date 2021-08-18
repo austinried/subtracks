@@ -2,7 +2,7 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
-import { useActiveListRefresh2 } from '@app/hooks/server'
+import { useActiveServerRefresh } from '@app/hooks/server'
 import { ListableItem, SearchResults, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
@@ -68,7 +68,7 @@ const Search = () => {
   const updating = useStore(selectMusic.searchResultsUpdating)
   const results = useStore(selectMusic.searchResults)
 
-  useActiveListRefresh2(
+  useActiveServerRefresh(
     useCallback(() => {
       setText('')
       clearSearch()

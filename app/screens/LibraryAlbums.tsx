@@ -1,7 +1,7 @@
 import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
 import GradientFlatList from '@app/components/GradientFlatList'
-import { useActiveListRefresh2 } from '@app/hooks/server'
+import { useFetchPaginatedList } from '@app/hooks/list'
 import { Album, AlbumListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
@@ -48,31 +48,28 @@ const AlbumListRenderItem: React.FC<{
 }> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
 
 const AlbumsList = () => {
-  const list = useStore(selectMusic.albums)
-  const updating = useStore(selectMusic.albumsUpdating)
-  const updateList = useStore(selectMusic.fetchAlbums)
-
-  useActiveListRefresh2(updateList)
+  const fetchAlbums = useStore(selectMusic.fetchAlbums)
+  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 60)
 
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
 
-  const albumsList = list.map(album => ({ album, size, height }))
-
   return (
     <View style={styles.container}>
       <GradientFlatList
         contentContainerStyle={styles.listContent}
-        data={albumsList}
+        data={list.map(album => ({ album, size, height }))}
         renderItem={AlbumListRenderItem}
         keyExtractor={item => item.album.id}
         numColumns={3}
         removeClippedSubviews={true}
-        refreshing={updating}
-        onRefresh={updateList}
+        refreshing={refreshing}
+        onRefresh={refresh}
         overScrollMode="never"
+        onEndReached={fetchNextPage}
+        onEndReachedThreshold={1}
         getItemLayout={(_data, index) => ({
           length: height,
           offset: height * Math.floor(index / 3),

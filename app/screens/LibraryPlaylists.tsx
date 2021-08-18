@@ -1,6 +1,6 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useActiveListRefresh2 } from '@app/hooks/server'
+import { useFetchList } from '@app/hooks/list'
 import { PlaylistListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
@@ -12,20 +12,17 @@ const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
 )
 
 const PlaylistsList = () => {
-  const playlists = useStore(selectMusic.playlists)
-  const updating = useStore(selectMusic.playlistsUpdating)
-  const updatePlaylists = useStore(selectMusic.fetchPlaylists)
-
-  useActiveListRefresh2(updatePlaylists)
+  const fetchPlaylists = useStore(selectMusic.fetchPlaylists)
+  const { list, refreshing, refresh } = useFetchList(fetchPlaylists)
 
   return (
     <GradientFlatList
       contentContainerStyle={styles.listContent}
-      data={playlists}
+      data={list}
       renderItem={PlaylistRenderItem}
       keyExtractor={item => item.id}
-      onRefresh={updatePlaylists}
-      refreshing={updating}
+      onRefresh={refresh}
+      refreshing={refreshing}
       overScrollMode="never"
     />
   )
