@@ -39,20 +39,13 @@ export type CacheSlice = {
   prepareCache: (serverId: string) => void
   pendingRemoval: Record<string, boolean>
   removeCache: (serverId: string) => Promise<void>
+  clearImageCache: () => Promise<void>
 }
 
 export const selectCache = {
   cacheItem: (store: CacheSlice) => store.cacheItem,
   fetchCoverArtFilePath: (store: CacheSlice) => store.fetchCoverArtFilePath,
-
-  songCacheDir: (store: Store) => {
-    const activeServerId = store.settings.activeServer
-    if (!activeServerId) {
-      return
-    }
-
-    return store.cacheDirs[activeServerId].song
-  },
+  clearImageCache: (store: CacheSlice) => store.clearImageCache,
 }
 
 export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): CacheSlice => ({
@@ -241,5 +234,32 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
         }
       }),
     )
+  },
+
+  clearImageCache: async () => {
+    const cacheRequests = get().cacheRequests
+    for (const serverId in cacheRequests) {
+      const coverArtRequests = cacheRequests[serverId].coverArt
+      const artstArtRequests = cacheRequests[serverId].artistArt
+      const requests = [...Object.values(coverArtRequests), ...Object.values(artstArtRequests)]
+      const pendingRequests = [
+        ...(requests.filter(r => r.promise !== undefined).map(r => r.promise) as Promise<void>[]),
+      ]
+
+      await Promise.all(pendingRequests)
+
+      await rmdir(get().cacheDirs[serverId].coverArt)
+      await mkdir(get().cacheDirs[serverId].coverArt)
+
+      await rmdir(get().cacheDirs[serverId].artistArt)
+      await mkdir(get().cacheDirs[serverId].artistArt)
+
+      set(
+        produce<CacheSlice>(state => {
+          state.cacheFiles[serverId].coverArt = {}
+          state.cacheFiles[serverId].artistArt = {}
+        }),
+      )
+    }
   },
 })

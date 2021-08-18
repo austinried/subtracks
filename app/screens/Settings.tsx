@@ -6,6 +6,7 @@ import SettingsItem from '@app/components/SettingsItem'
 import SettingsSwitch from '@app/components/SettingsSwitch'
 import { useSwitchActiveServer } from '@app/hooks/server'
 import { Server } from '@app/models/settings'
+import { selectCache } from '@app/state/cache'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -142,7 +143,25 @@ const SettingsContent = React.memo(() => {
   const maxBitrateMobile = useStore(selectSettings.maxBitrateMobile)
   const setMaxBitrateMobile = useStore(selectSettings.setMaxBitrateMobile)
 
+  const clearImageCache = useStore(selectCache.clearImageCache)
+  const [clearing, setClearing] = useState(false)
+
   const navigation = useNavigation()
+
+  const clear = useCallback(() => {
+    setClearing(true)
+
+    const waitForClear = async () => {
+      try {
+        await clearImageCache()
+      } catch (err) {
+        console.log(err)
+      } finally {
+        setClearing(false)
+      }
+    }
+    waitForClear()
+  }, [clearImageCache])
 
   return (
     <View style={styles.content}>
@@ -173,8 +192,20 @@ const SettingsContent = React.memo(() => {
         setValue={setScrobble}
       />
       <Header style={styles.header}>Reset</Header>
-      <Button style={styles.button} title="Clear image cache" onPress={() => {}} buttonStyle="hollow" />
-      <Button style={styles.button} title="Reset everything to default" onPress={() => {}} buttonStyle="hollow" />
+      <Button
+        disabled={clearing}
+        style={styles.button}
+        title="Clear image cache"
+        onPress={clear}
+        buttonStyle="hollow"
+      />
+      {/* <Button
+        disabled={clearing}
+        style={styles.button}
+        title="Reset everything to default"
+        onPress={() => {}}
+        buttonStyle="hollow"
+      /> */}
     </View>
   )
 })
