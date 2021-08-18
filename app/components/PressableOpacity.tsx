@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { LayoutRectangle, Pressable, PressableProps } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { GestureResponderEvent, LayoutRectangle, Pressable, PressableProps, ViewStyle } from 'react-native'
 
 type PressableOpacityProps = PressableProps & {
   ripple?: boolean
@@ -9,10 +9,11 @@ type PressableOpacityProps = PressableProps & {
 
 const PressableOpacity: React.FC<PressableOpacityProps> = props => {
   const [opacity, setOpacity] = useState(1)
+  const [disabledStyle, setDisabledStyle] = useState<ViewStyle>({})
   const [dimensions, setDimensions] = useState<LayoutRectangle | undefined>(undefined)
 
   useEffect(() => {
-    props.disabled === true ? setOpacity(0.3) : setOpacity(1)
+    props.disabled === true ? setDisabledStyle({ opacity: 0.3 }) : setDisabledStyle({})
   }, [props.disabled])
 
   props = {
@@ -20,10 +21,41 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
     unstable_pressDelay: props.unstable_pressDelay === undefined ? 60 : props.unstable_pressDelay,
   }
 
+  const onPressIn = useCallback<(event: GestureResponderEvent) => void>(
+    data => {
+      if (props.disabled) {
+        return
+      }
+      setOpacity(0.4)
+      props.onPressIn ? props.onPressIn(data) : null
+    },
+    [props],
+  )
+  const onPressOut = useCallback<(event: GestureResponderEvent) => void>(
+    data => {
+      if (props.disabled) {
+        return
+      }
+      setOpacity(1)
+      props.onPressOut ? props.onPressOut(data) : null
+    },
+    [props],
+  )
+  const onLongPress = useCallback<(event: GestureResponderEvent) => void>(
+    data => {
+      if (props.disabled) {
+        return
+      }
+      setOpacity(1)
+      props.onLongPress ? props.onLongPress(data) : null
+    },
+    [props],
+  )
+
   return (
     <Pressable
       {...props}
-      style={[{ justifyContent: 'center', alignItems: 'center' }, props.style as any, { opacity }]}
+      style={[{ justifyContent: 'center', alignItems: 'center' }, props.style as any, { opacity }, disabledStyle]}
       android_ripple={
         props.ripple
           ? {
@@ -34,22 +66,9 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
           : undefined
       }
       onLayout={event => setDimensions(event.nativeEvent.layout)}
-      onPressIn={() => {
-        if (!props.disabled) {
-          setOpacity(0.4)
-        }
-      }}
-      onPressOut={() => {
-        if (!props.disabled) {
-          setOpacity(1)
-        }
-      }}
-      onLongPress={data => {
-        if (!props.disabled) {
-          setOpacity(1)
-          props.onLongPress ? props.onLongPress(data) : null
-        }
-      }}>
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onLongPress={onLongPress}>
       {props.children}
     </Pressable>
   )

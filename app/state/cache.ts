@@ -1,4 +1,5 @@
-import { CacheFile, CacheItemTypeKey, CacheRequest } from '@app/models/music'
+import { CacheFile, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/music'
+import { mkdir, rmdir } from '@app/util/fs'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
 import RNFS from 'react-native-fs'
@@ -33,6 +34,11 @@ export type CacheSlice = {
   cacheRequests: CacheRequestsByServer
 
   fetchCoverArtFilePath: (coverArt: string) => Promise<string | undefined>
+
+  createCache: (serverId: string) => Promise<void>
+  prepareCache: (serverId: string) => void
+  pendingRemoval: Record<string, boolean>
+  removeCache: (serverId: string) => Promise<void>
 }
 
 export const selectCache = {
@@ -63,6 +69,10 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
 
     const activeServerId = get().settings.activeServer
     if (!activeServerId) {
+      return
+    }
+
+    if (get().pendingRemoval[activeServerId]) {
       return
     }
 
@@ -153,5 +163,83 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
 
     await get().cacheItem('coverArt', coverArt, () => client.getCoverArtUri({ id: coverArt }))
     return `file://${get().cacheFiles[activeServerId].coverArt[coverArt].path}`
+  },
+
+  createCache: async serverId => {
+    for (const type in CacheItemType) {
+      await mkdir(`${RNFS.DocumentDirectoryPath}/servers/${serverId}/${type}`)
+    }
+
+    set(
+      produce<CacheSlice>(state => {
+        state.cacheFiles[serverId] = {
+          song: {},
+          coverArt: {},
+          artistArt: {},
+        }
+      }),
+    )
+
+    get().prepareCache(serverId)
+  },
+
+  prepareCache: serverId => {
+    set(
+      produce<CacheSlice>(state => {
+        if (!state.cacheDirs[serverId]) {
+          state.cacheDirs[serverId] = {
+            song: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/song`,
+            coverArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArt`,
+            artistArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArt`,
+          }
+        }
+        if (!state.cacheRequests[serverId]) {
+          state.cacheRequests[serverId] = {
+            song: {},
+            coverArt: {},
+            artistArt: {},
+          }
+        }
+      }),
+    )
+  },
+
+  pendingRemoval: {},
+
+  removeCache: async serverId => {
+    set(
+      produce<CacheSlice>(state => {
+        state.pendingRemoval[serverId] = true
+      }),
+    )
+
+    const cacheRequests = get().cacheRequests[serverId]
+    const pendingRequests: Promise<void>[] = []
+
+    for (const type in CacheItemType) {
+      const requests = Object.values(cacheRequests[type as CacheItemTypeKey])
+        .filter(r => r.promise !== undefined)
+        .map(r => r.promise) as Promise<void>[]
+      pendingRequests.push(...requests)
+    }
+
+    await Promise.all(pendingRequests)
+    await rmdir(`${RNFS.DocumentDirectoryPath}/servers/${serverId}`)
+
+    set(
+      produce<CacheSlice>(state => {
+        delete state.pendingRemoval[serverId]
+
+        if (state.cacheDirs[serverId]) {
+          delete state.cacheDirs[serverId]
+        }
+        if (state.cacheFiles[serverId]) {
+          delete state.cacheFiles[serverId]
+        }
+        if (state.cacheRequests[serverId]) {
+          delete state.cacheRequests[serverId]
+        }
+      }),
+    )
   },
 })

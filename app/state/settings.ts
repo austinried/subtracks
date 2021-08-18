@@ -1,24 +1,8 @@
-import { CacheItemType } from '@app/models/music'
 import { AppSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
 import produce from 'immer'
-import RNFS from 'react-native-fs'
 import { GetState, SetState } from 'zustand'
-
-async function mkdir(path: string): Promise<void> {
-  const exists = await RNFS.exists(path)
-  if (exists) {
-    const isDir = (await RNFS.stat(path)).isDirectory()
-    if (!isDir) {
-      throw new Error(`path exists and is not a directory: ${path}`)
-    } else {
-      return
-    }
-  }
-
-  return await RNFS.mkdir(path)
-}
 
 export type SettingsSlice = {
   settings: AppSettings
@@ -26,12 +10,16 @@ export type SettingsSlice = {
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
   getActiveServer: () => Server | undefined
-  setServers: (servers: Server[]) => void
+  addServer: (server: Server) => Promise<void>
+  removeServer: (id: string) => Promise<void>
+  updateServer: (server: Server) => void
 
   setScrobble: (scrobble: boolean) => void
   setEstimateContentLength: (estimateContentLength: boolean) => void
   setMaxBitrateWifi: (maxBitrateWifi: number) => void
   setMaxBitrateMobile: (maxBitrateMobile: number) => void
+
+  pingServer: (server?: Server) => Promise<boolean>
 }
 
 export const selectSettings = {
@@ -41,7 +29,9 @@ export const selectSettings = {
   setActiveServer: (state: SettingsSlice) => state.setActiveServer,
 
   servers: (state: SettingsSlice) => state.settings.servers,
-  setServers: (state: SettingsSlice) => state.setServers,
+  addServer: (state: SettingsSlice) => state.addServer,
+  removeServer: (state: SettingsSlice) => state.removeServer,
+  updateServer: (state: SettingsSlice) => state.updateServer,
 
   homeLists: (state: SettingsSlice) => state.settings.home.lists,
 
@@ -55,6 +45,8 @@ export const selectSettings = {
   setMaxBitrateWifi: (state: SettingsSlice) => state.setMaxBitrateWifi,
   maxBitrateMobile: (state: SettingsSlice) => state.settings.maxBitrateMobile,
   setMaxBitrateMobile: (state: SettingsSlice) => state.setMaxBitrateMobile,
+
+  pingServer: (state: SettingsSlice) => state.pingServer,
 }
 
 export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
@@ -84,50 +76,55 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    for (const type in CacheItemType) {
-      await mkdir(`${RNFS.DocumentDirectoryPath}/servers/${id}/${type}`)
-    }
+    get().prepareCache(newActiveServer.id)
 
     set(
       produce<Store>(state => {
         state.settings.activeServer = newActiveServer.id
         state.client = new SubsonicApiClient(newActiveServer)
-
-        if (!state.cacheDirs[newActiveServer.id]) {
-          state.cacheDirs[newActiveServer.id] = {
-            song: `${RNFS.DocumentDirectoryPath}/servers/${id}/song`,
-            coverArt: `${RNFS.DocumentDirectoryPath}/servers/${id}/coverArt`,
-            artistArt: `${RNFS.DocumentDirectoryPath}/servers/${id}/artistArt`,
-          }
-        }
-        if (!state.cacheFiles[newActiveServer.id]) {
-          state.cacheFiles[newActiveServer.id] = {
-            song: {},
-            coverArt: {},
-            artistArt: {},
-          }
-        }
-        if (!state.cacheRequests[newActiveServer.id]) {
-          state.cacheRequests[newActiveServer.id] = {
-            song: {},
-            coverArt: {},
-            artistArt: {},
-          }
-        }
       }),
     )
   },
 
   getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
 
-  setServers: servers => {
+  addServer: async server => {
+    await get().createCache(server.id)
+
     set(
       produce<SettingsSlice>(state => {
-        state.settings.servers = servers
+        state.settings.servers.push(server)
       }),
     )
-    const activeServer = servers.find(s => s.id === get().settings.activeServer)
-    get().setActiveServer(activeServer?.id)
+
+    if (get().settings.servers.length === 1) {
+      get().setActiveServer(server.id)
+    }
+  },
+
+  removeServer: async id => {
+    await get().removeCache(id)
+
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.servers = state.settings.servers.filter(s => s.id !== id)
+      }),
+    )
+  },
+
+  updateServer: server => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.servers = replaceIndex(
+          state.settings.servers,
+          state.settings.servers.findIndex(s => s.id === server.id),
+          server,
+        )
+      }),
+    )
+    if (get().settings.activeServer === server.id) {
+      get().setActiveServer(server.id)
+    }
   },
 
   setScrobble: scrobble => {
@@ -168,4 +165,30 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       get().rebuildQueue()
     }
   },
+
+  pingServer: async server => {
+    let client: SubsonicApiClient
+    if (server) {
+      client = new SubsonicApiClient(server)
+    } else {
+      const currentClient = get().client
+      if (!currentClient) {
+        return false
+      }
+      client = currentClient
+    }
+
+    try {
+      await client.ping()
+      return true
+    } catch {
+      return false
+    }
+  },
 })
+
+function replaceIndex<T>(array: T[], index: number, replacement: T): T[] {
+  const start = array.slice(0, index)
+  const end = array.slice(index + 1)
+  return [...start, replacement, ...end]
+}

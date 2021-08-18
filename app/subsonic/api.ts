@@ -35,7 +35,6 @@ import {
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import { Server } from '@app/models/settings'
-import paths from '@app/util/paths'
 import PromiseQueue from '@app/util/PromiseQueue'
 
 export class SubsonicApiError extends Error {
@@ -211,11 +210,6 @@ export class SubsonicApiClient {
   //
   // Media retrieval
   //
-
-  async getCoverArt(params: GetCoverArtParams): Promise<string> {
-    const path = `${paths.songCache}/${params.id}`
-    return await this.apiDownload('getCoverArt', path, params)
-  }
 
   getCoverArtUri(params?: GetCoverArtParams): string {
     return this.buildUrl('getCoverArt', params)

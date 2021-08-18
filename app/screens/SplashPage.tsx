@@ -1,22 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
-import RNFS from 'react-native-fs'
-import paths from '@app/util/paths'
 import { Store, useStore } from '@app/state/store'
-
-async function mkdir(path: string): Promise<void> {
-  const exists = await RNFS.exists(path)
-  if (exists) {
-    const isDir = (await RNFS.stat(path)).isDirectory()
-    if (!isDir) {
-      throw new Error(`path exists and is not a directory: ${path}`)
-    } else {
-      return
-    }
-  }
-
-  return await RNFS.mkdir(path)
-}
 
 const selectHydrated = (store: Store) => store.hydrated
 
@@ -27,9 +11,7 @@ const SplashPage: React.FC<{}> = ({ children }) => {
   const minSplashTime = new Promise(resolve => setTimeout(resolve, 1))
 
   const prepare = async () => {
-    await mkdir(paths.imageCache)
-    await mkdir(paths.songCache)
-    await mkdir(paths.songs)
+    return
   }
 
   const promise = Promise.all([prepare(), minSplashTime])

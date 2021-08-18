@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   itemSubtitle: {
     fontFamily: font.regular,
     color: colors.text.secondary,
-    fontSize: 15,
+    fontSize: 14,
   },
 })
 

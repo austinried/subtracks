@@ -8,28 +8,27 @@ import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, Text, TextInput, View } from 'react-native'
+import { StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
-
-function replaceIndex<T>(array: T[], index: number, replacement: T): T[] {
-  const start = array.slice(0, index)
-  const end = array.slice(index + 1)
-  return [...start, replacement, ...end]
-}
 
 const ServerView: React.FC<{
   id?: string
 }> = ({ id }) => {
   const navigation = useNavigation()
   const activeServer = useStore(selectSettings.activeServer)
-  const setActiveServer = useStore(selectSettings.setActiveServer)
   const servers = useStore(selectSettings.servers)
-  const setServers = useStore(selectSettings.setServers)
+  const addServer = useStore(selectSettings.addServer)
+  const updateServer = useStore(selectSettings.updateServer)
+  const removeServer = useStore(selectSettings.removeServer)
   const server = id ? servers.find(s => s.id === id) : undefined
+  const pingServer = useStore(selectSettings.pingServer)
 
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
   const [password, setPassword] = useState(server?.token ? 'password' : '')
+  const [testing, setTesting] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const validate = useCallback(() => {
     return !!address && !!username && !!password
@@ -47,11 +46,7 @@ const ServerView: React.FC<{
     }
   }, [navigation])
 
-  const save = useCallback(() => {
-    if (!validate()) {
-      return
-    }
-
+  const createServer = useCallback<() => Server>(() => {
     const salt = server?.salt || uuidv4()
     let token: string
     if (password === 'password' && server?.token) {
@@ -60,47 +55,76 @@ const ServerView: React.FC<{
       token = md5(password + salt)
     }
 
-    const update: Server = {
+    return {
       id: server?.id || uuidv4(),
       address,
       username,
       salt,
       token,
     }
+  }, [address, password, server?.id, server?.salt, server?.token, username])
 
-    if (server) {
-      setServers(
-        replaceIndex(
-          servers,
-          servers.findIndex(s => s.id === id),
-          update,
-        ),
-      )
-    } else {
-      setServers([...servers, update])
+  const save = useCallback(() => {
+    if (!validate()) {
+      return
     }
 
-    if (!activeServer) {
-      setActiveServer(update.id)
-    }
+    setSaving(true)
+    const update = createServer()
 
-    exit()
-  }, [activeServer, address, exit, id, password, server, servers, setActiveServer, setServers, username, validate])
+    const waitForSave = async () => {
+      try {
+        if (id) {
+          updateServer(update)
+        } else {
+          await addServer(update)
+        }
+        exit()
+      } catch (err) {
+        console.error(err)
+        setSaving(false)
+      }
+    }
+    waitForSave()
+  }, [addServer, createServer, exit, id, updateServer, validate])
 
   const remove = useCallback(() => {
     if (!canRemove()) {
       return
     }
 
-    const update = [...servers]
-    update.splice(
-      update.findIndex(s => s.id === id),
-      1,
-    )
+    setRemoving(true)
+    const waitForRemove = async () => {
+      try {
+        await removeServer(id as string)
+        exit()
+      } catch (err) {
+        console.error(err)
+        setRemoving(false)
+      }
+    }
+    waitForRemove()
+  }, [canRemove, exit, id, removeServer])
 
-    setServers(update)
-    exit()
-  }, [canRemove, exit, id, servers, setServers])
+  const test = useCallback(() => {
+    setTesting(true)
+    const potential = createServer()
+
+    const ping = async () => {
+      const res = await pingServer(potential)
+      if (res) {
+        ToastAndroid.show(`Connection to ${potential.address} OK!`, ToastAndroid.SHORT)
+      } else {
+        ToastAndroid.show(`Connection to ${potential.address} failed, check settings or server`, ToastAndroid.SHORT)
+      }
+      setTesting(false)
+    }
+    ping()
+  }, [createServer, pingServer, setTesting])
+
+  const disableControls = useCallback(() => {
+    return !validate() || testing || removing || saving
+  }, [validate, testing, removing, saving])
 
   return (
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
@@ -139,18 +163,19 @@ const ServerView: React.FC<{
           onChangeText={setPassword}
         />
         <Button
-          disabled={!validate()}
+          disabled={disableControls()}
           style={styles.button}
           title="Test Connection"
           buttonStyle="hollow"
-          onPress={() => {}}
+          onPress={test}
         />
         <Button
+          disabled={disableControls()}
           style={[styles.button, styles.delete, { display: canRemove() ? 'flex' : 'none' }]}
           title="Delete"
           onPress={remove}
         />
-        <Button disabled={!validate()} style={styles.button} title="Save" onPress={save} />
+        <Button disabled={disableControls()} style={styles.button} title="Save" onPress={save} />
       </View>
     </GradientScrollView>
   )
