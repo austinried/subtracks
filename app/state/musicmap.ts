@@ -20,8 +20,8 @@ import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
 export type MusicMapSlice = {
-  mapChildToSong: (child: ChildElement) => Promise<Song>
-  mapChildrenToSongs: (children: ChildElement[]) => Promise<Song[]>
+  mapChildToSong: (child: ChildElement, coverArt?: string) => Promise<Song>
+  mapChildrenToSongs: (children: ChildElement[], coverArt?: string) => Promise<Song[]>
   mapArtistID3toArtist: (artist: ArtistID3Element) => Artist
   mapArtistInfo: (
     artistResponse: GetArtistResponse,
@@ -36,7 +36,7 @@ export type MusicMapSlice = {
 }
 
 export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>): MusicMapSlice => ({
-  mapChildToSong: async child => {
+  mapChildToSong: async (child, coverArt) => {
     return {
       itemType: 'song',
       id: child.id,
@@ -48,15 +48,15 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
       track: child.track,
       duration: child.duration,
       starred: child.starred,
-      coverArt: await get().getAlbumCoverArt(child.albumId),
+      coverArt: coverArt || (await get().getAlbumCoverArt(child.albumId)),
       streamUri: get().buildStreamUri(child.id),
     }
   },
 
-  mapChildrenToSongs: async children => {
+  mapChildrenToSongs: async (children, coverArt) => {
     const songMaps: Promise<Song>[] = []
     for (const child of children) {
-      songMaps.push(get().mapChildToSong(child))
+      songMaps.push(get().mapChildToSong(child, coverArt))
     }
     return await Promise.all(songMaps)
   },
@@ -125,7 +125,8 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
   mapPlaylistWithSongs: async playlist => {
     return {
       ...get().mapPlaylistListItem(playlist),
-      songs: await get().mapChildrenToSongs(playlist.songs),
+      // passing cover art here is a temp fix to improve large playlist performance
+      songs: await get().mapChildrenToSongs(playlist.songs, playlist.coverArt),
       coverArt: playlist.coverArt,
     }
   },
