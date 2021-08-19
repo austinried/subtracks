@@ -70,12 +70,11 @@ const AlbumsList = () => {
         overScrollMode="never"
         onEndReached={fetchNextPage}
         onEndReachedThreshold={6}
-        disableVirtualization={true}
-        getItemLayout={(_data, index) => ({
-          length: height,
-          offset: height * Math.floor(index / 3),
-          index,
-        })}
+        // getItemLayout={(_data, index) => ({
+        //   length: height,
+        //   offset: height * Math.floor(index / 3),
+        //   index,
+        // })}
       />
     </View>
   )
