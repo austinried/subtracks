@@ -157,8 +157,10 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const existing = get().cacheFiles[activeServerId].coverArt[coverArt]
-    const inProgress = get().cacheRequests[activeServerId].coverArt[coverArt]
+    const key: CacheItemTypeKey = size === 'thumbnail' ? 'coverArtThumb' : 'coverArt'
+
+    const existing = get().cacheFiles[activeServerId][key][coverArt]
+    const inProgress = get().cacheRequests[activeServerId][key][coverArt]
     if (existing && inProgress) {
       if (inProgress.promise) {
         await inProgress.promise
@@ -166,14 +168,14 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return `file://${existing.path}`
     }
 
-    await get().cacheItem('coverArt', coverArt, () =>
+    await get().cacheItem(key, coverArt, () =>
       client.getCoverArtUri({
         id: coverArt,
         size: size === 'thumbnail' ? '256' : undefined,
       }),
     )
 
-    return `file://${get().cacheFiles[activeServerId].coverArt[coverArt].path}`
+    return `file://${get().cacheFiles[activeServerId][key][coverArt].path}`
   },
 
   createCache: async serverId => {

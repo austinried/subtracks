@@ -23,8 +23,6 @@ export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<St
       }
     }
 
-    console.log(artwork)
-
     return {
       id: song.id,
       title: song.title,
