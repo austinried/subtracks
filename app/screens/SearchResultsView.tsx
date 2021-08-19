@@ -57,7 +57,7 @@ const SearchResultsView: React.FC<{
         }),
       [fetchSearchResults, query, type],
     ),
-    50,
+    100,
   )
 
   useEffect(() => {
@@ -77,7 +77,8 @@ const SearchResultsView: React.FC<{
       refreshing={refreshing}
       overScrollMode="never"
       onEndReached={fetchNextPage}
-      onEndReachedThreshold={1}
+      removeClippedSubviews={true}
+      onEndReachedThreshold={2}
     />
   )
 }

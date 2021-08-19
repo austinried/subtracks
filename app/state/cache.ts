@@ -1,4 +1,4 @@
-import { CacheFile, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
+import { CacheFile, CacheImageSize, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
 import { mkdir, rmdir } from '@app/util/fs'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
@@ -6,8 +6,13 @@ import RNFS from 'react-native-fs'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
-const imageDownloadQueue = new PromiseQueue(50)
-const songDownloadQueue = new PromiseQueue(1)
+const queues: Record<CacheItemTypeKey, PromiseQueue> = {
+  coverArt: new PromiseQueue(5),
+  coverArtThumb: new PromiseQueue(50),
+  artistArt: new PromiseQueue(5),
+  artistArtThumb: new PromiseQueue(50),
+  song: new PromiseQueue(1),
+}
 
 export type CacheDownload = CacheFile & CacheRequest
 
@@ -26,14 +31,18 @@ export type CacheRequestsByServer = Record<string, Record<CacheItemTypeKey, Reco
 // >
 
 export type CacheSlice = {
-  cacheItem: (key: CacheItemTypeKey, itemId: string, url: string | (() => string | Promise<string>)) => Promise<void>
+  cacheItem: (
+    key: CacheItemTypeKey,
+    itemId: string,
+    url: string | (() => string | Promise<string | undefined>),
+  ) => Promise<void>
 
   // cache: DownloadedItemsByServer
   cacheDirs: CacheDirsByServer
   cacheFiles: CacheFilesByServer
   cacheRequests: CacheRequestsByServer
 
-  fetchCoverArtFilePath: (coverArt: string) => Promise<string | undefined>
+  fetchCoverArtFilePath: (coverArt: string, size?: CacheImageSize) => Promise<string | undefined>
 
   createCache: (serverId: string) => Promise<void>
   prepareCache: (serverId: string) => void
@@ -80,44 +89,47 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
     }
 
     const path = `${get().cacheDirs[activeServerId][key]}/${itemId}`
-    const urlResult = typeof url === 'string' ? url : url()
-    const fromUrl = typeof urlResult === 'string' ? urlResult : await urlResult
 
-    const queue = key === 'song' ? songDownloadQueue : imageDownloadQueue
+    const promise = queues[key].enqueue(async () => {
+      const urlResult = typeof url === 'string' ? url : url()
+      const fromUrl = typeof urlResult === 'string' ? urlResult : await urlResult
 
-    const promise = queue.enqueue(() =>
-      RNFS.downloadFile({
-        fromUrl,
-        toFile: path,
-        progressInterval: 100,
-        progress: res => {
-          set(
-            produce<CacheSlice>(state => {
-              state.cacheRequests[activeServerId][key][itemId].progress = Math.max(
-                1,
-                res.bytesWritten / (res.contentLength || 1),
-              )
-            }),
-          )
-        },
-      })
-        .promise.then(() => {
-          set(
-            produce<CacheSlice>(state => {
-              state.cacheRequests[activeServerId][key][itemId].progress = 1
-              delete state.cacheRequests[activeServerId][key][itemId].promise
-            }),
-          )
-        })
-        .catch(() => {
-          set(
-            produce<CacheSlice>(state => {
-              delete state.cacheFiles[activeServerId][key][itemId]
-              delete state.cacheRequests[activeServerId][key][itemId]
-            }),
-          )
-        }),
-    )
+      try {
+        if (!fromUrl) {
+          throw new Error('cannot resolve url for cache request')
+        }
+
+        await RNFS.downloadFile({
+          fromUrl,
+          toFile: path,
+          // progressInterval: 100,
+          // progress: res => {
+          //   set(
+          //     produce<CacheSlice>(state => {
+          //       state.cacheRequests[activeServerId][key][itemId].progress = Math.max(
+          //         1,
+          //         res.bytesWritten / (res.contentLength || 1),
+          //       )
+          //     }),
+          //   )
+          // },
+        }).promise
+
+        set(
+          produce<CacheSlice>(state => {
+            state.cacheRequests[activeServerId][key][itemId].progress = 1
+            delete state.cacheRequests[activeServerId][key][itemId].promise
+          }),
+        )
+      } catch {
+        set(
+          produce<CacheSlice>(state => {
+            delete state.cacheFiles[activeServerId][key][itemId]
+            delete state.cacheRequests[activeServerId][key][itemId]
+          }),
+        )
+      }
+    })
     set(
       produce<Store>(state => {
         state.cacheFiles[activeServerId][key][itemId] = {
@@ -134,7 +146,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
     return await promise
   },
 
-  fetchCoverArtFilePath: async coverArt => {
+  fetchCoverArtFilePath: async (coverArt, size = 'thumbnail') => {
     const client = get().client
     if (!client) {
       return
@@ -151,10 +163,16 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       if (inProgress.promise) {
         await inProgress.promise
       }
-      return existing.path
+      return `file://${existing.path}`
     }
 
-    await get().cacheItem('coverArt', coverArt, () => client.getCoverArtUri({ id: coverArt }))
+    await get().cacheItem('coverArt', coverArt, () =>
+      client.getCoverArtUri({
+        id: coverArt,
+        size: size === 'thumbnail' ? '256' : undefined,
+      }),
+    )
+
     return `file://${get().cacheFiles[activeServerId].coverArt[coverArt].path}`
   },
 

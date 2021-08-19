@@ -27,11 +27,6 @@ const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequ
   ({ cache, style, imageStyle, resizeMode }) => {
     const [error, setError] = useState(false)
 
-    if (error) {
-      console.log('error!')
-      console.log(cache?.file?.path)
-    }
-
     let source: ImageSourcePropType
     if (!error && cache?.file && !cache?.request?.promise) {
       source = { uri: `file://${cache.file.path}`, cache: 'reload' }
@@ -62,7 +57,7 @@ const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequ
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
   const cache = useArtistArtFile(props.artistId, props.size)
 
-  return <ImageSource cache={cache} {...props} />
+  return <ImageSource cache={cache} {...props} imageStyle={{ ...styles.artistImage, ...props.imageStyle }} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
@@ -99,6 +94,9 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
     position: 'absolute',
+  },
+  artistImage: {
+    backgroundColor: 'rgba(81, 28, 99, 0.4)',
   },
 })
 
