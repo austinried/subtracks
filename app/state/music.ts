@@ -10,7 +10,7 @@ import {
   StarrableItemType,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
-import { GetAlbumList2Type, StarParams } from '@app/subsonic/params'
+import { GetAlbumList2Type, Search3Params, StarParams } from '@app/subsonic/params'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
@@ -33,11 +33,12 @@ export type MusicSlice = {
   fetchArtists: (size?: number, offset?: number) => Promise<Artist[]>
   fetchPlaylists: () => Promise<PlaylistListItem[]>
   fetchAlbums: () => Promise<AlbumListItem[]>
-
-  searchResults: SearchResults
-  searchResultsUpdating: boolean
-  fetchSearchResults: (query: string) => Promise<void>
-  clearSearchResults: () => void
+  fetchSearchResults: (
+    query: string,
+    type?: 'album' | 'song' | 'artist',
+    size?: number,
+    offset?: number,
+  ) => Promise<SearchResults>
 
   homeLists: HomeLists
   homeListsUpdating: boolean
@@ -66,11 +67,7 @@ export const selectMusic = {
   fetchArtists: (store: MusicSlice) => store.fetchArtists,
   fetchPlaylists: (store: MusicSlice) => store.fetchPlaylists,
   fetchAlbums: (store: MusicSlice) => store.fetchAlbums,
-
-  searchResults: (store: MusicSlice) => store.searchResults,
-  searchResultsUpdating: (store: MusicSlice) => store.searchResultsUpdating,
   fetchSearchResults: (store: MusicSlice) => store.fetchSearchResults,
-  clearSearchResults: (store: MusicSlice) => store.clearSearchResults,
 
   homeLists: (store: MusicSlice) => store.homeLists,
   homeListsUpdating: (store: MusicSlice) => store.homeListsUpdating,
@@ -236,31 +233,34 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     }
   },
 
-  searchResults: {
-    artists: [],
-    albums: [],
-    songs: [],
-  },
-  searchResultsUpdating: false,
-
-  fetchSearchResults: async query => {
+  fetchSearchResults: async (query, type, size, offset) => {
     if (query.length < 2) {
-      return
+      return { artists: [], albums: [], songs: [] }
     }
 
     const client = get().client
     if (!client) {
-      return
+      return { artists: [], albums: [], songs: [] }
     }
-
-    if (get().searchResultsUpdating) {
-      return
-    }
-
-    set({ searchResultsUpdating: true })
 
     try {
-      const response = await client.search3({ query })
+      const params: Search3Params = { query }
+      if (type === 'album') {
+        params.albumCount = size
+        params.albumOffset = offset
+      } else if (type === 'artist') {
+        params.artistCount = size
+        params.artistOffset = offset
+      } else if (type === 'song') {
+        params.songCount = size
+        params.songOffset = offset
+      } else {
+        params.albumCount = 5
+        params.artistCount = 5
+        params.songCount = 5
+      }
+
+      const response = await client.search3(params)
 
       const artists = response.data.artists.map(get().mapArtistID3toArtist)
       const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
@@ -268,24 +268,16 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
 
       set(
         produce<MusicSlice>(state => {
-          state.searchResults = { artists, albums, songs }
-          state.starredSongs = reduceStarred(state.starredSongs, state.searchResults.songs)
-          state.starredArtists = reduceStarred(state.starredArtists, state.searchResults.artists)
-          state.starredAlbums = reduceStarred(state.starredAlbums, state.searchResults.albums)
+          state.starredSongs = reduceStarred(state.starredSongs, songs)
+          state.starredArtists = reduceStarred(state.starredArtists, artists)
+          state.starredAlbums = reduceStarred(state.starredAlbums, albums)
         }),
       )
-    } finally {
-      set({ searchResultsUpdating: false })
+
+      return { artists, albums, songs }
+    } catch {
+      return { artists: [], albums: [], songs: [] }
     }
-  },
-  clearSearchResults: () => {
-    set({
-      searchResults: {
-        artists: [],
-        albums: [],
-        songs: [],
-      },
-    })
   },
 
   homeLists: {},

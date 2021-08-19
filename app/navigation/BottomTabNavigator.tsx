@@ -13,12 +13,14 @@ import { RouteProp, StackActions } from '@react-navigation/native'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { createNativeStackNavigator, NativeStackNavigationProp } from 'react-native-screens/native-stack'
+import SearchResultsView from '@app/screens/SearchResultsView'
 
 type TabStackParamList = {
   main: undefined
   album: { id: string; title: string }
   artist: { id: string; title: string }
   playlist: { id: string; title: string }
+  results: { query: string; type: 'album' | 'song' | 'artist' }
 }
 
 type AlbumScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'album'>
@@ -52,6 +54,17 @@ type PlaylistScreenProps = {
 
 const PlaylistScreen: React.FC<PlaylistScreenProps> = ({ route }) => (
   <SongListView id={route.params.id} title={route.params.title} type="playlist" />
+)
+
+type ResultsScreenNavigationProp = NativeStackNavigationProp<TabStackParamList, 'results'>
+type ResultsScreenRouteProp = RouteProp<TabStackParamList, 'results'>
+type ResultsScreenProps = {
+  route: ResultsScreenRouteProp
+  navigation: ResultsScreenNavigationProp
+}
+
+const ResultsScreen: React.FC<ResultsScreenProps> = ({ route }) => (
+  <SearchResultsView query={route.params.query} type={route.params.type} />
 )
 
 const styles = StyleSheet.create({
@@ -92,6 +105,7 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
         <Stack.Screen name="album" component={AlbumScreen} options={itemScreenOptions} />
         <Stack.Screen name="artist" component={ArtistScreen} options={{ headerShown: false }} />
         <Stack.Screen name="playlist" component={PlaylistScreen} options={itemScreenOptions} />
+        <Stack.Screen name="results" component={ResultsScreen} options={itemScreenOptions} />
       </Stack.Navigator>
     )
   }

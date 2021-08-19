@@ -1,3 +1,4 @@
+import Button from '@app/components/Button'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
@@ -9,6 +10,7 @@ import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { useNavigation } from '@react-navigation/native'
 import debounce from 'lodash.debounce'
 import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react-native'
@@ -30,8 +32,11 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
 
 const ResultsCategory = React.memo<{
   name: string
+  query: string
   items: ListableItem[]
-}>(({ name, items }) => {
+}>(({ name, query, items }) => {
+  const navigation = useNavigation()
+
   if (items.length === 0) {
     return <></>
   }
@@ -46,39 +51,53 @@ const ResultsCategory = React.memo<{
           <ListItem key={a.id} item={a} showArt={true} showStar={false} />
         ),
       )}
+      {items.length === 5 && (
+        <Button
+          title="More..."
+          buttonStyle="hollow"
+          style={styles.more}
+          onPress={() => navigation.navigate('results', { query, type: items[0].itemType })}
+        />
+      )}
     </>
   )
 })
 
 const Results = React.memo<{
   results: SearchResults
-}>(({ results }) => {
+  query: string
+}>(({ results, query }) => {
   return (
     <>
-      <ResultsCategory name="Artists" items={results.artists} />
-      <ResultsCategory name="Albums" items={results.albums} />
-      <ResultsCategory name="Songs" items={results.songs} />
+      <ResultsCategory name="Artists" query={query} items={results.artists} />
+      <ResultsCategory name="Albums" query={query} items={results.albums} />
+      <ResultsCategory name="Songs" query={query} items={results.songs} />
     </>
   )
 })
 
 const Search = () => {
-  const updateSearch = useStore(selectMusic.fetchSearchResults)
-  const clearSearch = useStore(selectMusic.clearSearchResults)
-  const updating = useStore(selectMusic.searchResultsUpdating)
-  const results = useStore(selectMusic.searchResults)
+  const fetchSearchResults = useStore(selectMusic.fetchSearchResults)
+  const [results, setResults] = useState<SearchResults>({ artists: [], albums: [], songs: [] })
+  const [refreshing, setRefreshing] = useState(false)
+  const [text, setText] = useState('')
 
   useActiveServerRefresh(
     useCallback(() => {
       setText('')
-      clearSearch()
-    }, [clearSearch]),
+      setResults({ artists: [], albums: [], songs: [] })
+    }, []),
   )
 
-  const [text, setText] = useState('')
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedonUpdateSearch = useMemo(() => debounce(updateSearch, 400), [])
+  const debouncedonUpdateSearch = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        setRefreshing(true)
+        setResults(await fetchSearchResults(query))
+        setRefreshing(false)
+      }, 400),
+    [fetchSearchResults],
+  )
 
   const onChangeText = useCallback(
     (value: string) => {
@@ -102,9 +121,14 @@ const Search = () => {
             value={text}
             onChangeText={onChangeText}
           />
-          <ActivityIndicator animating={updating} size="small" color={colors.text.secondary} style={styles.activity} />
+          <ActivityIndicator
+            animating={refreshing}
+            size="small"
+            color={colors.text.secondary}
+            style={styles.activity}
+          />
         </View>
-        {resultsCount > 0 ? <Results results={results} /> : <NothingHere style={styles.noResults} />}
+        {resultsCount > 0 ? <Results results={results} query={text} /> : <NothingHere style={styles.noResults} />}
       </View>
     </GradientScrollView>
   )
@@ -119,6 +143,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
     alignItems: 'stretch',
   },
   inputBar: {
@@ -146,6 +171,10 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontFamily: font.regular,
     fontSize: 14,
+  },
+  more: {
+    marginTop: 5,
+    marginBottom: 10,
   },
 })
 
