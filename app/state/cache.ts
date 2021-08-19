@@ -1,4 +1,4 @@
-import { CacheFile, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/music'
+import { CacheFile, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
 import { mkdir, rmdir } from '@app/util/fs'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
@@ -6,7 +6,7 @@ import RNFS from 'react-native-fs'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
-const imageDownloadQueue = new PromiseQueue(20)
+const imageDownloadQueue = new PromiseQueue(50)
 const songDownloadQueue = new PromiseQueue(1)
 
 export type CacheDownload = CacheFile & CacheRequest
@@ -168,7 +168,9 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
         state.cacheFiles[serverId] = {
           song: {},
           coverArt: {},
+          coverArtThumb: {},
           artistArt: {},
+          artistArtThumb: {},
         }
       }),
     )
@@ -183,14 +185,18 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
           state.cacheDirs[serverId] = {
             song: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/song`,
             coverArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArt`,
+            coverArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArtThumb`,
             artistArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArt`,
+            artistArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArtThumb`,
           }
         }
         if (!state.cacheRequests[serverId]) {
           state.cacheRequests[serverId] = {
             song: {},
             coverArt: {},
+            coverArtThumb: {},
             artistArt: {},
+            artistArtThumb: {},
           }
         }
       }),
@@ -257,7 +263,9 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       set(
         produce<CacheSlice>(state => {
           state.cacheFiles[serverId].coverArt = {}
+          state.cacheFiles[serverId].coverArtThumb = {}
           state.cacheFiles[serverId].artistArt = {}
+          state.cacheFiles[serverId].artistArtThumb = {}
         }),
       )
     }

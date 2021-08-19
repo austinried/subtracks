@@ -49,7 +49,7 @@ const AlbumListRenderItem: React.FC<{
 
 const AlbumsList = () => {
   const fetchAlbums = useStore(selectMusic.fetchAlbums)
-  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 60)
+  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
 
   const layout = useWindowDimensions()
 
@@ -69,7 +69,8 @@ const AlbumsList = () => {
         onRefresh={refresh}
         overScrollMode="never"
         onEndReached={fetchNextPage}
-        onEndReachedThreshold={1}
+        onEndReachedThreshold={6}
+        disableVirtualization={true}
         getItemLayout={(_data, index) => ({
           length: height,
           offset: height * Math.floor(index / 3),

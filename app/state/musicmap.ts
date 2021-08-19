@@ -79,6 +79,7 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
     return {
       ...get().mapArtistID3toArtist(artist),
       albums: mappedAlbums,
+      smallImageUrl: info.smallImageUrl,
       largeImageUrl: info.largeImageUrl,
       topSongs: (await get().mapChildrenToSongs(topSongs)).slice(0, 5),
     }

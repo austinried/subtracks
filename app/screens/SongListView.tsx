@@ -4,7 +4,8 @@ import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
-import { useAlbumWithSongs, useCoverArtFile, usePlaylistWithSongs } from '@app/hooks/music'
+import { useCoverArtFile } from '@app/hooks/cache'
+import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
@@ -74,7 +75,7 @@ const SongListDetails = React.memo<{
   songList?: AlbumWithSongs | PlaylistWithSongs
   subtitle?: string
 }>(({ songList, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt)
+  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
 
   if (!songList) {
     return <SongListDetailsFallback />
@@ -83,7 +84,7 @@ const SongListDetails = React.memo<{
   return (
     <ImageGradientScrollView imagePath={coverArtFile?.file?.path} style={styles.container}>
       <View style={styles.content}>
-        <CoverArt type="cover" coverArt={songList.coverArt} style={styles.cover} />
+        <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
         <Text style={styles.title}>{songList.name}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
         {songList.songs.length > 0 ? (

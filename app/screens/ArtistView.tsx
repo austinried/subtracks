@@ -118,6 +118,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         onScroll={onScroll}>
         <CoverArt
           type="artist"
+          size="original"
           artistId={artist.id}
           style={styles.artistCover}
           resizeMode={FastImage.resizeMode.cover}

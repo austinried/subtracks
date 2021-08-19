@@ -95,7 +95,7 @@ const SongCoverArt = () => {
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt type="cover" coverArt={track?.coverArt} style={coverArtStyles.image} />
+      <CoverArt type="cover" size="original" coverArt={track?.coverArt} style={coverArtStyles.image} />
     </View>
   )
 }

@@ -8,6 +8,7 @@ export interface Artist {
 
 export interface ArtistInfo extends Artist {
   albums: Album[]
+  smallImageUrl?: string
   largeImageUrl?: string
   topSongs: Song[]
 }
@@ -70,37 +71,3 @@ export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
 export type HomeLists = { [key: string]: AlbumListItem[] }
 
 export type StarrableItemType = 'song' | 'album' | 'artist'
-
-export enum CacheItemType {
-  coverArt = 'coverArt',
-  artistArt = 'artistArt',
-  song = 'song',
-}
-
-export type CacheItemTypeKey = keyof typeof CacheItemType
-
-export type CacheFile = {
-  path: string
-  date: number
-  permanent: boolean
-}
-
-export type CacheRequest = {
-  progress: number
-  promise?: Promise<void>
-}
-
-export type DownloadedAlbum = Album & {
-  songs: string[]
-}
-
-export type DownloadedPlaylist = PlaylistListItem & {
-  songs: string[]
-}
-
-export type DownloadedArtist = Artist & {
-  topSongs: string[]
-  albums: string[]
-}
-
-export type DownloadedSong = Song

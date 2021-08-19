@@ -120,6 +120,9 @@ export class SubsonicApiClient {
 
     const params = new URLSearchParams()
     for (const key of keys) {
+      if (obj[key] === undefined || obj[key] === null) {
+        continue
+      }
       params.append(key, String(obj[key]))
     }
 
