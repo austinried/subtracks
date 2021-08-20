@@ -10,7 +10,7 @@ export const useArtistInfo = (id: string) => {
     if (!artistInfo) {
       fetchArtistInfo(id)
     }
-  })
+  }, [artistInfo, fetchArtistInfo, id])
 
   return artistInfo
 }
@@ -23,7 +23,7 @@ export const useAlbumWithSongs = (id: string) => {
     if (!album) {
       fetchAlbum(id)
     }
-  })
+  }, [album, fetchAlbum, id])
 
   return album
 }
@@ -36,7 +36,7 @@ export const usePlaylistWithSongs = (id: string) => {
     if (!playlist) {
       fetchPlaylist(id)
     }
-  })
+  }, [fetchPlaylist, id, playlist])
 
   return playlist
 }

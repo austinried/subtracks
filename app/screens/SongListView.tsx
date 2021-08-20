@@ -12,8 +12,7 @@ import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { useNavigation } from '@react-navigation/native'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 type SongListType = 'album' | 'playlist'
@@ -144,12 +143,6 @@ const SongListView = React.memo<{
   title: string
   type: SongListType
 }>(({ id, title, type }) => {
-  const navigation = useNavigation()
-
-  useEffect(() => {
-    navigation.setOptions({ title })
-  })
-
   return type === 'album' ? <AlbumView id={id} title={title} /> : <PlaylistView id={id} title={title} />
 })
 

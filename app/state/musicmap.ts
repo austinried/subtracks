@@ -55,11 +55,20 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
   },
 
   mapChildrenToSongs: async (children, coverArt) => {
-    const songMaps: Promise<Song>[] = []
+    const albumIds = children.reduce((acc, val) => {
+      if (val.albumId && !(val.albumId in acc)) {
+        acc[val.albumId] = get().getAlbumCoverArt(val.albumId)
+      }
+      return acc
+    }, {} as Record<string, Promise<string | undefined>>)
+
+    await Promise.all(Object.values(albumIds))
+
+    const songs: Song[] = []
     for (const child of children) {
-      songMaps.push(get().mapChildToSong(child, coverArt))
+      songs.push(await get().mapChildToSong(child, coverArt || (await get().getAlbumCoverArt(child.albumId))))
     }
-    return await Promise.all(songMaps)
+    return songs
   },
 
   mapArtistID3toArtist: artist => {
