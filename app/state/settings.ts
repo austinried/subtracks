@@ -66,7 +66,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     estimateContentLength: true,
     maxBitrateWifi: 0,
     maxBitrateMobile: 192,
-    minBuffer: 3,
+    minBuffer: 10,
     maxBuffer: 60,
   },
 
