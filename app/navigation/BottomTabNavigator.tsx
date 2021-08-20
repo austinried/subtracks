@@ -102,9 +102,9 @@ function createTabStackNavigator(Component: React.ComponentType<any>) {
     return (
       <Stack.Navigator initialRouteName="main">
         <Stack.Screen name="main" component={Component} options={{ headerShown: false }} />
-        <Stack.Screen name="album" component={AlbumScreen} options={itemScreenOptions} />
+        <Stack.Screen name="album" component={AlbumScreen} options={{ headerShown: false }} />
         <Stack.Screen name="artist" component={ArtistScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="playlist" component={PlaylistScreen} options={itemScreenOptions} />
+        <Stack.Screen name="playlist" component={PlaylistScreen} options={{ headerShown: false }} />
         <Stack.Screen name="results" component={ResultsScreen} options={itemScreenOptions} />
       </Stack.Navigator>
     )

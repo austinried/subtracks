@@ -6,13 +6,24 @@ import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/typ
 import colors from '@app/styles/colors'
 import GradientBackground from '@app/components/GradientBackground'
 
-const ImageGradientBackground: React.FC<{
+export type ImageGradientBackgroundProps = {
   height?: number | string
   width?: number | string
   position?: 'relative' | 'absolute'
   style?: ViewStyle
   imagePath?: string
-}> = ({ height, width, position, style, imagePath, children }) => {
+  onGetColor?: (color: string) => void
+}
+
+const ImageGradientBackground: React.FC<ImageGradientBackgroundProps> = ({
+  height,
+  width,
+  position,
+  style,
+  imagePath,
+  children,
+  onGetColor,
+}) => {
   const [highColor, setHighColor] = useState<string>(colors.gradient.high)
   const navigation = useNavigation()
 
@@ -59,6 +70,10 @@ const ImageGradientBackground: React.FC<{
       },
     })
   }, [navigation, highColor])
+
+  useEffect(() => {
+    onGetColor && onGetColor(highColor)
+  }, [onGetColor, highColor])
 
   return (
     <GradientBackground

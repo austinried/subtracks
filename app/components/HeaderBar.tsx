@@ -8,14 +8,48 @@ import Animated from 'react-native-reanimated'
 import PressableOpacity from './PressableOpacity'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { ReactComponentLike } from 'prop-types'
-import { Song } from '@app/models/music'
-import { NowPlayingContextPressable } from './ContextMenu'
+import { AlbumListItem, Song } from '@app/models/music'
+import { AlbumContextPressable, NowPlayingContextPressable } from './ContextMenu'
+
+export type HeaderContextItem = Song | AlbumListItem
+
+const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) => {
+  let context: JSX.Element
+  switch (contextItem?.itemType) {
+    case 'song':
+      context = (
+        <NowPlayingContextPressable
+          menuStyle={styles.icons}
+          triggerWrapperStyle={styles.icons}
+          song={contextItem}
+          triggerOnLongPress={false}>
+          <IconMat name="more-vert" color="white" size={25} />
+        </NowPlayingContextPressable>
+      )
+      break
+    case 'album':
+      context = (
+        <AlbumContextPressable
+          menuStyle={styles.icons}
+          triggerWrapperStyle={styles.icons}
+          album={contextItem}
+          triggerOnLongPress={false}>
+          <IconMat name="more-vert" color="white" size={25} />
+        </AlbumContextPressable>
+      )
+      break
+    default:
+      context = <></>
+  }
+
+  return context
+})
 
 const HeaderBar = React.memo<{
   title?: string
   headerStyle?: Animated.AnimatedStyleProp<ViewStyle> | Animated.AnimatedStyleProp<ViewStyle>[]
   HeaderCenter?: ReactComponentLike
-  contextItem?: Song
+  contextItem?: HeaderContextItem
 }>(({ title, headerStyle, HeaderCenter, contextItem }) => {
   const navigation = useNavigation()
 
@@ -24,20 +58,6 @@ const HeaderBar = React.memo<{
   }, [navigation])
 
   const _headerStyle = Array.isArray(headerStyle) ? headerStyle : [headerStyle]
-
-  const moreIcon = <IconMat name="more-vert" color="white" size={25} />
-  let more = <></>
-  if (contextItem) {
-    more = (
-      <NowPlayingContextPressable
-        menuStyle={styles.icons}
-        triggerWrapperStyle={styles.icons}
-        song={contextItem}
-        triggerOnLongPress={false}>
-        {moreIcon}
-      </NowPlayingContextPressable>
-    )
-  }
 
   return (
     <Animated.View style={[styles.container, ..._headerStyle]}>
@@ -53,7 +73,7 @@ const HeaderBar = React.memo<{
           </Text>
         )}
       </View>
-      {more}
+      <More contextItem={contextItem} />
     </Animated.View>
   )
 })
