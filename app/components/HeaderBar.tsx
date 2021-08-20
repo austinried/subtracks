@@ -14,6 +14,7 @@ import { AlbumContextPressable, NowPlayingContextPressable } from './ContextMenu
 export type HeaderContextItem = Song | AlbumListItem
 
 const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) => {
+  const moreIcon = <IconMat name="more-vert" color="white" size={25} />
   let context: JSX.Element
   switch (contextItem?.itemType) {
     case 'song':
@@ -23,7 +24,7 @@ const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) =
           triggerWrapperStyle={styles.icons}
           song={contextItem}
           triggerOnLongPress={false}>
-          <IconMat name="more-vert" color="white" size={25} />
+          {moreIcon}
         </NowPlayingContextPressable>
       )
       break
@@ -34,7 +35,7 @@ const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) =
           triggerWrapperStyle={styles.icons}
           album={contextItem}
           triggerOnLongPress={false}>
-          <IconMat name="more-vert" color="white" size={25} />
+          {moreIcon}
         </AlbumContextPressable>
       )
       break

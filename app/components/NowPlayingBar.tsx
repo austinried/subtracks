@@ -6,8 +6,8 @@ import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
-import React from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import React, { useCallback } from 'react'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import { State } from 'react-native-track-player'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
@@ -41,29 +41,37 @@ const progressStyles = StyleSheet.create({
 })
 
 const Controls = React.memo(() => {
-  const playerState = useStore(selectTrackPlayer.playerState)
+  const state = useStore(selectTrackPlayer.playerState)
   const play = usePlay()
   const pause = usePause()
 
   let playPauseIcon: string
-  let playPauseAction: () => void
-
-  switch (playerState) {
+  switch (state) {
     case State.Playing:
       playPauseIcon = 'pause'
-      playPauseAction = pause
       break
     default:
       playPauseIcon = 'play'
-      playPauseAction = play
       break
   }
 
+  const action = useCallback(() => {
+    if (state === State.Playing) {
+      pause()
+    } else {
+      play()
+    }
+  }, [state, play, pause])
+
   return (
     <View style={styles.controls}>
-      <PressableOpacity onPress={playPauseAction} hitSlop={14}>
-        <IconFA5 name={playPauseIcon} size={28} color="white" />
-      </PressableOpacity>
+      {state === State.Buffering ? (
+        <ActivityIndicator color="white" size="large" animating={true} />
+      ) : (
+        <PressableOpacity onPress={action} hitSlop={14}>
+          <IconFA5 name={playPauseIcon} size={28} color="white" />
+        </PressableOpacity>
+      )}
     </View>
   )
 })

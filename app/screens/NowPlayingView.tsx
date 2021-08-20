@@ -15,7 +15,7 @@ import formatDuration from '@app/util/formatDuration'
 import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
@@ -280,6 +280,11 @@ const PlayerControls = () => {
       playPauseIcon = 'pause-circle'
       playPauseAction = pause
       break
+    case State.Buffering:
+      disabled = false
+      playPauseIcon = 'circle'
+      playPauseAction = pause
+      break
     default:
       disabled = false
       playPauseIcon = 'play-circle'
@@ -303,6 +308,14 @@ const PlayerControls = () => {
           </PressableOpacity>
           <PressableOpacity onPress={playPauseAction} disabled={disabled} style={controlsStyles.play}>
             <IconFA name={playPauseIcon} size={82} color="white" />
+            {state === State.Buffering && (
+              <ActivityIndicator
+                style={controlsStyles.buffering}
+                color={colors.gradient.low}
+                size="large"
+                animating={true}
+              />
+            )}
           </PressableOpacity>
           <PressableOpacity onPress={next} disabled={disabled}>
             <IconFA5 name="step-forward" size={36} color="white" />
@@ -360,6 +373,9 @@ const controlsStyles = StyleSheet.create({
     position: 'absolute',
     top: 26,
     opacity: 0,
+  },
+  buffering: {
+    position: 'absolute',
   },
 })
 
