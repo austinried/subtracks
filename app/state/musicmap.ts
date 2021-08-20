@@ -46,6 +46,7 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
       artistId: child.artistId,
       title: child.title,
       track: child.track,
+      discNumber: child.discNumber,
       duration: child.duration,
       starred: child.starred,
       coverArt: coverArt || (await get().getAlbumCoverArt(child.albumId)),

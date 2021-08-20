@@ -34,6 +34,8 @@ export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<St
       duration: song.duration,
       artistId: song.artistId,
       albumId: song.albumId,
+      track: song.track,
+      discNumber: song.discNumber,
     }
   },
 
@@ -53,6 +55,8 @@ export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<St
       duration: track.duration,
       artistId: track.artistId,
       albumId: track.albumId,
+      track: track.track,
+      discNumber: track.discNumber,
     }
   },
 })

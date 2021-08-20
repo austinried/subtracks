@@ -37,9 +37,15 @@ const Songs = React.memo<{
 
   if (type === 'album') {
     typeName = 'Album'
-    _songs
-      .sort((a, b) => a.title.localeCompare(b.title)) //
-      .sort((a, b) => (a.track || 0) - (b.track || 0))
+    if (_songs.some(s => s.track === undefined)) {
+      _songs.sort((a, b) => a.title.localeCompare(b.title))
+    } else {
+      _songs.sort((a, b) => {
+        const aVal = (a.track as number) + (a.discNumber !== undefined ? a.discNumber * 10000 : 0)
+        const bVal = (b.track as number) + (b.discNumber !== undefined ? b.discNumber * 10000 : 0)
+        return aVal - bVal
+      })
+    }
   } else {
     typeName = 'Playlist'
   }
@@ -62,8 +68,8 @@ const Songs = React.memo<{
             contextId={itemId}
             queueId={i}
             subtitle={s.artist}
-            onPress={() => setQueue(songs, name, type, itemId, i)}
-            showArt={type === 'playlist'}
+            onPress={() => setQueue(_songs, name, type, itemId, i)}
+            showArt={false}
           />
         ))}
       </View>
@@ -86,9 +92,11 @@ const SongListDetails = React.memo<{
 
   return (
     <View style={styles.container}>
-      {songList.itemType === 'album' && (
-        <HeaderBar headerStyle={{ backgroundColor: headerColor }} title={title} contextItem={songList} />
-      )}
+      <HeaderBar
+        headerStyle={{ backgroundColor: headerColor }}
+        title={title}
+        contextItem={songList.itemType === 'album' ? songList : undefined}
+      />
       <ImageGradientScrollView
         imagePath={coverArtFile?.file?.path}
         style={styles.container}

@@ -11,6 +11,8 @@ export type TrackExt = Track & {
   coverArt?: string
   artistId?: string
   albumId?: string
+  track?: number
+  discNumber?: number
 }
 
 export type Progress = {
