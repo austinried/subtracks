@@ -2,7 +2,7 @@ import { NoClientError } from '@app/models/error'
 import { Song } from '@app/models/music'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
-import TrackPlayer, { RepeatMode, State, Track } from 'react-native-track-player'
+import TrackPlayer, { PlayerOptions, RepeatMode, State, Track } from 'react-native-track-player'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
@@ -67,6 +67,8 @@ export type TrackPlayerSlice = {
   rebuildQueue: () => Promise<void>
   buildStreamUri: (id: string) => string
   resetTrackPlayerState: () => void
+
+  getPlayerOptions: () => PlayerOptions
 }
 
 export const selectTrackPlayer = {
@@ -200,7 +202,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
     return trackPlayerCommands.enqueue(async () => {
       const shuffled = shuffle !== undefined ? shuffle : !!get().shuffleOrder
 
-      await TrackPlayer.setupPlayer()
+      await TrackPlayer.setupPlayer(get().getPlayerOptions())
       await TrackPlayer.reset()
 
       if (songs.length === 0) {
@@ -298,6 +300,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       const queueContextType = get().queueContextType
 
       await TrackPlayer.reset()
+      await TrackPlayer.setupPlayer(get().getPlayerOptions())
 
       try {
         for (const track of queue) {
@@ -355,6 +358,14 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       queue: [],
       progress: { position: 0, duration: 0, buffered: 0 },
     })
+  },
+
+  getPlayerOptions: () => {
+    return {
+      minBuffer: get().settings.minBuffer,
+      playBuffer: get().settings.minBuffer / 2,
+      maxBuffer: get().settings.maxBuffer,
+    }
   },
 })
 

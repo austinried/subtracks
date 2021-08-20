@@ -4,6 +4,7 @@ import Header from '@app/components/Header'
 import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
 import SettingsSwitch from '@app/components/SettingsSwitch'
+import TextInput from '@app/components/TextInput'
 import { useSwitchActiveServer } from '@app/hooks/server'
 import { Server } from '@app/models/settings'
 import { selectCache } from '@app/state/cache'
@@ -13,7 +14,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
 import React, { useCallback, useState } from 'react'
-import { Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { KeyboardTypeOptions, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
@@ -105,7 +106,7 @@ const BitrateModal = React.memo<{
     <>
       <SettingsItem title={title} subtitle={bitrateString(bitrate)} onPress={toggleModal} />
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={toggleModal}>
-        <Pressable style={{ flex: 1 }} onPress={toggleModal}>
+        <Pressable style={styles.modalBackdrop} onPress={toggleModal}>
           <View style={styles.centeredView}>
             <Pressable style={styles.modalView}>
               <Header style={styles.modalHeader}>{title}</Header>
@@ -130,6 +131,66 @@ const BitrateModal = React.memo<{
   )
 })
 
+const SettingsTextModal = React.memo<{
+  title: string
+  value: string
+  setValue: (text: string) => void
+  getUnit?: (text: string) => string
+  keyboardType?: KeyboardTypeOptions
+}>(({ title, value, setValue, getUnit, keyboardType }) => {
+  const [visible, setVisible] = useState(false)
+  const [inputText, setInputText] = useState(value)
+
+  const toggleModal = useCallback(() => setVisible(!visible), [visible])
+
+  const submit = useCallback(() => {
+    setValue(inputText)
+    toggleModal()
+  }, [inputText, setValue, toggleModal])
+
+  const getSubtitle = useCallback(() => {
+    if (!getUnit) {
+      return value
+    }
+    return value + ' ' + getUnit(value)
+  }, [getUnit, value])
+
+  return (
+    <>
+      <SettingsItem title={title} subtitle={getSubtitle()} onPress={toggleModal} />
+      <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={toggleModal}>
+        <Pressable style={styles.modalBackdrop} onPress={toggleModal}>
+          <View style={styles.centeredView}>
+            <Pressable style={styles.modalView}>
+              <Header style={styles.modalHeader}>{title}</Header>
+              <View style={styles.modalTextInputLine}>
+                <TextInput
+                  style={styles.modalTextInput}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  onSubmitEditing={submit}
+                  keyboardType={keyboardType}
+                />
+                <PressableOpacity style={styles.modalTextSubmit} onPress={submit} hitSlop={10}>
+                  <Icon name="content-save-edit" color="white" size={32} />
+                </PressableOpacity>
+              </View>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  )
+})
+
+function secondsUnit(seconds: string): string {
+  const numberValue = parseFloat(seconds)
+  if (Math.abs(numberValue) !== 1) {
+    return 'seconds'
+  }
+  return 'second'
+}
+
 const SettingsContent = React.memo(() => {
   const servers = useStore(selectSettings.servers)
   const scrobble = useStore(selectSettings.scrobble)
@@ -142,6 +203,11 @@ const SettingsContent = React.memo(() => {
 
   const maxBitrateMobile = useStore(selectSettings.maxBitrateMobile)
   const setMaxBitrateMobile = useStore(selectSettings.setMaxBitrateMobile)
+
+  const minBuffer = useStore(selectSettings.minBuffer)
+  const setMinBuffer = useStore(selectSettings.setMinBuffer)
+  const maxBuffer = useStore(selectSettings.maxBuffer)
+  const setMaxBuffer = useStore(selectSettings.setMaxBuffer)
 
   const clearImageCache = useStore(selectCache.clearImageCache)
   const [clearing, setClearing] = useState(false)
@@ -163,6 +229,9 @@ const SettingsContent = React.memo(() => {
     waitForClear()
   }, [clearImageCache])
 
+  const setMinBufferText = useCallback((text: string) => setMinBuffer(parseFloat(text)), [setMinBuffer])
+  const setMaxBufferText = useCallback((text: string) => setMaxBuffer(parseFloat(text)), [setMaxBuffer])
+
   return (
     <View style={styles.content}>
       <Header>Servers</Header>
@@ -183,6 +252,20 @@ const SettingsContent = React.memo(() => {
         subtitle='Send the "estimateContentLength" flag when streaming. Helps fix issues with seeking when the server is transcoding songs.'
         value={estimateContentLength}
         setValue={setEstimateContentLength}
+      />
+      <SettingsTextModal
+        title="Minimum buffer time"
+        value={minBuffer.toString()}
+        setValue={setMinBufferText}
+        getUnit={secondsUnit}
+        keyboardType="numeric"
+      />
+      <SettingsTextModal
+        title="Maximum buffer time"
+        value={maxBuffer.toString()}
+        setValue={setMaxBufferText}
+        getUnit={secondsUnit}
+        keyboardType="numeric"
       />
       <Header style={styles.header}>Music</Header>
       <SettingsSwitch
@@ -234,6 +317,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 16,
   },
+  modalBackdrop: {
+    flex: 1,
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
@@ -268,6 +354,18 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     maxHeight: 475,
+  },
+  modalTextInputLine: {
+    flexDirection: 'row',
+    margin: 20,
+  },
+  modalTextInput: {
+    flex: 1,
+    paddingLeft: 12,
+  },
+  modalTextSubmit: {
+    marginLeft: 15,
+    // backgroundColor: 'green',
   },
 })
 

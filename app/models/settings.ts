@@ -16,4 +16,6 @@ export interface AppSettings {
   estimateContentLength: boolean
   maxBitrateWifi: number
   maxBitrateMobile: number
+  minBuffer: number
+  maxBuffer: number
 }

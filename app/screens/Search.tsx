@@ -3,6 +3,7 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
+import TextInput from '@app/components/TextInput'
 import { useActiveServerRefresh } from '@app/hooks/server'
 import { ListableItem, SearchResults, Song } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
@@ -13,7 +14,7 @@ import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import debounce from 'lodash.debounce'
 import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, StatusBar, StyleSheet, TextInput, View } from 'react-native'
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
   const setQueue = useStore(selectTrackPlayer.setQueue)
@@ -113,14 +114,7 @@ const Search = () => {
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
       <View style={styles.content}>
         <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Search"
-            placeholderTextColor="grey"
-            selectionColor={colors.text.secondary}
-            value={text}
-            onChangeText={onChangeText}
-          />
+          <TextInput style={styles.textInput} placeholder="Search" value={text} onChangeText={onChangeText} />
           <ActivityIndicator
             animating={refreshing}
             size="small"
@@ -154,16 +148,6 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 15,
   },
-  textInput: {
-    width: '100%',
-    backgroundColor: '#515151',
-    fontFamily: font.regular,
-    fontSize: 18,
-    color: colors.text.primary,
-    marginTop: 20,
-    paddingHorizontal: 12,
-    paddingRight: 46,
-  },
   noResults: {
     width: '100%',
   },
@@ -175,6 +159,11 @@ const styles = StyleSheet.create({
   more: {
     marginTop: 5,
     marginBottom: 10,
+  },
+  textInput: {
+    marginTop: 20,
+    paddingHorizontal: 12,
+    paddingRight: 46,
   },
 })
 

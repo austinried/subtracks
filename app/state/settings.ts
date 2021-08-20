@@ -18,6 +18,8 @@ export type SettingsSlice = {
   setEstimateContentLength: (estimateContentLength: boolean) => void
   setMaxBitrateWifi: (maxBitrateWifi: number) => void
   setMaxBitrateMobile: (maxBitrateMobile: number) => void
+  setMinBuffer: (minBuffer: number) => void
+  setMaxBuffer: (maxBuffer: number) => void
 
   pingServer: (server?: Server) => Promise<boolean>
 }
@@ -46,6 +48,11 @@ export const selectSettings = {
   maxBitrateMobile: (state: SettingsSlice) => state.settings.maxBitrateMobile,
   setMaxBitrateMobile: (state: SettingsSlice) => state.setMaxBitrateMobile,
 
+  minBuffer: (state: SettingsSlice) => state.settings.minBuffer,
+  setMinBuffer: (state: SettingsSlice) => state.setMinBuffer,
+  maxBuffer: (state: SettingsSlice) => state.settings.maxBuffer,
+  setMaxBuffer: (state: SettingsSlice) => state.setMaxBuffer,
+
   pingServer: (state: SettingsSlice) => state.pingServer,
 }
 
@@ -59,6 +66,8 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     estimateContentLength: true,
     maxBitrateWifi: 0,
     maxBitrateMobile: 192,
+    minBuffer: 3,
+    maxBuffer: 60,
   },
 
   setActiveServer: async (id, force) => {
@@ -122,6 +131,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         )
       }),
     )
+
     if (get().settings.activeServer === server.id) {
       get().setActiveServer(server.id)
     }
@@ -141,6 +151,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.estimateContentLength = estimateContentLength
       }),
     )
+
     get().rebuildQueue()
   },
 
@@ -150,6 +161,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.maxBitrateWifi = maxBitrateWifi
       }),
     )
+
     if (get().netState === 'wifi') {
       get().rebuildQueue()
     }
@@ -161,9 +173,38 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.settings.maxBitrateMobile = maxBitrateMobile
       }),
     )
+
     if (get().netState === 'mobile') {
       get().rebuildQueue()
     }
+  },
+
+  setMinBuffer: minBuffer => {
+    if (minBuffer === get().settings.minBuffer) {
+      return
+    }
+
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.minBuffer = Math.max(1, Math.min(minBuffer, state.settings.maxBuffer / 2))
+      }),
+    )
+
+    get().rebuildQueue()
+  },
+
+  setMaxBuffer: maxBuffer => {
+    if (maxBuffer === get().settings.maxBuffer) {
+      return
+    }
+
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.maxBuffer = Math.min(5 * 60, Math.max(maxBuffer, state.settings.minBuffer * 2))
+      }),
+    )
+
+    get().rebuildQueue()
   },
 
   pingServer: async server => {
