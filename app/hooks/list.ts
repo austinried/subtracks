@@ -42,11 +42,15 @@ export const useFetchPaginatedList = <T>(
     })
   }, [fetchList, pageSize])
 
+  const reset = useCallback(() => {
+    setList([])
+    refresh()
+  }, [refresh])
+
   useActiveServerRefresh(
     useCallback(() => {
-      setList([])
-      refresh()
-    }, [refresh]),
+      reset()
+    }, [reset]),
   )
 
   const fetchNextPage = useCallback(() => {
@@ -65,5 +69,5 @@ export const useFetchPaginatedList = <T>(
     })
   }, [offset, pageSize, fetchList, list])
 
-  return { list, refreshing, refresh, fetchNextPage }
+  return { list, refreshing, refresh, reset, fetchNextPage }
 }

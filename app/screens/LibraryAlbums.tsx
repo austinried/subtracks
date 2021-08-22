@@ -64,7 +64,7 @@ const filterOptions: OptionData[] = [
 
 const AlbumsList = () => {
   const fetchAlbums = useStore(selectMusic.fetchAlbums)
-  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
+  const { list, refreshing, refresh, reset, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
   const filter = useStore(selectSettings.libraryAlbumFilter)
   const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
 
@@ -74,8 +74,8 @@ const AlbumsList = () => {
   const height = size + 36
 
   useEffect(() => {
-    refresh()
-  }, [refresh, filter])
+    reset()
+  }, [reset, filter])
 
   return (
     <View style={styles.container}>
