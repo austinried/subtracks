@@ -69,7 +69,7 @@ export class SubsonicApiClient {
     this.params.append('t', server.token)
     this.params.append('s', server.salt)
     this.params.append('v', '1.15.0')
-    this.params.append('c', 'subsonify-cool-unique-app-string')
+    this.params.append('c', 'subtracks')
   }
 
   private buildUrl(method: string, params?: { [key: string]: any }): string {
