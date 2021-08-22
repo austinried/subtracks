@@ -82,14 +82,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    height: 140,
-    width: 140,
+    height: 150,
+    width: 150,
     marginBottom: -10,
     tintColor: colors.accent,
   },
   text: {
     fontFamily: font.bold,
-    fontSize: 50,
+    fontSize: 31,
     color: colors.text.primary,
   },
 })

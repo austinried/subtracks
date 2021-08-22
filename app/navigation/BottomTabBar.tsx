@@ -1,5 +1,7 @@
 import NowPlayingBar from '@app/components/NowPlayingBar'
 import PressableOpacity from '@app/components/PressableOpacity'
+import { selectSettings } from '@app/state/settings'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
@@ -18,6 +20,10 @@ const BottomTabButton = React.memo<{
   icon: OutlineFillIcon
   navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>
 }>(({ routeKey, label, name, isFocused, icon, navigation }) => {
+  const firstRun = useStore(selectSettings.firstRun)
+
+  const disabled = firstRun && name !== 'settings'
+
   const onPress = () => {
     const event = navigation.emit({
       type: 'tabPress',
@@ -40,43 +46,41 @@ const BottomTabButton = React.memo<{
   const textStyle = [styles.text, { color: focusColor }]
 
   return (
-    <PressableOpacity onPress={onPress} style={styles.button}>
+    <PressableOpacity onPress={onPress} style={styles.button} disabled={disabled}>
       <Image source={imgSource} style={imgStyle} fadeDuration={0} />
       <Text style={textStyle}>{label}</Text>
     </PressableOpacity>
   )
 })
 
-const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
-  return (
-    <View>
-      <NowPlayingBar />
-      <View style={styles.container}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key] as any
-          const label =
-            options.tabBarLabel !== undefined
-              ? (options.tabBarLabel as string)
-              : options.title !== undefined
-              ? options.title
-              : route.name
+const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => (
+  <View>
+    <NowPlayingBar />
+    <View style={styles.container}>
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key] as any
+        const label =
+          options.tabBarLabel !== undefined
+            ? (options.tabBarLabel as string)
+            : options.title !== undefined
+            ? options.title
+            : route.name
 
-          return (
-            <BottomTabButton
-              key={route.key}
-              routeKey={route.key}
-              label={label}
-              name={route.name}
-              isFocused={state.index === index}
-              icon={bottomTabIcons[route.name]}
-              navigation={navigation}
-            />
-          )
-        })}
-      </View>
+        return (
+          <BottomTabButton
+            key={route.key}
+            routeKey={route.key}
+            label={label}
+            name={route.name}
+            isFocused={state.index === index}
+            icon={bottomTabIcons[route.name]}
+            navigation={navigation}
+          />
+        )
+      })}
     </View>
-  )
-}
+  </View>
+)
 
 const styles = StyleSheet.create({
   container: {

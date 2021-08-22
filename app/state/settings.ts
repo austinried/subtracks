@@ -30,6 +30,8 @@ export type SettingsSlice = {
 export const selectSettings = {
   client: (state: SettingsSlice) => state.client,
 
+  firstRun: (state: SettingsSlice) => state.settings.servers.length === 0,
+
   activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
   setActiveServer: (state: SettingsSlice) => state.setActiveServer,
 
