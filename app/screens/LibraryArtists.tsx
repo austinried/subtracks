@@ -29,14 +29,11 @@ const ArtistsList = () => {
 
   useEffect(() => {
     switch (filter.type) {
-      case 'alphabeticalByName':
-        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)))
-        break
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
         break
       case 'starred':
-        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)).filter(a => a.starred))
+        setSortedList([...list].filter(a => a.starred))
         break
       default:
         setSortedList([...list])
@@ -54,6 +51,7 @@ const ArtistsList = () => {
         onRefresh={refresh}
         refreshing={refreshing}
         overScrollMode="never"
+        windowSize={3}
       />
       <FilterButton
         data={filterOptions}

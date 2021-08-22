@@ -24,6 +24,7 @@ const PlaylistsList = () => {
       onRefresh={refresh}
       refreshing={refreshing}
       overScrollMode="never"
+      windowSize={5}
     />
   )
 }

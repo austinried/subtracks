@@ -89,6 +89,7 @@ const AlbumsList = () => {
         overScrollMode="never"
         onEndReached={fetchNextPage}
         onEndReachedThreshold={6}
+        windowSize={5}
       />
       <FilterButton
         data={filterOptions}
