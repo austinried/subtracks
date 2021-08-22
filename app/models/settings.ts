@@ -1,3 +1,5 @@
+import { GetAlbumList2Type } from '@app/subsonic/params'
+
 export interface Server {
   id: string
   address: string
@@ -6,10 +8,22 @@ export interface Server {
   salt: string
 }
 
+export interface FilterSettings {
+  type: GetAlbumList2Type
+  fromYear: number
+  toYear: number
+  genre: string
+}
+
 export interface AppSettings {
   servers: Server[]
-  home: {
-    lists: string[]
+  screens: {
+    home: {
+      lists: string[]
+    }
+    library: {
+      albums: FilterSettings
+    }
   }
   activeServer?: string
   scrobble: boolean

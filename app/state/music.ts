@@ -10,7 +10,7 @@ import {
   StarrableItemType,
 } from '@app/models/music'
 import { Store } from '@app/state/store'
-import { GetAlbumList2Type, Search3Params, StarParams } from '@app/subsonic/params'
+import { GetAlbumList2Params, GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
@@ -218,7 +218,37 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     }
 
     try {
-      const response = await client.getAlbumList2({ type: 'alphabeticalByArtist', size, offset })
+      const filter = get().settings.screens.library.albums
+
+      let params: GetAlbumList2Params
+      switch (filter.type) {
+        case 'byYear':
+          params = {
+            size,
+            offset,
+            type: filter.type,
+            fromYear: filter.fromYear,
+            toYear: filter.toYear,
+          }
+          break
+        case 'byGenre':
+          params = {
+            size,
+            offset,
+            type: filter.type,
+            genre: filter.genre,
+          }
+          break
+        default:
+          params = {
+            size,
+            offset,
+            type: filter.type,
+          }
+          break
+      }
+
+      const response = await client.getAlbumList2(params)
       const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
 
       set(
@@ -294,13 +324,13 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     }
     set({ homeListsUpdating: true })
 
-    const types = get().settings.home.lists
+    const types = get().settings.screens.home.lists
 
     try {
       const promises: Promise<any>[] = []
       for (const type of types) {
         promises.push(
-          client.getAlbumList2({ type: type as GetAlbumList2Type, size: 20 }).then(response => {
+          client.getAlbumList2({ type: type as GetAlbumList2TypeBase, size: 20 }).then(response => {
             const list = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
             set(
               produce<MusicSlice>(state => {

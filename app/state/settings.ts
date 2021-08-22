@@ -1,4 +1,4 @@
-import { AppSettings, Server } from '@app/models/settings'
+import { AppSettings, FilterSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
 import produce from 'immer'
@@ -22,6 +22,8 @@ export type SettingsSlice = {
   setMaxBuffer: (maxBuffer: number) => void
 
   pingServer: (server?: Server) => Promise<boolean>
+
+  setLibraryAlbumFilter: (filter: FilterSettings) => void
 }
 
 export const selectSettings = {
@@ -35,7 +37,7 @@ export const selectSettings = {
   removeServer: (state: SettingsSlice) => state.removeServer,
   updateServer: (state: SettingsSlice) => state.updateServer,
 
-  homeLists: (state: SettingsSlice) => state.settings.home.lists,
+  homeLists: (state: SettingsSlice) => state.settings.screens.home.lists,
 
   scrobble: (state: SettingsSlice) => state.settings.scrobble,
   setScrobble: (state: SettingsSlice) => state.setScrobble,
@@ -54,13 +56,26 @@ export const selectSettings = {
   setMaxBuffer: (state: SettingsSlice) => state.setMaxBuffer,
 
   pingServer: (state: SettingsSlice) => state.pingServer,
+
+  setLibraryAlbumFilter: (state: SettingsSlice) => state.setLibraryAlbumFilter,
+  libraryAlbumFilter: (state: SettingsSlice) => state.settings.screens.library.albums,
 }
 
 export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
   settings: {
     servers: [],
-    home: {
-      lists: ['recent', 'random', 'frequent', 'starred'],
+    screens: {
+      home: {
+        lists: ['recent', 'random', 'frequent', 'starred'],
+      },
+      library: {
+        albums: {
+          type: 'alphabeticalByArtist',
+          fromYear: 1,
+          toYear: 9999,
+          genre: '',
+        },
+      },
     },
     scrobble: false,
     estimateContentLength: true,
@@ -225,6 +240,14 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     } catch {
       return false
     }
+  },
+
+  setLibraryAlbumFilter: filter => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.screens.library.albums = filter
+      }),
+    )
   },
 })
 

@@ -1,14 +1,17 @@
 import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
+import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
 import { Album, AlbumListItem } from '@app/models/music'
 import { selectMusic } from '@app/state/music'
+import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { GetAlbumList2Type } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import FastImage from 'react-native-fast-image'
 
@@ -47,14 +50,32 @@ const AlbumListRenderItem: React.FC<{
   item: { album: Album; size: number; height: number }
 }> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
 
+const filterOptions: OptionData[] = [
+  { text: 'By name', value: 'alphabeticalByName' },
+  { text: 'By artist', value: 'alphabeticalByArtist' },
+  { text: 'Newest', value: 'newest' },
+  { text: 'Frequent', value: 'frequent' },
+  { text: 'Recent', value: 'recent' },
+  { text: 'Starred', value: 'starred' },
+  { text: 'Random', value: 'random' },
+  // { text: 'By year...', value: 'byYear' },
+  // { text: 'By genre...', value: 'byGenre' },
+]
+
 const AlbumsList = () => {
   const fetchAlbums = useStore(selectMusic.fetchAlbums)
   const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
+  const filter = useStore(selectSettings.libraryAlbumFilter)
+  const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
 
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
+
+  useEffect(() => {
+    refresh()
+  }, [refresh, filter])
 
   return (
     <View style={styles.container}>
@@ -70,6 +91,16 @@ const AlbumsList = () => {
         overScrollMode="never"
         onEndReached={fetchNextPage}
         onEndReachedThreshold={6}
+      />
+      <FilterButton
+        data={filterOptions}
+        value={filter.type}
+        onSelect={selection => {
+          setFilter({
+            ...filter,
+            type: selection as GetAlbumList2Type,
+          })
+        }}
       />
     </View>
   )

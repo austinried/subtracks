@@ -15,7 +15,7 @@ const Debug = () => {
 }
 
 const App = () => (
-  <MenuProvider>
+  <MenuProvider backHandler={true}>
     <View style={{ flex: 1, backgroundColor: colors.gradient.high }}>
       <StatusBar animated={true} backgroundColor={'rgba(0, 0, 0, 0.3)'} barStyle={'light-content'} translucent={true} />
       <SplashPage>

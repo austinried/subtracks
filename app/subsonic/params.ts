@@ -36,7 +36,7 @@ export type GetTopSongsParams = {
 // Album/song lists
 //
 
-export type GetAlbumList2Type =
+export type GetAlbumList2TypeBase =
   | 'random'
   | 'newest'
   | 'frequent'
@@ -44,33 +44,34 @@ export type GetAlbumList2Type =
   | 'starred'
   | 'alphabeticalByName'
   | 'alphabeticalByArtist'
-export type GetAlbumListType = GetAlbumList2Type | ' highest'
+export type GetAlbumListTypeBase = GetAlbumList2TypeBase | ' highest'
 
-export type GetAlbumList2TypeByYear = {
-  type: 'byYear'
-  fromYear: string
-  toYear: string
+type GetAlbumListBase = {
+  size?: number
+  offset?: number
+  musicFolderId?: string
 }
 
-export type GetAlbumList2TypeByGenre = {
+export type GetAlbumList2TypeByYear = GetAlbumListBase & {
+  type: 'byYear'
+  fromYear: number
+  toYear: number
+}
+
+export type GetAlbumList2TypeByGenre = GetAlbumListBase & {
   type: 'byGenre'
   genre: string
 }
 
 export type GetAlbumList2Params =
-  | {
-      type: GetAlbumList2Type
-      size?: number
-      offset?: number
-      fromYear?: string
-      toYear?: string
-      genre?: string
-      musicFolderId?: string
-    }
+  | (GetAlbumListBase & { type: GetAlbumList2TypeBase })
   | GetAlbumList2TypeByYear
   | GetAlbumList2TypeByGenre
 
 export type GetAlbumListParams = GetAlbumList2Params
+
+export type GetAlbumList2Type = GetAlbumList2TypeBase | 'byYear' | 'byGenre'
+export type GetAlbumListType = GetAlbumListTypeBase | 'byYear' | 'byGenre'
 
 //
 // Playlists
