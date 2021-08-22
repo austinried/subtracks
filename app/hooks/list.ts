@@ -14,14 +14,18 @@ export const useFetchList = <T>(fetchList: () => Promise<T[]>) => {
     })
   }, [fetchList])
 
+  const reset = useCallback(() => {
+    setList([])
+    refresh()
+  }, [refresh])
+
   useActiveServerRefresh(
     useCallback(() => {
-      setList([])
-      refresh()
-    }, [refresh]),
+      reset()
+    }, [reset]),
   )
 
-  return { list, refreshing, refresh }
+  return { list, refreshing, refresh, reset }
 }
 
 export const useFetchPaginatedList = <T>(

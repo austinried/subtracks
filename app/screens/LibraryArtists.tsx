@@ -1,34 +1,78 @@
+import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { useFetchList } from '@app/hooks/list'
 import { Artist } from '@app/models/music'
+import { ArtistFilterType } from '@app/models/settings'
 import { selectMusic } from '@app/state/music'
+import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
-import React from 'react'
-import { StyleSheet } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { StyleSheet, View } from 'react-native'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
   <ListItem item={item} showArt={true} showStar={false} listStyle="big" />
 )
 
+const filterOptions: OptionData[] = [
+  { text: 'By name', value: 'alphabeticalByName' },
+  { text: 'Starred', value: 'starred' },
+  { text: 'Random', value: 'random' },
+]
+
 const ArtistsList = () => {
   const fetchArtists = useStore(selectMusic.fetchArtists)
   const { list, refreshing, refresh } = useFetchList(fetchArtists)
+  const filter = useStore(selectSettings.libraryArtistFilter)
+  const setFilter = useStore(selectSettings.setLibraryArtistFiler)
+  const [sortedList, setSortedList] = useState<Artist[]>([])
+
+  useEffect(() => {
+    switch (filter.type) {
+      case 'alphabeticalByName':
+        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)))
+        break
+      case 'random':
+        setSortedList([...list].sort(() => Math.random() - 0.5))
+        break
+      case 'starred':
+        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)).filter(a => a.starred))
+        break
+      default:
+        setSortedList([...list])
+        break
+    }
+  }, [list, filter])
 
   return (
-    <GradientFlatList
-      contentContainerStyle={styles.listContent}
-      data={list}
-      renderItem={ArtistRenderItem}
-      keyExtractor={item => item.id}
-      onRefresh={refresh}
-      refreshing={refreshing}
-      overScrollMode="never"
-    />
+    <View style={styles.container}>
+      <GradientFlatList
+        contentContainerStyle={styles.listContent}
+        data={sortedList}
+        renderItem={ArtistRenderItem}
+        keyExtractor={item => item.id}
+        onRefresh={refresh}
+        refreshing={refreshing}
+        overScrollMode="never"
+      />
+      <FilterButton
+        data={filterOptions}
+        value={filter.type}
+        onSelect={selection => {
+          setFilter({
+            ...filter,
+            type: selection as ArtistFilterType,
+          })
+        }}
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   listContent: {
     minHeight: '100%',
     paddingHorizontal: 10,

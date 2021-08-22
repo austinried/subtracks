@@ -1,4 +1,4 @@
-import { AppSettings, FilterSettings, Server } from '@app/models/settings'
+import { AppSettings, ArtistFilterSettings, AlbumFilterSettings, Server } from '@app/models/settings'
 import { Store } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
 import produce from 'immer'
@@ -23,7 +23,8 @@ export type SettingsSlice = {
 
   pingServer: (server?: Server) => Promise<boolean>
 
-  setLibraryAlbumFilter: (filter: FilterSettings) => void
+  setLibraryAlbumFilter: (filter: AlbumFilterSettings) => void
+  setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
 }
 
 export const selectSettings = {
@@ -59,6 +60,8 @@ export const selectSettings = {
 
   setLibraryAlbumFilter: (state: SettingsSlice) => state.setLibraryAlbumFilter,
   libraryAlbumFilter: (state: SettingsSlice) => state.settings.screens.library.albums,
+  setLibraryArtistFiler: (state: SettingsSlice) => state.setLibraryArtistFiler,
+  libraryArtistFilter: (state: SettingsSlice) => state.settings.screens.library.artists,
 }
 
 export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
@@ -74,6 +77,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
           fromYear: 1,
           toYear: 9999,
           genre: '',
+        },
+        artists: {
+          type: 'alphabeticalByName',
         },
       },
     },
@@ -246,6 +252,14 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     set(
       produce<SettingsSlice>(state => {
         state.settings.screens.library.albums = filter
+      }),
+    )
+  },
+
+  setLibraryArtistFiler: filter => {
+    set(
+      produce<SettingsSlice>(state => {
+        state.settings.screens.library.artists = filter
       }),
     )
   },

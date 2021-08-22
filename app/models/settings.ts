@@ -8,11 +8,17 @@ export interface Server {
   salt: string
 }
 
-export interface FilterSettings {
+export interface AlbumFilterSettings {
   type: GetAlbumList2Type
   fromYear: number
   toYear: number
   genre: string
+}
+
+export type ArtistFilterType = 'random' | 'starred' | 'alphabeticalByName'
+
+export interface ArtistFilterSettings {
+  type: ArtistFilterType
 }
 
 export interface AppSettings {
@@ -22,7 +28,8 @@ export interface AppSettings {
       lists: string[]
     }
     library: {
-      albums: FilterSettings
+      albums: AlbumFilterSettings
+      artists: ArtistFilterSettings
     }
   }
   activeServer?: string

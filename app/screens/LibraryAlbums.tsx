@@ -73,9 +73,7 @@ const AlbumsList = () => {
   const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
 
-  useEffect(() => {
-    reset()
-  }, [reset, filter])
+  useEffect(() => reset(), [reset, filter])
 
   return (
     <View style={styles.container}>
