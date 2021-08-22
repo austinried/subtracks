@@ -13,7 +13,6 @@ import { GetAlbumList2Type } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
 
 const AlbumItem = React.memo<{
   album: AlbumListItem
@@ -28,12 +27,7 @@ const AlbumItem = React.memo<{
       menuStyle={[styles.itemMenu, { width: size }]}
       triggerWrapperStyle={[styles.itemWrapper, { height }]}
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
-      <CoverArt
-        type="cover"
-        coverArt={album.coverArt}
-        style={{ height: size, width: size }}
-        resizeMode={FastImage.resizeMode.cover}
-      />
+      <CoverArt type="cover" coverArt={album.coverArt} style={{ height: size, width: size }} resizeMode={'cover'} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {album.name}

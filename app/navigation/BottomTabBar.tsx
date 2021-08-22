@@ -3,45 +3,21 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
+import { bottomTabIcons, OutlineFillIcon } from '@app/styles/icons'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BottomTabNavigationEventMap } from '@react-navigation/bottom-tabs/lib/typescript/src/types'
 import { NavigationHelpers, ParamListBase } from '@react-navigation/native'
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
-
-type TabButtonImage = {
-  regular: number
-  fill: number
-}
-
-const icons: { [key: string]: TabButtonImage } = {
-  home: {
-    regular: require('@res/icons/home.png'),
-    fill: require('@res/icons/home-fill.png'),
-  },
-  library: {
-    regular: require('@res/icons/library.png'),
-    fill: require('@res/icons/library-fill.png'),
-  },
-  search: {
-    regular: require('@res/icons/search.png'),
-    fill: require('@res/icons/search-fill.png'),
-  },
-  settings: {
-    regular: require('@res/icons/settings.png'),
-    fill: require('@res/icons/settings-fill.png'),
-  },
-}
+import { StyleSheet, Text, View, Image, ImageStyle } from 'react-native'
 
 const BottomTabButton = React.memo<{
   routeKey: string
   label: string
   name: string
   isFocused: boolean
-  img: TabButtonImage
+  icon: OutlineFillIcon
   navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>
-}>(({ routeKey, label, name, isFocused, img, navigation }) => {
+}>(({ routeKey, label, name, isFocused, icon, navigation }) => {
   const onPress = () => {
     const event = navigation.emit({
       type: 'tabPress',
@@ -54,20 +30,19 @@ const BottomTabButton = React.memo<{
     }
   }
 
+  const focusColor = isFocused ? colors.text.primary : colors.text.secondary
+  const imgSource = isFocused ? icon.fill : icon.outline
+  const imgFocusStyle: ImageStyle = {
+    tintColor: focusColor,
+    opacity: isFocused ? 1 : 0.6,
+  }
+  const imgStyle = [styles.image, imgFocusStyle]
+  const textStyle = [styles.text, { color: focusColor }]
+
   return (
     <PressableOpacity onPress={onPress} style={styles.button}>
-      <FastImage
-        source={isFocused ? img.fill : img.regular}
-        style={styles.image}
-        tintColor={isFocused ? colors.text.primary : colors.text.secondary}
-      />
-      <Text
-        style={{
-          ...styles.text,
-          color: isFocused ? colors.text.primary : colors.text.secondary,
-        }}>
-        {label}
-      </Text>
+      <Image source={imgSource} style={imgStyle} fadeDuration={0} />
+      <Text style={textStyle}>{label}</Text>
     </PressableOpacity>
   )
 })
@@ -93,7 +68,7 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               label={label}
               name={route.name}
               isFocused={state.index === index}
-              img={icons[route.name]}
+              icon={bottomTabIcons[route.name]}
               navigation={navigation}
             />
           )

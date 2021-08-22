@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     maxWidth: 145,
   },
   optionsContainer: {
-    backgroundColor: 'rgba(45, 45, 45, 0.95)',
+    backgroundColor: colors.gradient.high,
     maxWidth: 145,
   },
   option: {

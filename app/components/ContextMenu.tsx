@@ -9,7 +9,6 @@ import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { ReactComponentLike } from 'prop-types'
 import React from 'react'
 import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
-import FastImage from 'react-native-fast-image'
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
@@ -121,15 +120,9 @@ const MenuHeader = React.memo<{
 }>(({ coverArt, artistId, title, subtitle }) => (
   <View style={styles.menuHeader}>
     {artistId ? (
-      <CoverArt
-        type="artist"
-        artistId={artistId}
-        style={styles.coverArt}
-        resizeMode={FastImage.resizeMode.cover}
-        round={true}
-      />
+      <CoverArt type="artist" artistId={artistId} style={styles.coverArt} resizeMode={'cover'} round={true} />
     ) : (
-      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode={FastImage.resizeMode.cover} />
+      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode={'cover'} />
     )}
     <View style={styles.menuHeaderText}>
       <Text numberOfLines={1} style={styles.menuTitle}>

@@ -8,7 +8,6 @@ import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } from './ContextMenu'
@@ -148,7 +147,7 @@ const ListItem: React.FC<{
   }
 
   const artStyle = { ...styles.art, ...sizeStyle.art }
-  const resizeMode = FastImage.resizeMode.cover
+  const resizeMode = 'cover'
   let coverArt = <></>
   if (item.itemType === 'artist') {
     coverArt = <CoverArt type="artist" artistId={item.id} round={true} style={artStyle} resizeMode={resizeMode} />

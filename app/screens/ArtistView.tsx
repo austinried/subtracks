@@ -16,7 +16,6 @@ import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
 import React from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
 const AlbumItem = React.memo<{
@@ -36,12 +35,7 @@ const AlbumItem = React.memo<{
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
       menuStyle={[styles.albumItem, { width }]}
       triggerOuterWrapperStyle={{ width }}>
-      <CoverArt
-        type="cover"
-        coverArt={album.coverArt}
-        style={{ height, width }}
-        resizeMode={FastImage.resizeMode.cover}
-      />
+      <CoverArt type="cover" coverArt={album.coverArt} style={{ height, width }} resizeMode={'cover'} />
       <Text style={styles.albumTitle}>{album.name}</Text>
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </AlbumContextPressable>
@@ -116,13 +110,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         onScroll={onScroll}>
-        <CoverArt
-          type="artist"
-          size="original"
-          artistId={artist.id}
-          style={styles.artistCover}
-          resizeMode={FastImage.resizeMode.cover}
-        />
+        <CoverArt type="artist" size="original" artistId={artist.id} style={styles.artistCover} resizeMode={'cover'} />
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>
         </View>

@@ -14,7 +14,6 @@ import { GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
-import FastImage from 'react-native-fast-image'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recent Albums',
@@ -37,7 +36,7 @@ const AlbumItem = React.memo<{
         type="cover"
         coverArt={album.coverArt}
         style={{ height: styles.item.width, width: styles.item.width }}
-        resizeMode={FastImage.resizeMode.cover}
+        resizeMode={'cover'}
       />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}

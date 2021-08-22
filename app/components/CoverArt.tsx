@@ -2,13 +2,21 @@ import { useArtistArtFile, useCoverArtFile } from '@app/hooks/cache'
 import { CacheFile, CacheImageSize, CacheRequest } from '@app/models/cache'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
-import { ActivityIndicator, StyleSheet, View, ViewStyle, Image, ImageStyle, ImageSourcePropType } from 'react-native'
-import FastImage from 'react-native-fast-image'
+import {
+  ActivityIndicator,
+  Image,
+  ImageResizeMode,
+  ImageSourcePropType,
+  ImageStyle,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native'
 
 type BaseProps = {
   style?: ViewStyle
   imageStyle?: ImageStyle
-  resizeMode?: keyof typeof FastImage.resizeMode
+  resizeMode?: ImageResizeMode
   round?: boolean
   size?: CacheImageSize
 }
@@ -39,7 +47,7 @@ const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequ
         <Image
           source={source}
           fadeDuration={150}
-          resizeMode={resizeMode || FastImage.resizeMode.contain}
+          resizeMode={resizeMode || 'contain'}
           style={[{ height: style?.height, width: style?.width }, imageStyle]}
           onError={() => setError(true)}
         />
