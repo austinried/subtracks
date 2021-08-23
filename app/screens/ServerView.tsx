@@ -5,10 +5,11 @@ import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import toast from '@app/util/toast'
 import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, Text, TextInput, ToastAndroid, View } from 'react-native'
+import { StyleSheet, Text, TextInput, View } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 
 const ServerView: React.FC<{
@@ -81,7 +82,6 @@ const ServerView: React.FC<{
         }
         exit()
       } catch (err) {
-        console.error(err)
         setSaving(false)
       }
     }
@@ -99,7 +99,6 @@ const ServerView: React.FC<{
         await removeServer(id as string)
         exit()
       } catch (err) {
-        console.error(err)
         setRemoving(false)
       }
     }
@@ -113,9 +112,9 @@ const ServerView: React.FC<{
     const ping = async () => {
       const res = await pingServer(potential)
       if (res) {
-        ToastAndroid.show(`Connection to ${potential.address} OK!`, ToastAndroid.SHORT)
+        toast(`Connection to ${potential.address} OK!`)
       } else {
-        ToastAndroid.show(`Connection to ${potential.address} failed, check settings or server`, ToastAndroid.SHORT)
+        toast(`Connection to ${potential.address} failed, check settings or server`)
       }
       setTesting(false)
     }

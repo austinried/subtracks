@@ -1,5 +1,4 @@
-import { DOMParser } from 'xmldom'
-import RNFS from 'react-native-fs'
+import { Server } from '@app/models/settings'
 import {
   GetAlbumList2Params,
   GetAlbumListParams,
@@ -34,8 +33,8 @@ import {
   Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
-import { Server } from '@app/models/settings'
-import PromiseQueue from '@app/util/PromiseQueue'
+import toast from '@app/util/toast'
+import { DOMParser } from 'xmldom'
 
 export class SubsonicApiError extends Error {
   method: string
@@ -51,8 +50,6 @@ export class SubsonicApiError extends Error {
     this.code = errorElement.getAttribute('code') as string
   }
 }
-
-const downloadQueue = new PromiseQueue(1)
 
 export class SubsonicApiClient {
   address: string
@@ -81,28 +78,19 @@ export class SubsonicApiClient {
       }
     }
 
-    const url = `${this.address}/rest/${method}?${query}`
-    // console.log(`${method}: ${url}`)
-    return url
-  }
-
-  private async apiDownload(method: string, path: string, params?: { [key: string]: any }): Promise<string> {
-    const download = RNFS.downloadFile({
-      fromUrl: this.buildUrl(method, params),
-      toFile: path,
-    }).promise
-
-    await downloadQueue.enqueue(() => download)
-    await downloadQueue.enqueue(() => new Promise(resolve => setTimeout(resolve, 100)))
-
-    return path
+    return `${this.address}/rest/${method}?${query}`
   }
 
   private async apiGetXml(method: string, params?: { [key: string]: any }): Promise<Document> {
-    const response = await fetch(this.buildUrl(method, params))
-    const text = await response.text()
+    let text: string
 
-    // console.log(text)
+    try {
+      const response = await fetch(this.buildUrl(method, params))
+      text = await response.text()
+    } catch (err) {
+      toast(`Network error: ${this.address}`)
+      throw err
+    }
 
     const xml = new DOMParser().parseFromString(text)
     if (xml.documentElement.getAttribute('status') !== 'ok') {

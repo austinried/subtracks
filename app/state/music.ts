@@ -330,15 +330,18 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
       const promises: Promise<any>[] = []
       for (const type of types) {
         promises.push(
-          client.getAlbumList2({ type: type as GetAlbumList2TypeBase, size: 20 }).then(response => {
-            const list = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
-            set(
-              produce<MusicSlice>(state => {
-                state.homeLists[type] = list
-                state.starredAlbums = reduceStarred(state.starredAlbums, state.homeLists[type])
-              }),
-            )
-          }),
+          client
+            .getAlbumList2({ type: type as GetAlbumList2TypeBase, size: 20 })
+            .then(response => {
+              const list = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
+              set(
+                produce<MusicSlice>(state => {
+                  state.homeLists[type] = list
+                  state.starredAlbums = reduceStarred(state.starredAlbums, state.homeLists[type])
+                }),
+              )
+            })
+            .catch(() => {}),
         )
       }
       await Promise.all(promises)
