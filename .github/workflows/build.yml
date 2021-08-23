@@ -11,6 +11,9 @@ jobs:
           cache: 'yarn'
       - run: |
           yarn
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
+      - run: |
+          ./android/gradlew -p android assembleRelease -PsignReleaseWithDebug=true
+      - uses: actions/upload-artifact@v2
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
