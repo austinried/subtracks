@@ -65,7 +65,7 @@ export class GetIndexesResponse {
     const indexesElement = xml.getElementsByTagName('indexes')[0]
 
     this.ignoredArticles = indexesElement.getAttribute('ignoredArticles') as string
-    this.lastModified = parseInt(indexesElement.getAttribute('lastModified') as string)
+    this.lastModified = parseInt(indexesElement.getAttribute('lastModified') as string, 10)
 
     const artistElements = xml.getElementsByTagName('artist')
     for (let i = 0; i < artistElements.length; i++) {

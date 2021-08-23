@@ -15,7 +15,7 @@ function optionalBoolean(e: Element, name: string): boolean | undefined {
 }
 
 function requiredInt(e: Element, name: string): number {
-  return parseInt(e.getAttribute(name) as string)
+  return parseInt(e.getAttribute(name) as string, 10)
 }
 
 function optionalInt(e: Element, name: string): number | undefined {
