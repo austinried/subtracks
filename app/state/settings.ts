@@ -104,6 +104,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       })
       return
     }
+
     if (currentActiveServerId === id && !force) {
       return
     }
@@ -156,7 +157,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     )
 
     if (get().settings.activeServer === server.id) {
-      get().setActiveServer(server.id)
+      get().setActiveServer(server.id, true)
     }
   },
 
