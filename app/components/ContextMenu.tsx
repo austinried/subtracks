@@ -170,7 +170,7 @@ const OptionViewArtist = React.memo<{
       IconComponent={IconFA}
       name="microphone"
       size={26}
-      text="View artist"
+      text="View Artist"
       onSelect={() => navigation.navigate('artist', { id: artistId, title: artist })}
     />
   )
@@ -190,7 +190,7 @@ const OptionViewAlbum = React.memo<{
       IconComponent={IconFA5}
       name="compact-disc"
       size={26}
-      text="View album"
+      text="View Album"
       onSelect={() => navigation.navigate('album', { id: albumId, title: album })}
     />
   )

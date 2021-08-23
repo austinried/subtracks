@@ -18,7 +18,7 @@ import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'r
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recent Albums',
   random: 'Random Albums',
-  frequent: 'Frequent Albums',
+  frequent: 'Frequently Played',
   starred: 'Starred Albums',
 }
 

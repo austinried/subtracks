@@ -120,7 +120,7 @@ const ServerView: React.FC<{
       setTesting(false)
     }
     ping()
-  }, [createServer, pingServer, setTesting])
+  }, [createServer, pingServer])
 
   const disableControls = useCallback(() => {
     return !validate() || testing || removing || saving
@@ -135,7 +135,7 @@ const ServerView: React.FC<{
           placeholderTextColor="grey"
           selectionColor={colors.text.secondary}
           textContentType="URL"
-          placeholder="Address"
+          placeholder="http://demo.navidrome.org"
           value={address}
           onChangeText={setAddress}
         />
@@ -146,7 +146,7 @@ const ServerView: React.FC<{
           selectionColor={colors.text.secondary}
           textContentType="username"
           autoCompleteType="username"
-          placeholder="Username"
+          placeholder="demo"
           value={username}
           onChangeText={setUsername}
         />
@@ -158,7 +158,7 @@ const ServerView: React.FC<{
           textContentType="password"
           autoCompleteType="password"
           secureTextEntry={true}
-          placeholder="Password"
+          placeholder="demo"
           value={password}
           onChangeText={setPassword}
         />

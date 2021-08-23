@@ -45,15 +45,15 @@ const AlbumListRenderItem: React.FC<{
 }> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
 
 const filterOptions: OptionData[] = [
-  { text: 'By name', value: 'alphabeticalByName' },
-  { text: 'By artist', value: 'alphabeticalByArtist' },
+  { text: 'By Name', value: 'alphabeticalByName' },
+  { text: 'By Artist', value: 'alphabeticalByArtist' },
   { text: 'Newest', value: 'newest' },
   { text: 'Frequent', value: 'frequent' },
   { text: 'Recent', value: 'recent' },
   { text: 'Starred', value: 'starred' },
   { text: 'Random', value: 'random' },
-  // { text: 'By year...', value: 'byYear' },
-  // { text: 'By genre...', value: 'byGenre' },
+  // { text: 'By Year...', value: 'byYear' },
+  // { text: 'By Genre...', value: 'byGenre' },
 ]
 
 const AlbumsList = () => {

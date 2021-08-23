@@ -71,7 +71,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     servers: [],
     screens: {
       home: {
-        lists: ['recent', 'random', 'frequent', 'starred'],
+        lists: ['frequent', 'recent', 'starred', 'random'],
       },
       library: {
         albums: {
@@ -89,7 +89,7 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
     estimateContentLength: true,
     maxBitrateWifi: 0,
     maxBitrateMobile: 192,
-    minBuffer: 10,
+    minBuffer: 6,
     maxBuffer: 60,
   },
 

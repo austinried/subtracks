@@ -15,7 +15,7 @@ const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
 )
 
 const filterOptions: OptionData[] = [
-  { text: 'By name', value: 'alphabeticalByName' },
+  { text: 'By Name', value: 'alphabeticalByName' },
   { text: 'Starred', value: 'starred' },
   { text: 'Random', value: 'random' },
 ]
