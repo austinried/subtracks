@@ -16,7 +16,7 @@ import React, { useCallback } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
 
 const titles: { [key in GetAlbumListType]?: string } = {
-  recent: 'Recent Albums',
+  recent: 'Recently Played',
   random: 'Random Albums',
   frequent: 'Frequently Played',
   starred: 'Starred Albums',
