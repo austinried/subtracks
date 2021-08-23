@@ -126,6 +126,20 @@ const ServerView: React.FC<{
     return !validate() || testing || removing || saving
   }, [validate, testing, removing, saving])
 
+  const formatAddress = useCallback(() => {
+    let addressFormatted = address.trim()
+
+    if (addressFormatted.endsWith('/')) {
+      addressFormatted = addressFormatted.substr(0, addressFormatted.length - 1)
+    }
+
+    if (addressFormatted.length > 0 && !addressFormatted.includes(':/')) {
+      addressFormatted = `http://${addressFormatted}`
+    }
+
+    setAddress(addressFormatted)
+  }, [address])
+
   return (
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
       <View style={styles.content}>
@@ -138,6 +152,7 @@ const ServerView: React.FC<{
           placeholder="http://demo.navidrome.org"
           value={address}
           onChangeText={setAddress}
+          onBlur={formatAddress}
         />
         <Text style={styles.inputTitle}>Username</Text>
         <TextInput
