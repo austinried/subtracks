@@ -2,7 +2,7 @@ import RootNavigator from '@app/navigation/RootNavigator'
 import SplashPage from '@app/screens/SplashPage'
 import colors from '@app/styles/colors'
 import React from 'react'
-import { StatusBar, View } from 'react-native'
+import { StatusBar, View, StyleSheet } from 'react-native'
 import ProgressHook from './components/ProgressHook'
 import { useStore } from './state/store'
 import { selectTrackPlayer } from './state/trackplayer'
@@ -16,7 +16,7 @@ const Debug = () => {
 
 const App = () => (
   <MenuProvider backHandler={true}>
-    <View style={{ flex: 1, backgroundColor: colors.gradient.high }}>
+    <View style={styles.appContainer}>
       <StatusBar animated={true} backgroundColor={'rgba(0, 0, 0, 0.3)'} barStyle={'light-content'} translucent={true} />
       <SplashPage>
         <ProgressHook />
@@ -26,5 +26,12 @@ const App = () => (
     </View>
   </MenuProvider>
 )
+
+const styles = StyleSheet.create({
+  appContainer: {
+    flex: 1,
+    backgroundColor: colors.gradient.high,
+  },
+})
 
 export default App

@@ -9,7 +9,7 @@ import toast from '@app/util/toast'
 import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, Text, TextInput, View } from 'react-native'
+import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 
 const ServerView: React.FC<{
@@ -139,6 +139,10 @@ const ServerView: React.FC<{
     setAddress(addressFormatted)
   }, [address])
 
+  const deleteStyle: ViewStyle = {
+    display: canRemove() ? 'flex' : 'none',
+  }
+
   return (
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
       <View style={styles.content}>
@@ -185,7 +189,7 @@ const ServerView: React.FC<{
         />
         <Button
           disabled={disableControls()}
-          style={[styles.button, styles.delete, { display: canRemove() ? 'flex' : 'none' }]}
+          style={[styles.button, styles.delete, deleteStyle]}
           title="Delete"
           onPress={remove}
         />

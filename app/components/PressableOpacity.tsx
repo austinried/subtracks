@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { GestureResponderEvent, LayoutRectangle, Pressable, PressableProps, ViewStyle } from 'react-native'
+import { GestureResponderEvent, LayoutRectangle, Pressable, PressableProps, ViewStyle, StyleSheet } from 'react-native'
 
 type PressableOpacityProps = PressableProps & {
   ripple?: boolean
@@ -55,7 +55,7 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
   return (
     <Pressable
       {...props}
-      style={[{ justifyContent: 'center', alignItems: 'center' }, props.style as any, { opacity }, disabledStyle]}
+      style={[styles.pressable, props.style as any, { opacity }, disabledStyle]}
       android_ripple={
         props.ripple
           ? {
@@ -73,5 +73,12 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
     </Pressable>
   )
 }
+
+const styles = StyleSheet.create({
+  pressable: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+})
 
 export default React.memo(PressableOpacity)

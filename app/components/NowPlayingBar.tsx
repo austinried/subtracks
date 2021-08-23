@@ -7,7 +7,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import { State } from 'react-native-track-player'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
@@ -80,10 +80,10 @@ const NowPlayingBar = React.memo(() => {
   const navigation = useNavigation()
   const track = useStore(selectTrackPlayer.currentTrack)
 
+  const displayStyle: ViewStyle = { display: track ? 'flex' : 'none' }
+
   return (
-    <Pressable
-      onPress={() => navigation.navigate('now-playing')}
-      style={{ ...styles.container, display: track ? 'flex' : 'none' }}>
+    <Pressable onPress={() => navigation.navigate('now-playing')} style={[styles.container, displayStyle]}>
       <ProgressBar />
       <View style={styles.subContainer}>
         <CoverArt

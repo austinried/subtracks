@@ -91,7 +91,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     }
   })
 
-  const albumSize = albumsLayout.width / 2 - styles.container.paddingHorizontal / 2
+  const albumSize = albumsLayout.width / 2 - styles.contentContainer.paddingHorizontal / 2
 
   if (!artist) {
     return <ArtistViewFallback />
@@ -102,7 +102,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     .sort((a, b) => (b.year || 0) - (a.year || 0))
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <HeaderBar title={title} headerStyle={[styles.header, animatedOpacity]} />
       <GradientScrollView
         onLayout={coverLayout.onLayout}
@@ -114,7 +114,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>
         </View>
-        <View style={styles.container}>
+        <View style={styles.contentContainer}>
           {artist.topSongs.length > 0 ? (
             <TopSongs songs={artist.topSongs} name={artist.name} artistId={artist.id} />
           ) : (
@@ -135,6 +135,9 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 const artistCoverHeight = 350
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     position: 'absolute',
     zIndex: 1,
@@ -149,7 +152,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'center',
   },
-  container: {
+  contentContainer: {
     minHeight: artistCoverHeight * 2,
     width: '100%',
     paddingHorizontal: 20,

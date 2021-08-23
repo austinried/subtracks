@@ -15,7 +15,7 @@ import formatDuration from '@app/util/formatDuration'
 import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, TextStyle, View } from 'react-native'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
 import IconFA from 'react-native-vector-icons/FontAwesome'
@@ -53,7 +53,7 @@ const NowPlayingHeader = React.memo<{
 
   return (
     <HeaderBar
-      headerStyle={{ backgroundColor: 'transparent' }}
+      headerStyle={headerStyles.bar}
       contextItem={mapTrackExtToSong(track)}
       HeaderCenter={() => (
         <View style={headerStyles.center}>
@@ -72,6 +72,9 @@ const NowPlayingHeader = React.memo<{
 })
 
 const headerStyles = StyleSheet.create({
+  bar: {
+    backgroundColor: 'transparent',
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -292,13 +295,17 @@ const PlayerControls = () => {
       break
   }
 
+  const repeatExtOpacity: TextStyle = {
+    opacity: repeatMode === RepeatMode.Track ? 1 : 0,
+  }
+
   return (
     <View style={controlsStyles.container}>
       <View style={controlsStyles.top}>
         <View style={controlsStyles.center}>
           <PressableOpacity onPress={() => toggleRepeat()} disabled={disabled} hitSlop={16}>
             <Icon name="repeat" size={26} color={repeatMode === RepeatMode.Off ? 'white' : colors.accent} />
-            <Text style={[controlsStyles.repeatExt, repeatMode === RepeatMode.Track ? { opacity: 1 } : {}]}>1</Text>
+            <Text style={[controlsStyles.repeatExt, repeatExtOpacity]}>1</Text>
           </PressableOpacity>
         </View>
 
@@ -372,7 +379,6 @@ const controlsStyles = StyleSheet.create({
     fontSize: 14,
     position: 'absolute',
     top: 26,
-    opacity: 0,
   },
   buffering: {
     position: 'absolute',
