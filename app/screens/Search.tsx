@@ -11,10 +11,17 @@ import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import debounce from 'lodash.debounce'
-import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  InteractionManager,
+  StatusBar,
+  StyleSheet,
+  TextInput as ReactTextInput,
+  View,
+} from 'react-native'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
   const setQueue = useStore(selectTrackPlayer.setQueue)
@@ -82,6 +89,19 @@ const Search = () => {
   const [results, setResults] = useState<SearchResults>({ artists: [], albums: [], songs: [] })
   const [refreshing, setRefreshing] = useState(false)
   const [text, setText] = useState('')
+  const searchBarRef = useRef<ReactTextInput>(null)
+
+  useFocusEffect(
+    useCallback(() => {
+      const task = InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          setText('')
+          searchBarRef.current?.focus()
+        }, 50)
+      })
+      return () => task.cancel()
+    }, [searchBarRef]),
+  )
 
   useActiveServerRefresh(
     useCallback(() => {
@@ -114,7 +134,13 @@ const Search = () => {
     <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
       <View style={styles.content}>
         <View style={styles.inputBar}>
-          <TextInput style={styles.textInput} placeholder="Search" value={text} onChangeText={onChangeText} />
+          <TextInput
+            ref={searchBarRef}
+            style={styles.textInput}
+            placeholder="Search"
+            value={text}
+            onChangeText={onChangeText}
+          />
           <ActivityIndicator
             animating={refreshing}
             size="small"
