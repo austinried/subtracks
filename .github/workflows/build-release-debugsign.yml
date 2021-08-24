@@ -2,10 +2,18 @@ name: build-release-debugsign
 
 on:
   push:
+    paths-ignore:
+      - assets/**
+      - README.md
+      - LICENSE
     branches:
       - master
       - release/*
   pull_request:
+    paths-ignore:
+      - assets/**
+      - README.md
+      - LICENSE
     branches:
       - master
 
