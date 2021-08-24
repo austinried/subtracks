@@ -30,7 +30,7 @@ const App = () => (
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
-    backgroundColor: 'green', // change test
+    backgroundColor: colors.gradient.high,
   },
 })
 
