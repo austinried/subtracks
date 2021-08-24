@@ -11,6 +11,11 @@ Subtracks is an open source music streaming app for [Subsonic-API-compatible](ht
   <img src="assets/screenshots/04_album.png" alt="album view" width="200"/>
 </p>
 
+# Download
+<p float="left">
+  <a href="https://github.com/austinried/subtracks/releases/latest" disabled><img src="assets/github-badge.png"/ width="250"></a>
+</p>
+
 # Features
 - Art-first approach to displaying your music collection
 - Mulitple server support
