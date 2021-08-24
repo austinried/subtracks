@@ -1,13 +1,13 @@
-<img src="assets/header.png" alt="subtracks logo"/>
-
-#
+<img src="assets/header.png" alt="subtracks logo" width="500"/>
 Subtracks is an open source music streaming app for [Subsonic-compatible](http://www.subsonic.org/pages/api.jsp) servers.  It's designed to give you clean and convenient access to your music in the style of modern media players.
 
 # Screenshots
-<img src="assets/screenshots/01_home.png" alt="home" width="200"/>
-<img src="assets/screenshots/02_now-playing.png" alt="now playing" width="200"/>
-<img src="assets/screenshots/03_library-albums.png" alt="library albums" width="200"/>
-<img src="assets/screenshots/04_album.png" alt="album view" width="200"/>
+<p float="left">
+  <img src="assets/screenshots/01_home.png" alt="home" width="200"/>
+  <img src="assets/screenshots/02_now-playing.png" alt="now playing" width="200"/>
+  <img src="assets/screenshots/03_library-albums.png" alt="library albums" width="200"/>
+  <img src="assets/screenshots/04_album.png" alt="album view" width="200"/>
+</p>
 
 # Features
 - Art-first approach to displaying your music collection
