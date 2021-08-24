@@ -28,7 +28,12 @@ jobs:
           configuration-cache-enabled: true
           build-root-directory: android
           arguments: assembleRelease -PsignReleaseWithDebug=true
+      - run: |
+          mkdir bin
+      - run: >
+          mv android/app/build/outputs/apk/release/app-release.apk
+          bin/subtracks-${GITHUB_SHA}.apk
       - uses: actions/upload-artifact@v2
         with:
-          name: app-release.apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: subtracks-testing
+          path: bin/*

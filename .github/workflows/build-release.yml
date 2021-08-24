@@ -14,6 +14,9 @@ jobs:
         with:
           node-version: '14'
           cache: 'yarn'
+      - name: Get subtracks version
+        run: |
+          echo "SUBTRACKS_VERSION=$(node -e "console.log(require('./package.json').version);")" >> $GITHUB_ENV
       - run: |
           yarn
       - uses: gradle/wrapper-validation-action@v1
@@ -33,10 +36,11 @@ jobs:
           -PSUBTRACKS_UPLOAD_KEY_ALIAS=subtracks
           -PSUBTRACKS_UPLOAD_KEY_PASSWORD="$SUBTRACKS_UPLOAD_KEY_PASSWORD"
           -PSUBTRACKS_UPLOAD_STORE_PASSWORD="$SUBTRACKS_UPLOAD_STORE_PASSWORD"
-      - uses: actions/upload-artifact@v2
-        with:
-          name: app-release.apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+      - run: |
+          mkdir bin
+      - run: >
+          mv android/app/build/outputs/apk/release/app-release.apk
+          bin/subtracks-${SUBTRACKS_VERSION}.apk
       - name: Build release AAB
         env:
           SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
@@ -48,7 +52,10 @@ jobs:
           -PSUBTRACKS_UPLOAD_KEY_ALIAS=subtracks
           -PSUBTRACKS_UPLOAD_KEY_PASSWORD="$SUBTRACKS_UPLOAD_KEY_PASSWORD"
           -PSUBTRACKS_UPLOAD_STORE_PASSWORD="$SUBTRACKS_UPLOAD_STORE_PASSWORD"
+      - run: >
+          mv android/app/build/outputs/bundle/release/app-release.aab
+          bin/subtracks-${SUBTRACKS_VERSION}.aab
       - uses: actions/upload-artifact@v2
         with:
-          name: app-release.aab
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          name: subtracks-release
+          path: bin/*
