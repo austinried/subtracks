@@ -1,7 +1,7 @@
 name: build
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  build-release-debugsign:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -11,8 +11,14 @@ jobs:
           cache: 'yarn'
       - run: |
           yarn
-      - run: |
-          ./android/gradlew -p android assembleRelease -PsignReleaseWithDebug=true
+      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/gradle-build-action@v1
+        with:
+          distributions-cache-enabled: true
+          dependencies-cache-enabled: true
+          configuration-cache-enabled: true
+          build-root-directory: android
+          arguments: assembleRelease -PsignReleaseWithDebug=true
       - uses: actions/upload-artifact@v2
         with:
           name: app-release.apk
