@@ -1,0 +1,54 @@
+name: build-release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'yarn'
+      - run: |
+          yarn
+      - uses: gradle/wrapper-validation-action@v1
+      - name: Retrieve keystore file
+        env:
+          SUBTRACKS_KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
+        run: |
+          echo "$SUBTRACKS_KEYSTORE_BASE64" | base64 --decode > android/app/subtracks.keystore
+      - name: Build release APK
+        env:
+          SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+          SUBTRACKS_UPLOAD_STORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+        run: >
+          ./android/gradlew assembleRelease
+          -p android
+          -PSUBTRACKS_UPLOAD_STORE_FILE=subtracks.keystore
+          -PSUBTRACKS_UPLOAD_KEY_ALIAS=subtracks
+          -PSUBTRACKS_UPLOAD_KEY_PASSWORD="$SUBTRACKS_UPLOAD_KEY_PASSWORD"
+          -PSUBTRACKS_UPLOAD_STORE_PASSWORD="$SUBTRACKS_UPLOAD_STORE_PASSWORD"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+      - name: Build release AAB
+        env:
+          SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+          SUBTRACKS_UPLOAD_STORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+        run: >
+          ./android/gradlew bundleRelease
+          -p android
+          -PSUBTRACKS_UPLOAD_STORE_FILE=subtracks.keystore
+          -PSUBTRACKS_UPLOAD_KEY_ALIAS=subtracks
+          -PSUBTRACKS_UPLOAD_KEY_PASSWORD="$SUBTRACKS_UPLOAD_KEY_PASSWORD"
+          -PSUBTRACKS_UPLOAD_STORE_PASSWORD="$SUBTRACKS_UPLOAD_STORE_PASSWORD"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
