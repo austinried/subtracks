@@ -1,7 +1,7 @@
 <img src="assets/header.png" alt="subtracks logo" width="500"/>
 
 # 
-Subtracks is an open source music streaming app for [Subsonic-API-compatible](http://www.subsonic.org/pages/api.jsp) servers ([Subsonic](http://www.subsonic.org/pages/index.jsp), [Navidrome](https://www.navidrome.org/), [Airsonic](https://airsonic.github.io/), and more).  It's designed to give you clean and convenient access to your music in the style of modern media players.
+Subtracks is an Android open source music streaming app for [Subsonic-API-compatible](http://www.subsonic.org/pages/api.jsp) servers ([Subsonic](http://www.subsonic.org/pages/index.jsp), [Navidrome](https://www.navidrome.org/), [Airsonic](https://airsonic.github.io/), and more).  It's designed to give you clean and convenient access to your music in the style of modern media players.
 
 # Screenshots
 <p float="left">
