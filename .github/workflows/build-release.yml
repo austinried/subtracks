@@ -22,7 +22,7 @@ jobs:
         env:
           SUBTRACKS_KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
         run: |
-          echo "$SUBTRACKS_KEYSTORE_BASE64" | base64 --decode android/app/subtracks.keystore
+          echo "$SUBTRACKS_KEYSTORE_BASE64" | base64 --decode > android/app/subtracks.keystore
       - name: Build release APK
         env:
           SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
