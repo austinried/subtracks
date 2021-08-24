@@ -21,13 +21,13 @@ jobs:
       - name: Retrieve keystore file
         env:
           SUBTRACKS_KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
-      - run: |
+        run: |
           echo "$SUBTRACKS_KEYSTORE_BASE64" | base64 --decode android/app/subtracks.keystore
-      - name: Retrieve keystore secrets
+      - name: Build release APK
         env:
           SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
           SUBTRACKS_UPLOAD_STORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
-      - run: >
+        run: >
           ./android/gradlew assembleRelease
           -p android
           -PSUBTRACKS_UPLOAD_STORE_FILE=subtracks.keystore
@@ -38,7 +38,11 @@ jobs:
         with:
           name: app-release.apk
           path: android/app/build/outputs/apk/release/app-release.apk
-      - run: >
+      - name: Build release AAB
+        env:
+          SUBTRACKS_UPLOAD_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+          SUBTRACKS_UPLOAD_STORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+        run: >
           ./android/gradlew bundleRelease
           -p android
           -PSUBTRACKS_UPLOAD_STORE_FILE=subtracks.keystore
