@@ -1,0 +1,34 @@
+name: build-release-debugsign
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'yarn'
+      - run: |
+          yarn
+      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/gradle-build-action@v1
+        with:
+          distributions-cache-enabled: true
+          dependencies-cache-enabled: true
+          configuration-cache-enabled: true
+          build-root-directory: android
+          arguments: assembleRelease -PsignReleaseWithDebug=true
+      - uses: actions/upload-artifact@v2
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
