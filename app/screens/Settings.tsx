@@ -248,8 +248,8 @@ const SettingsContent = React.memo(() => {
         buttonStyle="hollow"
       />
       <Header style={styles.header}>Network</Header>
-      <BitrateModal title="Max bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
-      <BitrateModal title="Max bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
+      <BitrateModal title="Maximum bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
+      <BitrateModal title="Maximum bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
       {/* <SettingsSwitch
         title="Estimate content length"
         subtitle='Send the "estimateContentLength" flag when streaming. Helps fix issues with seeking when the server is transcoding songs.'
