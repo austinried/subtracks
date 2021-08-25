@@ -13,7 +13,7 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 
 # Download
 <p float="left">
-  <a href="https://github.com/austinried/subtracks/releases/latest" disabled><img src="assets/github-badge.png"/ width="250"></a>
+  <a href="https://github.com/austinried/subtracks/releases/latest" disabled><img src="assets/github-badge.png" width="250"/></a>
 </p>
 
 # Features
@@ -31,7 +31,6 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 - Customizable home screen categories
 - Browse by folder support (currently only browses by tags)
 - Multiple music folder awareness
-- More stream format options (dash, hls, smoothstreaming)
 - By year/by genre albums filter
 - Improve very large album/playlist/queue performance
 - Playlist mangement (add/remove/sort/edit)
