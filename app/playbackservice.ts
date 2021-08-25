@@ -35,6 +35,7 @@ const rebuildQueue = () => {
 }
 
 let serviceCreated = false
+
 const createService = async () => {
   useStore.subscribe(
     (currentTrack?: TrackExt) => {
@@ -45,6 +46,10 @@ const createService = async () => {
     state => state.currentTrack,
     (prev, next) => prev?.id === next?.id,
   )
+
+  NetInfo.fetch().then(state => {
+    setNetState(state.type === NetInfoStateType.cellular ? 'mobile' : 'wifi')
+  })
 
   NetInfo.addEventListener(state => {
     const currentType = useStore.getState().netState
