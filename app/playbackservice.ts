@@ -28,6 +28,12 @@ const setNetState = (netState: 'mobile' | 'wifi') => {
   })
 }
 
+const rebuildQueue = () => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().rebuildQueue(useStore.getState().playerState === State.Playing)
+  })
+}
+
 let serviceCreated = false
 const createService = async () => {
   useStore.subscribe(
@@ -111,6 +117,15 @@ const createService = async () => {
     trackPlayerCommands.enqueue(async () => {
       await TrackPlayer.seekTo(data.position)
     })
+  })
+
+  TrackPlayer.addEventListener(Event.PlaybackError, data => {
+    const { code, message } = data as Record<string, string>
+
+    // fix for ExoPlayer aborting playback while esimating content length
+    if (code === 'playback-source' && message.includes('416')) {
+      rebuildQueue()
+    }
   })
 }
 
