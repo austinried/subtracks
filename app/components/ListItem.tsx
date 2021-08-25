@@ -7,7 +7,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } from './ContextMenu'
@@ -55,7 +55,8 @@ const ListItem: React.FC<{
   showStar?: boolean
   listStyle?: 'big' | 'small'
   subtitle?: string
-}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle }) => {
+  style?: StyleProp<ViewStyle>
+}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style }) => {
   const navigation = useNavigation()
   const starred = useStarred(item.id, item.itemType)
 
@@ -156,7 +157,7 @@ const ListItem: React.FC<{
   }
 
   return (
-    <View style={[styles.container, sizeStyle.container]}>
+    <View style={[styles.container, sizeStyle.container, style]}>
       <PressableComponent>
         {showArt && coverArt}
         <View style={styles.text}>

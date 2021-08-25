@@ -135,8 +135,7 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
   mapPlaylistWithSongs: async playlist => {
     return {
       ...get().mapPlaylistListItem(playlist),
-      // passing cover art here is a temp fix to improve large playlist performance
-      songs: await get().mapChildrenToSongs(playlist.songs, playlist.coverArt),
+      songs: await get().mapChildrenToSongs(playlist.songs),
       coverArt: playlist.coverArt,
     }
   },

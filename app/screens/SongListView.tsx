@@ -1,10 +1,9 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import HeaderBar from '@app/components/HeaderBar'
-import ImageGradientScrollView from '@app/components/ImageGradientScrollView'
+import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
-import NothingHere from '@app/components/NothingHere'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
@@ -23,15 +22,42 @@ const SongListDetailsFallback = React.memo(() => (
   </GradientBackground>
 ))
 
-const Songs = React.memo<{
-  songs: Song[]
-  name: string
+const SongRenderItem: React.FC<{
+  item: {
+    song: Song
+    contextId?: string
+    queueId?: number
+    subtitle?: string
+    onPress?: () => void
+    showArt?: boolean
+  }
+}> = ({ item }) => (
+  <ListItem
+    item={item.song}
+    contextId={item.contextId}
+    queueId={item.queueId}
+    subtitle={item.subtitle}
+    onPress={item.onPress}
+    showArt={item.showArt}
+    style={styles.listItem}
+  />
+)
+
+const SongListDetails = React.memo<{
+  title: string
   type: SongListType
-  itemId: string
-}>(({ songs, name, type, itemId }) => {
+  songList?: AlbumWithSongs | PlaylistWithSongs
+  subtitle?: string
+}>(({ title, songList, subtitle, type }) => {
+  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
+  const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
   const setQueue = useStore(selectTrackPlayer.setQueue)
 
-  const _songs = [...songs]
+  if (!songList) {
+    return <SongListDetailsFallback />
+  }
+
+  const _songs = [...songList.songs]
   let typeName = ''
 
   if (type === 'album') {
@@ -50,67 +76,49 @@ const Songs = React.memo<{
   }
 
   return (
-    <>
-      <ListPlayerControls
-        style={styles.controls}
-        songs={_songs}
-        typeName={typeName}
-        queueName={name}
-        queueContextId={itemId}
-        queueContextType={type}
-      />
-      <View style={styles.songs}>
-        {_songs.map((s, i) => (
-          <ListItem
-            key={i}
-            item={s}
-            contextId={itemId}
-            queueId={i}
-            subtitle={s.artist}
-            onPress={() => setQueue(_songs, name, type, itemId, i)}
-            showArt={false}
-          />
-        ))}
-      </View>
-    </>
-  )
-})
-
-const SongListDetails = React.memo<{
-  title: string
-  type: SongListType
-  songList?: AlbumWithSongs | PlaylistWithSongs
-  subtitle?: string
-}>(({ title, songList, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
-  const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
-
-  if (!songList) {
-    return <SongListDetailsFallback />
-  }
-
-  return (
     <View style={styles.container}>
       <HeaderBar
         headerStyle={{ backgroundColor: headerColor }}
         title={title}
         contextItem={songList.itemType === 'album' ? songList : undefined}
       />
-      <ImageGradientScrollView
-        imagePath={coverArtFile?.file?.path}
-        style={styles.container}
-        onGetColor={setHeaderColor}>
-        <View style={styles.content}>
-          <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
-          <Text style={styles.title}>{songList.name}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-          {songList.songs.length > 0 ? (
-            <Songs songs={songList.songs} name={songList.name} type={type} itemId={songList.id} />
-          ) : (
-            <NothingHere height={300} width={250} />
-          )}
-        </View>
-      </ImageGradientScrollView>
+      <ImageGradientFlatList
+        data={_songs.map((s, i) => ({
+          song: s,
+          contextId: songList.id,
+          queueId: i,
+          subtitle: s.artist,
+          onPress: () => setQueue(_songs, songList.name, type, songList.id, i),
+          showArt: songList.itemType === 'playlist',
+        }))}
+        renderItem={SongRenderItem}
+        keyExtractor={(item, i) => i.toString()}
+        backgroundProps={{
+          imagePath: coverArtFile?.file?.path,
+          style: styles.container,
+          onGetColor: setHeaderColor,
+        }}
+        overScrollMode="never"
+        windowSize={7}
+        contentMarginTop={26}
+        ListHeaderComponent={
+          <View style={styles.content}>
+            <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
+            <Text style={styles.title}>{songList.name}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
+            {songList.songs.length > 0 && (
+              <ListPlayerControls
+                style={styles.controls}
+                songs={_songs}
+                typeName={typeName}
+                queueName={songList.name}
+                queueContextId={songList.id}
+                queueContextType={type}
+              />
+            )}
+          </View>
+        }
+      />
     </View>
   )
 })
@@ -184,6 +192,9 @@ const styles = StyleSheet.create({
   fallback: {
     alignItems: 'center',
     paddingTop: 100,
+  },
+  listItem: {
+    paddingHorizontal: 20,
   },
 })
 

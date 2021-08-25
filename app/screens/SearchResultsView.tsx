@@ -28,6 +28,7 @@ const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
       showStar={false}
       listStyle="small"
       onPress={onPress}
+      style={styles.listItem}
     />
   )
 }
@@ -69,25 +70,24 @@ const SearchResultsView: React.FC<{
 
   return (
     <GradientFlatList
-      contentContainerStyle={styles.listContent}
       data={list}
       renderItem={SearchResultsRenderItem}
-      keyExtractor={item => item.id}
+      keyExtractor={(item, i) => i.toString()}
       onRefresh={refresh}
       refreshing={refreshing}
       overScrollMode="never"
       onEndReached={fetchNextPage}
       removeClippedSubviews={true}
       onEndReachedThreshold={2}
+      contentMarginTop={6}
+      windowSize={5}
     />
   )
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    minHeight: '100%',
+  listItem: {
     paddingHorizontal: 10,
-    paddingTop: 6,
   },
 })
 

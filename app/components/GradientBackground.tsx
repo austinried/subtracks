@@ -3,14 +3,27 @@ import { useWindowDimensions, ViewStyle } from 'react-native'
 import LinearGradient from 'react-native-linear-gradient'
 import colorStyles from '@app/styles/colors'
 
-const GradientBackground: React.FC<{
+export type GradientBackgroundPropsBase = {
   height?: number | string
   width?: number | string
   position?: 'relative' | 'absolute'
   style?: ViewStyle
+}
+
+export type GradientBackgroundProps = GradientBackgroundPropsBase & {
   colors?: string[]
   locations?: number[]
-}> = ({ height, width, position, style, colors, locations, children }) => {
+}
+
+const GradientBackground: React.FC<GradientBackgroundProps> = ({
+  height,
+  width,
+  position,
+  style,
+  colors,
+  locations,
+  children,
+}) => {
   const layout = useWindowDimensions()
 
   return (

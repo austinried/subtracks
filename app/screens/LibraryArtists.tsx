@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
-  <ListItem item={item} showArt={true} showStar={false} listStyle="big" />
+  <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
 )
 
 const filterOptions: OptionData[] = [
@@ -44,7 +44,6 @@ const ArtistsList = () => {
   return (
     <View style={styles.container}>
       <GradientFlatList
-        contentContainerStyle={styles.listContent}
         data={sortedList}
         renderItem={ArtistRenderItem}
         keyExtractor={item => item.id}
@@ -52,6 +51,7 @@ const ArtistsList = () => {
         refreshing={refreshing}
         overScrollMode="never"
         windowSize={3}
+        contentMarginTop={6}
       />
       <FilterButton
         data={filterOptions}
@@ -71,10 +71,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContent: {
-    minHeight: '100%',
+  listItem: {
     paddingHorizontal: 10,
-    paddingTop: 6,
   },
 })
 
