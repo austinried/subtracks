@@ -195,8 +195,11 @@ const SettingsContent = React.memo(() => {
   const servers = useStore(selectSettings.servers)
   const scrobble = useStore(selectSettings.scrobble)
   const setScrobble = useStore(selectSettings.setScrobble)
-  const estimateContentLength = useStore(selectSettings.estimateContentLength)
-  const setEstimateContentLength = useStore(selectSettings.setEstimateContentLength)
+
+  // doesn't seem to ever be a case where we want this off
+  // will remove later if there isn't a use case for disabling
+  // const estimateContentLength = useStore(selectSettings.estimateContentLength)
+  // const setEstimateContentLength = useStore(selectSettings.setEstimateContentLength)
 
   const maxBitrateWifi = useStore(selectSettings.maxBitrateWifi)
   const setMaxBitrateWifi = useStore(selectSettings.setMaxBitrateWifi)
@@ -247,12 +250,12 @@ const SettingsContent = React.memo(() => {
       <Header style={styles.header}>Network</Header>
       <BitrateModal title="Max bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
       <BitrateModal title="Max bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
-      <SettingsSwitch
+      {/* <SettingsSwitch
         title="Estimate content length"
         subtitle='Send the "estimateContentLength" flag when streaming. Helps fix issues with seeking when the server is transcoding songs.'
         value={estimateContentLength}
         setValue={setEstimateContentLength}
-      />
+      /> */}
       <SettingsTextModal
         title="Minimum buffer time"
         value={minBuffer.toString()}
