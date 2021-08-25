@@ -1,16 +1,11 @@
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
-import { ViewStyle } from 'react-native'
 import ImageColors from 'react-native-image-colors'
 import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/types'
 import colors from '@app/styles/colors'
-import GradientBackground from '@app/components/GradientBackground'
+import GradientBackground, { GradientBackgroundPropsBase } from '@app/components/GradientBackground'
 
-export type ImageGradientBackgroundProps = {
-  height?: number | string
-  width?: number | string
-  position?: 'relative' | 'absolute'
-  style?: ViewStyle
+export type ImageGradientBackgroundProps = GradientBackgroundPropsBase & {
   imagePath?: string
   onGetColor?: (color: string) => void
 }

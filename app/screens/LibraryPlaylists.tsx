@@ -8,7 +8,7 @@ import React from 'react'
 import { StyleSheet } from 'react-native'
 
 const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
-  <ListItem item={item} showArt={true} showStar={false} listStyle="big" />
+  <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
 )
 
 const PlaylistsList = () => {
@@ -17,7 +17,6 @@ const PlaylistsList = () => {
 
   return (
     <GradientFlatList
-      contentContainerStyle={styles.listContent}
       data={list}
       renderItem={PlaylistRenderItem}
       keyExtractor={item => item.id}
@@ -25,15 +24,14 @@ const PlaylistsList = () => {
       refreshing={refreshing}
       overScrollMode="never"
       windowSize={5}
+      contentMarginTop={6}
     />
   )
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    minHeight: '100%',
+  listItem: {
     paddingHorizontal: 10,
-    paddingTop: 6,
   },
 })
 
