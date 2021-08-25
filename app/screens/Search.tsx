@@ -17,6 +17,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   InteractionManager,
+  ScrollView,
   StatusBar,
   StyleSheet,
   TextInput as ReactTextInput,
@@ -90,17 +91,20 @@ const Search = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [text, setText] = useState('')
   const searchBarRef = useRef<ReactTextInput>(null)
+  const scrollRef = useRef<ScrollView>(null)
 
   useFocusEffect(
     useCallback(() => {
       const task = InteractionManager.runAfterInteractions(() => {
         setTimeout(() => {
           setText('')
+          setResults({ artists: [], albums: [], songs: [] })
           searchBarRef.current?.focus()
+          scrollRef.current?.scrollTo({ y: 0, animated: true })
         }, 50)
       })
       return () => task.cancel()
-    }, [searchBarRef]),
+    }, [searchBarRef, scrollRef]),
   )
 
   useActiveServerRefresh(
@@ -131,7 +135,7 @@ const Search = () => {
   const resultsCount = results.albums.length + results.artists.length + results.songs.length
 
   return (
-    <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
+    <GradientScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
       <View style={styles.content}>
         <View style={styles.inputBar}>
           <TextInput
