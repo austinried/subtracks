@@ -28,6 +28,8 @@ jobs:
           cache: 'yarn'
       - run: |
           yarn
+      - run: |
+          yarn lint --max-warnings 0
       - uses: gradle/wrapper-validation-action@v1
       - uses: gradle/gradle-build-action@v1
         with:
