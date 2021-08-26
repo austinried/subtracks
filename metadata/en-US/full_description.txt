@@ -1,6 +1,6 @@
 Subtracks is an Android open source music streaming app for Subsonic-API-compatible servers (Subsonic, Navidrome, Airsonic, and more). It's designed to give you clean and convenient access to your music in the style of modern media players.
 
-# Features
+Features
 - Album and artist art display by default (full-res in detail/now playing views)
 - Gapless playback
 - Mulitple server support
