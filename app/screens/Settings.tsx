@@ -302,7 +302,7 @@ const SettingsContent = React.memo(() => {
       />
       <Button
         disabled={clearing}
-        style={[styles.button, styles.licenseButton]}
+        style={styles.button}
         title="Licenses (Android)"
         onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses/android_licenses.html' })}
         buttonStyle="hollow"
@@ -395,12 +395,6 @@ const styles = StyleSheet.create({
   },
   modalTextSubmit: {
     marginLeft: 15,
-    // backgroundColor: 'green',
-  },
-  text: {
-    color: 'white',
-    fontFamily: font.regular,
-    fontSize: 15,
   },
 })
 
