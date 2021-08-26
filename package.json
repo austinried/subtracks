@@ -5,10 +5,14 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "android": "react-native run-android",
-    "android-release": "./android/gradlew -p android assembleRelease -PsignReleaseWithDebug=true && adb install -r android/app/build/outputs/apk/release/app-release.apk && adb shell am start -n com.subtracks/.MainActivity",
+    "android:release": "./android/gradlew -p android assembleRelease -PsignReleaseWithDebug=true && adb install -r android/app/build/outputs/apk/release/app-release.apk && adb shell am start -n com.subtracks/.MainActivity",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "license:npm": "yarn licenses generate-disclaimer --production | grep -v '^info\\s\"\\?fsevents' > android/app/src/main/assets/licenses/npm_licenses.txt",
+    "license:android": "./android/gradlew -p android checkLicenses && ./android/gradlew -p android generateLicensePage",
+    "license:update": "./android/gradlew -p android updateLicenses",
+    "license": "yarn license:npm && yarn license:android"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.5",
@@ -36,6 +40,7 @@
     "react-native-tab-view": "^2.16.0",
     "react-native-track-player": "^2.0.3",
     "react-native-vector-icons": "^8.1.0",
+    "react-native-webview": "^11.13.0",
     "uuid": "^8.3.2",
     "xmldom": "^0.5.0",
     "zustand": "^3.5.7"

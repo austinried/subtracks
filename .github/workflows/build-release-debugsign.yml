@@ -27,9 +27,11 @@ jobs:
           node-version: '14'
           cache: 'yarn'
       - run: |
-          yarn
+          yarn install
       - run: |
           yarn lint --max-warnings 0
+      - run: |
+          yarn license
       - uses: gradle/wrapper-validation-action@v1
       - uses: gradle/gradle-build-action@v1
         with:

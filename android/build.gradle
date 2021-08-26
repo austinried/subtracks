@@ -14,6 +14,9 @@ buildscript {
     repositories {
         google()
         jcenter()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:4.1.0")
@@ -22,7 +25,13 @@ buildscript {
 
         // react-native-async-storage next
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "gradle.plugin.com.cookpad.android.plugin:plugin:1.2.8"
     }
+}
+apply plugin: "com.cookpad.android.plugin.license-tools"
+
+licenseTools {
+    outputHtml = "../../../app/src/main/assets/licenses/android_licenses.html"
 }
 
 allprojects {

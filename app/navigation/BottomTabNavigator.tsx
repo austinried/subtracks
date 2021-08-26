@@ -7,6 +7,7 @@ import SearchResultsView from '@app/screens/SearchResultsView'
 import ServerView from '@app/screens/ServerView'
 import SettingsView from '@app/screens/Settings'
 import SongListView from '@app/screens/SongListView'
+import WebViewScreen from '@app/screens/WebViewScreen'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -122,6 +123,7 @@ const SearchTab = createTabStackNavigator(Search)
 type SettingsStackParamList = {
   main: undefined
   server?: { id?: string }
+  web: { uri: string }
 }
 
 type ServerScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'server'>
@@ -130,8 +132,15 @@ type ServerScreenProps = {
   route: ServerScreenRouteProp
   navigation: ServerScreenNavigationProp
 }
-
 const ServerScreen: React.FC<ServerScreenProps> = ({ route }) => <ServerView id={route.params?.id} />
+
+type WebScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'web'>
+type WebScreenRouteProp = RouteProp<SettingsStackParamList, 'web'>
+type WebScreenProps = {
+  route: WebScreenRouteProp
+  navigation: WebScreenNavigationProp
+}
+const WebScreen: React.FC<WebScreenProps> = ({ route }) => <WebViewScreen uri={route.params.uri} />
 
 const SettingsStack = createNativeStackNavigator()
 
@@ -144,6 +153,17 @@ const SettingsTab = () => {
         component={ServerScreen}
         options={{
           title: 'Edit Server',
+          headerStyle: styles.stackheaderStyle,
+          headerHideShadow: true,
+          headerTintColor: 'white',
+          headerTitleStyle: styles.stackheaderTitleStyle,
+        }}
+      />
+      <SettingsStack.Screen
+        name="web"
+        component={WebScreen}
+        options={{
+          title: 'Web View',
           headerStyle: styles.stackheaderStyle,
           headerHideShadow: true,
           headerTintColor: 'white',

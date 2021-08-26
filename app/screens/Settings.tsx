@@ -14,7 +14,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
 import React, { useCallback, useState } from 'react'
-import { KeyboardTypeOptions, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { KeyboardTypeOptions, Linking, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
@@ -281,8 +281,30 @@ const SettingsContent = React.memo(() => {
       <Button
         disabled={clearing}
         style={styles.button}
-        title="Clear image cache"
+        title="Clear Image Cache"
         onPress={clear}
+        buttonStyle="hollow"
+      />
+      <Header style={styles.header}>About</Header>
+      <Button
+        disabled={clearing}
+        style={styles.button}
+        title="Project Homepage"
+        onPress={() => Linking.openURL('https://github.com/austinried/subtracks')}
+        buttonStyle="hollow"
+      />
+      <Button
+        disabled={clearing}
+        style={styles.button}
+        title="Licenses (NPM)"
+        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses/npm_licenses.txt' })}
+        buttonStyle="hollow"
+      />
+      <Button
+        disabled={clearing}
+        style={[styles.button, styles.licenseButton]}
+        title="Licenses (Android)"
+        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses/android_licenses.html' })}
         buttonStyle="hollow"
       />
     </View>
@@ -308,9 +330,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  text: {
-    color: 'white',
-  },
   serverActive: {
     paddingLeft: 12,
   },
@@ -319,6 +338,14 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 16,
+  },
+  licenseButton: {
+    marginHorizontal: 10,
+    flex: 1,
+  },
+  licenses: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   modalBackdrop: {
     flex: 1,
@@ -369,6 +396,11 @@ const styles = StyleSheet.create({
   modalTextSubmit: {
     marginLeft: 15,
     // backgroundColor: 'green',
+  },
+  text: {
+    color: 'white',
+    fontFamily: font.regular,
+    fontSize: 15,
   },
 })
 

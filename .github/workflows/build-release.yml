@@ -18,7 +18,9 @@ jobs:
         run: |
           echo "SUBTRACKS_VERSION=$(node -e "console.log(require('./package.json').version);")" >> $GITHUB_ENV
       - run: |
-          yarn
+          yarn install
+      - run: |
+          yarn license
       - uses: gradle/wrapper-validation-action@v1
       - name: Retrieve keystore file
         env:
