@@ -17,11 +17,11 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 </p>
 
 # Features
-- Art-first approach to displaying your music collection
+- Album and artist art display by default (full-res in detail/now playing views)
 - Mulitple server support
 - Filterable/sortable album and artist library views
 - Search artists, albums, and songs
-- Scroble support
+- Scrobble support
 - Max bitrate and buffer size settings
 - Loop and shuffle playback options
 - Long-press for context menu shortcuts
