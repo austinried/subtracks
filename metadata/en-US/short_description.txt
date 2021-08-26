@@ -1,0 +1,1 @@
+A music streaming app for Subsonic-API-compatible servers
