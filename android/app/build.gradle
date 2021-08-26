@@ -135,7 +135,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName '1.0.0'
     }
     splits {
         abi {
@@ -230,3 +230,76 @@ task copyDownloadableDepsToLibs(type: Copy) {
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+
+class Version {
+
+    private int major
+    private int minor
+    private int patch
+    private int code
+
+    Version(int code, String version) {
+        this.code = code
+
+        def (major, minor, patch) = version.tokenize('.')
+        this.major = major.toInteger()
+        this.minor = minor.toInteger()
+        this.patch = patch.toInteger()
+    }
+
+    @SuppressWarnings("unused")
+    void bumpMajor() {
+        major += 1
+        minor = 0
+        patch = 0
+
+        code += 1
+    }
+
+    @SuppressWarnings("unused")
+    void bumpMinor() {
+        minor += 1
+        patch = 0
+
+        code += 1
+    }
+
+    @SuppressWarnings("unused")
+    void bumpPatch() {
+        patch += 1
+        code += 1
+    }
+
+    String getName() { "$major.$minor.$patch" }
+
+    int getCode() { code }
+}
+
+tasks.addRule("Pattern: bump<TYPE>Version") { String taskName ->
+    if (taskName.matches("bump(Major|Minor|Patch)Version")) {
+        task(taskName) {
+            doLast {
+                String type = (taskName - 'bump' - 'Version')
+
+                println "Bumping ${type.toLowerCase()} version…"
+
+                int oldVersionCode = android.defaultConfig.versionCode
+                String oldVersionName = android.defaultConfig.versionName
+
+                version = new Version(oldVersionCode, oldVersionName)
+                version."bump$type"()
+
+                String newVersionName = version.getName()
+                String newVersionCode = version.getCode()
+
+                println "$oldVersionName ($oldVersionCode) → $newVersionName ($newVersionCode)"
+
+                def updated = buildFile.getText()
+                updated = updated.replaceFirst("versionName '$oldVersionName'", "versionName '$newVersionName'")
+                updated = updated.replaceFirst("versionCode $oldVersionCode", "versionCode $newVersionCode")
+
+                buildFile.setText(updated)
+            }
+        }
+    }
+}

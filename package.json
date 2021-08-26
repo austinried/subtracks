@@ -12,7 +12,10 @@
     "license:npm": "yarn licenses generate-disclaimer --production | grep -v '^info\\s\"\\?fsevents' > android/app/src/main/assets/licenses/npm_licenses.txt",
     "license:android": "./android/gradlew -p android checkLicenses && ./android/gradlew -p android generateLicensePage",
     "license:update": "./android/gradlew -p android updateLicenses",
-    "license": "yarn license:npm && yarn license:android"
+    "license": "yarn license:npm && yarn license:android",
+    "version:patch": "yarn version --patch --no-git-tag-version && ./android/gradlew -p android bumpPatchVersion",
+    "version:minor": "yarn version --minor --no-git-tag-version && ./android/gradlew -p android bumpMinorVersion",
+    "version:major": "yarn version --major --no-git-tag-version && ./android/gradlew -p android bumpMajorVersion"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.5",
