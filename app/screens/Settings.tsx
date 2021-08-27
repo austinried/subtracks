@@ -17,6 +17,7 @@ import React, { useCallback, useState } from 'react'
 import { KeyboardTypeOptions, Linking, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import { version } from '../../package.json'
 
 const ServerItem = React.memo<{
   server: Server
@@ -286,6 +287,9 @@ const SettingsContent = React.memo(() => {
         buttonStyle="hollow"
       />
       <Header style={styles.header}>About</Header>
+      <Text style={styles.text}>
+        <Text style={styles.bold}>Subtracks</Text> version {version}
+      </Text>
       <Button
         disabled={clearing}
         style={styles.button}
@@ -395,6 +399,14 @@ const styles = StyleSheet.create({
   },
   modalTextSubmit: {
     marginLeft: 15,
+  },
+  text: {
+    color: 'white',
+    fontFamily: font.regular,
+    fontSize: 16,
+  },
+  bold: {
+    fontFamily: font.bold,
   },
 })
 
