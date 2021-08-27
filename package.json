@@ -26,6 +26,7 @@
     "@react-navigation/bottom-tabs": "^5.11.11",
     "@react-navigation/material-top-tabs": "^5.3.15",
     "@react-navigation/native": "^5.9.4",
+    "@xmldom/xmldom": "^0.7.2",
     "immer": "^9.0.5",
     "lodash.debounce": "^4.0.8",
     "md5": "^2.3.0",
@@ -45,7 +46,6 @@
     "react-native-vector-icons": "^8.1.0",
     "react-native-webview": "^11.13.0",
     "uuid": "^8.3.2",
-    "xmldom": "^0.5.0",
     "zustand": "^3.5.7"
   },
   "devDependencies": {
@@ -59,7 +59,7 @@
     "@types/react-native-vector-icons": "^6.4.7",
     "@types/react-test-renderer": "^16.9.2",
     "@types/uuid": "^8.3.0",
-    "@types/xmldom": "^0.1.30",
+    "@types/xmldom": "^0.1.31",
     "babel-jest": "^26.6.3",
     "babel-plugin-module-resolver": "^4.1.0",
     "eslint": "^7.14.0",
