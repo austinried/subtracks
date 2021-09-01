@@ -40,3 +40,4 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 - Queue management (add/remove/sort)
 - Multi-select actions
 - Performance & animation improvements
+- More shuffle play modes
