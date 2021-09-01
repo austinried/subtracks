@@ -156,13 +156,13 @@ const infoStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    height: 28,
+    minHeight: 30,
     fontFamily: font.bold,
     fontSize: 22,
     color: colors.text.primary,
   },
   artist: {
-    height: 20,
+    minHeight: 21,
     fontFamily: font.regular,
     fontSize: 16,
     color: colors.text.secondary,
@@ -363,7 +363,7 @@ const controlsStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 10,
-    paddingBottom: 54,
+    paddingBottom: 40,
   },
   play: {
     marginHorizontal: 30,
@@ -419,7 +419,6 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // paddingTop: StatusBar.currentHeight,
   },
   content: {
     flex: 1,
