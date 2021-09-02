@@ -1,0 +1,4 @@
+## Changes
+
+- Remove unused permissions (read/write external storage)
+- Fix text cutting off on Now Playing screen 
