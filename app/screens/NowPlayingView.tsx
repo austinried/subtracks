@@ -336,9 +336,9 @@ const PlayerControls = () => {
         </View>
       </View>
       <View style={controlsStyles.bottom}>
-        <PressableOpacity onPress={undefined} disabled={true} hitSlop={16}>
+        {/* <PressableOpacity onPress={undefined} disabled={true} hitSlop={16}>
           <IconMatCom name="cast-audio" size={20} color="white" />
-        </PressableOpacity>
+        </PressableOpacity> */}
         <PressableOpacity onPress={() => navigation.navigate('queue')} disabled={disabled} hitSlop={16}>
           <IconMatCom name="playlist-play" size={24} color="white" />
         </PressableOpacity>
@@ -361,7 +361,7 @@ const controlsStyles = StyleSheet.create({
   bottom: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingTop: 10,
     paddingBottom: 40,
   },
