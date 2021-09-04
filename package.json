@@ -27,7 +27,7 @@
     "@react-navigation/material-top-tabs": "^5.3.15",
     "@react-navigation/native": "^5.9.4",
     "@xmldom/xmldom": "^0.7.2",
-    "immer": "^9.0.5",
+    "immer": "^9.0.6",
     "lodash.debounce": "^4.0.8",
     "md5": "^2.3.0",
     "react": "17.0.1",
