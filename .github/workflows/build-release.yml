@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -21,6 +23,8 @@ jobs:
           yarn install
       - run: |
           yarn license
+      - run: |
+          scripts/prepare-exoplayer-ffmpeg.sh
       - uses: gradle/wrapper-validation-action@v1
       - name: Retrieve keystore file
         env:
