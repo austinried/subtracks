@@ -7,3 +7,6 @@ include ':react-native-fs'
 project(':react-native-fs').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fs/android')
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
+gradle.ext.exoplayerRoot = '../submodules/ExoPlayer'
+gradle.ext.exoplayerModulePrefix = 'exoplayer-'
+apply from: file("$gradle.ext.exoplayerRoot/core_settings.gradle")
