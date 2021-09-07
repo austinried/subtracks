@@ -225,6 +225,7 @@ dependencies {
         exclude group:'com.google.android.exoplayer'
     }
     implementation project(':exoplayer-library-core')
+    implementation project(':exoplayer-extension-ffmpeg')
     compileOnly project(':exoplayer-library-dash')
     compileOnly project(':exoplayer-library-hls')
     compileOnly project(':exoplayer-library-smoothstreaming')
