@@ -232,6 +232,24 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://developer.android.com/tools/extras/support-library.html
+- artifact: androidx.test.ext:junit:+
+  name: junit
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/testing
+- artifact: androidx.test:core:+
+  name: core
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/testing
+- artifact: androidx.test:monitor:+
+  name: monitor
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/testing
 - artifact: androidx.transition:transition:+
   name: transition
   copyrightHolder: Original Author
@@ -414,12 +432,59 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://developer.android.com/tools/extras/support-library.html
+- artifact: com.google.auto.value:auto-value-annotations:+
+  name: auto-value-annotations
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/auto
 - artifact: com.google.code.findbugs:jsr305:+
   name: jsr305
   copyrightHolder: Original Author
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://findbugs.sourceforge.net/
+- artifact: com.google.errorprone:error_prone_annotations:+
+  name: error_prone_annotations
+  copyrightHolder: Original Author
+  license: Apache 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+- artifact: com.google.guava:failureaccess:+
+  name: failureaccess
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/guava
+- artifact: com.google.guava:guava:+
+  name: guava
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/guava
+- artifact: com.google.guava:listenablefuture:+
+  name: listenablefuture
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/guava
+- artifact: com.google.j2objc:j2objc-annotations:+
+  name: j2objc-annotations
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/j2objc/
+- artifact: com.google.truth:truth:+
+  name: truth
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/google/truth
+- artifact: com.googlecode.java-diff-utils:diffutils:+
+  name: diffutils
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: http://code.google.com/p/java-diff-utils/
 - artifact: com.parse.bolts:bolts-tasks:+
   name: bolts-tasks
   copyrightHolder: Original Author
@@ -450,6 +515,54 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://code.google.com/p/atinject/
+- artifact: junit:junit:+
+  name: junit
+  copyrightHolder: Original Author
+  license: Eclipse Public License 1.0
+  licenseUrl: http://www.eclipse.org/legal/epl-v10.html
+  url: http://junit.org
+- artifact: net.bytebuddy:byte-buddy-agent:+
+  name: byte-buddy-agent
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/raphw/byte-buddy
+- artifact: net.bytebuddy:byte-buddy:+
+  name: byte-buddy
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/raphw/byte-buddy
+- artifact: org.checkerframework:checker-compat-qual:+
+  name: checker-compat-qual
+  copyrightHolder: Original Author
+  license: GNU General Public License, version 2 (GPL2), with the classpath exception
+  licenseUrl: http://www.gnu.org/software/classpath/license.html
+  url: https://checkerframework.org
+- artifact: org.checkerframework:checker-qual:+
+  name: checker-qual
+  copyrightHolder: Original Author
+  license: The MIT License
+  licenseUrl: http://opensource.org/licenses/MIT
+  url: https://checkerframework.org
+- artifact: org.codehaus.mojo:animal-sniffer-annotations:+
+  name: animal-sniffer-annotations
+  copyrightHolder: Original Author
+  license: The MIT License
+  licenseUrl: http://opensource.org/licenses/MIT
+  url: https://github.com/mojohaus/animal-sniffer
+- artifact: org.hamcrest:hamcrest-core:+
+  name: hamcrest-core
+  copyrightHolder: Original Author
+  license: BSD License
+  licenseUrl: https://raw.githubusercontent.com/hamcrest/JavaHamcrest/master/LICENSE.txt
+  url: https://github.com/hamcrest/JavaHamcrest
+- artifact: org.jetbrains.kotlin:kotlin-annotations-jvm:+
+  name: kotlin-annotations-jvm
+  copyrightHolder: Original Author
+  license: The Apache License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://kotlinlang.org/
 - artifact: org.jetbrains.kotlin:kotlin-stdlib-common:+
   name: kotlin-stdlib-common
   copyrightHolder: Original Author
@@ -480,3 +593,15 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://www.jetbrains.org
+- artifact: org.mockito:mockito-core:+
+  name: mockito-core
+  copyrightHolder: Original Author
+  license: The MIT License
+  licenseUrl: https://github.com/mockito/mockito/blob/master/LICENSE
+  url: https://github.com/mockito/mockito
+- artifact: org.objenesis:objenesis:+
+  name: objenesis
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: http://objenesis.org
