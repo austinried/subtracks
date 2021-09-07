@@ -5592,10 +5592,9 @@ react-native-tab-view@^2.16.0:
   resolved "https://registry.yarnpkg.com/react-native-tab-view/-/react-native-tab-view-2.16.0.tgz#cae72c7084394bd328fac5fefb86cd966df37a86"
   integrity sha512-ac2DmT7+l13wzIFqtbfXn4wwfgtPoKzWjjZyrK1t+T8sdemuUvD4zIt+UImg03fu3s3VD8Wh/fBrIdcqQyZJWg==
 
-react-native-track-player@^2.0.3:
+"react-native-track-player@https://github.com/austinried/react-native-track-player":
   version "2.0.3"
-  resolved "https://registry.yarnpkg.com/react-native-track-player/-/react-native-track-player-2.0.3.tgz#a2648e2468f8502359b4678655573501d46f0c64"
-  integrity sha512-XV+92szbnf4FcByzfT62fN+iT9o0WhoMgDFl63Jf4gk6vw6VOFchPOoHKHW0XqgnO4vIit8CFc8u945l8vSSuQ==
+  resolved "https://github.com/austinried/react-native-track-player#24cbbb4a4065ade9a38d2bcdeffa5b6a2f5c3d13"
 
 react-native-vector-icons@^8.1.0:
   version "8.1.0"
