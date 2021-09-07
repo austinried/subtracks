@@ -13,8 +13,15 @@ ndkDownloadZip="$root/ndk/ndk.zip"
 
 if [ -z "$NDK_PATH" ] && [ ! -e "$ndkLocalPath" ]; then
     mkdir -p "$root/ndk"
-    wget https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -O "$ndkDownloadZip"
-    unzip -d "$root/ndk" "$ndkDownloadZip"
+
+    echo "downloading android-ndk-r21e-linux-x86_64.zip to $ndkDownloadZip..."
+    wget -nv https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -O "$ndkDownloadZip"
+    echo "done!"
+
+    echo "extracting $ndkDownloadZip..."
+    unzip -q -d "$root/ndk" "$ndkDownloadZip"
+    echo "done!"
+
     rm "$ndkDownloadZip"
 fi
 
