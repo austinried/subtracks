@@ -7,7 +7,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
+import { ImageResizeMode, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } from './ContextMenu'
@@ -56,7 +56,8 @@ const ListItem: React.FC<{
   listStyle?: 'big' | 'small'
   subtitle?: string
   style?: StyleProp<ViewStyle>
-}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style }) => {
+  CustomArt?: React.FC<{style: any, resizeMode: ImageResizeMode}> | null
+}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style, CustomArt }) => {
   const navigation = useNavigation()
   const starred = useStarred(item.id, item.itemType)
 
@@ -150,10 +151,15 @@ const ListItem: React.FC<{
   const artStyle = { ...styles.art, ...sizeStyle.art }
   const resizeMode = 'cover'
   let coverArt = <></>
-  if (item.itemType === 'artist') {
-    coverArt = <CoverArt type="artist" artistId={item.id} round={true} style={artStyle} resizeMode={resizeMode} />
-  } else {
-    coverArt = <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} />
+  if(CustomArt != null) {
+    coverArt = <CustomArt style={artStyle} resizeMode={resizeMode} />;
+  }
+  else {
+    if (item.itemType === 'artist') {
+      coverArt = <CoverArt type="artist" artistId={item.id} round={true} style={artStyle} resizeMode={resizeMode} />
+    } else {
+      coverArt = <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} />
+    }
   }
 
   return (

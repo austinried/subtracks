@@ -4,6 +4,7 @@ import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
+import { usePlaylistCover2x2 } from '@app/components/PlaylistCover'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
@@ -11,7 +12,7 @@ import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 type SongListType = 'album' | 'playlist'
@@ -75,6 +76,14 @@ const SongListDetails = React.memo<{
     typeName = 'Playlist'
   }
 
+  let coverArt = null;
+  if (songList.coverArt != null)
+    coverArt = <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />;
+  else {
+    const T = useCallback(usePlaylistCover2x2(songList.songs), []);
+    coverArt = useMemo(() => <T style={styles.cover} resizeMode='stretch' />, [T]);
+  }
+  
   return (
     <View style={styles.container}>
       <HeaderBar
@@ -103,7 +112,7 @@ const SongListDetails = React.memo<{
         contentMarginTop={26}
         ListHeaderComponent={
           <View style={styles.content}>
-            <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
+            {coverArt}
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
             {songList.songs.length > 0 && (
