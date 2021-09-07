@@ -9,4 +9,4 @@ apply from: file("../node_modules/@react-native-community/cli-platform-android/n
 include ':app'
 gradle.ext.exoplayerRoot = '../submodules/ExoPlayer'
 gradle.ext.exoplayerModulePrefix = 'exoplayer-'
-apply from: file("$gradle.ext.exoplayerRoot/core_settings.gradle")
+apply from: file("exoplayer_settings.gradle")

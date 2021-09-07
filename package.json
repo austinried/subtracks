@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "license:npm": "yarn licenses generate-disclaimer --production | grep -v '^info\\s\"\\?fsevents' > android/app/src/main/assets/licenses/npm_licenses.txt",
     "license:android": "./android/gradlew -p android checkLicenses && ./android/gradlew -p android generateLicensePage",
-    "license:update": "./android/gradlew -p android updateLicenses",
+    "license:android:update": "./android/gradlew -p android updateLicenses",
     "license": "yarn license:npm && yarn license:android",
     "version:patch": "yarn version --patch --no-git-tag-version && ./android/gradlew -p android bumpPatchVersion",
     "version:minor": "yarn version --minor --no-git-tag-version && ./android/gradlew -p android bumpMinorVersion",
