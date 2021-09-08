@@ -3,4 +3,4 @@
 *.bat text eol=crlf
 
 # ignore these paths for GitHub language percentages
-android/app/src/main/assets/licenses/* linguist-vendored=true
+android/app/src/main/assets/** linguist-vendored=true
