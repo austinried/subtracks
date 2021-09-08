@@ -4,7 +4,7 @@ import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
-import { usePlaylistCover2x2 } from '@app/components/PlaylistCover'
+import { genPlaylistCover2x2Component } from '@app/components/PlaylistCover'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
 import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
@@ -50,9 +50,20 @@ const SongListDetails = React.memo<{
   songList?: AlbumWithSongs | PlaylistWithSongs
   subtitle?: string
 }>(({ title, songList, subtitle, type }) => {
+  // be careful that all hooks are called before the branching happens
   const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
   const setQueue = useStore(selectTrackPlayer.setQueue)
+  const coverArt = useMemo(() => {
+    if(!songList)
+      return null
+    else if(songList.coverArt != null)
+      return <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
+    else {
+      const T = genPlaylistCover2x2Component(songList.songs);
+      return <T style={styles.cover} resizeMode='stretch' />
+    }
+  }, [songList])
 
   if (!songList) {
     return <SongListDetailsFallback />
@@ -74,14 +85,6 @@ const SongListDetails = React.memo<{
     }
   } else {
     typeName = 'Playlist'
-  }
-
-  let coverArt = null;
-  if (songList.coverArt != null)
-    coverArt = <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />;
-  else {
-    const T = useCallback(usePlaylistCover2x2(songList.songs), []);
-    coverArt = useMemo(() => <T style={styles.cover} resizeMode='stretch' />, [T]);
   }
   
   return (

@@ -1,11 +1,10 @@
-import { usePlaylistWithSongs } from '@app/hooks/music'
-import { PlaylistListItem, Song } from '@app/models/music'
+import { Song } from '@app/models/music'
 import CoverArt from '@app/components/CoverArt'
-import React, { useMemo } from 'react'
+import React from 'react'
 import { StyleSheet, ImageResizeMode, FlatList } from 'react-native'
 
-export function usePlaylistCover2x2(_songs: Song[]) {
-  const generator: React.FC<{style: any, resizeMode: ImageResizeMode}> = ({style}) => {
+export function genPlaylistCover2x2Component(_songs: Song[]) {
+  const component: React.FC<{style: any, resizeMode: ImageResizeMode}> = ({style}) => {
     const nestedStyle = { ...style, ...{ width: style.width / 2, height: style.height / 2, marginRight: 0 } }
     // we need to wrap the songs in a custom object because the list will ignore null values
     const songs = [...Array(4)].map((_, i) => ({s: i < _songs.length ? _songs[i] : null}))
@@ -19,13 +18,9 @@ export function usePlaylistCover2x2(_songs: Song[]) {
       />
     )
   }
-  return generator;
+  return React.memo(component);
 }
 
-export function usePlaylistCover2x2Fetch(item: PlaylistListItem) {
-  const playlist = usePlaylistWithSongs(item.id)
-  return useMemo(() => playlist == null ? null : usePlaylistCover2x2(playlist.songs), [playlist]);
-}
 const styles = StyleSheet.create({
   imgGrid: {
     paddingRight: 10
