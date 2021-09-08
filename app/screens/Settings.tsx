@@ -300,15 +300,8 @@ const SettingsContent = React.memo(() => {
       <Button
         disabled={clearing}
         style={styles.button}
-        title="Licenses (NPM)"
-        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses/npm_licenses.txt' })}
-        buttonStyle="hollow"
-      />
-      <Button
-        disabled={clearing}
-        style={styles.button}
-        title="Licenses (Android)"
-        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses/android_licenses.html' })}
+        title="Licenses"
+        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses.html' })}
         buttonStyle="hollow"
       />
     </View>

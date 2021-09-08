@@ -22,6 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: |
+          rm submodules/ExoPlayer/gradle/wrapper/gradle-wrapper.jar
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -32,6 +36,8 @@ jobs:
           yarn lint --max-warnings 0
       - run: |
           yarn license
+      - run: |
+          scripts/prepare-exoplayer-ffmpeg.sh
       - uses: gradle/wrapper-validation-action@v1
       - uses: gradle/gradle-build-action@v1
         with:
