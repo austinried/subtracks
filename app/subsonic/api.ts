@@ -34,6 +34,7 @@ import {
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import toast from '@app/util/toast'
+import userAgent from '@app/util/userAgent'
 import { DOMParser } from 'xmldom'
 
 export class SubsonicApiError extends Error {
@@ -85,7 +86,9 @@ export class SubsonicApiClient {
     let text: string
 
     try {
-      const response = await fetch(this.buildUrl(method, params))
+      const response = await fetch(this.buildUrl(method, params), {
+        headers: { 'User-Agent': userAgent },
+      })
       text = await response.text()
     } catch (err) {
       toast(`Network error: ${this.address}`)
