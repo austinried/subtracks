@@ -1,4 +1,5 @@
 import { Song } from '@app/models/music'
+import userAgent from '@app/util/userAgent'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 import { TrackExt } from './trackplayer'
@@ -29,6 +30,7 @@ export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<St
       artist: song.artist || 'Unknown Artist',
       album: song.album || 'Unknown Album',
       url: song.streamUri,
+      userAgent,
       artwork,
       coverArt: song.coverArt,
       duration: song.duration,
