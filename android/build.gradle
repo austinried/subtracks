@@ -31,7 +31,7 @@ buildscript {
 apply plugin: "com.cookpad.android.plugin.license-tools"
 
 licenseTools {
-    outputHtml = "../../../app/src/main/assets/licenses/android_licenses.html"
+    outputHtml = "../../../app/src/main/assets/licenses.html"
 }
 
 allprojects {
