@@ -14,6 +14,7 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 # Download
 <p float="left">
   <a href="https://play.google.com/store/apps/details?id=com.subtracks"><img src="assets/google-play-badge.png" width="250"/></a>
+  <a href="https://f-droid.org/en/packages/com.subtracks/"><img src="assets/f-droid-badge.png" width="250"></a>
   <a href="https://github.com/austinried/subtracks/releases/latest"><img src="assets/github-badge.png" width="250"/></a>
 </p>
 
