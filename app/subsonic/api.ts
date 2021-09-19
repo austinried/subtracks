@@ -64,8 +64,12 @@ export class SubsonicApiClient {
 
     this.params = new URLSearchParams()
     this.params.append('u', server.username)
-    this.params.append('t', server.token)
-    this.params.append('s', server.salt)
+    if (server.usePlainPassword) {
+      this.params.append('p', server.token)
+    } else {
+      this.params.append('t', server.token)
+      this.params.append('s', server.salt)
+    }
     this.params.append('v', '1.15.0')
     this.params.append('c', 'subtracks')
   }

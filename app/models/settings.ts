@@ -6,6 +6,7 @@ export interface Server {
   username: string
   token: string
   salt: string
+  usePlainPassword: boolean // see ServerView.tsx for more information
 }
 
 export interface AlbumFilterSettings {

@@ -11,6 +11,9 @@ import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
+import SettingsSwitch from '@app/components/SettingsSwitch'
+
+const EXISTING_PASSWORD = 'EXISTING_PASSWORD'
 
 const ServerView: React.FC<{
   id?: string
@@ -26,7 +29,8 @@ const ServerView: React.FC<{
 
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
-  const [password, setPassword] = useState(server?.token ? 'password' : '')
+  const [password, setPassword] = useState(server?.token ? EXISTING_PASSWORD : '')
+  const [usePlainPassword, setUsePlainPassword] = useState(server?.usePlainPassword ?? false)
   const [testing, setTesting] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -50,9 +54,18 @@ const ServerView: React.FC<{
   const createServer = useCallback<() => Server>(() => {
     const salt = server?.salt || uuidv4()
     let token: string
-    if (password === 'password' && server?.token) {
+
+    // WHY:
+    // Some servers might still use a Subsonic API older than 1.13.0 and therefore need the token to be sent in plain text (e.g. the Music app for nextcloud).
+    // Also see http://www.subsonic.org/pages/api.jsp
+    // Use existing token (can be either hashed + salted or plain text)
+    if (password === EXISTING_PASSWORD && server?.token) {
       token = server.token
+    } else if (usePlainPassword) {
+      // save password in plain text
+      token = password
     } else {
+      // hash and salt password
       token = md5(password + salt)
     }
 
@@ -60,10 +73,11 @@ const ServerView: React.FC<{
       id: server?.id || uuidv4(),
       address,
       username,
+      usePlainPassword,
       salt,
       token,
     }
-  }, [address, password, server?.id, server?.salt, server?.token, username])
+  }, [address, password, server?.id, server?.salt, server?.token, username, usePlainPassword])
 
   const save = useCallback(() => {
     if (!validate()) {
@@ -104,6 +118,22 @@ const ServerView: React.FC<{
     }
     waitForRemove()
   }, [canRemove, exit, id, removeServer])
+
+  const togglePlainPassword = useCallback((usePlainPassword: boolean) => {
+    setUsePlainPassword(usePlainPassword)
+
+    if (password === EXISTING_PASSWORD) {
+      if (usePlainPassword) {
+        // Make sure the user has to re-enter a plain text password
+        setPassword('')
+      } else if (server?.token) {
+        // Use existing plain text password so that it will be hashed upon
+        // server creation
+        setPassword(server.token)
+      }
+    }
+
+  }, [setUsePlainPassword, setPassword, server?.token, password])
 
   const test = useCallback(() => {
     setTesting(true)
@@ -179,6 +209,12 @@ const ServerView: React.FC<{
           placeholder="demo"
           value={password}
           onChangeText={setPassword}
+        />
+        <SettingsSwitch
+          title="Force plain text password"
+          subtitle={usePlainPassword ? 'Send password in plain text. Make sure your connection is secure! (Use only if the subsonic server requires this.)' : 'Send encrypted password.'}
+          value={usePlainPassword}
+          setValue={togglePlainPassword}
         />
         <Button
           disabled={disableControls()}
