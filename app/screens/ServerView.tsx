@@ -11,6 +11,9 @@ import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
+import SettingsSwitch from '@app/components/SettingsSwitch'
+
+const PASSWORD_PLACEHOLDER = 'PASSWORD_PLACEHOLDER'
 
 const ServerView: React.FC<{
   id?: string
@@ -26,7 +29,12 @@ const ServerView: React.FC<{
 
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
-  const [password, setPassword] = useState(server?.token ? 'password' : '')
+
+  const [usePlainPassword, setUsePlainPassword] = useState(server?.usePlainPassword ?? false)
+  const [password, setPassword] = useState(
+    server?.usePlainPassword ? server.plainPassword || '' : server?.token ? PASSWORD_PLACEHOLDER : '',
+  )
+
   const [testing, setTesting] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -48,11 +56,24 @@ const ServerView: React.FC<{
   }, [navigation])
 
   const createServer = useCallback<() => Server>(() => {
-    const salt = server?.salt || uuidv4()
+    if (usePlainPassword) {
+      return {
+        id: server?.id || uuidv4(),
+        usePlainPassword,
+        plainPassword: password,
+        address,
+        username,
+      }
+    }
+
     let token: string
-    if (password === 'password' && server?.token) {
+    let salt: string
+
+    if (server && !server.usePlainPassword && password === PASSWORD_PLACEHOLDER) {
+      salt = server.salt
       token = server.token
     } else {
+      salt = uuidv4()
       token = md5(password + salt)
     }
 
@@ -60,10 +81,11 @@ const ServerView: React.FC<{
       id: server?.id || uuidv4(),
       address,
       username,
+      usePlainPassword,
       salt,
       token,
     }
-  }, [address, password, server?.id, server?.salt, server?.token, username])
+  }, [usePlainPassword, server, address, username, password])
 
   const save = useCallback(() => {
     if (!validate()) {
@@ -104,6 +126,25 @@ const ServerView: React.FC<{
     }
     waitForRemove()
   }, [canRemove, exit, id, removeServer])
+
+  const togglePlainPassword = useCallback(
+    (value: boolean) => {
+      setUsePlainPassword(value)
+
+      if (value) {
+        if (server && server.usePlainPassword) {
+          setPassword(server.plainPassword)
+        } else if (server) {
+          setPassword('')
+        }
+      } else {
+        if (server && !server.usePlainPassword) {
+          setPassword(PASSWORD_PLACEHOLDER)
+        }
+      }
+    },
+    [server],
+  )
 
   const test = useCallback(() => {
     setTesting(true)
@@ -179,6 +220,16 @@ const ServerView: React.FC<{
           placeholder="demo"
           value={password}
           onChangeText={setPassword}
+        />
+        <SettingsSwitch
+          title="Force plain text password"
+          subtitle={
+            usePlainPassword
+              ? 'Send password in plain text (legacy, make sure your connection is secure!)'
+              : 'Send password as token + salt'
+          }
+          value={usePlainPassword}
+          setValue={togglePlainPassword}
         />
         <Button
           disabled={disableControls()}

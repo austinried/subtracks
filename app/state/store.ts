@@ -4,9 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import create from 'zustand'
 import { persist, StateStorage } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
+import migrations from './migrations'
 import { createMusicMapSlice, MusicMapSlice } from './musicmap'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
+
+const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
   MusicSlice &
@@ -51,6 +54,7 @@ export const useStore = create<Store>(
     }),
     {
       name: '@appStore',
+      version: DB_VERSION,
       getStorage: () => storage,
       whitelist: ['settings', 'cacheFiles'],
       onRehydrateStorage: _preState => {
@@ -58,6 +62,17 @@ export const useStore = create<Store>(
           await postState?.setActiveServer(postState.settings.activeServer, true)
           postState?.setHydrated(true)
         }
+      },
+      migrate: (persistedState, version) => {
+        if (version > DB_VERSION) {
+          throw new Error('cannot migrate db on a downgrade, delete all data first')
+        }
+
+        for (let i = version; i < DB_VERSION; i++) {
+          persistedState = migrations[i](persistedState)
+        }
+
+        return persistedState
       },
     },
   ),
