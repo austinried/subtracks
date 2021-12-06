@@ -72,7 +72,7 @@ export class SubsonicApiClient {
       this.params.append('s', server.salt)
     }
 
-    this.params.append('v', '1.15.0')
+    this.params.append('v', '1.14.0')
     this.params.append('c', 'subtracks')
   }
 
@@ -85,7 +85,8 @@ export class SubsonicApiClient {
       }
     }
 
-    return `${this.address}/rest/${method}?${query}`
+    // *.view was present on all method names in API 1.14.0 and earlier
+    return `${this.address}/rest/${method}.view?${query}`
   }
 
   private async apiGetXml(method: string, params?: { [key: string]: any }): Promise<Document> {
