@@ -1,0 +1,11 @@
+## New
+
+- Added ALAC file playback support
+- Added plain-text password option for older servers
+- Target API version 1.14.0 (instead of 1.15.0) to support more servers (Ampache, Airsonic Advanced)
+
+## Fixed
+
+- Removed non-working cast button until support is added
+- Fixed Subtracks showing up multiple times in Navidrome clients menu (too many user-agents)
+- Fixed network error for HTTPS servers using self-signed certificates that the user has trusted
