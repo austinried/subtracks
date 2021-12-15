@@ -1,0 +1,2 @@
+## Fixed
+- Don't resume playback after alarm/call ends if the alarm/call didn't pause playback in the first place
