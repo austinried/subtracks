@@ -34,6 +34,12 @@ const rebuildQueue = () => {
   })
 }
 
+const setDuckPaused = (duckPaused: boolean) => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().setDuckPaused(duckPaused)
+  })
+}
+
 let serviceCreated = false
 
 const createService = async () => {
@@ -81,9 +87,14 @@ const createService = async () => {
     }
 
     if (data.paused) {
-      trackPlayerCommands.enqueue(TrackPlayer.pause)
-    } else {
+      let state = useStore.getState().playerState
+      if (state === State.Playing || state === State.Buffering || state === State.Connecting) {
+        trackPlayerCommands.enqueue(TrackPlayer.pause)
+        setDuckPaused(true)
+      }
+    } else if (useStore.getState().duckPaused) {
       trackPlayerCommands.enqueue(TrackPlayer.play)
+      setDuckPaused(false)
     }
   })
 

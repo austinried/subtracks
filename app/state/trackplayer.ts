@@ -42,6 +42,9 @@ export type TrackPlayerSlice = {
   playerState: State
   setPlayerState: (playerState: State) => void
 
+  duckPaused: boolean
+  setDuckPaused: (duckPaused: boolean) => void
+
   currentTrack?: TrackExt
   currentTrackIdx?: number
   setCurrentTrackIdx: (idx?: number) => void
@@ -196,6 +199,9 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       }),
     )
   },
+
+  duckPaused: false,
+  setDuckPaused: duckPaused => set({ duckPaused }),
 
   queue: [],
   setQueue: async (songs, name, contextType, contextId, playTrack, shuffle) => {
