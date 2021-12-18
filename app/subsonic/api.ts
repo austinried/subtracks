@@ -72,7 +72,7 @@ export class SubsonicApiClient {
       this.params.append('s', server.salt)
     }
 
-    this.params.append('v', '1.14.0')
+    this.params.append('v', '1.13.0')
     this.params.append('c', 'subtracks')
   }
 
