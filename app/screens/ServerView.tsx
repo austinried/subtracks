@@ -194,6 +194,8 @@ const ServerView: React.FC<{
           selectionColor={colors.text.secondary}
           textContentType="URL"
           placeholder="http://demo.navidrome.org"
+          autoCorrect="false"
+          autoCapitalize="none"
           value={address}
           onChangeText={setAddress}
           onBlur={formatAddress}
@@ -205,6 +207,8 @@ const ServerView: React.FC<{
           selectionColor={colors.text.secondary}
           textContentType="username"
           autoCompleteType="username"
+          importantForAutofill="yes"
+          autoCapitalize="none"
           placeholder="demo"
           value={username}
           onChangeText={setUsername}
@@ -216,6 +220,8 @@ const ServerView: React.FC<{
           selectionColor={colors.text.secondary}
           textContentType="password"
           autoCompleteType="password"
+          autoCapitalize="none"
+          importantForAutofill="yes"
           secureTextEntry={true}
           placeholder="demo"
           value={password}
