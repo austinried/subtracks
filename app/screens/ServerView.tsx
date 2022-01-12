@@ -194,7 +194,7 @@ const ServerView: React.FC<{
           selectionColor={colors.text.secondary}
           textContentType="URL"
           placeholder="http://demo.navidrome.org"
-          autoCorrect="false"
+          autoCorrect={false}
           autoCapitalize="none"
           value={address}
           onChangeText={setAddress}
