@@ -10,3 +10,7 @@
 # Add any project specific keep options here:
 
 -keep class com.facebook.react.turbomodule.** { *; }
+
+# react-native-reanimated
+# https://github.com/software-mansion/react-native-reanimated/pull/2725
+-keep class com.swmansion.** {*;}
