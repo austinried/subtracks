@@ -5968,10 +5968,10 @@ react-native-webview@^11.13.0:
     escape-string-regexp "2.0.0"
     invariant "2.2.4"
 
-react-native@0.67.0-rc.6:
-  version "0.67.0-rc.6"
-  resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.67.0-rc.6.tgz#d5005dca9ea2d7578080e768eb2ce5da8f68a20c"
-  integrity sha512-qAHIM0Hp2lQLIbJBj6P4En5W9YT2v8Z1zsIa5A771DJY7H6ch4i9EDMf6Yhczc+Y95fq2p9YFOwgMf3R8jm59Q==
+react-native@0.67.0:
+  version "0.67.0"
+  resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.67.0.tgz#401c0ab75566f1086ad194ef9c3e4551c10c14e5"
+  integrity sha512-LTrLbZhapgsF0J1fgKvkMVealNKVZ+Fp3XWVFHWmglVQvdmALdcafZR2Plvhe9IH8KJddj3LAU9nV3rHot7q4Q==
   dependencies:
     "@jest/create-cache-key-function" "^27.0.1"
     "@react-native-community/cli" "^6.0.0"

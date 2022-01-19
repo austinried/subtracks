@@ -31,7 +31,7 @@
     "lodash.debounce": "^4.0.8",
     "md5": "^2.3.0",
     "react": "17.0.2",
-    "react-native": "0.67.0-rc.6",
+    "react-native": "0.67.0",
     "react-native-fs": "^2.18.0",
     "react-native-gesture-handler": "^1.10.3",
     "react-native-get-random-values": "^1.7.0",
