@@ -4,6 +4,12 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: https://developer.android.com/jetpack/androidx
+- artifact: androidx.annotation:annotation-experimental:+
+  name: annotation-experimental
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/jetpack/androidx/releases/annotation#1.1.0
 - artifact: androidx.annotation:annotation:+
   name: annotation
   copyrightHolder: Original Author
@@ -40,6 +46,12 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: http://developer.android.com/tools/extras/support-library.html
+- artifact: androidx.autofill:autofill:+
+  name: autofill
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/jetpack/androidx/releases/autofill#1.1.0
 - artifact: androidx.cardview:cardview:+
   name: cardview
   copyrightHolder: Original Author
@@ -189,19 +201,19 @@
   copyrightHolder: Original Author
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
-  url: https://developer.android.com/topic/libraries/architecture/index.html
+  url: https://developer.android.com/jetpack/androidx/releases/room#2.3.0
 - artifact: androidx.room:room-ktx:+
   name: room-ktx
   copyrightHolder: Original Author
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
-  url: https://developer.android.com/topic/libraries/architecture/index.html
+  url: https://developer.android.com/jetpack/androidx/releases/room#2.3.0
 - artifact: androidx.room:room-runtime:+
   name: room-runtime
   copyrightHolder: Original Author
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
-  url: https://developer.android.com/topic/libraries/architecture/index.html
+  url: https://developer.android.com/jetpack/androidx/releases/room#2.3.0
 - artifact: androidx.savedstate:savedstate:+
   name: savedstate
   copyrightHolder: Original Author
@@ -301,62 +313,104 @@
 - artifact: com.facebook.fresco:drawee:+
   name: drawee
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:fbcore:+
   name: fbcore
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:fresco:+
   name: fresco
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:imagepipeline-base:+
   name: imagepipeline-base
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:imagepipeline-native:+
+  name: imagepipeline-native
+  copyrightHolder: Original Author
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:imagepipeline-okhttp3:+
   name: imagepipeline-okhttp3
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:imagepipeline:+
   name: imagepipeline
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:memory-type-ashmem:+
+  name: memory-type-ashmem
+  copyrightHolder: Original Author
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:memory-type-java:+
+  name: memory-type-java
+  copyrightHolder: Original Author
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:memory-type-native:+
+  name: memory-type-native
+  copyrightHolder: Original Author
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:middleware:+
+  name: middleware
+  copyrightHolder: Original Author
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:nativeimagefilters:+
   name: nativeimagefilters
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.fresco:nativeimagetranscoder:+
   name: nativeimagetranscoder
   copyrightHolder: Original Author
-  license: MIT License
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:soloader:+
+  name: soloader
+  copyrightHolder: Original Author
+  license: MIT
+  licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
+  url: https://github.com/facebook/fresco
+- artifact: com.facebook.fresco:ui-common:+
+  name: ui-common
+  copyrightHolder: Original Author
+  license: MIT
   licenseUrl: https://github.com/facebook/fresco/blob/master/LICENSE
   url: https://github.com/facebook/fresco
 - artifact: com.facebook.infer.annotation:infer-annotation:+
   name: infer-annotation
   copyrightHolder: Original Author
-  license: BSD license
+  license: MIT license
   licenseUrl: https://github.com/facebook/infer/blob/master/LICENSE
   url: http://fbinfer.com/
 - artifact: com.facebook.react:react-native:+
   name: react-native
   copyrightHolder: Original Author
   license: MIT License
-  licenseUrl: https://github.com/facebook/react-native/blob/master/LICENSE
+  licenseUrl: https://github.com/facebook/react-native/blob/HEAD/LICENSE
   url: https://github.com/facebook/react-native
 - artifact: com.facebook.soloader:annotation:+
   name: annotation
@@ -494,21 +548,21 @@
 - artifact: com.squareup.okhttp3:okhttp-urlconnection:+
   name: okhttp-urlconnection
   copyrightHolder: Original Author
-  license: Apache-2.0 License
-  licenseUrl: https://github.com/square/okhttp/blob/master/LICENSE.txt
-  url: https://github.com/square/okhttp
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://square.github.io/okhttp/
 - artifact: com.squareup.okhttp3:okhttp:+
   name: okhttp
   copyrightHolder: Original Author
-  license: Apache-2.0 License
-  licenseUrl: https://github.com/square/okhttp/blob/master/LICENSE.txt
-  url: https://github.com/square/okhttp
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://square.github.io/okhttp/
 - artifact: com.squareup.okio:okio:+
   name: okio
   copyrightHolder: Original Author
-  license: Apache-2.0 License
-  licenseUrl: https://github.com/square/okio/blob/master/LICENSE.txt
-  url: https://github.com/square/okio
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://github.com/square/okio/
 - artifact: javax.inject:javax.inject:+
   name: javax.inject
   copyrightHolder: Original Author
@@ -563,8 +617,26 @@
   license: The Apache License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: https://kotlinlang.org/
+- artifact: org.jetbrains.kotlin:kotlin-reflect:+
+  name: kotlin-reflect
+  copyrightHolder: Original Author
+  license: The Apache License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://kotlinlang.org/
 - artifact: org.jetbrains.kotlin:kotlin-stdlib-common:+
   name: kotlin-stdlib-common
+  copyrightHolder: Original Author
+  license: The Apache License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://kotlinlang.org/
+- artifact: org.jetbrains.kotlin:kotlin-stdlib-jdk7:+
+  name: kotlin-stdlib-jdk7
+  copyrightHolder: Original Author
+  license: The Apache License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://kotlinlang.org/
+- artifact: org.jetbrains.kotlin:kotlin-stdlib-jdk8:+
+  name: kotlin-stdlib-jdk8
   copyrightHolder: Original Author
   license: The Apache License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
