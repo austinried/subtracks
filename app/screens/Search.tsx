@@ -32,7 +32,8 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
     <ListItem
       item={item}
       contextId={contextId}
-      queueId={0}
+      trackId={item.id}
+      queuePos={0}
       showArt={true}
       showStar={false}
       onPress={() => setQueue({ title: item.title, playTrack: 0 })}

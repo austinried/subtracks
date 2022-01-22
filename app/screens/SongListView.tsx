@@ -26,7 +26,8 @@ const SongRenderItem: React.FC<{
   item: {
     song: Song
     contextId?: string
-    queueId?: number
+    trackId?: string
+    queuePos?: number
     subtitle?: string
     onPress?: () => void
     showArt?: boolean
@@ -36,7 +37,8 @@ const SongRenderItem: React.FC<{
   <ListItem
     item={item.song}
     contextId={item.contextId}
-    queueId={item.queueId}
+    trackId={item.trackId}
+    queuePos={item.queuePos}
     subtitle={item.subtitle}
     onPress={item.onPress}
     showArt={item.showArt}
@@ -90,7 +92,8 @@ const SongListDetails = React.memo<{
         data={_songs.map((s, i) => ({
           song: s,
           contextId,
-          queueId: i,
+          trackId: s.id,
+          queuePos: i,
           subtitle: s.artist,
           onPress: play(i),
           showArt: songList.itemType === 'playlist',
@@ -120,7 +123,6 @@ const SongListDetails = React.memo<{
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
             <ListPlayerControls
               style={styles.controls}
-              songs={_songs}
               listType={type}
               play={play(undefined, false)}
               shuffle={play(undefined, true)}

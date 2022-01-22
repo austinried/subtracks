@@ -34,7 +34,8 @@ const OtherResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) 
     <ListItem
       item={item}
       contextId={item.id}
-      queueId={0}
+      trackId={item.id}
+      queuePos={0}
       showArt={true}
       showStar={false}
       listStyle="small"

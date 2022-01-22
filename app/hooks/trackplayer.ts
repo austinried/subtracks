@@ -73,21 +73,22 @@ export const useReset = (enqueue = true) => {
   return enqueue ? () => trackPlayerCommands.enqueue(reset) : reset
 }
 
-export const useIsPlaying = (contextId: string | undefined, track: number) => {
+export const useIsPlaying = (contextId: string | undefined, trackId: string, queuePos: number) => {
   const queueContextId = useStore(store => store.queueContextId)
   const currentTrackIdx = useStore(store => store.currentTrackIdx)
   const shuffleOrder = useStoreDeep(store => store.shuffleOrder)
+  const currentTrack = useStore(store => store.currentTrack)
 
   if (contextId === undefined) {
-    return track === currentTrackIdx
+    return trackId === currentTrack?.id && queuePos === currentTrackIdx
   }
 
   if (shuffleOrder) {
-    const shuffledTrack = shuffleOrder.findIndex(i => i === track)
-    track = shuffledTrack !== undefined ? shuffledTrack : -1
+    const shuffledTrack = shuffleOrder.findIndex(i => i === queuePos)
+    queuePos = shuffledTrack !== undefined ? shuffledTrack : -1
   }
 
-  return contextId === queueContextId && track === currentTrackIdx
+  return contextId === queueContextId && trackId === currentTrack?.id && queuePos === currentTrackIdx
 }
 
 export function mapSongToTrackExt(song: Song): TrackExt {

@@ -9,6 +9,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu'
+import Icon from 'react-native-vector-icons/Ionicons'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import CoverArt from './CoverArt'
@@ -218,6 +219,26 @@ const OptionViewArtist = withSuspenseMemo<{
   )
 })
 
+const OptionPlayArtist = withSuspenseMemo<{
+  artistId: string
+  shuffle: boolean
+}>(({ artistId, shuffle }) => {
+  // TODO
+  //const playArtist = usePlayArtist(artistId)
+  
+  // TODO resource strings
+  return (
+    <ContextMenuIconTextOption
+      IconComponent={shuffle ? Icon : IconFA5}
+      name={shuffle ? "shuffle" : "play"}
+      size={26}
+      color="white"
+      text={(shuffle ? "Shuffle" : "Play") + " Artist"}
+      onSelect={/* TODO () => playArtist(shuffle) */}
+    />
+  )
+})
+
 const OptionViewAlbum = withSuspenseMemo<{
   navigation: NavigationProp<any>
   album?: string
@@ -309,6 +330,8 @@ export const ArtistContextPressable: React.FC<ArtistContextPressableProps> = pro
       menuOptions={
         <>
           <OptionStar id={artist.id} type={artist.itemType} />
+          <OptionPlayArtist artistId={artist.id} shuffle={false}/>
+          <OptionPlayArtist artistId={artist.id} shuffle={true}/>
           {/* <OptionDownload itemType={artist.itemType} /> */}
         </>
       }>

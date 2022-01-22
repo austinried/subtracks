@@ -49,7 +49,7 @@ const TopSongs = withSuspenseMemo<{
   name: string
 }>(
   ({ songs, name }) => {
-    const { setQueue, contextId } = useSetQueue('artist', songs)
+    const { setQueue, contextId } = useSetQueue('top-songs', songs)
     const { t } = useTranslation()
 
     return (
@@ -60,7 +60,8 @@ const TopSongs = withSuspenseMemo<{
             key={i}
             item={s}
             contextId={contextId}
-            queueId={i}
+            trackId={s.id}
+            queuePos={i}
             showArt={true}
             subtitle={s.album}
             onPress={() => setQueue({ title: name, playTrack: i })}
@@ -145,6 +146,13 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>
         </View>
+        <ListPlayerControls
+          style={styles.controls}
+          listType={'artist'}
+          play={/* TODO play(undefined, false)*/}
+          shuffle={/* TODO play(undefined, true)*/}
+          disabled={false}
+        />
         <View style={styles.contentContainer}>
           {(topSongs || isError) && artist ? (
             topSongs && topSongs.length > 0 ? (
@@ -169,6 +177,9 @@ const artistCoverHeight = 350
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  controls: {
+    marginTop: 20,
   },
   header: {
     position: 'absolute',

@@ -15,10 +15,11 @@ import equal from 'fast-deep-equal/es6/react'
 
 const TitleTextSong = React.memo<{
   contextId?: string
-  queueId: number
+  trackId: string
+  queuePos: number
   title?: string
-}>(({ contextId, queueId, title }) => {
-  const playing = useIsPlaying(contextId, queueId)
+}>(({ contextId, trackId, queuePos, title }) => {
+  const playing = useIsPlaying(contextId, trackId, queuePos)
 
   return (
     <View style={styles.textLine}>
@@ -47,7 +48,8 @@ const TitleText = React.memo<{
 const ListItem: React.FC<{
   item: ListableItem
   contextId?: string
-  queueId?: number
+  trackId?: string
+  queuePos?: number
   onPress?: () => void
   showArt?: boolean
   showStar?: boolean
@@ -55,7 +57,7 @@ const ListItem: React.FC<{
   subtitle?: string
   style?: StyleProp<ViewStyle>
   disabled?: boolean
-}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style, disabled }) => {
+}> = ({ item, contextId, trackId, queuePos, onPress, showArt, showStar, subtitle, listStyle, style, disabled }) => {
   const navigation = useNavigation()
 
   showStar = showStar === undefined ? true : showStar
@@ -140,8 +142,8 @@ const ListItem: React.FC<{
   }
 
   let title = <></>
-  if (item.itemType === 'song' && queueId !== undefined) {
-    title = <TitleTextSong contextId={contextId} queueId={queueId} title={item.title} />
+  if (item.itemType === 'song' && trackId !== undefined && queuePos !== undefined) {
+    title = <TitleTextSong contextId={contextId} trackId={trackId} queuePos={queuePos} title={item.title} />
   } else if (item.itemType !== 'song') {
     title = <TitleText title={item.name} />
   }

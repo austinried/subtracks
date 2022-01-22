@@ -17,7 +17,8 @@ const SongRenderItem: React.FC<{
 }> = ({ item }) => (
   <ListItem
     item={item.song}
-    queueId={item.i}
+    trackId={item.song.id}
+    queuePos={item.i}
     onPress={item.onPress}
     showArt={true}
     style={styles.listItem}

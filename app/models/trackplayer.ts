@@ -15,4 +15,4 @@ export type Progress = {
   buffered: number
 }
 
-export type QueueContextType = 'album' | 'playlist' | 'song' | 'artist'
+export type QueueContextType = 'album' | 'playlist' | 'song' | 'artist' | 'top-songs'

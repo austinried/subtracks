@@ -9,8 +9,7 @@ import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { withSuspenseMemo } from './withSuspense'
 
 const ListPlayerControls = withSuspenseMemo<{
-  songs: Song[]
-  listType: 'album' | 'playlist'
+  listType: 'album' | 'playlist' | 'artist'
   style?: StyleProp<ViewStyle>
   play: () => void
   shuffle: () => void
