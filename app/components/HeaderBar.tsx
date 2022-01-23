@@ -48,7 +48,7 @@ const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) =
 
 const HeaderBar = React.memo<{
   title?: string
-  headerStyle?: Animated.AnimatedStyleProp<ViewStyle> | Animated.AnimatedStyleProp<ViewStyle>[]
+  headerStyle?: Animated.AnimateStyle<ViewStyle> | Animated.AnimateStyle<ViewStyle>[]
   HeaderCenter?: ReactComponentLike
   contextItem?: HeaderContextItem
 }>(({ title, headerStyle, HeaderCenter, contextItem }) => {
