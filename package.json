@@ -56,7 +56,6 @@
     "@types/jest": "^26.0.23",
     "@types/lodash.debounce": "^4.0.6",
     "@types/md5": "^2.3.0",
-    "@types/react-native": "^0.66.12",
     "@types/react-native-vector-icons": "^6.4.7",
     "@types/react-test-renderer": "^16.9.2",
     "@types/uuid": "^8.3.0",
