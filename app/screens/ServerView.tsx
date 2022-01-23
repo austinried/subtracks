@@ -206,7 +206,7 @@ const ServerView: React.FC<{
           placeholderTextColor="grey"
           selectionColor={colors.text.secondary}
           textContentType="username"
-          autoCompleteType="username"
+          autoComplete="username"
           importantForAutofill="yes"
           autoCapitalize="none"
           placeholder="demo"
@@ -219,7 +219,7 @@ const ServerView: React.FC<{
           placeholderTextColor="grey"
           selectionColor={colors.text.secondary}
           textContentType="password"
-          autoCompleteType="password"
+          autoComplete="password"
           autoCapitalize="none"
           importantForAutofill="yes"
           secureTextEntry={true}

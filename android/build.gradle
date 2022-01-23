@@ -2,24 +2,25 @@
 
 buildscript {
     ext {
-        buildToolsVersion = "30.0.3"
+        buildToolsVersion = "30.0.2"
         minSdkVersion = 21
         compileSdkVersion = 30
         targetSdkVersion = 30
-        ndkVersion = "20.1.5948944"
+        ndkVersion = "21.4.7075529"
 
         // react-native-async-storage next
         kotlinVersion = '1.4.21'
     }
     repositories {
         google()
-        jcenter()
+        mavenCentral()
+        // jcenter()
         maven {
             url 'https://plugins.gradle.org/m2/'
         }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:4.1.0")
+        classpath("com.android.tools.build:gradle:4.2.2")
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
 
@@ -45,9 +46,24 @@ allprojects {
             // Android JSC is installed from npm
             url("$rootDir/../node_modules/jsc-android/dist")
         }
-
+        mavenCentral {
+            // We don't want to fetch react-native from Maven Central as there are
+            // older versions over there.
+            content {
+                excludeGroup "com.facebook.react"
+            }
+        }
         google()
-        jcenter()
         maven { url 'https://www.jitpack.io' }
+        // remove jcenter once the following workarounds are no longer needed
+        jcenter() {
+            content {
+                // used by react-native-track-player, can remove once they use a newer exoplayer
+                includeGroup("com.linkedin.dexmaker")
+                // used by exoplayer
+                includeGroup("com.linkedin.dexmaker-mockito")
+                includeGroup("com.google.android.exoplayer")
+            }
+        }
     }
 }

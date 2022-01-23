@@ -35,7 +35,7 @@ import {
 } from '@app/subsonic/responses'
 import toast from '@app/util/toast'
 import userAgent from '@app/util/userAgent'
-import { DOMParser } from 'xmldom'
+import { DOMParser } from '@xmldom/xmldom'
 
 export class SubsonicApiError extends Error {
   method: string

@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  ignorePatterns: ['submodules/**'],
+  ignorePatterns: ['submodules/**', 'ndk/**'],
   extends: '@react-native-community',
   rules: {
     '@typescript-eslint/no-unused-vars': ['warn'],
