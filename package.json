@@ -7,7 +7,7 @@
     "android": "react-native run-android",
     "android:release": "./android/gradlew -p android assembleRelease -PsignReleaseWithDebug=true && adb install -r android/app/build/outputs/apk/release/app-release.apk && adb shell am start -n com.subtracks/.MainActivity",
     "start": "react-native start",
-    "prepare": "scripts/prepare-exoplayer-ffmpeg.sh",
+    "prepare-build": "scripts/prepare-exoplayer-ffmpeg.sh",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "license:npm": "yarn licenses generate-disclaimer --production | grep -v '^info\\s\"\\?fsevents' > android/app/src/main/assets/licenses/npm.txt",

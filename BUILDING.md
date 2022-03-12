@@ -22,7 +22,7 @@ When setting up your environment, make sure to install the following dependency 
 We also need the requirements to build ExoPlayer's ffmpeg extension for Android, which should be covered by:
 - build-essential (make, etc.)
 
-More information on building ffmpeg can be found here (this is what the `prepare` script does):
+More information on building ffmpeg can be found here (this is what the `prepare-build` script does):
 
 https://github.com/google/ExoPlayer/tree/r2.11.4/extensions/ffmpeg
 
@@ -36,7 +36,7 @@ cd subtracks
 Install the yarn packages and prepare the ExoPlayer ffmpeg extension by running the yarn script:
 ```sh
 yarn install
-yarn prepare
+yarn prepare-build
 ```
 
 ### Debug
