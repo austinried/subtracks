@@ -5,6 +5,7 @@ import create from 'zustand'
 import { persist, StateStorage } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
 import migrations from './migrations'
+import { createLibrarySlice, LibrarySlice } from './library'
 import { createMusicMapSlice, MusicMapSlice } from './musicmap'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
@@ -13,6 +14,7 @@ const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
   MusicSlice &
+  LibrarySlice &
   MusicMapSlice &
   TrackPlayerSlice &
   TrackPlayerMapSlice &
@@ -44,6 +46,7 @@ export const useStore = create<Store>(
     (set, get) => ({
       ...createSettingsSlice(set, get),
       ...createMusicSlice(set, get),
+      ...createLibrarySlice(set, get),
       ...createMusicMapSlice(set, get),
       ...createTrackPlayerSlice(set, get),
       ...createTrackPlayerMapSlice(set, get),

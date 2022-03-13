@@ -14,7 +14,8 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
-import React from 'react'
+import pick from 'lodash.pick'
+import React, { useEffect } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
@@ -67,6 +68,40 @@ const TopSongs = React.memo<{
   )
 })
 
+const ArtistAlbums = React.memo<{
+  id: string
+}>(({ id }) => {
+  const albums = useStore(store => {
+    const ids = store.entities.artistAlbums[id]
+    return ids ? pick(store.entities.albums, ids) : undefined
+  })
+  const fetchArtist = useStore(store => store.fetchLibraryArtist)
+  const albumsLayout = useLayout()
+
+  useEffect(() => {
+    if (!albums) {
+      fetchArtist(id)
+    }
+  }, [albums, fetchArtist, id])
+
+  const sortedAlbums = (albums ? Object.values(albums) : [])
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => (b.year || 0) - (a.year || 0))
+
+  const albumSize = albumsLayout.width / 2 - styles.contentContainer.paddingHorizontal / 2
+
+  return (
+    <>
+      <Header>Albums</Header>
+      <View style={styles.albums} onLayout={albumsLayout.onLayout}>
+        {sortedAlbums.map(a => (
+          <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
+        ))}
+      </View>
+    </>
+  )
+})
+
 const ArtistViewFallback = React.memo(() => (
   <GradientBackground style={styles.fallback}>
     <ActivityIndicator size="large" color={colors.accent} />
@@ -74,8 +109,14 @@ const ArtistViewFallback = React.memo(() => (
 ))
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
-  const artist = useArtistInfo(id)
-  const albumsLayout = useLayout()
+  // const artist = useArtistInfo(id)
+
+  const artist = useStore(store => store.entities.artists[id])
+  const artistInfo = useStore(store => store.entities.artistInfo[id])
+
+  const fetchArtist = useStore(store => store.fetchLibraryArtist)
+  const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)
+
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
 
@@ -91,15 +132,21 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     }
   })
 
-  const albumSize = albumsLayout.width / 2 - styles.contentContainer.paddingHorizontal / 2
+  useEffect(() => {
+    if (!artist) {
+      fetchArtist(id)
+    }
+  }, [artist, fetchArtist, id])
+
+  useEffect(() => {
+    if (!artistInfo) {
+      fetchArtistInfo(id)
+    }
+  }, [artistInfo, fetchArtistInfo, id])
 
   if (!artist) {
     return <ArtistViewFallback />
   }
-
-  const _albums = [...artist.albums]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .sort((a, b) => (b.year || 0) - (a.year || 0))
 
   return (
     <View style={styles.container}>
@@ -115,17 +162,12 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
           <Text style={styles.title}>{artist.name}</Text>
         </View>
         <View style={styles.contentContainer}>
-          {artist.topSongs.length > 0 ? (
+          {/* {artist.topSongs.length > 0 ? (
             <TopSongs songs={artist.topSongs} name={artist.name} artistId={artist.id} />
           ) : (
             <></>
-          )}
-          <Header>Albums</Header>
-          <View style={styles.albums} onLayout={albumsLayout.onLayout}>
-            {_albums.map(a => (
-              <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
-            ))}
-          </View>
+          )} */}
+          <ArtistAlbums id={id} />
         </View>
       </GradientScrollView>
     </View>

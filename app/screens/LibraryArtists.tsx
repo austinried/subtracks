@@ -1,13 +1,13 @@
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList } from '@app/hooks/list'
+import { useFetchList, useFetchList2 } from '@app/hooks/list'
 import { Artist } from '@app/models/music'
 import { ArtistFilterType } from '@app/models/settings'
 import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
@@ -21,13 +21,18 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const fetchArtists = useStore(selectMusic.fetchArtists)
-  const { list, refreshing, refresh } = useFetchList(fetchArtists)
+  const fetchArtists = useStore(store => store.fetchLibraryArtists)
+  const resetArtists = useStore(store => store.resetLibraryArtists)
+
+  const { refreshing, refresh } = useFetchList2(fetchArtists, resetArtists)
+  const artists = useStore(store => store.entities.artists)
+
   const filter = useStore(selectSettings.libraryArtistFilter)
   const setFilter = useStore(selectSettings.setLibraryArtistFiler)
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {
+    const list = Object.values(artists)
     switch (filter.type) {
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
@@ -39,7 +44,7 @@ const ArtistsList = () => {
         setSortedList([...list])
         break
     }
-  }, [list, filter])
+  }, [filter.type, artists])
 
   return (
     <View style={styles.container}>
