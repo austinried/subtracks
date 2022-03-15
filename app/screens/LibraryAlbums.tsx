@@ -2,11 +2,10 @@ import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
-import { useFetchPaginatedList } from '@app/hooks/list'
+import { useFetchPaginatedList2 } from '@app/hooks/list'
 import { Album, AlbumListItem } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { Store, useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2Type } from '@app/subsonic/params'
@@ -56,9 +55,19 @@ const filterOptions: OptionData[] = [
   // { text: 'By Genre...', value: 'byGenre' },
 ]
 
+const selectAlbumList = (store: Store) => {
+  return Object.values(store.entities.albumsList)
+    .flat()
+    .map(id => store.entities.albums[id])
+}
+
 const AlbumsList = () => {
-  const fetchAlbums = useStore(selectMusic.fetchAlbums)
-  const { list, refreshing, refresh, reset, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
+  const list = useStore(selectAlbumList)
+
+  const fetchAlbumsNextPage = useStore(store => store.fetchLibraryAlbumsNextPage)
+  const resetAlbumsList = useStore(store => store.resetLibraryAlbumsList)
+  const { refreshing, refresh, fetchNextPage } = useFetchPaginatedList2(fetchAlbumsNextPage, resetAlbumsList)
+
   const filter = useStore(selectSettings.libraryAlbumFilter)
   const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
 
@@ -67,7 +76,9 @@ const AlbumsList = () => {
   const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
 
-  useEffect(() => reset(), [reset, filter])
+  useEffect(() => {
+    refresh()
+  }, [refresh, filter])
 
   return (
     <View style={styles.container}>

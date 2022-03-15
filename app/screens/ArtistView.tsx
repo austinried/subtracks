@@ -5,7 +5,6 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
-import { useArtistInfo } from '@app/hooks/music'
 import { Album, Song } from '@app/models/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
@@ -15,7 +14,7 @@ import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
 import pick from 'lodash.pick'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
@@ -71,10 +70,16 @@ const TopSongs = React.memo<{
 const ArtistAlbums = React.memo<{
   id: string
 }>(({ id }) => {
-  const albums = useStore(store => {
-    const ids = store.entities.artistAlbums[id]
-    return ids ? pick(store.entities.albums, ids) : undefined
-  })
+  const albums = useStore(
+    useCallback(
+      store => {
+        const ids = store.entities.artistAlbums[id]
+        return ids ? pick(store.entities.albums, ids) : undefined
+      },
+      [id],
+    ),
+  )
+
   const fetchArtist = useStore(store => store.fetchLibraryArtist)
   const albumsLayout = useLayout()
 
@@ -109,10 +114,8 @@ const ArtistViewFallback = React.memo(() => (
 ))
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
-  // const artist = useArtistInfo(id)
-
-  const artist = useStore(store => store.entities.artists[id])
-  const artistInfo = useStore(store => store.entities.artistInfo[id])
+  const artist = useStore(useCallback(store => store.entities.artists[id], [id]))
+  const artistInfo = useStore(useCallback(store => store.entities.artistInfo[id], [id]))
 
   const fetchArtist = useStore(store => store.fetchLibraryArtist)
   const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)

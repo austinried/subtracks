@@ -1,6 +1,8 @@
 import { Store } from '@app/state/store'
 import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
+import { GetAlbumList2Params } from '@app/subsonic/params'
 import {
+  GetAlbumList2Response,
   GetArtistInfo2Response,
   GetArtistResponse,
   GetArtistsResponse,
@@ -17,6 +19,15 @@ export interface ById<T> {
 }
 
 export type OneToMany = ById<string[]>
+
+export interface OrderedById<T> {
+  byId: ById<T>
+  allIds: string[]
+}
+
+export interface PaginatedList {
+  [offset: number]: string[]
+}
 
 export interface Artist {
   itemType: 'artist'
@@ -111,35 +122,55 @@ function mapSong(song: ChildElement): Song {
 export type LibrarySlice = {
   entities: {
     artists: ById<Artist>
+    artistInfo: ById<ArtistInfo>
     artistAlbums: OneToMany
+    artistNameTopSongs: OneToMany
 
     albums: ById<Album>
-
-    artistInfo: ById<ArtistInfo>
-    artistNameTopSongs: OneToMany
+    albumsList: PaginatedList
+    albumsListSize: number
 
     songs: ById<Song>
   }
 
+  resetLibrary: () => void
+
   fetchLibraryArtists: () => Promise<void>
   fetchLibraryArtist: (id: string) => Promise<void>
-  resetLibraryArtists: () => Promise<void>
-  // fetchAlbums: (artistId: string) => Promise<void>
   fetchLibraryArtistInfo: (artistId: string) => Promise<void>
+  resetLibraryArtists: () => void
+
   fetchLibraryTopSongs: (artistName: string) => Promise<void>
+
+  fetchLibraryAlbumsNextPage: () => Promise<void>
+  resetLibraryAlbumsList: () => void
 }
 
+function nextOffest(list: PaginatedList): number {
+  const pages = Object.keys(list).map(k => parseInt(k, 10))
+  return pages.length > 0 ? pages.sort((a, b) => a - b)[pages.length - 1] : 0
+}
+
+const defaultEntities = () => ({
+  artists: {},
+  artistAlbums: {},
+  artistInfo: {},
+  artistNameTopSongs: {},
+
+  albums: {},
+  albumsList: {},
+  albumsListSize: 300,
+
+  songs: {},
+})
+
 export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): LibrarySlice => ({
-  entities: {
-    artists: {},
-    artistAlbums: {},
+  entities: defaultEntities(),
 
-    albums: {},
-
-    artistInfo: {},
-    artistNameTopSongs: {},
-
-    songs: {},
+  resetLibrary: () => {
+    set(store => {
+      store.entities = defaultEntities()
+    })
   },
 
   fetchLibraryArtists: async () => {
@@ -192,12 +223,12 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       produce<LibrarySlice>(state => {
         state.entities.artists[id] = artist
         state.entities.artistAlbums[id] = Object.keys(albums)
-        state.entities.albums = merge(state.entities.albums, albums)
+        merge(state.entities.albums, albums)
       }),
     )
   },
 
-  resetLibraryArtists: async () => {
+  resetLibraryArtists: () => {
     set(
       produce<LibrarySlice>(state => {
         state.entities.artists = {}
@@ -245,8 +276,77 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
 
     set(
       produce<LibrarySlice>(state => {
-        state.entities.songs = merge(state.entities.songs, topSongs)
+        merge(state.entities.songs, topSongs)
         state.entities.artistNameTopSongs[artistName] = topSongs.map(s => s.id)
+      }),
+    )
+  },
+
+  fetchLibraryAlbumsNextPage: async () => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const filter = get().settings.screens.library.albums
+    const size = get().entities.albumsListSize
+    const offset = nextOffest(get().entities.albumsList)
+
+    let params: GetAlbumList2Params
+    switch (filter.type) {
+      case 'byYear':
+        params = {
+          size,
+          offset,
+          type: filter.type,
+          fromYear: filter.fromYear,
+          toYear: filter.toYear,
+        }
+        break
+      case 'byGenre':
+        params = {
+          size,
+          offset,
+          type: filter.type,
+          genre: filter.genre,
+        }
+        break
+      default:
+        params = {
+          size,
+          offset,
+          type: filter.type,
+        }
+        break
+    }
+
+    let response: SubsonicResponse<GetAlbumList2Response>
+    try {
+      response = await client.getAlbumList2(params)
+    } catch {
+      return
+    }
+
+    const albums = response.data.albums.reduce((acc, value) => {
+      acc[value.id] = mapAlbum(value)
+      return acc
+    }, {} as ById<Album>)
+
+    set(
+      produce<LibrarySlice>(state => {
+        if (response.data.albums.length <= 0) {
+          return
+        }
+        merge(state.entities.albums, albums)
+        state.entities.albumsList[offset + size] = response.data.albums.map(a => a.id)
+      }),
+    )
+  },
+
+  resetLibraryAlbumsList: () => {
+    set(
+      produce<LibrarySlice>(state => {
+        state.entities.albumsList = {}
       }),
     )
   },

@@ -117,6 +117,8 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
         state.client = new SubsonicApiClient(newActiveServer)
       }),
     )
+
+    get().resetLibrary()
   },
 
   getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
