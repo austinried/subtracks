@@ -23,9 +23,7 @@ const selectArtists = (store: Store) => store.entities.artists
 
 const ArtistsList = () => {
   const fetchArtists = useStore(store => store.fetchLibraryArtists)
-  const resetArtists = useStore(store => store.resetLibraryArtists)
-
-  const { refreshing, refresh } = useFetchList2(fetchArtists, resetArtists)
+  const { refreshing, refresh } = useFetchList2(fetchArtists)
   const artists = useStore(selectArtists)
 
   const filter = useStore(selectSettings.libraryArtistFilter)

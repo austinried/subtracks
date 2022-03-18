@@ -6,7 +6,7 @@ import NothingHere from '@app/components/NothingHere'
 import { useFetchPaginatedList } from '@app/hooks/list'
 import { useActiveServerRefresh } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
-import { Album } from '@app/state/library'
+import { Album, mapById } from '@app/state/library'
 import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
 import { Store, useStore } from '@app/state/store'
@@ -56,7 +56,7 @@ const Category = React.memo<{
   type: string
 }>(({ type }) => {
   const list = useHomeStore(useCallback(store => store.lists[type] || [], [type]))
-  const albums = useStore(useCallback(store => list.map(id => store.entities.albums[id]), [list]))
+  const albums = useStore(useCallback(store => mapById(store.entities.albums, list), [list]))
 
   const Albums = () => (
     <ScrollView

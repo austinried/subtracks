@@ -4,6 +4,7 @@ import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
 import { Album, AlbumListItem } from '@app/models/music'
+import { mapById } from '@app/state/library'
 import { selectSettings } from '@app/state/settings'
 import { Store, useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -96,7 +97,7 @@ const AlbumsList = () => {
   )
 
   const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchPage, 300)
-  const albums = useStore(useCallback(store => list.map(id => store.entities.albums[id]), [list]))
+  const albums = useStore(useCallback(store => mapById(store.entities.albums, list), [list]))
 
   const layout = useWindowDimensions()
 

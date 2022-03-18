@@ -20,6 +20,7 @@ import {
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import produce from 'immer'
+import { WritableDraft } from 'immer/dist/types/types-external'
 import merge from 'lodash.merge'
 import pick from 'lodash.pick'
 import { GetState, SetState } from 'zustand'
@@ -175,13 +176,12 @@ export type LibrarySlice = {
     songs: ById<Song>
   }
 
-  resetLibrary: () => void
+  resetLibrary: (state?: WritableDraft<Store>) => void
 
   fetchLibraryArtists: () => Promise<void>
   fetchLibraryArtist: (id: string) => Promise<void>
   fetchLibraryArtistInfo: (artistId: string) => Promise<void>
   fetchLibraryArtistTopSongs: (artistName: string) => Promise<void>
-  resetLibraryArtists: () => void
 
   fetchLibraryAlbum: (id: string) => Promise<void>
 
@@ -205,6 +205,10 @@ function mergeById<T extends { [id: string]: unknown }>(object: T, source: T): v
   merge(object, source)
 }
 
+export function mapById<T>(object: ById<T>, ids: string[]): T[] {
+  return ids.map(id => object[id]).filter(a => a !== undefined)
+}
+
 const defaultEntities = () => ({
   artists: {},
   artistAlbums: {},
@@ -225,7 +229,11 @@ const defaultEntities = () => ({
 export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): LibrarySlice => ({
   entities: defaultEntities(),
 
-  resetLibrary: () => {
+  resetLibrary: state => {
+    if (state) {
+      state.entities = defaultEntities()
+      return
+    }
     set(store => {
       store.entities = defaultEntities()
     })
@@ -277,15 +285,6 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
         state.entities.artists[id] = artist
         state.entities.artistAlbums[id] = mapId(albums)
         mergeById(state.entities.albums, albumsById)
-      }),
-    )
-  },
-
-  resetLibraryArtists: () => {
-    set(
-      produce<LibrarySlice>(state => {
-        state.entities.artists = {}
-        state.entities.artistAlbums = {}
       }),
     )
   },
