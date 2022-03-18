@@ -217,14 +217,6 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
 
       let queue = await get().mapSongstoTrackExts(songs)
 
-      try {
-        for (const t of queue) {
-          t.url = get().buildStreamUri(t.id)
-        }
-      } catch {
-        return
-      }
-
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
         set({ shuffleOrder })

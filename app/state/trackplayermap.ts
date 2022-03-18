@@ -17,19 +17,21 @@ export const selectTrackPlayerMap = {
 export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerMapSlice => ({
   mapSongtoTrackExt: async song => {
     let artwork = require('@res/fallback.png')
-    if (song.coverArt) {
-      const filePath = await get().fetchCoverArtFilePath(song.coverArt)
-      if (filePath) {
-        artwork = filePath
-      }
-    }
+    // if (song.coverArt) {
+    //   const filePath = await get().fetchCoverArtFilePath(song.coverArt)
+    //   if (filePath) {
+    //     artwork = filePath
+    //   }
+    // }
+
+    console.log('mapping', song.title)
 
     return {
       id: song.id,
       title: song.title,
       artist: song.artist || 'Unknown Artist',
       album: song.album || 'Unknown Album',
-      url: song.streamUri,
+      url: get().buildStreamUri(song.id),
       userAgent,
       artwork,
       coverArt: song.coverArt,

@@ -63,7 +63,7 @@ export interface Song {
   duration?: number
   starred?: Date
 
-  streamUri: string
+  // streamUri: string
   coverArt?: string
 }
 

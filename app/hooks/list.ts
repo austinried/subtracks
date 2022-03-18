@@ -48,7 +48,7 @@ export const useFetchList2 = (fetchList: () => Promise<void>, resetList: () => v
 }
 
 export const useFetchPaginatedList = <T>(
-  fetchList: (size?: number, offset?: number) => Promise<T[]>,
+  fetchList: (size: number, offset: number) => Promise<T[]>,
   pageSize: number,
 ) => {
   const [list, setList] = useState<T[]>([])
@@ -93,33 +93,4 @@ export const useFetchPaginatedList = <T>(
   }, [offset, pageSize, fetchList, list])
 
   return { list, refreshing, refresh, reset, fetchNextPage }
-}
-
-export const useFetchPaginatedList2 = (fetchNextListPage: () => Promise<void>, resetList: () => void) => {
-  const [refreshing, setRefreshing] = useState(false)
-
-  const refresh = useCallback(async () => {
-    setRefreshing(true)
-
-    resetList()
-    await fetchNextListPage()
-
-    setRefreshing(false)
-  }, [fetchNextListPage, resetList])
-
-  useActiveServerRefresh(
-    useCallback(async () => {
-      await refresh()
-    }, [refresh]),
-  )
-
-  const fetchNextPage = useCallback(async () => {
-    setRefreshing(true)
-
-    await fetchNextListPage()
-
-    setRefreshing(false)
-  }, [fetchNextListPage])
-
-  return { refreshing, refresh, fetchNextPage }
 }

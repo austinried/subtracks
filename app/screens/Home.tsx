@@ -3,17 +3,21 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
+import { useFetchPaginatedList } from '@app/hooks/list'
 import { useActiveServerRefresh } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
+import { Album } from '@app/state/library'
 import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { Store, useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumListType } from '@app/subsonic/params'
+import { GetAlbumList2Params, GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback } from 'react'
+import produce from 'immer'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+import create from 'zustand'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recently Played',
@@ -49,9 +53,11 @@ const AlbumItem = React.memo<{
 })
 
 const Category = React.memo<{
-  name?: string
-  data: AlbumListItem[]
-}>(({ name, data }) => {
+  type: string
+}>(({ type }) => {
+  const list = useHomeStore(useCallback(store => store.lists[type] || [], [type]))
+  const albums = useStore(useCallback(store => list.map(id => store.entities.albums[id]), [list]))
+
   const Albums = () => (
     <ScrollView
       horizontal={true}
@@ -59,7 +65,7 @@ const Category = React.memo<{
       overScrollMode={'never'}
       style={styles.artScroll}
       contentContainerStyle={styles.artScrollContent}>
-      {data.map(album => (
+      {albums.map(album => (
         <AlbumItem key={album.id} album={album} />
       ))}
     </ScrollView>
@@ -73,24 +79,55 @@ const Category = React.memo<{
 
   return (
     <View style={styles.category}>
-      <Header style={styles.header}>{name}</Header>
-      {data.length > 0 ? <Albums /> : <Nothing />}
+      <Header style={styles.header}>{titles[type as GetAlbumListType] || ''}</Header>
+      {albums.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )
 })
 
+interface HomeState {
+  lists: { [type: string]: string[] }
+  setList: (type: string, list: string[]) => void
+}
+
+const useHomeStore = create<HomeState>((set, get) => ({
+  lists: {},
+
+  setList: (type, list) => {
+    set(
+      produce<HomeState>(state => {
+        state.lists[type] = list
+      }),
+    )
+  },
+}))
+
 const Home = () => {
+  const [refreshing, setRefreshing] = useState(false)
   const types = useStore(selectSettings.homeLists)
-  const lists = useStore(selectMusic.homeLists)
-  const updating = useStore(selectMusic.homeListsUpdating)
-  const update = useStore(selectMusic.fetchHomeLists)
-  const clear = useStore(selectMusic.clearHomeLists)
+  const fetchAlbumList = useStore(store => store.fetchLibraryAlbumList)
+  const setList = useHomeStore(store => store.setList)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+
+    await Promise.all(
+      types.map(async type => {
+        console.log('fetch', type)
+        const ids = await fetchAlbumList({ type: type as GetAlbumList2TypeBase, size: 20, offset: 0 })
+        console.log('set', type)
+        setList(type, ids)
+      }),
+    )
+
+    setRefreshing(false)
+  }, [fetchAlbumList, setList, types])
 
   useActiveServerRefresh(
     useCallback(() => {
-      clear()
-      update()
-    }, [clear, update]),
+      types.forEach(type => setList(type, []))
+      refresh()
+    }, [refresh, setList, types]),
   )
 
   return (
@@ -99,15 +136,15 @@ const Home = () => {
       contentContainerStyle={styles.scrollContentContainer}
       refreshControl={
         <RefreshControl
-          refreshing={updating}
-          onRefresh={update}
+          refreshing={refreshing}
+          onRefresh={refresh}
           colors={[colors.accent, colors.accentLow]}
           progressViewOffset={StatusBar.currentHeight}
         />
       }>
       <View style={styles.content}>
         {types.map(type => (
-          <Category key={type} name={titles[type as GetAlbumListType]} data={type in lists ? lists[type] : []} />
+          <Category key={type} type={type} />
         ))}
       </View>
     </GradientScrollView>

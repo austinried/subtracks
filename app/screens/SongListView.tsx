@@ -6,12 +6,13 @@ import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
-import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
+import { Album, AlbumWithSongs, PlaylistListItem, PlaylistWithSongs, Song } from '@app/models/music'
 import { useStore } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import React, { useState } from 'react'
+import pick from 'lodash.pick'
+import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 type SongListType = 'album' | 'playlist'
@@ -46,18 +47,19 @@ const SongRenderItem: React.FC<{
 const SongListDetails = React.memo<{
   title: string
   type: SongListType
-  songList?: AlbumWithSongs | PlaylistWithSongs
+  songList?: Album | PlaylistListItem
+  songs?: Song[]
   subtitle?: string
-}>(({ title, songList, subtitle, type }) => {
+}>(({ title, songList, songs, subtitle, type }) => {
   const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
   const setQueue = useStore(selectTrackPlayer.setQueue)
 
-  if (!songList) {
+  if (!songList || !songs) {
     return <SongListDetailsFallback />
   }
 
-  const _songs = [...songList.songs]
+  const _songs = [...songs]
   let typeName = ''
 
   if (type === 'album') {
@@ -106,7 +108,7 @@ const SongListDetails = React.memo<{
             <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-            {songList.songs.length > 0 && (
+            {songs.length > 0 && (
               <ListPlayerControls
                 style={styles.controls}
                 songs={_songs}
@@ -135,11 +137,32 @@ const AlbumView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const album = useAlbumWithSongs(id)
+  // const album = useAlbumWithSongs(id)
+
+  const album = useStore(useCallback(store => store.entities.albums[id], [id]))
+  const songs = useStore(
+    useCallback(
+      store => {
+        const ids = store.entities.albumSongs[id]
+        return ids ? ids.map(i => store.entities.songs[i]) : undefined
+      },
+      [id],
+    ),
+  )
+
+  const fetchAlbum = useStore(store => store.fetchLibraryAlbum)
+
+  useEffect(() => {
+    if (!album || !songs) {
+      fetchAlbum(id)
+    }
+  }, [album, fetchAlbum, id, songs])
+
   return (
     <SongListDetails
       title={title}
       songList={album}
+      songs={songs}
       subtitle={(album?.artist || '') + (album?.year ? ' • ' + album?.year : '')}
       type="album"
     />

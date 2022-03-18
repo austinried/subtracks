@@ -1,12 +1,22 @@
 import { Store } from '@app/state/store'
-import { AlbumID3Element, ArtistID3Element, ArtistInfo2Element, ChildElement } from '@app/subsonic/elements'
-import { GetAlbumList2Params } from '@app/subsonic/params'
+import {
+  AlbumID3Element,
+  ArtistID3Element,
+  ArtistInfo2Element,
+  ChildElement,
+  PlaylistElement,
+} from '@app/subsonic/elements'
+import { GetAlbumList2Params, Search3Params, StarParams } from '@app/subsonic/params'
 import {
   GetAlbumList2Response,
+  GetAlbumResponse,
   GetArtistInfo2Response,
   GetArtistResponse,
   GetArtistsResponse,
+  GetPlaylistResponse,
+  GetPlaylistsResponse,
   GetTopSongsResponse,
+  Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import produce from 'immer'
@@ -54,6 +64,14 @@ export interface Album {
   year?: number
 }
 
+export interface Playlist {
+  itemType: 'playlist'
+  id: string
+  name: string
+  comment?: string
+  coverArt?: string
+}
+
 export interface Song {
   itemType: 'song'
   id: string
@@ -66,9 +84,13 @@ export interface Song {
   discNumber?: number
   duration?: number
   starred?: Date
-
-  // streamUri: string
   coverArt?: string
+}
+
+export interface SearchResults {
+  artists: string[]
+  albums: string[]
+  songs: string[]
 }
 
 function mapArtist(artist: ArtistID3Element): Artist {
@@ -102,6 +124,16 @@ function mapAlbum(album: AlbumID3Element): Album {
   }
 }
 
+function mapPlaylist(playlist: PlaylistElement): Playlist {
+  return {
+    itemType: 'playlist',
+    id: playlist.id,
+    name: playlist.name,
+    comment: playlist.comment,
+    coverArt: playlist.coverArt,
+  }
+}
+
 function mapSong(song: ChildElement): Song {
   return {
     itemType: 'song',
@@ -119,6 +151,10 @@ function mapSong(song: ChildElement): Song {
   }
 }
 
+function mapId(entities: { id: string }[]): string[] {
+  return entities.map(e => e.id)
+}
+
 export type LibrarySlice = {
   entities: {
     artists: ById<Artist>
@@ -127,8 +163,14 @@ export type LibrarySlice = {
     artistNameTopSongs: OneToMany
 
     albums: ById<Album>
+    albumSongs: OneToMany
+
+    // todo: remove these and store in component state
     albumsList: PaginatedList
     albumsListSize: number
+
+    playlists: ById<Playlist>
+    playlistSongs: OneToMany
 
     songs: ById<Song>
   }
@@ -138,17 +180,29 @@ export type LibrarySlice = {
   fetchLibraryArtists: () => Promise<void>
   fetchLibraryArtist: (id: string) => Promise<void>
   fetchLibraryArtistInfo: (artistId: string) => Promise<void>
+  fetchLibraryArtistTopSongs: (artistName: string) => Promise<void>
   resetLibraryArtists: () => void
 
-  fetchLibraryTopSongs: (artistName: string) => Promise<void>
+  fetchLibraryAlbum: (id: string) => Promise<void>
 
-  fetchLibraryAlbumsNextPage: () => Promise<void>
-  resetLibraryAlbumsList: () => void
+  fetchLibraryPlaylists: () => Promise<void>
+  fetchLibraryPlaylist: (id: string) => Promise<void>
+
+  fetchLibraryAlbumList: (params: GetAlbumList2Params) => Promise<string[]>
+  fetchLibrarySearchResults: (params: Search3Params) => Promise<SearchResults>
+  star: (params: StarParams) => Promise<void>
+  unstar: (params: StarParams) => Promise<void>
 }
 
-function nextOffest(list: PaginatedList): number {
-  const pages = Object.keys(list).map(k => parseInt(k, 10))
-  return pages.length > 0 ? pages.sort((a, b) => a - b)[pages.length - 1] : 0
+function reduceById<T extends { id: string }>(collection: T[]): ById<T> {
+  return collection.reduce((acc, value) => {
+    acc[value.id] = value
+    return acc
+  }, {} as ById<T>)
+}
+
+function mergeById<T extends { [id: string]: unknown }>(object: T, source: T): void {
+  merge(object, source)
 }
 
 const defaultEntities = () => ({
@@ -160,6 +214,10 @@ const defaultEntities = () => ({
   albums: {},
   albumsList: {},
   albumsListSize: 300,
+  albumSongs: {},
+
+  playlists: {},
+  playlistSongs: {},
 
   songs: {},
 })
@@ -186,15 +244,13 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       return
     }
 
-    const artists = response.data.artists.reduce((acc, value) => {
-      acc[value.id] = mapArtist(value)
-      return acc
-    }, {} as ById<Artist>)
+    const artists = response.data.artists.map(mapArtist)
+    const artistsById = reduceById(artists)
 
     set(
       produce<LibrarySlice>(state => {
-        state.entities.artists = artists
-        state.entities.artistAlbums = pick(state.entities.artistAlbums, Object.keys(artists))
+        state.entities.artists = artistsById
+        state.entities.artistAlbums = pick(state.entities.artistAlbums, mapId(artists))
       }),
     )
   },
@@ -212,18 +268,15 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       return
     }
 
-    const albums = response.data.albums.reduce((acc, value) => {
-      acc[value.id] = mapAlbum(value)
-      return acc
-    }, {} as ById<Album>)
-
     const artist = mapArtist(response.data.artist)
+    const albums = response.data.albums.map(mapAlbum)
+    const albumsById = reduceById(albums)
 
     set(
       produce<LibrarySlice>(state => {
         state.entities.artists[id] = artist
-        state.entities.artistAlbums[id] = Object.keys(albums)
-        merge(state.entities.albums, albums)
+        state.entities.artistAlbums[id] = mapId(albums)
+        mergeById(state.entities.albums, albumsById)
       }),
     )
   },
@@ -259,7 +312,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryTopSongs: async artistName => {
+  fetchLibraryArtistTopSongs: async artistName => {
     const client = get().client
     if (!client) {
       return
@@ -273,80 +326,200 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     }
 
     const topSongs = response.data.songs.map(mapSong)
+    const topSongsById = reduceById(topSongs)
 
     set(
       produce<LibrarySlice>(state => {
-        merge(state.entities.songs, topSongs)
-        state.entities.artistNameTopSongs[artistName] = topSongs.map(s => s.id)
+        mergeById(state.entities.songs, topSongsById)
+        state.entities.artistNameTopSongs[artistName] = mapId(topSongs)
       }),
     )
   },
 
-  fetchLibraryAlbumsNextPage: async () => {
+  fetchLibraryAlbum: async id => {
     const client = get().client
     if (!client) {
       return
     }
 
-    const filter = get().settings.screens.library.albums
-    const size = get().entities.albumsListSize
-    const offset = nextOffest(get().entities.albumsList)
+    let response: SubsonicResponse<GetAlbumResponse>
+    try {
+      response = await client.getAlbum({ id })
+    } catch {
+      return
+    }
 
-    let params: GetAlbumList2Params
-    switch (filter.type) {
-      case 'byYear':
-        params = {
-          size,
-          offset,
-          type: filter.type,
-          fromYear: filter.fromYear,
-          toYear: filter.toYear,
-        }
-        break
-      case 'byGenre':
-        params = {
-          size,
-          offset,
-          type: filter.type,
-          genre: filter.genre,
-        }
-        break
-      default:
-        params = {
-          size,
-          offset,
-          type: filter.type,
-        }
-        break
+    const album = mapAlbum(response.data.album)
+    const songs = response.data.songs.map(mapSong)
+    const songsById = reduceById(songs)
+
+    set(
+      produce<LibrarySlice>(state => {
+        state.entities.albums[id] = album
+        state.entities.albumSongs[id] = mapId(songs)
+        mergeById(state.entities.songs, songsById)
+      }),
+    )
+  },
+
+  fetchLibraryPlaylists: async () => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    let response: SubsonicResponse<GetPlaylistsResponse>
+    try {
+      response = await client.getPlaylists()
+    } catch {
+      return
+    }
+
+    const playlists = response.data.playlists.map(mapPlaylist)
+    const playlistsById = reduceById(playlists)
+
+    set(
+      produce<LibrarySlice>(state => {
+        state.entities.playlists = playlistsById
+        state.entities.playlistSongs = pick(state.entities.playlistSongs, mapId(playlists))
+      }),
+    )
+  },
+
+  fetchLibraryPlaylist: async id => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    let response: SubsonicResponse<GetPlaylistResponse>
+    try {
+      response = await client.getPlaylist({ id })
+    } catch {
+      return
+    }
+
+    const playlist = mapPlaylist(response.data.playlist)
+    const songs = response.data.playlist.songs.map(mapSong)
+    const songsById = reduceById(songs)
+
+    set(
+      produce<LibrarySlice>(state => {
+        state.entities.playlists[id] = playlist
+        state.entities.playlistSongs[id] = mapId(songs)
+        mergeById(state.entities.songs, songsById)
+      }),
+    )
+  },
+
+  fetchLibraryAlbumList: async params => {
+    const client = get().client
+    if (!client) {
+      return []
     }
 
     let response: SubsonicResponse<GetAlbumList2Response>
     try {
       response = await client.getAlbumList2(params)
     } catch {
-      return
+      return []
     }
 
-    const albums = response.data.albums.reduce((acc, value) => {
-      acc[value.id] = mapAlbum(value)
-      return acc
-    }, {} as ById<Album>)
+    const albums = response.data.albums.map(mapAlbum)
+    const albumsById = reduceById(albums)
 
     set(
       produce<LibrarySlice>(state => {
-        if (response.data.albums.length <= 0) {
-          return
+        mergeById(state.entities.albums, albumsById)
+      }),
+    )
+
+    return mapId(albums)
+  },
+
+  fetchLibrarySearchResults: async params => {
+    const empty = { artists: [], albums: [], songs: [] }
+
+    const client = get().client
+    if (!client) {
+      return empty
+    }
+
+    let response: SubsonicResponse<Search3Response>
+    try {
+      response = await client.search3(params)
+    } catch {
+      return empty
+    }
+
+    const artists = response.data.artists.map(mapArtist)
+    const artistsById = reduceById(artists)
+    const albums = response.data.albums.map(mapAlbum)
+    const albumsById = reduceById(albums)
+    const songs = response.data.songs.map(mapSong)
+    const songsById = reduceById(songs)
+
+    set(
+      produce<LibrarySlice>(state => {
+        mergeById(state.entities.artists, artistsById)
+        mergeById(state.entities.albums, albumsById)
+        mergeById(state.entities.songs, songsById)
+      }),
+    )
+
+    return {
+      artists: mapId(artists),
+      albums: mapId(albums),
+      songs: mapId(songs),
+    }
+  },
+
+  star: async params => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    try {
+      await client.star(params)
+    } catch {
+      return
+    }
+
+    set(
+      produce<LibrarySlice>(state => {
+        if (params.id) {
+          state.entities.songs[params.id].starred = new Date()
+        } else if (params.albumId) {
+          state.entities.albums[params.albumId].starred = new Date()
+        } else if (params.artistId) {
+          state.entities.artists[params.artistId].starred = new Date()
         }
-        merge(state.entities.albums, albums)
-        state.entities.albumsList[offset + size] = response.data.albums.map(a => a.id)
       }),
     )
   },
 
-  resetLibraryAlbumsList: () => {
+  unstar: async params => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    try {
+      await client.unstar(params)
+    } catch {
+      return
+    }
+
     set(
       produce<LibrarySlice>(state => {
-        state.entities.albumsList = {}
+        if (params.id) {
+          state.entities.songs[params.id].starred = undefined
+        } else if (params.albumId) {
+          state.entities.albums[params.albumId].starred = undefined
+        } else if (params.artistId) {
+          state.entities.artists[params.artistId].starred = undefined
+        }
       }),
     )
   },
