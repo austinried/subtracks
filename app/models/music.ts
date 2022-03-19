@@ -21,12 +21,6 @@ export interface Album extends AlbumListItem {
   year?: number
 }
 
-export interface SearchResults {
-  artists: Artist[]
-  albums: AlbumListItem[]
-  songs: Song[]
-}
-
 export interface PlaylistListItem {
   itemType: 'playlist'
   id: string

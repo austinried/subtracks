@@ -6,6 +6,12 @@ enableScreens()
 
 import { LogBox } from 'react-native'
 LogBox.ignoreLogs(["The action 'POP_TO_TOP'"])
+LogBox.ignoreLogs([
+  '`new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.',
+])
+LogBox.ignoreLogs([
+  '`new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.',
+])
 
 import { AppRegistry } from 'react-native'
 import App from '@app/App'

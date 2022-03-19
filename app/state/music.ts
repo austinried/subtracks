@@ -1,23 +1,10 @@
-import { AlbumListItem, Artist, PlaylistListItem, SearchResults, StarrableItemType } from '@app/models/music'
+import { StarrableItemType } from '@app/models/music'
 import { Store } from '@app/state/store'
-import { GetAlbumList2Params, Search3Params, StarParams } from '@app/subsonic/params'
+import { StarParams } from '@app/subsonic/params'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
 export type MusicSlice = {
-  //
-  // lists-style state
-  //
-  fetchArtists: (size?: number, offset?: number) => Promise<Artist[]>
-  fetchPlaylists: () => Promise<PlaylistListItem[]>
-  fetchAlbums: () => Promise<AlbumListItem[]>
-  fetchSearchResults: (
-    query: string,
-    type?: 'album' | 'song' | 'artist',
-    size?: number,
-    offset?: number,
-  ) => Promise<SearchResults>
-
   //
   // actions, etc.
   //
@@ -33,11 +20,6 @@ export type MusicSlice = {
 }
 
 export const selectMusic = {
-  fetchArtists: (store: MusicSlice) => store.fetchArtists,
-  fetchPlaylists: (store: MusicSlice) => store.fetchPlaylists,
-  fetchAlbums: (store: MusicSlice) => store.fetchAlbums,
-  fetchSearchResults: (store: MusicSlice) => store.fetchSearchResults,
-
   starItem: (store: MusicSlice) => store.starItem,
 }
 
@@ -55,141 +37,6 @@ function reduceStarred(
 }
 
 export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): MusicSlice => ({
-  fetchArtists: async () => {
-    const client = get().client
-    if (!client) {
-      return []
-    }
-
-    try {
-      const response = await client.getArtists()
-      const artists = response.data.artists.map(get().mapArtistID3toArtist)
-
-      set(
-        produce<MusicSlice>(state => {
-          state.starredArtists = reduceStarred(state.starredArtists, artists)
-        }),
-      )
-
-      return artists
-    } catch {
-      return []
-    }
-  },
-
-  fetchPlaylists: async () => {
-    const client = get().client
-    if (!client) {
-      return []
-    }
-
-    try {
-      const response = await client.getPlaylists()
-      return response.data.playlists.map(get().mapPlaylistListItem)
-    } catch {
-      return []
-    }
-  },
-
-  fetchAlbums: async (size = 500, offset = 0) => {
-    const client = get().client
-    if (!client) {
-      return []
-    }
-
-    try {
-      const filter = get().settings.screens.library.albums
-
-      let params: GetAlbumList2Params
-      switch (filter.type) {
-        case 'byYear':
-          params = {
-            size,
-            offset,
-            type: filter.type,
-            fromYear: filter.fromYear,
-            toYear: filter.toYear,
-          }
-          break
-        case 'byGenre':
-          params = {
-            size,
-            offset,
-            type: filter.type,
-            genre: filter.genre,
-          }
-          break
-        default:
-          params = {
-            size,
-            offset,
-            type: filter.type,
-          }
-          break
-      }
-
-      const response = await client.getAlbumList2(params)
-      const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
-
-      set(
-        produce<MusicSlice>(state => {
-          state.starredAlbums = reduceStarred(state.starredAlbums, albums)
-        }),
-      )
-
-      return albums
-    } catch {
-      return []
-    }
-  },
-
-  fetchSearchResults: async (query, type, size, offset) => {
-    if (query.length < 2) {
-      return { artists: [], albums: [], songs: [] }
-    }
-
-    const client = get().client
-    if (!client) {
-      return { artists: [], albums: [], songs: [] }
-    }
-
-    try {
-      const params: Search3Params = { query }
-      if (type === 'album') {
-        params.albumCount = size
-        params.albumOffset = offset
-      } else if (type === 'artist') {
-        params.artistCount = size
-        params.artistOffset = offset
-      } else if (type === 'song') {
-        params.songCount = size
-        params.songOffset = offset
-      } else {
-        params.albumCount = 5
-        params.artistCount = 5
-        params.songCount = 5
-      }
-
-      const response = await client.search3(params)
-
-      const artists = response.data.artists.map(get().mapArtistID3toArtist)
-      const albums = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
-      const songs = await get().mapChildrenToSongs(response.data.songs)
-
-      set(
-        produce<MusicSlice>(state => {
-          state.starredSongs = reduceStarred(state.starredSongs, songs)
-          state.starredArtists = reduceStarred(state.starredArtists, artists)
-          state.starredAlbums = reduceStarred(state.starredAlbums, albums)
-        }),
-      )
-
-      return { artists, albums, songs }
-    } catch {
-      return { artists: [], albums: [], songs: [] }
-    }
-  },
-
   starredSongs: {},
   starredAlbums: {},
   starredArtists: {},
