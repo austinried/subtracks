@@ -17,14 +17,12 @@ export const selectTrackPlayerMap = {
 export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerMapSlice => ({
   mapSongtoTrackExt: async song => {
     let artwork = require('@res/fallback.png')
-    // if (song.coverArt) {
-    //   const filePath = await get().fetchCoverArtFilePath(song.coverArt)
-    //   if (filePath) {
-    //     artwork = filePath
-    //   }
-    // }
-
-    console.log('mapping', song.title)
+    if (song.coverArt) {
+      const filePath = await get().fetchCoverArtFilePath(song.coverArt)
+      if (filePath) {
+        artwork = filePath
+      }
+    }
 
     return {
       id: song.id,

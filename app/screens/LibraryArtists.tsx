@@ -5,7 +5,7 @@ import { useFetchList2 } from '@app/hooks/list'
 import { Artist } from '@app/models/music'
 import { ArtistFilterType } from '@app/models/settings'
 import { selectSettings } from '@app/state/settings'
-import { Store, useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 
@@ -19,12 +19,10 @@ const filterOptions: OptionData[] = [
   { text: 'Random', value: 'random' },
 ]
 
-const selectArtists = (store: Store) => store.entities.artists
-
 const ArtistsList = () => {
   const fetchArtists = useStore(store => store.fetchLibraryArtists)
   const { refreshing, refresh } = useFetchList2(fetchArtists)
-  const artists = useStore(selectArtists)
+  const artists = useStoreDeep(store => store.entities.artists)
 
   const filter = useStore(selectSettings.libraryArtistFilter)
   const setFilter = useStore(selectSettings.setLibraryArtistFiler)

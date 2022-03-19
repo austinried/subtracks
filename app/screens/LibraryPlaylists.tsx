@@ -1,10 +1,9 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList, useFetchList2 } from '@app/hooks/list'
+import { useFetchList2 } from '@app/hooks/list'
 import { PlaylistListItem } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
-import React, { useCallback, useState } from 'react'
+import { useStore, useStoreDeep } from '@app/state/store'
+import React from 'react'
 import { StyleSheet } from 'react-native'
 
 const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
@@ -14,7 +13,7 @@ const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
 const PlaylistsList = () => {
   const fetchPlaylists = useStore(store => store.fetchLibraryPlaylists)
   const { refreshing, refresh } = useFetchList2(fetchPlaylists)
-  const playlists = useStore(store => store.entities.playlists)
+  const playlists = useStoreDeep(store => store.entities.playlists)
 
   return (
     <GradientFlatList

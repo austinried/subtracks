@@ -1,10 +1,10 @@
 import { selectMusic } from '@app/state/music'
-import { Store, useStore } from '@app/state/store'
+import { Store, useStore, useStoreDeep } from '@app/state/store'
 import { useCallback, useEffect } from 'react'
 
 export const useArtistInfo = (id: string) => {
-  const artistInfo = useStore(useCallback((state: Store) => state.artistInfo[id], [id]))
-  const fetchArtistInfo = useStore(selectMusic.fetchArtistInfo)
+  const artistInfo = useStoreDeep(useCallback(store => store.entities.artistInfo[id], [id]))
+  const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)
 
   useEffect(() => {
     if (!artistInfo) {

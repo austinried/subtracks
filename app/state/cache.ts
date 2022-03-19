@@ -20,16 +20,6 @@ export type CacheDirsByServer = Record<string, Record<CacheItemTypeKey, string>>
 export type CacheFilesByServer = Record<string, Record<CacheItemTypeKey, Record<string, CacheFile>>>
 export type CacheRequestsByServer = Record<string, Record<CacheItemTypeKey, Record<string, CacheRequest>>>
 
-// export type DownloadedItemsByServer = Record<
-//   string,
-//   {
-//     songs: { [songId: string]: DownloadedSong }
-//     albums: { [albumId: string]: DownloadedAlbum }
-//     artists: { [songId: string]: DownloadedArtist }
-//     playlists: { [playlistId: string]: DownloadedPlaylist }
-//   }
-// >
-
 export type CacheSlice = {
   cacheItem: (
     key: CacheItemTypeKey,

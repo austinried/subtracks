@@ -5,13 +5,12 @@ import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import { useCoverArtFile } from '@app/hooks/cache'
-import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
-import { Album, AlbumWithSongs, PlaylistListItem, PlaylistWithSongs, Song } from '@app/models/music'
-import { useStore } from '@app/state/store'
+import { usePlaylistWithSongs } from '@app/hooks/music'
+import { Album, PlaylistListItem, Song } from '@app/models/music'
+import { useStore, useStoreDeep } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import pick from 'lodash.pick'
 import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
@@ -139,8 +138,8 @@ const AlbumView = React.memo<{
 }>(({ id, title }) => {
   // const album = useAlbumWithSongs(id)
 
-  const album = useStore(useCallback(store => store.entities.albums[id], [id]))
-  const songs = useStore(
+  const album = useStoreDeep(useCallback(store => store.entities.albums[id], [id]))
+  const songs = useStoreDeep(
     useCallback(
       store => {
         const ids = store.entities.albumSongs[id]

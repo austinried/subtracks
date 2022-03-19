@@ -1,9 +1,7 @@
 import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
-import { ArtistInfo } from '@app/models/music'
 import { selectCache } from '@app/state/cache'
-import { selectMusic } from '@app/state/music'
 import { selectSettings } from '@app/state/settings'
-import { useStore, Store } from '@app/state/store'
+import { Store, useStore, useStoreDeep } from '@app/state/store'
 import { useCallback, useEffect } from 'react'
 
 const useFileRequest = (key: CacheItemTypeKey, id: string) => {
@@ -61,28 +59,25 @@ export const useCoverArtFile = (coverArt = '-1', size: CacheImageSize = 'thumbna
 
 export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumbnail') => {
   const type: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
-  const fetchArtistInfo = useStore(selectMusic.fetchArtistInfo)
+  const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)
+  const artistInfo = useStoreDeep(store => store.entities.artistInfo[artistId])
   const { file, request } = useFileRequest(type, artistId)
   const cacheItem = useStore(selectCache.cacheItem)
 
   useEffect(() => {
+    if (!artistInfo) {
+      fetchArtistInfo(artistId)
+      return
+    }
+
     if (!file) {
       cacheItem(type, artistId, async () => {
-        let artistInfo: ArtistInfo | undefined
-        const cachedArtistInfo = useStore.getState().artistInfo[artistId]
-
-        if (cachedArtistInfo) {
-          artistInfo = cachedArtistInfo
-        } else {
-          artistInfo = await fetchArtistInfo(artistId)
-        }
-
         return type === 'artistArtThumb' ? artistInfo?.smallImageUrl : artistInfo?.largeImageUrl
       })
     }
     // intentionally leaving file out so it doesn't re-render if the request fails
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId, cacheItem, fetchArtistInfo, type])
+  }, [artistId, cacheItem, fetchArtistInfo, type, artistInfo])
 
   return { file, request }
 }

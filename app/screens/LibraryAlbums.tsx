@@ -6,13 +6,12 @@ import { useFetchPaginatedList } from '@app/hooks/list'
 import { Album, AlbumListItem } from '@app/models/music'
 import { mapById } from '@app/state/library'
 import { selectSettings } from '@app/state/settings'
-import { Store, useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import pick from 'lodash.pick'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
@@ -97,7 +96,7 @@ const AlbumsList = () => {
   )
 
   const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchPage, 300)
-  const albums = useStore(useCallback(store => mapById(store.entities.albums, list), [list]))
+  const albums = useStoreDeep(useCallback(store => mapById(store.entities.albums, list), [list]))
 
   const layout = useWindowDimensions()
 

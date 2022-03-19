@@ -6,7 +6,7 @@ import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
 import { Album, Song } from '@app/models/music'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
@@ -70,7 +70,7 @@ const TopSongs = React.memo<{
 const ArtistAlbums = React.memo<{
   id: string
 }>(({ id }) => {
-  const albums = useStore(
+  const albums = useStoreDeep(
     useCallback(
       store => {
         const ids = store.entities.artistAlbums[id]
@@ -114,8 +114,8 @@ const ArtistViewFallback = React.memo(() => (
 ))
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
-  const artist = useStore(useCallback(store => store.entities.artists[id], [id]))
-  const artistInfo = useStore(useCallback(store => store.entities.artistInfo[id], [id]))
+  const artist = useStoreDeep(useCallback(store => store.entities.artists[id], [id]))
+  const artistInfo = useStoreDeep(useCallback(store => store.entities.artistInfo[id], [id]))
 
   const fetchArtist = useStore(store => store.fetchLibraryArtist)
   const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)

@@ -3,21 +3,20 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useFetchPaginatedList } from '@app/hooks/list'
 import { useActiveServerRefresh } from '@app/hooks/server'
 import { AlbumListItem } from '@app/models/music'
-import { Album, mapById } from '@app/state/library'
-import { selectMusic } from '@app/state/music'
+import { mapById } from '@app/state/library'
 import { selectSettings } from '@app/state/settings'
-import { Store, useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumList2Params, GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
+import equal from 'fast-deep-equal/es6/react'
 import produce from 'immer'
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
-import create from 'zustand'
+import create, { StateSelector } from 'zustand'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recently Played',
@@ -55,8 +54,8 @@ const AlbumItem = React.memo<{
 const Category = React.memo<{
   type: string
 }>(({ type }) => {
-  const list = useHomeStore(useCallback(store => store.lists[type] || [], [type]))
-  const albums = useStore(useCallback(store => mapById(store.entities.albums, list), [list]))
+  const list = useHomeStoreDeep(useCallback(store => store.lists[type] || [], [type]))
+  const albums = useStoreDeep(useCallback(store => mapById(store.entities.albums, list), [list]))
 
   const Albums = () => (
     <ScrollView
@@ -90,7 +89,7 @@ interface HomeState {
   setList: (type: string, list: string[]) => void
 }
 
-const useHomeStore = create<HomeState>((set, get) => ({
+const useHomeStore = create<HomeState>(set => ({
   lists: {},
 
   setList: (type, list) => {
@@ -101,6 +100,10 @@ const useHomeStore = create<HomeState>((set, get) => ({
     )
   },
 }))
+
+function useHomeStoreDeep<U>(stateSelector: StateSelector<HomeState, U>) {
+  return useHomeStore(stateSelector, equal)
+}
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false)
@@ -113,9 +116,7 @@ const Home = () => {
 
     await Promise.all(
       types.map(async type => {
-        console.log('fetch', type)
         const ids = await fetchAlbumList({ type: type as GetAlbumList2TypeBase, size: 20, offset: 0 })
-        console.log('set', type)
         setList(type, ids)
       }),
     )

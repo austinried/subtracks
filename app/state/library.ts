@@ -166,10 +166,6 @@ export type LibrarySlice = {
     albums: ById<Album>
     albumSongs: OneToMany
 
-    // todo: remove these and store in component state
-    albumsList: PaginatedList
-    albumsListSize: number
-
     playlists: ById<Playlist>
     playlistSongs: OneToMany
 
@@ -216,8 +212,6 @@ const defaultEntities = () => ({
   artistNameTopSongs: {},
 
   albums: {},
-  albumsList: {},
-  albumsListSize: 300,
   albumSongs: {},
 
   playlists: {},
