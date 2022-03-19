@@ -21,10 +21,6 @@ export interface Album extends AlbumListItem {
   year?: number
 }
 
-export interface AlbumWithSongs extends Album {
-  songs: Song[]
-}
-
 export interface SearchResults {
   artists: Artist[]
   albums: AlbumListItem[]
@@ -37,10 +33,6 @@ export interface PlaylistListItem {
   name: string
   comment?: string
   coverArt?: string
-}
-
-export interface PlaylistWithSongs extends PlaylistListItem {
-  songs: Song[]
 }
 
 export interface Song {
@@ -61,7 +53,5 @@ export interface Song {
 }
 
 export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
-
-export type HomeLists = { [key: string]: AlbumListItem[] }
 
 export type StarrableItemType = 'song' | 'album' | 'artist'

@@ -5,7 +5,6 @@ import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import { useCoverArtFile } from '@app/hooks/cache'
-import { usePlaylistWithSongs } from '@app/hooks/music'
 import { Album, PlaylistListItem, Song } from '@app/models/music'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
@@ -128,16 +127,34 @@ const PlaylistView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const playlist = usePlaylistWithSongs(id)
-  return <SongListDetails title={title} songList={playlist} subtitle={playlist?.comment} type="playlist" />
+  const playlist = useStoreDeep(useCallback(store => store.entities.playlists[id], [id]))
+  const songs = useStoreDeep(
+    useCallback(
+      store => {
+        const ids = store.entities.playlistSongs[id]
+        return ids ? ids.map(i => store.entities.songs[i]) : undefined
+      },
+      [id],
+    ),
+  )
+
+  const fetchPlaylist = useStore(store => store.fetchLibraryPlaylist)
+
+  useEffect(() => {
+    if (!playlist || !songs) {
+      fetchPlaylist(id)
+    }
+  }, [playlist, fetchPlaylist, id, songs])
+
+  return (
+    <SongListDetails title={title} songList={playlist} songs={songs} subtitle={playlist?.comment} type="playlist" />
+  )
 })
 
 const AlbumView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  // const album = useAlbumWithSongs(id)
-
   const album = useStoreDeep(useCallback(store => store.entities.albums[id], [id]))
   const songs = useStoreDeep(
     useCallback(

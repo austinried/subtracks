@@ -1,28 +1,10 @@
-import {
-  AlbumListItem,
-  AlbumWithSongs,
-  Artist,
-  HomeLists,
-  PlaylistListItem,
-  PlaylistWithSongs,
-  SearchResults,
-  StarrableItemType,
-} from '@app/models/music'
+import { AlbumListItem, Artist, PlaylistListItem, SearchResults, StarrableItemType } from '@app/models/music'
 import { Store } from '@app/state/store'
-import { GetAlbumList2Params, GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
+import { GetAlbumList2Params, Search3Params, StarParams } from '@app/subsonic/params'
 import produce from 'immer'
 import { GetState, SetState } from 'zustand'
 
 export type MusicSlice = {
-  //
-  // family-style state
-  //
-  albumsWithSongs: { [id: string]: AlbumWithSongs }
-  fetchAlbumWithSongs: (id: string) => Promise<AlbumWithSongs | undefined>
-
-  playlistsWithSongs: { [id: string]: PlaylistWithSongs }
-  fetchPlaylistWithSongs: (id: string) => Promise<PlaylistWithSongs | undefined>
-
   //
   // lists-style state
   //
@@ -35,11 +17,6 @@ export type MusicSlice = {
     size?: number,
     offset?: number,
   ) => Promise<SearchResults>
-
-  homeLists: HomeLists
-  homeListsUpdating: boolean
-  fetchHomeLists: () => Promise<void>
-  clearHomeLists: () => void
 
   //
   // actions, etc.
@@ -56,18 +33,10 @@ export type MusicSlice = {
 }
 
 export const selectMusic = {
-  fetchAlbumWithSongs: (state: Store) => state.fetchAlbumWithSongs,
-  fetchPlaylistWithSongs: (state: Store) => state.fetchPlaylistWithSongs,
-
   fetchArtists: (store: MusicSlice) => store.fetchArtists,
   fetchPlaylists: (store: MusicSlice) => store.fetchPlaylists,
   fetchAlbums: (store: MusicSlice) => store.fetchAlbums,
   fetchSearchResults: (store: MusicSlice) => store.fetchSearchResults,
-
-  homeLists: (store: MusicSlice) => store.homeLists,
-  homeListsUpdating: (store: MusicSlice) => store.homeListsUpdating,
-  fetchHomeLists: (store: MusicSlice) => store.fetchHomeLists,
-  clearHomeLists: (store: MusicSlice) => store.clearHomeLists,
 
   starItem: (store: MusicSlice) => store.starItem,
 }
@@ -86,55 +55,6 @@ function reduceStarred(
 }
 
 export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): MusicSlice => ({
-  albumsWithSongs: {},
-
-  fetchAlbumWithSongs: async id => {
-    const client = get().client
-    if (!client) {
-      return undefined
-    }
-
-    try {
-      const response = await client.getAlbum({ id })
-      const album = await get().mapAlbumID3WithSongstoAlbumWithSongs(response.data.album, response.data.songs)
-
-      set(
-        produce<MusicSlice>(state => {
-          state.albumsWithSongs[id] = album
-          state.starredSongs = reduceStarred(state.starredSongs, album.songs)
-          state.starredAlbums = reduceStarred(state.starredAlbums, [album])
-        }),
-      )
-      return album
-    } catch {
-      return undefined
-    }
-  },
-
-  playlistsWithSongs: {},
-
-  fetchPlaylistWithSongs: async id => {
-    const client = get().client
-    if (!client) {
-      return undefined
-    }
-
-    try {
-      const response = await client.getPlaylist({ id })
-      const playlist = await get().mapPlaylistWithSongs(response.data.playlist)
-
-      set(
-        produce<MusicSlice>(state => {
-          state.playlistsWithSongs[id] = playlist
-          state.starredSongs = reduceStarred(state.starredSongs, playlist.songs)
-        }),
-      )
-      return playlist
-    } catch {
-      return undefined
-    }
-  },
-
   fetchArtists: async () => {
     const client = get().client
     if (!client) {
@@ -268,50 +188,6 @@ export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): Mu
     } catch {
       return { artists: [], albums: [], songs: [] }
     }
-  },
-
-  homeLists: {},
-  homeListsUpdating: false,
-
-  fetchHomeLists: async () => {
-    const client = get().client
-    if (!client) {
-      return
-    }
-
-    if (get().homeListsUpdating) {
-      return
-    }
-    set({ homeListsUpdating: true })
-
-    const types = get().settings.screens.home.lists
-
-    try {
-      const promises: Promise<any>[] = []
-      for (const type of types) {
-        promises.push(
-          client
-            .getAlbumList2({ type: type as GetAlbumList2TypeBase, size: 20 })
-            .then(response => {
-              const list = response.data.albums.map(get().mapAlbumID3toAlbumListItem)
-              set(
-                produce<MusicSlice>(state => {
-                  state.homeLists[type] = list
-                  state.starredAlbums = reduceStarred(state.starredAlbums, state.homeLists[type])
-                }),
-              )
-            })
-            .catch(() => {}),
-        )
-      }
-      await Promise.all(promises)
-    } finally {
-      set({ homeListsUpdating: false })
-    }
-  },
-
-  clearHomeLists: () => {
-    set({ homeLists: {} })
   },
 
   starredSongs: {},
