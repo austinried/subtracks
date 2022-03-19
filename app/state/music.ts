@@ -2,7 +2,6 @@ import {
   AlbumListItem,
   AlbumWithSongs,
   Artist,
-  ArtistInfo,
   HomeLists,
   PlaylistListItem,
   PlaylistWithSongs,
@@ -18,9 +17,6 @@ export type MusicSlice = {
   //
   // family-style state
   //
-  artistInfo: { [id: string]: ArtistInfo }
-  fetchArtistInfo: (id: string) => Promise<ArtistInfo | undefined>
-
   albumsWithSongs: { [id: string]: AlbumWithSongs }
   fetchAlbumWithSongs: (id: string) => Promise<AlbumWithSongs | undefined>
 
@@ -60,7 +56,6 @@ export type MusicSlice = {
 }
 
 export const selectMusic = {
-  fetchArtistInfo: (state: Store) => state.fetchArtistInfo,
   fetchAlbumWithSongs: (state: Store) => state.fetchAlbumWithSongs,
   fetchPlaylistWithSongs: (state: Store) => state.fetchPlaylistWithSongs,
 
@@ -91,41 +86,6 @@ function reduceStarred(
 }
 
 export const createMusicSlice = (set: SetState<Store>, get: GetState<Store>): MusicSlice => ({
-  artistInfo: {},
-
-  fetchArtistInfo: async id => {
-    const client = get().client
-    if (!client) {
-      return undefined
-    }
-
-    try {
-      const [artistResponse, artistInfoResponse] = await Promise.all([
-        client.getArtist({ id }),
-        client.getArtistInfo2({ id }),
-      ])
-      const topSongsResponse = await client.getTopSongs({ artist: artistResponse.data.artist.name, count: 50 })
-      const artistInfo = await get().mapArtistInfo(
-        artistResponse.data,
-        artistInfoResponse.data.artistInfo,
-        topSongsResponse.data.songs,
-      )
-
-      set(
-        produce<MusicSlice>(state => {
-          state.artistInfo[id] = artistInfo
-
-          state.starredSongs = reduceStarred(state.starredSongs, artistInfo.topSongs)
-          state.starredArtists = reduceStarred(state.starredArtists, [artistInfo])
-          state.starredAlbums = reduceStarred(state.starredAlbums, artistInfo.albums)
-        }),
-      )
-      return artistInfo
-    } catch {
-      return undefined
-    }
-  },
-
   albumsWithSongs: {},
 
   fetchAlbumWithSongs: async id => {

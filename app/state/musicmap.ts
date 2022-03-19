@@ -1,21 +1,11 @@
-import {
-  AlbumListItem,
-  AlbumWithSongs,
-  Artist,
-  ArtistInfo,
-  PlaylistListItem,
-  PlaylistWithSongs,
-  Song,
-} from '@app/models/music'
+import { AlbumListItem, AlbumWithSongs, Artist, PlaylistListItem, PlaylistWithSongs, Song } from '@app/models/music'
 import {
   AlbumID3Element,
   ArtistID3Element,
-  ArtistInfo2Element,
   ChildElement,
   PlaylistElement,
   PlaylistWithSongsElement,
 } from '@app/subsonic/elements'
-import { GetArtistResponse } from '@app/subsonic/responses'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'
 
@@ -23,11 +13,6 @@ export type MusicMapSlice = {
   mapChildToSong: (child: ChildElement, coverArt?: string) => Promise<Song>
   mapChildrenToSongs: (children: ChildElement[], coverArt?: string) => Promise<Song[]>
   mapArtistID3toArtist: (artist: ArtistID3Element) => Artist
-  mapArtistInfo: (
-    artistResponse: GetArtistResponse,
-    info: ArtistInfo2Element,
-    topSongs: ChildElement[],
-  ) => Promise<ArtistInfo>
   mapAlbumID3toAlbumListItem: (album: AlbumID3Element) => AlbumListItem
   mapAlbumID3toAlbum: (album: AlbumID3Element) => AlbumListItem
   mapAlbumID3WithSongstoAlbumWithSongs: (album: AlbumID3Element, songs: ChildElement[]) => Promise<AlbumWithSongs>
@@ -78,20 +63,6 @@ export const createMusicMapSlice = (set: SetState<Store>, get: GetState<Store>):
       name: artist.name,
       starred: artist.starred,
       coverArt: artist.coverArt,
-    }
-  },
-
-  mapArtistInfo: async (artistResponse, info, topSongs) => {
-    const { artist, albums } = artistResponse
-
-    const mappedAlbums = albums.map(get().mapAlbumID3toAlbum)
-
-    return {
-      ...get().mapArtistID3toArtist(artist),
-      albums: mappedAlbums,
-      smallImageUrl: info.smallImageUrl,
-      largeImageUrl: info.largeImageUrl,
-      topSongs: (await get().mapChildrenToSongs(topSongs)).slice(0, 5),
     }
   },
 

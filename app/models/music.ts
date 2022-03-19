@@ -6,13 +6,6 @@ export interface Artist {
   coverArt?: string
 }
 
-export interface ArtistInfo extends Artist {
-  albums: Album[]
-  smallImageUrl?: string
-  largeImageUrl?: string
-  topSongs: Song[]
-}
-
 export interface AlbumListItem {
   itemType: 'album'
   id: string
