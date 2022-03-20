@@ -6,7 +6,12 @@ export interface Artist {
   coverArt?: string
 }
 
-export interface AlbumListItem {
+export interface ArtistInfo {
+  id: string
+  largeImageUrl?: string
+}
+
+export interface Album {
   itemType: 'album'
   id: string
   name: string
@@ -14,14 +19,10 @@ export interface AlbumListItem {
   artistId?: string
   starred?: Date
   coverArt?: string
-}
-
-export interface Album extends AlbumListItem {
-  coverArt?: string
   year?: number
 }
 
-export interface PlaylistListItem {
+export interface Playlist {
   itemType: 'playlist'
   id: string
   name: string
@@ -41,11 +42,15 @@ export interface Song {
   discNumber?: number
   duration?: number
   starred?: Date
-
-  // streamUri: string
   coverArt?: string
 }
 
-export type ListableItem = Song | AlbumListItem | Artist | PlaylistListItem
+export interface SearchResults {
+  artists: string[]
+  albums: string[]
+  songs: string[]
+}
 
-export type StarrableItemType = 'song' | 'album' | 'artist'
+export type StarrableItemType = 'album' | 'song' | 'artist'
+
+export type ListableItem = Album | Song | Artist | Playlist

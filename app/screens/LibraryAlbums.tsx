@@ -3,19 +3,19 @@ import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
-import { Album, AlbumListItem } from '@app/models/music'
-import { mapById } from '@app/state/library'
+import { Album } from '@app/models/library'
 import { selectSettings } from '@app/state/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
+import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
-  album: AlbumListItem
+  album: Album
   size: number
   height: number
 }>(({ album, size, height }) => {

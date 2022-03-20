@@ -1,5 +1,5 @@
 import { NoClientError } from '@app/models/error'
-import { Song } from '@app/models/music'
+import { Song } from '@app/models/library'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
 import TrackPlayer, { PlayerOptions, RepeatMode, State, Track } from 'react-native-track-player'

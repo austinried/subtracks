@@ -1,5 +1,5 @@
 import { useIsPlaying } from '@app/hooks/trackplayer'
-import { AlbumListItem, Artist, ListableItem, Song } from '@app/models/music'
+import { Album, Artist, ListableItem, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -97,7 +97,7 @@ const ListItem: React.FC<{
   )
   const albumPressable = useCallback(
     ({ children }) => (
-      <AlbumContextPressable album={item as AlbumListItem} onPress={onPress} triggerWrapperStyle={styles.item}>
+      <AlbumContextPressable album={item as Album} onPress={onPress} triggerWrapperStyle={styles.item}>
         {children}
       </AlbumContextPressable>
     ),

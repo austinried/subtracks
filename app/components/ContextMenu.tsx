@@ -1,6 +1,6 @@
 import PressableOpacity from '@app/components/PressableOpacity'
 import { useStar } from '@app/hooks/music'
-import { AlbumListItem, Artist, Song, StarrableItemType } from '@app/models/music'
+import { StarrableItemType, Song, Artist, Album } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
@@ -199,7 +199,7 @@ const OptionViewAlbum = React.memo<{
 // ))
 
 export type AlbumContextPressableProps = ContextMenuProps & {
-  album: AlbumListItem
+  album: Album
 }
 
 export const AlbumContextPressable: React.FC<AlbumContextPressableProps> = props => {

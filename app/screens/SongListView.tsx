@@ -6,7 +6,7 @@ import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
 import { useCoverArtFile } from '@app/hooks/cache'
-import { Album, PlaylistListItem, Song } from '@app/models/music'
+import { Song, Album, Playlist } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
@@ -46,7 +46,7 @@ const SongRenderItem: React.FC<{
 const SongListDetails = React.memo<{
   title: string
   type: SongListType
-  songList?: Album | PlaylistListItem
+  songList?: Album | Playlist
   songs?: Song[]
   subtitle?: string
 }>(({ title, songList, songs, subtitle, type }) => {

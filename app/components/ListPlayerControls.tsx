@@ -1,5 +1,5 @@
 import Button from '@app/components/Button'
-import { Song } from '@app/models/music'
+import { Song } from '@app/models/library'
 import { useStore } from '@app/state/store'
 import { QueueContextType, selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'

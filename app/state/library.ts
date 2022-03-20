@@ -1,3 +1,5 @@
+import { Album, Artist, ArtistInfo, Playlist, SearchResults, Song } from '@app/models/library'
+import { ById, OneToMany } from '@app/models/state'
 import { Store } from '@app/state/store'
 import {
   AlbumID3Element,
@@ -20,140 +22,11 @@ import {
   Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
+import { reduceById, mergeById } from '@app/util/state'
 import produce from 'immer'
 import { WritableDraft } from 'immer/dist/types/types-external'
-import merge from 'lodash.merge'
 import pick from 'lodash.pick'
 import { GetState, SetState } from 'zustand'
-
-export interface ById<T> {
-  [id: string]: T
-}
-
-export type OneToMany = ById<string[]>
-
-export interface OrderedById<T> {
-  byId: ById<T>
-  allIds: string[]
-}
-
-export interface PaginatedList {
-  [offset: number]: string[]
-}
-
-export interface Artist {
-  itemType: 'artist'
-  id: string
-  name: string
-  starred?: Date
-  coverArt?: string
-}
-
-export interface ArtistInfo {
-  id: string
-  largeImageUrl?: string
-}
-
-export interface Album {
-  itemType: 'album'
-  id: string
-  name: string
-  artist?: string
-  artistId?: string
-  starred?: Date
-  coverArt?: string
-  year?: number
-}
-
-export interface Playlist {
-  itemType: 'playlist'
-  id: string
-  name: string
-  comment?: string
-  coverArt?: string
-}
-
-export interface Song {
-  itemType: 'song'
-  id: string
-  album?: string
-  albumId?: string
-  artist?: string
-  artistId?: string
-  title: string
-  track?: number
-  discNumber?: number
-  duration?: number
-  starred?: Date
-  coverArt?: string
-}
-
-export interface SearchResults {
-  artists: string[]
-  albums: string[]
-  songs: string[]
-}
-
-function mapArtist(artist: ArtistID3Element): Artist {
-  return {
-    itemType: 'artist',
-    id: artist.id,
-    name: artist.name,
-    starred: artist.starred,
-    coverArt: artist.coverArt,
-  }
-}
-
-function mapArtistInfo(id: string, info: ArtistInfo2Element): ArtistInfo {
-  return {
-    id,
-    largeImageUrl: info.largeImageUrl,
-  }
-}
-
-function mapAlbum(album: AlbumID3Element): Album {
-  return {
-    itemType: 'album',
-    id: album.id,
-    name: album.name,
-    artist: album.artist,
-    artistId: album.artistId,
-    starred: album.starred,
-    coverArt: album.coverArt,
-    year: album.year,
-  }
-}
-
-function mapPlaylist(playlist: PlaylistElement): Playlist {
-  return {
-    itemType: 'playlist',
-    id: playlist.id,
-    name: playlist.name,
-    comment: playlist.comment,
-    coverArt: playlist.coverArt,
-  }
-}
-
-function mapSong(song: ChildElement): Song {
-  return {
-    itemType: 'song',
-    id: song.id,
-    album: song.album,
-    albumId: song.albumId,
-    artist: song.artist,
-    artistId: song.artistId,
-    title: song.title,
-    track: song.track,
-    discNumber: song.discNumber,
-    duration: song.duration,
-    starred: song.starred,
-    coverArt: song.coverArt,
-  }
-}
-
-function mapId(entities: { id: string }[]): string[] {
-  return entities.map(e => e.id)
-}
 
 export type LibrarySlice = {
   entities: {
@@ -189,21 +62,6 @@ export type LibrarySlice = {
   fetchLibrarySearchResults: (params: Search3Params) => Promise<SearchResults>
   star: (params: StarParams) => Promise<void>
   unstar: (params: StarParams) => Promise<void>
-}
-
-function reduceById<T extends { id: string }>(collection: T[]): ById<T> {
-  return collection.reduce((acc, value) => {
-    acc[value.id] = value
-    return acc
-  }, {} as ById<T>)
-}
-
-function mergeById<T extends { [id: string]: unknown }>(object: T, source: T): void {
-  merge(object, source)
-}
-
-export function mapById<T>(object: ById<T>, ids: string[]): T[] {
-  return ids.map(id => object[id]).filter(a => a !== undefined)
 }
 
 const defaultEntities = () => ({
@@ -576,3 +434,64 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     }
   },
 })
+
+function mapArtist(artist: ArtistID3Element): Artist {
+  return {
+    itemType: 'artist',
+    id: artist.id,
+    name: artist.name,
+    starred: artist.starred,
+    coverArt: artist.coverArt,
+  }
+}
+
+function mapArtistInfo(id: string, info: ArtistInfo2Element): ArtistInfo {
+  return {
+    id,
+    largeImageUrl: info.largeImageUrl,
+  }
+}
+
+function mapAlbum(album: AlbumID3Element): Album {
+  return {
+    itemType: 'album',
+    id: album.id,
+    name: album.name,
+    artist: album.artist,
+    artistId: album.artistId,
+    starred: album.starred,
+    coverArt: album.coverArt,
+    year: album.year,
+  }
+}
+
+function mapPlaylist(playlist: PlaylistElement): Playlist {
+  return {
+    itemType: 'playlist',
+    id: playlist.id,
+    name: playlist.name,
+    comment: playlist.comment,
+    coverArt: playlist.coverArt,
+  }
+}
+
+function mapSong(song: ChildElement): Song {
+  return {
+    itemType: 'song',
+    id: song.id,
+    album: song.album,
+    albumId: song.albumId,
+    artist: song.artist,
+    artistId: song.artistId,
+    title: song.title,
+    track: song.track,
+    discNumber: song.discNumber,
+    duration: song.duration,
+    starred: song.starred,
+    coverArt: song.coverArt,
+  }
+}
+
+function mapId(entities: { id: string }[]): string[] {
+  return entities.map(e => e.id)
+}

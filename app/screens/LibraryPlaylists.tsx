@@ -1,12 +1,12 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { useFetchList2 } from '@app/hooks/list'
-import { PlaylistListItem } from '@app/models/music'
+import { Playlist } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import React from 'react'
 import { StyleSheet } from 'react-native'
 
-const PlaylistRenderItem: React.FC<{ item: PlaylistListItem }> = ({ item }) => (
+const PlaylistRenderItem: React.FC<{ item: Playlist }> = ({ item }) => (
   <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
 )
 

@@ -1,4 +1,4 @@
-import { Song } from '@app/models/music'
+import { Song } from '@app/models/library'
 import userAgent from '@app/util/userAgent'
 import { GetState, SetState } from 'zustand'
 import { Store } from './store'

@@ -4,13 +4,13 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
 import { useActiveServerRefresh } from '@app/hooks/server'
-import { AlbumListItem } from '@app/models/music'
-import { mapById } from '@app/state/library'
+import { Album } from '@app/models/library'
 import { selectSettings } from '@app/state/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
+import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import produce from 'immer'
@@ -26,7 +26,7 @@ const titles: { [key in GetAlbumListType]?: string } = {
 }
 
 const AlbumItem = React.memo<{
-  album: AlbumListItem
+  album: Album
 }>(({ album }) => {
   const navigation = useNavigation()
 

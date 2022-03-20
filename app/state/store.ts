@@ -1,4 +1,3 @@
-import { createMusicSlice, MusicSlice } from '@app/state/music'
 import { createSettingsSlice, SettingsSlice } from '@app/state/settings'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import equal from 'fast-deep-equal/es6/react'
@@ -7,16 +6,13 @@ import { persist, subscribeWithSelector } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
 import { createLibrarySlice, LibrarySlice } from './library'
 import migrations from './migrations'
-import { createMusicMapSlice, MusicMapSlice } from './musicmap'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
 
 const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
-  MusicSlice &
   LibrarySlice &
-  MusicMapSlice &
   TrackPlayerSlice &
   TrackPlayerMapSlice &
   CacheSlice & {
@@ -34,9 +30,7 @@ export const useStore = create<
     persist(
       (set, get) => ({
         ...createSettingsSlice(set, get),
-        ...createMusicSlice(set, get),
         ...createLibrarySlice(set, get),
-        ...createMusicMapSlice(set, get),
         ...createTrackPlayerSlice(set, get),
         ...createTrackPlayerMapSlice(set, get),
         ...createCacheSlice(set, get),
