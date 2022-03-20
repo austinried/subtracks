@@ -4,6 +4,7 @@ import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
+import NothingHere from '@app/components/NothingHere'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { Album, PlaylistListItem, Song } from '@app/models/music'
 import { useStore, useStoreDeep } from '@app/state/store'
@@ -49,15 +50,15 @@ const SongListDetails = React.memo<{
   songs?: Song[]
   subtitle?: string
 }>(({ title, songList, songs, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
+  const coverArtFile = useCoverArtFile(songList?.coverArt)
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
   const setQueue = useStore(selectTrackPlayer.setQueue)
 
-  if (!songList || !songs) {
+  if (!songList) {
     return <SongListDetailsFallback />
   }
 
-  const _songs = [...songs]
+  const _songs = [...(songs || [])]
   let typeName = ''
 
   if (type === 'album') {
@@ -101,21 +102,26 @@ const SongListDetails = React.memo<{
         overScrollMode="never"
         windowSize={7}
         contentMarginTop={26}
+        ListEmptyComponent={
+          songs ? (
+            <NothingHere style={styles.nothing} />
+          ) : (
+            <ActivityIndicator size="large" color={colors.accent} style={styles.listLoading} />
+          )
+        }
         ListHeaderComponent={
           <View style={styles.content}>
-            <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
+            <CoverArt type="cover" coverArt={songList.coverArt} style={styles.cover} />
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-            {songs.length > 0 && (
-              <ListPlayerControls
-                style={styles.controls}
-                songs={_songs}
-                typeName={typeName}
-                queueName={songList.name}
-                queueContextId={songList.id}
-                queueContextType={type}
-              />
-            )}
+            <ListPlayerControls
+              style={styles.controls}
+              songs={_songs}
+              typeName={typeName}
+              queueName={songList.name}
+              queueContextId={songList.id}
+              queueContextType={type}
+            />
           </View>
         }
       />
@@ -234,6 +240,12 @@ const styles = StyleSheet.create({
   },
   listItem: {
     paddingHorizontal: 20,
+  },
+  nothing: {
+    width: '100%',
+  },
+  listLoading: {
+    marginTop: 10,
   },
 })
 

@@ -6,6 +6,7 @@ import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
 import { Album, Song } from '@app/models/music'
+import { mapById } from '@app/state/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
@@ -13,7 +14,6 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
-import pick from 'lodash.pick'
 import React, { useCallback, useEffect } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
@@ -52,7 +52,7 @@ const TopSongs = React.memo<{
   return (
     <>
       <Header>Top Songs</Header>
-      {songs.map((s, i) => (
+      {songs.slice(0, 5).map((s, i) => (
         <ListItem
           key={i}
           item={s}
@@ -68,28 +68,11 @@ const TopSongs = React.memo<{
 })
 
 const ArtistAlbums = React.memo<{
-  id: string
-}>(({ id }) => {
-  const albums = useStoreDeep(
-    useCallback(
-      store => {
-        const ids = store.entities.artistAlbums[id]
-        return ids ? pick(store.entities.albums, ids) : undefined
-      },
-      [id],
-    ),
-  )
-
-  const fetchArtist = useStore(store => store.fetchLibraryArtist)
+  albums: Album[]
+}>(({ albums }) => {
   const albumsLayout = useLayout()
 
-  useEffect(() => {
-    if (!albums) {
-      fetchArtist(id)
-    }
-  }, [albums, fetchArtist, id])
-
-  const sortedAlbums = (albums ? Object.values(albums) : [])
+  const sortedAlbums = [...albums]
     .sort((a, b) => a.name.localeCompare(b.name))
     .sort((a, b) => (b.year || 0) - (a.year || 0))
 
@@ -115,10 +98,17 @@ const ArtistViewFallback = React.memo(() => (
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
   const artist = useStoreDeep(useCallback(store => store.entities.artists[id], [id]))
-  const artistInfo = useStoreDeep(useCallback(store => store.entities.artistInfo[id], [id]))
+  const topSongIds = useStoreDeep(useCallback(store => store.entities.artistNameTopSongs[artist?.name], [artist?.name]))
+  const topSongs = useStoreDeep(
+    useCallback(store => (topSongIds ? mapById(store.entities.songs, topSongIds) : undefined), [topSongIds]),
+  )
+  const albumIds = useStoreDeep(useCallback(store => store.entities.artistAlbums[id], [id]))
+  const albums = useStoreDeep(
+    useCallback(store => (albumIds ? mapById(store.entities.albums, albumIds) : undefined), [albumIds]),
+  )
 
   const fetchArtist = useStore(store => store.fetchLibraryArtist)
-  const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)
+  const fetchTopSongs = useStore(store => store.fetchLibraryArtistTopSongs)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -136,16 +126,16 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
   })
 
   useEffect(() => {
-    if (!artist) {
+    if (!artist || !albumIds) {
       fetchArtist(id)
     }
-  }, [artist, fetchArtist, id])
+  }, [artist, albumIds, fetchArtist, id])
 
   useEffect(() => {
-    if (!artistInfo) {
-      fetchArtistInfo(id)
+    if (artist && !topSongIds) {
+      fetchTopSongs(artist.name)
     }
-  }, [artistInfo, fetchArtistInfo, id])
+  }, [artist, fetchTopSongs, topSongIds])
 
   if (!artist) {
     return <ArtistViewFallback />
@@ -160,17 +150,23 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         onScroll={onScroll}>
-        <CoverArt type="artist" size="original" artistId={artist.id} style={styles.artistCover} resizeMode={'cover'} />
+        <CoverArt type="artist" artistId={artist.id} style={styles.artistCover} resizeMode={'cover'} />
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>
         </View>
         <View style={styles.contentContainer}>
-          {/* {artist.topSongs.length > 0 ? (
-            <TopSongs songs={artist.topSongs} name={artist.name} artistId={artist.id} />
+          {topSongs && albums ? (
+            topSongs.length > 0 ? (
+              <>
+                <TopSongs songs={topSongs} name={artist.name} artistId={artist.id} />
+                <ArtistAlbums albums={albums} />
+              </>
+            ) : (
+              <ArtistAlbums albums={albums} />
+            )
           ) : (
-            <></>
-          )} */}
-          <ArtistAlbums id={id} />
+            <ActivityIndicator size="large" color={colors.accent} style={styles.loading} />
+          )}
         </View>
       </GradientScrollView>
     </View>
@@ -244,6 +240,9 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontFamily: font.regular,
     textAlign: 'center',
+  },
+  loading: {
+    marginTop: 30,
   },
 })
 

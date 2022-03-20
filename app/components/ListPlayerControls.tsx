@@ -36,11 +36,14 @@ const ListPlayerControls = React.memo<{
       <View style={styles.controlsCenter}>
         <Button
           title={`Play ${typeName}`}
+          disabled={songs.length === 0}
           onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, false)}
         />
       </View>
       <View style={styles.controlsSide}>
-        <Button onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, true)}>
+        <Button
+          disabled={songs.length === 0}
+          onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, true)}>
           <Icon name="shuffle" size={26} color="white" />
         </Button>
       </View>

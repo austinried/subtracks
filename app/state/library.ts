@@ -51,7 +51,6 @@ export interface Artist {
 
 export interface ArtistInfo {
   id: string
-  smallImageUrl?: string
   largeImageUrl?: string
 }
 
@@ -108,7 +107,6 @@ function mapArtist(artist: ArtistID3Element): Artist {
 function mapArtistInfo(id: string, info: ArtistInfo2Element): ArtistInfo {
   return {
     id,
-    smallImageUrl: info.smallImageUrl,
     largeImageUrl: info.largeImageUrl,
   }
 }
@@ -119,7 +117,7 @@ function mapAlbum(album: AlbumID3Element): Album {
     id: album.id,
     name: album.name,
     artist: album.artist,
-    artistId: album.artist,
+    artistId: album.artistId,
     starred: album.starred,
     coverArt: album.coverArt,
     year: album.year,
