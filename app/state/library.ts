@@ -496,23 +496,41 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       return
     }
 
-    try {
-      await client.star(params)
-    } catch {
+    let id = '-1'
+    let entity: 'songs' | 'artists' | 'albums' = 'songs'
+    if (params.id) {
+      id = params.id
+      entity = 'songs'
+    } else if (params.albumId) {
+      id = params.albumId
+      entity = 'albums'
+    } else if (params.artistId) {
+      id = params.artistId
+      entity = 'artists'
+    } else {
       return
     }
 
+    const item = get().entities[entity][id]
+    const originalValue = item ? item.starred : null
+
     set(
       produce<LibrarySlice>(state => {
-        if (params.id) {
-          state.entities.songs[params.id].starred = new Date()
-        } else if (params.albumId) {
-          state.entities.albums[params.albumId].starred = new Date()
-        } else if (params.artistId) {
-          state.entities.artists[params.artistId].starred = new Date()
-        }
+        state.entities[entity][id].starred = new Date()
       }),
     )
+
+    try {
+      await client.star(params)
+    } catch {
+      set(
+        produce<LibrarySlice>(state => {
+          if (originalValue !== null) {
+            state.entities[entity][id].starred = originalValue
+          }
+        }),
+      )
+    }
   },
 
   unstar: async params => {
@@ -521,22 +539,40 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       return
     }
 
-    try {
-      await client.unstar(params)
-    } catch {
+    let id = '-1'
+    let entity: 'songs' | 'artists' | 'albums' = 'songs'
+    if (params.id) {
+      id = params.id
+      entity = 'songs'
+    } else if (params.albumId) {
+      id = params.albumId
+      entity = 'albums'
+    } else if (params.artistId) {
+      id = params.artistId
+      entity = 'artists'
+    } else {
       return
     }
 
+    const item = get().entities[entity][id]
+    const originalValue = item ? item.starred : null
+
     set(
       produce<LibrarySlice>(state => {
-        if (params.id) {
-          state.entities.songs[params.id].starred = undefined
-        } else if (params.albumId) {
-          state.entities.albums[params.albumId].starred = undefined
-        } else if (params.artistId) {
-          state.entities.artists[params.artistId].starred = undefined
-        }
+        state.entities[entity][id].starred = undefined
       }),
     )
+
+    try {
+      await client.unstar(params)
+    } catch {
+      set(
+        produce<LibrarySlice>(state => {
+          if (originalValue !== null) {
+            state.entities[entity][id].starred = originalValue
+          }
+        }),
+      )
+    }
   },
 })
