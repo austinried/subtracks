@@ -129,6 +129,14 @@ export class GetTopSongsResponse {
   }
 }
 
+export class GetSongResponse {
+  song: ChildElement
+
+  constructor(xml: Document) {
+    this.song = new ChildElement(xml.getElementsByTagName('song')[0])
+  }
+}
+
 //
 // Album/song lists
 //

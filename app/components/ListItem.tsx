@@ -1,8 +1,5 @@
-import { useStarred } from '@app/hooks/music'
 import { useIsPlaying } from '@app/hooks/trackplayer'
 import { AlbumListItem, Artist, ListableItem, Song } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -13,7 +10,7 @@ import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } from './ContextMenu'
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
-import Star from './Star'
+import { PressableStar } from './Star'
 
 const TitleTextSong = React.memo<{
   contextId?: string
@@ -58,7 +55,6 @@ const ListItem: React.FC<{
   style?: StyleProp<ViewStyle>
 }> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style }) => {
   const navigation = useNavigation()
-  const starred = useStarred(item.id, item.itemType)
 
   showStar = showStar === undefined ? true : showStar
   listStyle = listStyle || 'small'
@@ -133,13 +129,6 @@ const ListItem: React.FC<{
     PressableComponent = artistPressable
   }
 
-  const starItem = useStore(selectMusic.starItem)
-  const toggleStarred = useCallback(() => {
-    if (item.itemType !== 'playlist') {
-      starItem(item.id, item.itemType, starred)
-    }
-  }, [item.id, item.itemType, starItem, starred])
-
   let title = <></>
   if (item.itemType === 'song' && queueId !== undefined) {
     title = <TitleTextSong contextId={contextId} queueId={queueId} title={item.title} />
@@ -178,10 +167,8 @@ const ListItem: React.FC<{
         </View>
       </PressableComponent>
       <View style={styles.controls}>
-        {showStar && (
-          <PressableOpacity onPress={toggleStarred} style={styles.controlItem}>
-            <Star size={26} starred={starred} />
-          </PressableOpacity>
+        {showStar && item.itemType !== 'playlist' && (
+          <PressableStar id={item.id} type={item.itemType} size={26} style={styles.controlItem} />
         )}
       </View>
     </View>

@@ -2,10 +2,8 @@ import CoverArt from '@app/components/CoverArt'
 import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
-import Star from '@app/components/Star'
-import { useStarred } from '@app/hooks/music'
+import { PressableStar } from '@app/components/Star'
 import { useNext, usePause, usePlay, usePrevious, useSeekTo } from '@app/hooks/trackplayer'
-import { selectMusic } from '@app/state/music'
 import { useStore } from '@app/state/store'
 import { QueueContextType, selectTrackPlayer, TrackExt } from '@app/state/trackplayer'
 import { selectTrackPlayerMap } from '@app/state/trackplayermap'
@@ -118,10 +116,6 @@ const coverArtStyles = StyleSheet.create({
 
 const SongInfo = () => {
   const track = useStore(selectTrackPlayer.currentTrack)
-  const id = track?.id || '-1'
-  const type = 'song'
-  const starred = useStarred(id, type)
-  const setStarred = useStore(selectMusic.starItem)
 
   return (
     <View style={infoStyles.container}>
@@ -134,9 +128,7 @@ const SongInfo = () => {
         </Text>
       </View>
       <View style={infoStyles.controls}>
-        <PressableOpacity onPress={() => setStarred(id, type, starred)}>
-          <Star size={32} starred={starred} />
-        </PressableOpacity>
+        <PressableStar id={track?.id || '-1'} type={'song'} size={32} />
       </View>
     </View>
   )

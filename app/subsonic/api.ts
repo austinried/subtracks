@@ -11,6 +11,7 @@ import {
   GetMusicDirectoryParams,
   GetPlaylistParams,
   GetPlaylistsParams,
+  GetSongParams,
   GetTopSongsParams,
   ScrobbleParams,
   Search3Params,
@@ -29,6 +30,7 @@ import {
   GetMusicDirectoryResponse,
   GetPlaylistResponse,
   GetPlaylistsResponse,
+  GetSongResponse,
   GetTopSongsResponse,
   Search3Response,
   SubsonicResponse,
@@ -178,6 +180,11 @@ export class SubsonicApiClient {
   async getTopSongs(params: GetTopSongsParams): Promise<SubsonicResponse<GetTopSongsResponse>> {
     const xml = await this.apiGetXml('getTopSongs', params)
     return new SubsonicResponse<GetTopSongsResponse>(xml, new GetTopSongsResponse(xml))
+  }
+
+  async getSong(params: GetSongParams): Promise<SubsonicResponse<GetSongResponse>> {
+    const xml = await this.apiGetXml('getSong', params)
+    return new SubsonicResponse<GetSongResponse>(xml, new GetSongResponse(xml))
   }
 
   //

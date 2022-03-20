@@ -15,6 +15,7 @@ import {
   GetArtistsResponse,
   GetPlaylistResponse,
   GetPlaylistsResponse,
+  GetSongResponse,
   GetTopSongsResponse,
   Search3Response,
   SubsonicResponse,
@@ -183,6 +184,8 @@ export type LibrarySlice = {
 
   fetchLibraryPlaylists: () => Promise<void>
   fetchLibraryPlaylist: (id: string) => Promise<void>
+
+  fetchLibrarySong: (id: string) => Promise<void>
 
   fetchLibraryAlbumList: (params: GetAlbumList2Params) => Promise<string[]>
   fetchLibrarySearchResults: (params: Search3Params) => Promise<SearchResults>
@@ -401,6 +404,28 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
         state.entities.playlists[id] = playlist
         state.entities.playlistSongs[id] = mapId(songs)
         mergeById(state.entities.songs, songsById)
+      }),
+    )
+  },
+
+  fetchLibrarySong: async id => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    let response: SubsonicResponse<GetSongResponse>
+    try {
+      response = await client.getSong({ id })
+    } catch {
+      return
+    }
+
+    const song = mapSong(response.data.song)
+
+    set(
+      produce<LibrarySlice>(state => {
+        state.entities.songs[id] = song
       }),
     )
   },
