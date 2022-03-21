@@ -22,11 +22,14 @@ import {
   Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
+import PromiseQueue from '@app/util/PromiseQueue'
 import { reduceById, mergeById } from '@app/util/state'
 import produce from 'immer'
 import { WritableDraft } from 'immer/dist/types/types-external'
 import pick from 'lodash.pick'
 import { GetState, SetState } from 'zustand'
+
+const songCoverArtQueue = new PromiseQueue(2)
 
 export type LibrarySlice = {
   entities: {
@@ -62,6 +65,8 @@ export type LibrarySlice = {
   fetchLibrarySearchResults: (params: Search3Params) => Promise<SearchResults>
   star: (params: StarParams) => Promise<void>
   unstar: (params: StarParams) => Promise<void>
+
+  _fixSongCoverArt: (songs: Song[]) => Promise<void>
 }
 
 const defaultEntities = () => ({
@@ -180,6 +185,8 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     const topSongs = response.data.songs.map(mapSong)
     const topSongsById = reduceById(topSongs)
 
+    get()._fixSongCoverArt(topSongs)
+
     set(
       produce<LibrarySlice>(state => {
         mergeById(state.entities.songs, topSongsById)
@@ -204,6 +211,8 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     const album = mapAlbum(response.data.album)
     const songs = response.data.songs.map(mapSong)
     const songsById = reduceById(songs)
+
+    get()._fixSongCoverArt(songs)
 
     set(
       produce<LibrarySlice>(state => {
@@ -255,6 +264,8 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     const songs = response.data.playlist.songs.map(mapSong)
     const songsById = reduceById(songs)
 
+    get()._fixSongCoverArt(songs)
+
     set(
       produce<LibrarySlice>(state => {
         state.entities.playlists[id] = playlist
@@ -278,6 +289,8 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     }
 
     const song = mapSong(response.data.song)
+
+    get()._fixSongCoverArt([song])
 
     set(
       produce<LibrarySlice>(state => {
@@ -332,6 +345,8 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     const albumsById = reduceById(albums)
     const songs = response.data.songs.map(mapSong)
     const songsById = reduceById(songs)
+
+    get()._fixSongCoverArt(songs)
 
     set(
       produce<LibrarySlice>(state => {
@@ -433,6 +448,48 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
       )
     }
   },
+
+  // song cover art comes back from the api as a unique id per song even if it all points to the same
+  // album art, which prevents us from caching it once, so we need to use the album's cover art
+  _fixSongCoverArt: async songs => {
+    const client = get().client
+    if (!client) {
+      return
+    }
+
+    const albumsToGet: ById<Song[]> = {}
+    for (const song of songs) {
+      if (!song.albumId) {
+        continue
+      }
+
+      let album = get().entities.albums[song.albumId]
+      if (album) {
+        song.coverArt = album.coverArt
+        continue
+      }
+
+      albumsToGet[song.albumId] = albumsToGet[song.albumId] || []
+      albumsToGet[song.albumId].push(song)
+    }
+
+    for (const id in albumsToGet) {
+      songCoverArtQueue
+        .enqueue(() => client.getAlbum({ id }))
+        .then(res => {
+          const album = mapAlbum(res.data.album)
+
+          set(
+            produce<LibrarySlice>(state => {
+              state.entities.albums[album.id] = album
+              for (const song of albumsToGet[album.id]) {
+                state.entities.songs[song.id].coverArt = album.coverArt
+              }
+            }),
+          )
+        })
+    }
+  },
 })
 
 function mapArtist(artist: ArtistID3Element): Artist {
@@ -488,7 +545,6 @@ function mapSong(song: ChildElement): Song {
     discNumber: song.discNumber,
     duration: song.duration,
     starred: song.starred,
-    coverArt: song.coverArt,
   }
 }
 
