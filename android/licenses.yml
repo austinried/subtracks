@@ -15,7 +15,7 @@
   copyrightHolder: Original Author
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
-  url: http://developer.android.com/tools/extras/support-library.html
+  url: https://developer.android.com/jetpack/androidx/releases/annotation#1.2.0
 - artifact: androidx.appcompat:appcompat-resources:+
   name: appcompat-resources
   copyrightHolder: Original Author
@@ -70,6 +70,12 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: https://developer.android.com/jetpack/androidx
+- artifact: androidx.core:core-ktx:+
+  name: core-ktx
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: https://developer.android.com/jetpack/androidx/releases/core#1.6.0
 - artifact: androidx.core:core:+
   name: core
   copyrightHolder: Original Author
