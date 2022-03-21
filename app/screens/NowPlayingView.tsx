@@ -396,7 +396,7 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ImageGradientBackground imagePath={imagePath} />
+      <ImageGradientBackground imagePath={imagePath} height={'100%'} />
       <NowPlayingHeader track={track} />
       <View style={styles.content}>
         <SongCoverArt />
