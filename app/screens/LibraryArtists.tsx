@@ -37,6 +37,9 @@ const ArtistsList = () => {
       case 'starred':
         setSortedList([...list].filter(a => a.starred))
         break
+      case 'alphabeticalByName':
+        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)))
+        break
       default:
         setSortedList([...list])
         break
