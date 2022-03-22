@@ -8,6 +8,7 @@ export interface Artist {
 
 export interface ArtistInfo {
   id: string
+  smallImageUrl?: string
   largeImageUrl?: string
 }
 

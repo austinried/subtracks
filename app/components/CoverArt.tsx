@@ -1,5 +1,5 @@
 import { useArtistArtFile, useCoverArtFile } from '@app/hooks/cache'
-import { CacheFile, CacheRequest } from '@app/models/cache'
+import { CacheFile, CacheImageSize, CacheRequest } from '@app/models/cache'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import {
@@ -18,6 +18,7 @@ type BaseProps = {
   imageStyle?: ImageStyle
   resizeMode?: ImageResizeMode
   round?: boolean
+  size?: CacheImageSize
 }
 
 type ArtistCoverArtProps = BaseProps & {
@@ -62,13 +63,13 @@ const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequ
 )
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
-  const cache = useArtistArtFile(props.artistId)
+  const cache = useArtistArtFile(props.artistId, props.size)
 
   return <ImageSource cache={cache} {...props} imageStyle={{ ...styles.artistImage, ...props.imageStyle }} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
-  const cache = useCoverArtFile(props.coverArt)
+  const cache = useCoverArtFile(props.coverArt, props.size)
 
   return <ImageSource cache={cache} {...props} />
 })

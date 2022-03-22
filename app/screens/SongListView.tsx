@@ -50,7 +50,7 @@ const SongListDetails = React.memo<{
   songs?: Song[]
   subtitle?: string
 }>(({ title, songList, songs, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt)
+  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
   const setQueue = useStore(selectTrackPlayer.setQueue)
 
@@ -111,17 +111,17 @@ const SongListDetails = React.memo<{
         }
         ListHeaderComponent={
           <View style={styles.content}>
-            <CoverArt type="cover" coverArt={songList.coverArt} style={styles.cover} />
+            <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-            <ListPlayerControls
-              style={styles.controls}
-              songs={_songs}
-              typeName={typeName}
-              queueName={songList.name}
-              queueContextId={songList.id}
-              queueContextType={type}
-            />
+              <ListPlayerControls
+                style={styles.controls}
+                songs={_songs}
+                typeName={typeName}
+                queueName={songList.name}
+                queueContextId={songList.id}
+                queueContextType={type}
+              />
           </View>
         }
       />

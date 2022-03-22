@@ -150,7 +150,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         onScroll={onScroll}>
-        <CoverArt type="artist" artistId={artist.id} style={styles.artistCover} resizeMode={'cover'} />
+        <CoverArt type="artist" size="original" artistId={artist.id} style={styles.artistCover} resizeMode={'cover'} />
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{artist.name}</Text>
         </View>

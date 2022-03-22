@@ -505,6 +505,7 @@ function mapArtist(artist: ArtistID3Element): Artist {
 function mapArtistInfo(id: string, info: ArtistInfo2Element): ArtistInfo {
   return {
     id,
+    smallImageUrl: info.smallImageUrl,
     largeImageUrl: info.largeImageUrl,
   }
 }

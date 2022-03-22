@@ -1,4 +1,4 @@
-import { CacheItemTypeKey } from '@app/models/cache'
+import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
 import { selectCache } from '@app/state/cache'
 import { selectSettings } from '@app/state/settings'
 import { Store, useStore, useStoreDeep } from '@app/state/store'
@@ -35,15 +35,20 @@ const useFileRequest = (key: CacheItemTypeKey, id: string) => {
   return { file, request }
 }
 
-export const useCoverArtFile = (coverArt = '-1') => {
-  const type: CacheItemTypeKey = 'coverArt'
+export const useCoverArtFile = (coverArt = '-1', size: CacheImageSize = 'thumbnail') => {
+  const type: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
   const { file, request } = useFileRequest(type, coverArt)
   const client = useStore(selectSettings.client)
   const cacheItem = useStore(selectCache.cacheItem)
 
   useEffect(() => {
     if (!file && client) {
-      cacheItem(type, coverArt, () => client.getCoverArtUri({ id: coverArt }))
+      cacheItem(type, coverArt, () =>
+        client.getCoverArtUri({
+          id: coverArt,
+          size: type === 'coverArtThumb' ? '256' : undefined,
+        }),
+      )
     }
     // intentionally leaving file out so it doesn't re-render if the request fails
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,8 +57,8 @@ export const useCoverArtFile = (coverArt = '-1') => {
   return { file, request }
 }
 
-export const useArtistArtFile = (artistId: string) => {
-  const type: CacheItemTypeKey = 'artistArt'
+export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumbnail') => {
+  const type: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
   const fetchArtistInfo = useStore(store => store.fetchArtistInfo)
   const artistInfo = useStoreDeep(store => store.entities.artistInfo[artistId])
   const { file, request } = useFileRequest(type, artistId)
@@ -65,8 +70,10 @@ export const useArtistArtFile = (artistId: string) => {
       return
     }
 
-    if (!file && artistInfo.largeImageUrl) {
-      cacheItem(type, artistId, artistInfo.largeImageUrl)
+    if (!file && artistInfo) {
+      cacheItem(type, artistId, async () => {
+        return type === 'artistArtThumb' ? artistInfo?.smallImageUrl : artistInfo?.largeImageUrl
+      })
     }
     // intentionally leaving file out so it doesn't re-render if the request fails
     // eslint-disable-next-line react-hooks/exhaustive-deps
