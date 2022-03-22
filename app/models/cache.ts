@@ -2,11 +2,15 @@ import { Album, Playlist, Artist, Song } from './library'
 
 export enum CacheItemType {
   coverArt = 'coverArt',
+  coverArtThumb = 'coverArtThumb',
   artistArt = 'artistArt',
+  artistArtThumb = 'artistArtThumb',
   song = 'song',
 }
 
 export type CacheItemTypeKey = keyof typeof CacheItemType
+
+export type CacheImageSize = 'thumbnail' | 'original'
 
 export type CacheFile = {
   path: string

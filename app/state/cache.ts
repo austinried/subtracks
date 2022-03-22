@@ -1,4 +1,4 @@
-import { CacheFile, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
+import { CacheFile, CacheImageSize, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
 import { mkdir, rmdir } from '@app/util/fs'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
@@ -8,7 +8,9 @@ import { Store } from './store'
 
 const queues: Record<CacheItemTypeKey, PromiseQueue> = {
   coverArt: new PromiseQueue(5),
+  coverArtThumb: new PromiseQueue(50),
   artistArt: new PromiseQueue(5),
+  artistArtThumb: new PromiseQueue(50),
   song: new PromiseQueue(1),
 }
 
@@ -30,7 +32,7 @@ export type CacheSlice = {
   cacheFiles: CacheFilesByServer
   cacheRequests: CacheRequestsByServer
 
-  fetchCoverArtFilePath: (coverArt: string) => Promise<string | undefined>
+  fetchCoverArtFilePath: (coverArt: string, size?: CacheImageSize) => Promise<string | undefined>
 
   createCache: (serverId: string) => Promise<void>
   prepareCache: (serverId: string) => void
@@ -134,7 +136,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
     return await promise
   },
 
-  fetchCoverArtFilePath: async coverArt => {
+  fetchCoverArtFilePath: async (coverArt, size = 'thumbnail') => {
     const client = get().client
     if (!client) {
       return
@@ -145,7 +147,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const key: CacheItemTypeKey = 'coverArt'
+    const key: CacheItemTypeKey = size === 'thumbnail' ? 'coverArtThumb' : 'coverArt'
 
     const existing = get().cacheFiles[activeServerId][key][coverArt]
     const inProgress = get().cacheRequests[activeServerId][key][coverArt]
@@ -156,7 +158,12 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return `file://${existing.path}`
     }
 
-    await get().cacheItem(key, coverArt, () => client.getCoverArtUri({ id: coverArt }))
+    await get().cacheItem(key, coverArt, () =>
+      client.getCoverArtUri({
+        id: coverArt,
+        size: size === 'thumbnail' ? '256' : undefined,
+      }),
+    )
 
     return `file://${get().cacheFiles[activeServerId][key][coverArt].path}`
   },
@@ -171,7 +178,9 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
         state.cacheFiles[serverId] = {
           song: {},
           coverArt: {},
+          coverArtThumb: {},
           artistArt: {},
+          artistArtThumb: {},
         }
       }),
     )
@@ -186,14 +195,18 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
           state.cacheDirs[serverId] = {
             song: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/song`,
             coverArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArt`,
+            coverArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArtThumb`,
             artistArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArt`,
+            artistArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArtThumb`,
           }
         }
         if (!state.cacheRequests[serverId]) {
           state.cacheRequests[serverId] = {
             song: {},
             coverArt: {},
+            coverArtThumb: {},
             artistArt: {},
+            artistArtThumb: {},
           }
         }
       }),
@@ -260,7 +273,9 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       set(
         produce<CacheSlice>(state => {
           state.cacheFiles[serverId].coverArt = {}
+          state.cacheFiles[serverId].coverArtThumb = {}
           state.cacheFiles[serverId].artistArt = {}
+          state.cacheFiles[serverId].artistArtThumb = {}
         }),
       )
     }

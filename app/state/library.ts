@@ -23,7 +23,7 @@ import {
   SubsonicResponse,
 } from '@app/subsonic/responses'
 import PromiseQueue from '@app/util/PromiseQueue'
-import { reduceById, mergeById, mapId } from '@app/util/state'
+import { reduceById, mergeById } from '@app/util/state'
 import produce from 'immer'
 import { WritableDraft } from 'immer/dist/types/types-external'
 import pick from 'lodash.pick'
@@ -546,4 +546,8 @@ function mapSong(song: ChildElement): Song {
     duration: song.duration,
     starred: song.starred,
   }
+}
+
+function mapId(entities: { id: string }[]): string[] {
+  return entities.map(e => e.id)
 }
