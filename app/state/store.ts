@@ -50,13 +50,13 @@ export const useStore = create<
             postState?.setHydrated(true)
           }
         },
-        migrate: (persistedState, version) => {
+        migrate: async (persistedState, version) => {
           if (version > DB_VERSION) {
             throw new Error('cannot migrate db on a downgrade, delete all data first')
           }
 
           for (let i = version; i < DB_VERSION; i++) {
-            persistedState = migrations[i](persistedState)
+            persistedState = await migrations[i](persistedState)
           }
 
           return persistedState
