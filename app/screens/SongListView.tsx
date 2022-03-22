@@ -144,7 +144,7 @@ const PlaylistView = React.memo<{
     ),
   )
 
-  const fetchPlaylist = useStore(store => store.fetchLibraryPlaylist)
+  const fetchPlaylist = useStore(store => store.fetchPlaylist)
 
   useEffect(() => {
     if (!playlist || !songs) {
@@ -172,7 +172,7 @@ const AlbumView = React.memo<{
     ),
   )
 
-  const fetchAlbum = useStore(store => store.fetchLibraryAlbum)
+  const fetchAlbum = useStore(store => store.fetchAlbum)
 
   useEffect(() => {
     if (!album || !songs) {

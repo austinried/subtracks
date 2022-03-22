@@ -41,7 +41,7 @@ const SearchResultsView: React.FC<{
   type: 'album' | 'artist' | 'song'
 }> = ({ query, type }) => {
   const navigation = useNavigation()
-  const fetchSearchResults = useStore(store => store.fetchLibrarySearchResults)
+  const fetchSearchResults = useStore(store => store.fetchSearchResults)
   const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(
     useCallback(
       async (size, offset) => {

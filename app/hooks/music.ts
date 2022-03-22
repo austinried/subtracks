@@ -18,9 +18,9 @@ function starParams(id: string, type: StarrableItem): StarParams {
 }
 
 export const useStar = (id: string, type: StarrableItem) => {
-  const fetchAlbum = useStore(store => store.fetchLibraryAlbum)
-  const fetchArtist = useStore(store => store.fetchLibraryArtist)
-  const fetchSong = useStore(store => store.fetchLibrarySong)
+  const fetchAlbum = useStore(store => store.fetchAlbum)
+  const fetchArtist = useStore(store => store.fetchArtist)
+  const fetchSong = useStore(store => store.fetchSong)
 
   const _starred = useStore(
     useCallback(

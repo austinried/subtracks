@@ -49,20 +49,20 @@ export type LibrarySlice = {
 
   resetLibrary: (state?: WritableDraft<Store>) => void
 
-  fetchLibraryArtists: () => Promise<void>
-  fetchLibraryArtist: (id: string) => Promise<void>
-  fetchLibraryArtistInfo: (artistId: string) => Promise<void>
-  fetchLibraryArtistTopSongs: (artistName: string) => Promise<void>
+  fetchArtists: () => Promise<void>
+  fetchArtist: (id: string) => Promise<void>
+  fetchArtistInfo: (artistId: string) => Promise<void>
+  fetchArtistTopSongs: (artistName: string) => Promise<void>
 
-  fetchLibraryAlbum: (id: string) => Promise<void>
+  fetchAlbum: (id: string) => Promise<void>
 
-  fetchLibraryPlaylists: () => Promise<void>
-  fetchLibraryPlaylist: (id: string) => Promise<void>
+  fetchPlaylists: () => Promise<void>
+  fetchPlaylist: (id: string) => Promise<void>
 
-  fetchLibrarySong: (id: string) => Promise<void>
+  fetchSong: (id: string) => Promise<void>
 
-  fetchLibraryAlbumList: (params: GetAlbumList2Params) => Promise<string[]>
-  fetchLibrarySearchResults: (params: Search3Params) => Promise<SearchResults>
+  fetchAlbumList: (params: GetAlbumList2Params) => Promise<string[]>
+  fetchSearchResults: (params: Search3Params) => Promise<SearchResults>
   star: (params: StarParams) => Promise<void>
   unstar: (params: StarParams) => Promise<void>
 
@@ -97,7 +97,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     })
   },
 
-  fetchLibraryArtists: async () => {
+  fetchArtists: async () => {
     const client = get().client
     if (!client) {
       return
@@ -121,7 +121,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryArtist: async id => {
+  fetchArtist: async id => {
     const client = get().client
     if (!client) {
       return
@@ -147,7 +147,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryArtistInfo: async id => {
+  fetchArtistInfo: async id => {
     const client = get().client
     if (!client) {
       return
@@ -169,7 +169,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryArtistTopSongs: async artistName => {
+  fetchArtistTopSongs: async artistName => {
     const client = get().client
     if (!client) {
       return
@@ -195,7 +195,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryAlbum: async id => {
+  fetchAlbum: async id => {
     const client = get().client
     if (!client) {
       return
@@ -223,7 +223,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryPlaylists: async () => {
+  fetchPlaylists: async () => {
     const client = get().client
     if (!client) {
       return
@@ -247,7 +247,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryPlaylist: async id => {
+  fetchPlaylist: async id => {
     const client = get().client
     if (!client) {
       return
@@ -275,7 +275,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibrarySong: async id => {
+  fetchSong: async id => {
     const client = get().client
     if (!client) {
       return
@@ -299,7 +299,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     )
   },
 
-  fetchLibraryAlbumList: async params => {
+  fetchAlbumList: async params => {
     const client = get().client
     if (!client) {
       return []
@@ -324,7 +324,7 @@ export const createLibrarySlice = (set: SetState<Store>, get: GetState<Store>): 
     return mapId(albums)
   },
 
-  fetchLibrarySearchResults: async params => {
+  fetchSearchResults: async params => {
     const empty = { artists: [], albums: [], songs: [] }
 
     const client = get().client

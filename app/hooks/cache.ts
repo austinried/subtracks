@@ -54,7 +54,7 @@ export const useCoverArtFile = (coverArt = '-1') => {
 
 export const useArtistArtFile = (artistId: string) => {
   const type: CacheItemTypeKey = 'artistArt'
-  const fetchArtistInfo = useStore(store => store.fetchLibraryArtistInfo)
+  const fetchArtistInfo = useStore(store => store.fetchArtistInfo)
   const artistInfo = useStoreDeep(store => store.entities.artistInfo[artistId])
   const { file, request } = useFileRequest(type, artistId)
   const cacheItem = useStore(selectCache.cacheItem)

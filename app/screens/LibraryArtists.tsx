@@ -20,7 +20,7 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const fetchArtists = useStore(store => store.fetchLibraryArtists)
+  const fetchArtists = useStore(store => store.fetchArtists)
   const { refreshing, refresh } = useFetchList2(fetchArtists)
   const artists = useStoreDeep(store => store.entities.artists)
 

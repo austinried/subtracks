@@ -105,7 +105,7 @@ const Results = React.memo<{
 })
 
 const Search = () => {
-  const fetchSearchResults = useStore(store => store.fetchLibrarySearchResults)
+  const fetchSearchResults = useStore(store => store.fetchSearchResults)
   const [results, setResults] = useState<SearchResults>({ artists: [], albums: [], songs: [] })
   const [refreshing, setRefreshing] = useState(false)
   const [text, setText] = useState('')

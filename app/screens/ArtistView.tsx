@@ -107,8 +107,8 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     useCallback(store => (albumIds ? mapById(store.entities.albums, albumIds) : undefined), [albumIds]),
   )
 
-  const fetchArtist = useStore(store => store.fetchLibraryArtist)
-  const fetchTopSongs = useStore(store => store.fetchLibraryArtistTopSongs)
+  const fetchArtist = useStore(store => store.fetchArtist)
+  const fetchTopSongs = useStore(store => store.fetchArtistTopSongs)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)

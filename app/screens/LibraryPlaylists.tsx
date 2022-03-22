@@ -11,7 +11,7 @@ const PlaylistRenderItem: React.FC<{ item: Playlist }> = ({ item }) => (
 )
 
 const PlaylistsList = () => {
-  const fetchPlaylists = useStore(store => store.fetchLibraryPlaylists)
+  const fetchPlaylists = useStore(store => store.fetchPlaylists)
   const { refreshing, refresh } = useFetchList2(fetchPlaylists)
   const playlists = useStoreDeep(store => store.entities.playlists)
 

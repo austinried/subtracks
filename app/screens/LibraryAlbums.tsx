@@ -60,7 +60,7 @@ const AlbumsList = () => {
   const filter = useStore(selectSettings.libraryAlbumFilter)
   const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
 
-  const fetchAlbumList = useStore(store => store.fetchLibraryAlbumList)
+  const fetchAlbumList = useStore(store => store.fetchAlbumList)
   const fetchPage = useCallback(
     (size: number, offset: number) => {
       let params: GetAlbumList2Params

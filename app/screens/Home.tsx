@@ -108,7 +108,7 @@ function useHomeStoreDeep<U>(stateSelector: StateSelector<HomeState, U>) {
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false)
   const types = useStore(selectSettings.homeLists)
-  const fetchAlbumList = useStore(store => store.fetchLibraryAlbumList)
+  const fetchAlbumList = useStore(store => store.fetchAlbumList)
   const setList = useHomeStore(store => store.setList)
 
   const refresh = useCallback(async () => {
