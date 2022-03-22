@@ -11,6 +11,7 @@ import { AlbumContextPressable, ArtistContextPressable, SongContextPressable } f
 import CoverArt from './CoverArt'
 import PressableOpacity from './PressableOpacity'
 import { PressableStar } from './Star'
+import equal from 'fast-deep-equal/es6/react'
 
 const TitleTextSong = React.memo<{
   contextId?: string
@@ -246,4 +247,4 @@ const bigStyles = StyleSheet.create({
   },
 })
 
-export default React.memo(ListItem)
+export default React.memo(ListItem, equal)
