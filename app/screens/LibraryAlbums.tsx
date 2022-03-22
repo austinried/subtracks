@@ -3,23 +3,26 @@ import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
-import { Album } from '@app/models/library'
 import { selectSettings } from '@app/state/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
-import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
-  album: Album
+  id: string
   size: number
   height: number
-}>(({ album, size, height }) => {
+}>(({ id, size, height }) => {
+  const album = useStoreDeep(useCallback(store => store.entities.albums[id], [id]))
   const navigation = useNavigation()
+
+  if (!album) {
+    return <></>
+  }
 
   return (
     <AlbumContextPressable
@@ -41,8 +44,8 @@ const AlbumItem = React.memo<{
 })
 
 const AlbumListRenderItem: React.FC<{
-  item: { album: Album; size: number; height: number }
-}> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
+  item: { id: string; size: number; height: number }
+}> = ({ item }) => <AlbumItem id={item.id} size={item.size} height={item.height} />
 
 const filterOptions: OptionData[] = [
   { text: 'By Name', value: 'alphabeticalByName' },
@@ -96,7 +99,6 @@ const AlbumsList = () => {
   )
 
   const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchPage, 300)
-  const albums = useStoreDeep(useCallback(store => mapById(store.entities.albums, list), [list]))
 
   const layout = useWindowDimensions()
 
@@ -106,9 +108,9 @@ const AlbumsList = () => {
   return (
     <View style={styles.container}>
       <GradientFlatList
-        data={albums.map(album => ({ album, size, height }))}
+        data={list.map(id => ({ id, size, height }))}
         renderItem={AlbumListRenderItem}
-        keyExtractor={item => item.album.id}
+        keyExtractor={item => item.id}
         numColumns={3}
         removeClippedSubviews={true}
         refreshing={refreshing}
