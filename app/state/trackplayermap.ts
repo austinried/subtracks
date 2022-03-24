@@ -1,7 +1,6 @@
 import { Song } from '@app/models/library'
 import userAgent from '@app/util/userAgent'
-import { GetState, SetState } from 'zustand'
-import { Store } from './store'
+import { GetStore, SetStore } from './store'
 import { TrackExt } from './trackplayer'
 
 export type TrackPlayerMapSlice = {
@@ -14,7 +13,7 @@ export const selectTrackPlayerMap = {
   mapTrackExtToSong: (store: TrackPlayerMapSlice) => store.mapTrackExtToSong,
 }
 
-export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerMapSlice => ({
+export const createTrackPlayerMapSlice = (set: SetStore, get: GetStore): TrackPlayerMapSlice => ({
   mapSongtoTrackExt: async song => {
     let artwork = require('@res/fallback.png')
     if (song.coverArt) {

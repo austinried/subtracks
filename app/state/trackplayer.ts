@@ -3,8 +3,7 @@ import { Song } from '@app/models/library'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
 import TrackPlayer, { PlayerOptions, RepeatMode, State, Track } from 'react-native-track-player'
-import { GetState, SetState } from 'zustand'
-import { Store } from './store'
+import { GetStore, SetStore } from './store'
 
 export type TrackExt = Track & {
   id: string
@@ -114,15 +113,24 @@ export const selectTrackPlayer = {
 
 export const trackPlayerCommands = new PromiseQueue(1)
 
-export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerSlice => ({
+export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlayerSlice => ({
   queueName: undefined,
-  setQueueName: name => set({ queueName: name }),
+  setQueueName: name =>
+    set(state => {
+      state.queueName = name
+    }),
 
   queueContextType: undefined,
-  setQueueContextType: queueContextType => set({ queueContextType }),
+  setQueueContextType: queueContextType =>
+    set(state => {
+      state.queueContextType = queueContextType
+    }),
 
   queueContextId: undefined,
-  setQueueContextId: queueContextId => set({ queueContextId }),
+  setQueueContextId: queueContextId =>
+    set(state => {
+      state.queueContextId = queueContextId
+    }),
 
   shuffleOrder: undefined,
   toggleShuffle: async () => {
@@ -140,7 +148,9 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
         }
 
         await TrackPlayer.add(tracks)
-        set({ shuffleOrder })
+        set(state => {
+          state.shuffleOrder = shuffleOrder
+        })
       } else {
         const tracks = unshuffleTracks(queue, queueShuffleOrder)
 
@@ -155,10 +165,14 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
           await TrackPlayer.add(tracks)
         }
 
-        set({ shuffleOrder: undefined })
+        set(state => {
+          state.shuffleOrder = undefined
+        })
       }
 
-      set({ queue: await getQueue() })
+      set(async state => {
+        state.queue = await getQueue()
+      })
       get().setCurrentTrackIdx(await getCurrentTrack())
     })
   },
@@ -182,12 +196,17 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       }
 
       await TrackPlayer.setRepeatMode(nextMode)
-      set({ repeatMode: nextMode })
+      set(state => {
+        state.repeatMode = nextMode
+      })
     })
   },
 
   playerState: State.None,
-  setPlayerState: playerState => set({ playerState }),
+  setPlayerState: playerState =>
+    set(state => {
+      state.playerState = playerState
+    }),
 
   currentTrack: undefined,
   currentTrackIdx: undefined,
@@ -201,7 +220,10 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
   },
 
   duckPaused: false,
-  setDuckPaused: duckPaused => set({ duckPaused }),
+  setDuckPaused: duckPaused =>
+    set(state => {
+      state.duckPaused = duckPaused
+    }),
 
   queue: [],
   setQueue: async (songs, name, contextType, contextId, playTrack, shuffle) => {
@@ -219,21 +241,25 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
-        set({ shuffleOrder })
+        set(state => {
+          state.shuffleOrder = shuffleOrder
+        })
         queue = tracks
         playTrack = 0
       } else {
-        set({ shuffleOrder: undefined })
+        set(state => {
+          state.shuffleOrder = undefined
+        })
       }
 
       playTrack = playTrack || 0
 
       try {
-        set({
-          queue,
-          queueName: name,
-          queueContextType: contextType,
-          queueContextId: contextId,
+        set(state => {
+          state.queue = queue
+          state.queueName = name
+          state.queueContextType = contextType
+          state.queueContextId = contextId
         })
         get().setCurrentTrackIdx(playTrack)
 
@@ -256,7 +282,10 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
   },
 
   progress: { position: 0, duration: 0, buffered: 0 },
-  setProgress: progress => set({ progress }),
+  setProgress: progress =>
+    set(state => {
+      state.progress = progress
+    }),
 
   scrobbleTrack: async id => {
     const client = get().client
@@ -278,7 +307,9 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
     if (netState === get().netState) {
       return
     }
-    set({ netState })
+    set(state => {
+      state.netState = netState
+    })
     get().rebuildQueue()
   },
 
@@ -290,7 +321,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
       }
 
       const currentTrack = await getCurrentTrack()
-      const state = await getPlayerState()
+      const playerState = await getPlayerState()
       const position = (await TrackPlayer.getPosition()) || 0
 
       const queueName = get().queueName
@@ -308,11 +339,11 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
         return
       }
 
-      set({
-        queue,
-        queueName,
-        queueContextId,
-        queueContextType,
+      set(state => {
+        state.queue = queue
+        state.queueName = queueName
+        state.queueContextType = queueContextType
+        state.queueContextId = queueContextId
       })
       get().setCurrentTrackIdx(currentTrack)
 
@@ -324,7 +355,7 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
 
       await TrackPlayer.seekTo(position)
 
-      if (state === State.Playing || forcePlay) {
+      if (playerState === State.Playing || forcePlay) {
         await TrackPlayer.play()
       }
     })
@@ -344,17 +375,17 @@ export const createTrackPlayerSlice = (set: SetState<Store>, get: GetState<Store
   },
 
   resetTrackPlayerState: () => {
-    set({
-      queueName: undefined,
-      queueContextType: undefined,
-      queueContextId: undefined,
-      shuffleOrder: undefined,
-      repeatMode: RepeatMode.Off,
-      playerState: State.None,
-      currentTrack: undefined,
-      currentTrackIdx: undefined,
-      queue: [],
-      progress: { position: 0, duration: 0, buffered: 0 },
+    set(state => {
+      state.queueName = undefined
+      state.queueContextType = undefined
+      state.queueContextId = undefined
+      state.shuffleOrder = undefined
+      state.repeatMode = RepeatMode.Off
+      state.playerState = State.None
+      state.currentTrack = undefined
+      state.currentTrackIdx = undefined
+      state.queue = []
+      state.progress = { position: 0, duration: 0, buffered: 0 }
     })
   },
 
