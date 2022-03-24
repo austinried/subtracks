@@ -298,7 +298,7 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
     }
 
     try {
-      await client.scrobble({ id })
+      await client.fetch('scrobble', { id })
     } catch {}
   },
 

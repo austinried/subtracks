@@ -32,6 +32,7 @@ import {
   GetPlaylistsResponse,
   GetSongResponse,
   GetTopSongsResponse,
+  NullResponse,
   Search3Response,
   SubsonicResponse,
 } from '@app/subsonic/responses'
@@ -52,6 +53,48 @@ export class SubsonicApiError extends Error {
     this.method = method
     this.code = errorElement.getAttribute('code') as string
   }
+}
+
+type ResponseType<T extends SubsonicResponse> = (xml: Document) => T
+
+type RequestParams = {
+  getIndexes: GetIndexesParams
+  getMusicDirectory: GetMusicDirectoryParams
+  getAlbum: GetAlbumParams
+  getArtistInfo: GetArtistInfoParams
+  getArtistInfo2: GetArtistInfo2Params
+  getArtist: GetArtistParams
+  getTopSongs: GetTopSongsParams
+  getSong: GetSongParams
+  getAlbumList: GetAlbumListParams
+  getAlbumList2: GetAlbumList2Params
+  getPlaylists: GetPlaylistsParams
+  getPlaylist: GetPlaylistParams
+  scrobble: ScrobbleParams
+  star: StarParams
+  unstar: StarParams
+  search3: Search3Params
+}
+
+const Methods = {
+  ping: (xml => new NullResponse(xml)) as ResponseType<NullResponse>,
+  getArtists: (xml => new GetArtistsResponse(xml)) as ResponseType<GetArtistsResponse>,
+  getIndexes: (xml => new GetIndexesResponse(xml)) as ResponseType<GetIndexesResponse>,
+  getMusicDirectory: (xml => new GetMusicDirectoryResponse(xml)) as ResponseType<GetMusicDirectoryResponse>,
+  getAlbum: (xml => new GetAlbumResponse(xml)) as ResponseType<GetAlbumResponse>,
+  getArtistInfo: (xml => new GetArtistInfoResponse(xml)) as ResponseType<GetArtistInfoResponse>,
+  getArtistInfo2: (xml => new GetArtistInfo2Response(xml)) as ResponseType<GetArtistInfo2Response>,
+  getArtist: (xml => new GetArtistResponse(xml)) as ResponseType<GetArtistResponse>,
+  getTopSongs: (xml => new GetTopSongsResponse(xml)) as ResponseType<GetTopSongsResponse>,
+  getSong: (xml => new GetSongResponse(xml)) as ResponseType<GetSongResponse>,
+  getAlbumList: (xml => new GetAlbumListResponse(xml)) as ResponseType<GetAlbumListResponse>,
+  getAlbumList2: (xml => new GetAlbumList2Response(xml)) as ResponseType<GetAlbumList2Response>,
+  getPlaylists: (xml => new GetPlaylistsResponse(xml)) as ResponseType<GetPlaylistsResponse>,
+  getPlaylist: (xml => new GetPlaylistResponse(xml)) as ResponseType<GetPlaylistResponse>,
+  scrobble: (xml => new NullResponse(xml)) as ResponseType<NullResponse>,
+  star: (xml => new NullResponse(xml)) as ResponseType<NullResponse>,
+  unstar: (xml => new NullResponse(xml)) as ResponseType<NullResponse>,
+  search3: (xml => new Search3Response(xml)) as ResponseType<Search3Response>,
 }
 
 export class SubsonicApiClient {
@@ -129,95 +172,13 @@ export class SubsonicApiClient {
     return params
   }
 
-  //
-  // System
-  //
-
-  async ping(): Promise<SubsonicResponse<null>> {
-    const xml = await this.apiGetXml('ping')
-    return new SubsonicResponse<null>(xml, null)
+  async fetch<T extends keyof typeof Methods>(
+    method: T,
+    ...params: T extends Extract<keyof RequestParams, T> ? [RequestParams[Extract<keyof RequestParams, T>]] : []
+  ): Promise<ReturnType<typeof Methods[T]>> {
+    const xml = await this.apiGetXml(method, params.length > 0 ? params[0] : undefined)
+    return Methods[method](xml) as ReturnType<typeof Methods[T]>
   }
-
-  //
-  // Browsing
-  //
-
-  async getArtists(): Promise<SubsonicResponse<GetArtistsResponse>> {
-    const xml = await this.apiGetXml('getArtists')
-    return new SubsonicResponse<GetArtistsResponse>(xml, new GetArtistsResponse(xml))
-  }
-
-  async getIndexes(params?: GetIndexesParams): Promise<SubsonicResponse<GetIndexesResponse>> {
-    const xml = await this.apiGetXml('getIndexes', params)
-    return new SubsonicResponse<GetIndexesResponse>(xml, new GetIndexesResponse(xml))
-  }
-
-  async getMusicDirectory(params: GetMusicDirectoryParams): Promise<SubsonicResponse<GetMusicDirectoryResponse>> {
-    const xml = await this.apiGetXml('getMusicDirectory', params)
-    return new SubsonicResponse<GetMusicDirectoryResponse>(xml, new GetMusicDirectoryResponse(xml))
-  }
-
-  async getAlbum(params: GetAlbumParams): Promise<SubsonicResponse<GetAlbumResponse>> {
-    const xml = await this.apiGetXml('getAlbum', params)
-    return new SubsonicResponse<GetAlbumResponse>(xml, new GetAlbumResponse(xml))
-  }
-
-  async getArtistInfo(params: GetArtistInfoParams): Promise<SubsonicResponse<GetArtistInfoResponse>> {
-    const xml = await this.apiGetXml('getArtistInfo', params)
-    return new SubsonicResponse<GetArtistInfoResponse>(xml, new GetArtistInfoResponse(xml))
-  }
-
-  async getArtistInfo2(params: GetArtistInfo2Params): Promise<SubsonicResponse<GetArtistInfo2Response>> {
-    const xml = await this.apiGetXml('getArtistInfo2', params)
-    return new SubsonicResponse<GetArtistInfo2Response>(xml, new GetArtistInfo2Response(xml))
-  }
-
-  async getArtist(params: GetArtistParams): Promise<SubsonicResponse<GetArtistResponse>> {
-    const xml = await this.apiGetXml('getArtist', params)
-    return new SubsonicResponse<GetArtistResponse>(xml, new GetArtistResponse(xml))
-  }
-
-  async getTopSongs(params: GetTopSongsParams): Promise<SubsonicResponse<GetTopSongsResponse>> {
-    const xml = await this.apiGetXml('getTopSongs', params)
-    return new SubsonicResponse<GetTopSongsResponse>(xml, new GetTopSongsResponse(xml))
-  }
-
-  async getSong(params: GetSongParams): Promise<SubsonicResponse<GetSongResponse>> {
-    const xml = await this.apiGetXml('getSong', params)
-    return new SubsonicResponse<GetSongResponse>(xml, new GetSongResponse(xml))
-  }
-
-  //
-  // Album/song lists
-  //
-
-  async getAlbumList(params: GetAlbumListParams): Promise<SubsonicResponse<GetAlbumListResponse>> {
-    const xml = await this.apiGetXml('getAlbumList', params)
-    return new SubsonicResponse<GetAlbumListResponse>(xml, new GetAlbumListResponse(xml))
-  }
-
-  async getAlbumList2(params: GetAlbumList2Params): Promise<SubsonicResponse<GetAlbumList2Response>> {
-    const xml = await this.apiGetXml('getAlbumList2', params)
-    return new SubsonicResponse<GetAlbumList2Response>(xml, new GetAlbumList2Response(xml))
-  }
-
-  //
-  // Playlists
-  //
-
-  async getPlaylists(params?: GetPlaylistsParams): Promise<SubsonicResponse<GetPlaylistsResponse>> {
-    const xml = await this.apiGetXml('getPlaylists', params)
-    return new SubsonicResponse<GetPlaylistsResponse>(xml, new GetPlaylistsResponse(xml))
-  }
-
-  async getPlaylist(params: GetPlaylistParams): Promise<SubsonicResponse<GetPlaylistResponse>> {
-    const xml = await this.apiGetXml('getPlaylist', params)
-    return new SubsonicResponse<GetPlaylistResponse>(xml, new GetPlaylistResponse(xml))
-  }
-
-  //
-  // Media retrieval
-  //
 
   getCoverArtUri(params?: GetCoverArtParams): string {
     return this.buildUrl('getCoverArt', params)
@@ -225,33 +186,5 @@ export class SubsonicApiClient {
 
   streamUri(params: StreamParams): string {
     return this.buildUrl('stream', params)
-  }
-
-  //
-  // Media annotation
-  //
-
-  async scrobble(params: ScrobbleParams): Promise<SubsonicResponse<undefined>> {
-    const xml = await this.apiGetXml('scrobble', params)
-    return new SubsonicResponse<undefined>(xml, undefined)
-  }
-
-  async star(params: StarParams): Promise<SubsonicResponse<undefined>> {
-    const xml = await this.apiGetXml('star', params)
-    return new SubsonicResponse<undefined>(xml, undefined)
-  }
-
-  async unstar(params: StarParams): Promise<SubsonicResponse<undefined>> {
-    const xml = await this.apiGetXml('unstar', params)
-    return new SubsonicResponse<undefined>(xml, undefined)
-  }
-
-  //
-  // Searching
-  //
-
-  async search3(params: Search3Params): Promise<SubsonicResponse<Search3Response>> {
-    const xml = await this.apiGetXml('search3', params)
-    return new SubsonicResponse<Search3Response>(xml, new Search3Response(xml))
   }
 }
