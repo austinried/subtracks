@@ -100,7 +100,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetArtistsResponse
     try {
-      response = await client.fetch('getArtists')
+      response = await client.getArtists()
     } catch {
       return
     }
@@ -122,7 +122,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetArtistResponse
     try {
-      response = await client.fetch('getArtist', { id })
+      response = await client.getArtist({ id })
     } catch {
       return
     }
@@ -146,7 +146,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetArtistInfo2Response
     try {
-      response = await client.fetch('getArtistInfo2', { id })
+      response = await client.getArtistInfo2({ id })
     } catch {
       return
     }
@@ -166,7 +166,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetTopSongsResponse
     try {
-      response = await client.fetch('getTopSongs', { artist: artistName, count: 50 })
+      response = await client.getTopSongs({ artist: artistName, count: 50 })
     } catch {
       return
     }
@@ -190,7 +190,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetAlbumResponse
     try {
-      response = await client.fetch('getAlbum', { id })
+      response = await client.getAlbum({ id })
     } catch {
       return
     }
@@ -216,7 +216,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetPlaylistsResponse
     try {
-      response = await client.fetch('getPlaylists', {})
+      response = await client.getPlaylists()
     } catch {
       return
     }
@@ -238,7 +238,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetPlaylistResponse
     try {
-      response = await client.fetch('getPlaylist', { id })
+      response = await client.getPlaylist({ id })
     } catch {
       return
     }
@@ -264,7 +264,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetSongResponse
     try {
-      response = await client.fetch('getSong', { id })
+      response = await client.getSong({ id })
     } catch {
       return
     }
@@ -286,7 +286,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: GetAlbumList2Response
     try {
-      response = await client.fetch('getAlbumList2', params)
+      response = await client.getAlbumList2(params)
     } catch {
       return []
     }
@@ -309,7 +309,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     let response: Search3Response
     try {
-      response = await client.fetch('search3', params)
+      response = await client.search3(params)
     } catch {
       return empty
     }
@@ -365,7 +365,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     })
 
     try {
-      await client.fetch('star', params)
+      await client.star(params)
     } catch {
       set(state => {
         if (originalValue !== null) {
@@ -404,7 +404,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     })
 
     try {
-      await client.fetch('unstar', params)
+      await client.unstar(params)
     } catch {
       set(state => {
         if (originalValue !== null) {
@@ -440,7 +440,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     for (const id in albumsToGet) {
       songCoverArtQueue
-        .enqueue(() => client.fetch('getAlbum', { id }))
+        .enqueue(() => client.getAlbum({ id }))
         .then(res => {
           const album = mapAlbum(res.data.album)
 

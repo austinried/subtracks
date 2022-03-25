@@ -220,7 +220,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
 
     try {
-      await client.fetch('ping')
+      await client.ping()
       return true
     } catch {
       return false
