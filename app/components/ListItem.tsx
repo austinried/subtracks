@@ -141,9 +141,20 @@ const ListItem: React.FC<{
   const resizeMode = 'cover'
   let coverArt = <></>
   if (item.itemType === 'artist') {
-    coverArt = <CoverArt type="artist" artistId={item.id} round={true} style={artStyle} resizeMode={resizeMode} />
+    coverArt = (
+      <CoverArt
+        type="artist"
+        artistId={item.id}
+        round={true}
+        style={artStyle}
+        resizeMode={resizeMode}
+        size="thumbnail"
+      />
+    )
   } else {
-    coverArt = <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} />
+    coverArt = (
+      <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} size="thumbnail" />
+    )
   }
 
   return (
