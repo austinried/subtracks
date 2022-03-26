@@ -21,11 +21,11 @@ const migrations: Array<(state: any) => any> = [
     state.settings.screens.home.listTypes = [...state.settings.screens.home.lists]
     delete state.settings.screens.home.lists
 
-    state.settings.screens.library.albumsFilter = { ...state.settings.screens.home.albums }
-    delete state.settings.screens.home.albums
+    state.settings.screens.library.albumsFilter = { ...state.settings.screens.library.albums }
+    delete state.settings.screens.library.albums
 
-    state.settings.screens.library.artistsFilter = { ...state.settings.screens.home.artists }
-    delete state.settings.screens.home.artists
+    state.settings.screens.library.artistsFilter = { ...state.settings.screens.library.artists }
+    delete state.settings.screens.library.artists
 
     delete state.settings.estimateContentLength
 
