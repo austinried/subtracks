@@ -1,26 +1,10 @@
 import { NoClientError } from '@app/models/error'
 import { Song } from '@app/models/library'
+import { Progress, QueueContextType, TrackExt } from '@app/models/trackplayer'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
-import TrackPlayer, { PlayerOptions, RepeatMode, State, Track } from 'react-native-track-player'
+import TrackPlayer, { PlayerOptions, RepeatMode, State } from 'react-native-track-player'
 import { GetStore, SetStore } from './store'
-
-export type TrackExt = Track & {
-  id: string
-  coverArt?: string
-  artistId?: string
-  albumId?: string
-  track?: number
-  discNumber?: number
-}
-
-export type Progress = {
-  position: number
-  duration: number
-  buffered: number
-}
-
-export type QueueContextType = 'album' | 'playlist' | 'song' | 'artist'
 
 export type TrackPlayerSlice = {
   queueName?: string
@@ -71,44 +55,6 @@ export type TrackPlayerSlice = {
   resetTrackPlayerState: () => void
 
   getPlayerOptions: () => PlayerOptions
-}
-
-export const selectTrackPlayer = {
-  queueName: (store: TrackPlayerSlice) => store.queueName,
-  setQueueName: (store: TrackPlayerSlice) => store.setQueueName,
-
-  queueContextType: (store: TrackPlayerSlice) => store.queueContextType,
-  setQueueContextType: (store: TrackPlayerSlice) => store.setQueueContextType,
-
-  queueContextId: (store: TrackPlayerSlice) => store.queueContextId,
-  setQueueContextId: (store: TrackPlayerSlice) => store.setQueueContextId,
-
-  shuffleOrder: (store: TrackPlayerSlice) => store.shuffleOrder,
-  shuffled: (store: TrackPlayerSlice) => !!store.shuffleOrder,
-  toggleShuffle: (store: TrackPlayerSlice) => store.toggleShuffle,
-
-  repeatMode: (store: TrackPlayerSlice) => store.repeatMode,
-  toggleRepeatMode: (store: TrackPlayerSlice) => store.toggleRepeatMode,
-
-  playerState: (store: TrackPlayerSlice) => store.playerState,
-  setPlayerState: (store: TrackPlayerSlice) => store.setPlayerState,
-
-  currentTrack: (store: TrackPlayerSlice) => store.currentTrack,
-  currentTrackIdx: (store: TrackPlayerSlice) => store.currentTrackIdx,
-  setCurrentTrackIdx: (store: TrackPlayerSlice) => store.setCurrentTrackIdx,
-
-  queue: (store: TrackPlayerSlice) => store.queue,
-  setQueue: (store: TrackPlayerSlice) => store.setQueue,
-
-  progress: (store: TrackPlayerSlice) => store.progress,
-  setProgress: (store: TrackPlayerSlice) => store.setProgress,
-
-  scrobbleTrack: (store: TrackPlayerSlice) => store.scrobbleTrack,
-
-  setNetState: (store: TrackPlayerSlice) => store.setNetState,
-  buildStreamUri: (store: TrackPlayerSlice) => store.buildStreamUri,
-
-  resetTrackPlayerState: (store: TrackPlayerSlice) => store.resetTrackPlayerState,
 }
 
 export const trackPlayerCommands = new PromiseQueue(1)

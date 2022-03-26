@@ -7,7 +7,6 @@ import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
 import { Album, Song } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
@@ -47,7 +46,7 @@ const TopSongs = React.memo<{
   name: string
   artistId: string
 }>(({ songs, name, artistId }) => {
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   return (
     <>

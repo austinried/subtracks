@@ -1,7 +1,7 @@
 import { Song } from '@app/models/library'
+import { TrackExt } from '@app/models/trackplayer'
 import userAgent from '@app/util/userAgent'
-import { GetStore, SetStore } from './store'
-import { TrackExt } from './trackplayer'
+import { GetStore, SetStore } from '@app/state/store'
 
 export type TrackPlayerMapSlice = {
   mapSongtoTrackExt: (song: Song) => Promise<TrackExt>

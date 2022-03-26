@@ -3,7 +3,6 @@ import ListItem from '@app/components/ListItem'
 import { useFetchPaginatedList } from '@app/hooks/list'
 import { Album, Artist, Song } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import { Search3Params } from '@app/subsonic/params'
 import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
@@ -13,7 +12,7 @@ import { StyleSheet } from 'react-native'
 type SearchListItemType = Album | Song | Artist
 
 const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   let onPress
   if (item.itemType === 'song') {

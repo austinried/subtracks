@@ -7,7 +7,6 @@ import TextInput from '@app/components/TextInput'
 import { useActiveServerRefresh } from '@app/hooks/settings'
 import { Song, Album, Artist, SearchResults } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { mapById } from '@app/util/state'
@@ -25,7 +24,7 @@ import {
 } from 'react-native'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   return (
     <ListItem

@@ -8,7 +8,6 @@ import NothingHere from '@app/components/NothingHere'
 import { useCoverArtFile } from '@app/hooks/cache'
 import { Song, Album, Playlist } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -52,7 +51,7 @@ const SongListDetails = React.memo<{
 }>(({ title, songList, songs, subtitle, type }) => {
   const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   if (!songList) {
     return <SongListDetailsFallback />

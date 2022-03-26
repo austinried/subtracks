@@ -2,7 +2,6 @@ import CoverArt from '@app/components/CoverArt'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { usePause, usePlay } from '@app/hooks/trackplayer'
 import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/native'
@@ -12,7 +11,8 @@ import { State } from 'react-native-track-player'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 
 const ProgressBar = React.memo(() => {
-  const { position, duration } = useStore(selectTrackPlayer.progress)
+  const position = useStore(store => store.progress.position)
+  const duration = useStore(store => store.progress.duration)
 
   let progress = 0
   if (duration > 0) {
@@ -41,7 +41,7 @@ const progressStyles = StyleSheet.create({
 })
 
 const Controls = React.memo(() => {
-  const state = useStore(selectTrackPlayer.playerState)
+  const state = useStore(store => store.playerState)
   const play = usePlay()
   const pause = usePause()
 
@@ -78,9 +78,12 @@ const Controls = React.memo(() => {
 
 const NowPlayingBar = React.memo(() => {
   const navigation = useNavigation()
-  const track = useStore(selectTrackPlayer.currentTrack)
+  const currentTrackExists = useStore(store => !!store.currentTrack)
+  const coverArt = useStore(store => store.currentTrack?.coverArt)
+  const title = useStore(store => store.currentTrack?.title)
+  const artist = useStore(store => store.currentTrack?.artist)
 
-  const displayStyle: ViewStyle = { display: track ? 'flex' : 'none' }
+  const displayStyle: ViewStyle = { display: currentTrackExists ? 'flex' : 'none' }
 
   return (
     <Pressable onPress={() => navigation.navigate('now-playing')} style={[styles.container, displayStyle]}>
@@ -89,14 +92,14 @@ const NowPlayingBar = React.memo(() => {
         <CoverArt
           type="cover"
           style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
-          coverArt={track?.coverArt}
+          coverArt={coverArt}
         />
         <View style={styles.detailsContainer}>
           <Text numberOfLines={1} style={styles.detailsTitle}>
-            {track?.title}
+            {title}
           </Text>
           <Text numberOfLines={1} style={styles.detailsAlbum}>
-            {track?.artist}
+            {artist}
           </Text>
         </View>
         <Controls />

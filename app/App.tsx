@@ -5,12 +5,11 @@ import React from 'react'
 import { StatusBar, View, StyleSheet } from 'react-native'
 import ProgressHook from './components/ProgressHook'
 import { useStore } from './state/store'
-import { selectTrackPlayer } from './state/trackplayer'
 import { MenuProvider } from 'react-native-popup-menu'
 
 const Debug = () => {
-  const currentTrack = useStore(selectTrackPlayer.currentTrack)
-  console.log(currentTrack?.title)
+  const currentTrackTitle = useStore(store => store.currentTrack?.title)
+  console.log('currentTrackTitle', currentTrackTitle)
   return <></>
 }
 
