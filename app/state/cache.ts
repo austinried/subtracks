@@ -39,12 +39,6 @@ export type CacheSlice = {
   clearImageCache: () => Promise<void>
 }
 
-export const selectCache = {
-  cacheItem: (store: CacheSlice) => store.cacheItem,
-  fetchCoverArtFilePath: (store: CacheSlice) => store.fetchCoverArtFilePath,
-  clearImageCache: (store: CacheSlice) => store.clearImageCache,
-}
-
 export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
   // cache: {},
   cacheDirs: {},

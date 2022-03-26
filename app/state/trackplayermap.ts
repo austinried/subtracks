@@ -9,10 +9,6 @@ export type TrackPlayerMapSlice = {
   mapTrackExtToSong: (song: TrackExt) => Song
 }
 
-export const selectTrackPlayerMap = {
-  mapTrackExtToSong: (store: TrackPlayerMapSlice) => store.mapTrackExtToSong,
-}
-
 export const createTrackPlayerMapSlice = (set: SetStore, get: GetStore): TrackPlayerMapSlice => ({
   mapSongtoTrackExt: async song => {
     let artwork = require('@res/fallback.png')
