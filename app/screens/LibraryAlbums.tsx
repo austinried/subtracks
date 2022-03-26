@@ -59,7 +59,7 @@ const filterOptions: OptionData[] = [
 ]
 
 const AlbumsList = () => {
-  const filter = useStoreDeep(store => store.settings.screens.library.albums)
+  const filter = useStoreDeep(store => store.settings.screens.library.albumsFilter)
   const setFilter = useStore(store => store.setLibraryAlbumFilter)
 
   const fetchAlbumList = useStore(store => store.fetchAlbumList)

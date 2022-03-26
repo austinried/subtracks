@@ -1,5 +1,4 @@
 import { GetAlbumList2Type } from '@app/subsonic/params'
-import { ById } from '@app/models/state'
 
 export type Server = (TokenPassword | PlainPassword) & {
   id: string
@@ -30,24 +29,4 @@ export type ArtistFilterType = 'random' | 'starred' | 'alphabeticalByName'
 
 export interface ArtistFilterSettings {
   type: ArtistFilterType
-}
-
-export interface AppSettings {
-  servers: ById<Server>
-  screens: {
-    home: {
-      lists: string[]
-    }
-    library: {
-      albums: AlbumFilterSettings
-      artists: ArtistFilterSettings
-    }
-  }
-  activeServer?: string
-  scrobble: boolean
-  estimateContentLength: boolean
-  maxBitrateWifi: number
-  maxBitrateMobile: number
-  minBuffer: number
-  maxBuffer: number
 }

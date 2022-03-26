@@ -6,7 +6,7 @@ const useFileRequest = (key: CacheItemTypeKey, id: string) => {
   const file = useStore(
     useCallback(
       (store: Store) => {
-        const activeServerId = store.settings.activeServer
+        const activeServerId = store.settings.activeServerId
         if (!activeServerId) {
           return
         }
@@ -19,7 +19,7 @@ const useFileRequest = (key: CacheItemTypeKey, id: string) => {
   const request = useStore(
     useCallback(
       (store: Store) => {
-        const activeServerId = store.settings.activeServer
+        const activeServerId = store.settings.activeServerId
         if (!activeServerId) {
           return
         }

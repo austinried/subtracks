@@ -1,9 +1,28 @@
-import { AlbumFilterSettings, AppSettings, ArtistFilterSettings, Server } from '@app/models/settings'
+import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/settings'
+import { ById } from '@app/models/state'
 import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
 
 export type SettingsSlice = {
-  settings: AppSettings
+  settings: {
+    servers: ById<Server>
+    activeServerId?: string
+    screens: {
+      home: {
+        listTypes: string[]
+      }
+      library: {
+        albumsFilter: AlbumFilterSettings
+        artistsFilter: ArtistFilterSettings
+      }
+    }
+    scrobble: boolean
+    maxBitrateWifi: number
+    maxBitrateMobile: number
+    minBuffer: number
+    maxBuffer: number
+  }
+
   client?: SubsonicApiClient
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
@@ -12,7 +31,6 @@ export type SettingsSlice = {
   updateServer: (server: Server) => void
 
   setScrobble: (scrobble: boolean) => void
-  setEstimateContentLength: (estimateContentLength: boolean) => void
   setMaxBitrateWifi: (maxBitrateWifi: number) => void
   setMaxBitrateMobile: (maxBitrateMobile: number) => void
   setMinBuffer: (minBuffer: number) => void
@@ -29,22 +47,21 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     servers: {},
     screens: {
       home: {
-        lists: ['frequent', 'recent', 'starred', 'random'],
+        listTypes: ['frequent', 'recent', 'starred', 'random'],
       },
       library: {
-        albums: {
+        albumsFilter: {
           type: 'alphabeticalByArtist',
           fromYear: 1,
           toYear: 9999,
           genre: '',
         },
-        artists: {
+        artistsFilter: {
           type: 'alphabeticalByName',
         },
       },
     },
     scrobble: false,
-    estimateContentLength: true,
     maxBitrateWifi: 0,
     maxBitrateMobile: 192,
     minBuffer: 6,
@@ -53,7 +70,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
 
   setActiveServer: async (id, force) => {
     const servers = get().settings.servers
-    const currentActiveServerId = get().settings.activeServer
+    const currentActiveServerId = get().settings.activeServerId
     const newActiveServer = id ? servers[id] : undefined
 
     if (!newActiveServer) {
@@ -70,7 +87,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     get().prepareCache(newActiveServer.id)
 
     set(state => {
-      state.settings.activeServer = newActiveServer.id
+      state.settings.activeServerId = newActiveServer.id
       state.client = new SubsonicApiClient(newActiveServer)
       get().resetLibrary(state)
     })
@@ -101,7 +118,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
       state.settings.servers[server.id] = server
     })
 
-    if (get().settings.activeServer === server.id) {
+    if (get().settings.activeServerId === server.id) {
       get().setActiveServer(server.id, true)
     }
   },
@@ -110,13 +127,6 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     set(state => {
       state.settings.scrobble = scrobble
     })
-  },
-
-  setEstimateContentLength: estimateContentLength => {
-    set(state => {
-      state.settings.estimateContentLength = estimateContentLength
-    })
-    get().rebuildQueue()
   },
 
   setMaxBitrateWifi: maxBitrateWifi => {
@@ -185,13 +195,13 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
 
   setLibraryAlbumFilter: filter => {
     set(state => {
-      state.settings.screens.library.albums = filter
+      state.settings.screens.library.albumsFilter = filter
     })
   },
 
   setLibraryArtistFiler: filter => {
     set(state => {
-      state.settings.screens.library.artists = filter
+      state.settings.screens.library.artistsFilter = filter
     })
   },
 })

@@ -23,7 +23,7 @@ const ArtistsList = () => {
   const { refreshing, refresh } = useFetchList2(fetchArtists)
   const artists = useStoreDeep(store => store.library.artists)
 
-  const filter = useStoreDeep(store => store.settings.screens.library.artists)
+  const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
   const setFilter = useStore(store => store.setLibraryArtistFiler)
   const [sortedList, setSortedList] = useState<Artist[]>([])
 

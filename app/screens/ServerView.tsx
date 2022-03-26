@@ -18,7 +18,7 @@ const ServerView: React.FC<{
   id?: string
 }> = ({ id }) => {
   const navigation = useNavigation()
-  const activeServer = useStore(store => store.settings.activeServer)
+  const activeServerId = useStore(store => store.settings.activeServerId)
   const servers = useStoreDeep(store => store.settings.servers)
   const addServer = useStore(store => store.addServer)
   const updateServer = useStore(store => store.updateServer)
@@ -43,8 +43,8 @@ const ServerView: React.FC<{
   }, [address, username, password])
 
   const canRemove = useCallback(() => {
-    return id && Object.keys(servers).length > 1 && activeServer !== id
-  }, [id, servers, activeServer])
+    return id && Object.keys(servers).length > 1 && activeServerId !== id
+  }, [id, servers, activeServerId])
 
   const exit = useCallback(() => {
     if (navigation.canGoBack()) {

@@ -3,12 +3,12 @@ import { useStore } from '@app/state/store'
 import { useEffect } from 'react'
 
 export const useSwitchActiveServer = () => {
-  const activeServer = useStore(store => store.settings.activeServer)
+  const activeServerId = useStore(store => store.settings.activeServerId)
   const setActiveServer = useStore(store => store.setActiveServer)
   const resetPlayer = useReset()
 
   return async (id: string) => {
-    if (id === activeServer) {
+    if (id === activeServerId) {
       return
     }
 
@@ -18,13 +18,13 @@ export const useSwitchActiveServer = () => {
 }
 
 export const useActiveServerRefresh = (refresh: () => void) => {
-  const activeServer = useStore(store => store.settings.activeServer)
+  const activeServerId = useStore(store => store.settings.activeServerId)
 
   useEffect(() => {
-    if (activeServer) {
+    if (activeServerId) {
       refresh()
     }
-  }, [activeServer, refresh])
+  }, [activeServerId, refresh])
 }
 
 export const useFirstRun = () => {

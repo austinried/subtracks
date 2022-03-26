@@ -81,7 +81,7 @@ export const useStore = create<
         partialize: state => ({ settings: state.settings, cacheFiles: state.cacheFiles }),
         onRehydrateStorage: _preState => {
           return async (postState, _error) => {
-            await postState?.setActiveServer(postState.settings.activeServer, true)
+            await postState?.setActiveServer(postState.settings.activeServerId, true)
             postState?.setHydrated(true)
           }
         },

@@ -57,7 +57,7 @@ export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
       return
     }
 
-    const activeServerId = get().settings.activeServer
+    const activeServerId = get().settings.activeServerId
     if (!activeServerId) {
       return
     }
@@ -134,7 +134,7 @@ export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
       return
     }
 
-    const activeServerId = get().settings.activeServer
+    const activeServerId = get().settings.activeServerId
     if (!activeServerId) {
       return
     }

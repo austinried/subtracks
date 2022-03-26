@@ -15,6 +15,20 @@ const migrations: Array<(state: any) => any> = [
       return acc
     }, {} as ById<Server>)
 
+    state.settings.activeServerId = state.settings.activeServer
+    delete state.settings.activeServer
+
+    state.settings.screens.home.listTypes = [...state.settings.screens.home.lists]
+    delete state.settings.screens.home.lists
+
+    state.settings.screens.library.albumsFilter = { ...state.settings.screens.home.albums }
+    delete state.settings.screens.home.albums
+
+    state.settings.screens.library.artistsFilter = { ...state.settings.screens.home.artists }
+    delete state.settings.screens.home.artists
+
+    delete state.settings.estimateContentLength
+
     return state
   },
 ]

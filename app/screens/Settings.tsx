@@ -20,7 +20,7 @@ import { version } from '../../package.json'
 const ServerItem = React.memo<{
   server: Server
 }>(({ server }) => {
-  const activeServer = useStore(store => store.settings.activeServer)
+  const activeServerId = useStore(store => store.settings.activeServerId)
   const switchActiveServer = useSwitchActiveServer()
   const navigation = useNavigation()
 
@@ -34,7 +34,7 @@ const ServerItem = React.memo<{
       subtitle={server.username}
       onPress={() => navigation.navigate('server', { id: server.id })}>
       <PressableOpacity style={styles.serverActive} onPress={setActive}>
-        {activeServer === server.id ? (
+        {activeServerId === server.id ? (
           <Icon name="checkbox-marked-circle" size={30} color={colors.accent} />
         ) : (
           <Icon name="checkbox-blank-circle-outline" size={30} color={colors.text.secondary} />

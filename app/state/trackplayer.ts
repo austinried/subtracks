@@ -369,7 +369,7 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
 
     return client.streamUri({
       id,
-      estimateContentLength: get().settings.estimateContentLength,
+      estimateContentLength: true,
       maxBitRate: get().netState === 'mobile' ? get().settings.maxBitrateMobile : get().settings.maxBitrateWifi,
     })
   },
