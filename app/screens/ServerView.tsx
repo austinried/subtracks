@@ -24,7 +24,7 @@ const ServerView: React.FC<{
   const addServer = useStore(selectSettings.addServer)
   const updateServer = useStore(selectSettings.updateServer)
   const removeServer = useStore(selectSettings.removeServer)
-  const server = id ? servers.find(s => s.id === id) : undefined
+  const server = id ? servers[id] : undefined
   const pingServer = useStore(selectSettings.pingServer)
 
   const [address, setAddress] = useState(server?.address || '')
@@ -44,7 +44,7 @@ const ServerView: React.FC<{
   }, [address, username, password])
 
   const canRemove = useCallback(() => {
-    return id && servers.length > 1 && activeServer?.id !== id
+    return id && Object.keys(servers).length > 1 && activeServer?.id !== id
   }, [id, servers, activeServer])
 
   const exit = useCallback(() => {

@@ -1,4 +1,5 @@
 import { GetAlbumList2Type } from '@app/subsonic/params'
+import { ById } from '@app/models/state'
 
 export type Server = (TokenPassword | PlainPassword) & {
   id: string
@@ -32,7 +33,7 @@ export interface ArtistFilterSettings {
 }
 
 export interface AppSettings {
-  servers: Server[]
+  servers: ById<Server>
   screens: {
     home: {
       lists: string[]

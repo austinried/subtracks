@@ -239,7 +239,7 @@ const SettingsContent = React.memo(() => {
   return (
     <View style={styles.content}>
       <Header>Servers</Header>
-      {servers.map(s => (
+      {Object.values(servers).map(s => (
         <ServerItem key={s.id} server={s} />
       ))}
       <Button

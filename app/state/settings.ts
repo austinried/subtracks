@@ -7,7 +7,6 @@ export type SettingsSlice = {
   client?: SubsonicApiClient
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
-  getActiveServer: () => Server | undefined
   addServer: (server: Server) => Promise<void>
   removeServer: (id: string) => Promise<void>
   updateServer: (server: Server) => void
@@ -28,9 +27,10 @@ export type SettingsSlice = {
 export const selectSettings = {
   client: (state: SettingsSlice) => state.client,
 
-  firstRun: (state: SettingsSlice) => state.settings.servers.length === 0,
+  firstRun: (state: SettingsSlice) => Object.keys(state.settings.servers).length === 0,
 
-  activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
+  activeServer: (state: SettingsSlice) =>
+    state.settings.activeServer ? state.settings.servers[state.settings.activeServer] : undefined,
   setActiveServer: (state: SettingsSlice) => state.setActiveServer,
 
   servers: (state: SettingsSlice) => state.settings.servers,
@@ -66,7 +66,7 @@ export const selectSettings = {
 
 export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice => ({
   settings: {
-    servers: [],
+    servers: {},
     screens: {
       home: {
         lists: ['frequent', 'recent', 'starred', 'random'],
@@ -94,7 +94,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
   setActiveServer: async (id, force) => {
     const servers = get().settings.servers
     const currentActiveServerId = get().settings.activeServer
-    const newActiveServer = servers.find(s => s.id === id)
+    const newActiveServer = id ? servers[id] : undefined
 
     if (!newActiveServer) {
       set(state => {
@@ -116,14 +116,14 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     })
   },
 
-  getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
-
   addServer: async server => {
     await get().createCache(server.id)
 
-    set(state => state.settings.servers.push(server))
+    set(state => {
+      state.settings.servers[server.id] = server
+    })
 
-    if (get().settings.servers.length === 1) {
+    if (Object.keys(get().settings.servers).length === 1) {
       get().setActiveServer(server.id)
     }
   },
@@ -132,17 +132,13 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     await get().removeCache(id)
 
     set(state => {
-      state.settings.servers = state.settings.servers.filter(s => s.id !== id)
+      delete state.settings.servers[id]
     })
   },
 
   updateServer: server => {
     set(state => {
-      state.settings.servers = replaceIndex(
-        state.settings.servers,
-        state.settings.servers.findIndex(s => s.id === server.id),
-        server,
-      )
+      state.settings.servers[server.id] = server
     })
 
     if (get().settings.activeServer === server.id) {
@@ -239,9 +235,3 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     })
   },
 })
-
-function replaceIndex<T>(array: T[], index: number, replacement: T): T[] {
-  const start = array.slice(0, index)
-  const end = array.slice(index + 1)
-  return [...start, replacement, ...end]
-}
