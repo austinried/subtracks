@@ -116,10 +116,13 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
         })
       }
 
-      set(async state => {
-        state.queue = await getQueue()
+      const newQueue = await getQueue()
+      const newCurrentTrackIdx = await getCurrentTrack()
+
+      set(state => {
+        state.queue = newQueue
       })
-      get().setCurrentTrackIdx(await getCurrentTrack())
+      get().setCurrentTrackIdx(newCurrentTrackIdx)
     })
   },
 
