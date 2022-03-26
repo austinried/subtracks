@@ -22,14 +22,14 @@ import {
   Search3Response,
 } from '@app/subsonic/responses'
 import PromiseQueue from '@app/util/PromiseQueue'
-import { mergeById, reduceById } from '@app/util/state'
+import { mapId, mergeById, reduceById } from '@app/util/state'
 import { WritableDraft } from 'immer/dist/types/types-external'
 import pick from 'lodash.pick'
 
 const songCoverArtQueue = new PromiseQueue(2)
 
 export type LibrarySlice = {
-  entities: {
+  library: {
     artists: ById<Artist>
     artistInfo: ById<ArtistInfo>
     artistAlbums: OneToMany
@@ -66,7 +66,7 @@ export type LibrarySlice = {
   _fixSongCoverArt: (songs: Song[]) => Promise<void>
 }
 
-const defaultEntities = () => ({
+const defaultLibrary = () => ({
   artists: {},
   artistAlbums: {},
   artistInfo: {},
@@ -82,14 +82,16 @@ const defaultEntities = () => ({
 })
 
 export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice => ({
-  entities: defaultEntities(),
+  library: defaultLibrary(),
 
   resetLibrary: state => {
     if (state) {
-      state.entities = defaultEntities()
+      state.library = defaultLibrary()
       return
     }
-    set(store => (store.entities = defaultEntities()))
+    set(store => {
+      store.library = defaultLibrary()
+    })
   },
 
   fetchArtists: async () => {
@@ -109,8 +111,8 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const artistsById = reduceById(artists)
 
     set(state => {
-      state.entities.artists = artistsById
-      state.entities.artistAlbums = pick(state.entities.artistAlbums, mapId(artists))
+      state.library.artists = artistsById
+      state.library.artistAlbums = pick(state.library.artistAlbums, mapId(artists))
     })
   },
 
@@ -132,9 +134,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const albumsById = reduceById(albums)
 
     set(state => {
-      state.entities.artists[id] = artist
-      state.entities.artistAlbums[id] = mapId(albums)
-      mergeById(state.entities.albums, albumsById)
+      state.library.artists[id] = artist
+      state.library.artistAlbums[id] = mapId(albums)
+      mergeById(state.library.albums, albumsById)
     })
   },
 
@@ -154,7 +156,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const info = mapArtistInfo(id, response.data.artistInfo)
 
     set(state => {
-      state.entities.artistInfo[id] = info
+      state.library.artistInfo[id] = info
     })
   },
 
@@ -177,8 +179,8 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     get()._fixSongCoverArt(topSongs)
 
     set(state => {
-      mergeById(state.entities.songs, topSongsById)
-      state.entities.artistNameTopSongs[artistName] = mapId(topSongs)
+      mergeById(state.library.songs, topSongsById)
+      state.library.artistNameTopSongs[artistName] = mapId(topSongs)
     })
   },
 
@@ -202,9 +204,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     get()._fixSongCoverArt(songs)
 
     set(state => {
-      state.entities.albums[id] = album
-      state.entities.albumSongs[id] = mapId(songs)
-      mergeById(state.entities.songs, songsById)
+      state.library.albums[id] = album
+      state.library.albumSongs[id] = mapId(songs)
+      mergeById(state.library.songs, songsById)
     })
   },
 
@@ -225,8 +227,8 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const playlistsById = reduceById(playlists)
 
     set(state => {
-      state.entities.playlists = playlistsById
-      state.entities.playlistSongs = pick(state.entities.playlistSongs, mapId(playlists))
+      state.library.playlists = playlistsById
+      state.library.playlistSongs = pick(state.library.playlistSongs, mapId(playlists))
     })
   },
 
@@ -250,9 +252,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     get()._fixSongCoverArt(songs)
 
     set(state => {
-      state.entities.playlists[id] = playlist
-      state.entities.playlistSongs[id] = mapId(songs)
-      mergeById(state.entities.songs, songsById)
+      state.library.playlists[id] = playlist
+      state.library.playlistSongs[id] = mapId(songs)
+      mergeById(state.library.songs, songsById)
     })
   },
 
@@ -274,7 +276,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     get()._fixSongCoverArt([song])
 
     set(state => {
-      state.entities.songs[id] = song
+      state.library.songs[id] = song
     })
   },
 
@@ -294,7 +296,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const albums = response.data.albums.map(mapAlbum)
     const albumsById = reduceById(albums)
 
-    set(state => mergeById(state.entities.albums, albumsById))
+    set(state => {
+      mergeById(state.library.albums, albumsById)
+    })
 
     return mapId(albums)
   },
@@ -324,9 +328,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     get()._fixSongCoverArt(songs)
 
     set(state => {
-      mergeById(state.entities.artists, artistsById)
-      mergeById(state.entities.albums, albumsById)
-      mergeById(state.entities.songs, songsById)
+      mergeById(state.library.artists, artistsById)
+      mergeById(state.library.albums, albumsById)
+      mergeById(state.library.songs, songsById)
     })
 
     return {
@@ -357,11 +361,11 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
       return
     }
 
-    const item = get().entities[entity][id]
+    const item = get().library[entity][id]
     const originalValue = item ? item.starred : null
 
     set(state => {
-      state.entities[entity][id].starred = new Date()
+      state.library[entity][id].starred = new Date()
     })
 
     try {
@@ -369,7 +373,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     } catch {
       set(state => {
         if (originalValue !== null) {
-          state.entities[entity][id].starred = originalValue
+          state.library[entity][id].starred = originalValue
         }
       })
     }
@@ -396,11 +400,11 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
       return
     }
 
-    const item = get().entities[entity][id]
+    const item = get().library[entity][id]
     const originalValue = item ? item.starred : null
 
     set(state => {
-      state.entities[entity][id].starred = undefined
+      state.library[entity][id].starred = undefined
     })
 
     try {
@@ -408,7 +412,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     } catch {
       set(state => {
         if (originalValue !== null) {
-          state.entities[entity][id].starred = originalValue
+          state.library[entity][id].starred = originalValue
         }
       })
     }
@@ -428,7 +432,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
         continue
       }
 
-      let album = get().entities.albums[song.albumId]
+      let album = get().library.albums[song.albumId]
       if (album) {
         song.coverArt = album.coverArt
         continue
@@ -445,9 +449,9 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
           const album = mapAlbum(res.data.album)
 
           set(state => {
-            state.entities.albums[album.id] = album
+            state.library.albums[album.id] = album
             for (const song of albumsToGet[album.id]) {
-              state.entities.songs[song.id].coverArt = album.coverArt
+              state.library.songs[song.id].coverArt = album.coverArt
             }
           })
         })
@@ -510,8 +514,4 @@ function mapSong(song: ChildElement): Song {
     duration: song.duration,
     starred: song.starred,
   }
-}
-
-function mapId(entities: { id: string }[]): string[] {
-  return entities.map(e => e.id)
 }

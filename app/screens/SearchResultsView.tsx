@@ -84,11 +84,11 @@ const SearchResultsView: React.FC<{
       store => {
         switch (type) {
           case 'album':
-            return mapById(store.entities.albums, list)
+            return mapById(store.library.albums, list)
           case 'artist':
-            return mapById(store.entities.artists, list)
+            return mapById(store.library.artists, list)
           case 'song':
-            return mapById(store.entities.songs, list)
+            return mapById(store.library.songs, list)
           default:
             return []
         }

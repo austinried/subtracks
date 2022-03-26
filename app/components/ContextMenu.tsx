@@ -1,5 +1,5 @@
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useStar } from '@app/hooks/music'
+import { useStar } from '@app/hooks/library'
 import { StarrableItemType, Song, Artist, Album } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'

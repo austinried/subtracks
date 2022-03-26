@@ -17,7 +17,7 @@ const AlbumItem = React.memo<{
   size: number
   height: number
 }>(({ id, size, height }) => {
-  const album = useStoreDeep(useCallback(store => store.entities.albums[id], [id]))
+  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
   const navigation = useNavigation()
 
   if (!album) {

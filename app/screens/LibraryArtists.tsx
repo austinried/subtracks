@@ -22,7 +22,7 @@ const filterOptions: OptionData[] = [
 const ArtistsList = () => {
   const fetchArtists = useStore(store => store.fetchArtists)
   const { refreshing, refresh } = useFetchList2(fetchArtists)
-  const artists = useStoreDeep(store => store.entities.artists)
+  const artists = useStoreDeep(store => store.library.artists)
 
   const filter = useStore(selectSettings.libraryArtistFilter)
   const setFilter = useStore(selectSettings.setLibraryArtistFiler)

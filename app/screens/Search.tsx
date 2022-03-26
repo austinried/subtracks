@@ -50,11 +50,11 @@ const ResultsCategory = React.memo<{
       store => {
         switch (type) {
           case 'album':
-            return mapById(store.entities.albums, ids)
+            return mapById(store.library.albums, ids)
           case 'artist':
-            return mapById(store.entities.artists, ids)
+            return mapById(store.library.artists, ids)
           case 'song':
-            return mapById(store.entities.songs, ids)
+            return mapById(store.library.songs, ids)
           default:
             return []
         }

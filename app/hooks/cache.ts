@@ -60,7 +60,7 @@ export const useCoverArtFile = (coverArt = '-1', size: CacheImageSize = 'thumbna
 export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumbnail') => {
   const type: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
   const fetchArtistInfo = useStore(store => store.fetchArtistInfo)
-  const artistInfo = useStoreDeep(store => store.entities.artistInfo[artistId])
+  const artistInfo = useStoreDeep(store => store.library.artistInfo[artistId])
   const { file, request } = useFileRequest(type, artistId)
   const cacheItem = useStore(selectCache.cacheItem)
 

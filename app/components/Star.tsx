@@ -1,4 +1,4 @@
-import { useStar } from '@app/hooks/music'
+import { useStar } from '@app/hooks/library'
 import colors from '@app/styles/colors'
 import React from 'react'
 import { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native'

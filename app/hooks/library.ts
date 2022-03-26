@@ -26,11 +26,11 @@ export const useStar = (id: string, type: StarrableItem) => {
     useCallback(
       store => {
         if (type === 'album') {
-          return store.entities.albums[id] ? !!store.entities.albums[id].starred : null
+          return store.library.albums[id] ? !!store.library.albums[id].starred : null
         } else if (type === 'artist') {
-          return store.entities.artists[id] ? !!store.entities.artists[id].starred : null
+          return store.library.artists[id] ? !!store.library.artists[id].starred : null
         } else {
-          return store.entities.songs[id] ? !!store.entities.songs[id].starred : null
+          return store.library.songs[id] ? !!store.library.songs[id].starred : null
         }
       },
       [id, type],

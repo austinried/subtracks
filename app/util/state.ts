@@ -15,3 +15,7 @@ export function mergeById<T extends { [id: string]: unknown }>(object: T, source
 export function mapById<T>(object: ById<T>, ids: string[]): T[] {
   return ids.map(id => object[id]).filter(a => a !== undefined)
 }
+
+export function mapId(entities: { id: string }[]): string[] {
+  return entities.map(e => e.id)
+}

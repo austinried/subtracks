@@ -114,14 +114,14 @@ const SongListDetails = React.memo<{
             <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-              <ListPlayerControls
-                style={styles.controls}
-                songs={_songs}
-                typeName={typeName}
-                queueName={songList.name}
-                queueContextId={songList.id}
-                queueContextType={type}
-              />
+            <ListPlayerControls
+              style={styles.controls}
+              songs={_songs}
+              typeName={typeName}
+              queueName={songList.name}
+              queueContextId={songList.id}
+              queueContextType={type}
+            />
           </View>
         }
       />
@@ -133,12 +133,12 @@ const PlaylistView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const playlist = useStoreDeep(useCallback(store => store.entities.playlists[id], [id]))
+  const playlist = useStoreDeep(useCallback(store => store.library.playlists[id], [id]))
   const songs = useStoreDeep(
     useCallback(
       store => {
-        const ids = store.entities.playlistSongs[id]
-        return ids ? ids.map(i => store.entities.songs[i]) : undefined
+        const ids = store.library.playlistSongs[id]
+        return ids ? ids.map(i => store.library.songs[i]) : undefined
       },
       [id],
     ),
@@ -161,12 +161,12 @@ const AlbumView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const album = useStoreDeep(useCallback(store => store.entities.albums[id], [id]))
+  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
   const songs = useStoreDeep(
     useCallback(
       store => {
-        const ids = store.entities.albumSongs[id]
-        return ids ? ids.map(i => store.entities.songs[i]) : undefined
+        const ids = store.library.albumSongs[id]
+        return ids ? ids.map(i => store.library.songs[i]) : undefined
       },
       [id],
     ),

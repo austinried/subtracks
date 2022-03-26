@@ -97,14 +97,14 @@ const ArtistViewFallback = React.memo(() => (
 ))
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
-  const artist = useStoreDeep(useCallback(store => store.entities.artists[id], [id]))
-  const topSongIds = useStoreDeep(useCallback(store => store.entities.artistNameTopSongs[artist?.name], [artist?.name]))
+  const artist = useStoreDeep(useCallback(store => store.library.artists[id], [id]))
+  const topSongIds = useStoreDeep(useCallback(store => store.library.artistNameTopSongs[artist?.name], [artist?.name]))
   const topSongs = useStoreDeep(
-    useCallback(store => (topSongIds ? mapById(store.entities.songs, topSongIds) : undefined), [topSongIds]),
+    useCallback(store => (topSongIds ? mapById(store.library.songs, topSongIds) : undefined), [topSongIds]),
   )
-  const albumIds = useStoreDeep(useCallback(store => store.entities.artistAlbums[id], [id]))
+  const albumIds = useStoreDeep(useCallback(store => store.library.artistAlbums[id], [id]))
   const albums = useStoreDeep(
-    useCallback(store => (albumIds ? mapById(store.entities.albums, albumIds) : undefined), [albumIds]),
+    useCallback(store => (albumIds ? mapById(store.library.albums, albumIds) : undefined), [albumIds]),
   )
 
   const fetchArtist = useStore(store => store.fetchArtist)
