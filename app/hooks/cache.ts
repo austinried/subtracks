@@ -1,6 +1,4 @@
 import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
-import { selectCache } from '@app/state/cache'
-import { selectSettings } from '@app/state/settings'
 import { Store, useStore, useStoreDeep } from '@app/state/store'
 import { useCallback, useEffect } from 'react'
 
@@ -38,8 +36,8 @@ const useFileRequest = (key: CacheItemTypeKey, id: string) => {
 export const useCoverArtFile = (coverArt = '-1', size: CacheImageSize = 'thumbnail') => {
   const type: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
   const { file, request } = useFileRequest(type, coverArt)
-  const client = useStore(selectSettings.client)
-  const cacheItem = useStore(selectCache.cacheItem)
+  const client = useStore(store => store.client)
+  const cacheItem = useStore(store => store.cacheItem)
 
   useEffect(() => {
     if (!file && client) {
@@ -62,7 +60,7 @@ export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumb
   const fetchArtistInfo = useStore(store => store.fetchArtistInfo)
   const artistInfo = useStoreDeep(store => store.library.artistInfo[artistId])
   const { file, request } = useFileRequest(type, artistId)
-  const cacheItem = useStore(selectCache.cacheItem)
+  const cacheItem = useStore(store => store.cacheItem)
 
   useEffect(() => {
     if (!artistInfo) {

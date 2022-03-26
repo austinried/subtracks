@@ -1,7 +1,6 @@
 import NowPlayingBar from '@app/components/NowPlayingBar'
 import PressableOpacity from '@app/components/PressableOpacity'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useFirstRun } from '@app/hooks/settings'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
@@ -10,7 +9,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BottomTabNavigationEventMap } from '@react-navigation/bottom-tabs/lib/typescript/src/types'
 import { NavigationHelpers, ParamListBase } from '@react-navigation/native'
 import React from 'react'
-import { StyleSheet, Text, View, Image, ImageStyle } from 'react-native'
+import { Image, ImageStyle, StyleSheet, Text, View } from 'react-native'
 
 const BottomTabButton = React.memo<{
   routeKey: string
@@ -20,7 +19,7 @@ const BottomTabButton = React.memo<{
   icon: OutlineFillIcon
   navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>
 }>(({ routeKey, label, name, isFocused, icon, navigation }) => {
-  const firstRun = useStore(selectSettings.firstRun)
+  const firstRun = useFirstRun()
 
   const disabled = firstRun && name !== 'settings'
 

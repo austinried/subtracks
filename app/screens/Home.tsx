@@ -3,8 +3,7 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useActiveServerRefresh } from '@app/hooks/server'
-import { selectSettings } from '@app/state/settings'
+import { useActiveServerRefresh } from '@app/hooks/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -109,7 +108,7 @@ function useHomeStoreDeep<U>(stateSelector: StateSelector<HomeState, U>) {
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false)
-  const types = useStore(selectSettings.homeLists)
+  const types = useStoreDeep(store => store.settings.screens.home.lists)
   const fetchAlbumList = useStore(store => store.fetchAlbumList)
   const setList = useHomeStore(store => store.setList)
 

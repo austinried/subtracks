@@ -24,46 +24,6 @@ export type SettingsSlice = {
   setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
 }
 
-export const selectSettings = {
-  client: (state: SettingsSlice) => state.client,
-
-  firstRun: (state: SettingsSlice) => Object.keys(state.settings.servers).length === 0,
-
-  activeServer: (state: SettingsSlice) =>
-    state.settings.activeServer ? state.settings.servers[state.settings.activeServer] : undefined,
-  setActiveServer: (state: SettingsSlice) => state.setActiveServer,
-
-  servers: (state: SettingsSlice) => state.settings.servers,
-  addServer: (state: SettingsSlice) => state.addServer,
-  removeServer: (state: SettingsSlice) => state.removeServer,
-  updateServer: (state: SettingsSlice) => state.updateServer,
-
-  homeLists: (state: SettingsSlice) => state.settings.screens.home.lists,
-
-  scrobble: (state: SettingsSlice) => state.settings.scrobble,
-  setScrobble: (state: SettingsSlice) => state.setScrobble,
-
-  estimateContentLength: (state: SettingsSlice) => state.settings.estimateContentLength,
-  setEstimateContentLength: (state: SettingsSlice) => state.setEstimateContentLength,
-
-  maxBitrateWifi: (state: SettingsSlice) => state.settings.maxBitrateWifi,
-  setMaxBitrateWifi: (state: SettingsSlice) => state.setMaxBitrateWifi,
-  maxBitrateMobile: (state: SettingsSlice) => state.settings.maxBitrateMobile,
-  setMaxBitrateMobile: (state: SettingsSlice) => state.setMaxBitrateMobile,
-
-  minBuffer: (state: SettingsSlice) => state.settings.minBuffer,
-  setMinBuffer: (state: SettingsSlice) => state.setMinBuffer,
-  maxBuffer: (state: SettingsSlice) => state.settings.maxBuffer,
-  setMaxBuffer: (state: SettingsSlice) => state.setMaxBuffer,
-
-  pingServer: (state: SettingsSlice) => state.pingServer,
-
-  setLibraryAlbumFilter: (state: SettingsSlice) => state.setLibraryAlbumFilter,
-  libraryAlbumFilter: (state: SettingsSlice) => state.settings.screens.library.albums,
-  setLibraryArtistFiler: (state: SettingsSlice) => state.setLibraryArtistFiler,
-  libraryArtistFilter: (state: SettingsSlice) => state.settings.screens.library.artists,
-}
-
 export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice => ({
   settings: {
     servers: {},

@@ -3,7 +3,6 @@ import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
-import { selectSettings } from '@app/state/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -60,8 +59,8 @@ const filterOptions: OptionData[] = [
 ]
 
 const AlbumsList = () => {
-  const filter = useStore(selectSettings.libraryAlbumFilter)
-  const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
+  const filter = useStoreDeep(store => store.settings.screens.library.albums)
+  const setFilter = useStore(store => store.setLibraryAlbumFilter)
 
   const fetchAlbumList = useStore(store => store.fetchAlbumList)
   const fetchPage = useCallback(

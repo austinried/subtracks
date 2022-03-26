@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useActiveServerRefresh } from './server'
+import { useActiveServerRefresh } from './settings'
 
 export const useFetchList = <T>(fetchList: () => Promise<T[]>) => {
   const [list, setList] = useState<T[]>([])

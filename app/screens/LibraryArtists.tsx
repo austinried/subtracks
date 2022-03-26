@@ -4,7 +4,6 @@ import ListItem from '@app/components/ListItem'
 import { useFetchList2 } from '@app/hooks/list'
 import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
-import { selectSettings } from '@app/state/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -24,8 +23,8 @@ const ArtistsList = () => {
   const { refreshing, refresh } = useFetchList2(fetchArtists)
   const artists = useStoreDeep(store => store.library.artists)
 
-  const filter = useStore(selectSettings.libraryArtistFilter)
-  const setFilter = useStore(selectSettings.setLibraryArtistFiler)
+  const filter = useStoreDeep(store => store.settings.screens.library.artists)
+  const setFilter = useStore(store => store.setLibraryArtistFiler)
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {

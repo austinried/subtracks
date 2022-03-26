@@ -1,8 +1,7 @@
 import Button from '@app/components/Button'
 import GradientScrollView from '@app/components/GradientScrollView'
 import { Server } from '@app/models/settings'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import toast from '@app/util/toast'
@@ -19,13 +18,13 @@ const ServerView: React.FC<{
   id?: string
 }> = ({ id }) => {
   const navigation = useNavigation()
-  const activeServer = useStore(selectSettings.activeServer)
-  const servers = useStore(selectSettings.servers)
-  const addServer = useStore(selectSettings.addServer)
-  const updateServer = useStore(selectSettings.updateServer)
-  const removeServer = useStore(selectSettings.removeServer)
+  const activeServer = useStore(store => store.settings.activeServer)
+  const servers = useStoreDeep(store => store.settings.servers)
+  const addServer = useStore(store => store.addServer)
+  const updateServer = useStore(store => store.updateServer)
+  const removeServer = useStore(store => store.removeServer)
   const server = id ? servers[id] : undefined
-  const pingServer = useStore(selectSettings.pingServer)
+  const pingServer = useStore(store => store.pingServer)
 
   const [address, setAddress] = useState(server?.address || '')
   const [username, setUsername] = useState(server?.username || '')
@@ -44,7 +43,7 @@ const ServerView: React.FC<{
   }, [address, username, password])
 
   const canRemove = useCallback(() => {
-    return id && Object.keys(servers).length > 1 && activeServer?.id !== id
+    return id && Object.keys(servers).length > 1 && activeServer !== id
   }, [id, servers, activeServer])
 
   const exit = useCallback(() => {

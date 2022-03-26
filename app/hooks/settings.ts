@@ -1,15 +1,14 @@
 import { useReset } from '@app/hooks/trackplayer'
-import { selectSettings } from '@app/state/settings'
 import { useStore } from '@app/state/store'
 import { useEffect } from 'react'
 
 export const useSwitchActiveServer = () => {
-  const activeServer = useStore(selectSettings.activeServer)
-  const setActiveServer = useStore(selectSettings.setActiveServer)
+  const activeServer = useStore(store => store.settings.activeServer)
+  const setActiveServer = useStore(store => store.setActiveServer)
   const resetPlayer = useReset()
 
   return async (id: string) => {
-    if (id === activeServer?.id) {
+    if (id === activeServer) {
       return
     }
 
@@ -19,11 +18,15 @@ export const useSwitchActiveServer = () => {
 }
 
 export const useActiveServerRefresh = (refresh: () => void) => {
-  const activeServer = useStore(selectSettings.activeServer)
+  const activeServer = useStore(store => store.settings.activeServer)
 
   useEffect(() => {
     if (activeServer) {
       refresh()
     }
   }, [activeServer, refresh])
+}
+
+export const useFirstRun = () => {
+  return useStore(store => Object.keys(store.settings.servers).length === 0)
 }
