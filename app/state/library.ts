@@ -34,6 +34,7 @@ export type LibrarySlice = {
     artistInfo: ById<ArtistInfo>
     artistAlbums: OneToMany
     artistNameTopSongs: OneToMany
+    artistOrder: string[]
 
     albums: ById<Album>
     albumSongs: OneToMany
@@ -71,6 +72,7 @@ const defaultLibrary = () => ({
   artistAlbums: {},
   artistInfo: {},
   artistNameTopSongs: {},
+  artistOrder: [],
 
   albums: {},
   albumSongs: {},
@@ -109,10 +111,12 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
 
     const artists = response.data.artists.map(mapArtist)
     const artistsById = reduceById(artists)
+    const artistIds = mapId(artists)
 
     set(state => {
       state.library.artists = artistsById
-      state.library.artistAlbums = pick(state.library.artistAlbums, mapId(artists))
+      state.library.artistAlbums = pick(state.library.artistAlbums, artistIds)
+      state.library.artistOrder = artistIds
     })
   },
 

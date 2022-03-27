@@ -22,6 +22,7 @@ const ArtistsList = () => {
   const fetchArtists = useStore(store => store.fetchArtists)
   const { refreshing, refresh } = useFetchList2(fetchArtists)
   const artists = useStoreDeep(store => store.library.artists)
+  const artistOrder = useStoreDeep(store => store.library.artistOrder)
 
   const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
   const setFilter = useStore(store => store.setLibraryArtistFiler)
@@ -37,13 +38,13 @@ const ArtistsList = () => {
         setSortedList([...list].filter(a => a.starred))
         break
       case 'alphabeticalByName':
-        setSortedList([...list].sort((a, b) => a.name.localeCompare(b.name)))
+        setSortedList(artistOrder.map(id => artists[id]))
         break
       default:
         setSortedList([...list])
         break
     }
-  }, [filter.type, artists])
+  }, [filter.type, artists, artistOrder])
 
   return (
     <View style={styles.container}>
