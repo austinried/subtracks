@@ -1,6 +1,6 @@
 import { createSettingsSlice, SettingsSlice } from '@app/state/settings'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import equal from 'fast-deep-equal/es6/react'
+import equal from 'fast-deep-equal'
 import create, { GetState, Mutate, SetState, State, StateCreator, StateSelector, StoreApi } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
