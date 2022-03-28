@@ -4,18 +4,26 @@ on:
   push:
     paths-ignore:
       - assets/**
+      - .vscode/**
+      - .eslintrc.js
+      - .prettierrc.js
+      - BUILDING.md
       - README.md
       - LICENSE
     branches:
-      - master
+      - main
       - release/*
   pull_request:
     paths-ignore:
       - assets/**
+      - .vscode/**
+      - .eslintrc.js
+      - .prettierrc.js
+      - BUILDING.md
       - README.md
       - LICENSE
     branches:
-      - master
+      - main
 
 jobs:
   build:
