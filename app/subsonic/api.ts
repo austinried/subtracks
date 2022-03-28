@@ -65,13 +65,13 @@ export class SubsonicApiClient {
     this.username = server.username
 
     this.params = new URLSearchParams()
-    this.params.append('u', server.username)
+    this.params.append('u', encodeURIComponent(server.username))
 
     if (server.usePlainPassword) {
-      this.params.append('p', server.plainPassword)
+      this.params.append('p', encodeURIComponent(server.plainPassword))
     } else {
-      this.params.append('t', server.token)
-      this.params.append('s', server.salt)
+      this.params.append('t', encodeURIComponent(server.token))
+      this.params.append('s', encodeURIComponent(server.salt))
     }
 
     this.params.append('v', '1.13.0')
@@ -79,16 +79,16 @@ export class SubsonicApiClient {
   }
 
   private buildUrl(method: string, params?: { [key: string]: any }): string {
-    let query = this.params.toString()
+    let urlParams = this.params.toString()
     if (params) {
-      const urlParams = this.obj2Params(params)
-      if (urlParams) {
-        query += '&' + urlParams.toString()
+      const methodParams = this.obj2Params(params)
+      if (methodParams) {
+        urlParams += '&' + methodParams.toString()
       }
     }
 
     // *.view was present on all method names in API 1.14.0 and earlier
-    return `${this.address}/rest/${method}.view?${query}`
+    return `${this.address}/rest/${method}.view?${urlParams}`
   }
 
   private async apiGetXml(method: string, params?: { [key: string]: any }): Promise<Document> {
@@ -123,7 +123,7 @@ export class SubsonicApiClient {
       if (obj[key] === undefined || obj[key] === null) {
         continue
       }
-      params.append(key, String(obj[key]))
+      params.append(key, encodeURIComponent(String(obj[key])))
     }
 
     return params
