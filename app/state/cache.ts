@@ -1,10 +1,8 @@
 import { CacheFile, CacheImageSize, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
 import { mkdir, rmdir } from '@app/util/fs'
 import PromiseQueue from '@app/util/PromiseQueue'
-import produce from 'immer'
 import RNFS from 'react-native-fs'
-import { GetState, SetState } from 'zustand'
-import { Store } from './store'
+import { GetStore, SetStore } from './store'
 
 const queues: Record<CacheItemTypeKey, PromiseQueue> = {
   coverArt: new PromiseQueue(5),
@@ -19,16 +17,6 @@ export type CacheDownload = CacheFile & CacheRequest
 export type CacheDirsByServer = Record<string, Record<CacheItemTypeKey, string>>
 export type CacheFilesByServer = Record<string, Record<CacheItemTypeKey, Record<string, CacheFile>>>
 export type CacheRequestsByServer = Record<string, Record<CacheItemTypeKey, Record<string, CacheRequest>>>
-
-// export type DownloadedItemsByServer = Record<
-//   string,
-//   {
-//     songs: { [songId: string]: DownloadedSong }
-//     albums: { [albumId: string]: DownloadedAlbum }
-//     artists: { [songId: string]: DownloadedArtist }
-//     playlists: { [playlistId: string]: DownloadedPlaylist }
-//   }
-// >
 
 export type CacheSlice = {
   cacheItem: (
@@ -51,13 +39,7 @@ export type CacheSlice = {
   clearImageCache: () => Promise<void>
 }
 
-export const selectCache = {
-  cacheItem: (store: CacheSlice) => store.cacheItem,
-  fetchCoverArtFilePath: (store: CacheSlice) => store.fetchCoverArtFilePath,
-  clearImageCache: (store: CacheSlice) => store.clearImageCache,
-}
-
-export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): CacheSlice => ({
+export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
   // cache: {},
   cacheDirs: {},
   cacheFiles: {},
@@ -69,7 +51,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const activeServerId = get().settings.activeServer
+    const activeServerId = get().settings.activeServerId
     if (!activeServerId) {
       return
     }
@@ -115,34 +97,28 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
           // },
         }).promise
 
-        set(
-          produce<CacheSlice>(state => {
-            state.cacheRequests[activeServerId][key][itemId].progress = 1
-            delete state.cacheRequests[activeServerId][key][itemId].promise
-          }),
-        )
+        set(state => {
+          state.cacheRequests[activeServerId][key][itemId].progress = 1
+          delete state.cacheRequests[activeServerId][key][itemId].promise
+        })
       } catch {
-        set(
-          produce<CacheSlice>(state => {
-            delete state.cacheFiles[activeServerId][key][itemId]
-            delete state.cacheRequests[activeServerId][key][itemId]
-          }),
-        )
+        set(state => {
+          delete state.cacheFiles[activeServerId][key][itemId]
+          delete state.cacheRequests[activeServerId][key][itemId]
+        })
       }
     })
-    set(
-      produce<Store>(state => {
-        state.cacheFiles[activeServerId][key][itemId] = {
-          path,
-          date: Date.now(),
-          permanent: false,
-        }
-        state.cacheRequests[activeServerId][key][itemId] = {
-          progress: 0,
-          promise,
-        }
-      }),
-    )
+    set(state => {
+      state.cacheFiles[activeServerId][key][itemId] = {
+        path,
+        date: Date.now(),
+        permanent: false,
+      }
+      state.cacheRequests[activeServerId][key][itemId] = {
+        progress: 0,
+        promise,
+      }
+    })
     return await promise
   },
 
@@ -152,7 +128,7 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       return
     }
 
-    const activeServerId = get().settings.activeServer
+    const activeServerId = get().settings.activeServerId
     if (!activeServerId) {
       return
     }
@@ -183,54 +159,48 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       await mkdir(`${RNFS.DocumentDirectoryPath}/servers/${serverId}/${type}`)
     }
 
-    set(
-      produce<CacheSlice>(state => {
-        state.cacheFiles[serverId] = {
+    set(state => {
+      state.cacheFiles[serverId] = {
+        song: {},
+        coverArt: {},
+        coverArtThumb: {},
+        artistArt: {},
+        artistArtThumb: {},
+      }
+    })
+
+    get().prepareCache(serverId)
+  },
+
+  prepareCache: serverId => {
+    set(state => {
+      if (!state.cacheDirs[serverId]) {
+        state.cacheDirs[serverId] = {
+          song: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/song`,
+          coverArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArt`,
+          coverArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArtThumb`,
+          artistArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArt`,
+          artistArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArtThumb`,
+        }
+      }
+      if (!state.cacheRequests[serverId]) {
+        state.cacheRequests[serverId] = {
           song: {},
           coverArt: {},
           coverArtThumb: {},
           artistArt: {},
           artistArtThumb: {},
         }
-      }),
-    )
-
-    get().prepareCache(serverId)
-  },
-
-  prepareCache: serverId => {
-    set(
-      produce<CacheSlice>(state => {
-        if (!state.cacheDirs[serverId]) {
-          state.cacheDirs[serverId] = {
-            song: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/song`,
-            coverArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArt`,
-            coverArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/coverArtThumb`,
-            artistArt: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArt`,
-            artistArtThumb: `${RNFS.DocumentDirectoryPath}/servers/${serverId}/artistArtThumb`,
-          }
-        }
-        if (!state.cacheRequests[serverId]) {
-          state.cacheRequests[serverId] = {
-            song: {},
-            coverArt: {},
-            coverArtThumb: {},
-            artistArt: {},
-            artistArtThumb: {},
-          }
-        }
-      }),
-    )
+      }
+    })
   },
 
   pendingRemoval: {},
 
   removeCache: async serverId => {
-    set(
-      produce<CacheSlice>(state => {
-        state.pendingRemoval[serverId] = true
-      }),
-    )
+    set(state => {
+      state.pendingRemoval[serverId] = true
+    })
 
     const cacheRequests = get().cacheRequests[serverId]
     const pendingRequests: Promise<void>[] = []
@@ -245,21 +215,19 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
     await Promise.all(pendingRequests)
     await rmdir(`${RNFS.DocumentDirectoryPath}/servers/${serverId}`)
 
-    set(
-      produce<CacheSlice>(state => {
-        delete state.pendingRemoval[serverId]
+    set(state => {
+      delete state.pendingRemoval[serverId]
 
-        if (state.cacheDirs[serverId]) {
-          delete state.cacheDirs[serverId]
-        }
-        if (state.cacheFiles[serverId]) {
-          delete state.cacheFiles[serverId]
-        }
-        if (state.cacheRequests[serverId]) {
-          delete state.cacheRequests[serverId]
-        }
-      }),
-    )
+      if (state.cacheDirs[serverId]) {
+        delete state.cacheDirs[serverId]
+      }
+      if (state.cacheFiles[serverId]) {
+        delete state.cacheFiles[serverId]
+      }
+      if (state.cacheRequests[serverId]) {
+        delete state.cacheRequests[serverId]
+      }
+    })
   },
 
   clearImageCache: async () => {
@@ -280,14 +248,12 @@ export const createCacheSlice = (set: SetState<Store>, get: GetState<Store>): Ca
       await rmdir(get().cacheDirs[serverId].artistArt)
       await mkdir(get().cacheDirs[serverId].artistArt)
 
-      set(
-        produce<CacheSlice>(state => {
-          state.cacheFiles[serverId].coverArt = {}
-          state.cacheFiles[serverId].coverArtThumb = {}
-          state.cacheFiles[serverId].artistArt = {}
-          state.cacheFiles[serverId].artistArtThumb = {}
-        }),
-      )
+      set(state => {
+        state.cacheFiles[serverId].coverArt = {}
+        state.cacheFiles[serverId].coverArtThumb = {}
+        state.cacheFiles[serverId].artistArt = {}
+        state.cacheFiles[serverId].artistArtThumb = {}
+      })
     }
   },
 })

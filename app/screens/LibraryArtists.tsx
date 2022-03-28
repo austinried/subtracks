@@ -1,12 +1,10 @@
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList } from '@app/hooks/list'
-import { Artist } from '@app/models/music'
+import { useFetchList2 } from '@app/hooks/list'
+import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
-import { selectMusic } from '@app/state/music'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 
@@ -21,13 +19,17 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const fetchArtists = useStore(selectMusic.fetchArtists)
-  const { list, refreshing, refresh } = useFetchList(fetchArtists)
-  const filter = useStore(selectSettings.libraryArtistFilter)
-  const setFilter = useStore(selectSettings.setLibraryArtistFiler)
+  const fetchArtists = useStore(store => store.fetchArtists)
+  const { refreshing, refresh } = useFetchList2(fetchArtists)
+  const artists = useStoreDeep(store => store.library.artists)
+  const artistOrder = useStoreDeep(store => store.library.artistOrder)
+
+  const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
+  const setFilter = useStore(store => store.setLibraryArtistFiler)
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {
+    const list = Object.values(artists)
     switch (filter.type) {
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
@@ -35,11 +37,14 @@ const ArtistsList = () => {
       case 'starred':
         setSortedList([...list].filter(a => a.starred))
         break
+      case 'alphabeticalByName':
+        setSortedList(artistOrder.map(id => artists[id]))
+        break
       default:
         setSortedList([...list])
         break
     }
-  }, [list, filter])
+  }, [filter.type, artists, artistOrder])
 
   return (
     <View style={styles.container}>

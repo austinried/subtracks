@@ -4,13 +4,12 @@ import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
-import { useActiveServerRefresh } from '@app/hooks/server'
-import { ListableItem, SearchResults, Song } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
+import { useActiveServerRefresh } from '@app/hooks/settings'
+import { Song, Album, Artist, SearchResults } from '@app/models/library'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import { mapById } from '@app/util/state'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import debounce from 'lodash.debounce'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
@@ -25,7 +24,7 @@ import {
 } from 'react-native'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   return (
     <ListItem
@@ -42,8 +41,27 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
 const ResultsCategory = React.memo<{
   name: string
   query: string
-  items: ListableItem[]
-}>(({ name, query, items }) => {
+  ids: string[]
+  type: 'artist' | 'album' | 'song'
+}>(({ name, query, type, ids }) => {
+  const items: (Album | Artist | Song)[] = useStoreDeep(
+    useCallback(
+      store => {
+        switch (type) {
+          case 'album':
+            return mapById(store.library.albums, ids)
+          case 'artist':
+            return mapById(store.library.artists, ids)
+          case 'song':
+            return mapById(store.library.songs, ids)
+          default:
+            return []
+        }
+      },
+      [ids, type],
+    ),
+  )
+
   const navigation = useNavigation()
 
   if (items.length === 0) {
@@ -54,8 +72,8 @@ const ResultsCategory = React.memo<{
     <>
       <Header>{name}</Header>
       {items.map(a =>
-        a.itemType === 'song' ? (
-          <SongItem key={a.id} item={a} />
+        type === 'song' ? (
+          <SongItem key={a.id} item={a as Song} />
         ) : (
           <ListItem key={a.id} item={a} showArt={true} showStar={false} />
         ),
@@ -78,15 +96,15 @@ const Results = React.memo<{
 }>(({ results, query }) => {
   return (
     <>
-      <ResultsCategory name="Artists" query={query} items={results.artists} />
-      <ResultsCategory name="Albums" query={query} items={results.albums} />
-      <ResultsCategory name="Songs" query={query} items={results.songs} />
+      <ResultsCategory name="Artists" query={query} type={'artist'} ids={results.artists} />
+      <ResultsCategory name="Albums" query={query} type={'album'} ids={results.albums} />
+      <ResultsCategory name="Songs" query={query} type={'song'} ids={results.songs} />
     </>
   )
 })
 
 const Search = () => {
-  const fetchSearchResults = useStore(selectMusic.fetchSearchResults)
+  const fetchSearchResults = useStore(store => store.fetchSearchResults)
   const [results, setResults] = useState<SearchResults>({ artists: [], albums: [], songs: [] })
   const [refreshing, setRefreshing] = useState(false)
   const [text, setText] = useState('')
@@ -118,7 +136,7 @@ const Search = () => {
     () =>
       debounce(async (query: string) => {
         setRefreshing(true)
-        setResults(await fetchSearchResults(query))
+        setResults(await fetchSearchResults({ query, albumCount: 5, artistCount: 5, songCount: 5 }))
         setRefreshing(false)
       }, 400),
     [fetchSearchResults],

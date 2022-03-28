@@ -27,6 +27,10 @@ export type GetArtistParams = {
   id: string
 }
 
+export type GetSongParams = {
+  id: string
+}
+
 export type GetTopSongsParams = {
   artist: string
   count?: number

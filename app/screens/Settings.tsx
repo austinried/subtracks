@@ -5,11 +5,9 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
 import SettingsSwitch from '@app/components/SettingsSwitch'
 import TextInput from '@app/components/TextInput'
-import { useSwitchActiveServer } from '@app/hooks/server'
+import { useSwitchActiveServer } from '@app/hooks/settings'
 import { Server } from '@app/models/settings'
-import { selectCache } from '@app/state/cache'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
@@ -22,7 +20,7 @@ import { version } from '../../package.json'
 const ServerItem = React.memo<{
   server: Server
 }>(({ server }) => {
-  const activeServer = useStore(selectSettings.activeServer)
+  const activeServerId = useStore(store => store.settings.activeServerId)
   const switchActiveServer = useSwitchActiveServer()
   const navigation = useNavigation()
 
@@ -36,7 +34,7 @@ const ServerItem = React.memo<{
       subtitle={server.username}
       onPress={() => navigation.navigate('server', { id: server.id })}>
       <PressableOpacity style={styles.serverActive} onPress={setActive}>
-        {activeServer && activeServer.id === server.id ? (
+        {activeServerId === server.id ? (
           <Icon name="checkbox-marked-circle" size={30} color={colors.accent} />
         ) : (
           <Icon name="checkbox-blank-circle-outline" size={30} color={colors.text.secondary} />
@@ -193,27 +191,22 @@ function secondsUnit(seconds: string): string {
 }
 
 const SettingsContent = React.memo(() => {
-  const servers = useStore(selectSettings.servers)
-  const scrobble = useStore(selectSettings.scrobble)
-  const setScrobble = useStore(selectSettings.setScrobble)
+  const servers = useStoreDeep(store => store.settings.servers)
+  const scrobble = useStore(store => store.settings.scrobble)
+  const setScrobble = useStore(store => store.setScrobble)
 
-  // doesn't seem to ever be a case where we want this off
-  // will remove later if there isn't a use case for disabling
-  // const estimateContentLength = useStore(selectSettings.estimateContentLength)
-  // const setEstimateContentLength = useStore(selectSettings.setEstimateContentLength)
+  const maxBitrateWifi = useStore(store => store.settings.maxBitrateWifi)
+  const setMaxBitrateWifi = useStore(store => store.setMaxBitrateWifi)
 
-  const maxBitrateWifi = useStore(selectSettings.maxBitrateWifi)
-  const setMaxBitrateWifi = useStore(selectSettings.setMaxBitrateWifi)
+  const maxBitrateMobile = useStore(store => store.settings.maxBitrateMobile)
+  const setMaxBitrateMobile = useStore(store => store.setMaxBitrateMobile)
 
-  const maxBitrateMobile = useStore(selectSettings.maxBitrateMobile)
-  const setMaxBitrateMobile = useStore(selectSettings.setMaxBitrateMobile)
+  const minBuffer = useStore(store => store.settings.minBuffer)
+  const setMinBuffer = useStore(store => store.setMinBuffer)
+  const maxBuffer = useStore(store => store.settings.maxBuffer)
+  const setMaxBuffer = useStore(store => store.setMaxBuffer)
 
-  const minBuffer = useStore(selectSettings.minBuffer)
-  const setMinBuffer = useStore(selectSettings.setMinBuffer)
-  const maxBuffer = useStore(selectSettings.maxBuffer)
-  const setMaxBuffer = useStore(selectSettings.setMaxBuffer)
-
-  const clearImageCache = useStore(selectCache.clearImageCache)
+  const clearImageCache = useStore(store => store.clearImageCache)
   const [clearing, setClearing] = useState(false)
 
   const navigation = useNavigation()
@@ -239,7 +232,7 @@ const SettingsContent = React.memo(() => {
   return (
     <View style={styles.content}>
       <Header>Servers</Header>
-      {servers.map(s => (
+      {Object.values(servers).map(s => (
         <ServerItem key={s.id} server={s} />
       ))}
       <Button
@@ -251,12 +244,6 @@ const SettingsContent = React.memo(() => {
       <Header style={styles.header}>Network</Header>
       <BitrateModal title="Maximum bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
       <BitrateModal title="Maximum bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
-      {/* <SettingsSwitch
-        title="Estimate content length"
-        subtitle='Send the "estimateContentLength" flag when streaming. Helps fix issues with seeking when the server is transcoding songs.'
-        value={estimateContentLength}
-        setValue={setEstimateContentLength}
-      /> */}
       <SettingsTextModal
         title="Minimum buffer time"
         value={minBuffer.toString()}

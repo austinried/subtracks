@@ -12,119 +12,160 @@ import {
 
 export type ResponseStatus = 'ok' | 'failed'
 
-export class SubsonicResponse<T> {
+export class SubsonicResponse {
   status: ResponseStatus
   version: string
-  data: T
 
-  constructor(xml: Document, data: T) {
-    this.data = data
+  constructor(xml: Document) {
     this.status = xml.documentElement.getAttribute('status') as ResponseStatus
     this.version = xml.documentElement.getAttribute('version') as string
   }
+}
+
+export class NullResponse extends SubsonicResponse {
+  data = null
 }
 
 //
 // Browsing
 //
 
-export class GetArtistsResponse {
-  ignoredArticles: string
-  artists: ArtistID3Element[] = []
+export class GetArtistsResponse extends SubsonicResponse {
+  data: {
+    ignoredArticles: string
+    artists: ArtistID3Element[]
+  }
 
   constructor(xml: Document) {
-    this.ignoredArticles = xml.getElementsByTagName('artists')[0].getAttribute('ignoredArticles') as string
+    super(xml)
 
-    const artistElements = xml.getElementsByTagName('artist')
-    for (let i = 0; i < artistElements.length; i++) {
-      this.artists.push(new ArtistID3Element(artistElements[i]))
+    this.data = {
+      ignoredArticles: xml.getElementsByTagName('artists')[0].getAttribute('ignoredArticles') || '',
+      artists: Array.from(xml.getElementsByTagName('artist')).map(i => new ArtistID3Element(i)),
     }
   }
 }
 
-export class GetArtistResponse {
-  artist: ArtistID3Element
-  albums: AlbumID3Element[] = []
+export class GetArtistResponse extends SubsonicResponse {
+  data: {
+    artist: ArtistID3Element
+    albums: AlbumID3Element[]
+  }
 
   constructor(xml: Document) {
-    this.artist = new ArtistID3Element(xml.getElementsByTagName('artist')[0])
+    super(xml)
 
-    const albumElements = xml.getElementsByTagName('album')
-    for (let i = 0; i < albumElements.length; i++) {
-      this.albums.push(new AlbumID3Element(albumElements[i]))
+    this.data = {
+      artist: new ArtistID3Element(xml.getElementsByTagName('artist')[0]),
+      albums: Array.from(xml.getElementsByTagName('album')).map(i => new AlbumID3Element(i)),
     }
   }
 }
 
-export class GetIndexesResponse {
-  ignoredArticles: string
-  lastModified: number
-  artists: ArtistElement[] = []
+export class GetIndexesResponse extends SubsonicResponse {
+  data: {
+    ignoredArticles: string
+    lastModified: number
+    artists: ArtistElement[]
+  }
 
   constructor(xml: Document) {
+    super(xml)
+
     const indexesElement = xml.getElementsByTagName('indexes')[0]
 
-    this.ignoredArticles = indexesElement.getAttribute('ignoredArticles') as string
-    this.lastModified = parseInt(indexesElement.getAttribute('lastModified') as string, 10)
-
-    const artistElements = xml.getElementsByTagName('artist')
-    for (let i = 0; i < artistElements.length; i++) {
-      this.artists.push(new ArtistElement(artistElements[i]))
+    this.data = {
+      ignoredArticles: indexesElement.getAttribute('ignoredArticles') || '',
+      lastModified: parseInt(indexesElement.getAttribute('lastModified') || '0', 10),
+      artists: Array.from(xml.getElementsByTagName('artist')).map(i => new ArtistElement(i)),
     }
   }
 }
 
-export class GetArtistInfoResponse {
-  artistInfo: ArtistInfoElement
-
-  constructor(xml: Document) {
-    this.artistInfo = new ArtistInfoElement(xml.getElementsByTagName('artistInfo')[0])
+export class GetArtistInfoResponse extends SubsonicResponse {
+  data: {
+    artistInfo: ArtistInfoElement
   }
-}
-
-export class GetArtistInfo2Response {
-  artistInfo: ArtistInfo2Element
 
   constructor(xml: Document) {
-    this.artistInfo = new ArtistInfo2Element(xml.getElementsByTagName('artistInfo2')[0])
-  }
-}
+    super(xml)
 
-export class GetMusicDirectoryResponse {
-  directory: DirectoryElement
-  children: ChildElement[] = []
-
-  constructor(xml: Document) {
-    this.directory = new DirectoryElement(xml.getElementsByTagName('directory')[0])
-
-    const childElements = xml.getElementsByTagName('child')
-    for (let i = 0; i < childElements.length; i++) {
-      this.children.push(new ChildElement(childElements[i]))
+    this.data = {
+      artistInfo: new ArtistInfoElement(xml.getElementsByTagName('artistInfo')[0]),
     }
   }
 }
 
-export class GetAlbumResponse {
-  album: AlbumID3Element
-  songs: ChildElement[] = []
+export class GetArtistInfo2Response extends SubsonicResponse {
+  data: {
+    artistInfo: ArtistInfo2Element
+  }
 
   constructor(xml: Document) {
-    this.album = new AlbumID3Element(xml.getElementsByTagName('album')[0])
+    super(xml)
 
-    const childElements = xml.getElementsByTagName('song')
-    for (let i = 0; i < childElements.length; i++) {
-      this.songs.push(new ChildElement(childElements[i]))
+    this.data = {
+      artistInfo: new ArtistInfo2Element(xml.getElementsByTagName('artistInfo2')[0]),
     }
   }
 }
 
-export class GetTopSongsResponse {
-  songs: ChildElement[] = []
+export class GetMusicDirectoryResponse extends SubsonicResponse {
+  data: {
+    directory: DirectoryElement
+    children: ChildElement[]
+  }
 
   constructor(xml: Document) {
-    const childElements = xml.getElementsByTagName('song')
-    for (let i = 0; i < childElements.length; i++) {
-      this.songs.push(new ChildElement(childElements[i]))
+    super(xml)
+
+    this.data = {
+      directory: new DirectoryElement(xml.getElementsByTagName('directory')[0]),
+      children: Array.from(xml.getElementsByTagName('child')).map(i => new ChildElement(i)),
+    }
+  }
+}
+
+export class GetAlbumResponse extends SubsonicResponse {
+  data: {
+    album: AlbumID3Element
+    songs: ChildElement[]
+  }
+
+  constructor(xml: Document) {
+    super(xml)
+
+    this.data = {
+      album: new AlbumID3Element(xml.getElementsByTagName('album')[0]),
+      songs: Array.from(xml.getElementsByTagName('song')).map(i => new ChildElement(i)),
+    }
+  }
+}
+
+export class GetTopSongsResponse extends SubsonicResponse {
+  data: {
+    songs: ChildElement[]
+  }
+
+  constructor(xml: Document) {
+    super(xml)
+
+    this.data = {
+      songs: Array.from(xml.getElementsByTagName('song')).map(i => new ChildElement(i)),
+    }
+  }
+}
+
+export class GetSongResponse extends SubsonicResponse {
+  data: {
+    song: ChildElement
+  }
+
+  constructor(xml: Document) {
+    super(xml)
+
+    this.data = {
+      song: new ChildElement(xml.getElementsByTagName('song')[0]),
     }
   }
 }
@@ -133,13 +174,16 @@ export class GetTopSongsResponse {
 // Album/song lists
 //
 
-class BaseGetAlbumListResponse<T> {
-  albums: T[] = []
+class BaseGetAlbumListResponse<T> extends SubsonicResponse {
+  data: {
+    albums: T[]
+  }
 
-  constructor(xml: Document, albumType: new (e: Element) => T) {
-    const albumElements = xml.getElementsByTagName('album')
-    for (let i = 0; i < albumElements.length; i++) {
-      this.albums.push(new albumType(albumElements[i]))
+  constructor(xml: Document, AlbumType: new (e: Element) => T) {
+    super(xml)
+
+    this.data = {
+      albums: Array.from(xml.getElementsByTagName('album')).map(i => new AlbumType(i)),
     }
   }
 }
@@ -160,22 +204,31 @@ export class GetAlbumList2Response extends BaseGetAlbumListResponse<AlbumID3Elem
 // Playlists
 //
 
-export class GetPlaylistsResponse {
-  playlists: PlaylistElement[] = []
+export class GetPlaylistsResponse extends SubsonicResponse {
+  data: {
+    playlists: PlaylistElement[]
+  }
 
   constructor(xml: Document) {
-    const playlistElements = xml.getElementsByTagName('playlist')
-    for (let i = 0; i < playlistElements.length; i++) {
-      this.playlists.push(new PlaylistElement(playlistElements[i]))
+    super(xml)
+
+    this.data = {
+      playlists: Array.from(xml.getElementsByTagName('playlist')).map(i => new PlaylistElement(i)),
     }
   }
 }
 
-export class GetPlaylistResponse {
-  playlist: PlaylistWithSongsElement
+export class GetPlaylistResponse extends SubsonicResponse {
+  data: {
+    playlist: PlaylistWithSongsElement
+  }
 
   constructor(xml: Document) {
-    this.playlist = new PlaylistWithSongsElement(xml.getElementsByTagName('playlist')[0])
+    super(xml)
+
+    this.data = {
+      playlist: new PlaylistWithSongsElement(xml.getElementsByTagName('playlist')[0]),
+    }
   }
 }
 
@@ -183,25 +236,20 @@ export class GetPlaylistResponse {
 // Searching
 //
 
-export class Search3Response {
-  artists: ArtistID3Element[] = []
-  albums: AlbumID3Element[] = []
-  songs: ChildElement[] = []
+export class Search3Response extends SubsonicResponse {
+  data: {
+    artists: ArtistID3Element[]
+    albums: AlbumID3Element[]
+    songs: ChildElement[]
+  }
 
   constructor(xml: Document) {
-    const artistElements = xml.getElementsByTagName('artist')
-    for (let i = 0; i < artistElements.length; i++) {
-      this.artists.push(new ArtistID3Element(artistElements[i]))
-    }
+    super(xml)
 
-    const albumElements = xml.getElementsByTagName('album')
-    for (let i = 0; i < albumElements.length; i++) {
-      this.albums.push(new AlbumID3Element(albumElements[i]))
-    }
-
-    const songElements = xml.getElementsByTagName('song')
-    for (let i = 0; i < songElements.length; i++) {
-      this.songs.push(new ChildElement(songElements[i]))
+    this.data = {
+      artists: Array.from(xml.getElementsByTagName('artist')).map(i => new ArtistID3Element(i)),
+      albums: Array.from(xml.getElementsByTagName('album')).map(i => new AlbumID3Element(i)),
+      songs: Array.from(xml.getElementsByTagName('song')).map(i => new ChildElement(i)),
     }
   }
 }

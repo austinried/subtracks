@@ -45,7 +45,7 @@ const SplashPage: React.FC<{}> = ({ children }) => {
 
   const splash = (
     <Animated.View style={[styles.splashContainer, animatedStyles]} pointerEvents="none">
-      <GradientBackground style={styles.background}>
+      <GradientBackground style={styles.background} height="100%">
         <View style={styles.logoContainer}>
           <Image style={styles.image} source={require('@res/casette.png')} fadeDuration={0} />
           <Text style={styles.text}>subtracks</Text>

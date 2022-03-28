@@ -1,18 +1,18 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { useFetchPaginatedList } from '@app/hooks/list'
-import { AlbumListItem, Artist, Song } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
+import { Album, Artist, Song } from '@app/models/library'
+import { useStore, useStoreDeep } from '@app/state/store'
+import { Search3Params } from '@app/subsonic/params'
+import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 
-type SearchListItemType = AlbumListItem | Song | Artist
+type SearchListItemType = Album | Song | Artist
 
 const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   let onPress
   if (item.itemType === 'song') {
@@ -40,25 +40,60 @@ const SearchResultsView: React.FC<{
   type: 'album' | 'artist' | 'song'
 }> = ({ query, type }) => {
   const navigation = useNavigation()
-  const fetchSearchResults = useStore(selectMusic.fetchSearchResults)
-  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList<SearchListItemType>(
+  const fetchSearchResults = useStore(store => store.fetchSearchResults)
+  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(
     useCallback(
-      (size, offset) =>
-        fetchSearchResults(query, type, size, offset).then(results => {
-          switch (type) {
-            case 'album':
-              return results.albums
-            case 'artist':
-              return results.artists
-            case 'song':
-              return results.songs
-            default:
-              return []
-          }
-        }),
+      async (size, offset) => {
+        const params: Search3Params = { query }
+        if (type === 'album') {
+          params.albumCount = size
+          params.albumOffset = offset
+        } else if (type === 'artist') {
+          params.artistCount = size
+          params.artistOffset = offset
+        } else if (type === 'song') {
+          params.songCount = size
+          params.songOffset = offset
+        } else {
+          params.albumCount = 5
+          params.artistCount = 5
+          params.songCount = 5
+        }
+
+        const results = await fetchSearchResults(params)
+
+        switch (type) {
+          case 'album':
+            return results.albums
+          case 'artist':
+            return results.artists
+          case 'song':
+            return results.songs
+          default:
+            return []
+        }
+      },
       [fetchSearchResults, query, type],
     ),
     100,
+  )
+
+  const items: SearchListItemType[] = useStoreDeep(
+    useCallback(
+      store => {
+        switch (type) {
+          case 'album':
+            return mapById(store.library.albums, list)
+          case 'artist':
+            return mapById(store.library.artists, list)
+          case 'song':
+            return mapById(store.library.songs, list)
+          default:
+            return []
+        }
+      },
+      [list, type],
+    ),
   )
 
   useEffect(() => {
@@ -70,7 +105,7 @@ const SearchResultsView: React.FC<{
 
   return (
     <GradientFlatList
-      data={list}
+      data={items}
       renderItem={SearchResultsRenderItem}
       keyExtractor={(item, i) => i.toString()}
       onRefresh={refresh}

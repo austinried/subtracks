@@ -1,5 +1,5 @@
-import { useStore } from '@app/state/store'
-import { getQueue, selectTrackPlayer, trackPlayerCommands } from '@app/state/trackplayer'
+import { useStore, useStoreDeep } from '@app/state/store'
+import { getQueue, trackPlayerCommands } from '@app/state/trackplayer'
 import TrackPlayer from 'react-native-track-player'
 
 export const usePlay = () => {
@@ -57,7 +57,7 @@ export const useSeekTo = () => {
 }
 
 export const useReset = (enqueue = true) => {
-  const resetStore = useStore(selectTrackPlayer.resetTrackPlayerState)
+  const resetStore = useStore(store => store.resetTrackPlayerState)
 
   const reset = async () => {
     await TrackPlayer.reset()
@@ -68,9 +68,9 @@ export const useReset = (enqueue = true) => {
 }
 
 export const useIsPlaying = (contextId: string | undefined, track: number) => {
-  const queueContextId = useStore(selectTrackPlayer.queueContextId)
-  const currentTrackIdx = useStore(selectTrackPlayer.currentTrackIdx)
-  const shuffleOrder = useStore(selectTrackPlayer.shuffleOrder)
+  const queueContextId = useStore(store => store.queueContextId)
+  const currentTrackIdx = useStore(store => store.currentTrackIdx)
+  const shuffleOrder = useStoreDeep(store => store.shuffleOrder)
 
   if (contextId === undefined) {
     return track === currentTrackIdx

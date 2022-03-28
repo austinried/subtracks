@@ -2,13 +2,10 @@ import CoverArt from '@app/components/CoverArt'
 import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
-import Star from '@app/components/Star'
-import { useStarred } from '@app/hooks/music'
+import { PressableStar } from '@app/components/Star'
 import { useNext, usePause, usePlay, usePrevious, useSeekTo } from '@app/hooks/trackplayer'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
-import { QueueContextType, selectTrackPlayer, TrackExt } from '@app/state/trackplayer'
-import { selectTrackPlayerMap } from '@app/state/trackplayermap'
+import { QueueContextType, TrackExt } from '@app/models/trackplayer'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import formatDuration from '@app/util/formatDuration'
@@ -41,9 +38,9 @@ function getContextName(type?: QueueContextType) {
 const NowPlayingHeader = React.memo<{
   track?: TrackExt
 }>(({ track }) => {
-  const queueName = useStore(selectTrackPlayer.queueName)
-  const queueContextType = useStore(selectTrackPlayer.queueContextType)
-  const mapTrackExtToSong = useStore(selectTrackPlayerMap.mapTrackExtToSong)
+  const queueName = useStore(store => store.queueName)
+  const queueContextType = useStore(store => store.queueContextType)
+  const mapTrackExtToSong = useStore(store => store.mapTrackExtToSong)
 
   if (!track) {
     return <></>
@@ -94,11 +91,11 @@ const headerStyles = StyleSheet.create({
 })
 
 const SongCoverArt = () => {
-  const track = useStore(selectTrackPlayer.currentTrack)
+  const coverArt = useStore(store => store.currentTrack?.coverArt)
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt type="cover" size="original" coverArt={track?.coverArt} style={coverArtStyles.image} />
+      <CoverArt type="cover" size="original" coverArt={coverArt} style={coverArtStyles.image} />
     </View>
   )
 }
@@ -117,26 +114,22 @@ const coverArtStyles = StyleSheet.create({
 })
 
 const SongInfo = () => {
-  const track = useStore(selectTrackPlayer.currentTrack)
-  const id = track?.id || '-1'
-  const type = 'song'
-  const starred = useStarred(id, type)
-  const setStarred = useStore(selectMusic.starItem)
+  const id = useStore(store => store.currentTrack?.id)
+  const artist = useStore(store => store.currentTrack?.artist)
+  const title = useStore(store => store.currentTrack?.title)
 
   return (
     <View style={infoStyles.container}>
       <View style={infoStyles.details}>
         <Text numberOfLines={1} style={infoStyles.title}>
-          {track?.title}
+          {title}
         </Text>
         <Text numberOfLines={1} style={infoStyles.artist}>
-          {track?.artist}
+          {artist}
         </Text>
       </View>
       <View style={infoStyles.controls}>
-        <PressableOpacity onPress={() => setStarred(id, type, starred)}>
-          <Star size={32} starred={starred} />
-        </PressableOpacity>
+        <PressableStar id={id || '-1'} type={'song'} size={32} />
       </View>
     </View>
   )
@@ -170,7 +163,8 @@ const infoStyles = StyleSheet.create({
 })
 
 const SeekBar = () => {
-  const { position, duration } = useStore(selectTrackPlayer.progress)
+  const position = useStore(store => store.progress.position)
+  const duration = useStore(store => store.progress.duration)
   const seekTo = useSeekTo()
   const [value, setValue] = useState(0)
   const [sliding, setSliding] = useState(false)
@@ -262,15 +256,15 @@ const seekStyles = StyleSheet.create({
 })
 
 const PlayerControls = () => {
-  const state = useStore(selectTrackPlayer.playerState)
+  const state = useStore(store => store.playerState)
   const play = usePlay()
   const pause = usePause()
   const next = useNext()
   const previous = usePrevious()
-  const shuffled = useStore(selectTrackPlayer.shuffled)
-  const toggleShuffle = useStore(selectTrackPlayer.toggleShuffle)
-  const repeatMode = useStore(selectTrackPlayer.repeatMode)
-  const toggleRepeat = useStore(selectTrackPlayer.toggleRepeatMode)
+  const shuffled = useStore(store => !!store.shuffleOrder)
+  const toggleShuffle = useStore(store => store.toggleShuffle)
+  const repeatMode = useStore(store => store.repeatMode)
+  const toggleRepeat = useStore(store => store.toggleRepeatMode)
   const navigation = useNavigation()
 
   let playPauseIcon: string
@@ -392,7 +386,7 @@ type RootStackParamList = {
 type NowPlayingProps = NativeStackScreenProps<RootStackParamList, 'main'>
 
 const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
-  const track = useStore(selectTrackPlayer.currentTrack)
+  const track = useStoreDeep(store => store.currentTrack)
 
   useEffect(() => {
     if (!track) {
@@ -404,7 +398,7 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ImageGradientBackground imagePath={imagePath} />
+      <ImageGradientBackground imagePath={imagePath} height={'100%'} />
       <NowPlayingHeader track={track} />
       <View style={styles.content}>
         <SongCoverArt />

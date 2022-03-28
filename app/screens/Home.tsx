@@ -3,17 +3,17 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useActiveServerRefresh } from '@app/hooks/server'
-import { AlbumListItem } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useActiveServerRefresh } from '@app/hooks/settings'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumListType } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback } from 'react'
+import equal from 'fast-deep-equal/es6/react'
+import produce from 'immer'
+import React, { useCallback, useState } from 'react'
 import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+import create, { StateSelector } from 'zustand'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recently Played',
@@ -23,9 +23,14 @@ const titles: { [key in GetAlbumListType]?: string } = {
 }
 
 const AlbumItem = React.memo<{
-  album: AlbumListItem
-}>(({ album }) => {
+  id: string
+}>(({ id }) => {
   const navigation = useNavigation()
+  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
+
+  if (!album) {
+    return <></>
+  }
 
   return (
     <AlbumContextPressable
@@ -49,9 +54,10 @@ const AlbumItem = React.memo<{
 })
 
 const Category = React.memo<{
-  name?: string
-  data: AlbumListItem[]
-}>(({ name, data }) => {
+  type: string
+}>(({ type }) => {
+  const list = useHomeStoreDeep(useCallback(store => store.lists[type] || [], [type]))
+
   const Albums = () => (
     <ScrollView
       horizontal={true}
@@ -59,8 +65,8 @@ const Category = React.memo<{
       overScrollMode={'never'}
       style={styles.artScroll}
       contentContainerStyle={styles.artScrollContent}>
-      {data.map(album => (
-        <AlbumItem key={album.id} album={album} />
+      {list.map(id => (
+        <AlbumItem key={id} id={id} />
       ))}
     </ScrollView>
   )
@@ -73,24 +79,57 @@ const Category = React.memo<{
 
   return (
     <View style={styles.category}>
-      <Header style={styles.header}>{name}</Header>
-      {data.length > 0 ? <Albums /> : <Nothing />}
+      <Header style={styles.header}>{titles[type as GetAlbumListType] || ''}</Header>
+      {list.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )
 })
 
+interface HomeState {
+  lists: { [type: string]: string[] }
+  setList: (type: string, list: string[]) => void
+}
+
+const useHomeStore = create<HomeState>(set => ({
+  lists: {},
+
+  setList: (type, list) => {
+    set(
+      produce<HomeState>(state => {
+        state.lists[type] = list
+      }),
+    )
+  },
+}))
+
+function useHomeStoreDeep<U>(stateSelector: StateSelector<HomeState, U>) {
+  return useHomeStore(stateSelector, equal)
+}
+
 const Home = () => {
-  const types = useStore(selectSettings.homeLists)
-  const lists = useStore(selectMusic.homeLists)
-  const updating = useStore(selectMusic.homeListsUpdating)
-  const update = useStore(selectMusic.fetchHomeLists)
-  const clear = useStore(selectMusic.clearHomeLists)
+  const [refreshing, setRefreshing] = useState(false)
+  const types = useStoreDeep(store => store.settings.screens.home.listTypes)
+  const fetchAlbumList = useStore(store => store.fetchAlbumList)
+  const setList = useHomeStore(store => store.setList)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+
+    await Promise.all(
+      types.map(async type => {
+        const ids = await fetchAlbumList({ type: type as GetAlbumList2TypeBase, size: 20, offset: 0 })
+        setList(type, ids)
+      }),
+    )
+
+    setRefreshing(false)
+  }, [fetchAlbumList, setList, types])
 
   useActiveServerRefresh(
     useCallback(() => {
-      clear()
-      update()
-    }, [clear, update]),
+      types.forEach(type => setList(type, []))
+      refresh()
+    }, [refresh, setList, types]),
   )
 
   return (
@@ -99,15 +138,15 @@ const Home = () => {
       contentContainerStyle={styles.scrollContentContainer}
       refreshControl={
         <RefreshControl
-          refreshing={updating}
-          onRefresh={update}
+          refreshing={refreshing}
+          onRefresh={refresh}
           colors={[colors.accent, colors.accentLow]}
           progressViewOffset={StatusBar.currentHeight}
         />
       }>
       <View style={styles.content}>
         {types.map(type => (
-          <Category key={type} name={titles[type as GetAlbumListType]} data={type in lists ? lists[type] : []} />
+          <Category key={type} type={type} />
         ))}
       </View>
     </GradientScrollView>

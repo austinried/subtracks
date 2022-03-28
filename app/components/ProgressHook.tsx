@@ -1,11 +1,10 @@
 import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
 import React, { useEffect } from 'react'
 import { State, useProgress } from 'react-native-track-player'
 
 const ProgressHook = () => {
-  const playerState = useStore(selectTrackPlayer.playerState)
-  const setProgress = useStore(selectTrackPlayer.setProgress)
+  const playerState = useStore(store => store.playerState)
+  const setProgress = useStore(store => store.setProgress)
   const progress = useProgress(250)
 
   useEffect(() => {

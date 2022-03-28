@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useActiveServerRefresh } from './server'
+import { useActiveServerRefresh } from './settings'
 
 export const useFetchList = <T>(fetchList: () => Promise<T[]>) => {
   const [list, setList] = useState<T[]>([])
@@ -28,8 +28,26 @@ export const useFetchList = <T>(fetchList: () => Promise<T[]>) => {
   return { list, refreshing, refresh, reset }
 }
 
+export const useFetchList2 = (fetchList: () => Promise<void>) => {
+  const [refreshing, setRefreshing] = useState(false)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    await fetchList()
+    setRefreshing(false)
+  }, [fetchList])
+
+  useActiveServerRefresh(
+    useCallback(async () => {
+      await refresh()
+    }, [refresh]),
+  )
+
+  return { refreshing, refresh }
+}
+
 export const useFetchPaginatedList = <T>(
-  fetchList: (size?: number, offset?: number) => Promise<T[]>,
+  fetchList: (size: number, offset: number) => Promise<T[]>,
   pageSize: number,
 ) => {
   const [list, setList] = useState<T[]>([])
@@ -53,8 +71,8 @@ export const useFetchPaginatedList = <T>(
 
   useActiveServerRefresh(
     useCallback(() => {
-      reset()
-    }, [reset]),
+      refresh()
+    }, [refresh]),
   )
 
   const fetchNextPage = useCallback(() => {

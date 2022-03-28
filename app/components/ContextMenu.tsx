@@ -1,8 +1,6 @@
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useStarred } from '@app/hooks/music'
-import { AlbumListItem, Artist, Song, StarrableItemType } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { useStore } from '@app/state/store'
+import { useStar } from '@app/hooks/library'
+import { StarrableItemType, Song, Artist, Album } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
@@ -12,9 +10,8 @@ import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
-// import IconMat from 'react-native-vector-icons/MaterialIcons'
 import CoverArt from './CoverArt'
-import Star from './Star'
+import { Star } from './Star'
 
 const { SlideInMenu } = renderers
 
@@ -144,14 +141,13 @@ const OptionStar = React.memo<{
   type: StarrableItemType
   additionalText?: string
 }>(({ id, type, additionalText: text }) => {
-  const starred = useStarred(id, type)
-  const setStarred = useStore(selectMusic.starItem)
+  const { starred, toggleStar } = useStar(id, type)
 
   return (
     <ContextMenuIconTextOption
       IconComponentRaw={<Star starred={starred} size={26} />}
       text={(starred ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
-      onSelect={() => setStarred(id, type, starred)}
+      onSelect={toggleStar}
     />
   )
 })
@@ -203,7 +199,7 @@ const OptionViewAlbum = React.memo<{
 // ))
 
 export type AlbumContextPressableProps = ContextMenuProps & {
-  album: AlbumListItem
+  album: Album
 }
 
 export const AlbumContextPressable: React.FC<AlbumContextPressableProps> = props => {
