@@ -36,7 +36,7 @@ jobs:
           cache: 'yarn'
 
       - run: |
-          yarn install
+          yarn install --network-concurrency 1
 
       - run: |
           yarn lint --max-warnings 0
