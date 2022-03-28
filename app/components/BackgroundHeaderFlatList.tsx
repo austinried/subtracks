@@ -37,7 +37,7 @@ function BackgroundHeaderFlatList<ItemT>(props: BackgroundHeaderFlatListProp<Ite
         </props.BackgroundComponent>
       }
       ListHeaderComponentStyle={[headerStyle]}
-      ListEmptyComponent={<NothingHere style={styles.nothing} />}
+      ListEmptyComponent={props.ListEmptyComponent || <NothingHere style={styles.nothing} />}
     />
   )
 }

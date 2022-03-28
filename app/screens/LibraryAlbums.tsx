@@ -3,23 +3,25 @@ import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import { useFetchPaginatedList } from '@app/hooks/list'
-import { Album, AlbumListItem } from '@app/models/music'
-import { selectMusic } from '@app/state/music'
-import { selectSettings } from '@app/state/settings'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumList2Type } from '@app/subsonic/params'
+import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import React, { useEffect } from 'react'
+import React, { useCallback } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
-  album: AlbumListItem
+  id: string
   size: number
   height: number
-}>(({ album, size, height }) => {
+}>(({ id, size, height }) => {
+  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
   const navigation = useNavigation()
+
+  if (!album) {
+    return <></>
+  }
 
   return (
     <AlbumContextPressable
@@ -41,8 +43,8 @@ const AlbumItem = React.memo<{
 })
 
 const AlbumListRenderItem: React.FC<{
-  item: { album: Album; size: number; height: number }
-}> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
+  item: { id: string; size: number; height: number }
+}> = ({ item }) => <AlbumItem id={item.id} size={item.size} height={item.height} />
 
 const filterOptions: OptionData[] = [
   { text: 'By Name', value: 'alphabeticalByName' },
@@ -57,24 +59,57 @@ const filterOptions: OptionData[] = [
 ]
 
 const AlbumsList = () => {
-  const fetchAlbums = useStore(selectMusic.fetchAlbums)
-  const { list, refreshing, refresh, reset, fetchNextPage } = useFetchPaginatedList(fetchAlbums, 300)
-  const filter = useStore(selectSettings.libraryAlbumFilter)
-  const setFilter = useStore(selectSettings.setLibraryAlbumFilter)
+  const filter = useStoreDeep(store => store.settings.screens.library.albumsFilter)
+  const setFilter = useStore(store => store.setLibraryAlbumFilter)
+
+  const fetchAlbumList = useStore(store => store.fetchAlbumList)
+  const fetchPage = useCallback(
+    (size: number, offset: number) => {
+      let params: GetAlbumList2Params
+      switch (filter.type) {
+        case 'byYear':
+          params = {
+            size,
+            offset,
+            type: filter.type,
+            fromYear: filter.fromYear,
+            toYear: filter.toYear,
+          }
+          break
+        case 'byGenre':
+          params = {
+            size,
+            offset,
+            type: filter.type,
+            genre: filter.genre,
+          }
+          break
+        default:
+          params = {
+            size,
+            offset,
+            type: filter.type,
+          }
+          break
+      }
+      return fetchAlbumList(params)
+    },
+    [fetchAlbumList, filter.fromYear, filter.genre, filter.toYear, filter.type],
+  )
+
+  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchPage, 300)
 
   const layout = useWindowDimensions()
 
   const size = layout.width / 3 - styles.itemWrapper.marginHorizontal * 2
   const height = size + 36
 
-  useEffect(() => reset(), [reset, filter])
-
   return (
     <View style={styles.container}>
       <GradientFlatList
-        data={list.map(album => ({ album, size, height }))}
+        data={list.map(id => ({ id, size, height }))}
         renderItem={AlbumListRenderItem}
-        keyExtractor={item => item.album.id}
+        keyExtractor={item => item.id}
         numColumns={3}
         removeClippedSubviews={true}
         refreshing={refreshing}

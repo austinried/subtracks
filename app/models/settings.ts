@@ -30,23 +30,3 @@ export type ArtistFilterType = 'random' | 'starred' | 'alphabeticalByName'
 export interface ArtistFilterSettings {
   type: ArtistFilterType
 }
-
-export interface AppSettings {
-  servers: Server[]
-  screens: {
-    home: {
-      lists: string[]
-    }
-    library: {
-      albums: AlbumFilterSettings
-      artists: ArtistFilterSettings
-    }
-  }
-  activeServer?: string
-  scrobble: boolean
-  estimateContentLength: boolean
-  maxBitrateWifi: number
-  maxBitrateMobile: number
-  minBuffer: number
-  maxBuffer: number
-}

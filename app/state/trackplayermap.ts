@@ -1,8 +1,7 @@
-import { Song } from '@app/models/music'
+import { Song } from '@app/models/library'
+import { TrackExt } from '@app/models/trackplayer'
 import userAgent from '@app/util/userAgent'
-import { GetState, SetState } from 'zustand'
-import { Store } from './store'
-import { TrackExt } from './trackplayer'
+import { GetStore, SetStore } from '@app/state/store'
 
 export type TrackPlayerMapSlice = {
   mapSongtoTrackExt: (song: Song) => Promise<TrackExt>
@@ -10,11 +9,7 @@ export type TrackPlayerMapSlice = {
   mapTrackExtToSong: (song: TrackExt) => Song
 }
 
-export const selectTrackPlayerMap = {
-  mapTrackExtToSong: (store: TrackPlayerMapSlice) => store.mapTrackExtToSong,
-}
-
-export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<Store>): TrackPlayerMapSlice => ({
+export const createTrackPlayerMapSlice = (set: SetStore, get: GetStore): TrackPlayerMapSlice => ({
   mapSongtoTrackExt: async song => {
     let artwork = require('@res/fallback.png')
     if (song.coverArt) {
@@ -29,7 +24,7 @@ export const createTrackPlayerMapSlice = (set: SetState<Store>, get: GetState<St
       title: song.title,
       artist: song.artist || 'Unknown Artist',
       album: song.album || 'Unknown Album',
-      url: song.streamUri,
+      url: get().buildStreamUri(song.id),
       userAgent,
       artwork,
       coverArt: song.coverArt,

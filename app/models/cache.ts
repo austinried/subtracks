@@ -1,4 +1,4 @@
-import { Album, PlaylistListItem, Artist, Song } from './music'
+import { Album, Playlist, Artist, Song } from './library'
 
 export enum CacheItemType {
   coverArt = 'coverArt',
@@ -27,7 +27,7 @@ export type DownloadedAlbum = Album & {
   songs: string[]
 }
 
-export type DownloadedPlaylist = PlaylistListItem & {
+export type DownloadedPlaylist = Playlist & {
   songs: string[]
 }
 

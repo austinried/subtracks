@@ -8,10 +8,10 @@ import Animated from 'react-native-reanimated'
 import PressableOpacity from './PressableOpacity'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { ReactComponentLike } from 'prop-types'
-import { AlbumListItem, Song } from '@app/models/music'
 import { AlbumContextPressable, NowPlayingContextPressable } from './ContextMenu'
+import { Album, Song } from '@app/models/library'
 
-export type HeaderContextItem = Song | AlbumListItem
+export type HeaderContextItem = Song | Album
 
 const More = React.memo<{ contextItem?: HeaderContextItem }>(({ contextItem }) => {
   const moreIcon = <IconMat name="more-vert" color="white" size={25} />

@@ -4,14 +4,13 @@ import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
+import NothingHere from '@app/components/NothingHere'
 import { useCoverArtFile } from '@app/hooks/cache'
-import { useAlbumWithSongs, usePlaylistWithSongs } from '@app/hooks/music'
-import { AlbumWithSongs, PlaylistWithSongs, Song } from '@app/models/music'
-import { useStore } from '@app/state/store'
-import { selectTrackPlayer } from '@app/state/trackplayer'
+import { Song, Album, Playlist } from '@app/models/library'
+import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 type SongListType = 'album' | 'playlist'
@@ -46,18 +45,19 @@ const SongRenderItem: React.FC<{
 const SongListDetails = React.memo<{
   title: string
   type: SongListType
-  songList?: AlbumWithSongs | PlaylistWithSongs
+  songList?: Album | Playlist
+  songs?: Song[]
   subtitle?: string
-}>(({ title, songList, subtitle, type }) => {
+}>(({ title, songList, songs, subtitle, type }) => {
   const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
-  const setQueue = useStore(selectTrackPlayer.setQueue)
+  const setQueue = useStore(store => store.setQueue)
 
   if (!songList) {
     return <SongListDetailsFallback />
   }
 
-  const _songs = [...songList.songs]
+  const _songs = [...(songs || [])]
   let typeName = ''
 
   if (type === 'album') {
@@ -101,21 +101,26 @@ const SongListDetails = React.memo<{
         overScrollMode="never"
         windowSize={7}
         contentMarginTop={26}
+        ListEmptyComponent={
+          songs ? (
+            <NothingHere style={styles.nothing} />
+          ) : (
+            <ActivityIndicator size="large" color={colors.accent} style={styles.listLoading} />
+          )
+        }
         ListHeaderComponent={
           <View style={styles.content}>
             <CoverArt type="cover" size="original" coverArt={songList.coverArt} style={styles.cover} />
             <Text style={styles.title}>{songList.name}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : <></>}
-            {songList.songs.length > 0 && (
-              <ListPlayerControls
-                style={styles.controls}
-                songs={_songs}
-                typeName={typeName}
-                queueName={songList.name}
-                queueContextId={songList.id}
-                queueContextType={type}
-              />
-            )}
+            <ListPlayerControls
+              style={styles.controls}
+              songs={_songs}
+              typeName={typeName}
+              queueName={songList.name}
+              queueContextId={songList.id}
+              queueContextType={type}
+            />
           </View>
         }
       />
@@ -127,19 +132,58 @@ const PlaylistView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const playlist = usePlaylistWithSongs(id)
-  return <SongListDetails title={title} songList={playlist} subtitle={playlist?.comment} type="playlist" />
+  const playlist = useStoreDeep(useCallback(store => store.library.playlists[id], [id]))
+  const songs = useStoreDeep(
+    useCallback(
+      store => {
+        const ids = store.library.playlistSongs[id]
+        return ids ? ids.map(i => store.library.songs[i]) : undefined
+      },
+      [id],
+    ),
+  )
+
+  const fetchPlaylist = useStore(store => store.fetchPlaylist)
+
+  useEffect(() => {
+    if (!playlist || !songs) {
+      fetchPlaylist(id)
+    }
+  }, [playlist, fetchPlaylist, id, songs])
+
+  return (
+    <SongListDetails title={title} songList={playlist} songs={songs} subtitle={playlist?.comment} type="playlist" />
+  )
 })
 
 const AlbumView = React.memo<{
   id: string
   title: string
 }>(({ id, title }) => {
-  const album = useAlbumWithSongs(id)
+  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
+  const songs = useStoreDeep(
+    useCallback(
+      store => {
+        const ids = store.library.albumSongs[id]
+        return ids ? ids.map(i => store.library.songs[i]) : undefined
+      },
+      [id],
+    ),
+  )
+
+  const fetchAlbum = useStore(store => store.fetchAlbum)
+
+  useEffect(() => {
+    if (!album || !songs) {
+      fetchAlbum(id)
+    }
+  }, [album, fetchAlbum, id, songs])
+
   return (
     <SongListDetails
       title={title}
       songList={album}
+      songs={songs}
       subtitle={(album?.artist || '') + (album?.year ? ' • ' + album?.year : '')}
       type="album"
     />
@@ -195,6 +239,12 @@ const styles = StyleSheet.create({
   },
   listItem: {
     paddingHorizontal: 20,
+  },
+  nothing: {
+    width: '100%',
+  },
+  listLoading: {
+    marginTop: 10,
   },
 })
 

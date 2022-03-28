@@ -5,7 +5,12 @@ import { enableScreens } from 'react-native-screens'
 enableScreens()
 
 import { LogBox } from 'react-native'
-LogBox.ignoreLogs(["The action 'POP_TO_TOP'"])
+LogBox.ignoreLogs([
+  "The action 'POP_TO_TOP'",
+  '`new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.',
+  '`new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.',
+  "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
+])
 
 import { AppRegistry } from 'react-native'
 import App from '@app/App'

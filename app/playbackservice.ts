@@ -1,4 +1,4 @@
-import { getCurrentTrack, getPlayerState, TrackExt, trackPlayerCommands } from '@app/state/trackplayer'
+import { getCurrentTrack, getPlayerState, trackPlayerCommands } from '@app/state/trackplayer'
 import TrackPlayer, { Event, State } from 'react-native-track-player'
 import { useStore } from './state/store'
 import { unstable_batchedUpdates } from 'react-native'
@@ -44,13 +44,12 @@ let serviceCreated = false
 
 const createService = async () => {
   useStore.subscribe(
-    (currentTrack?: TrackExt) => {
-      if (currentTrack) {
-        useStore.getState().scrobbleTrack(currentTrack.id)
+    state => state.currentTrack?.id,
+    (currentTrackId?: string) => {
+      if (currentTrackId) {
+        useStore.getState().scrobbleTrack(currentTrackId)
       }
     },
-    state => state.currentTrack,
-    (prev, next) => prev?.id === next?.id,
   )
 
   NetInfo.fetch().then(state => {

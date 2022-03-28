@@ -1,21 +1,36 @@
-import { AppSettings, ArtistFilterSettings, AlbumFilterSettings, Server } from '@app/models/settings'
-import { Store } from '@app/state/store'
+import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/settings'
+import { ById } from '@app/models/state'
+import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
-import produce from 'immer'
-import { GetState, SetState } from 'zustand'
 
 export type SettingsSlice = {
-  settings: AppSettings
+  settings: {
+    servers: ById<Server>
+    activeServerId?: string
+    screens: {
+      home: {
+        listTypes: string[]
+      }
+      library: {
+        albumsFilter: AlbumFilterSettings
+        artistsFilter: ArtistFilterSettings
+      }
+    }
+    scrobble: boolean
+    maxBitrateWifi: number
+    maxBitrateMobile: number
+    minBuffer: number
+    maxBuffer: number
+  }
+
   client?: SubsonicApiClient
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
-  getActiveServer: () => Server | undefined
   addServer: (server: Server) => Promise<void>
   removeServer: (id: string) => Promise<void>
   updateServer: (server: Server) => void
 
   setScrobble: (scrobble: boolean) => void
-  setEstimateContentLength: (estimateContentLength: boolean) => void
   setMaxBitrateWifi: (maxBitrateWifi: number) => void
   setMaxBitrateMobile: (maxBitrateMobile: number) => void
   setMinBuffer: (minBuffer: number) => void
@@ -27,66 +42,26 @@ export type SettingsSlice = {
   setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
 }
 
-export const selectSettings = {
-  client: (state: SettingsSlice) => state.client,
-
-  firstRun: (state: SettingsSlice) => state.settings.servers.length === 0,
-
-  activeServer: (state: SettingsSlice) => state.settings.servers.find(s => s.id === state.settings.activeServer),
-  setActiveServer: (state: SettingsSlice) => state.setActiveServer,
-
-  servers: (state: SettingsSlice) => state.settings.servers,
-  addServer: (state: SettingsSlice) => state.addServer,
-  removeServer: (state: SettingsSlice) => state.removeServer,
-  updateServer: (state: SettingsSlice) => state.updateServer,
-
-  homeLists: (state: SettingsSlice) => state.settings.screens.home.lists,
-
-  scrobble: (state: SettingsSlice) => state.settings.scrobble,
-  setScrobble: (state: SettingsSlice) => state.setScrobble,
-
-  estimateContentLength: (state: SettingsSlice) => state.settings.estimateContentLength,
-  setEstimateContentLength: (state: SettingsSlice) => state.setEstimateContentLength,
-
-  maxBitrateWifi: (state: SettingsSlice) => state.settings.maxBitrateWifi,
-  setMaxBitrateWifi: (state: SettingsSlice) => state.setMaxBitrateWifi,
-  maxBitrateMobile: (state: SettingsSlice) => state.settings.maxBitrateMobile,
-  setMaxBitrateMobile: (state: SettingsSlice) => state.setMaxBitrateMobile,
-
-  minBuffer: (state: SettingsSlice) => state.settings.minBuffer,
-  setMinBuffer: (state: SettingsSlice) => state.setMinBuffer,
-  maxBuffer: (state: SettingsSlice) => state.settings.maxBuffer,
-  setMaxBuffer: (state: SettingsSlice) => state.setMaxBuffer,
-
-  pingServer: (state: SettingsSlice) => state.pingServer,
-
-  setLibraryAlbumFilter: (state: SettingsSlice) => state.setLibraryAlbumFilter,
-  libraryAlbumFilter: (state: SettingsSlice) => state.settings.screens.library.albums,
-  setLibraryArtistFiler: (state: SettingsSlice) => state.setLibraryArtistFiler,
-  libraryArtistFilter: (state: SettingsSlice) => state.settings.screens.library.artists,
-}
-
-export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>): SettingsSlice => ({
+export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice => ({
   settings: {
-    servers: [],
+    servers: {},
     screens: {
       home: {
-        lists: ['frequent', 'recent', 'starred', 'random'],
+        listTypes: ['frequent', 'recent', 'starred', 'random'],
       },
       library: {
-        albums: {
+        albumsFilter: {
           type: 'alphabeticalByArtist',
           fromYear: 1,
           toYear: 9999,
           genre: '',
         },
-        artists: {
+        artistsFilter: {
           type: 'alphabeticalByName',
         },
       },
     },
     scrobble: false,
-    estimateContentLength: true,
     maxBitrateWifi: 0,
     maxBitrateMobile: 192,
     minBuffer: 6,
@@ -95,12 +70,12 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
 
   setActiveServer: async (id, force) => {
     const servers = get().settings.servers
-    const currentActiveServerId = get().settings.activeServer
-    const newActiveServer = servers.find(s => s.id === id)
+    const currentActiveServerId = get().settings.activeServerId
+    const newActiveServer = id ? servers[id] : undefined
 
     if (!newActiveServer) {
-      set({
-        client: undefined,
+      set(state => {
+        state.client = undefined
       })
       return
     }
@@ -111,26 +86,21 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
 
     get().prepareCache(newActiveServer.id)
 
-    set(
-      produce<Store>(state => {
-        state.settings.activeServer = newActiveServer.id
-        state.client = new SubsonicApiClient(newActiveServer)
-      }),
-    )
+    set(state => {
+      state.settings.activeServerId = newActiveServer.id
+      state.client = new SubsonicApiClient(newActiveServer)
+      get().resetLibrary(state)
+    })
   },
-
-  getActiveServer: () => get().settings.servers.find(s => s.id === get().settings.activeServer),
 
   addServer: async server => {
     await get().createCache(server.id)
 
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.servers.push(server)
-      }),
-    )
+    set(state => {
+      state.settings.servers[server.id] = server
+    })
 
-    if (get().settings.servers.length === 1) {
+    if (Object.keys(get().settings.servers).length === 1) {
       get().setActiveServer(server.id)
     }
   },
@@ -138,53 +108,31 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
   removeServer: async id => {
     await get().removeCache(id)
 
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.servers = state.settings.servers.filter(s => s.id !== id)
-      }),
-    )
+    set(state => {
+      delete state.settings.servers[id]
+    })
   },
 
   updateServer: server => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.servers = replaceIndex(
-          state.settings.servers,
-          state.settings.servers.findIndex(s => s.id === server.id),
-          server,
-        )
-      }),
-    )
+    set(state => {
+      state.settings.servers[server.id] = server
+    })
 
-    if (get().settings.activeServer === server.id) {
+    if (get().settings.activeServerId === server.id) {
       get().setActiveServer(server.id, true)
     }
   },
 
   setScrobble: scrobble => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.scrobble = scrobble
-      }),
-    )
-  },
-
-  setEstimateContentLength: estimateContentLength => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.estimateContentLength = estimateContentLength
-      }),
-    )
-
-    get().rebuildQueue()
+    set(state => {
+      state.settings.scrobble = scrobble
+    })
   },
 
   setMaxBitrateWifi: maxBitrateWifi => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.maxBitrateWifi = maxBitrateWifi
-      }),
-    )
+    set(state => {
+      state.settings.maxBitrateWifi = maxBitrateWifi
+    })
 
     if (get().netState === 'wifi') {
       get().rebuildQueue()
@@ -192,11 +140,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
   },
 
   setMaxBitrateMobile: maxBitrateMobile => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.maxBitrateMobile = maxBitrateMobile
-      }),
-    )
+    set(state => {
+      state.settings.maxBitrateMobile = maxBitrateMobile
+    })
 
     if (get().netState === 'mobile') {
       get().rebuildQueue()
@@ -208,11 +154,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.minBuffer = Math.max(1, Math.min(minBuffer, state.settings.maxBuffer / 2))
-      }),
-    )
+    set(state => {
+      state.settings.minBuffer = Math.max(1, Math.min(minBuffer, state.settings.maxBuffer / 2))
+    })
 
     get().rebuildQueue()
   },
@@ -222,11 +166,9 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
       return
     }
 
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.maxBuffer = Math.min(5 * 60, Math.max(maxBuffer, state.settings.minBuffer * 2))
-      }),
-    )
+    set(state => {
+      state.settings.maxBuffer = Math.min(5 * 60, Math.max(maxBuffer, state.settings.minBuffer * 2))
+    })
 
     get().rebuildQueue()
   },
@@ -252,24 +194,14 @@ export const createSettingsSlice = (set: SetState<Store>, get: GetState<Store>):
   },
 
   setLibraryAlbumFilter: filter => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.screens.library.albums = filter
-      }),
-    )
+    set(state => {
+      state.settings.screens.library.albumsFilter = filter
+    })
   },
 
   setLibraryArtistFiler: filter => {
-    set(
-      produce<SettingsSlice>(state => {
-        state.settings.screens.library.artists = filter
-      }),
-    )
+    set(state => {
+      state.settings.screens.library.artistsFilter = filter
+    })
   },
 })
-
-function replaceIndex<T>(array: T[], index: number, replacement: T): T[] {
-  const start = array.slice(0, index)
-  const end = array.slice(index + 1)
-  return [...start, replacement, ...end]
-}
