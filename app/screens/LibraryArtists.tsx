@@ -2,11 +2,15 @@ import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { useFetchList2 } from '@app/hooks/list'
+import { useQueryArtists } from '@app/hooks/query'
 import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
+import { ArtistID3Element } from '@app/subsonic/elements'
+import { reduceById, mapId } from '@app/util/state'
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
+import { useQuery, QueryFunction } from 'react-query'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
   <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
@@ -19,17 +23,18 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const fetchArtists = useStore(store => store.fetchArtists)
-  const { refreshing, refresh } = useFetchList2(fetchArtists)
-  const artists = useStoreDeep(store => store.library.artists)
-  const artistOrder = useStoreDeep(store => store.library.artistOrder)
+  const { isLoading, data, refetch } = useQueryArtists()
 
   const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
   const setFilter = useStore(store => store.setLibraryArtistFiler)
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {
-    const list = Object.values(artists)
+    if (!data) {
+      return
+    }
+
+    const list = Object.values(data.byId)
     switch (filter.type) {
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
@@ -38,13 +43,13 @@ const ArtistsList = () => {
         setSortedList([...list].filter(a => a.starred))
         break
       case 'alphabeticalByName':
-        setSortedList(artistOrder.map(id => artists[id]))
+        setSortedList(data.allIds.map(id => data.byId[id]))
         break
       default:
         setSortedList([...list])
         break
     }
-  }, [filter.type, artists, artistOrder])
+  }, [filter.type, data])
 
   return (
     <View style={styles.container}>
@@ -52,8 +57,8 @@ const ArtistsList = () => {
         data={sortedList}
         renderItem={ArtistRenderItem}
         keyExtractor={item => item.id}
-        onRefresh={refresh}
-        refreshing={refreshing}
+        onRefresh={refetch}
+        refreshing={isLoading}
         overScrollMode="never"
         windowSize={3}
         contentMarginTop={6}

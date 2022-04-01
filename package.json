@@ -50,6 +50,7 @@
     "react-native-uuid": "^2.0.1",
     "react-native-vector-icons": "^8.1.0",
     "react-native-webview": "^11.13.0",
+    "react-query": "^3.34.19",
     "zustand": "^3.7.1"
   },
   "devDependencies": {
