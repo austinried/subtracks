@@ -1,0 +1,5 @@
+## Fixed
+
+- Reduced required version of Subsonic API support from servers to 1.13.0 (#53)
+- Fixed autocorrect/autofill in server settings input (#60)
+- Fixed issues special characters in plain text passwords (and elsewhere) (#81)
