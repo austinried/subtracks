@@ -10,6 +10,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
+import equal from 'fast-deep-equal/es6/react'
 import React, { useCallback } from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
@@ -29,7 +30,7 @@ const AlbumItem = React.memo<{
       album={album}
       menuStyle={[styles.itemMenu, { width: size }]}
       triggerWrapperStyle={[styles.itemWrapper, { height }]}
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}>
       <CoverArt type="cover" coverArt={album.coverArt} style={{ height: size, width: size }} resizeMode={'cover'} />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
@@ -41,7 +42,7 @@ const AlbumItem = React.memo<{
       </View>
     </AlbumContextPressable>
   )
-})
+}, equal)
 
 const AlbumListRenderItem: React.FC<{
   item: { album: Album; size: number; height: number }

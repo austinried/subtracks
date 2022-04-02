@@ -12,7 +12,7 @@ export function mapArtist(artist: ArtistID3Element): Artist {
     itemType: 'artist',
     id: artist.id,
     name: artist.name,
-    starred: artist.starred,
+    starred: artist.starred?.getTime(),
     coverArt: artist.coverArt,
   }
 }
@@ -32,7 +32,7 @@ export function mapAlbum(album: AlbumID3Element): Album {
     name: album.name,
     artist: album.artist,
     artistId: album.artistId,
-    starred: album.starred,
+    starred: album.starred?.getTime(),
     coverArt: album.coverArt,
     year: album.year,
   }
@@ -60,6 +60,6 @@ export function mapSong(song: ChildElement): Song {
     track: song.track,
     discNumber: song.discNumber,
     duration: song.duration,
-    starred: song.starred,
+    starred: song.starred?.getTime(),
   }
 }

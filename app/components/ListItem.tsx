@@ -65,13 +65,13 @@ const ListItem: React.FC<{
   if (!onPress) {
     switch (item.itemType) {
       case 'album':
-        onPress = () => navigation.navigate('album', { id: item.id, title: item.name })
+        onPress = () => navigation.navigate('album', { id: item.id, title: item.name, album: item })
         break
       case 'artist':
         onPress = () => navigation.navigate('artist', { id: item.id, title: item.name })
         break
       case 'playlist':
-        onPress = () => navigation.navigate('playlist', { id: item.id, title: item.name })
+        onPress = () => navigation.navigate('playlist', { id: item.id, title: item.name, playlist: item })
         break
     }
   }

@@ -35,7 +35,7 @@ const AlbumItem = React.memo<{
     <AlbumContextPressable
       album={album}
       triggerWrapperStyle={styles.item}
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}>
       <CoverArt
         type="cover"
         coverArt={album.coverArt}

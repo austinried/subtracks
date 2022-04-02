@@ -1,4 +1,5 @@
 import { Album, Artist, ArtistInfo, Playlist, SearchResults, Song } from '@app/models/library'
+import { mapArtist, mapAlbum, mapArtistInfo, mapSong, mapPlaylist } from '@app/models/map'
 import { ById, OneToMany } from '@app/models/state'
 import { GetStore, SetStore, Store } from '@app/state/store'
 import {
@@ -369,7 +370,7 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     const originalValue = item ? item.starred : null
 
     set(state => {
-      state.library[entity][id].starred = new Date()
+      state.library[entity][id].starred = Date.now()
     })
 
     try {
@@ -462,60 +463,3 @@ export const createLibrarySlice = (set: SetStore, get: GetStore): LibrarySlice =
     }
   },
 })
-
-function mapArtist(artist: ArtistID3Element): Artist {
-  return {
-    itemType: 'artist',
-    id: artist.id,
-    name: artist.name,
-    starred: artist.starred,
-    coverArt: artist.coverArt,
-  }
-}
-
-function mapArtistInfo(id: string, info: ArtistInfo2Element): ArtistInfo {
-  return {
-    id,
-    smallImageUrl: info.smallImageUrl,
-    largeImageUrl: info.largeImageUrl,
-  }
-}
-
-function mapAlbum(album: AlbumID3Element): Album {
-  return {
-    itemType: 'album',
-    id: album.id,
-    name: album.name,
-    artist: album.artist,
-    artistId: album.artistId,
-    starred: album.starred,
-    coverArt: album.coverArt,
-    year: album.year,
-  }
-}
-
-function mapPlaylist(playlist: PlaylistElement): Playlist {
-  return {
-    itemType: 'playlist',
-    id: playlist.id,
-    name: playlist.name,
-    comment: playlist.comment,
-    coverArt: playlist.coverArt,
-  }
-}
-
-function mapSong(song: ChildElement): Song {
-  return {
-    itemType: 'song',
-    id: song.id,
-    album: song.album,
-    albumId: song.albumId,
-    artist: song.artist,
-    artistId: song.artistId,
-    title: song.title,
-    track: song.track,
-    discNumber: song.discNumber,
-    duration: song.duration,
-    starred: song.starred,
-  }
-}

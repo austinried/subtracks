@@ -2,7 +2,7 @@ export interface Artist {
   itemType: 'artist'
   id: string
   name: string
-  starred?: Date
+  starred?: number
   coverArt?: string
 }
 
@@ -18,7 +18,7 @@ export interface Album {
   name: string
   artist?: string
   artistId?: string
-  starred?: Date
+  starred?: number
   coverArt?: string
   year?: number
 }
@@ -42,7 +42,7 @@ export interface Song {
   track?: number
   discNumber?: number
   duration?: number
-  starred?: Date
+  starred?: number
   coverArt?: string
 }
 
