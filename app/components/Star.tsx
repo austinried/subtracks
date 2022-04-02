@@ -20,11 +20,11 @@ export const PressableStar = React.memo<{
   size: number
   style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>) | undefined
 }>(({ id, type, size, style }) => {
-  const { starred, toggleStar } = useStar(id, type)
+  // const { starred, toggleStar } = useStar(id, type)
 
   return (
-    <PressableOpacity onPress={toggleStar} style={style}>
-      <Star size={size} starred={starred} />
+    <PressableOpacity onPress={() => undefined} style={style}>
+      <Star size={size} starred={false} />
     </PressableOpacity>
   )
 })
