@@ -5,15 +5,15 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
+import { useQueryArtist, useQueryArtistTopSongs } from '@app/hooks/query'
 import { Album, Song } from '@app/models/library'
-import { useStore, useStoreDeep } from '@app/state/store'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
-import { mapById } from '@app/util/state'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback, useEffect } from 'react'
+import React from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
@@ -31,7 +31,7 @@ const AlbumItem = React.memo<{
   return (
     <AlbumContextPressable
       album={album}
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}
       menuStyle={[styles.albumItem, { width }]}
       triggerOuterWrapperStyle={{ width }}>
       <CoverArt type="cover" coverArt={album.coverArt} style={{ height, width }} resizeMode={'cover'} />
@@ -96,18 +96,9 @@ const ArtistViewFallback = React.memo(() => (
 ))
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
-  const artist = useStoreDeep(useCallback(store => store.library.artists[id], [id]))
-  const topSongIds = useStoreDeep(useCallback(store => store.library.artistNameTopSongs[artist?.name], [artist?.name]))
-  const topSongs = useStoreDeep(
-    useCallback(store => (topSongIds ? mapById(store.library.songs, topSongIds) : undefined), [topSongIds]),
-  )
-  const albumIds = useStoreDeep(useCallback(store => store.library.artistAlbums[id], [id]))
-  const albums = useStoreDeep(
-    useCallback(store => (albumIds ? mapById(store.library.albums, albumIds) : undefined), [albumIds]),
-  )
-
-  const fetchArtist = useStore(store => store.fetchArtist)
-  const fetchTopSongs = useStore(store => store.fetchArtistTopSongs)
+  const { data: artistData } = useQueryArtist(id)
+  // const { data: artistInfo } = useQueryArtistInfo(id)
+  const { data: topSongs } = useQueryArtistTopSongs(artistData?.artist?.name)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -124,21 +115,11 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     }
   })
 
-  useEffect(() => {
-    if (!artist || !albumIds) {
-      fetchArtist(id)
-    }
-  }, [artist, albumIds, fetchArtist, id])
-
-  useEffect(() => {
-    if (artist && !topSongIds) {
-      fetchTopSongs(artist.name)
-    }
-  }, [artist, fetchTopSongs, topSongIds])
-
-  if (!artist) {
+  if (!artistData) {
     return <ArtistViewFallback />
   }
+
+  const { artist, albums } = artistData
 
   return (
     <View style={styles.container}>
@@ -154,7 +135,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
           <Text style={styles.title}>{artist.name}</Text>
         </View>
         <View style={styles.contentContainer}>
-          {topSongs && albums ? (
+          {topSongs && artist ? (
             topSongs.length > 0 ? (
               <>
                 <TopSongs songs={topSongs} name={artist.name} artistId={artist.id} />

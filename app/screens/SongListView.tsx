@@ -172,7 +172,6 @@ const SongListView = React.memo<{
   album?: Album
   playlist?: Playlist
 }>(({ id, title, type, album, playlist }) => {
-  console.log(album)
   return type === 'album' ? (
     <AlbumView id={id} title={title} album={album} />
   ) : (

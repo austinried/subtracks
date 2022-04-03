@@ -218,8 +218,6 @@ const SettingsContent = React.memo(() => {
     const waitForClear = async () => {
       try {
         await clearImageCache()
-      } catch (err) {
-        console.log(err)
       } finally {
         setClearing(false)
       }

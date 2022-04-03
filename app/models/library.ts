@@ -55,3 +55,8 @@ export interface SearchResults {
 export type StarrableItemType = 'album' | 'song' | 'artist'
 
 export type ListableItem = Album | Song | Artist | Playlist
+
+export interface AlbumCoverArt {
+  albumId: string
+  coverArt?: string
+}
