@@ -184,7 +184,7 @@ const ServerView: React.FC<{
   }
 
   return (
-    <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
+    <GradientScrollView style={styles.scroll}>
       <View style={styles.content}>
         <Text style={styles.inputTitle}>Address</Text>
         <TextInput
@@ -258,9 +258,6 @@ const ServerView: React.FC<{
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-  },
-  scrollContentContainer: {
-    // paddingTop: StatusBar.currentHeight,
   },
   content: {
     paddingHorizontal: 20,

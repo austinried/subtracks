@@ -1,15 +1,16 @@
+import { Album, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
-import React, { useCallback } from 'react'
-import { View, StatusBar, Text, StyleSheet, ViewStyle } from 'react-native'
-import Animated from 'react-native-reanimated'
-import PressableOpacity from './PressableOpacity'
-import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { ReactComponentLike } from 'prop-types'
+import React, { useCallback } from 'react'
+import { StyleSheet, Text, View, ViewStyle } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import IconMat from 'react-native-vector-icons/MaterialIcons'
 import { AlbumContextPressable, NowPlayingContextPressable } from './ContextMenu'
-import { Album, Song } from '@app/models/library'
+import PressableOpacity from './PressableOpacity'
 
 export type HeaderContextItem = Song | Album
 
@@ -53,6 +54,7 @@ const HeaderBar = React.memo<{
   contextItem?: HeaderContextItem
 }>(({ title, headerStyle, HeaderCenter, contextItem }) => {
   const navigation = useNavigation()
+  const top = useSafeAreaInsets().top
 
   const back = useCallback(() => {
     navigation.goBack()
@@ -61,7 +63,7 @@ const HeaderBar = React.memo<{
   const _headerStyle = Array.isArray(headerStyle) ? headerStyle : [headerStyle]
 
   return (
-    <Animated.View style={[styles.container, ..._headerStyle]}>
+    <Animated.View style={[styles.container, { paddingTop: top, height: dimensions.header + top }, ..._headerStyle]}>
       <PressableOpacity onPress={back} style={styles.icons}>
         <IconMat name="arrow-back" color="white" size={25} />
       </PressableOpacity>
@@ -81,8 +83,6 @@ const HeaderBar = React.memo<{
 
 const styles = StyleSheet.create({
   container: {
-    height: dimensions.top(),
-    paddingTop: StatusBar.currentHeight,
     backgroundColor: colors.gradient.high,
     width: '100%',
     flexDirection: 'row',
