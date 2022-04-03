@@ -1,9 +1,9 @@
 import { Album, AlbumCoverArt, Artist, Playlist, Song } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
-import { GetAlbumList2TypeBase } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase, StarParams } from '@app/subsonic/params'
 import uniq from 'lodash.uniq'
-import { useInfiniteQuery, useQueries, useQuery, UseQueryResult } from 'react-query'
+import { useInfiniteQuery, useMutation, useQueries, useQuery, UseQueryResult } from 'react-query'
 import {
   useFetchAlbum,
   useFetchAlbumList,
@@ -13,6 +13,9 @@ import {
   useFetchArtistTopSongs,
   useFetchPlaylist,
   useFetchPlaylists,
+  useFetchSong,
+  useFetchStar,
+  useFetchUnstar,
 } from './fetch'
 
 export const useQueryArtists = () => useQuery('artists', useFetchArtists())
@@ -80,7 +83,7 @@ export const useQueryAlbumList = (size: number, type: GetAlbumList2TypeBase) => 
   const fetchAlbumList = useFetchAlbumList()
 
   return useInfiniteQuery(
-    ['albumList', size, type],
+    ['albumList', type, size],
     async context => {
       return await fetchAlbumList(size, context.pageParam || 0, type)
     },
@@ -96,6 +99,58 @@ export const useQueryAlbumList = (size: number, type: GetAlbumList2TypeBase) => 
   )
 }
 
+export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
+  const fetchStar = useFetchStar()
+  const fetchUnstar = useFetchUnstar()
+  const fetchSong = useFetchSong()
+  const fetchAlbum = useFetchAlbum()
+  const fetchArtist = useFetchArtist()
+
+  const query = useQuery(
+    ['starredItems', id],
+    async () => {
+      switch (type) {
+        case 'album':
+          console.log('fetch album starred', id)
+          return !!(await fetchAlbum(id)).album.starred
+        case 'artist':
+          console.log('fetch artist starred', id)
+          return !!(await fetchArtist(id)).artist.starred
+        default:
+          console.log('fetch song starred', id)
+          return !!(await fetchSong(id)).starred
+      }
+    },
+    {
+      cacheTime: Infinity,
+      staleTime: Infinity,
+    },
+  )
+
+  const toggle = useMutation(
+    () => {
+      const params: StarParams = {
+        id: type === 'song' ? id : undefined,
+        albumId: type === 'album' ? id : undefined,
+        artistId: type === 'artist' ? id : undefined,
+      }
+      return !query.data ? fetchStar(params) : fetchUnstar(params)
+    },
+    {
+      onMutate: () => {
+        queryClient.setQueryData<boolean>(['starredItems', id], !query.data)
+      },
+      onSuccess: () => {
+        if (type === 'album') {
+          queryClient.invalidateQueries(['albumList', 'starred'])
+        }
+      },
+    },
+  )
+
+  return { query, toggle }
+}
+
 // song cover art comes back from the api as a unique id per song even if it all points to the same
 // album art, which prevents us from caching it once, so we need to use the album's cover art
 const useFixCoverArt = <T extends Song[] | { songs?: Song[] }>(query: UseQueryResult<T>) => {
@@ -107,8 +162,10 @@ const useFixCoverArt = <T extends Song[] | { songs?: Song[] }>(query: UseQueryRe
   const coverArts = useQueries(
     albumIds.map(id => ({
       queryKey: ['albumCoverArt', id],
-      queryFn: (): Promise<AlbumCoverArt> =>
-        fetchAlbum(id).then(res => ({ albumId: res.album.id, coverArt: res.album.coverArt })),
+      queryFn: (): Promise<AlbumCoverArt> => {
+        console.log('fetch album coverArt')
+        return fetchAlbum(id).then(res => ({ albumId: res.album.id, coverArt: res.album.coverArt }))
+      },
       staleTime: Infinity,
       cacheTime: Infinity,
     })),

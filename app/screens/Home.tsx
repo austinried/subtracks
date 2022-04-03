@@ -92,7 +92,7 @@ const Home = () => {
   const listQueries = useQueries(
     types.map(type => {
       return {
-        queryKey: ['albumList', { size, type: type as GetAlbumList2TypeBase }],
+        queryKey: ['albumList', type as GetAlbumList2TypeBase, size],
         queryFn: async () => {
           const albums = await fetchAlbumList(size, 0, type as GetAlbumList2TypeBase)
           return { type, albums }

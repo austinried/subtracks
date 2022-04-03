@@ -2,7 +2,7 @@ import { Playlist, Song, Album, AlbumCoverArt } from '@app/models/library'
 import { mapArtist, mapAlbum, mapPlaylist, mapSong, mapArtistInfo } from '@app/models/map'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
-import { GetAlbumList2TypeBase } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import { mapCollectionById } from '@app/util/state'
 
 export const useClient = () => {
@@ -17,93 +17,167 @@ export const useClient = () => {
   }
 }
 
+function cacheStarredData<T extends { id: string; starred?: undefined | any }>(item: T) {
+  queryClient.setQueryData<boolean>(['starredItems', item.id], !!item.starred)
+}
+
+function cacheAlbumCoverArtData<T extends { id: string; coverArt?: string }>(item: T) {
+  queryClient.setQueryData<AlbumCoverArt>(['albumCoverArt', item.id], { albumId: item.id, coverArt: item.coverArt })
+}
+
 export const useFetchArtists = () => {
   const client = useClient()
-  return () =>
-    client()
-      .getArtists()
-      .then(res => mapCollectionById(res.data.artists, mapArtist))
+
+  return async () => {
+    const res = await client().getArtists()
+
+    res.data.artists.forEach(cacheStarredData)
+
+    return mapCollectionById(res.data.artists, mapArtist)
+  }
 }
 
 export const useFetchArtist = () => {
   const client = useClient()
-  return (id: string) =>
-    client()
-      .getArtist({ id })
-      .then(res => ({
-        artist: mapArtist(res.data.artist),
-        albums: res.data.albums.map(mapAlbum),
-      }))
+
+  return async (id: string) => {
+    const res = await client().getArtist({ id })
+
+    cacheStarredData(res.data.artist)
+    res.data.albums.forEach(cacheStarredData)
+
+    res.data.albums.forEach(cacheAlbumCoverArtData)
+
+    return {
+      artist: mapArtist(res.data.artist),
+      albums: res.data.albums.map(mapAlbum),
+    }
+  }
 }
 
 export const useFetchArtistInfo = () => {
   const client = useClient()
-  return (id: string) =>
-    client()
-      .getArtistInfo2({ id })
-      .then(res => mapArtistInfo(id, res.data.artistInfo))
+
+  return async (id: string) => {
+    const res = await client().getArtistInfo2({ id })
+    return mapArtistInfo(id, res.data.artistInfo)
+  }
 }
 
 export const useFetchArtistTopSongs = () => {
   const client = useClient()
-  return (artistName: string) =>
-    client()
-      .getTopSongs({ artist: artistName })
-      .then(res => res.data.songs.map(mapSong))
+
+  return async (artistName: string) => {
+    const res = await client().getTopSongs({ artist: artistName })
+
+    res.data.songs.forEach(cacheStarredData)
+
+    return res.data.songs.map(mapSong)
+  }
 }
 
 export const useFetchPlaylists = () => {
   const client = useClient()
-  return () =>
-    client()
-      .getPlaylists()
-      .then(res => mapCollectionById(res.data.playlists, mapPlaylist))
+
+  return async () => {
+    const res = await client().getPlaylists()
+    return mapCollectionById(res.data.playlists, mapPlaylist)
+  }
 }
 
 export const useFetchPlaylist = () => {
   const client = useClient()
-  return (id: string): Promise<{ playlist: Playlist; songs?: Song[] }> =>
-    client()
-      .getPlaylist({ id })
-      .then(res => ({
-        playlist: mapPlaylist(res.data.playlist),
-        songs: res.data.playlist.songs.map(mapSong),
-      }))
+
+  return async (id: string): Promise<{ playlist: Playlist; songs?: Song[] }> => {
+    const res = await client().getPlaylist({ id })
+
+    res.data.playlist.songs.forEach(cacheStarredData)
+
+    return {
+      playlist: mapPlaylist(res.data.playlist),
+      songs: res.data.playlist.songs.map(mapSong),
+    }
+  }
 }
 
 export const useFetchAlbum = () => {
   const client = useClient()
-  return (id: string): Promise<{ album: Album; songs?: Song[] }> =>
-    client()
-      .getAlbum({ id })
-      .then(res => ({
-        album: mapAlbum(res.data.album),
-        songs: res.data.songs.map(mapSong),
-      }))
-      .then(res => {
-        queryClient.setQueryData<AlbumCoverArt>(
-          ['albumCoverArt', res.album.id],
-          { albumId: res.album.id, coverArt: res.album.coverArt },
-          { updatedAt: Date.now() },
-        )
-        return res
-      })
+
+  return async (id: string): Promise<{ album: Album; songs?: Song[] }> => {
+    const res = await client().getAlbum({ id })
+
+    cacheStarredData(res.data.album)
+    res.data.songs.forEach(cacheStarredData)
+
+    cacheAlbumCoverArtData(res.data.album)
+
+    return {
+      album: mapAlbum(res.data.album),
+      songs: res.data.songs.map(mapSong),
+    }
+  }
 }
 
 export const useFetchAlbumList = () => {
   const client = useClient()
-  return (size: number, offset: number, type: GetAlbumList2TypeBase) =>
-    client()
-      .getAlbumList2({ size, offset, type })
-      .then(res => res.data.albums.map(mapAlbum))
-      .then(res => {
-        res.map(a =>
-          queryClient.setQueryData<AlbumCoverArt>(
-            ['albumCoverArt', a.id],
-            { albumId: a.id, coverArt: a.coverArt },
-            { updatedAt: Date.now() },
-          ),
-        )
-        return res
-      })
+
+  return async (size: number, offset: number, type: GetAlbumList2TypeBase) => {
+    const res = await client().getAlbumList2({ size, offset, type })
+
+    res.data.albums.forEach(cacheStarredData)
+
+    res.data.albums.forEach(cacheAlbumCoverArtData)
+
+    return res.data.albums.map(mapAlbum)
+  }
+}
+
+export const useFetchSong = () => {
+  const client = useClient()
+
+  return async (id: string) => {
+    const res = await client().getSong({ id })
+
+    cacheStarredData(res.data.song)
+
+    return mapSong(res.data.song)
+  }
+}
+
+export const useFetchSearchResults = () => {
+  const client = useClient()
+
+  return async (params: Search3Params) => {
+    const res = await client().search3(params)
+
+    res.data.artists.forEach(cacheStarredData)
+    res.data.albums.forEach(cacheStarredData)
+    res.data.songs.forEach(cacheStarredData)
+
+    res.data.albums.forEach(cacheAlbumCoverArtData)
+
+    return {
+      artists: res.data.artists.map(mapArtist),
+      albums: res.data.albums.map(mapAlbum),
+      songs: res.data.songs.map(mapSong),
+    }
+  }
+}
+
+export const useFetchStar = () => {
+  const client = useClient()
+
+  return async (params: StarParams) => {
+    await client().star(params)
+    return
+  }
+}
+
+export const useFetchUnstar = () => {
+  const client = useClient()
+
+  return async (params: StarParams) => {
+    await client().unstar(params)
+    return
+  }
 }

@@ -1,5 +1,5 @@
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useStar } from '@app/hooks/library'
+import { useStar } from '@app/hooks/query'
 import { StarrableItemType, Song, Artist, Album } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -141,13 +141,13 @@ const OptionStar = React.memo<{
   type: StarrableItemType
   additionalText?: string
 }>(({ id, type, additionalText: text }) => {
-  const { starred, toggleStar } = useStar(id, type)
+  const { query, toggle } = useStar(id, type)
 
   return (
     <ContextMenuIconTextOption
-      IconComponentRaw={<Star starred={starred} size={26} />}
-      text={(starred ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
-      onSelect={toggleStar}
+      IconComponentRaw={<Star starred={!!query.data} size={26} />}
+      text={(query.data ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
+      onSelect={() => toggle.mutate()}
     />
   )
 })
