@@ -1,16 +1,7 @@
 import { CacheFile, CacheImageSize, CacheItemType, CacheItemTypeKey, CacheRequest } from '@app/models/cache'
 import { mkdir, rmdir } from '@app/util/fs'
-import PromiseQueue from '@app/util/PromiseQueue'
 import RNFS from 'react-native-fs'
 import { GetStore, SetStore } from './store'
-
-const queues: Record<CacheItemTypeKey, PromiseQueue> = {
-  coverArt: new PromiseQueue(5),
-  coverArtThumb: new PromiseQueue(50),
-  artistArt: new PromiseQueue(5),
-  artistArtThumb: new PromiseQueue(50),
-  song: new PromiseQueue(1),
-}
 
 export type CacheDownload = CacheFile & CacheRequest
 
@@ -72,7 +63,7 @@ export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
 
     const path = `${get().cacheDirs[activeServerId][key]}/${itemId}`
 
-    const promise = queues[key].enqueue(async () => {
+    const promise = (async () => {
       const urlResult = typeof url === 'string' ? url : url()
       const fromUrl = typeof urlResult === 'string' ? urlResult : await urlResult
 
@@ -107,7 +98,8 @@ export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
           delete state.cacheRequests[activeServerId][key][itemId]
         })
       }
-    })
+    })()
+
     set(state => {
       state.cacheFiles[activeServerId][key][itemId] = {
         path,
@@ -119,6 +111,7 @@ export const createCacheSlice = (set: SetStore, get: GetStore): CacheSlice => ({
         promise,
       }
     })
+
     return await promise
   },
 
