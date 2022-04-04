@@ -4,6 +4,7 @@ import dimensions from '@app/styles/dimensions'
 import React, { ForwardedRef, PropsWithChildren } from 'react'
 import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export type GradientScrollViewProps = PropsWithChildren<
   Animated.AnimateProps<ScrollViewProps> & {
@@ -13,8 +14,9 @@ export type GradientScrollViewProps = PropsWithChildren<
 
 const GradientScrollView = React.forwardRef<ScrollView, GradientScrollViewProps>((props, ref) => {
   const layout = useWindowDimensions()
+  const paddingTop = useSafeAreaInsets().top
 
-  const minHeight = layout.height - (dimensions.top() + dimensions.bottom())
+  const minHeight = layout.height - (dimensions.header + paddingTop + dimensions.bottom())
 
   return (
     <Animated.ScrollView
