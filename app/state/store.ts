@@ -4,7 +4,6 @@ import equal from 'fast-deep-equal'
 import create, { GetState, Mutate, SetState, State, StateCreator, StateSelector, StoreApi } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
 import { CacheSlice, createCacheSlice } from './cache'
-import { createLibrarySlice, LibrarySlice } from './library'
 import migrations from './migrations'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
 import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
@@ -14,7 +13,6 @@ import { WritableDraft } from 'immer/dist/internal'
 const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
-  LibrarySlice &
   TrackPlayerSlice &
   TrackPlayerMapSlice &
   CacheSlice & {
@@ -63,7 +61,6 @@ export const useStore = create<
     persist(
       immer((set, get) => ({
         ...createSettingsSlice(set, get),
-        ...createLibrarySlice(set, get),
         ...createTrackPlayerSlice(set, get),
         ...createTrackPlayerMapSlice(set, get),
         ...createCacheSlice(set, get),

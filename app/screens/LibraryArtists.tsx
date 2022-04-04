@@ -1,16 +1,12 @@
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList2 } from '@app/hooks/list'
 import { useQueryArtists } from '@app/hooks/query'
 import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { ArtistID3Element } from '@app/subsonic/elements'
-import { reduceById, mapId } from '@app/util/state'
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { useQuery, QueryFunction } from 'react-query'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
   <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
