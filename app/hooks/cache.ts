@@ -1,6 +1,7 @@
 import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
-import { Store, useStore, useStoreDeep } from '@app/state/store'
+import { Store, useStore } from '@app/state/store'
 import { useCallback, useEffect } from 'react'
+import { useQueryArtistInfo } from './query'
 
 const useFileRequest = (key: CacheItemTypeKey, id: string) => {
   const file = useStore(
@@ -57,14 +58,12 @@ export const useCoverArtFile = (coverArt = '-1', size: CacheImageSize = 'thumbna
 
 export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumbnail') => {
   const type: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
-  const fetchArtistInfo = useStore(store => store.fetchArtistInfo)
-  const artistInfo = useStoreDeep(store => store.library.artistInfo[artistId])
+  const { data: artistInfo } = useQueryArtistInfo(artistId)
   const { file, request } = useFileRequest(type, artistId)
   const cacheItem = useStore(store => store.cacheItem)
 
   useEffect(() => {
     if (!artistInfo) {
-      fetchArtistInfo(artistId)
       return
     }
 
@@ -75,7 +74,7 @@ export const useArtistArtFile = (artistId: string, size: CacheImageSize = 'thumb
     }
     // intentionally leaving file out so it doesn't re-render if the request fails
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId, cacheItem, fetchArtistInfo, type, artistInfo])
+  }, [artistId, cacheItem, type, artistInfo])
 
   return { file, request }
 }
