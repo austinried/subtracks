@@ -18,7 +18,7 @@ type BaseProps = {
   imageStyle?: ImageStyle
   resizeMode?: ImageResizeMode
   round?: boolean
-  size?: CacheImageSize
+  size: CacheImageSize
 }
 
 type ArtistCoverArtProps = BaseProps & {

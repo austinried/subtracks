@@ -117,9 +117,16 @@ const MenuHeader = React.memo<{
 }>(({ coverArt, artistId, title, subtitle }) => (
   <View style={styles.menuHeader}>
     {artistId ? (
-      <CoverArt type="artist" artistId={artistId} style={styles.coverArt} resizeMode={'cover'} round={true} />
+      <CoverArt
+        type="artist"
+        artistId={artistId}
+        style={styles.coverArt}
+        resizeMode="cover"
+        round={true}
+        size="thumbnail"
+      />
     ) : (
-      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode={'cover'} />
+      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode="cover" size="thumbnail" />
     )}
     <View style={styles.menuHeaderText}>
       <Text numberOfLines={1} style={styles.menuTitle}>

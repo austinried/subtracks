@@ -30,7 +30,13 @@ const AlbumItem = React.memo<{
       menuStyle={[styles.itemMenu, { width: size }]}
       triggerWrapperStyle={[styles.itemWrapper, { height }]}
       onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}>
-      <CoverArt type="cover" coverArt={album.coverArt} style={{ height: size, width: size }} resizeMode={'cover'} />
+      <CoverArt
+        type="cover"
+        coverArt={album.coverArt}
+        style={{ height: size, width: size }}
+        resizeMode="cover"
+        size="thumbnail"
+      />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {album.name}

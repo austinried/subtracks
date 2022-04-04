@@ -36,7 +36,8 @@ const AlbumItem = React.memo<{
         type="cover"
         coverArt={album.coverArt}
         style={{ height: styles.item.width, width: styles.item.width }}
-        resizeMode={'cover'}
+        resizeMode="cover"
+        size="thumbnail"
       />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
