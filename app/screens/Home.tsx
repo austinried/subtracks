@@ -12,7 +12,8 @@ import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import produce from 'immer'
 import React, { useCallback, useState } from 'react'
-import { RefreshControl, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import create, { StateSelector } from 'zustand'
 
 const titles: { [key in GetAlbumListType]?: string } = {
@@ -111,6 +112,7 @@ const Home = () => {
   const types = useStoreDeep(store => store.settings.screens.home.listTypes)
   const fetchAlbumList = useStore(store => store.fetchAlbumList)
   const setList = useHomeStore(store => store.setList)
+  const paddingTop = useSafeAreaInsets().top
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -135,13 +137,13 @@ const Home = () => {
   return (
     <GradientScrollView
       style={styles.scroll}
-      contentContainerStyle={styles.scrollContentContainer}
+      contentContainerStyle={{ paddingTop }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={refresh}
           colors={[colors.accent, colors.accentLow]}
-          progressViewOffset={StatusBar.currentHeight}
+          progressViewOffset={paddingTop}
         />
       }>
       <View style={styles.content}>
@@ -156,9 +158,6 @@ const Home = () => {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-  },
-  scrollContentContainer: {
-    paddingTop: StatusBar.currentHeight,
   },
   content: {
     paddingBottom: 20,

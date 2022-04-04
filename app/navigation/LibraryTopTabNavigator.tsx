@@ -6,28 +6,32 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import React from 'react'
-import { StatusBar, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const Tab = createMaterialTopTabNavigator()
 
-const LibraryTopTabNavigator = () => (
-  <Tab.Navigator
-    tabBarOptions={{
-      style: styles.tabBar,
-      labelStyle: styles.tablabelStyle,
-      indicatorStyle: styles.tabindicatorStyle,
-    }}
-    initialRouteName="albums">
-    <Tab.Screen name="albums" component={AlbumsTab} options={{ tabBarLabel: 'Albums' }} />
-    <Tab.Screen name="artists" component={ArtistsTab} options={{ tabBarLabel: 'Artists' }} />
-    <Tab.Screen name="playlists" component={PlaylistsTab} options={{ tabBarLabel: 'Playlists' }} />
-  </Tab.Navigator>
-)
+const LibraryTopTabNavigator = () => {
+  const marginTop = useSafeAreaInsets().top
+
+  return (
+    <Tab.Navigator
+      tabBarOptions={{
+        style: [styles.tabBar, { marginTop }],
+        labelStyle: styles.tablabelStyle,
+        indicatorStyle: styles.tabindicatorStyle,
+      }}
+      initialRouteName="albums">
+      <Tab.Screen name="albums" component={AlbumsTab} options={{ tabBarLabel: 'Albums' }} />
+      <Tab.Screen name="artists" component={ArtistsTab} options={{ tabBarLabel: 'Artists' }} />
+      <Tab.Screen name="playlists" component={PlaylistsTab} options={{ tabBarLabel: 'Playlists' }} />
+    </Tab.Navigator>
+  )
+}
 
 const styles = StyleSheet.create({
   tabBar: {
     height: dimensions.header,
-    marginTop: StatusBar.currentHeight,
     backgroundColor: colors.gradient.high,
     elevation: 0,
     justifyContent: 'center',

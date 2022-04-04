@@ -5,7 +5,7 @@ import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
 import { useActiveServerRefresh } from '@app/hooks/settings'
-import { Song, Album, Artist, SearchResults } from '@app/models/library'
+import { Album, Artist, SearchResults, Song } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -17,11 +17,11 @@ import {
   ActivityIndicator,
   InteractionManager,
   ScrollView,
-  StatusBar,
   StyleSheet,
   TextInput as ReactTextInput,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
   const setQueue = useStore(store => store.setQueue)
@@ -110,6 +110,7 @@ const Search = () => {
   const [text, setText] = useState('')
   const searchBarRef = useRef<ReactTextInput>(null)
   const scrollRef = useRef<ScrollView>(null)
+  const paddingTop = useSafeAreaInsets().top
 
   useFocusEffect(
     useCallback(() => {
@@ -153,7 +154,7 @@ const Search = () => {
   const resultsCount = results.albums.length + results.artists.length + results.songs.length
 
   return (
-    <GradientScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
+    <GradientScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={{ paddingTop }}>
       <View style={styles.content}>
         <View style={styles.inputBar}>
           <TextInput
@@ -179,9 +180,6 @@ const Search = () => {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-  },
-  scrollContentContainer: {
-    paddingTop: StatusBar.currentHeight,
   },
   content: {
     paddingHorizontal: 20,

@@ -12,8 +12,9 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
 import React, { useCallback, useState } from 'react'
-import { KeyboardTypeOptions, Linking, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native'
+import { KeyboardTypeOptions, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { version } from '../../package.json'
 
@@ -296,8 +297,10 @@ const SettingsContent = React.memo(() => {
 })
 
 const Settings = () => {
+  const paddingTop = useSafeAreaInsets().top
+
   return (
-    <GradientScrollView style={styles.scroll} contentContainerStyle={styles.scrollContentContainer}>
+    <GradientScrollView style={styles.scroll} contentContainerStyle={{ paddingTop }}>
       <SettingsContent />
     </GradientScrollView>
   )
@@ -306,9 +309,6 @@ const Settings = () => {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-  },
-  scrollContentContainer: {
-    paddingTop: StatusBar.currentHeight,
   },
   content: {
     paddingHorizontal: 20,
