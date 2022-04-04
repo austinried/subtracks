@@ -234,6 +234,11 @@ function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQu
     }
     return
   }
+
+  if (query.data.songs) {
+    query.data.songs = query.data.songs.map(mapSongCoverArt)
+    return
+  }
 }
 
 // song cover art comes back from the api as a unique id per song even if it all points to the same
@@ -247,9 +252,9 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
   const coverArts = useQueries(
     albumIds.map(id => ({
       queryKey: ['albumCoverArt', id],
-      queryFn: (): Promise<AlbumCoverArt> => {
-        console.log('fetch album coverArt')
-        return fetchAlbum(id).then(res => ({ albumId: res.album.id, coverArt: res.album.coverArt }))
+      queryFn: async (): Promise<AlbumCoverArt> => {
+        const res = await fetchAlbum(id)
+        return { albumId: res.album.id, coverArt: res.album.coverArt }
       },
       staleTime: Infinity,
       cacheTime: Infinity,
