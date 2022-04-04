@@ -1,9 +1,17 @@
 import { Album, AlbumCoverArt, Artist, Playlist, Song } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
-import { GetAlbumList2TypeBase, StarParams } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import uniq from 'lodash.uniq'
-import { useInfiniteQuery, useMutation, useQueries, useQuery, UseQueryResult } from 'react-query'
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+  useMutation,
+  useQueries,
+  useQuery,
+  UseQueryResult,
+} from 'react-query'
 import {
   useFetchAlbum,
   useFetchAlbumList,
@@ -13,6 +21,7 @@ import {
   useFetchArtistTopSongs,
   useFetchPlaylist,
   useFetchPlaylists,
+  useFetchSearchResults,
   useFetchSong,
   useFetchStar,
   useFetchUnstar,
@@ -99,6 +108,38 @@ export const useQueryAlbumList = (size: number, type: GetAlbumList2TypeBase) => 
   )
 }
 
+export const useQuerySearchResults = (params: Search3Params) => {
+  const fetchSearchResults = useFetchSearchResults()
+
+  const query = useInfiniteQuery(
+    ['search', params.query, params.artistCount, params.albumCount, params.songCount],
+    async context => {
+      return await fetchSearchResults({
+        ...params,
+        artistOffset: context.pageParam?.artistOffset || 0,
+        albumOffset: context.pageParam?.albumOffset || 0,
+        songOffset: context.pageParam?.songOffset || 0,
+      })
+    },
+    {
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.albums.length + lastPage.artists.length + lastPage.songs.length === 0) {
+          return
+        }
+        return {
+          artistOffset: allPages.reduce((acc, val) => (acc += val.artists.length), 0),
+          albumOffset: allPages.reduce((acc, val) => (acc += val.albums.length), 0),
+          songOffset: allPages.reduce((acc, val) => (acc += val.songs.length), 0),
+        }
+      },
+      cacheTime: 1000 * 60,
+      enabled: !!params.query && params.query.length > 1,
+    },
+  )
+
+  return useFixCoverArt(query)
+}
+
 export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
   const fetchStar = useFetchStar()
   const fetchUnstar = useFetchUnstar()
@@ -151,12 +192,56 @@ export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
   return { query, toggle }
 }
 
+type WithSongs = Song[] | { songs?: Song[] }
+type InfiniteWithSongs = { songs: Song[] }
+type AnyDataWithSongs = WithSongs | InfiniteData<InfiniteWithSongs>
+type AnyQueryWithSongs = UseQueryResult<WithSongs> | UseInfiniteQueryResult<{ songs: Song[] }>
+
+function getSongs<T extends AnyDataWithSongs>(data: T | undefined): Song[] {
+  if (!data) {
+    return []
+  }
+
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if ('pages' in data) {
+    return data.pages.flatMap(p => p.songs)
+  }
+
+  return data.songs || []
+}
+
+function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQueryResult<AlbumCoverArt>[]): void {
+  if (!query.data) {
+    return
+  }
+
+  const mapSongCoverArt = (song: Song) => ({
+    ...song,
+    coverArt: coverArts.find(c => c.data?.albumId === song.albumId)?.data?.coverArt,
+  })
+
+  if (Array.isArray(query.data)) {
+    query.data = query.data.map(mapSongCoverArt)
+    return
+  }
+
+  if ('pages' in query.data) {
+    for (const p of query.data.pages) {
+      p.songs = p.songs.map(mapSongCoverArt)
+    }
+    return
+  }
+}
+
 // song cover art comes back from the api as a unique id per song even if it all points to the same
 // album art, which prevents us from caching it once, so we need to use the album's cover art
-const useFixCoverArt = <T extends Song[] | { songs?: Song[] }>(query: UseQueryResult<T>) => {
+const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
   const fetchAlbum = useFetchAlbum()
 
-  const songs = Array.isArray(query.data) ? (query.data as Song[]) : query.data?.songs
+  const songs = getSongs(query.data)
   const albumIds = uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
 
   const coverArts = useQueries(
@@ -171,24 +256,8 @@ const useFixCoverArt = <T extends Song[] | { songs?: Song[] }>(query: UseQueryRe
     })),
   )
 
-  const mapSongCoverArt = (song: Song) => ({
-    ...song,
-    coverArt: coverArts.find(c => c.data?.albumId === song.albumId)?.data?.coverArt,
-  })
-
-  if (Array.isArray(query.data) && coverArts.some(c => c.data)) {
-    query = {
-      ...query,
-      data: query.data.map(mapSongCoverArt),
-    } as UseQueryResult<T>
-  } else if (query.data && 'songs' in query.data && query.data.songs && coverArts.some(c => c.data)) {
-    query = {
-      ...query,
-      data: {
-        ...query.data,
-        songs: query.data.songs.map(mapSongCoverArt),
-      },
-    } as UseQueryResult<T>
+  if (coverArts.some(c => c.data)) {
+    setSongCoverArt(query, coverArts)
   }
 
   return query

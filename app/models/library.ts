@@ -47,9 +47,9 @@ export interface Song {
 }
 
 export interface SearchResults {
-  artists: string[]
-  albums: string[]
-  songs: string[]
+  artists: Artist[]
+  albums: Album[]
+  songs: Song[]
 }
 
 export type StarrableItemType = 'album' | 'song' | 'artist'
