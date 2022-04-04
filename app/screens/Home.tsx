@@ -3,7 +3,7 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useFetchAlbumList } from '@app/hooks/fetch'
+import { useQueryHomeLists } from '@app/hooks/query'
 import { Album } from '@app/models/library'
 import { useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -14,7 +14,6 @@ import equal from 'fast-deep-equal/es6/react'
 import React from 'react'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useQueries } from 'react-query'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recently Played',
@@ -82,21 +81,8 @@ const Category = React.memo<{
 
 const Home = () => {
   const types = useStoreDeep(store => store.settings.screens.home.listTypes)
-  const fetchAlbumList = useFetchAlbumList()
+  const listQueries = useQueryHomeLists(types as GetAlbumList2TypeBase[], 20)
   const paddingTop = useSafeAreaInsets().top
-
-  const size = 20
-  const listQueries = useQueries(
-    types.map(type => {
-      return {
-        queryKey: ['albumList', type as GetAlbumList2TypeBase, size],
-        queryFn: async () => {
-          const albums = await fetchAlbumList(size, 0, type as GetAlbumList2TypeBase)
-          return { type, albums }
-        },
-      }
-    }),
-  )
 
   return (
     <GradientScrollView

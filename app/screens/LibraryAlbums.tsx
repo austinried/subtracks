@@ -7,7 +7,7 @@ import { Album } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumList2Type } from '@app/subsonic/params'
+import { GetAlbumList2Type, GetAlbumList2TypeBase } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import React from 'react'
@@ -63,7 +63,7 @@ const AlbumsList = () => {
   const filter = useStoreDeep(store => store.settings.screens.library.albumsFilter)
   const setFilter = useStore(store => store.setLibraryAlbumFilter)
 
-  const { isLoading, data, fetchNextPage, refetch } = useQueryAlbumList(300, filter.type as any)
+  const { isLoading, data, fetchNextPage, refetch } = useQueryAlbumList(filter.type as GetAlbumList2TypeBase, 300)
 
   const layout = useWindowDimensions()
 

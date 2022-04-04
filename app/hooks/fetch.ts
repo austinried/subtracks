@@ -4,6 +4,7 @@ import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import { mapCollectionById } from '@app/util/state'
+import qk from './queryKeys'
 
 export const useClient = () => {
   const client = useStore(store => store.client)
@@ -18,11 +19,11 @@ export const useClient = () => {
 }
 
 function cacheStarredData<T extends { id: string; starred?: undefined | any }>(item: T) {
-  queryClient.setQueryData<boolean>(['starredItems', item.id], !!item.starred)
+  queryClient.setQueryData<boolean>(qk.starredItems(item.id), !!item.starred)
 }
 
 function cacheAlbumCoverArtData<T extends { id: string; coverArt?: string }>(item: T) {
-  queryClient.setQueryData<AlbumCoverArt>(['albumCoverArt', item.id], { albumId: item.id, coverArt: item.coverArt })
+  queryClient.setQueryData<AlbumCoverArt>(qk.albumCoverArt(item.id), { albumId: item.id, coverArt: item.coverArt })
 }
 
 export const useFetchArtists = () => {

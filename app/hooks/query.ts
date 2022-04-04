@@ -1,4 +1,4 @@
-import { Album, AlbumCoverArt, Artist, Playlist, Song } from '@app/models/library'
+import { Album, AlbumCoverArt, Artist, Playlist, Song, StarrableItemType } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
@@ -26,15 +26,16 @@ import {
   useFetchStar,
   useFetchUnstar,
 } from './fetch'
+import qk from './queryKeys'
 
-export const useQueryArtists = () => useQuery('artists', useFetchArtists())
+export const useQueryArtists = () => useQuery(qk.artists, useFetchArtists())
 
 export const useQueryArtist = (id: string) => {
   const fetchArtist = useFetchArtist()
 
-  return useQuery(['artist', id], () => fetchArtist(id), {
+  return useQuery(qk.artist(id), () => fetchArtist(id), {
     initialData: () => {
-      const artist = queryClient.getQueryData<CollectionById<Artist>>('artists')?.byId[id]
+      const artist = queryClient.getQueryData<CollectionById<Artist>>(qk.artists)?.byId[id]
       if (artist) {
         return { artist, albums: [] }
       }
@@ -44,30 +45,30 @@ export const useQueryArtist = (id: string) => {
 
 export const useQueryArtistInfo = (id: string) => {
   const fetchArtistInfo = useFetchArtistInfo()
-  return useQuery(['artistInfo', id], () => fetchArtistInfo(id))
+  return useQuery(qk.artistInfo(id), () => fetchArtistInfo(id))
 }
 
 export const useQueryArtistTopSongs = (artistName?: string) => {
   const fetchArtistTopSongs = useFetchArtistTopSongs()
-  const query = useQuery(['artistTopSongs', artistName], () => fetchArtistTopSongs(artistName as string), {
+  const query = useQuery(qk.artistTopSongs(artistName as string), () => fetchArtistTopSongs(artistName as string), {
     enabled: !!artistName,
   })
 
   return useFixCoverArt(query)
 }
 
-export const useQueryPlaylists = () => useQuery('playlists', useFetchPlaylists())
+export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())
 
 export const useQueryPlaylist = (id: string, initialPlaylist?: Playlist) => {
   const fetchPlaylist = useFetchPlaylist()
 
-  const query = useQuery(['playlist', id], () => fetchPlaylist(id), {
+  const query = useQuery(qk.playlist(id), () => fetchPlaylist(id), {
     initialData: () => {
       if (initialPlaylist) {
         return { playlist: initialPlaylist }
       }
 
-      const playlist = queryClient.getQueryData<CollectionById<Playlist>>('playlists')?.byId[id]
+      const playlist = queryClient.getQueryData<CollectionById<Playlist>>(qk.playlists)?.byId[id]
       if (playlist) {
         return { playlist, songs: [] }
       }
@@ -80,7 +81,7 @@ export const useQueryPlaylist = (id: string, initialPlaylist?: Playlist) => {
 export const useQueryAlbum = (id: string, initialAlbum?: Album) => {
   const fetchAlbum = useFetchAlbum()
 
-  const query = useQuery(['album', id], () => fetchAlbum(id), {
+  const query = useQuery(qk.album(id), () => fetchAlbum(id), {
     initialData: (): { album: Album; songs?: Song[] } | undefined =>
       initialAlbum ? { album: initialAlbum } : undefined,
   })
@@ -88,11 +89,11 @@ export const useQueryAlbum = (id: string, initialAlbum?: Album) => {
   return useFixCoverArt(query)
 }
 
-export const useQueryAlbumList = (size: number, type: GetAlbumList2TypeBase) => {
+export const useQueryAlbumList = (type: GetAlbumList2TypeBase, size: number) => {
   const fetchAlbumList = useFetchAlbumList()
 
   return useInfiniteQuery(
-    ['albumList', type, size],
+    qk.albumList(type, size),
     async context => {
       return await fetchAlbumList(size, context.pageParam || 0, type)
     },
@@ -112,7 +113,7 @@ export const useQuerySearchResults = (params: Search3Params) => {
   const fetchSearchResults = useFetchSearchResults()
 
   const query = useInfiniteQuery(
-    ['search', params.query, params.artistCount, params.albumCount, params.songCount],
+    qk.search(params.query, params.artistCount, params.albumCount, params.songCount),
     async context => {
       return await fetchSearchResults({
         ...params,
@@ -140,7 +141,25 @@ export const useQuerySearchResults = (params: Search3Params) => {
   return useFixCoverArt(query)
 }
 
-export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
+export const useQueryHomeLists = (types: GetAlbumList2TypeBase[], size: number) => {
+  const fetchAlbumList = useFetchAlbumList()
+
+  const listQueries = useQueries(
+    types.map(type => {
+      return {
+        queryKey: qk.albumList(type, size),
+        queryFn: async () => {
+          const albums = await fetchAlbumList(size, 0, type as GetAlbumList2TypeBase)
+          return { type, albums }
+        },
+      }
+    }),
+  )
+
+  return listQueries
+}
+
+export const useStar = (id: string, type: StarrableItemType) => {
   const fetchStar = useFetchStar()
   const fetchUnstar = useFetchUnstar()
   const fetchSong = useFetchSong()
@@ -148,7 +167,7 @@ export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
   const fetchArtist = useFetchArtist()
 
   const query = useQuery(
-    ['starredItems', id],
+    qk.starredItems(id),
     async () => {
       switch (type) {
         case 'album':
@@ -179,11 +198,11 @@ export const useStar = (id: string, type: 'song' | 'album' | 'artist') => {
     },
     {
       onMutate: () => {
-        queryClient.setQueryData<boolean>(['starredItems', id], !query.data)
+        queryClient.setQueryData<boolean>(qk.starredItems(id), !query.data)
       },
       onSuccess: () => {
         if (type === 'album') {
-          queryClient.invalidateQueries(['albumList', 'starred'])
+          queryClient.invalidateQueries(qk.albumList('starred'))
         }
       },
     },
@@ -251,7 +270,7 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
 
   const coverArts = useQueries(
     albumIds.map(id => ({
-      queryKey: ['albumCoverArt', id],
+      queryKey: qk.albumCoverArt(id),
       queryFn: async (): Promise<AlbumCoverArt> => {
         const res = await fetchAlbum(id)
         return { albumId: res.album.id, coverArt: res.album.coverArt }
