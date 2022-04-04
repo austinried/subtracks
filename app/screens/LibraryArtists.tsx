@@ -23,14 +23,15 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const { isLoading, data, refetch } = useQueryArtists()
-
   const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
   const setFilter = useStore(store => store.setLibraryArtistFiler)
+
+  const { isLoading, data, refetch } = useQueryArtists()
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {
     if (!data) {
+      setSortedList([])
       return
     }
 

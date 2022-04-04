@@ -115,8 +115,8 @@ const Home = () => {
       }>
       <View style={styles.content}>
         {types.map(type => {
-          const q = listQueries.find(q => q.data?.type === type)
-          return <Category key={type} type={type} albums={q?.data?.albums || []} />
+          const query = listQueries.find(list => list.data?.type === type)
+          return <Category key={type} type={type} albums={query?.data?.albums || []} />
         })}
       </View>
     </GradientScrollView>
