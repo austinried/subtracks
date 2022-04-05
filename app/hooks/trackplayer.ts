@@ -92,14 +92,14 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
-export const useSetQueue = (songs: Song[]) => {
+export const useSetQueue = (songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
   const serverId = useStore(store => store.settings.activeServerId)
   const client = useStore(store => store.client)
   const buildStreamUri = useStore(store => store.buildStreamUri)
   const fetchFile = useFetchFile()
 
-  const songCoverArt = uniq(songs.map(s => s.coverArt)).filter((c): c is string => c !== undefined)
+  const songCoverArt = uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
   const coverArtPaths = useQueries(
     songCoverArt.map(coverArt => ({
       queryKey: qk.coverArt(coverArt, 'thumbnail'),
@@ -111,7 +111,7 @@ export const useSetQueue = (songs: Song[]) => {
         const url = client.getCoverArtUri({ id: coverArt, size: '256' })
         return await fetchFile(serverId, 'coverArtThumb', coverArt, url)
       },
-      enabled: !!serverId && !!client,
+      enabled: !!serverId && !!client && !!songs,
       staleTime: Infinity,
       cacheTime: Infinity,
       notifyOnChangeProps: ['data', 'isFetched'] as any,
@@ -156,7 +156,7 @@ export const useSetQueue = (songs: Song[]) => {
     playTrack?: number,
     shuffle?: boolean,
   ) => {
-    const tracks = songs.map(mapSongToTrackExt)
+    const tracks = (songs || []).map(mapSongToTrackExt)
     return await _setQueue(tracks, name, contextType, contextId, playTrack, shuffle)
   }
 

@@ -44,6 +44,9 @@ export interface Song {
   duration?: number
   starred?: number
   coverArt?: string
+  playCount?: number
+  userRating?: number
+  averageRating?: number
 }
 
 export interface SearchResults {

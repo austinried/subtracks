@@ -62,6 +62,9 @@ export function mapSong(song: ChildElement): Song {
     discNumber: song.discNumber,
     duration: song.duration,
     starred: song.starred?.getTime(),
+    playCount: song.playCount,
+    averageRating: song.averageRating,
+    userRating: song.userRating,
   }
 }
 

@@ -13,6 +13,7 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
+import equal from 'fast-deep-equal/es6/react'
 import React from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
@@ -39,7 +40,7 @@ const AlbumItem = React.memo<{
       <Text style={styles.albumYear}> {album.year ? album.year : ''}</Text>
     </AlbumContextPressable>
   )
-})
+}, equal)
 
 const TopSongs = React.memo<{
   songs: Song[]
@@ -65,7 +66,7 @@ const TopSongs = React.memo<{
       ))}
     </>
   )
-})
+}, equal)
 
 const ArtistAlbums = React.memo<{
   albums: Album[]
@@ -88,7 +89,7 @@ const ArtistAlbums = React.memo<{
       </View>
     </>
   )
-})
+}, equal)
 
 const ArtistViewFallback = React.memo(() => (
   <GradientBackground style={styles.fallback}>
@@ -98,8 +99,7 @@ const ArtistViewFallback = React.memo(() => (
 
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
   const { data: artistData } = useQueryArtist(id)
-  // const { data: artistInfo } = useQueryArtistInfo(id)
-  const { data: topSongs } = useQueryArtistTopSongs(artistData?.artist?.name)
+  const { data: topSongs, isError } = useQueryArtistTopSongs(artistData?.artist?.name)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -136,8 +136,8 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
           <Text style={styles.title}>{artist.name}</Text>
         </View>
         <View style={styles.contentContainer}>
-          {topSongs && artist ? (
-            topSongs.length > 0 ? (
+          {(topSongs || isError) && artist ? (
+            topSongs && topSongs.length > 0 ? (
               <>
                 <TopSongs songs={topSongs} name={artist.name} artistId={artist.id} />
                 <ArtistAlbums albums={albums} />

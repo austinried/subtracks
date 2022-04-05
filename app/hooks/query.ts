@@ -5,6 +5,7 @@ import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import uniq from 'lodash.uniq'
+import sortBy from 'lodash.sortby'
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -53,11 +54,25 @@ export const useQueryArtistInfo = (id: string) => {
 
 export const useQueryArtistTopSongs = (artistName?: string) => {
   const fetchArtistTopSongs = useFetchArtistTopSongs()
-  const query = useQuery(qk.artistTopSongs(artistName as string), () => fetchArtistTopSongs(artistName as string), {
+  const query = useQuery(qk.artistTopSongs(artistName || ''), () => fetchArtistTopSongs(artistName as string), {
     enabled: !!artistName,
   })
 
-  return useFixCoverArt(query)
+  const querySuccess = query.isFetched && query.isSuccess && query.data && query.data.length > 0
+  console.log(querySuccess)
+
+  const fetchSearchResults = useFetchSearchResults()
+  const backupQuery = useQuery(
+    qk.search(artistName || '', 0, 0, 50),
+    () => fetchSearchResults({ query: artistName as string, songCount: 50 }),
+    {
+      enabled: !!artistName && !query.isFetching && !querySuccess,
+      // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
+      select: data => sortBy(data.songs, [s => s.userRating, s => s.averageRating, s => s.playCount]),
+    },
+  )
+
+  return useFixCoverArt(querySuccess ? query : backupQuery)
 }
 
 export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())
