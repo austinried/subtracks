@@ -37,7 +37,7 @@ export const useQueryArtist = (id: string) => {
   const fetchArtist = useFetchArtist()
 
   return useQuery(qk.artist(id), () => fetchArtist(id), {
-    initialData: () => {
+    placeholderData: () => {
       const artist = queryClient.getQueryData<CollectionById<Artist>>(qk.artists)?.byId[id]
       if (artist) {
         return { artist, albums: [] }
@@ -62,13 +62,13 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
 
 export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())
 
-export const useQueryPlaylist = (id: string, initialPlaylist?: Playlist) => {
+export const useQueryPlaylist = (id: string, placeholderPlaylist?: Playlist) => {
   const fetchPlaylist = useFetchPlaylist()
 
   const query = useQuery(qk.playlist(id), () => fetchPlaylist(id), {
-    initialData: () => {
-      if (initialPlaylist) {
-        return { playlist: initialPlaylist }
+    placeholderData: () => {
+      if (placeholderPlaylist) {
+        return { playlist: placeholderPlaylist }
       }
 
       const playlist = queryClient.getQueryData<CollectionById<Playlist>>(qk.playlists)?.byId[id]
@@ -81,12 +81,12 @@ export const useQueryPlaylist = (id: string, initialPlaylist?: Playlist) => {
   return useFixCoverArt(query)
 }
 
-export const useQueryAlbum = (id: string, initialAlbum?: Album) => {
+export const useQueryAlbum = (id: string, placeholderAlbum?: Album) => {
   const fetchAlbum = useFetchAlbum()
 
   const query = useQuery(qk.album(id), () => fetchAlbum(id), {
-    initialData: (): { album: Album; songs?: Song[] } | undefined =>
-      initialAlbum ? { album: initialAlbum } : undefined,
+    placeholderData: (): { album: Album; songs?: Song[] } | undefined =>
+      placeholderAlbum ? { album: placeholderAlbum } : undefined,
   })
 
   return useFixCoverArt(query)
