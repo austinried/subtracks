@@ -5,12 +5,12 @@ import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
-import { useCoverArtFile } from '@app/hooks/cache'
-import { useQueryAlbum, useQueryPlaylist } from '@app/hooks/query'
+import { useQueryAlbum, useQueryCoverArtPath, useQueryPlaylist } from '@app/hooks/query'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Playlist, Song } from '@app/models/library'
-import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
+import equal from 'fast-deep-equal/es6/react'
 import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
@@ -50,13 +50,8 @@ const SongListDetails = React.memo<{
   songs?: Song[]
   subtitle?: string
 }>(({ title, songList, songs, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
+  const { data: coverArtPath } = useQueryCoverArtPath(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
-  const setQueue = useStore(store => store.setQueue)
-
-  if (!songList) {
-    return <SongListDetailsFallback />
-  }
 
   const _songs = [...(songs || [])]
   let typeName = ''
@@ -76,6 +71,12 @@ const SongListDetails = React.memo<{
     typeName = 'Playlist'
   }
 
+  const { setQueue, isReady } = useSetQueue(_songs)
+
+  if (!songList) {
+    return <SongListDetailsFallback />
+  }
+
   return (
     <View style={styles.container}>
       <HeaderBar
@@ -89,13 +90,13 @@ const SongListDetails = React.memo<{
           contextId: songList.id,
           queueId: i,
           subtitle: s.artist,
-          onPress: () => setQueue(_songs, songList.name, type, songList.id, i),
+          onPress: () => setQueue(songList.name, type, songList.id, i),
           showArt: songList.itemType === 'playlist',
         }))}
         renderItem={SongRenderItem}
         keyExtractor={(item, i) => i.toString()}
         backgroundProps={{
-          imagePath: coverArtFile?.file?.path,
+          imagePath: coverArtPath,
           style: styles.container,
           onGetColor: setHeaderColor,
         }}
@@ -127,7 +128,7 @@ const SongListDetails = React.memo<{
       />
     </View>
   )
-})
+}, equal)
 
 const PlaylistView = React.memo<{
   id: string
@@ -145,7 +146,7 @@ const PlaylistView = React.memo<{
       type="playlist"
     />
   )
-})
+}, equal)
 
 const AlbumView = React.memo<{
   id: string
@@ -163,7 +164,7 @@ const AlbumView = React.memo<{
       type="album"
     />
   )
-})
+}, equal)
 
 const SongListView = React.memo<{
   id: string
@@ -177,7 +178,7 @@ const SongListView = React.memo<{
   ) : (
     <PlaylistView id={id} title={title} playlist={playlist} />
   )
-})
+}, equal)
 
 const styles = StyleSheet.create({
   container: {

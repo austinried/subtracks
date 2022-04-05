@@ -207,23 +207,15 @@ const SettingsContent = React.memo(() => {
   const maxBuffer = useStore(store => store.settings.maxBuffer)
   const setMaxBuffer = useStore(store => store.setMaxBuffer)
 
-  const clearImageCache = useStore(store => store.clearImageCache)
   const [clearing, setClearing] = useState(false)
 
   const navigation = useNavigation()
 
   const clear = useCallback(() => {
     setClearing(true)
-
-    const waitForClear = async () => {
-      try {
-        await clearImageCache()
-      } finally {
-        setClearing(false)
-      }
-    }
-    waitForClear()
-  }, [clearImageCache])
+    // todo: reimplement this
+    setClearing(false)
+  }, [])
 
   const setMinBufferText = useCallback((text: string) => setMinBuffer(parseFloat(text)), [setMinBuffer])
   const setMaxBufferText = useCallback((text: string) => setMaxBuffer(parseFloat(text)), [setMaxBuffer])

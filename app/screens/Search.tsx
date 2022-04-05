@@ -6,8 +6,8 @@ import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
 import { useQuerySearchResults } from '@app/hooks/query'
 import { useActiveServerRefresh } from '@app/hooks/settings'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, SearchResults, Song } from '@app/models/library'
-import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
@@ -25,7 +25,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const setQueue = useStore(store => store.setQueue)
+  const { setQueue, isReady } = useSetQueue([item])
 
   return (
     <ListItem
@@ -34,7 +34,7 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
       queueId={0}
       showArt={true}
       showStar={false}
-      onPress={() => setQueue([item], item.title, 'song', item.id, 0)}
+      onPress={() => setQueue(item.title, 'song', item.id, 0)}
     />
   )
 }, equal)

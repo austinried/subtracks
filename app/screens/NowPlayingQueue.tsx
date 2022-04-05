@@ -3,6 +3,7 @@ import ListItem from '@app/components/ListItem'
 import NowPlayingBar from '@app/components/NowPlayingBar'
 import { useSkipTo } from '@app/hooks/trackplayer'
 import { Song } from '@app/models/library'
+import { mapTrackExtToSong } from '@app/models/map'
 import { useStore, useStoreDeep } from '@app/state/store'
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -26,7 +27,6 @@ const SongRenderItem: React.FC<{
 
 const NowPlayingQueue = React.memo<{}>(() => {
   const queue = useStoreDeep(store => store.queue)
-  const mapTrackExtToSong = useStore(store => store.mapTrackExtToSong)
   const skipTo = useSkipTo()
 
   return (

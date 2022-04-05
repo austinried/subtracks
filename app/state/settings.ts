@@ -26,8 +26,8 @@ export type SettingsSlice = {
   client?: SubsonicApiClient
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
-  addServer: (server: Server) => Promise<void>
-  removeServer: (id: string) => Promise<void>
+  addServer: (server: Server) => void
+  removeServer: (id: string) => void
   updateServer: (server: Server) => void
 
   setScrobble: (scrobble: boolean) => void
@@ -84,17 +84,13 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
       return
     }
 
-    get().prepareCache(newActiveServer.id)
-
     set(state => {
       state.settings.activeServerId = newActiveServer.id
       state.client = new SubsonicApiClient(newActiveServer)
     })
   },
 
-  addServer: async server => {
-    await get().createCache(server.id)
-
+  addServer: server => {
     set(state => {
       state.settings.servers[server.id] = server
     })
@@ -104,9 +100,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
   },
 
-  removeServer: async id => {
-    await get().removeCache(id)
-
+  removeServer: id => {
     set(state => {
       delete state.settings.servers[id]
     })

@@ -1,7 +1,7 @@
 import Button from '@app/components/Button'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Song } from '@app/models/library'
 import { QueueContextType } from '@app/models/trackplayer'
-import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
@@ -17,7 +17,7 @@ const ListPlayerControls = React.memo<{
   style?: StyleProp<ViewStyle>
 }>(({ songs, typeName, queueName, queueContextType, queueContextId, style }) => {
   const [downloaded, setDownloaded] = useState(false)
-  const setQueue = useStore(store => store.setQueue)
+  const { setQueue, isReady } = useSetQueue(songs)
 
   return (
     <View style={[styles.controls, style]}>
@@ -36,14 +36,14 @@ const ListPlayerControls = React.memo<{
       <View style={styles.controlsCenter}>
         <Button
           title={`Play ${typeName}`}
-          disabled={songs.length === 0}
-          onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, false)}
+          disabled={!isReady || songs.length === 0}
+          onPress={() => setQueue(queueName, queueContextType, queueContextId, undefined, false)}
         />
       </View>
       <View style={styles.controlsSide}>
         <Button
-          disabled={songs.length === 0}
-          onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, true)}>
+          disabled={!isReady || songs.length === 0}
+          onPress={() => setQueue(queueName, queueContextType, queueContextId, undefined, true)}>
           <Icon name="shuffle" size={26} color="white" />
         </Button>
       </View>

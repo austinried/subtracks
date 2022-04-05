@@ -1,3 +1,4 @@
+import { CacheImageSize } from '@app/models/cache'
 import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 
 const qk = {
@@ -28,6 +29,9 @@ const qk = {
     albumCount,
     songCount,
   ],
+
+  coverArt: (coverArt: string, size: CacheImageSize) => ['coverArt', coverArt, size],
+  artistArt: (artistId: string, size: CacheImageSize) => ['artistArt', artistId, size],
 }
 
 export default qk

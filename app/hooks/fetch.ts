@@ -5,6 +5,9 @@ import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import { mapCollectionById } from '@app/util/state'
 import qk from './queryKeys'
+import RNFS from 'react-native-fs'
+import { CacheItemTypeKey } from '@app/models/cache'
+import path from 'path'
 
 export const useClient = () => {
   const client = useStore(store => store.client)
@@ -180,5 +183,45 @@ export const useFetchUnstar = () => {
   return async (params: StarParams) => {
     await client().unstar(params)
     return
+  }
+}
+
+export const useFetchFile = () => {
+  return async (
+    serverId: string,
+    key: CacheItemTypeKey,
+    id: string,
+    fromUrl: string,
+    progress?: (res: RNFS.DownloadProgressCallbackResult) => void,
+  ) => {
+    const fileDir = path.join(RNFS.DocumentDirectoryPath, 'servers', serverId, key)
+    const filePath = path.join(fileDir, id)
+
+    if (await RNFS.exists(filePath)) {
+      return filePath
+    }
+
+    let stat: RNFS.StatResult | undefined
+    try {
+      stat = await RNFS.stat(fileDir)
+    } catch {}
+
+    if (!stat?.isDirectory()) {
+      await RNFS.mkdir(fileDir)
+    }
+
+    const req = RNFS.downloadFile({
+      fromUrl,
+      toFile: filePath,
+      progressInterval: progress ? 100 : undefined,
+      progress,
+      // progress: res => {
+      //   let amount = res.bytesWritten / (res.contentLength || 1)
+      //   amount = Math.max(Math.min(1, amount), 0)
+      // },
+    })
+
+    await req.promise
+    return filePath
   }
 }

@@ -1,8 +1,8 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
 import { useQuerySearchResults } from '@app/hooks/query'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, Song } from '@app/models/library'
-import { useStore } from '@app/state/store'
 import { Search3Params } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect } from 'react'
@@ -10,13 +10,8 @@ import { StyleSheet } from 'react-native'
 
 type SearchListItemType = Album | Song | Artist
 
-const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
-  const setQueue = useStore(store => store.setQueue)
-
-  let onPress
-  if (item.itemType === 'song') {
-    onPress = () => setQueue([item], item.title, 'song', item.id, 0)
-  }
+const SongResultsListItem: React.FC<{ item: Song }> = ({ item }) => {
+  const { setQueue, isReady } = useSetQueue([item])
 
   return (
     <ListItem
@@ -26,10 +21,32 @@ const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
       showArt={true}
       showStar={false}
       listStyle="small"
-      onPress={onPress}
+      onPress={() => setQueue(item.title, 'song', item.id, 0)}
       style={styles.listItem}
     />
   )
+}
+
+const OtherResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
+  return (
+    <ListItem
+      item={item}
+      contextId={item.id}
+      queueId={0}
+      showArt={true}
+      showStar={false}
+      listStyle="small"
+      style={styles.listItem}
+    />
+  )
+}
+
+const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
+  if (item.itemType === 'song') {
+    return <SongResultsListItem item={item} />
+  } else {
+    return <OtherResultsListItem item={item} />
+  }
 }
 
 const SearchResultsRenderItem: React.FC<{ item: SearchListItemType }> = ({ item }) => <ResultsListItem item={item} />

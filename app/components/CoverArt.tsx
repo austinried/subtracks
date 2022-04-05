@@ -1,5 +1,5 @@
-import { useArtistArtFile, useCoverArtFile } from '@app/hooks/cache'
-import { CacheFile, CacheImageSize, CacheRequest } from '@app/models/cache'
+import { useQueryArtistArtPath, useQueryCoverArtPath } from '@app/hooks/query'
+import { CacheImageSize } from '@app/models/cache'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import {
@@ -31,13 +31,13 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequest } } & BaseProps>(
-  ({ cache, style, imageStyle, resizeMode }) => {
+const ImageSource = React.memo<{ data?: string; isLoading: boolean } & BaseProps>(
+  ({ style, imageStyle, resizeMode, data, isLoading }) => {
     const [error, setError] = useState(false)
 
     let source: ImageSourcePropType
-    if (!error && cache?.file && !cache?.request?.promise) {
-      source = { uri: `file://${cache.file.path}`, cache: 'reload' }
+    if (!error && data) {
+      source = { uri: `file://${data}` }
     } else {
       source = require('@res/fallback.png')
     }
@@ -51,27 +51,22 @@ const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequ
           style={[{ height: style?.height, width: style?.width }, imageStyle]}
           onError={() => setError(true)}
         />
-        <ActivityIndicator
-          animating={!!cache?.request?.promise}
-          size="large"
-          color={colors.accent}
-          style={styles.indicator}
-        />
+        <ActivityIndicator animating={isLoading} size="large" color={colors.accent} style={styles.indicator} />
       </>
     )
   },
 )
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
-  const cache = useArtistArtFile(props.artistId, props.size)
+  const { data, isLoading } = useQueryArtistArtPath(props.artistId, props.size)
 
-  return <ImageSource cache={cache} {...props} imageStyle={{ ...styles.artistImage, ...props.imageStyle }} />
+  return <ImageSource data={data} isLoading={isLoading} {...props} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
-  const cache = useCoverArtFile(props.coverArt, props.size)
+  const { data, isLoading } = useQueryCoverArtPath(props.coverArt, props.size)
 
-  return <ImageSource cache={cache} {...props} />
+  return <ImageSource data={data} isLoading={isLoading} {...props} />
 })
 
 const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {

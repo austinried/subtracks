@@ -1,5 +1,4 @@
 import { NoClientError } from '@app/models/error'
-import { Song } from '@app/models/library'
 import { Progress, QueueContextType, TrackExt } from '@app/models/trackplayer'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
@@ -34,7 +33,7 @@ export type TrackPlayerSlice = {
 
   queue: TrackExt[]
   setQueue: (
-    songs: Song[],
+    songs: TrackExt[],
     name: string,
     contextType: QueueContextType,
     contextId: string,
@@ -175,18 +174,16 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
     }),
 
   queue: [],
-  setQueue: async (songs, name, contextType, contextId, playTrack, shuffle) => {
+  setQueue: async (queue, name, contextType, contextId, playTrack, shuffle) => {
     return trackPlayerCommands.enqueue(async () => {
       const shuffled = shuffle !== undefined ? shuffle : !!get().shuffleOrder
 
       await TrackPlayer.setupPlayer(get().getPlayerOptions())
       await TrackPlayer.reset()
 
-      if (songs.length === 0) {
+      if (queue.length === 0) {
         return
       }
-
-      let queue = await get().mapSongstoTrackExts(songs)
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)

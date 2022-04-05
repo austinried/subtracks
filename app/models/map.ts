@@ -6,6 +6,7 @@ import {
   PlaylistElement,
 } from '@app/subsonic/elements'
 import { Album, Artist, ArtistInfo, Playlist, Song } from './library'
+import { TrackExt } from './trackplayer'
 
 export function mapArtist(artist: ArtistID3Element): Artist {
   return {
@@ -61,5 +62,21 @@ export function mapSong(song: ChildElement): Song {
     discNumber: song.discNumber,
     duration: song.duration,
     starred: song.starred?.getTime(),
+  }
+}
+
+export function mapTrackExtToSong(track: TrackExt): Song {
+  return {
+    itemType: 'song',
+    id: track.id,
+    title: track.title as string,
+    artist: track.artist,
+    album: track.album,
+    coverArt: track.coverArt,
+    duration: track.duration,
+    artistId: track.artistId,
+    albumId: track.albumId,
+    track: track.track,
+    discNumber: track.discNumber,
   }
 }

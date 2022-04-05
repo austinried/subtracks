@@ -3,19 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import equal from 'fast-deep-equal'
 import create, { GetState, Mutate, SetState, State, StateCreator, StateSelector, StoreApi } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
-import { CacheSlice, createCacheSlice } from './cache'
 import migrations from './migrations'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
-import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
 import produce, { Draft } from 'immer'
 import { WritableDraft } from 'immer/dist/internal'
 
 const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
-  TrackPlayerSlice &
-  TrackPlayerMapSlice &
-  CacheSlice & {
+  TrackPlayerSlice & {
     hydrated: boolean
     setHydrated: (hydrated: boolean) => void
   }
@@ -62,8 +58,6 @@ export const useStore = create<
       immer((set, get) => ({
         ...createSettingsSlice(set, get),
         ...createTrackPlayerSlice(set, get),
-        ...createTrackPlayerMapSlice(set, get),
-        ...createCacheSlice(set, get),
 
         hydrated: false,
         setHydrated: hydrated =>
@@ -75,7 +69,7 @@ export const useStore = create<
         name: '@appStore',
         version: DB_VERSION,
         getStorage: () => AsyncStorage,
-        partialize: state => ({ settings: state.settings, cacheFiles: state.cacheFiles }),
+        partialize: state => ({ settings: state.settings }),
         onRehydrateStorage: _preState => {
           return async (postState, _error) => {
             await postState?.setActiveServer(postState.settings.activeServerId, true)

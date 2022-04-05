@@ -1,6 +1,8 @@
+import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
 import { Album, AlbumCoverArt, Artist, Playlist, Song, StarrableItemType } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
+import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import uniq from 'lodash.uniq'
 import {
@@ -19,6 +21,7 @@ import {
   useFetchArtistInfo,
   useFetchArtists,
   useFetchArtistTopSongs,
+  useFetchFile,
   useFetchPlaylist,
   useFetchPlaylists,
   useFetchSearchResults,
@@ -209,6 +212,57 @@ export const useStar = (id: string, type: StarrableItemType) => {
   )
 
   return { query, toggle }
+}
+
+export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'thumbnail') => {
+  const fetchFile = useFetchFile()
+  const serverId = useStore(store => store.settings.activeServerId)
+  const client = useStore(store => store.client)
+
+  const key: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
+
+  return useQuery(
+    qk.coverArt(coverArt, size),
+    async () => {
+      if (!serverId || !client) {
+        return
+      }
+
+      const url = client.getCoverArtUri({ id: coverArt, size: key === 'coverArtThumb' ? '256' : undefined })
+      return await fetchFile(serverId, key, coverArt, url)
+    },
+    {
+      enabled: !!serverId && !!client,
+      staleTime: Infinity,
+      cacheTime: Infinity,
+    },
+  )
+}
+
+export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = 'thumbnail') => {
+  const fetchFile = useFetchFile()
+  const serverId = useStore(store => store.settings.activeServerId)
+  const client = useStore(store => store.client)
+  const { data: artistInfo } = useQueryArtistInfo(artistId)
+
+  const key: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
+
+  return useQuery(
+    qk.artistArt(artistId, size),
+    async () => {
+      if (!serverId || !client || !artistInfo?.smallImageUrl || !artistInfo?.largeImageUrl) {
+        return
+      }
+
+      const url = key === 'artistArtThumb' ? artistInfo.smallImageUrl : artistInfo.largeImageUrl
+      return await fetchFile(serverId, key, artistId, url)
+    },
+    {
+      enabled: !!serverId && !!client && (!!artistInfo?.smallImageUrl || !!artistInfo?.largeImageUrl),
+      staleTime: Infinity,
+      cacheTime: Infinity,
+    },
+  )
 }
 
 type WithSongs = Song[] | { songs?: Song[] }
