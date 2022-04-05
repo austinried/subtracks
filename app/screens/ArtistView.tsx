@@ -60,6 +60,7 @@ const TopSongs = React.memo<{
           showArt={true}
           subtitle={s.album}
           onPress={() => setQueue(name, 'artist', artistId, i)}
+          disabled={!isReady}
         />
       ))}
     </>

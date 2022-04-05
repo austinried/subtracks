@@ -156,7 +156,6 @@ export const useSetQueue = (songs: Song[]) => {
     playTrack?: number,
     shuffle?: boolean,
   ) => {
-    // await Promise.all(coverArtPaths.map(c => c.refetch()))
     const tracks = songs.map(mapSongToTrackExt)
     return await _setQueue(tracks, name, contextType, contextId, playTrack, shuffle)
   }

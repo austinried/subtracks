@@ -22,6 +22,7 @@ type ContextMenuProps = {
   triggerTouchableStyle?: StyleProp<ViewStyle>
   onPress?: () => any
   triggerOnLongPress?: boolean
+  disabled?: boolean
 }
 
 type InternalContextMenuProps = ContextMenuProps & {
@@ -39,6 +40,7 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   menuOptions,
   children,
   triggerOnLongPress,
+  disabled,
 }) => {
   menuStyle = menuStyle || { flex: 1 }
   triggerWrapperStyle = triggerWrapperStyle || { flex: 1 }
@@ -47,11 +49,12 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   return (
     <Menu renderer={SlideInMenu} style={menuStyle}>
       <MenuTrigger
+        disabled={disabled}
         triggerOnLongPress={triggerOnLongPress === undefined ? true : triggerOnLongPress}
         customStyles={{
           triggerOuterWrapper: triggerOuterWrapperStyle,
           triggerWrapper: triggerWrapperStyle,
-          triggerTouchable: { style: triggerTouchableStyle },
+          triggerTouchable: { style: triggerTouchableStyle, disabled },
           TriggerTouchableComponent: PressableOpacity,
         }}
         onAlternativeAction={onPress}>

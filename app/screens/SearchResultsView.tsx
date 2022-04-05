@@ -23,6 +23,7 @@ const SongResultsListItem: React.FC<{ item: Song }> = ({ item }) => {
       listStyle="small"
       onPress={() => setQueue(item.title, 'song', item.id, 0)}
       style={styles.listItem}
+      disabled={!isReady}
     />
   )
 }

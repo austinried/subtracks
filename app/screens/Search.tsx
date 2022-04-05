@@ -35,6 +35,7 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
       showArt={true}
       showStar={false}
       onPress={() => setQueue(item.title, 'song', item.id, 0)}
+      disabled={!isReady}
     />
   )
 }, equal)

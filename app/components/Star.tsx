@@ -19,11 +19,12 @@ export const PressableStar = React.memo<{
   type: 'album' | 'artist' | 'song'
   size: number
   style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>) | undefined
-}>(({ id, type, size, style }) => {
+  disabled?: boolean
+}>(({ id, type, size, style, disabled }) => {
   const { query, toggle } = useStar(id, type)
 
   return (
-    <PressableOpacity onPress={() => toggle.mutate()} style={style}>
+    <PressableOpacity onPress={() => toggle.mutate()} style={style} disabled={disabled}>
       <Star size={size} starred={!!query.data} />
     </PressableOpacity>
   )

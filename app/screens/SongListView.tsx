@@ -30,6 +30,7 @@ const SongRenderItem: React.FC<{
     subtitle?: string
     onPress?: () => void
     showArt?: boolean
+    disabled?: boolean
   }
 }> = ({ item }) => (
   <ListItem
@@ -40,6 +41,7 @@ const SongRenderItem: React.FC<{
     onPress={item.onPress}
     showArt={item.showArt}
     style={styles.listItem}
+    disabled={item.disabled}
   />
 )
 
@@ -77,6 +79,9 @@ const SongListDetails = React.memo<{
     return <SongListDetailsFallback />
   }
 
+  const disabled = !isReady || _songs.length === 0
+  const play = (track?: number, shuffle?: boolean) => () => setQueue(songList.name, type, songList.id, track, shuffle)
+
   return (
     <View style={styles.container}>
       <HeaderBar
@@ -90,8 +95,9 @@ const SongListDetails = React.memo<{
           contextId: songList.id,
           queueId: i,
           subtitle: s.artist,
-          onPress: () => setQueue(songList.name, type, songList.id, i),
+          onPress: play(i),
           showArt: songList.itemType === 'playlist',
+          disabled: disabled,
         }))}
         renderItem={SongRenderItem}
         keyExtractor={(item, i) => i.toString()}
@@ -119,9 +125,9 @@ const SongListDetails = React.memo<{
               style={styles.controls}
               songs={_songs}
               typeName={typeName}
-              queueName={songList.name}
-              queueContextId={songList.id}
-              queueContextType={type}
+              play={play(undefined, false)}
+              shuffle={play(undefined, true)}
+              disabled={disabled}
             />
           </View>
         }
