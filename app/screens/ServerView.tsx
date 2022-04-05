@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
-import { v4 as uuidv4 } from 'uuid'
+import uuid from 'react-native-uuid'
 import SettingsSwitch from '@app/components/SettingsSwitch'
 
 const PASSWORD_PLACEHOLDER = 'PASSWORD_PLACEHOLDER'
@@ -57,7 +57,7 @@ const ServerView: React.FC<{
   const createServer = useCallback<() => Server>(() => {
     if (usePlainPassword) {
       return {
-        id: server?.id || uuidv4(),
+        id: server?.id || (uuid.v4() as string),
         usePlainPassword,
         plainPassword: password,
         address,
@@ -72,12 +72,12 @@ const ServerView: React.FC<{
       salt = server.salt
       token = server.token
     } else {
-      salt = uuidv4()
+      salt = uuid.v4() as string
       token = md5(password + salt)
     }
 
     return {
-      id: server?.id || uuidv4(),
+      id: server?.id || (uuid.v4() as string),
       address,
       username,
       usePlainPassword,
