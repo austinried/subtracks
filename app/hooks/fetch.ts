@@ -8,6 +8,9 @@ import qk from './queryKeys'
 import RNFS from 'react-native-fs'
 import { CacheItemTypeKey } from '@app/models/cache'
 import path from 'path'
+import ReactNativeBlobUtil from 'react-native-blob-util'
+import mime from 'mime-types'
+import userAgent from '@app/util/userAgent'
 
 export const useClient = () => {
   const client = useStore(store => store.client)
@@ -192,13 +195,17 @@ export const useFetchFile = () => {
     key: CacheItemTypeKey,
     id: string,
     fromUrl: string,
-    progress?: (res: RNFS.DownloadProgressCallbackResult) => void,
+    // progress?: (res: RNFS.DownloadProgressCallbackResult) => void,
   ) => {
-    const fileDir = path.join(RNFS.DocumentDirectoryPath, 'servers', serverId, key)
-    const filePath = path.join(fileDir, id)
+    const fileDir = path.join(RNFS.ExternalCachesDirectoryPath, 'servers', serverId, key, id, 'image')
+    const filePathNoExt = path.join(fileDir, id)
 
-    if (await RNFS.exists(filePath)) {
-      return filePath
+    if (await RNFS.exists(fileDir)) {
+      const dir = await RNFS.readDir(fileDir)
+      if (dir.length !== 0) {
+        console.log('existing file:', dir[0].path)
+        return dir[0].path
+      }
     }
 
     let stat: RNFS.StatResult | undefined
@@ -206,22 +213,37 @@ export const useFetchFile = () => {
       stat = await RNFS.stat(fileDir)
     } catch {}
 
+    if (stat?.isFile()) {
+      console.warn('unlinking file at dir path:', fileDir)
+      await RNFS.unlink(fileDir)
+    }
     if (!stat?.isDirectory()) {
+      console.log('creating directory:', fileDir)
       await RNFS.mkdir(fileDir)
     }
 
-    const req = RNFS.downloadFile({
-      fromUrl,
-      toFile: filePath,
-      progressInterval: progress ? 100 : undefined,
-      progress,
-      // progress: res => {
-      //   let amount = res.bytesWritten / (res.contentLength || 1)
-      //   amount = Math.max(Math.min(1, amount), 0)
-      // },
-    })
+    const headers = { 'User-Agent': userAgent }
 
-    await req.promise
-    return filePath
+    // we send a HEAD first for two reasons:
+    // 1. to follow any redirects and get the actual URL (DownloadManager does not support redirects)
+    // 2. to obtain the mime-type up front so we can use it for the file extension
+    const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
+
+    const contentType = headRes.headers.get('content-type') || undefined
+    const extension = contentType ? mime.extension(contentType) : undefined
+
+    const req = await ReactNativeBlobUtil.config({
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: false,
+        mime: contentType,
+        description: 'subtracks',
+        path: extension ? `${filePathNoExt}.${extension}` : filePathNoExt,
+      },
+    }).fetch('GET', headRes.url, headers)
+
+    const downloadPath = req.path()
+    console.log('downloaded file:', downloadPath)
+    return downloadPath
   }
 }

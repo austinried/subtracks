@@ -114,7 +114,7 @@ export const useSetQueue = (songs: Song[]) => {
       enabled: !!serverId && !!client,
       staleTime: Infinity,
       cacheTime: Infinity,
-      notifyOnChangeProps: ['data', 'isFetching'] as any,
+      notifyOnChangeProps: ['data', 'isFetched'] as any,
     })),
   )
 
@@ -160,5 +160,5 @@ export const useSetQueue = (songs: Song[]) => {
     return await _setQueue(tracks, name, contextType, contextId, playTrack, shuffle)
   }
 
-  return { setQueue, isReady: coverArtPaths.every(c => !c.isFetching) }
+  return { setQueue, isReady: coverArtPaths.every(c => c.isFetched) }
 }
