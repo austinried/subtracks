@@ -244,7 +244,7 @@ export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'th
   const serverId = useStore(store => store.settings.activeServerId)
   const client = useStore(store => store.client)
 
-  const key: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
+  const itemType: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
 
   return useQuery(
     qk.coverArt(coverArt, size),
@@ -253,8 +253,8 @@ export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'th
         return
       }
 
-      const url = client.getCoverArtUri({ id: coverArt, size: key === 'coverArtThumb' ? '256' : undefined })
-      return await fetchFile(serverId, key, coverArt, url, 'image')
+      const fromUrl = client.getCoverArtUri({ id: coverArt, size: itemType === 'coverArtThumb' ? '256' : undefined })
+      return await fetchFile({ serverId, itemType, itemId: coverArt, fromUrl, expectedContentType: 'image' })
     },
     {
       enabled: !!serverId && !!client,
@@ -270,7 +270,7 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
   const client = useStore(store => store.client)
   const { data: artistInfo } = useQueryArtistInfo(artistId)
 
-  const key: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
+  const itemType: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
 
   return useQuery(
     qk.artistArt(artistId, size),
@@ -279,8 +279,8 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
         return
       }
 
-      const url = key === 'artistArtThumb' ? artistInfo.smallImageUrl : artistInfo.largeImageUrl
-      return await fetchFile(serverId, key, artistId, url, 'image')
+      const fromUrl = itemType === 'artistArtThumb' ? artistInfo.smallImageUrl : artistInfo.largeImageUrl
+      return await fetchFile({ serverId, itemType, itemId: artistId, fromUrl, expectedContentType: 'image' })
     },
     {
       enabled: !!serverId && !!client && (!!artistInfo?.smallImageUrl || !!artistInfo?.largeImageUrl),

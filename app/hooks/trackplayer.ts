@@ -1,7 +1,7 @@
 import { Song } from '@app/models/library'
-import { QueueContextType, TrackExt } from '@app/models/trackplayer'
+import { TrackExt } from '@app/models/trackplayer'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { getQueue, trackPlayerCommands } from '@app/state/trackplayer'
+import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
 import uniq from 'lodash.uniq'
 import TrackPlayer from 'react-native-track-player'
@@ -108,8 +108,14 @@ export const useSetQueue = (songs?: Song[]) => {
           return
         }
 
-        const url = client.getCoverArtUri({ id: coverArt, size: '256' })
-        return await fetchFile(serverId, 'coverArtThumb', coverArt, url, 'image')
+        const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
+        return await fetchFile({
+          serverId,
+          itemType: 'coverArtThumb',
+          itemId: coverArt,
+          fromUrl,
+          expectedContentType: 'image',
+        })
       },
       enabled: !!serverId && !!client && !!songs,
       staleTime: Infinity,
@@ -149,15 +155,9 @@ export const useSetQueue = (songs?: Song[]) => {
     }
   }
 
-  const setQueue = async (
-    name: string,
-    contextType: QueueContextType,
-    contextId: string,
-    playTrack?: number,
-    shuffle?: boolean,
-  ) => {
-    const tracks = (songs || []).map(mapSongToTrackExt)
-    return await _setQueue(tracks, name, contextType, contextId, playTrack, shuffle)
+  const setQueue = async (options: SetQueueOptions) => {
+    const queue = (songs || []).map(mapSongToTrackExt)
+    return await _setQueue({ queue, ...options })
   }
 
   return { setQueue, isReady: coverArtPaths.every(c => c.isFetched) }

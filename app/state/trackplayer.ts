@@ -5,6 +5,18 @@ import produce from 'immer'
 import TrackPlayer, { PlayerOptions, RepeatMode, State } from 'react-native-track-player'
 import { GetStore, SetStore } from './store'
 
+export type SetQueueOptions = {
+  title: string
+  type: QueueContextType
+  contextId: string
+  playTrack?: number
+  shuffle?: boolean
+}
+
+export type SetQueueOptionsInternal = SetQueueOptions & {
+  queue: TrackExt[]
+}
+
 export type TrackPlayerSlice = {
   queueName?: string
   setQueueName: (name?: string) => void
@@ -32,14 +44,7 @@ export type TrackPlayerSlice = {
   setCurrentTrackIdx: (idx?: number) => void
 
   queue: TrackExt[]
-  setQueue: (
-    songs: TrackExt[],
-    name: string,
-    contextType: QueueContextType,
-    contextId: string,
-    playTrack?: number,
-    shuffle?: boolean,
-  ) => Promise<void>
+  setQueue: (options: SetQueueOptionsInternal) => Promise<void>
 
   progress: Progress
   setProgress: (progress: Progress) => void
@@ -174,7 +179,7 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
     }),
 
   queue: [],
-  setQueue: async (queue, name, contextType, contextId, playTrack, shuffle) => {
+  setQueue: async ({ queue, title, type, contextId, playTrack, shuffle }) => {
     return trackPlayerCommands.enqueue(async () => {
       const shuffled = shuffle !== undefined ? shuffle : !!get().shuffleOrder
 
@@ -203,8 +208,8 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
       try {
         set(state => {
           state.queue = queue
-          state.queueName = name
-          state.queueContextType = contextType
+          state.queueName = title
+          state.queueContextType = type
           state.queueContextId = contextId
         })
         get().setCurrentTrackIdx(playTrack)

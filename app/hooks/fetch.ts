@@ -210,17 +210,18 @@ function assertMimeType(expected?: string, actual?: string) {
   }
 }
 
-export const useFetchFile = () => {
-  return async (
-    serverId: string,
-    key: CacheItemTypeKey,
-    id: string,
-    fromUrl: string,
-    expectedType?: string,
-    // progress?: (res: RNFS.DownloadProgressCallbackResult) => void,
-  ) => {
-    const fileDir = path.join(RNFS.ExternalCachesDirectoryPath, 'servers', serverId, key, id, 'image')
-    const filePathNoExt = path.join(fileDir, id)
+export type FetchFileOptions = {
+  serverId: string
+  itemType: CacheItemTypeKey
+  itemId: string
+  fromUrl: string
+  expectedContentType?: string
+}
+
+export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
+  return async ({ serverId, itemType, itemId, fromUrl, expectedContentType }) => {
+    const fileDir = path.join(RNFS.ExternalCachesDirectoryPath, 'servers', serverId, itemType, itemId, 'image')
+    const filePathNoExt = path.join(fileDir, itemId)
 
     try {
       const dir = await RNFS.readDir(fileDir)
@@ -250,11 +251,11 @@ export const useFetchFile = () => {
     const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
 
     if (headRes.status > 399) {
-      throw new Error(`HTTP status error ${headRes.status}. File: ${key} ID: ${id}`)
+      throw new Error(`HTTP status error ${headRes.status}. File: ${itemType} ID: ${itemId}`)
     }
 
     const contentType = headRes.headers.get('content-type') || undefined
-    assertMimeType(expectedType, contentType)
+    assertMimeType(expectedContentType, contentType)
 
     const extension = contentType ? mime.extension(contentType) : undefined
 

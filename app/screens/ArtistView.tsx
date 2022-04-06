@@ -48,7 +48,7 @@ const TopSongs = React.memo<{
   artistId: string
 }>(({ songs, name, artistId }) => {
   const { setQueue, isReady } = useSetQueue(songs)
-  const queueContextId = `${artistId}_${songs.map(s => s.id).join('_')}`
+  const contextId = `${artistId}_${songs.map(s => s.id).join('_')}`
 
   return (
     <>
@@ -57,11 +57,11 @@ const TopSongs = React.memo<{
         <ListItem
           key={i}
           item={s}
-          contextId={queueContextId}
+          contextId={contextId}
           queueId={i}
           showArt={true}
           subtitle={s.album}
-          onPress={() => setQueue(name, 'artist', queueContextId, i)}
+          onPress={() => setQueue({ title: name, type: 'artist', contextId, playTrack: i })}
           disabled={!isReady}
         />
       ))}

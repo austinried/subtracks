@@ -80,7 +80,8 @@ const SongListDetails = React.memo<{
   }
 
   const disabled = !isReady || _songs.length === 0
-  const play = (track?: number, shuffle?: boolean) => () => setQueue(songList.name, type, songList.id, track, shuffle)
+  const play = (track?: number, shuffle?: boolean) => () =>
+    setQueue({ title: songList.name, type, contextId: songList.id, playTrack: track, shuffle })
 
   return (
     <View style={styles.container}>
