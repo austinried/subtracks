@@ -109,7 +109,7 @@ export const useSetQueue = (songs?: Song[]) => {
         }
 
         const url = client.getCoverArtUri({ id: coverArt, size: '256' })
-        return await fetchFile(serverId, 'coverArtThumb', coverArt, url)
+        return await fetchFile(serverId, 'coverArtThumb', coverArt, url, 'image')
       },
       enabled: !!serverId && !!client && !!songs,
       staleTime: Infinity,

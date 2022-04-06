@@ -189,24 +189,44 @@ export const useFetchUnstar = () => {
   }
 }
 
+function assertMimeType(expected?: string, actual?: string) {
+  expected = expected?.toLowerCase()
+  actual = actual?.toLowerCase()
+
+  if (!expected || expected === actual) {
+    return
+  }
+
+  if (!expected.includes(';')) {
+    actual = actual?.split(';')[0]
+  }
+
+  if (!expected.includes('/')) {
+    actual = actual?.split('/')[0]
+  }
+
+  if (expected !== actual) {
+    throw new Error(`Request does not satisfy expected content type. Expected: ${expected} Actual: ${actual}`)
+  }
+}
+
 export const useFetchFile = () => {
   return async (
     serverId: string,
     key: CacheItemTypeKey,
     id: string,
     fromUrl: string,
+    expectedType?: string,
     // progress?: (res: RNFS.DownloadProgressCallbackResult) => void,
   ) => {
     const fileDir = path.join(RNFS.ExternalCachesDirectoryPath, 'servers', serverId, key, id, 'image')
     const filePathNoExt = path.join(fileDir, id)
 
-    if (await RNFS.exists(fileDir)) {
+    try {
       const dir = await RNFS.readDir(fileDir)
-      if (dir.length !== 0) {
-        console.log('existing file:', dir[0].path)
-        return dir[0].path
-      }
-    }
+      console.log('existing file:', dir[0].path)
+      return dir[0].path
+    } catch {}
 
     let stat: RNFS.StatResult | undefined
     try {
@@ -226,10 +246,12 @@ export const useFetchFile = () => {
 
     // we send a HEAD first for two reasons:
     // 1. to follow any redirects and get the actual URL (DownloadManager does not support redirects)
-    // 2. to obtain the mime-type up front so we can use it for the file extension
+    // 2. to obtain the mime-type up front so we can use it for the file extension/validation
     const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
 
     const contentType = headRes.headers.get('content-type') || undefined
+    assertMimeType(expectedType, contentType)
+
     const extension = contentType ? mime.extension(contentType) : undefined
 
     const req = await ReactNativeBlobUtil.config({

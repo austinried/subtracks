@@ -254,7 +254,7 @@ export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'th
       }
 
       const url = client.getCoverArtUri({ id: coverArt, size: key === 'coverArtThumb' ? '256' : undefined })
-      return await fetchFile(serverId, key, coverArt, url)
+      return await fetchFile(serverId, key, coverArt, url, 'image')
     },
     {
       enabled: !!serverId && !!client,
@@ -280,7 +280,7 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
       }
 
       const url = key === 'artistArtThumb' ? artistInfo.smallImageUrl : artistInfo.largeImageUrl
-      return await fetchFile(serverId, key, artistId, url)
+      return await fetchFile(serverId, key, artistId, url, 'image')
     },
     {
       enabled: !!serverId && !!client && (!!artistInfo?.smallImageUrl || !!artistInfo?.largeImageUrl),
