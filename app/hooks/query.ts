@@ -56,10 +56,14 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   const fetchArtistTopSongs = useFetchArtistTopSongs()
   const query = useQuery(qk.artistTopSongs(artistName || ''), () => fetchArtistTopSongs(artistName as string), {
     enabled: !!artistName,
+    retry: 2,
+    retryDelay: 50,
+    staleTime: 1000 * 60 * 60 * 24,
+    cacheTime: 1000 * 60 * 60 * 24,
+    notifyOnChangeProps: ['data', 'isError', 'isFetched', 'isSuccess', 'isFetching'],
   })
 
   const querySuccess = query.isFetched && query.isSuccess && query.data && query.data.length > 0
-  console.log(querySuccess)
 
   const fetchSearchResults = useFetchSearchResults()
   const backupQuery = useQuery(
@@ -67,8 +71,14 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
     () => fetchSearchResults({ query: artistName as string, songCount: 50 }),
     {
       enabled: !!artistName && !query.isFetching && !querySuccess,
-      // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
-      select: data => sortBy(data.songs, [s => s.userRating, s => s.averageRating, s => s.playCount]),
+      select: data =>
+        // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
+        sortBy(data.songs, [s => -(s.playCount || 0), s => -(s.averageRating || 0), s => -(s.userRating || 0)]),
+      retry: 2,
+      retryDelay: 50,
+      staleTime: 1000 * 60 * 60 * 24,
+      cacheTime: 1000 * 60 * 60 * 24,
+      notifyOnChangeProps: ['data', 'isError'],
     },
   )
 
