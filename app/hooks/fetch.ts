@@ -249,6 +249,10 @@ export const useFetchFile = () => {
     // 2. to obtain the mime-type up front so we can use it for the file extension/validation
     const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
 
+    if (headRes.status > 399) {
+      throw new Error(`HTTP status error ${headRes.status}. File: ${key} ID: ${id}`)
+    }
+
     const contentType = headRes.headers.get('content-type') || undefined
     assertMimeType(expectedType, contentType)
 
