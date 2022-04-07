@@ -1,7 +1,7 @@
 import { useReset } from '@app/hooks/trackplayer'
 import { CacheItemTypeKey } from '@app/models/cache'
 import queryClient from '@app/queryClient'
-import { useStore } from '@app/state/store'
+import { useStore, useStoreDeep } from '@app/state/store'
 import { cacheDir } from '@app/util/fs'
 import { useEffect } from 'react'
 import RNFS from 'react-native-fs'
@@ -37,14 +37,10 @@ export const useFirstRun = () => {
 }
 
 export const useResetImageCache = () => {
-  const serverId = useStore(store => store.settings.activeServerId)
+  const serverIds = useStoreDeep(store => Object.keys(store.settings.servers))
   const changeCacheBuster = useStore(store => store.changeCacheBuster)
 
   return async () => {
-    if (!serverId) {
-      return
-    }
-
     // disable/invalidate queries
     queryClient.cancelQueries(qk.artistArt())
     queryClient.cancelQueries(qk.coverArt())
@@ -54,12 +50,14 @@ export const useResetImageCache = () => {
     // delete all images
     const itemTypes: CacheItemTypeKey[] = ['artistArt', 'artistArtThumb', 'coverArt', 'coverArtThumb']
     await Promise.all(
-      itemTypes.map(async type => {
-        const dir = cacheDir(serverId, type)
-        try {
-          await RNFS.unlink(dir)
-        } catch {}
-      }),
+      serverIds.flatMap(id =>
+        itemTypes.map(async type => {
+          const dir = cacheDir(id, type)
+          try {
+            await RNFS.unlink(dir)
+          } catch {}
+        }),
+      ),
     )
 
     // change cacheBuster

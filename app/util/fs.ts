@@ -2,7 +2,7 @@ import RNFS from 'react-native-fs'
 import path from 'path'
 import { CacheItemTypeKey } from '@app/models/cache'
 
-const serversCacheDir = path.join(RNFS.ExternalCachesDirectoryPath, 's')
+const serversCacheDir = path.join(RNFS.ExternalDirectoryPath, 's')
 
 export function cacheDir(serverId?: string, itemType?: CacheItemTypeKey, itemId?: string): string {
   const segments: string[] = []
