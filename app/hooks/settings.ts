@@ -42,10 +42,12 @@ export const useResetImageCache = () => {
 
   return async () => {
     // disable/invalidate queries
-    queryClient.cancelQueries(qk.artistArt())
-    queryClient.cancelQueries(qk.coverArt())
-    queryClient.invalidateQueries(qk.artistArt(), { refetchActive: false })
-    queryClient.invalidateQueries(qk.coverArt(), { refetchActive: false })
+    await Promise.all([
+      queryClient.cancelQueries(qk.artistArt()),
+      queryClient.cancelQueries(qk.coverArt()),
+      queryClient.invalidateQueries(qk.artistArt(), { refetchActive: false }),
+      queryClient.invalidateQueries(qk.coverArt(), { refetchActive: false }),
+    ])
 
     // delete all images
     const itemTypes: CacheItemTypeKey[] = ['artistArt', 'artistArtThumb', 'coverArt', 'coverArtThumb']
@@ -64,7 +66,9 @@ export const useResetImageCache = () => {
     changeCacheBuster()
 
     // enable queries
-    queryClient.refetchQueries(qk.artistArt(), { active: true })
-    queryClient.refetchQueries(qk.coverArt(), { active: true })
+    await Promise.all([
+      queryClient.refetchQueries(qk.artistArt(), { active: true }),
+      queryClient.refetchQueries(qk.coverArt(), { active: true }),
+    ])
   }
 }
