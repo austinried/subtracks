@@ -45,10 +45,8 @@ const AlbumItem = React.memo<{
 const TopSongs = React.memo<{
   songs: Song[]
   name: string
-  artistId: string
-}>(({ songs, name, artistId }) => {
-  const { setQueue, isReady } = useSetQueue(songs)
-  const contextId = `${artistId}_${songs.map(s => s.id).join('_')}`
+}>(({ songs, name }) => {
+  const { setQueue, isReady, contextId } = useSetQueue('artist', songs)
 
   return (
     <>
@@ -61,7 +59,7 @@ const TopSongs = React.memo<{
           queueId={i}
           showArt={true}
           subtitle={s.album}
-          onPress={() => setQueue({ title: name, type: 'artist', contextId, playTrack: i })}
+          onPress={() => setQueue({ title: name, playTrack: i })}
           disabled={!isReady}
         />
       ))}
@@ -140,7 +138,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
           {(topSongs || isError) && artist ? (
             topSongs && topSongs.length > 0 ? (
               <>
-                <TopSongs songs={topSongs} name={artist.name} artistId={artist.id} />
+                <TopSongs songs={topSongs} name={artist.name} />
                 <ArtistAlbums albums={albums} />
               </>
             ) : (

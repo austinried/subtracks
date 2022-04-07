@@ -1,5 +1,5 @@
 import { Song } from '@app/models/library'
-import { TrackExt } from '@app/models/trackplayer'
+import { QueueContextType, TrackExt } from '@app/models/trackplayer'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
@@ -9,6 +9,7 @@ import { useQueries } from 'react-query'
 import { useFetchFile } from './fetch'
 import qk from './queryKeys'
 import zipObject from 'lodash.zipobject'
+import { useMemo } from 'react'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -92,7 +93,7 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
-export const useSetQueue = (songs?: Song[]) => {
+export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
   const serverId = useStore(store => store.settings.activeServerId)
   const client = useStore(store => store.client)
@@ -155,10 +156,12 @@ export const useSetQueue = (songs?: Song[]) => {
     }
   }
 
+  const contextId = useMemo(() => `${type}-${songs?.map(s => s.id).join('-')}`, [type, songs])
+
   const setQueue = async (options: SetQueueOptions) => {
     const queue = (songs || []).map(mapSongToTrackExt)
-    return await _setQueue({ queue, ...options })
+    return await _setQueue({ queue, type, contextId, ...options })
   }
 
-  return { setQueue, isReady: coverArtPaths.every(c => c.isFetched) }
+  return { setQueue, contextId, isReady: coverArtPaths.every(c => c.isFetched) }
 }

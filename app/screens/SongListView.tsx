@@ -73,7 +73,7 @@ const SongListDetails = React.memo<{
     typeName = 'Playlist'
   }
 
-  const { setQueue, isReady } = useSetQueue(_songs)
+  const { setQueue, isReady, contextId } = useSetQueue(type, _songs)
 
   if (!songList) {
     return <SongListDetailsFallback />
@@ -81,7 +81,7 @@ const SongListDetails = React.memo<{
 
   const disabled = !isReady || _songs.length === 0
   const play = (track?: number, shuffle?: boolean) => () =>
-    setQueue({ title: songList.name, type, contextId: songList.id, playTrack: track, shuffle })
+    setQueue({ title: songList.name, playTrack: track, shuffle })
 
   return (
     <View style={styles.container}>
@@ -93,7 +93,7 @@ const SongListDetails = React.memo<{
       <ImageGradientFlatList
         data={_songs.map((s, i) => ({
           song: s,
-          contextId: songList.id,
+          contextId,
           queueId: i,
           subtitle: s.artist,
           onPress: play(i),

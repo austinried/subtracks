@@ -7,14 +7,14 @@ import { GetStore, SetStore } from './store'
 
 export type SetQueueOptions = {
   title: string
-  type: QueueContextType
-  contextId: string
   playTrack?: number
   shuffle?: boolean
 }
 
 export type SetQueueOptionsInternal = SetQueueOptions & {
   queue: TrackExt[]
+  contextId: string
+  type: QueueContextType
 }
 
 export type TrackPlayerSlice = {
