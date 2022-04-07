@@ -9,7 +9,7 @@ import { useQueries } from 'react-query'
 import { useFetchFile } from './fetch'
 import qk from './queryKeys'
 import zipObject from 'lodash.zipobject'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -100,7 +100,11 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const buildStreamUri = useStore(store => store.buildStreamUri)
   const fetchFile = useFetchFile()
 
-  const songCoverArt = uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
+  const songCoverArt = useMemo(
+    () => uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined),
+    [songs],
+  )
+
   const coverArtPaths = useQueries(
     songCoverArt.map(coverArt => ({
       queryKey: qk.coverArt(coverArt, 'thumbnail'),
@@ -125,43 +129,53 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
     })),
   )
 
-  const songCoverArtToPath = zipObject(
-    songCoverArt,
-    coverArtPaths.map(c => c.data),
+  const songCoverArtToPath = useMemo(
+    () =>
+      zipObject(
+        songCoverArt,
+        coverArtPaths.map(c => c.data),
+      ),
+    [songCoverArt, coverArtPaths],
   )
 
-  const mapSongToTrackExt = (s: Song): TrackExt => {
-    let artwork = require('@res/fallback.png')
-    if (s.coverArt) {
-      const filePath = songCoverArtToPath[s.coverArt]
-      if (filePath) {
-        artwork = `file://${filePath}`
+  const mapSongToTrackExt = useCallback(
+    (s: Song): TrackExt => {
+      let artwork = require('@res/fallback.png')
+      if (s.coverArt) {
+        const filePath = songCoverArtToPath[s.coverArt]
+        if (filePath) {
+          artwork = `file://${filePath}`
+        }
       }
-    }
 
-    return {
-      id: s.id,
-      title: s.title,
-      artist: s.artist || 'Unknown Artist',
-      album: s.album || 'Unknown Album',
-      url: buildStreamUri(s.id),
-      userAgent,
-      artwork,
-      coverArt: s.coverArt,
-      duration: s.duration,
-      artistId: s.artistId,
-      albumId: s.albumId,
-      track: s.track,
-      discNumber: s.discNumber,
-    }
-  }
+      return {
+        id: s.id,
+        title: s.title,
+        artist: s.artist || 'Unknown Artist',
+        album: s.album || 'Unknown Album',
+        url: buildStreamUri(s.id),
+        userAgent,
+        artwork,
+        coverArt: s.coverArt,
+        duration: s.duration,
+        artistId: s.artistId,
+        albumId: s.albumId,
+        track: s.track,
+        discNumber: s.discNumber,
+      }
+    },
+    [buildStreamUri, songCoverArtToPath],
+  )
 
   const contextId = useMemo(() => `${type}-${songs?.map(s => s.id).join('-')}`, [type, songs])
 
-  const setQueue = async (options: SetQueueOptions) => {
-    const queue = (songs || []).map(mapSongToTrackExt)
-    return await _setQueue({ queue, type, contextId, ...options })
-  }
+  const setQueue = useCallback(
+    async (options: SetQueueOptions) => {
+      const queue = (songs || []).map(mapSongToTrackExt)
+      return await _setQueue({ queue, type, contextId, ...options })
+    },
+    [_setQueue, contextId, mapSongToTrackExt, songs, type],
+  )
 
   return { setQueue, contextId, isReady: coverArtPaths.every(c => c.isFetched) }
 }

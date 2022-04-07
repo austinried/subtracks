@@ -6,6 +6,7 @@ import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import sortBy from 'lodash.sortby'
 import uniq from 'lodash.uniq'
+import { useCallback, useMemo } from 'react'
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -56,10 +57,9 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   const fetchArtistTopSongs = useFetchArtistTopSongs()
   const query = useQuery(qk.artistTopSongs(artistName || ''), () => fetchArtistTopSongs(artistName as string), {
     enabled: !!artistName,
-    retry: 2,
-    retryDelay: 50,
-    staleTime: 1000 * 60 * 60 * 24,
-    cacheTime: 1000 * 60 * 60 * 24,
+    retry: false,
+    staleTime: Infinity,
+    cacheTime: Infinity,
     notifyOnChangeProps: ['data', 'isError', 'isFetched', 'isSuccess', 'isFetching'],
   })
 
@@ -74,10 +74,8 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
       select: data =>
         // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
         sortBy(data.songs, [s => -(s.playCount || 0), s => -(s.averageRating || 0), s => -(s.userRating || 0)]),
-      retry: 2,
-      retryDelay: 50,
-      staleTime: 1000 * 60 * 60 * 24,
-      cacheTime: 1000 * 60 * 60 * 24,
+      staleTime: Infinity,
+      cacheTime: Infinity,
       notifyOnChangeProps: ['data', 'isError'],
     },
   )
@@ -344,8 +342,11 @@ function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQu
 const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
   const fetchAlbum = useFetchAlbum()
 
-  const songs = getSongs(query.data)
-  const albumIds = uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
+  const songs = useMemo(() => getSongs(query.data), [query.data])
+  const albumIds = useMemo(
+    () => uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined)),
+    [songs],
+  )
 
   const coverArts = useQueries(
     albumIds.map(id => ({
@@ -359,8 +360,12 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
     })),
   )
 
-  if (coverArts.some(c => c.data)) {
+  const _setSongCoverArt = useCallback(() => {
     setSongCoverArt(query, coverArts)
+  }, [query, coverArts])
+
+  if (coverArts.every(c => c.isFetched)) {
+    _setSongCoverArt()
   }
 
   return query
