@@ -11,6 +11,7 @@ import path from 'path'
 import ReactNativeBlobUtil from 'react-native-blob-util'
 import mime from 'mime-types'
 import userAgent from '@app/util/userAgent'
+import { cacheDir } from '@app/util/fs'
 
 export const useClient = () => {
   const client = useStore(store => store.client)
@@ -220,8 +221,8 @@ export type FetchFileOptions = {
 
 export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
   return async ({ serverId, itemType, itemId, fromUrl, expectedContentType }) => {
-    const fileDir = path.join(RNFS.ExternalCachesDirectoryPath, 'servers', serverId, itemType, itemId, 'image')
-    const filePathNoExt = path.join(fileDir, itemId)
+    const fileDir = cacheDir(serverId, itemType, itemId)
+    const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
 
     try {
       const dir = await RNFS.readDir(fileDir)
@@ -239,7 +240,6 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
       await RNFS.unlink(fileDir)
     }
     if (!stat?.isDirectory()) {
-      console.log('creating directory:', fileDir)
       await RNFS.mkdir(fileDir)
     }
 

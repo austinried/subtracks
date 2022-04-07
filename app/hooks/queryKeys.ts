@@ -15,10 +15,8 @@ const qk = {
 
   album: (id: string) => ['album', id],
   albumList: (type: GetAlbumList2TypeBase, size?: number) => {
-    const key: any[] = ['albumList', type]
-    if (size !== undefined) {
-      key.push(size)
-    }
+    const key: (string | number)[] = ['albumList', type]
+    size !== undefined && key.push(size)
     return key
   },
 
@@ -30,8 +28,18 @@ const qk = {
     songCount,
   ],
 
-  coverArt: (coverArt: string, size: CacheImageSize) => ['coverArt', coverArt, size],
-  artistArt: (artistId: string, size: CacheImageSize) => ['artistArt', artistId, size],
+  coverArt: (coverArt?: string, size?: CacheImageSize) => {
+    const key: string[] = ['coverArt']
+    coverArt !== undefined && key.push(coverArt)
+    size !== undefined && key.push(size)
+    return key
+  },
+  artistArt: (artistId?: string, size?: CacheImageSize) => {
+    const key: string[] = ['artistArt']
+    artistId !== undefined && key.push(artistId)
+    size !== undefined && key.push(size)
+    return key
+  },
 }
 
 export default qk

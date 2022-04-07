@@ -4,8 +4,8 @@ import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
-import uniq from 'lodash.uniq'
 import sortBy from 'lodash.sortby'
+import uniq from 'lodash.uniq'
 import {
   InfiniteData,
   useInfiniteQuery,

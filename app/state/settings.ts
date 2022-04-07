@@ -2,6 +2,7 @@ import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/s
 import { ById } from '@app/models/state'
 import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
+import uuid from 'react-native-uuid'
 
 export type SettingsSlice = {
   settings: {
@@ -21,9 +22,12 @@ export type SettingsSlice = {
     maxBitrateMobile: number
     minBuffer: number
     maxBuffer: number
+    cacheBuster: string
   }
 
   client?: SubsonicApiClient
+
+  changeCacheBuster: () => void
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
   addServer: (server: Server) => void
@@ -40,6 +44,10 @@ export type SettingsSlice = {
 
   setLibraryAlbumFilter: (filter: AlbumFilterSettings) => void
   setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
+}
+
+export function newCacheBuster(): string {
+  return (uuid.v4() as string).split('-')[0]
 }
 
 export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice => ({
@@ -66,6 +74,13 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     maxBitrateMobile: 192,
     minBuffer: 6,
     maxBuffer: 60,
+    cacheBuster: newCacheBuster(),
+  },
+
+  changeCacheBuster: () => {
+    set(store => {
+      store.settings.cacheBuster = newCacheBuster()
+    })
   },
 
   setActiveServer: async (id, force) => {
@@ -91,6 +106,10 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
   },
 
   addServer: server => {
+    const serverIds = Object.keys(get().settings.servers)
+    server.id =
+      serverIds.length === 0 ? '0' : (serverIds.map(i => parseInt(i, 10)).sort((a, b) => b - a)[0] + 1).toString()
+
     set(state => {
       state.settings.servers[server.id] = server
     })
