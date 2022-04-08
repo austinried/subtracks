@@ -1,17 +1,18 @@
-import { Playlist, Song, Album, AlbumCoverArt } from '@app/models/library'
-import { mapArtist, mapAlbum, mapPlaylist, mapSong, mapArtistInfo } from '@app/models/map'
+import { CacheItemTypeKey } from '@app/models/cache'
+import { Album, AlbumCoverArt, Playlist, Song } from '@app/models/library'
+import { mapAlbum, mapArtist, mapArtistInfo, mapPlaylist, mapSong } from '@app/models/map'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
-import { mapCollectionById } from '@app/util/state'
-import qk from './queryKeys'
-import RNFS from 'react-native-fs'
-import { CacheItemTypeKey } from '@app/models/cache'
-import path from 'path'
-import ReactNativeBlobUtil from 'react-native-blob-util'
-import mime from 'mime-types'
-import userAgent from '@app/util/userAgent'
 import { cacheDir } from '@app/util/fs'
+import { mapCollectionById } from '@app/util/state'
+import userAgent from '@app/util/userAgent'
+import cd from 'content-disposition'
+import mime from 'mime-types'
+import path from 'path'
+import ReactNativeBlobUtil, { FetchBlobResponse } from 'react-native-blob-util'
+import RNFS from 'react-native-fs'
+import qk from './queryKeys'
 
 export const useClient = () => {
   const client = useStore(store => store.client)
@@ -231,10 +232,13 @@ function assertMimeType(expected?: string, actual?: string) {
 export type FetchFileOptions = FetchExisingFileOptions & {
   fromUrl: string
   expectedContentType?: string
+  progress?: boolean
 }
 
 export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
-  return async ({ serverId, itemType, itemId, fromUrl, expectedContentType }) => {
+  return async ({ serverId, itemType, itemId, fromUrl, expectedContentType, progress }) => {
+    progress = progress || false
+
     const fileDir = cacheDir(serverId, itemType, itemId)
     const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
 
@@ -256,9 +260,20 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
     const contentType = headRes.headers.get('content-type') || undefined
     assertMimeType(expectedContentType, contentType)
 
-    const extension = contentType ? mime.extension(contentType) : undefined
+    const contentDisposition = headRes.headers.get('content-disposition') || undefined
+    const filename = contentDisposition ? cd.parse(contentDisposition).parameters.filename : undefined
 
-    const req = await ReactNativeBlobUtil.config({
+    let extension: string | undefined
+    if (filename) {
+      extension = path.extname(filename) || undefined
+      if (extension) {
+        extension = extension.substring(1)
+      }
+    } else if (contentType) {
+      extension = mime.extension(contentType) || undefined
+    }
+
+    const config = ReactNativeBlobUtil.config({
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: false,
@@ -266,9 +281,20 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
         description: 'subtracks',
         path: extension ? `${filePathNoExt}.${extension}` : filePathNoExt,
       },
-    }).fetch('GET', headRes.url, headers)
+    })
 
-    const downloadPath = req.path()
+    const fetchParams: Parameters<typeof config['fetch']> = ['GET', headRes.url, headers]
+
+    let res: FetchBlobResponse
+    if (progress) {
+      res = await config.fetch(...fetchParams).progress((received, total) => {
+        console.log('received', received, 'total', total)
+      })
+    } else {
+      res = await config.fetch(...fetchParams)
+    }
+
+    const downloadPath = res.path()
     queryClient.setQueryData<string>(qk.existingFiles(itemType, itemId), downloadPath)
 
     console.log('downloaded file:', downloadPath)
