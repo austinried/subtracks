@@ -6,7 +6,6 @@ import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import sortBy from 'lodash.sortby'
 import uniq from 'lodash.uniq'
-import { useCallback, useMemo } from 'react'
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -374,11 +373,8 @@ function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQu
 const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
   const fetchAlbum = useFetchAlbum()
 
-  const songs = useMemo(() => getSongs(query.data), [query.data])
-  const albumIds = useMemo(
-    () => uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined)),
-    [songs],
-  )
+  const songs = getSongs(query.data)
+  const albumIds = uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
 
   const coverArts = useQueries(
     albumIds.map(id => ({
@@ -392,12 +388,8 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
     })),
   )
 
-  const _setSongCoverArt = useCallback(() => {
-    setSongCoverArt(query, coverArts)
-  }, [query, coverArts])
-
   if (coverArts.every(c => c.isFetched)) {
-    _setSongCoverArt()
+    setSongCoverArt(query, coverArts)
   }
 
   return query
