@@ -45,8 +45,10 @@ export const useResetImageCache = () => {
     await Promise.all([
       queryClient.cancelQueries(qk.artistArt()),
       queryClient.cancelQueries(qk.coverArt()),
+      queryClient.cancelQueries(qk.existingFiles()),
       queryClient.invalidateQueries(qk.artistArt(), { refetchActive: false }),
       queryClient.invalidateQueries(qk.coverArt(), { refetchActive: false }),
+      queryClient.invalidateQueries(qk.existingFiles(), { refetchActive: false }),
     ])
 
     // delete all images
@@ -67,6 +69,7 @@ export const useResetImageCache = () => {
 
     // enable queries
     await Promise.all([
+      queryClient.refetchQueries(qk.existingFiles(), { active: true }),
       queryClient.refetchQueries(qk.artistArt(), { active: true }),
       queryClient.refetchQueries(qk.coverArt(), { active: true }),
     ])

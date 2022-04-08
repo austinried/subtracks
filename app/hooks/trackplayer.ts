@@ -6,10 +6,11 @@ import userAgent from '@app/util/userAgent'
 import uniq from 'lodash.uniq'
 import TrackPlayer from 'react-native-track-player'
 import { useQueries } from 'react-query'
-import { useFetchFile } from './fetch'
+import { useFetchExistingFile, useFetchFile } from './fetch'
 import qk from './queryKeys'
 import zipObject from 'lodash.zipobject'
 import { useCallback, useMemo } from 'react'
+import queryClient from '@app/queryClient'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -99,6 +100,7 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const client = useStore(store => store.client)
   const buildStreamUri = useStore(store => store.buildStreamUri)
   const fetchFile = useFetchFile()
+  const fetchExistingFile = useFetchExistingFile()
 
   const songCoverArt = useMemo(
     () => uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined),
@@ -113,10 +115,22 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
           return
         }
 
+        const itemType = 'coverArtThumb'
+
+        const existingCache = queryClient.getQueryData<string | undefined>(qk.existingFiles(itemType, coverArt))
+        if (existingCache) {
+          return existingCache
+        }
+
+        const existingDisk = await fetchExistingFile({ serverId, itemId: coverArt, itemType })
+        if (existingDisk) {
+          return existingDisk
+        }
+
         const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
         return await fetchFile({
           serverId,
-          itemType: 'coverArtThumb',
+          itemType,
           itemId: coverArt,
           fromUrl,
           expectedContentType: 'image',

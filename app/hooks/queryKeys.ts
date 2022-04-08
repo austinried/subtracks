@@ -1,4 +1,4 @@
-import { CacheImageSize } from '@app/models/cache'
+import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
 import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 
 const qk = {
@@ -38,6 +38,13 @@ const qk = {
     const key: string[] = ['artistArt']
     artistId !== undefined && key.push(artistId)
     size !== undefined && key.push(size)
+    return key
+  },
+
+  existingFiles: (type?: CacheItemTypeKey, itemId?: string) => {
+    const key: string[] = ['existingFiles']
+    type !== undefined && key.push(type)
+    itemId !== undefined && key.push(itemId)
     return key
   },
 }

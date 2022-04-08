@@ -19,6 +19,7 @@ type BaseProps = {
   resizeMode?: ImageResizeMode
   round?: boolean
   size: CacheImageSize
+  fadeDuration?: number
 }
 
 type ArtistCoverArtProps = BaseProps & {
@@ -31,8 +32,14 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const ImageSource = React.memo<{ data?: string; isLoading: boolean } & BaseProps>(
-  ({ style, imageStyle, resizeMode, data, isLoading }) => {
+type ImageSourceProps = BaseProps & {
+  data?: string
+  isFetching: boolean
+  isExistingFetching: boolean
+}
+
+const ImageSource = React.memo<ImageSourceProps>(
+  ({ style, imageStyle, resizeMode, data, isFetching, isExistingFetching, fadeDuration }) => {
     const [error, setError] = useState(false)
 
     let source: ImageSourcePropType
@@ -44,29 +51,35 @@ const ImageSource = React.memo<{ data?: string; isLoading: boolean } & BaseProps
 
     return (
       <>
-        <Image
-          source={source}
-          fadeDuration={150}
-          resizeMode={resizeMode || 'contain'}
-          style={[{ height: style?.height, width: style?.width }, imageStyle]}
-          onError={() => setError(true)}
-        />
-        <ActivityIndicator animating={isLoading} size="large" color={colors.accent} style={styles.indicator} />
+        {isExistingFetching ? (
+          <View style={{ height: style?.height, width: style?.width }} />
+        ) : (
+          <Image
+            source={source}
+            fadeDuration={fadeDuration === undefined ? 250 : fadeDuration}
+            resizeMode={resizeMode || 'contain'}
+            style={[{ height: style?.height, width: style?.width }, imageStyle]}
+            onError={() => setError(true)}
+          />
+        )}
+        {isFetching && (
+          <ActivityIndicator animating={true} size="large" color={colors.accent} style={styles.indicator} />
+        )}
       </>
     )
   },
 )
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
-  const { data, isLoading } = useQueryArtistArtPath(props.artistId, props.size)
+  const { data, isFetching, isExistingFetching } = useQueryArtistArtPath(props.artistId, props.size)
 
-  return <ImageSource data={data} isLoading={isLoading} {...props} />
+  return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
-  const { data, isLoading } = useQueryCoverArtPath(props.coverArt, props.size)
+  const { data, isFetching, isExistingFetching } = useQueryCoverArtPath(props.coverArt, props.size)
 
-  return <ImageSource data={data} isLoading={isLoading} {...props} />
+  return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
 })
 
 const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {

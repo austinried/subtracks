@@ -127,9 +127,17 @@ const MenuHeader = React.memo<{
         resizeMode="cover"
         round={true}
         size="thumbnail"
+        fadeDuration={0}
       />
     ) : (
-      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode="cover" size="thumbnail" />
+      <CoverArt
+        type="cover"
+        coverArt={coverArt}
+        style={styles.coverArt}
+        resizeMode="cover"
+        size="thumbnail"
+        fadeDuration={0}
+      />
     )}
     <View style={styles.menuHeaderText}>
       <Text numberOfLines={1} style={styles.menuTitle}>

@@ -190,6 +190,23 @@ export const useFetchUnstar = () => {
   }
 }
 
+export type FetchExisingFileOptions = {
+  serverId: string
+  itemType: CacheItemTypeKey
+  itemId: string
+}
+
+export const useFetchExistingFile: () => (options: FetchExisingFileOptions) => Promise<string | undefined> = () => {
+  return async ({ serverId, itemType, itemId }) => {
+    const fileDir = cacheDir(serverId, itemType, itemId)
+    try {
+      const dir = await RNFS.readDir(fileDir)
+      console.log('existing file:', dir[0].path)
+      return dir[0].path
+    } catch {}
+  }
+}
+
 function assertMimeType(expected?: string, actual?: string) {
   expected = expected?.toLowerCase()
   actual = actual?.toLowerCase()
@@ -211,10 +228,7 @@ function assertMimeType(expected?: string, actual?: string) {
   }
 }
 
-export type FetchFileOptions = {
-  serverId: string
-  itemType: CacheItemTypeKey
-  itemId: string
+export type FetchFileOptions = FetchExisingFileOptions & {
   fromUrl: string
   expectedContentType?: string
 }
@@ -225,23 +239,8 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
     const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
 
     try {
-      const dir = await RNFS.readDir(fileDir)
-      console.log('existing file:', dir[0].path)
-      return dir[0].path
-    } catch {}
-
-    let stat: RNFS.StatResult | undefined
-    try {
-      stat = await RNFS.stat(fileDir)
-    } catch {}
-
-    if (stat?.isFile()) {
-      console.warn('unlinking file at dir path:', fileDir)
       await RNFS.unlink(fileDir)
-    }
-    if (!stat?.isDirectory()) {
-      await RNFS.mkdir(fileDir)
-    }
+    } catch {}
 
     const headers = { 'User-Agent': userAgent }
 
@@ -270,6 +269,8 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
     }).fetch('GET', headRes.url, headers)
 
     const downloadPath = req.path()
+    queryClient.setQueryData<string>(qk.existingFiles(itemType, itemId), downloadPath)
+
     console.log('downloaded file:', downloadPath)
     return downloadPath
   }

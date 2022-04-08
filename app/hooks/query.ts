@@ -23,6 +23,7 @@ import {
   useFetchArtistInfo,
   useFetchArtists,
   useFetchArtistTopSongs,
+  useFetchExistingFile,
   useFetchFile,
   useFetchPlaylist,
   useFetchPlaylists,
@@ -237,14 +238,35 @@ export const useStar = (id: string, type: StarrableItemType) => {
   return { query, toggle }
 }
 
+export const useQueryExistingFile = (itemType: CacheItemTypeKey, itemId: string) => {
+  const fetchExistingFile = useFetchExistingFile()
+  const serverId = useStore(store => store.settings.activeServerId)
+
+  return useQuery(
+    qk.existingFiles(itemType, itemId),
+    () => {
+      if (serverId) {
+        return fetchExistingFile({ serverId, itemType, itemId })
+      }
+    },
+    {
+      enabled: !!serverId,
+      staleTime: Infinity,
+      cacheTime: Infinity,
+      notifyOnChangeProps: ['data', 'isFetched'],
+    },
+  )
+}
+
 export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'thumbnail') => {
   const fetchFile = useFetchFile()
   const serverId = useStore(store => store.settings.activeServerId)
   const client = useStore(store => store.client)
 
   const itemType: CacheItemTypeKey = size === 'original' ? 'coverArt' : 'coverArtThumb'
+  const existing = useQueryExistingFile(itemType, coverArt)
 
-  return useQuery(
+  const query = useQuery(
     qk.coverArt(coverArt, size),
     async () => {
       if (!serverId || !client) {
@@ -255,11 +277,13 @@ export const useQueryCoverArtPath = (coverArt = '-1', size: CacheImageSize = 'th
       return await fetchFile({ serverId, itemType, itemId: coverArt, fromUrl, expectedContentType: 'image' })
     },
     {
-      enabled: !!serverId && !!client,
+      enabled: existing.isFetched && !existing.data && !!serverId && !!client,
       staleTime: Infinity,
       cacheTime: Infinity,
     },
   )
+
+  return { ...query, data: existing.data || query.data, isExistingFetching: existing.isFetching }
 }
 
 export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = 'thumbnail') => {
@@ -269,8 +293,9 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
   const { data: artistInfo } = useQueryArtistInfo(artistId)
 
   const itemType: CacheItemTypeKey = size === 'original' ? 'artistArt' : 'artistArtThumb'
+  const existing = useQueryExistingFile(itemType, artistId)
 
-  return useQuery(
+  const query = useQuery(
     qk.artistArt(artistId, size),
     async () => {
       if (!serverId || !client || !artistInfo?.smallImageUrl || !artistInfo?.largeImageUrl) {
@@ -281,11 +306,18 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
       return await fetchFile({ serverId, itemType, itemId: artistId, fromUrl, expectedContentType: 'image' })
     },
     {
-      enabled: !!serverId && !!client && (!!artistInfo?.smallImageUrl || !!artistInfo?.largeImageUrl),
+      enabled:
+        existing.isFetched &&
+        !existing.data &&
+        !!serverId &&
+        !!client &&
+        (!!artistInfo?.smallImageUrl || !!artistInfo?.largeImageUrl),
       staleTime: Infinity,
       cacheTime: Infinity,
     },
   )
+
+  return { ...query, data: existing.data || query.data, isExistingFetching: existing.isFetching }
 }
 
 type WithSongs = Song[] | { songs?: Song[] }
