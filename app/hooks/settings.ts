@@ -17,7 +17,9 @@ export const useSwitchActiveServer = () => {
       return
     }
 
+    await queryClient.cancelQueries(undefined, { active: true })
     await resetPlayer()
+    queryClient.removeQueries(undefined, { active: true })
     setActiveServer(id)
   }
 }
@@ -43,9 +45,9 @@ export const useResetImageCache = () => {
   return async () => {
     // disable/invalidate queries
     await Promise.all([
-      queryClient.cancelQueries(qk.artistArt()),
-      queryClient.cancelQueries(qk.coverArt()),
-      queryClient.cancelQueries(qk.existingFiles()),
+      queryClient.cancelQueries(qk.artistArt(), { active: true }),
+      queryClient.cancelQueries(qk.coverArt(), { active: true }),
+      queryClient.cancelQueries(qk.existingFiles(), { active: true }),
       queryClient.invalidateQueries(qk.artistArt(), { refetchActive: false }),
       queryClient.invalidateQueries(qk.coverArt(), { refetchActive: false }),
       queryClient.invalidateQueries(qk.existingFiles(), { refetchActive: false }),
