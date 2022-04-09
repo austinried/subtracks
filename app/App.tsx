@@ -1,7 +1,7 @@
 import RootNavigator from '@app/navigation/RootNavigator'
 import SplashPage from '@app/screens/SplashPage'
 import colors from '@app/styles/colors'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { StatusBar, View, StyleSheet } from 'react-native'
 import ProgressHook from './components/ProgressHook'
 import { useStore } from './state/store'
@@ -16,12 +16,6 @@ const Debug = () => {
 }
 
 const App = () => {
-  const activeServerId = useStore(store => store.settings.activeServerId)
-
-  useEffect(() => {
-    queryClient.removeQueries()
-  }, [activeServerId])
-
   return (
     <QueryClientProvider client={queryClient}>
       <MenuProvider backHandler={true}>

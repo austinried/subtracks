@@ -3,7 +3,6 @@ import { CacheItemTypeKey } from '@app/models/cache'
 import queryClient from '@app/queryClient'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { cacheDir } from '@app/util/fs'
-import { useEffect } from 'react'
 import RNFS from 'react-native-fs'
 import qk from './queryKeys'
 
@@ -19,19 +18,9 @@ export const useSwitchActiveServer = () => {
 
     await queryClient.cancelQueries(undefined, { active: true })
     await resetPlayer()
-    queryClient.removeQueries(undefined, { active: true })
+    queryClient.removeQueries()
     setActiveServer(id)
   }
-}
-
-export const useActiveServerRefresh = (refresh: () => void) => {
-  const activeServerId = useStore(store => store.settings.activeServerId)
-
-  useEffect(() => {
-    if (activeServerId) {
-      refresh()
-    }
-  }, [activeServerId, refresh])
 }
 
 export const useFirstRun = () => {

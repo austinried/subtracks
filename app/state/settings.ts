@@ -26,6 +26,7 @@ export type SettingsSlice = {
   }
 
   client?: SubsonicApiClient
+  resetServer: boolean
 
   changeCacheBuster: () => void
 
@@ -77,6 +78,8 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     cacheBuster: newCacheBuster(),
   },
 
+  resetServer: false,
+
   changeCacheBuster: () => {
     set(store => {
       store.settings.cacheBuster = newCacheBuster()
@@ -100,8 +103,16 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
 
     set(state => {
+      state.resetServer = true
+    })
+
+    set(state => {
       state.settings.activeServerId = newActiveServer.id
       state.client = new SubsonicApiClient(newActiveServer)
+    })
+
+    set(state => {
+      state.resetServer = false
     })
   },
 

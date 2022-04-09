@@ -5,7 +5,6 @@ import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
 import { useQuerySearchResults } from '@app/hooks/query'
-import { useActiveServerRefresh } from '@app/hooks/settings'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, SearchResults, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
@@ -113,13 +112,6 @@ const Search = () => {
     }, [text]),
   )
 
-  useActiveServerRefresh(
-    useCallback(() => {
-      setText('')
-      setQuery('')
-    }, []),
-  )
-
   const debouncedSetQuery = useMemo(
     () =>
       debounce((value: string) => {
@@ -137,9 +129,9 @@ const Search = () => {
   )
 
   const resultsCount =
-    (data?.pages.reduce((acc, val) => (acc += val.artists.length), 0) || 0) +
-    (data?.pages.reduce((acc, val) => (acc += val.albums.length), 0) || 0) +
-    (data?.pages.reduce((acc, val) => (acc += val.songs.length), 0) || 0)
+    (data ? data.pages.reduce((acc, val) => (acc += val.artists.length), 0) : 0) +
+    (data ? data.pages.reduce((acc, val) => (acc += val.albums.length), 0) : 0) +
+    (data ? data.pages.reduce((acc, val) => (acc += val.songs.length), 0) : 0)
 
   return (
     <GradientScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={{ paddingTop }}>

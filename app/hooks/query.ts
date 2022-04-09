@@ -340,9 +340,9 @@ function getSongs<T extends AnyDataWithSongs>(data: T | undefined): Song[] {
   return data.songs || []
 }
 
-function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQueryResult<AlbumCoverArt>[]): void {
+function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQueryResult<AlbumCoverArt>[]): T {
   if (!query.data) {
-    return
+    return query
   }
 
   const mapSongCoverArt = (song: Song) => ({
@@ -351,21 +351,35 @@ function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQu
   })
 
   if (Array.isArray(query.data)) {
-    query.data = query.data.map(mapSongCoverArt)
-    return
+    return {
+      ...query,
+      data: query.data.map(mapSongCoverArt),
+    }
   }
 
   if ('pages' in query.data) {
-    for (const p of query.data.pages) {
-      p.songs = p.songs.map(mapSongCoverArt)
+    return {
+      ...query,
+      data: {
+        pages: query.data.pages.map(p => ({
+          ...p,
+          songs: p.songs.map(mapSongCoverArt),
+        })),
+      },
     }
-    return
   }
 
   if (query.data.songs) {
-    query.data.songs = query.data.songs.map(mapSongCoverArt)
-    return
+    return {
+      ...query,
+      data: {
+        ...query.data,
+        songs: query.data.songs.map(mapSongCoverArt),
+      },
+    }
   }
+
+  return query
 }
 
 // song cover art comes back from the api as a unique id per song even if it all points to the same
@@ -385,11 +399,12 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
       },
       staleTime: Infinity,
       cacheTime: Infinity,
+      notifyOnChangeProps: ['data', 'isFetched'] as any,
     })),
   )
 
   if (coverArts.every(c => c.isFetched)) {
-    setSongCoverArt(query, coverArts)
+    return setSongCoverArt(query, coverArts)
   }
 
   return query

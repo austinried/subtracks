@@ -10,6 +10,7 @@ import ServerView from '@app/screens/ServerView'
 import SettingsView from '@app/screens/Settings'
 import SongListView from '@app/screens/SongListView'
 import WebViewScreen from '@app/screens/WebViewScreen'
+import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { BottomTabNavigationProp, createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -170,12 +171,19 @@ const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = () => {
   const firstRun = useFirstRun()
+  const resetServer = useStore(store => store.resetServer)
 
   return (
     <Tab.Navigator tabBar={BottomTabBar} initialRouteName={firstRun ? 'settings' : 'home'}>
-      <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: 'Library' }} />
-      <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: 'Search' }} />
+      {resetServer ? (
+        <></>
+      ) : (
+        <>
+          <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: 'Home' }} />
+          <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: 'Library' }} />
+          <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: 'Search' }} />
+        </>
+      )}
       <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: 'Settings' }} />
     </Tab.Navigator>
   )
