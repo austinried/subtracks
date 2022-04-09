@@ -6078,10 +6078,9 @@ react-is@^16.13.0, react-is@^16.13.1, react-is@^16.7.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react-native-blob-util@^0.15.0:
+"react-native-blob-util@https://github.com/austinried/react-native-blob-util.git#android-downloadmanager-progress":
   version "0.15.0"
-  resolved "https://registry.yarnpkg.com/react-native-blob-util/-/react-native-blob-util-0.15.0.tgz#b75755e0169d7e3aed865a835c38fe584d2aa56a"
-  integrity sha512-hXUoh1eHe25sREQkblpXGQKe1rr8uE1QgEVQIBeF4MbCfscPOCB6YYlsQ9PvJp0dXHCE/H1g//WvkM7wQukJeQ==
+  resolved "https://github.com/austinried/react-native-blob-util.git#aa7a1a2b9653272914d0c8ce8ee2f38428ae3948"
   dependencies:
     base-64 "0.1.0"
     glob "^7.1.6"

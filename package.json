@@ -43,7 +43,7 @@
     "path": "^0.12.7",
     "react": "17.0.2",
     "react-native": "0.67.1",
-    "react-native-blob-util": "^0.15.0",
+    "react-native-blob-util": "https://github.com/austinried/react-native-blob-util.git#android-downloadmanager-progress",
     "react-native-fs": "^2.18.0",
     "react-native-gesture-handler": "^2.3.2",
     "react-native-image-colors": "^1.3.0",

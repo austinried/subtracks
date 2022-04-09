@@ -232,13 +232,11 @@ function assertMimeType(expected?: string, actual?: string) {
 export type FetchFileOptions = FetchExisingFileOptions & {
   fromUrl: string
   expectedContentType?: string
-  progress?: boolean
+  progress?: (received: number, total: number) => void
 }
 
 export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
   return async ({ serverId, itemType, itemId, fromUrl, expectedContentType, progress }) => {
-    progress = progress || false
-
     const fileDir = cacheDir(serverId, itemType, itemId)
     const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
 
@@ -287,9 +285,7 @@ export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> 
 
     let res: FetchBlobResponse
     if (progress) {
-      res = await config.fetch(...fetchParams).progress((received, total) => {
-        console.log('received', received, 'total', total)
-      })
+      res = await config.fetch(...fetchParams).progress(progress)
     } else {
       res = await config.fetch(...fetchParams)
     }
