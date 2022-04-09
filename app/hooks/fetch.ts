@@ -192,13 +192,14 @@ export const useFetchUnstar = () => {
 }
 
 export type FetchExisingFileOptions = {
-  serverId: string
   itemType: CacheItemTypeKey
   itemId: string
 }
 
 export const useFetchExistingFile: () => (options: FetchExisingFileOptions) => Promise<string | undefined> = () => {
-  return async ({ serverId, itemType, itemId }) => {
+  const serverId = useStore(store => store.settings.activeServerId)
+
+  return async ({ itemType, itemId }) => {
     const fileDir = cacheDir(serverId, itemType, itemId)
     try {
       const dir = await RNFS.readDir(fileDir)
@@ -236,7 +237,9 @@ export type FetchFileOptions = FetchExisingFileOptions & {
 }
 
 export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
-  return async ({ serverId, itemType, itemId, fromUrl, expectedContentType, progress }) => {
+  const serverId = useStore(store => store.settings.activeServerId)
+
+  return async ({ itemType, itemId, fromUrl, expectedContentType, progress }) => {
     const fileDir = cacheDir(serverId, itemType, itemId)
     const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
 

@@ -95,7 +95,6 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
 
 export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
-  const serverId = useStore(store => store.settings.activeServerId)
   const client = useStore(store => store.client)
   const buildStreamUri = useStore(store => store.buildStreamUri)
   const fetchFile = useFetchFile()
@@ -107,7 +106,7 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
     songCoverArt.map(coverArt => ({
       queryKey: qk.coverArt(coverArt, 'thumbnail'),
       queryFn: async () => {
-        if (!serverId || !client) {
+        if (!client) {
           return
         }
 
@@ -118,21 +117,20 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
           return existingCache
         }
 
-        const existingDisk = await fetchExistingFile({ serverId, itemId: coverArt, itemType })
+        const existingDisk = await fetchExistingFile({ itemId: coverArt, itemType })
         if (existingDisk) {
           return existingDisk
         }
 
         const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
         return await fetchFile({
-          serverId,
           itemType,
           itemId: coverArt,
           fromUrl,
           expectedContentType: 'image',
         })
       },
-      enabled: !!serverId && !!client && !!songs,
+      enabled: !!client && !!songs,
       staleTime: Infinity,
       cacheTime: Infinity,
       notifyOnChangeProps: ['data', 'isFetched'] as any,
