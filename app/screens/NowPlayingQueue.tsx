@@ -4,7 +4,7 @@ import NowPlayingBar from '@app/components/NowPlayingBar'
 import { useSkipTo } from '@app/hooks/trackplayer'
 import { Song } from '@app/models/library'
 import { mapTrackExtToSong } from '@app/models/map'
-import { useStore, useStoreDeep } from '@app/state/store'
+import { useStoreDeep } from '@app/state/store'
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
