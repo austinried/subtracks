@@ -1,15 +1,14 @@
 import { Song } from '@app/models/library'
 import { QueueContextType, TrackExt } from '@app/models/trackplayer'
+import queryClient from '@app/queryClient'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
-import uniq from 'lodash.uniq'
+import _ from 'lodash'
 import TrackPlayer from 'react-native-track-player'
 import { useQueries } from 'react-query'
 import { useFetchExistingFile, useFetchFile } from './fetch'
 import qk from './queryKeys'
-import zipObject from 'lodash.zipobject'
-import queryClient from '@app/queryClient'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -100,7 +99,7 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const fetchFile = useFetchFile()
   const fetchExistingFile = useFetchExistingFile()
 
-  const songCoverArt = uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
+  const songCoverArt = _.uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
 
   const coverArtPaths = useQueries(
     songCoverArt.map(coverArt => ({
@@ -137,7 +136,7 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
     })),
   )
 
-  const songCoverArtToPath = zipObject(
+  const songCoverArtToPath = _.zipObject(
     songCoverArt,
     coverArtPaths.map(c => c.data),
   )

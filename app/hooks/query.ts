@@ -4,8 +4,7 @@ import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
-import sortBy from 'lodash.sortby'
-import uniq from 'lodash.uniq'
+import _ from 'lodash'
 import {
   InfiniteData,
   useInfiniteQuery,
@@ -73,7 +72,7 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
       enabled: !!artistName && !query.isFetching && !querySuccess,
       select: data =>
         // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
-        sortBy(data.songs, [s => -(s.playCount || 0), s => -(s.averageRating || 0), s => -(s.userRating || 0)]),
+        _.sortBy(data.songs, [s => -(s.playCount || 0), s => -(s.averageRating || 0), s => -(s.userRating || 0)]),
       staleTime: Infinity,
       cacheTime: Infinity,
       notifyOnChangeProps: ['data', 'isError'],
@@ -375,7 +374,7 @@ const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
   const fetchAlbum = useFetchAlbum()
 
   const songs = getSongs(query.data)
-  const albumIds = uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
+  const albumIds = _.uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
 
   const coverArts = useQueries(
     albumIds.map(id => ({

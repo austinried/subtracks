@@ -11,7 +11,7 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
-import debounce from 'lodash.debounce'
+import _ from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -114,7 +114,7 @@ const Search = () => {
 
   const debouncedSetQuery = useMemo(
     () =>
-      debounce((value: string) => {
+      _.debounce((value: string) => {
         setQuery(value)
       }, 400),
     [],

@@ -4470,7 +4470,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 -----
 
-The following software may be included in this product: lodash, lodash.merge, lodash.template, lodash.templatesettings. A copy of the source code may be downloaded from https://github.com/lodash/lodash.git (lodash), https://github.com/lodash/lodash.git (lodash.merge), https://github.com/lodash/lodash.git (lodash.template), https://github.com/lodash/lodash.git (lodash.templatesettings). This software contains the following license and notice below:
+The following software may be included in this product: lodash, lodash.template, lodash.templatesettings. A copy of the source code may be downloaded from https://github.com/lodash/lodash.git (lodash), https://github.com/lodash/lodash.git (lodash.template), https://github.com/lodash/lodash.git (lodash.templatesettings). This software contains the following license and notice below:
 
 Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
@@ -4549,7 +4549,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -----
 
-The following software may be included in this product: lodash.debounce, lodash.omit, lodash.pick, lodash.sortby, lodash.throttle, lodash.uniq, lodash.zipobject. A copy of the source code may be downloaded from https://github.com/lodash/lodash.git (lodash.debounce), https://github.com/lodash/lodash.git (lodash.omit), https://github.com/lodash/lodash.git (lodash.pick), https://github.com/lodash/lodash.git (lodash.sortby), https://github.com/lodash/lodash.git (lodash.throttle), https://github.com/lodash/lodash.git (lodash.uniq), https://github.com/lodash/lodash.git (lodash.zipobject). This software contains the following license and notice below:
+The following software may be included in this product: lodash.debounce, lodash.omit, lodash.pick, lodash.throttle. A copy of the source code may be downloaded from https://github.com/lodash/lodash.git (lodash.debounce), https://github.com/lodash/lodash.git (lodash.omit), https://github.com/lodash/lodash.git (lodash.pick), https://github.com/lodash/lodash.git (lodash.throttle). This software contains the following license and notice below:
 
 Copyright jQuery Foundation and other contributors <https://jquery.org/>
 
