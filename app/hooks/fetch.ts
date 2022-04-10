@@ -232,6 +232,7 @@ function assertMimeType(expected?: string, actual?: string) {
 
 export type FetchFileOptions = FetchExisingFileOptions & {
   fromUrl: string
+  useCacheBuster?: boolean
   expectedContentType?: string
   progress?: (received: number, total: number) => void
 }
@@ -239,9 +240,11 @@ export type FetchFileOptions = FetchExisingFileOptions & {
 export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
   const serverId = useStore(store => store.settings.activeServerId)
 
-  return async ({ itemType, itemId, fromUrl, expectedContentType, progress }) => {
+  return async ({ itemType, itemId, fromUrl, useCacheBuster, expectedContentType, progress }) => {
+    useCacheBuster = useCacheBuster === undefined ? true : useCacheBuster
+
     const fileDir = cacheDir(serverId, itemType, itemId)
-    const filePathNoExt = path.join(fileDir, useStore.getState().settings.cacheBuster)
+    const filePathNoExt = path.join(fileDir, useCacheBuster ? useStore.getState().settings.cacheBuster : itemType)
 
     try {
       await RNFS.unlink(fileDir)
