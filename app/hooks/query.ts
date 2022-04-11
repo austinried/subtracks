@@ -65,14 +65,23 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   const querySuccess = query.isFetched && query.isSuccess && query.data && query.data.length > 0
 
   const fetchSearchResults = useFetchSearchResults()
+  const [artistCount, albumCount, songCount] = [0, 0, 300]
   const backupQuery = useQuery(
-    qk.search(artistName || '', 0, 0, 50),
-    () => fetchSearchResults({ query: artistName as string, songCount: 50 }),
+    qk.search(artistName || '', artistCount, albumCount, songCount),
+    () => fetchSearchResults({ query: artistName as string, artistCount, albumCount, songCount }),
     {
-      enabled: !!artistName && !query.isFetching && !querySuccess,
-      select: data =>
+      select: data => {
+        const artistNameLower = artistName?.toLowerCase()
+        const songs = data.songs.filter(s => s.artist?.toLowerCase() === artistNameLower)
+
         // sortBy is a stable sort, so that this doesn't change order arbitrarily and re-render
-        _.sortBy(data.songs, [s => -(s.playCount || 0), s => -(s.averageRating || 0), s => -(s.userRating || 0)]),
+        return _.sortBy(songs, [
+          s => -(s.playCount || 0),
+          s => -(s.averageRating || 0),
+          s => -(s.userRating || 0),
+        ]).slice(0, 50)
+      },
+      enabled: !!artistName && !query.isFetching && !querySuccess,
       staleTime: Infinity,
       cacheTime: Infinity,
       notifyOnChangeProps: ['data', 'isError'],
