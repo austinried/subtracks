@@ -93,6 +93,8 @@ const NowPlayingBar = React.memo(() => {
           type="cover"
           style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
           coverArt={coverArt}
+          size="thumbnail"
+          fadeDuration={0}
         />
         <View style={styles.detailsContainer}>
           <Text numberOfLines={1} style={styles.detailsTitle}>

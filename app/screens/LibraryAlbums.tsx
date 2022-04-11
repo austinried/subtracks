@@ -2,21 +2,22 @@ import { AlbumContextPressable } from '@app/components/ContextMenu'
 import CoverArt from '@app/components/CoverArt'
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
-import { useFetchPaginatedList } from '@app/hooks/list'
+import { useQueryAlbumList } from '@app/hooks/query'
+import { Album } from '@app/models/library'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumList2Params, GetAlbumList2Type } from '@app/subsonic/params'
+import { GetAlbumList2Type, GetAlbumList2TypeBase } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback } from 'react'
+import equal from 'fast-deep-equal/es6/react'
+import React from 'react'
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 
 const AlbumItem = React.memo<{
-  id: string
+  album: Album
   size: number
   height: number
-}>(({ id, size, height }) => {
-  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
+}>(({ album, size, height }) => {
   const navigation = useNavigation()
 
   if (!album) {
@@ -28,8 +29,14 @@ const AlbumItem = React.memo<{
       album={album}
       menuStyle={[styles.itemMenu, { width: size }]}
       triggerWrapperStyle={[styles.itemWrapper, { height }]}
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
-      <CoverArt type="cover" coverArt={album.coverArt} style={{ height: size, width: size }} resizeMode={'cover'} />
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}>
+      <CoverArt
+        type="cover"
+        coverArt={album.coverArt}
+        style={{ height: size, width: size }}
+        resizeMode="cover"
+        size="thumbnail"
+      />
       <View style={styles.itemDetails}>
         <Text style={styles.title} numberOfLines={1}>
           {album.name}
@@ -40,11 +47,11 @@ const AlbumItem = React.memo<{
       </View>
     </AlbumContextPressable>
   )
-})
+}, equal)
 
 const AlbumListRenderItem: React.FC<{
-  item: { id: string; size: number; height: number }
-}> = ({ item }) => <AlbumItem id={item.id} size={item.size} height={item.height} />
+  item: { album: Album; size: number; height: number }
+}> = ({ item }) => <AlbumItem album={item.album} size={item.size} height={item.height} />
 
 const filterOptions: OptionData[] = [
   { text: 'By Name', value: 'alphabeticalByName' },
@@ -62,42 +69,7 @@ const AlbumsList = () => {
   const filter = useStoreDeep(store => store.settings.screens.library.albumsFilter)
   const setFilter = useStore(store => store.setLibraryAlbumFilter)
 
-  const fetchAlbumList = useStore(store => store.fetchAlbumList)
-  const fetchPage = useCallback(
-    (size: number, offset: number) => {
-      let params: GetAlbumList2Params
-      switch (filter.type) {
-        case 'byYear':
-          params = {
-            size,
-            offset,
-            type: filter.type,
-            fromYear: filter.fromYear,
-            toYear: filter.toYear,
-          }
-          break
-        case 'byGenre':
-          params = {
-            size,
-            offset,
-            type: filter.type,
-            genre: filter.genre,
-          }
-          break
-        default:
-          params = {
-            size,
-            offset,
-            type: filter.type,
-          }
-          break
-      }
-      return fetchAlbumList(params)
-    },
-    [fetchAlbumList, filter.fromYear, filter.genre, filter.toYear, filter.type],
-  )
-
-  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(fetchPage, 300)
+  const { isLoading, data, fetchNextPage, refetch } = useQueryAlbumList(filter.type as GetAlbumList2TypeBase, 300)
 
   const layout = useWindowDimensions()
 
@@ -107,15 +79,15 @@ const AlbumsList = () => {
   return (
     <View style={styles.container}>
       <GradientFlatList
-        data={list.map(id => ({ id, size, height }))}
+        data={data ? data.pages.flatMap(albums => albums.map(album => ({ album, size, height }))) : []}
         renderItem={AlbumListRenderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.album.id}
         numColumns={3}
         removeClippedSubviews={true}
-        refreshing={refreshing}
-        onRefresh={refresh}
+        refreshing={isLoading}
+        onRefresh={refetch}
         overScrollMode="never"
-        onEndReached={fetchNextPage}
+        onEndReached={() => fetchNextPage()}
         onEndReachedThreshold={6}
         windowSize={5}
       />

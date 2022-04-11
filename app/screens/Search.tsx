@@ -4,14 +4,14 @@ import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
-import { useActiveServerRefresh } from '@app/hooks/settings'
+import { useQuerySearchResults } from '@app/hooks/query'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, SearchResults, Song } from '@app/models/library'
-import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { mapById } from '@app/util/state'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import debounce from 'lodash.debounce'
+import equal from 'fast-deep-equal/es6/react'
+import _ from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -24,44 +24,27 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const setQueue = useStore(store => store.setQueue)
+  const { setQueue, isReady, contextId } = useSetQueue('song', [item])
 
   return (
     <ListItem
       item={item}
-      contextId={item.id}
+      contextId={contextId}
       queueId={0}
       showArt={true}
       showStar={false}
-      onPress={() => setQueue([item], item.title, 'song', item.id, 0)}
+      onPress={() => setQueue({ title: item.title, playTrack: 0 })}
+      disabled={!isReady}
     />
   )
-})
+}, equal)
 
 const ResultsCategory = React.memo<{
   name: string
   query: string
-  ids: string[]
+  items: (Artist | Album | Song)[]
   type: 'artist' | 'album' | 'song'
-}>(({ name, query, type, ids }) => {
-  const items: (Album | Artist | Song)[] = useStoreDeep(
-    useCallback(
-      store => {
-        switch (type) {
-          case 'album':
-            return mapById(store.library.albums, ids)
-          case 'artist':
-            return mapById(store.library.artists, ids)
-          case 'song':
-            return mapById(store.library.songs, ids)
-          default:
-            return []
-        }
-      },
-      [ids, type],
-    ),
-  )
-
+}>(({ name, query, type, items }) => {
   const navigation = useNavigation()
 
   if (items.length === 0) {
@@ -88,7 +71,7 @@ const ResultsCategory = React.memo<{
       )}
     </>
   )
-})
+}, equal)
 
 const Results = React.memo<{
   results: SearchResults
@@ -96,17 +79,17 @@ const Results = React.memo<{
 }>(({ results, query }) => {
   return (
     <>
-      <ResultsCategory name="Artists" query={query} type={'artist'} ids={results.artists} />
-      <ResultsCategory name="Albums" query={query} type={'album'} ids={results.albums} />
-      <ResultsCategory name="Songs" query={query} type={'song'} ids={results.songs} />
+      <ResultsCategory name="Artists" query={query} type={'artist'} items={results.artists} />
+      <ResultsCategory name="Albums" query={query} type={'album'} items={results.albums} />
+      <ResultsCategory name="Songs" query={query} type={'song'} items={results.songs} />
     </>
   )
-})
+}, equal)
 
 const Search = () => {
-  const fetchSearchResults = useStore(store => store.fetchSearchResults)
-  const [results, setResults] = useState<SearchResults>({ artists: [], albums: [], songs: [] })
-  const [refreshing, setRefreshing] = useState(false)
+  const [query, setQuery] = useState('')
+  const { data, isLoading } = useQuerySearchResults({ query, albumCount: 5, artistCount: 5, songCount: 5 })
+
   const [text, setText] = useState('')
   const searchBarRef = useRef<ReactTextInput>(null)
   const scrollRef = useRef<ScrollView>(null)
@@ -116,42 +99,39 @@ const Search = () => {
     useCallback(() => {
       const task = InteractionManager.runAfterInteractions(() => {
         setTimeout(() => {
+          if (text) {
+            return
+          }
           setText('')
-          setResults({ artists: [], albums: [], songs: [] })
+          setQuery('')
           searchBarRef.current?.focus()
           scrollRef.current?.scrollTo({ y: 0, animated: true })
         }, 50)
       })
       return () => task.cancel()
-    }, [searchBarRef, scrollRef]),
+    }, [text]),
   )
 
-  useActiveServerRefresh(
-    useCallback(() => {
-      setText('')
-      setResults({ artists: [], albums: [], songs: [] })
-    }, []),
-  )
-
-  const debouncedonUpdateSearch = useMemo(
+  const debouncedSetQuery = useMemo(
     () =>
-      debounce(async (query: string) => {
-        setRefreshing(true)
-        setResults(await fetchSearchResults({ query, albumCount: 5, artistCount: 5, songCount: 5 }))
-        setRefreshing(false)
+      _.debounce((value: string) => {
+        setQuery(value)
       }, 400),
-    [fetchSearchResults],
+    [],
   )
 
   const onChangeText = useCallback(
     (value: string) => {
       setText(value)
-      debouncedonUpdateSearch(value)
+      debouncedSetQuery(value)
     },
-    [setText, debouncedonUpdateSearch],
+    [setText, debouncedSetQuery],
   )
 
-  const resultsCount = results.albums.length + results.artists.length + results.songs.length
+  const resultsCount =
+    (data ? data.pages.reduce((acc, val) => (acc += val.artists.length), 0) : 0) +
+    (data ? data.pages.reduce((acc, val) => (acc += val.albums.length), 0) : 0) +
+    (data ? data.pages.reduce((acc, val) => (acc += val.songs.length), 0) : 0)
 
   return (
     <GradientScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={{ paddingTop }}>
@@ -164,14 +144,13 @@ const Search = () => {
             value={text}
             onChangeText={onChangeText}
           />
-          <ActivityIndicator
-            animating={refreshing}
-            size="small"
-            color={colors.text.secondary}
-            style={styles.activity}
-          />
+          <ActivityIndicator animating={isLoading} size="small" color={colors.text.secondary} style={styles.activity} />
         </View>
-        {resultsCount > 0 ? <Results results={results} query={text} /> : <NothingHere style={styles.noResults} />}
+        {data !== undefined && resultsCount > 0 ? (
+          <Results results={data.pages[0]} query={text} />
+        ) : (
+          <NothingHere style={styles.noResults} />
+        )}
       </View>
     </GradientScrollView>
   )

@@ -3,21 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import equal from 'fast-deep-equal'
 import create, { GetState, Mutate, SetState, State, StateCreator, StateSelector, StoreApi } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
-import { CacheSlice, createCacheSlice } from './cache'
-import { createLibrarySlice, LibrarySlice } from './library'
 import migrations from './migrations'
 import { createTrackPlayerSlice, TrackPlayerSlice } from './trackplayer'
-import { createTrackPlayerMapSlice, TrackPlayerMapSlice } from './trackplayermap'
 import produce, { Draft } from 'immer'
 import { WritableDraft } from 'immer/dist/internal'
 
 const DB_VERSION = migrations.length
 
 export type Store = SettingsSlice &
-  LibrarySlice &
-  TrackPlayerSlice &
-  TrackPlayerMapSlice &
-  CacheSlice & {
+  TrackPlayerSlice & {
     hydrated: boolean
     setHydrated: (hydrated: boolean) => void
   }
@@ -63,10 +57,7 @@ export const useStore = create<
     persist(
       immer((set, get) => ({
         ...createSettingsSlice(set, get),
-        ...createLibrarySlice(set, get),
         ...createTrackPlayerSlice(set, get),
-        ...createTrackPlayerMapSlice(set, get),
-        ...createCacheSlice(set, get),
 
         hydrated: false,
         setHydrated: hydrated =>
@@ -78,20 +69,20 @@ export const useStore = create<
         name: '@appStore',
         version: DB_VERSION,
         getStorage: () => AsyncStorage,
-        partialize: state => ({ settings: state.settings, cacheFiles: state.cacheFiles }),
+        partialize: state => ({ settings: state.settings }),
         onRehydrateStorage: _preState => {
           return async (postState, _error) => {
             await postState?.setActiveServer(postState.settings.activeServerId, true)
             postState?.setHydrated(true)
           }
         },
-        migrate: (persistedState, version) => {
+        migrate: async (persistedState, version) => {
           if (version > DB_VERSION) {
             throw new Error('cannot migrate db on a downgrade, delete all data first')
           }
 
           for (let i = version; i < DB_VERSION; i++) {
-            persistedState = migrations[i](persistedState)
+            persistedState = await migrations[i](persistedState)
           }
 
           return persistedState

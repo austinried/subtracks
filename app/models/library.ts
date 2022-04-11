@@ -2,7 +2,7 @@ export interface Artist {
   itemType: 'artist'
   id: string
   name: string
-  starred?: Date
+  starred?: number
   coverArt?: string
 }
 
@@ -18,7 +18,7 @@ export interface Album {
   name: string
   artist?: string
   artistId?: string
-  starred?: Date
+  starred?: number
   coverArt?: string
   year?: number
 }
@@ -42,16 +42,24 @@ export interface Song {
   track?: number
   discNumber?: number
   duration?: number
-  starred?: Date
+  starred?: number
   coverArt?: string
+  playCount?: number
+  userRating?: number
+  averageRating?: number
 }
 
 export interface SearchResults {
-  artists: string[]
-  albums: string[]
-  songs: string[]
+  artists: Artist[]
+  albums: Album[]
+  songs: Song[]
 }
 
 export type StarrableItemType = 'album' | 'song' | 'artist'
 
 export type ListableItem = Album | Song | Artist | Playlist
+
+export interface AlbumCoverArt {
+  albumId: string
+  coverArt?: string
+}

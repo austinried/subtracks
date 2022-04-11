@@ -1,7 +1,5 @@
 import Button from '@app/components/Button'
 import { Song } from '@app/models/library'
-import { QueueContextType } from '@app/models/trackplayer'
-import { useStore } from '@app/state/store'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
@@ -11,13 +9,12 @@ import IconMat from 'react-native-vector-icons/MaterialIcons'
 const ListPlayerControls = React.memo<{
   songs: Song[]
   typeName: string
-  queueName: string
-  queueContextType: QueueContextType
-  queueContextId: string
   style?: StyleProp<ViewStyle>
-}>(({ songs, typeName, queueName, queueContextType, queueContextId, style }) => {
+  play: () => void
+  shuffle: () => void
+  disabled?: boolean
+}>(({ typeName, style, play, shuffle, disabled }) => {
   const [downloaded, setDownloaded] = useState(false)
-  const setQueue = useStore(store => store.setQueue)
 
   return (
     <View style={[styles.controls, style]}>
@@ -34,16 +31,10 @@ const ListPlayerControls = React.memo<{
         </Button>
       </View>
       <View style={styles.controlsCenter}>
-        <Button
-          title={`Play ${typeName}`}
-          disabled={songs.length === 0}
-          onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, false)}
-        />
+        <Button title={`Play ${typeName}`} disabled={disabled} onPress={play} />
       </View>
       <View style={styles.controlsSide}>
-        <Button
-          disabled={songs.length === 0}
-          onPress={() => setQueue(songs, queueName, queueContextType, queueContextId, undefined, true)}>
+        <Button disabled={disabled} onPress={shuffle}>
           <Icon name="shuffle" size={26} color="white" />
         </Button>
       </View>

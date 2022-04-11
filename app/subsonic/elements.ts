@@ -101,10 +101,7 @@ export class BaseArtistInfoElement<T> {
       this.largeImageUrl = e.getElementsByTagName('largeImageUrl')[0].textContent as string
     }
 
-    const similarArtistElements = e.getElementsByTagName('similarArtist')
-    for (let i = 0; i < similarArtistElements.length; i++) {
-      this.similarArtists.push(new artistType(similarArtistElements[i]))
-    }
+    this.similarArtists = Array.from(e.getElementsByTagName('similarArtist')).map(i => new artistType(i))
   }
 }
 
@@ -250,9 +247,7 @@ export class PlaylistElement {
   coverArt?: string
 
   constructor(e: Element) {
-    for (let i = 0; i < e.getElementsByTagName('allowedUser').length; i++) {
-      this.allowedUser.push(e.getElementsByTagName('allowedUser')[i].textContent as string)
-    }
+    this.allowedUser = Array.from(e.getElementsByTagName('allowedUser')).map(i => i.textContent as string)
 
     this.id = requiredString(e, 'id')
     this.name = requiredString(e, 'name')
@@ -273,8 +268,6 @@ export class PlaylistWithSongsElement extends PlaylistElement {
   constructor(e: Element) {
     super(e)
 
-    for (let i = 0; i < e.getElementsByTagName('entry').length; i++) {
-      this.songs.push(new ChildElement(e.getElementsByTagName('entry')[i]))
-    }
+    this.songs = Array.from(e.getElementsByTagName('entry')).map(i => new ChildElement(i))
   }
 }

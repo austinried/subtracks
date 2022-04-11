@@ -1,7 +1,7 @@
 import FilterButton, { OptionData } from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList2 } from '@app/hooks/list'
+import { useQueryArtists } from '@app/hooks/query'
 import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
@@ -19,17 +19,19 @@ const filterOptions: OptionData[] = [
 ]
 
 const ArtistsList = () => {
-  const fetchArtists = useStore(store => store.fetchArtists)
-  const { refreshing, refresh } = useFetchList2(fetchArtists)
-  const artists = useStoreDeep(store => store.library.artists)
-  const artistOrder = useStoreDeep(store => store.library.artistOrder)
-
   const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
   const setFilter = useStore(store => store.setLibraryArtistFiler)
+
+  const { isLoading, data, refetch } = useQueryArtists()
   const [sortedList, setSortedList] = useState<Artist[]>([])
 
   useEffect(() => {
-    const list = Object.values(artists)
+    if (!data) {
+      setSortedList([])
+      return
+    }
+
+    const list = Object.values(data.byId)
     switch (filter.type) {
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
@@ -38,13 +40,13 @@ const ArtistsList = () => {
         setSortedList([...list].filter(a => a.starred))
         break
       case 'alphabeticalByName':
-        setSortedList(artistOrder.map(id => artists[id]))
+        setSortedList(data.allIds.map(id => data.byId[id]))
         break
       default:
         setSortedList([...list])
         break
     }
-  }, [filter.type, artists, artistOrder])
+  }, [filter.type, data])
 
   return (
     <View style={styles.container}>
@@ -52,8 +54,8 @@ const ArtistsList = () => {
         data={sortedList}
         renderItem={ArtistRenderItem}
         keyExtractor={item => item.id}
-        onRefresh={refresh}
-        refreshing={refreshing}
+        onRefresh={refetch}
+        refreshing={isLoading}
         overScrollMode="never"
         windowSize={3}
         contentMarginTop={6}

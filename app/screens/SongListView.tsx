@@ -5,12 +5,13 @@ import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
-import { useCoverArtFile } from '@app/hooks/cache'
-import { Song, Album, Playlist } from '@app/models/library'
-import { useStore, useStoreDeep } from '@app/state/store'
+import { useQueryAlbum, useQueryCoverArtPath, useQueryPlaylist } from '@app/hooks/query'
+import { useSetQueue } from '@app/hooks/trackplayer'
+import { Album, Playlist, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import React, { useCallback, useEffect, useState } from 'react'
+import equal from 'fast-deep-equal/es6/react'
+import React, { useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 type SongListType = 'album' | 'playlist'
@@ -29,6 +30,7 @@ const SongRenderItem: React.FC<{
     subtitle?: string
     onPress?: () => void
     showArt?: boolean
+    disabled?: boolean
   }
 }> = ({ item }) => (
   <ListItem
@@ -39,6 +41,7 @@ const SongRenderItem: React.FC<{
     onPress={item.onPress}
     showArt={item.showArt}
     style={styles.listItem}
+    disabled={item.disabled}
   />
 )
 
@@ -49,13 +52,8 @@ const SongListDetails = React.memo<{
   songs?: Song[]
   subtitle?: string
 }>(({ title, songList, songs, subtitle, type }) => {
-  const coverArtFile = useCoverArtFile(songList?.coverArt, 'thumbnail')
+  const { data: coverArtPath } = useQueryCoverArtPath(songList?.coverArt, 'thumbnail')
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
-  const setQueue = useStore(store => store.setQueue)
-
-  if (!songList) {
-    return <SongListDetailsFallback />
-  }
 
   const _songs = [...(songs || [])]
   let typeName = ''
@@ -75,6 +73,16 @@ const SongListDetails = React.memo<{
     typeName = 'Playlist'
   }
 
+  const { setQueue, isReady, contextId } = useSetQueue(type, _songs)
+
+  if (!songList) {
+    return <SongListDetailsFallback />
+  }
+
+  const disabled = !isReady || _songs.length === 0
+  const play = (track?: number, shuffle?: boolean) => () =>
+    setQueue({ title: songList.name, playTrack: track, shuffle })
+
   return (
     <View style={styles.container}>
       <HeaderBar
@@ -85,16 +93,17 @@ const SongListDetails = React.memo<{
       <ImageGradientFlatList
         data={_songs.map((s, i) => ({
           song: s,
-          contextId: songList.id,
+          contextId,
           queueId: i,
           subtitle: s.artist,
-          onPress: () => setQueue(_songs, songList.name, type, songList.id, i),
+          onPress: play(i),
           showArt: songList.itemType === 'playlist',
+          disabled: disabled,
         }))}
         renderItem={SongRenderItem}
         keyExtractor={(item, i) => i.toString()}
         backgroundProps={{
-          imagePath: coverArtFile?.file?.path,
+          imagePath: coverArtPath,
           style: styles.container,
           onGetColor: setHeaderColor,
         }}
@@ -117,86 +126,66 @@ const SongListDetails = React.memo<{
               style={styles.controls}
               songs={_songs}
               typeName={typeName}
-              queueName={songList.name}
-              queueContextId={songList.id}
-              queueContextType={type}
+              play={play(undefined, false)}
+              shuffle={play(undefined, true)}
+              disabled={disabled}
             />
           </View>
         }
       />
     </View>
   )
-})
+}, equal)
 
 const PlaylistView = React.memo<{
   id: string
   title: string
-}>(({ id, title }) => {
-  const playlist = useStoreDeep(useCallback(store => store.library.playlists[id], [id]))
-  const songs = useStoreDeep(
-    useCallback(
-      store => {
-        const ids = store.library.playlistSongs[id]
-        return ids ? ids.map(i => store.library.songs[i]) : undefined
-      },
-      [id],
-    ),
-  )
-
-  const fetchPlaylist = useStore(store => store.fetchPlaylist)
-
-  useEffect(() => {
-    if (!playlist || !songs) {
-      fetchPlaylist(id)
-    }
-  }, [playlist, fetchPlaylist, id, songs])
-
-  return (
-    <SongListDetails title={title} songList={playlist} songs={songs} subtitle={playlist?.comment} type="playlist" />
-  )
-})
-
-const AlbumView = React.memo<{
-  id: string
-  title: string
-}>(({ id, title }) => {
-  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
-  const songs = useStoreDeep(
-    useCallback(
-      store => {
-        const ids = store.library.albumSongs[id]
-        return ids ? ids.map(i => store.library.songs[i]) : undefined
-      },
-      [id],
-    ),
-  )
-
-  const fetchAlbum = useStore(store => store.fetchAlbum)
-
-  useEffect(() => {
-    if (!album || !songs) {
-      fetchAlbum(id)
-    }
-  }, [album, fetchAlbum, id, songs])
+  playlist?: Playlist
+}>(({ id, title, playlist }) => {
+  const query = useQueryPlaylist(id, playlist)
 
   return (
     <SongListDetails
       title={title}
-      songList={album}
-      songs={songs}
-      subtitle={(album?.artist || '') + (album?.year ? ' • ' + album?.year : '')}
+      songList={query.data?.playlist}
+      songs={query.data?.songs}
+      subtitle={query.data?.playlist?.comment}
+      type="playlist"
+    />
+  )
+}, equal)
+
+const AlbumView = React.memo<{
+  id: string
+  title: string
+  album?: Album
+}>(({ id, title, album }) => {
+  const query = useQueryAlbum(id, album)
+
+  return (
+    <SongListDetails
+      title={title}
+      songList={query.data?.album}
+      songs={query.data?.songs}
+      subtitle={(query.data?.album?.artist || '') + (query.data?.album?.year ? ' • ' + query.data?.album?.year : '')}
       type="album"
     />
   )
-})
+}, equal)
 
 const SongListView = React.memo<{
   id: string
   title: string
   type: SongListType
-}>(({ id, title, type }) => {
-  return type === 'album' ? <AlbumView id={id} title={title} /> : <PlaylistView id={id} title={title} />
-})
+  album?: Album
+  playlist?: Playlist
+}>(({ id, title, type, album, playlist }) => {
+  return type === 'album' ? (
+    <AlbumView id={id} title={title} album={album} />
+  ) : (
+    <PlaylistView id={id} title={title} playlist={playlist} />
+  )
+}, equal)
 
 const styles = StyleSheet.create({
   container: {
