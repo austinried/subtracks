@@ -593,6 +593,12 @@
   license: The Apache Software License, Version 2.0
   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
   url: https://github.com/raphw/byte-buddy
+- artifact: org.apache.commons:commons-lang3:+
+  name: commons-lang3
+  copyrightHolder: Original Author
+  license: The Apache Software License, Version 2.0
+  licenseUrl: http://www.apache.org/licenses/LICENSE-2.0.txt
+  url: http://commons.apache.org/lang/
 - artifact: org.checkerframework:checker-compat-qual:+
   name: checker-compat-qual
   copyrightHolder: Original Author

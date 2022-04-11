@@ -12,3 +12,8 @@ export interface OrderedById<T> {
 export interface PaginatedList {
   [offset: number]: string[]
 }
+
+export interface CollectionById<T extends { id: string }> {
+  byId: ById<T>
+  allIds: string[]
+}

@@ -1,10 +1,21 @@
 import { NoClientError } from '@app/models/error'
-import { Song } from '@app/models/library'
 import { Progress, QueueContextType, TrackExt } from '@app/models/trackplayer'
 import PromiseQueue from '@app/util/PromiseQueue'
 import produce from 'immer'
 import TrackPlayer, { PlayerOptions, RepeatMode, State } from 'react-native-track-player'
 import { GetStore, SetStore } from './store'
+
+export type SetQueueOptions = {
+  title: string
+  playTrack?: number
+  shuffle?: boolean
+}
+
+export type SetQueueOptionsInternal = SetQueueOptions & {
+  queue: TrackExt[]
+  contextId: string
+  type: QueueContextType
+}
 
 export type TrackPlayerSlice = {
   queueName?: string
@@ -33,14 +44,7 @@ export type TrackPlayerSlice = {
   setCurrentTrackIdx: (idx?: number) => void
 
   queue: TrackExt[]
-  setQueue: (
-    songs: Song[],
-    name: string,
-    contextType: QueueContextType,
-    contextId: string,
-    playTrack?: number,
-    shuffle?: boolean,
-  ) => Promise<void>
+  setQueue: (options: SetQueueOptionsInternal) => Promise<void>
 
   progress: Progress
   setProgress: (progress: Progress) => void
@@ -175,18 +179,16 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
     }),
 
   queue: [],
-  setQueue: async (songs, name, contextType, contextId, playTrack, shuffle) => {
+  setQueue: async ({ queue, title, type, contextId, playTrack, shuffle }) => {
     return trackPlayerCommands.enqueue(async () => {
       const shuffled = shuffle !== undefined ? shuffle : !!get().shuffleOrder
 
       await TrackPlayer.setupPlayer(get().getPlayerOptions())
       await TrackPlayer.reset()
 
-      if (songs.length === 0) {
+      if (queue.length === 0) {
         return
       }
-
-      let queue = await get().mapSongstoTrackExts(songs)
 
       if (shuffled) {
         const { tracks, shuffleOrder } = shuffleTracks(queue, playTrack)
@@ -206,8 +208,8 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
       try {
         set(state => {
           state.queue = queue
-          state.queueName = name
-          state.queueContextType = contextType
+          state.queueName = title
+          state.queueContextType = type
           state.queueContextId = contextId
         })
         get().setCurrentTrackIdx(playTrack)

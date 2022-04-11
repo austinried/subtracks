@@ -54,7 +54,8 @@ const ListItem: React.FC<{
   listStyle?: 'big' | 'small'
   subtitle?: string
   style?: StyleProp<ViewStyle>
-}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style }) => {
+  disabled?: boolean
+}> = ({ item, contextId, queueId, onPress, showArt, showStar, subtitle, listStyle, style, disabled }) => {
   const navigation = useNavigation()
 
   showStar = showStar === undefined ? true : showStar
@@ -65,13 +66,13 @@ const ListItem: React.FC<{
   if (!onPress) {
     switch (item.itemType) {
       case 'album':
-        onPress = () => navigation.navigate('album', { id: item.id, title: item.name })
+        onPress = () => navigation.navigate('album', { id: item.id, title: item.name, album: item })
         break
       case 'artist':
         onPress = () => navigation.navigate('artist', { id: item.id, title: item.name })
         break
       case 'playlist':
-        onPress = () => navigation.navigate('playlist', { id: item.id, title: item.name })
+        onPress = () => navigation.navigate('playlist', { id: item.id, title: item.name, playlist: item })
         break
     }
   }
@@ -90,35 +91,43 @@ const ListItem: React.FC<{
 
   const itemPressable = useCallback(
     ({ children }) => (
-      <PressableOpacity onPress={onPress} style={styles.item}>
+      <PressableOpacity onPress={onPress} style={styles.item} disabled={disabled}>
         {children}
       </PressableOpacity>
     ),
-    [onPress],
+    [disabled, onPress],
   )
   const albumPressable = useCallback(
     ({ children }) => (
-      <AlbumContextPressable album={item as Album} onPress={onPress} triggerWrapperStyle={styles.item}>
+      <AlbumContextPressable
+        album={item as Album}
+        onPress={onPress}
+        triggerWrapperStyle={styles.item}
+        disabled={disabled}>
         {children}
       </AlbumContextPressable>
     ),
-    [item, onPress],
+    [disabled, item, onPress],
   )
   const songPressable = useCallback(
     ({ children }) => (
-      <SongContextPressable song={item as Song} onPress={onPress} triggerWrapperStyle={styles.item}>
+      <SongContextPressable song={item as Song} onPress={onPress} triggerWrapperStyle={styles.item} disabled={disabled}>
         {children}
       </SongContextPressable>
     ),
-    [item, onPress],
+    [disabled, item, onPress],
   )
   const artistPressable = useCallback(
     ({ children }) => (
-      <ArtistContextPressable artist={item as Artist} onPress={onPress} triggerWrapperStyle={styles.item}>
+      <ArtistContextPressable
+        artist={item as Artist}
+        onPress={onPress}
+        triggerWrapperStyle={styles.item}
+        disabled={disabled}>
         {children}
       </ArtistContextPressable>
     ),
-    [item, onPress],
+    [disabled, item, onPress],
   )
 
   let PressableComponent = itemPressable
@@ -180,7 +189,7 @@ const ListItem: React.FC<{
       </PressableComponent>
       <View style={styles.controls}>
         {showStar && item.itemType !== 'playlist' && (
-          <PressableStar id={item.id} type={item.itemType} size={26} style={styles.controlItem} />
+          <PressableStar id={item.id} type={item.itemType} size={26} style={styles.controlItem} disabled={disabled} />
         )}
       </View>
     </View>

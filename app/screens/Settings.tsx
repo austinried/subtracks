@@ -5,7 +5,7 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
 import SettingsSwitch from '@app/components/SettingsSwitch'
 import TextInput from '@app/components/TextInput'
-import { useSwitchActiveServer } from '@app/hooks/settings'
+import { useSwitchActiveServer, useResetImageCache } from '@app/hooks/settings'
 import { Server } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -207,25 +207,16 @@ const SettingsContent = React.memo(() => {
   const maxBuffer = useStore(store => store.settings.maxBuffer)
   const setMaxBuffer = useStore(store => store.setMaxBuffer)
 
-  const clearImageCache = useStore(store => store.clearImageCache)
   const [clearing, setClearing] = useState(false)
+  const resetImageCache = useResetImageCache()
 
   const navigation = useNavigation()
 
-  const clear = useCallback(() => {
+  const clear = useCallback(async () => {
     setClearing(true)
-
-    const waitForClear = async () => {
-      try {
-        await clearImageCache()
-      } catch (err) {
-        console.log(err)
-      } finally {
-        setClearing(false)
-      }
-    }
-    waitForClear()
-  }, [clearImageCache])
+    await resetImageCache()
+    setClearing(false)
+  }, [resetImageCache])
 
   const setMinBufferText = useCallback((text: string) => setMinBuffer(parseFloat(text)), [setMinBuffer])
   const setMaxBufferText = useCallback((text: string) => setMaxBuffer(parseFloat(text)), [setMaxBuffer])

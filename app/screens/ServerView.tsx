@@ -35,8 +35,6 @@ const ServerView: React.FC<{
   )
 
   const [testing, setTesting] = useState(false)
-  const [removing, setRemoving] = useState(false)
-  const [saving, setSaving] = useState(false)
 
   const validate = useCallback(() => {
     return !!address && !!username && !!password
@@ -57,7 +55,7 @@ const ServerView: React.FC<{
   const createServer = useCallback<() => Server>(() => {
     if (usePlainPassword) {
       return {
-        id: server?.id || (uuid.v4() as string),
+        id: server?.id || '',
         usePlainPassword,
         plainPassword: password,
         address,
@@ -77,7 +75,7 @@ const ServerView: React.FC<{
     }
 
     return {
-      id: server?.id || (uuid.v4() as string),
+      id: server?.id || '',
       address,
       username,
       usePlainPassword,
@@ -91,22 +89,15 @@ const ServerView: React.FC<{
       return
     }
 
-    setSaving(true)
     const update = createServer()
 
-    const waitForSave = async () => {
-      try {
-        if (id) {
-          updateServer(update)
-        } else {
-          await addServer(update)
-        }
-        exit()
-      } catch (err) {
-        setSaving(false)
-      }
+    if (id) {
+      updateServer(update)
+    } else {
+      addServer(update)
     }
-    waitForSave()
+
+    exit()
   }, [addServer, createServer, exit, id, updateServer, validate])
 
   const remove = useCallback(() => {
@@ -114,16 +105,8 @@ const ServerView: React.FC<{
       return
     }
 
-    setRemoving(true)
-    const waitForRemove = async () => {
-      try {
-        await removeServer(id as string)
-        exit()
-      } catch (err) {
-        setRemoving(false)
-      }
-    }
-    waitForRemove()
+    removeServer(id as string)
+    exit()
   }, [canRemove, exit, id, removeServer])
 
   const togglePlainPassword = useCallback(
@@ -162,8 +145,8 @@ const ServerView: React.FC<{
   }, [createServer, pingServer])
 
   const disableControls = useCallback(() => {
-    return !validate() || testing || removing || saving
-  }, [validate, testing, removing, saving])
+    return !validate() || testing
+  }, [validate, testing])
 
   const formatAddress = useCallback(() => {
     let addressFormatted = address.trim()

@@ -2,6 +2,7 @@ import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/s
 import { ById } from '@app/models/state'
 import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
+import uuid from 'react-native-uuid'
 
 export type SettingsSlice = {
   settings: {
@@ -21,13 +22,17 @@ export type SettingsSlice = {
     maxBitrateMobile: number
     minBuffer: number
     maxBuffer: number
+    cacheBuster: string
   }
 
   client?: SubsonicApiClient
+  resetServer: boolean
+
+  changeCacheBuster: () => void
 
   setActiveServer: (id: string | undefined, force?: boolean) => Promise<void>
-  addServer: (server: Server) => Promise<void>
-  removeServer: (id: string) => Promise<void>
+  addServer: (server: Server) => void
+  removeServer: (id: string) => void
   updateServer: (server: Server) => void
 
   setScrobble: (scrobble: boolean) => void
@@ -40,6 +45,10 @@ export type SettingsSlice = {
 
   setLibraryAlbumFilter: (filter: AlbumFilterSettings) => void
   setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
+}
+
+export function newCacheBuster(): string {
+  return (uuid.v4() as string).split('-')[0]
 }
 
 export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice => ({
@@ -66,6 +75,15 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     maxBitrateMobile: 192,
     minBuffer: 6,
     maxBuffer: 60,
+    cacheBuster: newCacheBuster(),
+  },
+
+  resetServer: false,
+
+  changeCacheBuster: () => {
+    set(store => {
+      store.settings.cacheBuster = newCacheBuster()
+    })
   },
 
   setActiveServer: async (id, force) => {
@@ -84,17 +102,24 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
       return
     }
 
-    get().prepareCache(newActiveServer.id)
+    set(state => {
+      state.resetServer = true
+    })
 
     set(state => {
       state.settings.activeServerId = newActiveServer.id
       state.client = new SubsonicApiClient(newActiveServer)
-      get().resetLibrary(state)
+    })
+
+    set(state => {
+      state.resetServer = false
     })
   },
 
-  addServer: async server => {
-    await get().createCache(server.id)
+  addServer: server => {
+    const serverIds = Object.keys(get().settings.servers)
+    server.id =
+      serverIds.length === 0 ? '0' : (serverIds.map(i => parseInt(i, 10)).sort((a, b) => b - a)[0] + 1).toString()
 
     set(state => {
       state.settings.servers[server.id] = server
@@ -105,9 +130,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
   },
 
-  removeServer: async id => {
-    await get().removeCache(id)
-
+  removeServer: id => {
     set(state => {
       delete state.settings.servers[id]
     })

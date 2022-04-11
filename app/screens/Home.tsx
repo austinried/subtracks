@@ -3,18 +3,17 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
-import { useActiveServerRefresh } from '@app/hooks/settings'
-import { useStore, useStoreDeep } from '@app/state/store'
+import { useQueryHomeLists } from '@app/hooks/query'
+import { Album } from '@app/models/library'
+import { useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
-import produce from 'immer'
-import React, { useCallback, useState } from 'react'
+import React from 'react'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import create, { StateSelector } from 'zustand'
 
 const titles: { [key in GetAlbumListType]?: string } = {
   recent: 'Recently Played',
@@ -24,25 +23,21 @@ const titles: { [key in GetAlbumListType]?: string } = {
 }
 
 const AlbumItem = React.memo<{
-  id: string
-}>(({ id }) => {
+  album: Album
+}>(({ album }) => {
   const navigation = useNavigation()
-  const album = useStoreDeep(useCallback(store => store.library.albums[id], [id]))
-
-  if (!album) {
-    return <></>
-  }
 
   return (
     <AlbumContextPressable
       album={album}
       triggerWrapperStyle={styles.item}
-      onPress={() => navigation.navigate('album', { id: album.id, title: album.name })}>
+      onPress={() => navigation.navigate('album', { id: album.id, title: album.name, album })}>
       <CoverArt
         type="cover"
         coverArt={album.coverArt}
         style={{ height: styles.item.width, width: styles.item.width }}
-        resizeMode={'cover'}
+        resizeMode="cover"
+        size="thumbnail"
       />
       <Text style={styles.title} numberOfLines={1}>
         {album.name}
@@ -52,13 +47,12 @@ const AlbumItem = React.memo<{
       </Text>
     </AlbumContextPressable>
   )
-})
+}, equal)
 
 const Category = React.memo<{
   type: string
-}>(({ type }) => {
-  const list = useHomeStoreDeep(useCallback(store => store.lists[type] || [], [type]))
-
+  albums: Album[]
+}>(({ type, albums }) => {
   const Albums = () => (
     <ScrollView
       horizontal={true}
@@ -66,8 +60,8 @@ const Category = React.memo<{
       overScrollMode={'never'}
       style={styles.artScroll}
       contentContainerStyle={styles.artScrollContent}>
-      {list.map(id => (
-        <AlbumItem key={id} id={id} />
+      {albums.map(a => (
+        <AlbumItem key={a.id} album={a} />
       ))}
     </ScrollView>
   )
@@ -81,58 +75,15 @@ const Category = React.memo<{
   return (
     <View style={styles.category}>
       <Header style={styles.header}>{titles[type as GetAlbumListType] || ''}</Header>
-      {list.length > 0 ? <Albums /> : <Nothing />}
+      {albums.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )
-})
-
-interface HomeState {
-  lists: { [type: string]: string[] }
-  setList: (type: string, list: string[]) => void
-}
-
-const useHomeStore = create<HomeState>(set => ({
-  lists: {},
-
-  setList: (type, list) => {
-    set(
-      produce<HomeState>(state => {
-        state.lists[type] = list
-      }),
-    )
-  },
-}))
-
-function useHomeStoreDeep<U>(stateSelector: StateSelector<HomeState, U>) {
-  return useHomeStore(stateSelector, equal)
-}
+}, equal)
 
 const Home = () => {
-  const [refreshing, setRefreshing] = useState(false)
   const types = useStoreDeep(store => store.settings.screens.home.listTypes)
-  const fetchAlbumList = useStore(store => store.fetchAlbumList)
-  const setList = useHomeStore(store => store.setList)
+  const listQueries = useQueryHomeLists(types as GetAlbumList2TypeBase[], 20)
   const paddingTop = useSafeAreaInsets().top
-
-  const refresh = useCallback(async () => {
-    setRefreshing(true)
-
-    await Promise.all(
-      types.map(async type => {
-        const ids = await fetchAlbumList({ type: type as GetAlbumList2TypeBase, size: 20, offset: 0 })
-        setList(type, ids)
-      }),
-    )
-
-    setRefreshing(false)
-  }, [fetchAlbumList, setList, types])
-
-  useActiveServerRefresh(
-    useCallback(() => {
-      types.forEach(type => setList(type, []))
-      refresh()
-    }, [refresh, setList, types]),
-  )
 
   return (
     <GradientScrollView
@@ -140,16 +91,17 @@ const Home = () => {
       contentContainerStyle={{ paddingTop }}
       refreshControl={
         <RefreshControl
-          refreshing={refreshing}
-          onRefresh={refresh}
+          refreshing={listQueries.some(q => q.isLoading)}
+          onRefresh={() => listQueries.forEach(q => q.refetch())}
           colors={[colors.accent, colors.accentLow]}
           progressViewOffset={paddingTop}
         />
       }>
       <View style={styles.content}>
-        {types.map(type => (
-          <Category key={type} type={type} />
-        ))}
+        {types.map(type => {
+          const query = listQueries.find(list => list.data?.type === type)
+          return <Category key={type} type={type} albums={query?.data?.albums || []} />
+        })}
       </View>
     </GradientScrollView>
   )

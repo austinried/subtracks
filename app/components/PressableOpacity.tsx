@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { GestureResponderEvent, LayoutRectangle, Pressable, PressableProps, ViewStyle, StyleSheet } from 'react-native'
+import React, { useCallback, useState } from 'react'
+import { GestureResponderEvent, LayoutRectangle, Pressable, PressableProps, StyleSheet } from 'react-native'
 
 type PressableOpacityProps = PressableProps & {
   ripple?: boolean
@@ -9,12 +9,7 @@ type PressableOpacityProps = PressableProps & {
 
 const PressableOpacity: React.FC<PressableOpacityProps> = props => {
   const [opacity, setOpacity] = useState(1)
-  const [disabledStyle, setDisabledStyle] = useState<ViewStyle>({})
   const [dimensions, setDimensions] = useState<LayoutRectangle | undefined>(undefined)
-
-  useEffect(() => {
-    props.disabled === true ? setDisabledStyle({ opacity: 0.3 }) : setDisabledStyle({})
-  }, [props.disabled])
 
   props = {
     ...props,
@@ -55,7 +50,8 @@ const PressableOpacity: React.FC<PressableOpacityProps> = props => {
   return (
     <Pressable
       {...props}
-      style={[styles.pressable, props.style as any, { opacity }, disabledStyle]}
+      // eslint-disable-next-line react-native/no-inline-styles
+      style={[styles.pressable, props.style as any, { opacity }, props.disabled ? { opacity: 0.3 } : {}]}
       android_ripple={
         props.ripple
           ? {

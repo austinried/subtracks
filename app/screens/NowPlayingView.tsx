@@ -4,6 +4,7 @@ import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { PressableStar } from '@app/components/Star'
 import { useNext, usePause, usePlay, usePrevious, useSeekTo } from '@app/hooks/trackplayer'
+import { mapTrackExtToSong } from '@app/models/map'
 import { QueueContextType, TrackExt } from '@app/models/trackplayer'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -40,7 +41,6 @@ const NowPlayingHeader = React.memo<{
 }>(({ track }) => {
   const queueName = useStore(store => store.queueName)
   const queueContextType = useStore(store => store.queueContextType)
-  const mapTrackExtToSong = useStore(store => store.mapTrackExtToSong)
 
   if (!track) {
     return <></>

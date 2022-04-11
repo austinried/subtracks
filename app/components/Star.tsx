@@ -1,4 +1,4 @@
-import { useStar } from '@app/hooks/library'
+import { useStar } from '@app/hooks/query'
 import colors from '@app/styles/colors'
 import React from 'react'
 import { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native'
@@ -19,12 +19,13 @@ export const PressableStar = React.memo<{
   type: 'album' | 'artist' | 'song'
   size: number
   style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>) | undefined
-}>(({ id, type, size, style }) => {
-  const { starred, toggleStar } = useStar(id, type)
+  disabled?: boolean
+}>(({ id, type, size, style, disabled }) => {
+  const { query, toggle } = useStar(id, type)
 
   return (
-    <PressableOpacity onPress={toggleStar} style={style}>
-      <Star size={size} starred={starred} />
+    <PressableOpacity onPress={() => toggle.mutate()} style={style} disabled={disabled}>
+      <Star size={size} starred={!!query.data} />
     </PressableOpacity>
   )
 })

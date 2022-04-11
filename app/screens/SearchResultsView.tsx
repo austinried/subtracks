@@ -1,24 +1,34 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchPaginatedList } from '@app/hooks/list'
+import { useQuerySearchResults } from '@app/hooks/query'
+import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, Song } from '@app/models/library'
-import { useStore, useStoreDeep } from '@app/state/store'
 import { Search3Params } from '@app/subsonic/params'
-import { mapById } from '@app/util/state'
 import { useNavigation } from '@react-navigation/native'
-import React, { useCallback, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 
 type SearchListItemType = Album | Song | Artist
 
-const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
-  const setQueue = useStore(store => store.setQueue)
+const SongResultsListItem: React.FC<{ item: Song }> = ({ item }) => {
+  const { setQueue, isReady, contextId } = useSetQueue('song', [item])
 
-  let onPress
-  if (item.itemType === 'song') {
-    onPress = () => setQueue([item], item.title, 'song', item.id, 0)
-  }
+  return (
+    <ListItem
+      item={item}
+      contextId={contextId}
+      queueId={0}
+      showArt={true}
+      showStar={false}
+      listStyle="small"
+      onPress={() => setQueue({ title: item.title, playTrack: 0 })}
+      style={styles.listItem}
+      disabled={!isReady}
+    />
+  )
+}
 
+const OtherResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
   return (
     <ListItem
       item={item}
@@ -27,10 +37,17 @@ const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
       showArt={true}
       showStar={false}
       listStyle="small"
-      onPress={onPress}
       style={styles.listItem}
     />
   )
+}
+
+const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
+  if (item.itemType === 'song') {
+    return <SongResultsListItem item={item} />
+  } else {
+    return <OtherResultsListItem item={item} />
+  }
 }
 
 const SearchResultsRenderItem: React.FC<{ item: SearchListItemType }> = ({ item }) => <ResultsListItem item={item} />
@@ -40,61 +57,28 @@ const SearchResultsView: React.FC<{
   type: 'album' | 'artist' | 'song'
 }> = ({ query, type }) => {
   const navigation = useNavigation()
-  const fetchSearchResults = useStore(store => store.fetchSearchResults)
-  const { list, refreshing, refresh, fetchNextPage } = useFetchPaginatedList(
-    useCallback(
-      async (size, offset) => {
-        const params: Search3Params = { query }
-        if (type === 'album') {
-          params.albumCount = size
-          params.albumOffset = offset
-        } else if (type === 'artist') {
-          params.artistCount = size
-          params.artistOffset = offset
-        } else if (type === 'song') {
-          params.songCount = size
-          params.songOffset = offset
-        } else {
-          params.albumCount = 5
-          params.artistCount = 5
-          params.songCount = 5
-        }
 
-        const results = await fetchSearchResults(params)
+  const size = 100
+  const params: Search3Params = { query }
 
-        switch (type) {
-          case 'album':
-            return results.albums
-          case 'artist':
-            return results.artists
-          case 'song':
-            return results.songs
-          default:
-            return []
-        }
-      },
-      [fetchSearchResults, query, type],
-    ),
-    100,
-  )
+  if (type === 'album') {
+    params.albumCount = size
+  } else if (type === 'artist') {
+    params.artistCount = size
+  } else {
+    params.songCount = size
+  }
 
-  const items: SearchListItemType[] = useStoreDeep(
-    useCallback(
-      store => {
-        switch (type) {
-          case 'album':
-            return mapById(store.library.albums, list)
-          case 'artist':
-            return mapById(store.library.artists, list)
-          case 'song':
-            return mapById(store.library.songs, list)
-          default:
-            return []
-        }
-      },
-      [list, type],
-    ),
-  )
+  const { data, isLoading, refetch, fetchNextPage } = useQuerySearchResults(params)
+
+  const items: (Artist | Album | Song)[] = []
+  if (type === 'album') {
+    data && items.push(...data.pages.flatMap(p => p.albums))
+  } else if (type === 'artist') {
+    data && items.push(...data.pages.flatMap(p => p.artists))
+  } else {
+    data && items.push(...data.pages.flatMap(p => p.songs))
+  }
 
   useEffect(() => {
     navigation.setOptions({
@@ -108,10 +92,10 @@ const SearchResultsView: React.FC<{
       data={items}
       renderItem={SearchResultsRenderItem}
       keyExtractor={(item, i) => i.toString()}
-      onRefresh={refresh}
-      refreshing={refreshing}
+      onRefresh={refetch}
+      refreshing={isLoading}
       overScrollMode="never"
-      onEndReached={fetchNextPage}
+      onEndReached={() => fetchNextPage}
       removeClippedSubviews={true}
       onEndReachedThreshold={2}
       contentMarginTop={6}

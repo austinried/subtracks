@@ -1,5 +1,5 @@
-import { useArtistArtFile, useCoverArtFile } from '@app/hooks/cache'
-import { CacheFile, CacheImageSize, CacheRequest } from '@app/models/cache'
+import { useQueryArtistArtPath, useQueryCoverArtPath } from '@app/hooks/query'
+import { CacheImageSize } from '@app/models/cache'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
 import {
@@ -18,7 +18,8 @@ type BaseProps = {
   imageStyle?: ImageStyle
   resizeMode?: ImageResizeMode
   round?: boolean
-  size?: CacheImageSize
+  size: CacheImageSize
+  fadeDuration?: number
 }
 
 type ArtistCoverArtProps = BaseProps & {
@@ -31,47 +32,54 @@ type CoverArtProps = BaseProps & {
   coverArt?: string
 }
 
-const ImageSource = React.memo<{ cache?: { file?: CacheFile; request?: CacheRequest } } & BaseProps>(
-  ({ cache, style, imageStyle, resizeMode }) => {
+type ImageSourceProps = BaseProps & {
+  data?: string
+  isFetching: boolean
+  isExistingFetching: boolean
+}
+
+const ImageSource = React.memo<ImageSourceProps>(
+  ({ style, imageStyle, resizeMode, data, isFetching, isExistingFetching, fadeDuration }) => {
     const [error, setError] = useState(false)
 
     let source: ImageSourcePropType
-    if (!error && cache?.file && !cache?.request?.promise) {
-      source = { uri: `file://${cache.file.path}`, cache: 'reload' }
+    if (!error && data) {
+      source = { uri: `file://${data}` }
     } else {
       source = require('@res/fallback.png')
     }
 
     return (
       <>
-        <Image
-          source={source}
-          fadeDuration={150}
-          resizeMode={resizeMode || 'contain'}
-          style={[{ height: style?.height, width: style?.width }, imageStyle]}
-          onError={() => setError(true)}
-        />
-        <ActivityIndicator
-          animating={!!cache?.request?.promise}
-          size="large"
-          color={colors.accent}
-          style={styles.indicator}
-        />
+        {isExistingFetching ? (
+          <View style={{ height: style?.height, width: style?.width }} />
+        ) : (
+          <Image
+            source={source}
+            fadeDuration={fadeDuration === undefined ? 250 : fadeDuration}
+            resizeMode={resizeMode || 'contain'}
+            style={[{ height: style?.height, width: style?.width }, imageStyle]}
+            onError={() => setError(true)}
+          />
+        )}
+        {isFetching && (
+          <ActivityIndicator animating={true} size="large" color={colors.accent} style={styles.indicator} />
+        )}
       </>
     )
   },
 )
 
 const ArtistImage = React.memo<ArtistCoverArtProps>(props => {
-  const cache = useArtistArtFile(props.artistId, props.size)
+  const { data, isFetching, isExistingFetching } = useQueryArtistArtPath(props.artistId, props.size)
 
-  return <ImageSource cache={cache} {...props} imageStyle={{ ...styles.artistImage, ...props.imageStyle }} />
+  return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
 })
 
 const CoverArtImage = React.memo<CoverArtProps>(props => {
-  const cache = useCoverArtFile(props.coverArt, props.size)
+  const { data, isFetching, isExistingFetching } = useQueryCoverArtPath(props.coverArt, props.size)
 
-  return <ImageSource cache={cache} {...props} />
+  return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
 })
 
 const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {

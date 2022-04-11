@@ -1,19 +1,15 @@
 import RNFS from 'react-native-fs'
+import path from 'path'
+import { CacheItemTypeKey } from '@app/models/cache'
 
-export async function mkdir(path: string): Promise<void> {
-  const exists = await RNFS.exists(path)
-  if (exists) {
-    const isDir = (await RNFS.stat(path)).isDirectory()
-    if (!isDir) {
-      throw new Error(`path exists and is not a directory: ${path}`)
-    } else {
-      return
-    }
-  }
+const serversCacheDir = path.join(RNFS.ExternalDirectoryPath, 's')
 
-  return await RNFS.mkdir(path)
-}
+export function cacheDir(serverId?: string, itemType?: CacheItemTypeKey, itemId?: string): string {
+  const segments: string[] = []
 
-export async function rmdir(path: string): Promise<void> {
-  return RNFS.unlink(path)
+  serverId && segments.push(serverId)
+  serverId && itemType && segments.push(itemType)
+  serverId && itemType && itemId && segments.push(itemId)
+
+  return path.join(serversCacheDir, ...segments)
 }

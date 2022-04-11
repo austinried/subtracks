@@ -1,8 +1,8 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
-import { useFetchList2 } from '@app/hooks/list'
+import { useQueryPlaylists } from '@app/hooks/query'
 import { Playlist } from '@app/models/library'
-import { useStore, useStoreDeep } from '@app/state/store'
+import { mapById } from '@app/util/state'
 import React from 'react'
 import { StyleSheet } from 'react-native'
 
@@ -11,17 +11,15 @@ const PlaylistRenderItem: React.FC<{ item: Playlist }> = ({ item }) => (
 )
 
 const PlaylistsList = () => {
-  const fetchPlaylists = useStore(store => store.fetchPlaylists)
-  const { refreshing, refresh } = useFetchList2(fetchPlaylists)
-  const playlists = useStoreDeep(store => store.library.playlists)
+  const { isLoading, data, refetch } = useQueryPlaylists()
 
   return (
     <GradientFlatList
-      data={Object.values(playlists)}
+      data={data ? mapById(data?.byId, data?.allIds) : []}
       renderItem={PlaylistRenderItem}
       keyExtractor={item => item.id}
-      onRefresh={refresh}
-      refreshing={refreshing}
+      onRefresh={refetch}
+      refreshing={isLoading}
       overScrollMode="never"
       windowSize={5}
       contentMarginTop={6}

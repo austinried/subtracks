@@ -1,5 +1,5 @@
 import PressableOpacity from '@app/components/PressableOpacity'
-import { useStar } from '@app/hooks/library'
+import { useStar } from '@app/hooks/query'
 import { StarrableItemType, Song, Artist, Album } from '@app/models/library'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -22,6 +22,7 @@ type ContextMenuProps = {
   triggerTouchableStyle?: StyleProp<ViewStyle>
   onPress?: () => any
   triggerOnLongPress?: boolean
+  disabled?: boolean
 }
 
 type InternalContextMenuProps = ContextMenuProps & {
@@ -39,6 +40,7 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   menuOptions,
   children,
   triggerOnLongPress,
+  disabled,
 }) => {
   menuStyle = menuStyle || { flex: 1 }
   triggerWrapperStyle = triggerWrapperStyle || { flex: 1 }
@@ -47,11 +49,12 @@ const ContextMenu: React.FC<InternalContextMenuProps> = ({
   return (
     <Menu renderer={SlideInMenu} style={menuStyle}>
       <MenuTrigger
+        disabled={disabled}
         triggerOnLongPress={triggerOnLongPress === undefined ? true : triggerOnLongPress}
         customStyles={{
           triggerOuterWrapper: triggerOuterWrapperStyle,
           triggerWrapper: triggerWrapperStyle,
-          triggerTouchable: { style: triggerTouchableStyle },
+          triggerTouchable: { style: triggerTouchableStyle, disabled },
           TriggerTouchableComponent: PressableOpacity,
         }}
         onAlternativeAction={onPress}>
@@ -117,9 +120,24 @@ const MenuHeader = React.memo<{
 }>(({ coverArt, artistId, title, subtitle }) => (
   <View style={styles.menuHeader}>
     {artistId ? (
-      <CoverArt type="artist" artistId={artistId} style={styles.coverArt} resizeMode={'cover'} round={true} />
+      <CoverArt
+        type="artist"
+        artistId={artistId}
+        style={styles.coverArt}
+        resizeMode="cover"
+        round={true}
+        size="thumbnail"
+        fadeDuration={0}
+      />
     ) : (
-      <CoverArt type="cover" coverArt={coverArt} style={styles.coverArt} resizeMode={'cover'} />
+      <CoverArt
+        type="cover"
+        coverArt={coverArt}
+        style={styles.coverArt}
+        resizeMode="cover"
+        size="thumbnail"
+        fadeDuration={0}
+      />
     )}
     <View style={styles.menuHeaderText}>
       <Text numberOfLines={1} style={styles.menuTitle}>
@@ -141,13 +159,13 @@ const OptionStar = React.memo<{
   type: StarrableItemType
   additionalText?: string
 }>(({ id, type, additionalText: text }) => {
-  const { starred, toggleStar } = useStar(id, type)
+  const { query, toggle } = useStar(id, type)
 
   return (
     <ContextMenuIconTextOption
-      IconComponentRaw={<Star starred={starred} size={26} />}
-      text={(starred ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
-      onSelect={toggleStar}
+      IconComponentRaw={<Star starred={!!query.data} size={26} />}
+      text={(query.data ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
+      onSelect={() => toggle.mutate()}
     />
   )
 })
