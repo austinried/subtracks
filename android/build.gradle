@@ -9,7 +9,7 @@ buildscript {
         ndkVersion = "21.4.7075529"
 
         // react-native-async-storage next
-        kotlinVersion = '1.6.10'
+        kotlinVersion = '1.4.21'
     }
     repositories {
         google()

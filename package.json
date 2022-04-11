@@ -19,7 +19,7 @@
     "version:major": "yarn version --major --no-git-tag-version && ./android/gradlew -p android bumpMajorVersion"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.15.5",
+    "@react-native-async-storage/async-storage": "1.16",
     "@react-native-community/hooks": "^2.6.0",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-native-community/netinfo": "^6.0.0",
