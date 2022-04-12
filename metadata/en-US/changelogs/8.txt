@@ -1,0 +1,12 @@
+## New
+
+* Top Songs in the Artist view now tries to fallback to searching for songs by the artist and sorting by play count/rating if the server doesn't support the getTopSongs endpoint
+* Images are now downloaded in the background via the Android DownloadManager and won't be corrupted if the app is closed
+  * Note: the cache file structure has been changed, so all images will be erased on update and new images will be downloaded as normal
+
+## Fixed
+
+* Fixed some screens displaying under the status bar on certain devices (#83)
+* Fixed occasional pausing after playing a few tracks (#66)
+* Fixed repeat mode not being persisted after skipping tracks (#56)
+* Search no longer clears the query when going back from the "more" results screen
