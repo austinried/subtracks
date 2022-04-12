@@ -28,9 +28,9 @@ const setNetState = (netState: 'mobile' | 'wifi') => {
   })
 }
 
-const rebuildQueue = () => {
+const rebuildQueue = (forcePlay?: boolean) => {
   unstable_batchedUpdates(() => {
-    useStore.getState().rebuildQueue(useStore.getState().playerState === State.Playing)
+    useStore.getState().rebuildQueue(forcePlay)
   })
 }
 
@@ -139,7 +139,7 @@ const createService = async () => {
 
     // fix for ExoPlayer aborting playback while esimating content length
     if (code === 'playback-source' && message.includes('416')) {
-      rebuildQueue()
+      rebuildQueue(true)
     }
   })
 }
