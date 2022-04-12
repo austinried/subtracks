@@ -274,6 +274,7 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
       const currentTrack = await getCurrentTrack()
       const playerState = await getPlayerState()
       const position = (await TrackPlayer.getPosition()) || 0
+      const repeatMode = await getRepeatMode()
 
       const queueName = get().queueName
       const queueContextId = get().queueContextId
@@ -304,6 +305,7 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
         await TrackPlayer.skip(currentTrack)
       }
 
+      await TrackPlayer.setRepeatMode(repeatMode)
       await TrackPlayer.seekTo(position)
 
       if (playerState === State.Playing || forcePlay) {
