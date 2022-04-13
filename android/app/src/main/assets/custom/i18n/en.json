@@ -1,0 +1,12 @@
+{
+    "translation": {
+        "hello": "Hello world",
+        "change": "Change language"
+    },
+    "home": {
+        "recent": "Recently Played",
+        "random": "Random Albums",
+        "frequent": "Frequently Played",
+        "starred": "Starred Albums"
+    }
+}

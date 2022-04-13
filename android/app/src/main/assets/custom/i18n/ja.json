@@ -1,0 +1,12 @@
+{
+    "translation": {
+        "hello": "ただいま",
+        "change": "言語が変わります"
+    },
+    "home": {
+        "recent": "最近再生した",
+        "random": "ランダムアルバム",
+        "frequent": "よく聴くアルバム",
+        "starred": "星付きアルバム"
+    }
+}
