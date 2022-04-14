@@ -21,7 +21,41 @@
         },
         "artist": {
             "name": "Artiste",
-            "name_plural": "Artistes"
+            "name_plural": "Artistes",
+            "lists": {
+                "random": "Aléatoire",
+                "starred": "Favoris",
+                "alphabeticalByName": "Par Nom"
+            }
+        }
+    },
+    "settings": {
+        "network": {
+            "values": {
+                "seconds": "{{value}} secondes"
+            }
+        },
+        "servers": {
+            "fields": {
+                "username": "Nom d'utilisateur",
+                "address": "Adresse",
+                "password": "Mot de passe"
+            },
+            "actions": {
+                "testConnection": "Tester la connexion",
+                "add": "Ajouter un serveur",
+                "delete": "Supprimer",
+                "save": "Sauvegarder"
+            },
+            "name": "Serveurs"
+        },
+        "music": {
+            "name": "Musique"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "library": "Bibliothèque"
         }
     }
 }
