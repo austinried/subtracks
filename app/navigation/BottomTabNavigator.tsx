@@ -118,7 +118,7 @@ const SearchTab = createTabStackNavigator(Search)
 type SettingsStackParamList = {
   main: undefined
   server?: { id?: string }
-  web: { uri: string }
+  web: { uri: string; title?: string }
 }
 
 type ServerScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'server'>
@@ -135,7 +135,9 @@ type WebScreenProps = {
   route: WebScreenRouteProp
   navigation: WebScreenNavigationProp
 }
-const WebScreen: React.FC<WebScreenProps> = ({ route }) => <WebViewScreen uri={route.params.uri} />
+const WebScreen: React.FC<WebScreenProps> = ({ route }) => (
+  <WebViewScreen uri={route.params.uri} title={route.params.title} />
+)
 
 const SettingsStack = createNativeStackNavigator()
 
@@ -158,7 +160,6 @@ const SettingsTab = () => {
         name="web"
         component={WebScreen}
         options={{
-          title: 'Web View',
           headerStyle: styles.stackheaderStyle,
           headerHideShadow: true,
           headerTintColor: 'white',

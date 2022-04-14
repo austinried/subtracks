@@ -71,5 +71,78 @@
         "inputPlaceholder": "Search",
         "headerTitle": "Search: {{query}}",
         "moreResults": "More..."
+    },
+    "settings": {
+        "servers": {
+            "name": "Servers",
+            "fields": {
+                "address": "Address",
+                "username": "Username",
+                "password": "Password"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Force plaintext password",
+                    "descriptionOn": "Send password in plaintext (legacy, make sure your connection is secure!)",
+                    "descriptionOff": "Send password as token + salt"
+                }
+            },
+            "actions": {
+                "add": "Add Server",
+                "testConnection": "Test Connection",
+                "delete": "Delete",
+                "save": "Save"
+            },
+            "messages": {
+                "connectionOk": "Connection to {{address}} OK!",
+                "connectionFailed": "Connection to {{address}} failed, check settings or server"
+            }
+        },
+        "network": {
+            "name": "Network",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Unlimited",
+                "seconds": "{{value}} seconds"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Maximum bitrate (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Maximum bitrate (mobile)"
+                },
+                "minBuffer": {
+                    "title": "Minimum buffer time"
+                },
+                "maxBuffer": {
+                    "title": "Maximum buffer time"
+                }
+            }
+        },
+        "music": {
+            "name": "Music",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble plays",
+                    "descriptionOn": "Scrobble play history",
+                    "descriptionOff": "Don't scrobble play history"
+                }
+            }
+        },
+        "reset": {
+            "name": "Reset",
+            "actions": {
+                "clearImageCache": "Clear Image Cache"
+            }
+        },
+        "about": {
+            "name": "About",
+            "version": "version {{version}}",
+            "actions": {
+                "projectHomepage": "Project Homepage",
+                "licenses": "Licenses"
+            }
+        }
     }
 }
