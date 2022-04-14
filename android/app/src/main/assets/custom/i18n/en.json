@@ -44,6 +44,10 @@
             "actions": {
                 "play": "Play Playlist"
             }
+        },
+        "queue": {
+            "name": "Queue",
+            "name_plural": "Queues"
         }
     },
     "context": {
@@ -62,5 +66,10 @@
     },
     "messages": {
         "nothingHere": "Nothing here..."
+    },
+    "search": {
+        "inputPlaceholder": "Search",
+        "headerTitle": "Search: {{query}}",
+        "moreResults": "More..."
     }
 }

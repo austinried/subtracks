@@ -18,6 +18,7 @@ export function withSuspense<P extends string | number | object>(
 export function withSuspenseMemo<P extends string | number | object>(
   WrappedComponent: ComponentType<P>,
   fallback: SuspenseProps['fallback'] = null,
+  propsAreEqual?: Parameters<typeof React.memo>['1'],
 ) {
   function ComponentWithSuspense(props: P) {
     return (
@@ -27,5 +28,5 @@ export function withSuspenseMemo<P extends string | number | object>(
     )
   }
 
-  return React.memo(ComponentWithSuspense)
+  return React.memo(ComponentWithSuspense, propsAreEqual)
 }

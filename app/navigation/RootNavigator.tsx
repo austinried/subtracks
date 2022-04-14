@@ -1,3 +1,4 @@
+import { withSuspense } from '@app/components/withSuspense'
 import BottomTabNavigator from '@app/navigation/BottomTabNavigator'
 import NowPlayingQueue from '@app/screens/NowPlayingQueue'
 import NowPlayingView from '@app/screens/NowPlayingView'
@@ -5,32 +6,37 @@ import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { DarkTheme, NavigationContainer } from '@react-navigation/native'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { createNativeStackNavigator } from 'react-native-screens/native-stack'
 
 const NowPlayingStack = createNativeStackNavigator()
 
-const NowPlayingNavigator = () => (
-  <NowPlayingStack.Navigator>
-    <NowPlayingStack.Screen name="main" component={NowPlayingView} options={{ headerShown: false }} />
-    <NowPlayingStack.Screen
-      name="queue"
-      component={NowPlayingQueue}
-      options={{
-        title: 'Queue',
-        headerStyle: {
-          backgroundColor: colors.gradient.high,
-        },
-        headerTitleStyle: {
-          fontSize: 18,
-          fontFamily: font.semiBold,
-          color: colors.text.primary,
-        },
-        headerHideShadow: true,
-        headerTintColor: 'white',
-      }}
-    />
-  </NowPlayingStack.Navigator>
-)
+const NowPlayingNavigator = withSuspense(() => {
+  const { t } = useTranslation('resources.queue')
+
+  return (
+    <NowPlayingStack.Navigator>
+      <NowPlayingStack.Screen name="main" component={NowPlayingView} options={{ headerShown: false }} />
+      <NowPlayingStack.Screen
+        name="queue"
+        component={NowPlayingQueue}
+        options={{
+          title: t('name'),
+          headerStyle: {
+            backgroundColor: colors.gradient.high,
+          },
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: font.semiBold,
+            color: colors.text.primary,
+          },
+          headerHideShadow: true,
+          headerTintColor: 'white',
+        }}
+      />
+    </NowPlayingStack.Navigator>
+  )
+})
 
 const RootStack = createNativeStackNavigator()
 
