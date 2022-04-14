@@ -137,7 +137,12 @@ const ServerView = withSuspense<{
 
     const ping = async () => {
       const res = await pingServer(potential)
-      toast(t(`messages.${res ? 'connectionOk' : 'connectionFailed'}`, { address: potential.address }))
+      toast(
+        t(`messages.${res ? 'connectionOk' : 'connectionFailed'}`, {
+          address: potential.address,
+          interpolation: { escapeValue: false },
+        }),
+      )
       setTesting(false)
     }
     ping()
