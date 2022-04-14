@@ -72,7 +72,8 @@
     "search": {
         "inputPlaceholder": "Search",
         "headerTitle": "Search: {{query}}",
-        "moreResults": "More..."
+        "moreResults": "More...",
+        "nowPlayingContext": "Search Results"
     },
     "settings": {
         "servers": {

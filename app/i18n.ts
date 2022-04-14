@@ -22,7 +22,7 @@ async function readTranslation(language: string, namespace: string) {
     cache[language] = await loadTranslation(language)
   }
 
-  return _.get(cache[language], namespace)
+  return namespace === 'translation' ? cache[language] : _.get(cache[language], namespace)
 }
 
 export const backend = {

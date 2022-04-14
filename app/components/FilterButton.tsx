@@ -53,7 +53,7 @@ const FilterButton = React.memo<{
           optionsWrapper: styles.optionsWrapper,
           optionsContainer: styles.optionsContainer,
         }}>
-        <ScrollView style={styles.optionsScroll}>
+        <ScrollView style={styles.optionsScroll} overScrollMode="never">
           <View style={styles.header}>
             <Text style={styles.headerText} numberOfLines={2} ellipsizeMode="clip">
               {title}
