@@ -101,7 +101,14 @@
             }
         },
         "music": {
-            "name": "Musique"
+            "name": "Musique",
+            "options": {
+                "scrobble": {
+                    "descriptionOff": "Ne pas scrobbler l'historique de lecture",
+                    "descriptionOn": "Scrobbler l'historique de lecture",
+                    "title": "Scrobbler la lecture"
+                }
+            }
         },
         "about": {
             "version": "version {{version}}",
@@ -114,7 +121,8 @@
         "reset": {
             "actions": {
                 "clearImageCache": "Vider le cache d'images"
-            }
+            },
+            "name": "Réinitialiser"
         }
     },
     "navigation": {
