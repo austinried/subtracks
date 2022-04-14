@@ -56,10 +56,8 @@ const SongListDetails = React.memo<{
   const [headerColor, setHeaderColor] = useState<string | undefined>(undefined)
 
   const _songs = [...(songs || [])]
-  let typeName = ''
 
   if (type === 'album') {
-    typeName = 'Album'
     if (_songs.some(s => s.track === undefined)) {
       _songs.sort((a, b) => a.title.localeCompare(b.title))
     } else {
@@ -69,8 +67,6 @@ const SongListDetails = React.memo<{
         return aVal - bVal
       })
     }
-  } else {
-    typeName = 'Playlist'
   }
 
   const { setQueue, isReady, contextId } = useSetQueue(type, _songs)
@@ -125,7 +121,7 @@ const SongListDetails = React.memo<{
             <ListPlayerControls
               style={styles.controls}
               songs={_songs}
-              typeName={typeName}
+              listType={type}
               play={play(undefined, false)}
               shuffle={play(undefined, true)}
               disabled={disabled}

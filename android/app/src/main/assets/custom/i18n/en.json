@@ -35,13 +35,15 @@
                 "alphabeticalByName": "By Name"
             },
             "actions": {
-                "play": "Play Album",
-                "view": "View Album"
+                "view": "View Arist"
             }
         },
         "playlist": {
             "name": "Playlist",
-            "name_plural": "Playlists"
+            "name_plural": "Playlists",
+            "actions": {
+                "play": "Play Playlist"
+            }
         }
     },
     "context": {
@@ -57,5 +59,8 @@
             "search": "Search",
             "settings": "Settings"
         }
+    },
+    "messages": {
+        "nothingHere": "Nothing here..."
     }
 }

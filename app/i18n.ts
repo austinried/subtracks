@@ -6,11 +6,23 @@ import _ from 'lodash'
 
 const I18N_ASSETS_DIR = path.join('custom', 'i18n')
 
-let cache: {
-  language: string
-  translation: {
+const cache: {
+  [language: string]: {
     [key: string]: any
   }
+} = {}
+
+async function loadTranslation(language: string) {
+  const text = await RNFS.readFileAssets(path.join(I18N_ASSETS_DIR, `${language}.json`), 'utf8')
+  return JSON.parse(text)
+}
+
+async function readTranslation(language: string, namespace: string) {
+  if (!cache[language]) {
+    cache[language] = await loadTranslation(language)
+  }
+
+  return _.get(cache[language], namespace)
 }
 
 export const backend = {
@@ -18,17 +30,7 @@ export const backend = {
   init: () => {},
   read: async (language, namespace, callback) => {
     try {
-      if (cache && cache.language === language) {
-        callback(null, _.get(cache.translation, namespace))
-      }
-
-      const text = await RNFS.readFileAssets(path.join(I18N_ASSETS_DIR, `${language}.json`), 'utf8')
-      cache = {
-        language,
-        translation: JSON.parse(text),
-      }
-
-      callback(null, _.get(cache.translation, namespace))
+      callback(null, await readTranslation(language, namespace))
     } catch (err) {
       callback(err as any, null)
     }

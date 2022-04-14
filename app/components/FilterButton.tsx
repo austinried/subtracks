@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'right',
     marginRight: 6,
+    marginLeft: 2,
   },
 })
 

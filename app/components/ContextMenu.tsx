@@ -6,12 +6,14 @@ import font from '@app/styles/font'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { ReactComponentLike } from 'prop-types'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native'
 import { Menu, MenuOption, MenuOptions, MenuTrigger, renderers } from 'react-native-popup-menu'
 import IconFA from 'react-native-vector-icons/FontAwesome'
 import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import CoverArt from './CoverArt'
 import { Star } from './Star'
+import { withSuspenseMemo } from './withSuspense'
 
 const { SlideInMenu } = renderers
 
@@ -154,27 +156,30 @@ const MenuHeader = React.memo<{
   </View>
 ))
 
-const OptionStar = React.memo<{
+const OptionStar = withSuspenseMemo<{
   id: string
   type: StarrableItemType
   additionalText?: string
 }>(({ id, type, additionalText: text }) => {
   const { query, toggle } = useStar(id, type)
+  const { t } = useTranslation('context.actions')
 
   return (
     <ContextMenuIconTextOption
       IconComponentRaw={<Star starred={!!query.data} size={26} />}
-      text={(query.data ? 'Unstar' : 'Star') + (text ? ` ${text}` : '')}
+      text={(query.data ? t('unstar') : t('star')) + (text ? ` ${text}` : '')}
       onSelect={() => toggle.mutate()}
     />
   )
 })
 
-const OptionViewArtist = React.memo<{
+const OptionViewArtist = withSuspenseMemo<{
   navigation: NavigationProp<any>
   artist?: string
   artistId?: string
 }>(({ navigation, artist, artistId }) => {
+  const { t } = useTranslation('resources.artist.actions')
+
   if (!artist || !artistId) {
     return <></>
   }
@@ -184,17 +189,19 @@ const OptionViewArtist = React.memo<{
       IconComponent={IconFA}
       name="microphone"
       size={26}
-      text="View Artist"
+      text={t('view')}
       onSelect={() => navigation.navigate('artist', { id: artistId, title: artist })}
     />
   )
 })
 
-const OptionViewAlbum = React.memo<{
+const OptionViewAlbum = withSuspenseMemo<{
   navigation: NavigationProp<any>
   album?: string
   albumId?: string
 }>(({ navigation, album, albumId }) => {
+  const { t } = useTranslation('resources.album.actions')
+
   if (!album || !albumId) {
     return <></>
   }
@@ -204,7 +211,7 @@ const OptionViewAlbum = React.memo<{
       IconComponent={IconFA5}
       name="compact-disc"
       size={26}
-      text="View Album"
+      text={t('view')}
       onSelect={() => navigation.navigate('album', { id: albumId, title: album })}
     />
   )
