@@ -37,7 +37,7 @@
                 "alphabeticalByName": "By Name"
             },
             "actions": {
-                "view": "View Arist"
+                "view": "View Artist"
             }
         },
         "playlist": {
@@ -67,12 +67,12 @@
         }
     },
     "messages": {
-        "nothingHere": "Nothing here..."
+        "nothingHere": "Nothing here…"
     },
     "search": {
         "inputPlaceholder": "Search",
         "headerTitle": "Search: {{query}}",
-        "moreResults": "More...",
+        "moreResults": "More…",
         "nowPlayingContext": "Search Results"
     },
     "settings": {
