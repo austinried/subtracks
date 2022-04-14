@@ -49,7 +49,7 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 See [Building from source](BUILDING.md).
 
 # Translations
-Want to see Subtracks in your language? Visit the [project on Weblate](https://hosted.weblate.org/projects/subtracks/subtracks/) to help!
+Want to see Subtracks in your language? Visit the project on [Weblate](https://hosted.weblate.org/engage/subtracks/) to help!
 
 <a href="https://hosted.weblate.org/engage/subtracks/">
 <img src="https://hosted.weblate.org/widgets/subtracks/-/subtracks/multi-auto.svg" alt="Translation status" />
