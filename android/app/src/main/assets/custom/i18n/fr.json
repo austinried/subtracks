@@ -1,0 +1,27 @@
+{
+    "resources": {
+        "album": {
+            "name": "Album",
+            "name_plural": "Albums",
+            "lists": {
+                "random": "Aléatoire",
+                "newest": "Récemment Ajouté",
+                "frequent": "Fréquemment Joué",
+                "recent": "Récemment Joué",
+                "alphabeticalByName": "Par Nom",
+                "byYear": "Par Année",
+                "alphabeticalByArtist": "Par Artiste",
+                "byGenre": "Par Genre",
+                "starred": "Favoris"
+            }
+        },
+        "song": {
+            "name": "Musique",
+            "name_plural": "Musiques"
+        },
+        "artist": {
+            "name": "Artiste",
+            "name_plural": "Artistes"
+        }
+    }
+}
