@@ -1,9 +1,5 @@
 {
-    "translation": {
-        "hello": "Hei verden"
-    },
     "home": {
-        "random": "Tilfeldige album",
-        "starred": "Stjernemerkede album"
+        "random": "Tilfeldige album"
     }
 }
