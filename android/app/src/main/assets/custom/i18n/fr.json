@@ -136,11 +136,13 @@
     "search": {
         "headerTitle": "Recherche : {{query}}",
         "inputPlaceholder": "Recherche",
-        "moreResults": "Plus…"
+        "moreResults": "Plus…",
+        "nowPlayingContext": "Résultats de recherche"
     },
     "context": {
         "actions": {
-            "star": "Étoiler"
+            "star": "Mettre en favoris",
+            "unstar": "Enlever des favoris"
         }
     },
     "messages": {
