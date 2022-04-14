@@ -77,6 +77,7 @@ const AlbumFilterButton = withSuspenseMemo(() => {
       onSelect={selection => {
         setFilterType(selection as GetAlbumList2TypeBase)
       }}
+      title={t('sort')}
     />
   )
 })

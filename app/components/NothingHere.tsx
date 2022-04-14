@@ -17,7 +17,9 @@ const NothingHere = withSuspenseMemo<{
   return (
     <View style={[styles.container, { height, width }, style]}>
       <Icon name="music-rest-quarter" color={styles.text.color} size={width / 2} />
-      <Text style={[styles.text, { fontSize: width / 8 }]}>{t('nothingHere')}</Text>
+      <Text style={[styles.text, { fontSize: width / 8 }]} numberOfLines={3}>
+        {t('nothingHere')}
+      </Text>
     </View>
   )
 })

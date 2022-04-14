@@ -30,6 +30,7 @@ const ArtistFilterButton = withSuspenseMemo(() => {
       data={filterValues.map(value => ({ value, text: t(value) }))}
       value={filterType}
       onSelect={selection => setFilterType(selection as ArtistFilterType)}
+      title={t('sort')}
     />
   )
 })

@@ -11,6 +11,7 @@
             "name": "Album",
             "name_plural": "Albums",
             "lists": {
+                "sort": "Sort Albums",
                 "random": "Random",
                 "newest": "Recently Added",
                 "frequent": "Frequently Played",
@@ -30,6 +31,7 @@
             "name": "Artist",
             "name_plural": "Artists",
             "lists": {
+                "sort": "Sort Artists",
                 "random": "Random",
                 "starred": "Starred",
                 "alphabeticalByName": "By Name"

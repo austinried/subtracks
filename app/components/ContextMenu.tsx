@@ -108,7 +108,9 @@ const ContextMenuIconTextOption = React.memo<ContextMenuIconTextOptionProps>(
     return (
       <ContextMenuOption onSelect={onSelect}>
         <View style={styles.icon}>{Icon}</View>
-        <Text style={styles.optionText}>{text}</Text>
+        <Text style={styles.optionText} numberOfLines={1} adjustsFontSizeToFit={true} minimumFontScale={0.6}>
+          {text}
+        </Text>
       </ContextMenuOption>
     )
   },
@@ -325,6 +327,8 @@ const styles = StyleSheet.create({
   },
   optionsWrapper: {
     // marginBottom: 10,
+    paddingHorizontal: 20,
+    // backgroundColor: 'purple',
   },
   menuHeader: {
     paddingTop: 14,
@@ -355,9 +359,11 @@ const styles = StyleSheet.create({
   },
   option: {
     paddingVertical: 8,
-    paddingHorizontal: 20,
+    // paddingHorizontal: 100,
     flexDirection: 'row',
     alignItems: 'center',
+    // backgroundColor: 'blue',
+    overflow: 'hidden',
   },
   icon: {
     marginRight: 10,
