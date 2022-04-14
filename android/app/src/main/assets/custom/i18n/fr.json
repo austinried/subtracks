@@ -35,13 +35,29 @@
                 "starred": "Favoris",
                 "alphabeticalByName": "Par Nom",
                 "sort": "Trier les artistes"
+            },
+            "actions": {
+                "view": "Voir l'artiste"
             }
+        },
+        "playlist": {
+            "actions": {
+                "play": "Lire la playlist"
+            },
+            "name": "Playlist",
+            "name_plural": "Playlists"
+        },
+        "queue": {
+            "name": "File d'attente",
+            "name_plural": "Files d'attente"
         }
     },
     "settings": {
         "network": {
             "values": {
-                "seconds": "{{value}} secondes"
+                "seconds": "{{value}} secondes",
+                "unlimitedKbps": "Illimité",
+                "kbps": "{{value}}kbit/s"
             },
             "options": {
                 "maxBitrateWifi": {
@@ -49,8 +65,15 @@
                 },
                 "maxBitrateMobile": {
                     "title": "Débit binaire maximum (mobile)"
+                },
+                "maxBuffer": {
+                    "title": "Temps maximum en mémoire tampon"
+                },
+                "minBuffer": {
+                    "title": "Temps minimum en mémoire tampon"
                 }
-            }
+            },
+            "name": "Réseau"
         },
         "servers": {
             "fields": {
@@ -64,15 +87,55 @@
                 "delete": "Supprimer",
                 "save": "Sauvegarder"
             },
-            "name": "Serveurs"
+            "name": "Serveurs",
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forcer le mot de passe en texte clair",
+                    "descriptionOn": "Envoyer le mot de passe en test clair (héritage, assurez-vous que la connexion est sécurisée !)",
+                    "descriptionOff": "Envoyer le mot de passe sous forme de jeton + salage"
+                }
+            },
+            "messages": {
+                "connectionOk": "Connexion à {{address}} OK !",
+                "connectionFailed": "Échec de la connexion à {{address}}, vérifiez les paramètres ou le serveur"
+            }
         },
         "music": {
             "name": "Musique"
+        },
+        "about": {
+            "version": "version {{version}}",
+            "name": "À propos",
+            "actions": {
+                "licenses": "Licenses",
+                "projectHomepage": "Page d'accueil du projet"
+            }
+        },
+        "reset": {
+            "actions": {
+                "clearImageCache": "Vider le cache d'images"
+            }
         }
     },
     "navigation": {
         "tabs": {
-            "library": "Bibliothèque"
+            "library": "Bibliothèque",
+            "home": "Accueil",
+            "search": "Recherche",
+            "settings": "Paramètres"
         }
+    },
+    "search": {
+        "headerTitle": "Recherche : {{query}}",
+        "inputPlaceholder": "Recherche",
+        "moreResults": "Plus…"
+    },
+    "context": {
+        "actions": {
+            "star": "Étoiler"
+        }
+    },
+    "messages": {
+        "nothingHere": "Rien ici…"
     }
 }
