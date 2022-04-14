@@ -2,6 +2,7 @@ import { BackendModule, LanguageDetectorAsyncModule } from 'i18next'
 import path from 'path'
 import RNFS from 'react-native-fs'
 import * as RNLocalize from 'react-native-localize'
+import _ from 'lodash'
 
 const I18N_ASSETS_DIR = path.join('custom', 'i18n')
 
@@ -18,7 +19,7 @@ export const backend = {
   read: async (language, namespace, callback) => {
     try {
       if (cache && cache.language === language) {
-        callback(null, cache.translation[namespace])
+        callback(null, _.get(cache.translation, namespace))
       }
 
       const text = await RNFS.readFileAssets(path.join(I18N_ASSETS_DIR, `${language}.json`), 'utf8')
@@ -27,7 +28,7 @@ export const backend = {
         translation: JSON.parse(text),
       }
 
-      callback(null, cache.translation[namespace])
+      callback(null, _.get(cache.translation, namespace))
     } catch (err) {
       callback(err as any, null)
     }

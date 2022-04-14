@@ -40,7 +40,7 @@ const FilterButton = React.memo<{
           triggerTouchable: { style: styles.filter },
           TriggerTouchableComponent: PressableOpacity,
         }}>
-        <Icon name="filter-variant" color="white" size={30} style={styles.filterIcon} />
+        <Icon name="filter-variant" color="white" size={30} />
       </MenuTrigger>
       <MenuOptions
         customStyles={{
@@ -71,28 +71,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accent,
   },
-  filterIcon: {
-    // top: 4,
-  },
   optionsWrapper: {
-    maxWidth: 145,
+    maxWidth: 130,
   },
   optionsContainer: {
     backgroundColor: colors.gradient.high,
-    maxWidth: 145,
+    maxWidth: 130,
   },
   option: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: 40,
+    paddingVertical: 8,
   },
   optionText: {
+    flex: 1,
     color: colors.text.primary,
     fontFamily: font.semiBold,
-    fontSize: 16,
-    flex: 1,
+    fontSize: 14,
+    textAlign: 'right',
+    marginRight: 6,
   },
 })
 

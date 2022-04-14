@@ -3,6 +3,7 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
+import { withSuspenseMemo } from '@app/components/withSuspense'
 import { useQueryHomeLists } from '@app/hooks/query'
 import { Album } from '@app/models/library'
 import { useStoreDeep } from '@app/state/store'
@@ -11,11 +12,10 @@ import font from '@app/styles/font'
 import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
-import React, { Suspense } from 'react'
+import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTranslation } from 'react-i18next'
-import Button from '@app/components/Button'
 
 const AlbumItem = React.memo<{
   album: Album
@@ -44,17 +44,9 @@ const AlbumItem = React.memo<{
   )
 }, equal)
 
-const _CategoryHeader = React.memo<{ type: string }>(({ type }) => {
-  const { t } = useTranslation('home')
+const CategoryHeader = withSuspenseMemo<{ type: string }>(({ type }) => {
+  const { t } = useTranslation('resources.album.lists')
   return <Header style={styles.header}>{t(type)}</Header>
-})
-
-const CategoryHeader = React.memo<{ type: string }>(({ type }) => {
-  return (
-    <Suspense fallback={<></>}>
-      <_CategoryHeader type={type} />
-    </Suspense>
-  )
 })
 
 const Category = React.memo<{
@@ -88,20 +80,6 @@ const Category = React.memo<{
   )
 }, equal)
 
-const _SwitchLanguage = React.memo(() => {
-  const { t, i18n } = useTranslation('translation')
-
-  return <Button title={t('change')} onPress={() => i18n.changeLanguage(i18n.language === 'en' ? 'ja' : 'en')} />
-})
-
-const SwitchLanguage = React.memo(() => {
-  return (
-    <Suspense fallback={<></>}>
-      <_SwitchLanguage />
-    </Suspense>
-  )
-})
-
 const Home = () => {
   const types = useStoreDeep(store => store.settings.screens.home.listTypes)
   const listQueries = useQueryHomeLists(types as GetAlbumList2TypeBase[], 20)
@@ -119,7 +97,6 @@ const Home = () => {
           progressViewOffset={paddingTop}
         />
       }>
-      <SwitchLanguage />
       <View style={styles.content}>
         {types.map(type => {
           const query = listQueries.find(list => list.data?.type === type)

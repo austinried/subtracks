@@ -2,6 +2,7 @@ import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/s
 import { ById } from '@app/models/state'
 import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
+import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 import uuid from 'react-native-uuid'
 
 export type SettingsSlice = {
@@ -44,6 +45,7 @@ export type SettingsSlice = {
   pingServer: (server?: Server) => Promise<boolean>
 
   setLibraryAlbumFilter: (filter: AlbumFilterSettings) => void
+  setLibraryAlbumFilterType: (type: GetAlbumList2TypeBase) => void
   setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
 }
 
@@ -219,6 +221,12 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
   setLibraryAlbumFilter: filter => {
     set(state => {
       state.settings.screens.library.albumsFilter = filter
+    })
+  },
+
+  setLibraryAlbumFilterType: type => {
+    set(state => {
+      state.settings.screens.library.albumsFilter.type = type
     })
   },
 
