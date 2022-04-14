@@ -1,12 +1,9 @@
 {
     "translation": {
-        "change": "Endre språk",
         "hello": "Hei verden"
     },
     "home": {
-        "recent": "Nylig spilt",
         "random": "Tilfeldige album",
-        "frequent": "Ofte spilt",
         "starred": "Stjernemerkede album"
     }
 }
