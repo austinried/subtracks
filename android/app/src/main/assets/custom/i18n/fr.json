@@ -11,7 +11,8 @@
                 "alphabeticalByName": "Par Nom",
                 "byYear": "Par Année",
                 "alphabeticalByArtist": "Par Artiste",
-                "byGenre": "Par Genre"
+                "byGenre": "Par Genre",
+                "starred": "Favoris"
             }
         },
         "song": {
