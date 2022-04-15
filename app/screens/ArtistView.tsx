@@ -89,7 +89,7 @@ const ArtistAlbums = withSuspenseMemo<{
 
     return (
       <>
-        <Header>{t('name', { count: 1 })}</Header>
+        <Header>{t('name', { count: 2 })}</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {sortedAlbums.map(a => (
             <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />

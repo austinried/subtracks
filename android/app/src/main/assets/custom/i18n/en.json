@@ -92,6 +92,7 @@
             },
             "actions": {
                 "add": "Add Server",
+                "edit": "Edit Server",
                 "testConnection": "Test Connection",
                 "delete": "Delete",
                 "save": "Save"

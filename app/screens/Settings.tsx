@@ -20,12 +20,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { version } from '../../package.json'
 
-const ServerItem = React.memo<{
+const ServerItem = withSuspenseMemo<{
   server: Server
 }>(({ server }) => {
   const activeServerId = useStore(store => store.settings.activeServerId)
   const switchActiveServer = useSwitchActiveServer()
   const navigation = useNavigation()
+  const { t } = useTranslation('settings.servers.actions')
 
   const setActive = useCallback(() => {
     switchActiveServer(server.id)
@@ -35,7 +36,7 @@ const ServerItem = React.memo<{
     <SettingsItem
       title={server.address}
       subtitle={server.username}
-      onPress={() => navigation.navigate('server', { id: server.id })}>
+      onPress={() => navigation.navigate('server', { id: server.id, title: t('edit') })}>
       <PressableOpacity style={styles.serverActive} onPress={setActive}>
         {activeServerId === server.id ? (
           <Icon name="checkbox-marked-circle" size={30} color={colors.accent} />
@@ -219,7 +220,7 @@ const SettingsContent = withSuspenseMemo(() => {
       <Button
         style={styles.button}
         title={t('servers.actions.add')}
-        onPress={() => navigation.navigate('server')}
+        onPress={() => navigation.navigate('server', { title: t('servers.actions.add') })}
         buttonStyle="hollow"
       />
       <Header style={styles.header}>{t('network.name')}</Header>
