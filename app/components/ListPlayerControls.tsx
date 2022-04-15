@@ -2,19 +2,22 @@ import Button from '@app/components/Button'
 import { Song } from '@app/models/library'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMat from 'react-native-vector-icons/MaterialIcons'
+import { withSuspenseMemo } from './withSuspense'
 
-const ListPlayerControls = React.memo<{
+const ListPlayerControls = withSuspenseMemo<{
   songs: Song[]
-  typeName: string
+  listType: 'album' | 'playlist'
   style?: StyleProp<ViewStyle>
   play: () => void
   shuffle: () => void
   disabled?: boolean
-}>(({ typeName, style, play, shuffle, disabled }) => {
+}>(({ listType, style, play, shuffle, disabled }) => {
   const [downloaded, setDownloaded] = useState(false)
+  const { t } = useTranslation('resources')
 
   return (
     <View style={[styles.controls, style]}>
@@ -31,7 +34,7 @@ const ListPlayerControls = React.memo<{
         </Button>
       </View>
       <View style={styles.controlsCenter}>
-        <Button title={`Play ${typeName}`} disabled={disabled} onPress={play} />
+        <Button title={t(`${listType}.actions.play`)} disabled={disabled} onPress={play} />
       </View>
       <View style={styles.controlsSide}>
         <Button disabled={disabled} onPress={shuffle}>
@@ -55,6 +58,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    maxWidth: '65%',
   },
 })
 

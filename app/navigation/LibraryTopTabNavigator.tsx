@@ -1,3 +1,4 @@
+import { withSuspense } from '@app/components/withSuspense'
 import AlbumsTab from '@app/screens/LibraryAlbums'
 import ArtistsTab from '@app/screens/LibraryArtists'
 import PlaylistsTab from '@app/screens/LibraryPlaylists'
@@ -6,12 +7,14 @@ import dimensions from '@app/styles/dimensions'
 import font from '@app/styles/font'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const Tab = createMaterialTopTabNavigator()
 
-const LibraryTopTabNavigator = () => {
+const LibraryTopTabNavigator = withSuspense(() => {
+  const { t } = useTranslation('resources')
   const marginTop = useSafeAreaInsets().top
 
   return (
@@ -22,12 +25,16 @@ const LibraryTopTabNavigator = () => {
         indicatorStyle: styles.tabindicatorStyle,
       }}
       initialRouteName="albums">
-      <Tab.Screen name="albums" component={AlbumsTab} options={{ tabBarLabel: 'Albums' }} />
-      <Tab.Screen name="artists" component={ArtistsTab} options={{ tabBarLabel: 'Artists' }} />
-      <Tab.Screen name="playlists" component={PlaylistsTab} options={{ tabBarLabel: 'Playlists' }} />
+      <Tab.Screen name="albums" component={AlbumsTab} options={{ tabBarLabel: t('album.name', { count: 2 }) }} />
+      <Tab.Screen name="artists" component={ArtistsTab} options={{ tabBarLabel: t('artist.name', { count: 2 }) }} />
+      <Tab.Screen
+        name="playlists"
+        component={PlaylistsTab}
+        options={{ tabBarLabel: t('playlist.name', { count: 2 }) }}
+      />
     </Tab.Navigator>
   )
-}
+})
 
 const styles = StyleSheet.create({
   tabBar: {

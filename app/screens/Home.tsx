@@ -3,24 +3,19 @@ import CoverArt from '@app/components/CoverArt'
 import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import NothingHere from '@app/components/NothingHere'
+import { withSuspenseMemo } from '@app/components/withSuspense'
 import { useQueryHomeLists } from '@app/hooks/query'
 import { Album } from '@app/models/library'
 import { useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
-import { GetAlbumList2TypeBase, GetAlbumListType } from '@app/subsonic/params'
+import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
-const titles: { [key in GetAlbumListType]?: string } = {
-  recent: 'Recently Played',
-  random: 'Random Albums',
-  frequent: 'Frequently Played',
-  starred: 'Starred Albums',
-}
 
 const AlbumItem = React.memo<{
   album: Album
@@ -49,6 +44,12 @@ const AlbumItem = React.memo<{
   )
 }, equal)
 
+const CategoryHeader = withSuspenseMemo<{ type: string }>(({ type }) => {
+  const { t } = useTranslation('resources.album.lists')
+  console.log('type', type, t(type))
+  return <Header style={styles.header}>{t(type)}</Header>
+})
+
 const Category = React.memo<{
   type: string
   albums: Album[]
@@ -74,7 +75,7 @@ const Category = React.memo<{
 
   return (
     <View style={styles.category}>
-      <Header style={styles.header}>{titles[type as GetAlbumListType] || ''}</Header>
+      <CategoryHeader type={type} />
       {albums.length > 0 ? <Albums /> : <Nothing />}
     </View>
   )

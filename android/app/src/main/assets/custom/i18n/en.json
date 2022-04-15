@@ -1,0 +1,151 @@
+{
+    "resources": {
+        "song": {
+            "name": "Song",
+            "name_plural": "Songs",
+            "lists": {
+                "artistTopSongs": "Top Songs"
+            }
+        },
+        "album": {
+            "name": "Album",
+            "name_plural": "Albums",
+            "lists": {
+                "sort": "Sort Albums",
+                "random": "Random",
+                "newest": "Recently Added",
+                "frequent": "Frequently Played",
+                "recent": "Recently Played",
+                "starred": "Starred",
+                "alphabeticalByName": "By Name",
+                "alphabeticalByArtist": "By Artist",
+                "byYear": "By Year",
+                "byGenre": "By Genre"
+            },
+            "actions": {
+                "play": "Play Album",
+                "view": "View Album"
+            }
+        },
+        "artist": {
+            "name": "Artist",
+            "name_plural": "Artists",
+            "lists": {
+                "sort": "Sort Artists",
+                "random": "Random",
+                "starred": "Starred",
+                "alphabeticalByName": "By Name"
+            },
+            "actions": {
+                "view": "View Artist"
+            }
+        },
+        "playlist": {
+            "name": "Playlist",
+            "name_plural": "Playlists",
+            "actions": {
+                "play": "Play Playlist"
+            }
+        },
+        "queue": {
+            "name": "Queue",
+            "name_plural": "Queues"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Star",
+            "unstar": "Unstar"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Home",
+            "library": "Library",
+            "search": "Search",
+            "settings": "Settings"
+        }
+    },
+    "messages": {
+        "nothingHere": "Nothing here…"
+    },
+    "search": {
+        "inputPlaceholder": "Search",
+        "headerTitle": "Search: {{query}}",
+        "moreResults": "More…",
+        "nowPlayingContext": "Search Results"
+    },
+    "settings": {
+        "servers": {
+            "name": "Servers",
+            "fields": {
+                "address": "Address",
+                "username": "Username",
+                "password": "Password"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Force plaintext password",
+                    "descriptionOn": "Send password in plaintext (legacy, make sure your connection is secure!)",
+                    "descriptionOff": "Send password as token + salt"
+                }
+            },
+            "actions": {
+                "add": "Add Server",
+                "testConnection": "Test Connection",
+                "delete": "Delete",
+                "save": "Save"
+            },
+            "messages": {
+                "connectionOk": "Connection to {{address}} OK!",
+                "connectionFailed": "Connection to {{address}} failed, check settings or server"
+            }
+        },
+        "network": {
+            "name": "Network",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Unlimited",
+                "seconds": "{{value}} seconds"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Maximum bitrate (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Maximum bitrate (mobile)"
+                },
+                "minBuffer": {
+                    "title": "Minimum buffer time"
+                },
+                "maxBuffer": {
+                    "title": "Maximum buffer time"
+                }
+            }
+        },
+        "music": {
+            "name": "Music",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble plays",
+                    "descriptionOn": "Scrobble play history",
+                    "descriptionOff": "Don't scrobble play history"
+                }
+            }
+        },
+        "reset": {
+            "name": "Reset",
+            "actions": {
+                "clearImageCache": "Clear Image Cache"
+            }
+        },
+        "about": {
+            "name": "About",
+            "version": "version {{version}}",
+            "actions": {
+                "projectHomepage": "Project Homepage",
+                "licenses": "Licenses"
+            }
+        }
+    }
+}

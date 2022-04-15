@@ -16,7 +16,13 @@ const Button: React.FC<{
       onPress={onPress}
       disabled={disabled}
       style={[styles.container, buttonStyle !== undefined ? styles[buttonStyle] : {}, style]}>
-      {title ? <Text style={styles.text}>{title}</Text> : children}
+      {title ? (
+        <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit={true}>
+          {title}
+        </Text>
+      ) : (
+        children
+      )}
     </PressableOpacity>
   )
 }
@@ -26,6 +32,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     paddingHorizontal: 10,
     minHeight: 42,
+    maxHeight: 42,
     justifyContent: 'center',
     borderRadius: 1000,
   },
@@ -43,6 +50,7 @@ const styles = StyleSheet.create({
     fontFamily: font.bold,
     color: colors.text.primary,
     paddingHorizontal: 14,
+    textAlign: 'center',
   },
 })
 

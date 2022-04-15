@@ -1,0 +1,15 @@
+{
+    "resources": {
+        "album": {
+            "lists": {
+                "random": "ランダムアルバム",
+                "frequent": "よく聴くアルバム",
+                "recent": "最近再生した",
+                "starred": "星付きアルバム"
+            }
+        },
+        "song": {
+            "name": "歌"
+        }
+    }
+}

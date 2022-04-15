@@ -1,26 +1,42 @@
-import FilterButton, { OptionData } from '@app/components/FilterButton'
+import FilterButton from '@app/components/FilterButton'
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
+import { withSuspenseMemo } from '@app/components/withSuspense'
 import { useQueryArtists } from '@app/hooks/query'
 import { Artist } from '@app/models/library'
 import { ArtistFilterType } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
 const ArtistRenderItem: React.FC<{ item: Artist }> = ({ item }) => (
   <ListItem item={item} showArt={true} showStar={false} listStyle="big" style={styles.listItem} />
 )
 
-const filterOptions: OptionData[] = [
-  { text: 'By Name', value: 'alphabeticalByName' },
-  { text: 'Starred', value: 'starred' },
-  { text: 'Random', value: 'random' },
+const filterValues: ArtistFilterType[] = [
+  'alphabeticalByName', //
+  'starred',
+  'random',
 ]
 
+const ArtistFilterButton = withSuspenseMemo(() => {
+  const { t } = useTranslation('resources.artist.lists')
+  const filterType = useStoreDeep(store => store.settings.screens.library.artistsFilter.type)
+  const setFilterType = useStore(store => store.setLibraryArtistFilterType)
+
+  return (
+    <FilterButton
+      data={filterValues.map(value => ({ value, text: t(value) }))}
+      value={filterType}
+      onSelect={selection => setFilterType(selection as ArtistFilterType)}
+      title={t('sort')}
+    />
+  )
+})
+
 const ArtistsList = () => {
-  const filter = useStoreDeep(store => store.settings.screens.library.artistsFilter)
-  const setFilter = useStore(store => store.setLibraryArtistFiler)
+  const filterType = useStore(store => store.settings.screens.library.artistsFilter.type)
 
   const { isLoading, data, refetch } = useQueryArtists()
   const [sortedList, setSortedList] = useState<Artist[]>([])
@@ -32,7 +48,7 @@ const ArtistsList = () => {
     }
 
     const list = Object.values(data.byId)
-    switch (filter.type) {
+    switch (filterType) {
       case 'random':
         setSortedList([...list].sort(() => Math.random() - 0.5))
         break
@@ -46,7 +62,7 @@ const ArtistsList = () => {
         setSortedList([...list])
         break
     }
-  }, [filter.type, data])
+  }, [filterType, data])
 
   return (
     <View style={styles.container}>
@@ -60,16 +76,7 @@ const ArtistsList = () => {
         windowSize={3}
         contentMarginTop={6}
       />
-      <FilterButton
-        data={filterOptions}
-        value={filter.type}
-        onSelect={selection => {
-          setFilter({
-            ...filter,
-            type: selection as ArtistFilterType,
-          })
-        }}
-      />
+      <ArtistFilterButton />
     </View>
   )
 }
