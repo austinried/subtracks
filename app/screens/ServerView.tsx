@@ -9,7 +9,7 @@ import font from '@app/styles/font'
 import toast from '@app/util/toast'
 import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
 import uuid from 'react-native-uuid'
@@ -18,7 +18,8 @@ const PASSWORD_PLACEHOLDER = 'PASSWORD_PLACEHOLDER'
 
 const ServerView = withSuspense<{
   id?: string
-}>(({ id }) => {
+  title?: string
+}>(({ id, title }) => {
   const { t } = useTranslation('settings.servers')
   const navigation = useNavigation()
   const activeServerId = useStore(store => store.settings.activeServerId)
@@ -38,6 +39,10 @@ const ServerView = withSuspense<{
   )
 
   const [testing, setTesting] = useState(false)
+
+  useEffect(() => {
+    navigation.setOptions({ title })
+  }, [navigation, title])
 
   const validate = useCallback(() => {
     return !!address && !!username && !!password
