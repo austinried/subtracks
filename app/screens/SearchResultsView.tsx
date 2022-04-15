@@ -1,11 +1,13 @@
 import GradientFlatList from '@app/components/GradientFlatList'
 import ListItem from '@app/components/ListItem'
+import { withSuspense } from '@app/components/withSuspense'
 import { useQuerySearchResults } from '@app/hooks/query'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, Song } from '@app/models/library'
 import { Search3Params } from '@app/subsonic/params'
 import { useNavigation } from '@react-navigation/native'
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet } from 'react-native'
 
 type SearchListItemType = Album | Song | Artist
@@ -52,11 +54,12 @@ const ResultsListItem: React.FC<{ item: SearchListItemType }> = ({ item }) => {
 
 const SearchResultsRenderItem: React.FC<{ item: SearchListItemType }> = ({ item }) => <ResultsListItem item={item} />
 
-const SearchResultsView: React.FC<{
+const SearchResultsView = withSuspense<{
   query: string
   type: 'album' | 'artist' | 'song'
-}> = ({ query, type }) => {
+}>(({ query, type }) => {
   const navigation = useNavigation()
+  const { t } = useTranslation('search')
 
   const size = 100
   const params: Search3Params = { query }
@@ -82,7 +85,7 @@ const SearchResultsView: React.FC<{
 
   useEffect(() => {
     navigation.setOptions({
-      title: `Search: "${query}"`,
+      title: t('headerTitle', { query }),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -102,7 +105,7 @@ const SearchResultsView: React.FC<{
       windowSize={5}
     />
   )
-}
+})
 
 const styles = StyleSheet.create({
   listItem: {

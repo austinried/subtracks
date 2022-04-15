@@ -5,6 +5,7 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
+import { withSuspenseMemo } from '@app/components/withSuspense'
 import { useQueryArtist, useQueryArtistTopSongs } from '@app/hooks/query'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/library'
@@ -15,6 +16,7 @@ import { useLayout } from '@react-native-community/hooks'
 import { useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 
@@ -42,53 +44,63 @@ const AlbumItem = React.memo<{
   )
 }, equal)
 
-const TopSongs = React.memo<{
+const TopSongs = withSuspenseMemo<{
   songs: Song[]
   name: string
-}>(({ songs, name }) => {
-  const { setQueue, isReady, contextId } = useSetQueue('artist', songs)
+}>(
+  ({ songs, name }) => {
+    const { setQueue, isReady, contextId } = useSetQueue('artist', songs)
+    const { t } = useTranslation('resources.song.lists')
 
-  return (
-    <>
-      <Header>Top Songs</Header>
-      {songs.slice(0, 5).map((s, i) => (
-        <ListItem
-          key={i}
-          item={s}
-          contextId={contextId}
-          queueId={i}
-          showArt={true}
-          subtitle={s.album}
-          onPress={() => setQueue({ title: name, playTrack: i })}
-          disabled={!isReady}
-        />
-      ))}
-    </>
-  )
-}, equal)
-
-const ArtistAlbums = React.memo<{
-  albums: Album[]
-}>(({ albums }) => {
-  const albumsLayout = useLayout()
-
-  const sortedAlbums = [...albums]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .sort((a, b) => (b.year || 0) - (a.year || 0))
-
-  const albumSize = albumsLayout.width / 2 - styles.contentContainer.paddingHorizontal / 2
-
-  return (
-    <>
-      <Header>Albums</Header>
-      <View style={styles.albums} onLayout={albumsLayout.onLayout}>
-        {sortedAlbums.map(a => (
-          <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
+    return (
+      <>
+        <Header>{t('artistTopSongs')}</Header>
+        {songs.slice(0, 5).map((s, i) => (
+          <ListItem
+            key={i}
+            item={s}
+            contextId={contextId}
+            queueId={i}
+            showArt={true}
+            subtitle={s.album}
+            onPress={() => setQueue({ title: name, playTrack: i })}
+            disabled={!isReady}
+          />
         ))}
-      </View>
-    </>
-  )
-}, equal)
+      </>
+    )
+  },
+  null,
+  equal,
+)
+
+const ArtistAlbums = withSuspenseMemo<{
+  albums: Album[]
+}>(
+  ({ albums }) => {
+    const albumsLayout = useLayout()
+    const { t } = useTranslation('resources.album')
+
+    const sortedAlbums = [...albums]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => (b.year || 0) - (a.year || 0))
+
+    const albumSize = albumsLayout.width / 2 - styles.contentContainer.paddingHorizontal / 2
+
+    return (
+      <>
+        <Header>{t('name', { count: 1 })}</Header>
+        <View style={styles.albums} onLayout={albumsLayout.onLayout}>
+          {sortedAlbums.map(a => (
+            <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />
+          ))}
+        </View>
+      </>
+    )
+  },
+  null,
+  equal,
+)
 
 const ArtistViewFallback = React.memo(() => (
   <GradientBackground style={styles.fallback}>

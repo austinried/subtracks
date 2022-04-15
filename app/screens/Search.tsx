@@ -4,6 +4,7 @@ import Header from '@app/components/Header'
 import ListItem from '@app/components/ListItem'
 import NothingHere from '@app/components/NothingHere'
 import TextInput from '@app/components/TextInput'
+import { withSuspense, withSuspenseMemo } from '@app/components/withSuspense'
 import { useQuerySearchResults } from '@app/hooks/query'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Artist, SearchResults, Song } from '@app/models/library'
@@ -13,6 +14,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import equal from 'fast-deep-equal/es6/react'
 import _ from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   InteractionManager,
@@ -39,56 +41,68 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
   )
 }, equal)
 
-const ResultsCategory = React.memo<{
+const ResultsCategory = withSuspenseMemo<{
   name: string
   query: string
   items: (Artist | Album | Song)[]
   type: 'artist' | 'album' | 'song'
-}>(({ name, query, type, items }) => {
-  const navigation = useNavigation()
+}>(
+  ({ name, query, type, items }) => {
+    const navigation = useNavigation()
+    const { t } = useTranslation('search')
 
-  if (items.length === 0) {
-    return <></>
-  }
+    if (items.length === 0) {
+      return <></>
+    }
 
-  return (
-    <>
-      <Header>{name}</Header>
-      {items.map(a =>
-        type === 'song' ? (
-          <SongItem key={a.id} item={a as Song} />
-        ) : (
-          <ListItem key={a.id} item={a} showArt={true} showStar={false} />
-        ),
-      )}
-      {items.length === 5 && (
-        <Button
-          title="More..."
-          buttonStyle="hollow"
-          style={styles.more}
-          onPress={() => navigation.navigate('results', { query, type: items[0].itemType })}
-        />
-      )}
-    </>
-  )
-}, equal)
+    return (
+      <>
+        <Header>{name}</Header>
+        {items.map(a =>
+          type === 'song' ? (
+            <SongItem key={a.id} item={a as Song} />
+          ) : (
+            <ListItem key={a.id} item={a} showArt={true} showStar={false} />
+          ),
+        )}
+        {items.length === 5 && (
+          <Button
+            title={t('moreResults')}
+            buttonStyle="hollow"
+            style={styles.more}
+            onPress={() => navigation.navigate('results', { query, type: items[0].itemType })}
+          />
+        )}
+      </>
+    )
+  },
+  null,
+  equal,
+)
 
-const Results = React.memo<{
+const Results = withSuspenseMemo<{
   results: SearchResults
   query: string
-}>(({ results, query }) => {
-  return (
-    <>
-      <ResultsCategory name="Artists" query={query} type={'artist'} items={results.artists} />
-      <ResultsCategory name="Albums" query={query} type={'album'} items={results.albums} />
-      <ResultsCategory name="Songs" query={query} type={'song'} items={results.songs} />
-    </>
-  )
-}, equal)
+}>(
+  ({ results, query }) => {
+    const { t } = useTranslation('resources')
 
-const Search = () => {
+    return (
+      <>
+        <ResultsCategory name={t('artist.name', { count: 2 })} query={query} type={'artist'} items={results.artists} />
+        <ResultsCategory name={t('album.name', { count: 2 })} query={query} type={'album'} items={results.albums} />
+        <ResultsCategory name={t('song.name', { count: 2 })} query={query} type={'song'} items={results.songs} />
+      </>
+    )
+  },
+  null,
+  equal,
+)
+
+const Search = withSuspense(() => {
   const [query, setQuery] = useState('')
   const { data, isLoading } = useQuerySearchResults({ query, albumCount: 5, artistCount: 5, songCount: 5 })
+  const { t } = useTranslation('search')
 
   const [text, setText] = useState('')
   const searchBarRef = useRef<ReactTextInput>(null)
@@ -140,7 +154,7 @@ const Search = () => {
           <TextInput
             ref={searchBarRef}
             style={styles.textInput}
-            placeholder="Search"
+            placeholder={t('inputPlaceholder')}
             value={text}
             onChangeText={onChangeText}
           />
@@ -154,7 +168,7 @@ const Search = () => {
       </View>
     </GradientScrollView>
   )
-}
+})
 
 const styles = StyleSheet.create({
   scroll: {

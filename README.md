@@ -3,6 +3,8 @@
 # 
 Subtracks is an Android open source music streaming app for [Subsonic-API-compatible](http://www.subsonic.org/pages/api.jsp) servers ([Subsonic](http://www.subsonic.org/pages/index.jsp), [Navidrome](https://www.navidrome.org/), [Airsonic](https://airsonic.github.io/), and more).  It's designed to give you clean and convenient access to your music in the style of modern media players.
 
+[![Translation status](https://hosted.weblate.org/widgets/subtracks/-/subtracks/svg-badge.svg)](https://hosted.weblate.org/engage/subtracks/) ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/austinried/subtracks/build-release-debugsign/main) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/austinried/subtracks?label=github) ![F-Droid](https://img.shields.io/f-droid/v/com.subtracks)
+
 # Screenshots
 <p float="left">
   <img src="metadata/en-US/images/phoneScreenshots/01_home.png" alt="home" width="200"/>
@@ -45,3 +47,10 @@ Subtracks is an Android open source music streaming app for [Subsonic-API-compat
 
 # Building
 See [Building from source](BUILDING.md).
+
+# Translations
+Want to see Subtracks in your language? Visit the project on [Weblate](https://hosted.weblate.org/engage/subtracks/) to help!
+
+<a href="https://hosted.weblate.org/engage/subtracks/">
+<img src="https://hosted.weblate.org/widgets/subtracks/-/subtracks/multi-auto.svg" alt="Translation status" />
+</a>

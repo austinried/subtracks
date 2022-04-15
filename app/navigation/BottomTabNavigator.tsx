@@ -1,3 +1,4 @@
+import { withSuspense } from '@app/components/withSuspense'
 import { useFirstRun } from '@app/hooks/settings'
 import { Album, Playlist } from '@app/models/library'
 import BottomTabBar from '@app/navigation/BottomTabBar'
@@ -16,6 +17,7 @@ import font from '@app/styles/font'
 import { BottomTabNavigationProp, createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { RouteProp, StackActions } from '@react-navigation/native'
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet } from 'react-native'
 import { createNativeStackNavigator, NativeStackNavigationProp } from 'react-native-screens/native-stack'
 
@@ -116,7 +118,7 @@ const SearchTab = createTabStackNavigator(Search)
 type SettingsStackParamList = {
   main: undefined
   server?: { id?: string }
-  web: { uri: string }
+  web: { uri: string; title?: string }
 }
 
 type ServerScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'server'>
@@ -133,7 +135,9 @@ type WebScreenProps = {
   route: WebScreenRouteProp
   navigation: WebScreenNavigationProp
 }
-const WebScreen: React.FC<WebScreenProps> = ({ route }) => <WebViewScreen uri={route.params.uri} />
+const WebScreen: React.FC<WebScreenProps> = ({ route }) => (
+  <WebViewScreen uri={route.params.uri} title={route.params.title} />
+)
 
 const SettingsStack = createNativeStackNavigator()
 
@@ -156,7 +160,6 @@ const SettingsTab = () => {
         name="web"
         component={WebScreen}
         options={{
-          title: 'Web View',
           headerStyle: styles.stackheaderStyle,
           headerHideShadow: true,
           headerTintColor: 'white',
@@ -169,7 +172,8 @@ const SettingsTab = () => {
 
 const Tab = createBottomTabNavigator()
 
-const BottomTabNavigator = () => {
+const BottomTabNavigator = withSuspense(() => {
+  const { t } = useTranslation('navigation.tabs')
   const firstRun = useFirstRun()
   const resetServer = useStore(store => store.resetServer)
 
@@ -179,14 +183,14 @@ const BottomTabNavigator = () => {
         <></>
       ) : (
         <>
-          <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: 'Home' }} />
-          <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: 'Library' }} />
-          <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: 'Search' }} />
+          <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: t('home') }} />
+          <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: t('library') }} />
+          <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: t('search') }} />
         </>
       )}
-      <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: 'Settings' }} />
+      <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: t('settings') }} />
     </Tab.Navigator>
   )
-}
+})
 
 export default BottomTabNavigator

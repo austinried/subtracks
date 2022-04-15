@@ -1,5 +1,7 @@
 import Button from '@app/components/Button'
 import GradientScrollView from '@app/components/GradientScrollView'
+import SettingsSwitch from '@app/components/SettingsSwitch'
+import { withSuspense } from '@app/components/withSuspense'
 import { Server } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
@@ -8,15 +10,16 @@ import toast from '@app/util/toast'
 import { useNavigation } from '@react-navigation/native'
 import md5 from 'md5'
 import React, { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native'
 import uuid from 'react-native-uuid'
-import SettingsSwitch from '@app/components/SettingsSwitch'
 
 const PASSWORD_PLACEHOLDER = 'PASSWORD_PLACEHOLDER'
 
-const ServerView: React.FC<{
+const ServerView = withSuspense<{
   id?: string
-}> = ({ id }) => {
+}>(({ id }) => {
+  const { t } = useTranslation('settings.servers')
   const navigation = useNavigation()
   const activeServerId = useStore(store => store.settings.activeServerId)
   const servers = useStoreDeep(store => store.settings.servers)
@@ -134,15 +137,16 @@ const ServerView: React.FC<{
 
     const ping = async () => {
       const res = await pingServer(potential)
-      if (res) {
-        toast(`Connection to ${potential.address} OK!`)
-      } else {
-        toast(`Connection to ${potential.address} failed, check settings or server`)
-      }
+      toast(
+        t(`messages.${res ? 'connectionOk' : 'connectionFailed'}`, {
+          address: potential.address,
+          interpolation: { escapeValue: false },
+        }),
+      )
       setTesting(false)
     }
     ping()
-  }, [createServer, pingServer])
+  }, [createServer, pingServer, t])
 
   const disableControls = useCallback(() => {
     return !validate() || testing
@@ -169,7 +173,7 @@ const ServerView: React.FC<{
   return (
     <GradientScrollView style={styles.scroll}>
       <View style={styles.content}>
-        <Text style={styles.inputTitle}>Address</Text>
+        <Text style={styles.inputTitle}>{t('fields.address')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -182,7 +186,7 @@ const ServerView: React.FC<{
           onChangeText={setAddress}
           onBlur={formatAddress}
         />
-        <Text style={styles.inputTitle}>Username</Text>
+        <Text style={styles.inputTitle}>{t('fields.username')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -195,7 +199,7 @@ const ServerView: React.FC<{
           value={username}
           onChangeText={setUsername}
         />
-        <Text style={styles.inputTitle}>Password</Text>
+        <Text style={styles.inputTitle}>{t('fields.password')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -210,11 +214,11 @@ const ServerView: React.FC<{
           onChangeText={setPassword}
         />
         <SettingsSwitch
-          title="Force plain text password"
+          title={t('options.forcePlaintextPassword.title')}
           subtitle={
             usePlainPassword
-              ? 'Send password in plain text (legacy, make sure your connection is secure!)'
-              : 'Send password as token + salt'
+              ? t('options.forcePlaintextPassword.descriptionOn')
+              : t('options.forcePlaintextPassword.descriptionOff')
           }
           value={usePlainPassword}
           setValue={togglePlainPassword}
@@ -222,21 +226,21 @@ const ServerView: React.FC<{
         <Button
           disabled={disableControls()}
           style={styles.button}
-          title="Test Connection"
+          title={t('actions.testConnection')}
           buttonStyle="hollow"
           onPress={test}
         />
         <Button
           disabled={disableControls()}
           style={[styles.button, styles.delete, deleteStyle]}
-          title="Delete"
+          title={t('actions.delete')}
           onPress={remove}
         />
-        <Button disabled={disableControls()} style={styles.button} title="Save" onPress={save} />
+        <Button disabled={disableControls()} style={styles.button} title={t('actions.save')} onPress={save} />
       </View>
     </GradientScrollView>
   )
-}
+})
 
 const styles = StyleSheet.create({
   scroll: {

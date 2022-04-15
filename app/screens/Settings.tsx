@@ -5,13 +5,15 @@ import PressableOpacity from '@app/components/PressableOpacity'
 import SettingsItem from '@app/components/SettingsItem'
 import SettingsSwitch from '@app/components/SettingsSwitch'
 import TextInput from '@app/components/TextInput'
-import { useSwitchActiveServer, useResetImageCache } from '@app/hooks/settings'
+import { withSuspenseMemo } from '@app/components/withSuspense'
+import { useResetImageCache, useSwitchActiveServer } from '@app/hooks/settings'
 import { Server } from '@app/models/settings'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import { useNavigation } from '@react-navigation/core'
 import React, { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { KeyboardTypeOptions, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -73,25 +75,23 @@ const ModalChoice = React.memo<{
   )
 })
 
-function bitrateString(bitrate: number): string {
-  return bitrate === 0 ? 'Unlimited' : `${bitrate}kbps`
-}
-
-const BitrateModal = React.memo<{
+const BitrateModal = withSuspenseMemo<{
   title: string
   bitrate: number
   setBitrate: (bitrate: number) => void
 }>(({ title, bitrate, setBitrate }) => {
+  const { t } = useTranslation('settings.network.values')
   const [visible, setVisible] = useState(false)
 
   const toggleModal = useCallback(() => setVisible(!visible), [visible])
 
+  const bitrateText = useCallback((value: number) => (value === 0 ? t('unlimitedKbps') : t('kbps', { value })), [t])
+
   const BitrateChoice: React.FC<{ value: number }> = useCallback(
     ({ value }) => {
-      const text = bitrateString(value)
       return (
         <ModalChoice
-          text={text}
+          text={bitrateText(value)}
           value={value}
           setValue={setBitrate}
           closeModal={toggleModal}
@@ -99,12 +99,12 @@ const BitrateModal = React.memo<{
         />
       )
     },
-    [bitrate, toggleModal, setBitrate],
+    [bitrate, toggleModal, setBitrate, bitrateText],
   )
 
   return (
     <>
-      <SettingsItem title={title} subtitle={bitrateString(bitrate)} onPress={toggleModal} />
+      <SettingsItem title={title} subtitle={bitrateText(bitrate)} onPress={toggleModal} />
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={toggleModal}>
         <Pressable style={styles.modalBackdrop} onPress={toggleModal}>
           <View style={styles.centeredView}>
@@ -135,9 +135,9 @@ const SettingsTextModal = React.memo<{
   title: string
   value: string
   setValue: (text: string) => void
-  getUnit?: (text: string) => string
+  subtitle: (value: string) => string
   keyboardType?: KeyboardTypeOptions
-}>(({ title, value, setValue, getUnit, keyboardType }) => {
+}>(({ title, value, setValue, subtitle, keyboardType }) => {
   const [visible, setVisible] = useState(false)
   const [inputText, setInputText] = useState(value)
 
@@ -148,16 +148,9 @@ const SettingsTextModal = React.memo<{
     toggleModal()
   }, [inputText, setValue, toggleModal])
 
-  const getSubtitle = useCallback(() => {
-    if (!getUnit) {
-      return value
-    }
-    return value + ' ' + getUnit(value)
-  }, [getUnit, value])
-
   return (
     <>
-      <SettingsItem title={title} subtitle={getSubtitle()} onPress={toggleModal} />
+      <SettingsItem title={title} subtitle={subtitle(value)} onPress={toggleModal} />
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={toggleModal}>
         <Pressable style={styles.modalBackdrop} onPress={toggleModal}>
           <View style={styles.centeredView}>
@@ -183,15 +176,9 @@ const SettingsTextModal = React.memo<{
   )
 })
 
-function secondsUnit(seconds: string): string {
-  const numberValue = parseFloat(seconds)
-  if (Math.abs(numberValue) !== 1) {
-    return 'seconds'
-  }
-  return 'second'
-}
+const SettingsContent = withSuspenseMemo(() => {
+  const { t } = useTranslation('settings')
 
-const SettingsContent = React.memo(() => {
   const servers = useStoreDeep(store => store.settings.servers)
   const scrobble = useStore(store => store.settings.scrobble)
   const setScrobble = useStore(store => store.setScrobble)
@@ -221,66 +208,78 @@ const SettingsContent = React.memo(() => {
   const setMinBufferText = useCallback((text: string) => setMinBuffer(parseFloat(text)), [setMinBuffer])
   const setMaxBufferText = useCallback((text: string) => setMaxBuffer(parseFloat(text)), [setMaxBuffer])
 
+  const secondsText = useCallback((value: string) => t('network.values.seconds', { value }), [t])
+
   return (
     <View style={styles.content}>
-      <Header>Servers</Header>
+      <Header>{t('servers.name')}</Header>
       {Object.values(servers).map(s => (
         <ServerItem key={s.id} server={s} />
       ))}
       <Button
         style={styles.button}
-        title="Add Server"
+        title={t('servers.actions.add')}
         onPress={() => navigation.navigate('server')}
         buttonStyle="hollow"
       />
-      <Header style={styles.header}>Network</Header>
-      <BitrateModal title="Maximum bitrate (Wi-Fi)" bitrate={maxBitrateWifi} setBitrate={setMaxBitrateWifi} />
-      <BitrateModal title="Maximum bitrate (mobile)" bitrate={maxBitrateMobile} setBitrate={setMaxBitrateMobile} />
+      <Header style={styles.header}>{t('network.name')}</Header>
+      <BitrateModal
+        title={t('network.options.maxBitrateWifi.title')}
+        bitrate={maxBitrateWifi}
+        setBitrate={setMaxBitrateWifi}
+      />
+      <BitrateModal
+        title={t('network.options.maxBitrateMobile.title')}
+        bitrate={maxBitrateMobile}
+        setBitrate={setMaxBitrateMobile}
+      />
       <SettingsTextModal
-        title="Minimum buffer time"
+        title={t('network.options.minBuffer.title')}
         value={minBuffer.toString()}
         setValue={setMinBufferText}
-        getUnit={secondsUnit}
+        subtitle={secondsText}
         keyboardType="numeric"
       />
       <SettingsTextModal
-        title="Maximum buffer time"
+        title={t('network.options.maxBuffer.title')}
         value={maxBuffer.toString()}
         setValue={setMaxBufferText}
-        getUnit={secondsUnit}
+        subtitle={secondsText}
         keyboardType="numeric"
       />
-      <Header style={styles.header}>Music</Header>
+      <Header style={styles.header}>{t('music.name')}</Header>
       <SettingsSwitch
-        title="Scrobble plays"
-        subtitle={scrobble ? 'Scrobble play history' : "Don't scrobble play history"}
+        title={t('music.options.scrobble.title')}
+        subtitle={scrobble ? t('music.options.scrobble.descriptionOn') : t('music.options.scrobble.descriptionOff')}
         value={scrobble}
         setValue={setScrobble}
       />
-      <Header style={styles.header}>Reset</Header>
+      <Header style={styles.header}>{t('reset.name')}</Header>
       <Button
         disabled={clearing}
         style={styles.button}
-        title="Clear Image Cache"
+        title={t('reset.actions.clearImageCache')}
         onPress={clear}
         buttonStyle="hollow"
       />
-      <Header style={styles.header}>About</Header>
+      <Header style={styles.header}>{t('about.name')}</Header>
       <Text style={styles.text}>
-        <Text style={styles.bold}>Subtracks</Text> version {version}
+        <Text style={styles.bold}>Subtracks</Text> {t('about.version', { version })}
       </Text>
       <Button
         disabled={clearing}
         style={styles.button}
-        title="Project Homepage"
+        title={t('about.actions.projectHomepage')}
         onPress={() => Linking.openURL('https://github.com/austinried/subtracks')}
         buttonStyle="hollow"
       />
       <Button
         disabled={clearing}
         style={styles.button}
-        title="Licenses"
-        onPress={() => navigation.navigate('web', { uri: 'file:///android_asset/licenses.html' })}
+        title={t('about.actions.licenses')}
+        onPress={() =>
+          navigation.navigate('web', { uri: 'file:///android_asset/licenses.html', title: t('about.actions.licenses') })
+        }
         buttonStyle="hollow"
       />
     </View>

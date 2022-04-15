@@ -1,10 +1,13 @@
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
 import React from 'react'
-import { Text, StyleSheet } from 'react-native'
-import { MenuOption, Menu, MenuTrigger, MenuOptions } from 'react-native-popup-menu'
+import { Text, StyleSheet, View } from 'react-native'
+import { MenuOption, Menu, MenuTrigger, MenuOptions, renderers } from 'react-native-popup-menu'
 import PressableOpacity from './PressableOpacity'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import { ScrollView } from 'react-native-gesture-handler'
+
+const { SlideInMenu } = renderers
 
 export type OptionData = {
   value: string
@@ -17,12 +20,14 @@ const Option = React.memo<{
   selected?: boolean
 }>(({ text, value, selected }) => (
   <MenuOption style={styles.option} value={value}>
-    <Text style={styles.optionText}>{text}</Text>
     {selected ? (
-      <Icon name="checkbox-marked-circle" size={26} color={colors.accent} />
+      <Icon name="checkbox-marked-circle" size={32} color={colors.accent} style={styles.icon} />
     ) : (
-      <Icon name="checkbox-blank-circle-outline" size={26} color={colors.text.secondary} />
+      <Icon name="checkbox-blank-circle-outline" size={32} color={colors.text.secondary} style={styles.icon} />
     )}
+    <Text style={styles.optionText} numberOfLines={1} adjustsFontSizeToFit={true} minimumFontScale={0.6}>
+      {text}
+    </Text>
   </MenuOption>
 ))
 
@@ -30,9 +35,10 @@ const FilterButton = React.memo<{
   value?: string
   data: OptionData[]
   onSelect?: (selection: string) => void
-}>(({ value, data, onSelect }) => {
+  title: string
+}>(({ value, data, onSelect, title }) => {
   return (
-    <Menu onSelect={onSelect}>
+    <Menu onSelect={onSelect} renderer={SlideInMenu}>
       <MenuTrigger
         customStyles={{
           triggerOuterWrapper: styles.filterOuterWrapper,
@@ -40,16 +46,23 @@ const FilterButton = React.memo<{
           triggerTouchable: { style: styles.filter },
           TriggerTouchableComponent: PressableOpacity,
         }}>
-        <Icon name="filter-variant" color="white" size={30} style={styles.filterIcon} />
+        <Icon name="filter-variant" color="white" size={30} />
       </MenuTrigger>
       <MenuOptions
         customStyles={{
           optionsWrapper: styles.optionsWrapper,
           optionsContainer: styles.optionsContainer,
         }}>
-        {data.map(o => (
-          <Option key={o.value} text={o.text} value={o.value} selected={o.value === value} />
-        ))}
+        <ScrollView style={styles.optionsScroll} overScrollMode="never">
+          <View style={styles.header}>
+            <Text style={styles.headerText} numberOfLines={2} ellipsizeMode="clip">
+              {title}
+            </Text>
+          </View>
+          {data.map(o => (
+            <Option key={o.value} text={o.text} value={o.value} selected={o.value === value} />
+          ))}
+        </ScrollView>
       </MenuOptions>
     </Menu>
   )
@@ -71,28 +84,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accent,
   },
-  filterIcon: {
-    // top: 4,
+  optionsScroll: {
+    maxHeight: 260,
   },
   optionsWrapper: {
-    maxWidth: 145,
+    overflow: 'hidden',
   },
   optionsContainer: {
-    backgroundColor: colors.gradient.high,
-    maxWidth: 145,
+    backgroundColor: 'rgba(45, 45, 45, 0.95)',
+  },
+  header: {
+    paddingHorizontal: 20,
+    // paddingVertical: 10,
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  headerText: {
+    fontFamily: font.bold,
+    fontSize: 20,
+    color: colors.text.primary,
   },
   option: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
     paddingVertical: 8,
-    justifyContent: 'center',
+    paddingHorizontal: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   optionText: {
-    color: colors.text.primary,
     fontFamily: font.semiBold,
     fontSize: 16,
-    flex: 1,
+    color: colors.text.primary,
+  },
+  icon: {
+    marginRight: 14,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // backgroundColor: 'red',
   },
 })
 

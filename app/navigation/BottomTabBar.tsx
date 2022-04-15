@@ -47,7 +47,9 @@ const BottomTabButton = React.memo<{
   return (
     <PressableOpacity onPress={onPress} style={styles.button} disabled={disabled}>
       <Image source={imgSource} style={imgStyle} fadeDuration={0} />
-      <Text style={textStyle}>{label}</Text>
+      <Text style={textStyle} numberOfLines={1} ellipsizeMode="clip">
+        {label}
+      </Text>
     </PressableOpacity>
   )
 })
@@ -92,6 +94,7 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
+    flexGrow: 1,
     flex: 1,
     height: '100%',
   },

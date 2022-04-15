@@ -14,6 +14,9 @@ public class MainActivity extends ReactActivity {
     return "subtracks";
   }
 
+  // required by react-native-screens
+  // "This change is required to avoid crashes related to View state being not persisted consistently across Activity restarts."
+  // https://reactnavigation.org/docs/getting-started
   @Override
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(null);

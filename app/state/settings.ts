@@ -1,7 +1,8 @@
-import { AlbumFilterSettings, ArtistFilterSettings, Server } from '@app/models/settings'
+import { AlbumFilterSettings, ArtistFilterSettings, ArtistFilterType, Server } from '@app/models/settings'
 import { ById } from '@app/models/state'
 import { GetStore, SetStore } from '@app/state/store'
 import { SubsonicApiClient } from '@app/subsonic/api'
+import { GetAlbumList2TypeBase } from '@app/subsonic/params'
 import uuid from 'react-native-uuid'
 
 export type SettingsSlice = {
@@ -43,8 +44,8 @@ export type SettingsSlice = {
 
   pingServer: (server?: Server) => Promise<boolean>
 
-  setLibraryAlbumFilter: (filter: AlbumFilterSettings) => void
-  setLibraryArtistFiler: (filter: ArtistFilterSettings) => void
+  setLibraryAlbumFilterType: (type: GetAlbumList2TypeBase) => void
+  setLibraryArtistFilterType: (type: ArtistFilterType) => void
 }
 
 export function newCacheBuster(): string {
@@ -216,15 +217,15 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
   },
 
-  setLibraryAlbumFilter: filter => {
+  setLibraryAlbumFilterType: type => {
     set(state => {
-      state.settings.screens.library.albumsFilter = filter
+      state.settings.screens.library.albumsFilter.type = type
     })
   },
 
-  setLibraryArtistFiler: filter => {
+  setLibraryArtistFilterType: type => {
     set(state => {
-      state.settings.screens.library.artistsFilter = filter
+      state.settings.screens.library.artistsFilter.type = type
     })
   },
 })

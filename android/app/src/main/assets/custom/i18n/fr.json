@@ -1,0 +1,151 @@
+{
+    "resources": {
+        "album": {
+            "name": "Album",
+            "name_plural": "Albums",
+            "lists": {
+                "random": "Aléatoire",
+                "newest": "Récemment Ajouté",
+                "frequent": "Fréquemment Joué",
+                "recent": "Récemment Joué",
+                "alphabeticalByName": "Par Nom",
+                "byYear": "Par Année",
+                "alphabeticalByArtist": "Par Artiste",
+                "byGenre": "Par Genre",
+                "starred": "Favoris",
+                "sort": "Trier les albums"
+            },
+            "actions": {
+                "play": "Jouer l'album",
+                "view": "Voir l'album"
+            }
+        },
+        "song": {
+            "name": "Chanson",
+            "name_plural": "Chansons",
+            "lists": {
+                "artistTopSongs": "Meilleures Chansons"
+            }
+        },
+        "artist": {
+            "name": "Artiste",
+            "name_plural": "Artistes",
+            "lists": {
+                "random": "Aléatoire",
+                "starred": "Favoris",
+                "alphabeticalByName": "Par Nom",
+                "sort": "Trier les artistes"
+            },
+            "actions": {
+                "view": "Voir l'artiste"
+            }
+        },
+        "playlist": {
+            "actions": {
+                "play": "Lire la playlist"
+            },
+            "name": "Playlist",
+            "name_plural": "Playlists"
+        },
+        "queue": {
+            "name": "File d'attente",
+            "name_plural": "Files d'attente"
+        }
+    },
+    "settings": {
+        "network": {
+            "values": {
+                "seconds": "{{value}} secondes",
+                "unlimitedKbps": "Illimité",
+                "kbps": "{{value}}kbit/s"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Débit binaire maximum (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Débit binaire maximum (mobile)"
+                },
+                "maxBuffer": {
+                    "title": "Temps maximum en mémoire tampon"
+                },
+                "minBuffer": {
+                    "title": "Temps minimum en mémoire tampon"
+                }
+            },
+            "name": "Réseau"
+        },
+        "servers": {
+            "fields": {
+                "username": "Nom d'utilisateur",
+                "address": "Adresse",
+                "password": "Mot de passe"
+            },
+            "actions": {
+                "testConnection": "Tester la connexion",
+                "add": "Ajouter un serveur",
+                "delete": "Supprimer",
+                "save": "Sauvegarder"
+            },
+            "name": "Serveurs",
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forcer le mot de passe en texte clair",
+                    "descriptionOn": "Envoyer le mot de passe en test clair (héritage, assurez-vous que la connexion est sécurisée !)",
+                    "descriptionOff": "Envoyer le mot de passe sous forme de jeton + salage"
+                }
+            },
+            "messages": {
+                "connectionOk": "Connexion à {{address}} OK !",
+                "connectionFailed": "Échec de la connexion à {{address}}, vérifiez les paramètres ou le serveur"
+            }
+        },
+        "music": {
+            "name": "Musique",
+            "options": {
+                "scrobble": {
+                    "descriptionOff": "Ne pas scrobbler l'historique de lecture",
+                    "descriptionOn": "Scrobbler l'historique de lecture",
+                    "title": "Scrobbler la lecture"
+                }
+            }
+        },
+        "about": {
+            "version": "version {{version}}",
+            "name": "À propos",
+            "actions": {
+                "licenses": "Licenses",
+                "projectHomepage": "Page d'accueil du projet"
+            }
+        },
+        "reset": {
+            "actions": {
+                "clearImageCache": "Vider le cache d'images"
+            },
+            "name": "Réinitialiser"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "library": "Bibliothèque",
+            "home": "Accueil",
+            "search": "Recherche",
+            "settings": "Paramètres"
+        }
+    },
+    "search": {
+        "headerTitle": "Recherche : {{query}}",
+        "inputPlaceholder": "Recherche",
+        "moreResults": "Plus…",
+        "nowPlayingContext": "Résultats de recherche"
+    },
+    "context": {
+        "actions": {
+            "star": "Mettre en favoris",
+            "unstar": "Enlever des favoris"
+        }
+    },
+    "messages": {
+        "nothingHere": "Rien ici…"
+    }
+}

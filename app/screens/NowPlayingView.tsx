@@ -3,9 +3,10 @@ import HeaderBar from '@app/components/HeaderBar'
 import ImageGradientBackground from '@app/components/ImageGradientBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { PressableStar } from '@app/components/Star'
+import { withSuspenseMemo } from '@app/components/withSuspense'
 import { useNext, usePause, usePlay, usePrevious, useSeekTo } from '@app/hooks/trackplayer'
 import { mapTrackExtToSong } from '@app/models/map'
-import { QueueContextType, TrackExt } from '@app/models/trackplayer'
+import { TrackExt } from '@app/models/trackplayer'
 import { useStore, useStoreDeep } from '@app/state/store'
 import colors from '@app/styles/colors'
 import font from '@app/styles/font'
@@ -13,6 +14,7 @@ import formatDuration from '@app/util/formatDuration'
 import Slider from '@react-native-community/slider'
 import { useNavigation } from '@react-navigation/native'
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, StyleSheet, Text, TextStyle, View } from 'react-native'
 import { NativeStackScreenProps } from 'react-native-screens/native-stack'
 import { RepeatMode, State } from 'react-native-track-player'
@@ -21,32 +23,27 @@ import IconFA5 from 'react-native-vector-icons/FontAwesome5'
 import Icon from 'react-native-vector-icons/Ionicons'
 import IconMatCom from 'react-native-vector-icons/MaterialCommunityIcons'
 
-function getContextName(type?: QueueContextType) {
-  switch (type) {
-    case 'album':
-      return 'Album'
-    case 'artist':
-      return 'Top Songs'
-    case 'playlist':
-      return 'Playlist'
-    case 'song':
-      return 'Search Results'
-    default:
-      return undefined
-  }
-}
-
-const NowPlayingHeader = React.memo<{
+const NowPlayingHeader = withSuspenseMemo<{
   track?: TrackExt
 }>(({ track }) => {
   const queueName = useStore(store => store.queueName)
   const queueContextType = useStore(store => store.queueContextType)
+  const { t } = useTranslation()
 
   if (!track) {
     return <></>
   }
 
-  let contextName = getContextName(queueContextType)
+  let contextName: string
+  if (queueContextType === 'album') {
+    contextName = t('resources.album.name')
+  } else if (queueContextType === 'artist') {
+    contextName = t('resources.song.lists.artistTopSongs')
+  } else if (queueContextType === 'playlist') {
+    contextName = t('resources.playlist.name')
+  } else if (queueContextType === 'song') {
+    contextName = t('search.nowPlayingContext')
+  }
 
   return (
     <HeaderBar
