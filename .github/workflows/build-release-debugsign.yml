@@ -17,6 +17,7 @@ on:
     paths-ignore:
       - assets/**
       - .vscode/**
+      - android/app/src/main/assets/custom/i18n/**
       - .eslintrc.js
       - .prettierrc.js
       - BUILDING.md
