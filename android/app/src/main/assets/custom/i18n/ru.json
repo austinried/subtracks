@@ -1,1 +1,157 @@
-{}
+{
+    "settings": {
+        "servers": {
+            "actions": {
+                "delete": "Удалить",
+                "add": "Добавить сервер",
+                "edit": "Редактировать сервер",
+                "testConnection": "Проверить подключение",
+                "save": "Сохранить"
+            },
+            "name": "Серверы",
+            "fields": {
+                "address": "Адрес",
+                "username": "Имя пользователя",
+                "password": "Пароль"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "descriptionOn": "Отправить пароль в виде текста (устарело, убедитесь, что ваше соединение безопасно!)",
+                    "descriptionOff": "Отправить пароль в виде токена",
+                    "title": "Принудительный текстовый пароль"
+                }
+            },
+            "messages": {
+                "connectionOk": "Подключение к {{address}} установлено!",
+                "connectionFailed": "Не удалось подключиться к {{address}}, проверьте настройки или сервер"
+            }
+        },
+        "network": {
+            "name": "Сеть",
+            "values": {
+                "kbps": "{{value}} кбит/с",
+                "unlimitedKbps": "Без ограничений",
+                "seconds": "{{value}} секунд"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Максимальный битрейт (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Максимальный битрейт (мобильный интернет)"
+                },
+                "minBuffer": {
+                    "title": "Минимальное время буферизации"
+                },
+                "maxBuffer": {
+                    "title": "Максимальное время буферизации"
+                }
+            }
+        },
+        "music": {
+            "name": "Музыка",
+            "options": {
+                "scrobble": {
+                    "title": "Синхронизация воспроизведения",
+                    "descriptionOff": "Не синхронизировать историю воспроизведений",
+                    "descriptionOn": "Синхронизация истории воспроизведения"
+                }
+            }
+        },
+        "reset": {
+            "name": "Сброс",
+            "actions": {
+                "clearImageCache": "Очистить кэш изображения"
+            }
+        },
+        "about": {
+            "name": "О Subtracks",
+            "version": "версия {{version}}",
+            "actions": {
+                "projectHomepage": "Сайт проекта",
+                "licenses": "Лицензии"
+            }
+        }
+    },
+    "resources": {
+        "album": {
+            "name_0": "Альбом",
+            "name_1": "Альбома",
+            "name_2": "Альбомов",
+            "lists": {
+                "sort": "Сортировка альбомов",
+                "random": "Случайно",
+                "newest": "Недавно добавленные",
+                "frequent": "Часто проигрываемые",
+                "recent": "Недавно проигранные",
+                "starred": "Избранные",
+                "alphabeticalByName": "По имени",
+                "alphabeticalByArtist": "По исполнителю",
+                "byYear": "По году",
+                "byGenre": "По жанру"
+            },
+            "actions": {
+                "play": "Воспроизвести альбом",
+                "view": "Посмотреть альбом"
+            }
+        },
+        "song": {
+            "name_0": "Трек",
+            "name_1": "Трека",
+            "name_2": "Треков",
+            "lists": {
+                "artistTopSongs": "Лучшие треки"
+            }
+        },
+        "artist": {
+            "name_0": "Исполнитель",
+            "name_1": "Исполнителя",
+            "name_2": "Исполнителей",
+            "lists": {
+                "sort": "Сортировать исполнителей",
+                "random": "Случайно",
+                "starred": "Избранные",
+                "alphabeticalByName": "По имени"
+            },
+            "actions": {
+                "view": "Посмотреть исполнителя"
+            }
+        },
+        "playlist": {
+            "name_0": "Плейлист",
+            "name_1": "Плейлиста",
+            "name_2": "Плейлистов",
+            "actions": {
+                "play": "Воспроизвести плейлист"
+            }
+        },
+        "queue": {
+            "name_0": "Очередь",
+            "name_1": "Очереди",
+            "name_2": "Очередей"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Избранное",
+            "unstar": "Убрать из избранного"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "library": "Библиотека",
+            "search": "Поиск",
+            "settings": "Настройки",
+            "home": "Главная"
+        }
+    },
+    "messages": {
+        "nothingHere": "Здесь ничего нет…"
+    },
+    "search": {
+        "inputPlaceholder": "Поиск",
+        "headerTitle": "Поиск: {{query}}",
+        "moreResults": "Больше…",
+        "nowPlayingContext": "Результаты поиска"
+    }
+}
