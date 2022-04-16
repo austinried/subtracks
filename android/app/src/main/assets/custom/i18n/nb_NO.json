@@ -1,1 +1,152 @@
-{}
+{
+    "resources": {
+        "artist": {
+            "name": "Artist",
+            "name_plural": "Artister",
+            "lists": {
+                "sort": "Sorter artister",
+                "random": "Tilfeldig",
+                "starred": "Stjernemerket",
+                "alphabeticalByName": "Etter navn"
+            },
+            "actions": {
+                "view": "Vis artist"
+            }
+        },
+        "playlist": {
+            "name": "Spilleliste",
+            "name_plural": "Spillelister",
+            "actions": {
+                "play": "Spill av spilleliste"
+            }
+        },
+        "song": {
+            "lists": {
+                "artistTopSongs": "Toppspor"
+            },
+            "name": "Spor",
+            "name_plural": ""
+        },
+        "album": {
+            "name": "Album",
+            "name_plural": "",
+            "lists": {
+                "sort": "Sorter album",
+                "random": "Tilfeldig",
+                "newest": "Nylig tillagt",
+                "frequent": "Ofte spilt",
+                "recent": "Nylig spilt",
+                "starred": "Stjernemerket",
+                "alphabeticalByName": "Etter navn",
+                "alphabeticalByArtist": "Etter artist",
+                "byYear": "Etter år",
+                "byGenre": "Etter sjanger"
+            },
+            "actions": {
+                "play": "Spill album",
+                "view": "Vis album"
+            }
+        },
+        "queue": {
+            "name": "Kø",
+            "name_plural": "Køer"
+        }
+    },
+    "settings": {
+        "servers": {
+            "actions": {
+                "add": "Legg til tjener",
+                "testConnection": "Test tilkobling",
+                "delete": "Slett",
+                "save": "Lagre",
+                "edit": "Rediger tjener"
+            },
+            "messages": {
+                "connectionOk": "Tilkobling til {{address}} OK.",
+                "connectionFailed": "Tilkobling til {{address}} mislyktes. Sjekk innstillingene eller tjeneren."
+            },
+            "name": "Tjenere",
+            "fields": {
+                "address": "Adresse",
+                "username": "Brukernavn",
+                "password": "Passord"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Påtving klartekstspassord",
+                    "descriptionOn": "Send passord i klartekst (Foreldet. Forsikre deg om at tilkoblingen er sikker.)",
+                    "descriptionOff": "Send passord som symbol + salt"
+                }
+            }
+        },
+        "network": {
+            "name": "Nettverk",
+            "values": {
+                "kbps": "{{value}} kbps",
+                "unlimitedKbps": "Ubegrenset",
+                "seconds": "{{value}} sekunder"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Maksimal bitrate (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Maksimal bitrate (mobil)"
+                },
+                "minBuffer": {
+                    "title": "Minimal mellomlagringstid"
+                },
+                "maxBuffer": {
+                    "title": "Maksimal mellomlagringstid"
+                }
+            }
+        },
+        "music": {
+            "name": "Musikk",
+            "options": {
+                "scrobble": {
+                    "title": "Sporinfodelingsavspillinger",
+                    "descriptionOn": "Sporinfodelings-avspillinghistorikk",
+                    "descriptionOff": "Ikke utfør sporinfodeling av avspillingshistorikk"
+                }
+            }
+        },
+        "reset": {
+            "name": "Tilbakestill",
+            "actions": {
+                "clearImageCache": "Tøm bildehurtiglager"
+            }
+        },
+        "about": {
+            "name": "Om",
+            "version": "versjon {{version}}",
+            "actions": {
+                "projectHomepage": "Prosjekthjemmeside",
+                "licenses": "Lisenser"
+            }
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Stjernemerk",
+            "unstar": "Fjern stjernemerking"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Hjem",
+            "library": "Bibliotek",
+            "search": "Søk",
+            "settings": "Innstillinger"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "Søk",
+        "headerTitle": "Søk: {{query}}",
+        "moreResults": "Mer …",
+        "nowPlayingContext": "Søkeresultater"
+    },
+    "messages": {
+        "nothingHere": "Ingenting her …"
+    }
+}
