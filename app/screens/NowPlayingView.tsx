@@ -30,17 +30,19 @@ const NowPlayingHeader = withSuspenseMemo<{
   const queueContextType = useStore(store => store.queueContextType)
   const { t } = useTranslation()
 
+  console.log(t('resources.album.name', { count: 1 }))
+
   if (!track) {
     return <></>
   }
 
   let contextName: string
   if (queueContextType === 'album') {
-    contextName = t('resources.album.name')
+    contextName = t('resources.album.name', { count: 1 })
   } else if (queueContextType === 'artist') {
     contextName = t('resources.song.lists.artistTopSongs')
   } else if (queueContextType === 'playlist') {
-    contextName = t('resources.playlist.name')
+    contextName = t('resources.playlist.name', { count: 1 })
   } else if (queueContextType === 'song') {
     contextName = t('search.nowPlayingContext')
   }

@@ -21,7 +21,7 @@ const NowPlayingNavigator = withSuspense(() => {
         name="queue"
         component={NowPlayingQueue}
         options={{
-          title: t('resources.queue.name'),
+          title: t('resources.queue.name', { count: 1 }),
           headerStyle: {
             backgroundColor: colors.gradient.high,
           },

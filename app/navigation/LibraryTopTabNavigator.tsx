@@ -17,8 +17,6 @@ const LibraryTopTabNavigator = withSuspense(() => {
   const { t } = useTranslation()
   const marginTop = useSafeAreaInsets().top
 
-  console.log('Albums:', t('resources.album.name', { count: 2 }))
-
   return (
     <Tab.Navigator
       tabBarOptions={{
