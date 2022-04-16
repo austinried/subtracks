@@ -164,12 +164,12 @@ const OptionStar = withSuspenseMemo<{
   additionalText?: string
 }>(({ id, type, additionalText: text }) => {
   const { query, toggle } = useStar(id, type)
-  const { t } = useTranslation('context.actions')
+  const { t } = useTranslation()
 
   return (
     <ContextMenuIconTextOption
       IconComponentRaw={<Star starred={!!query.data} size={26} />}
-      text={(query.data ? t('unstar') : t('star')) + (text ? ` ${text}` : '')}
+      text={(query.data ? t('unstar') : t('context.actions.star')) + (text ? ` ${text}` : '')}
       onSelect={() => toggle.mutate()}
     />
   )
@@ -180,7 +180,7 @@ const OptionViewArtist = withSuspenseMemo<{
   artist?: string
   artistId?: string
 }>(({ navigation, artist, artistId }) => {
-  const { t } = useTranslation('resources.artist.actions')
+  const { t } = useTranslation()
 
   if (!artist || !artistId) {
     return <></>
@@ -192,7 +192,7 @@ const OptionViewArtist = withSuspenseMemo<{
       name="microphone"
       size={26}
       text={t('view')}
-      onSelect={() => navigation.navigate('artist', { id: artistId, title: artist })}
+      onSelect={() => navigation.navigate('resources.artist.actions.artist', { id: artistId, title: artist })}
     />
   )
 })
@@ -202,7 +202,7 @@ const OptionViewAlbum = withSuspenseMemo<{
   album?: string
   albumId?: string
 }>(({ navigation, album, albumId }) => {
-  const { t } = useTranslation('resources.album.actions')
+  const { t } = useTranslation()
 
   if (!album || !albumId) {
     return <></>
@@ -214,7 +214,7 @@ const OptionViewAlbum = withSuspenseMemo<{
       name="compact-disc"
       size={26}
       text={t('view')}
-      onSelect={() => navigation.navigate('album', { id: albumId, title: album })}
+      onSelect={() => navigation.navigate('resources.album.actions.album', { id: albumId, title: album })}
     />
   )
 })

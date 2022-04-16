@@ -17,7 +17,7 @@ const ListPlayerControls = withSuspenseMemo<{
   disabled?: boolean
 }>(({ listType, style, play, shuffle, disabled }) => {
   const [downloaded, setDownloaded] = useState(false)
-  const { t } = useTranslation('resources')
+  const { t } = useTranslation()
 
   return (
     <View style={[styles.controls, style]}>
@@ -34,7 +34,7 @@ const ListPlayerControls = withSuspenseMemo<{
         </Button>
       </View>
       <View style={styles.controlsCenter}>
-        <Button title={t(`${listType}.actions.play`)} disabled={disabled} onPress={play} />
+        <Button title={t(`resources.${listType}.actions.play`)} disabled={disabled} onPress={play} />
       </View>
       <View style={styles.controlsSide}>
         <Button disabled={disabled} onPress={shuffle}>

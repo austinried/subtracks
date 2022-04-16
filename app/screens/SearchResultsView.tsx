@@ -59,7 +59,7 @@ const SearchResultsView = withSuspense<{
   type: 'album' | 'artist' | 'song'
 }>(({ query, type }) => {
   const navigation = useNavigation()
-  const { t } = useTranslation('search')
+  const { t } = useTranslation()
 
   const size = 100
   const params: Search3Params = { query }
@@ -85,7 +85,7 @@ const SearchResultsView = withSuspense<{
 
   useEffect(() => {
     navigation.setOptions({
-      title: t('headerTitle', { query }),
+      title: t('search.headerTitle', { query }),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

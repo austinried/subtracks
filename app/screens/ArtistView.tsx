@@ -50,11 +50,11 @@ const TopSongs = withSuspenseMemo<{
 }>(
   ({ songs, name }) => {
     const { setQueue, isReady, contextId } = useSetQueue('artist', songs)
-    const { t } = useTranslation('resources.song.lists')
+    const { t } = useTranslation()
 
     return (
       <>
-        <Header>{t('artistTopSongs')}</Header>
+        <Header>{t('resources.song.lists.artistTopSongs')}</Header>
         {songs.slice(0, 5).map((s, i) => (
           <ListItem
             key={i}
@@ -79,7 +79,7 @@ const ArtistAlbums = withSuspenseMemo<{
 }>(
   ({ albums }) => {
     const albumsLayout = useLayout()
-    const { t } = useTranslation('resources.album')
+    const { t } = useTranslation()
 
     const sortedAlbums = [...albums]
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -89,7 +89,7 @@ const ArtistAlbums = withSuspenseMemo<{
 
     return (
       <>
-        <Header>{t('name', { count: 2 })}</Header>
+        <Header>{t('resources.album.name', { count: 2 })}</Header>
         <View style={styles.albums} onLayout={albumsLayout.onLayout}>
           {sortedAlbums.map(a => (
             <AlbumItem key={a.id} album={a} height={albumSize} width={albumSize} />

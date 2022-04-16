@@ -10,7 +10,7 @@ const NothingHere = withSuspenseMemo<{
   width?: number
   style?: ViewStyle
 }>(({ height, width, style }) => {
-  const { t } = useTranslation('messages')
+  const { t } = useTranslation()
   height = height || 200
   width = width || 200
 
@@ -18,7 +18,7 @@ const NothingHere = withSuspenseMemo<{
     <View style={[styles.container, { height, width }, style]}>
       <Icon name="music-rest-quarter" color={styles.text.color} size={width / 2} />
       <Text style={[styles.text, { fontSize: width / 8 }]} numberOfLines={3}>
-        {t('nothingHere')}
+        {t('messages.nothingHere')}
       </Text>
     </View>
   )
