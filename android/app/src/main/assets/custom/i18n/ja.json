@@ -6,10 +6,50 @@
                 "frequent": "よく聴くアルバム",
                 "recent": "最近再生した",
                 "starred": "星付きアルバム"
-            }
+            },
+            "name": "アルバム"
         },
         "song": {
-            "name": "歌"
+            "name": "歌",
+            "lists": {
+                "artistTopSongs": "人気曲"
+            }
+        },
+        "artist": {
+            "name": "アーティスト"
+        },
+        "playlist": {
+            "name": "プレイリスト"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "ホーム",
+            "library": "ライブラリ",
+            "search": "検索",
+            "settings": "設定"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "検索"
+    },
+    "settings": {
+        "servers": {
+            "name": "サーバ"
+        },
+        "network": {
+            "name": "ネット"
+        },
+        "music": {
+            "name": "音楽"
+        },
+        "reset": {
+            "name": "リセット"
+        },
+        "about": {
+            "actions": {
+                "projectHomepage": "ホームページ"
+            }
         }
     }
 }
