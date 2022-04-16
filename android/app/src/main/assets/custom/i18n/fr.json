@@ -85,7 +85,8 @@
                 "testConnection": "Tester la connexion",
                 "add": "Ajouter un serveur",
                 "delete": "Supprimer",
-                "save": "Sauvegarder"
+                "save": "Sauvegarder",
+                "edit": "Modifier le serveur"
             },
             "name": "Serveurs",
             "options": {

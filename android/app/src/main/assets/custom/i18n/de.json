@@ -1,0 +1,144 @@
+{
+    "resources": {
+        "song": {
+            "lists": {
+                "artistTopSongs": "Top Lieder"
+            },
+            "name": "Lied",
+            "name_plural": "Lieder"
+        },
+        "album": {
+            "name": "Album",
+            "name_plural": "Alben",
+            "lists": {
+                "sort": "Alben sortieren",
+                "random": "Zufällig",
+                "frequent": "Häufig abgespielt",
+                "recent": "Kürzlich abgespielt",
+                "starred": "Favoriten",
+                "byYear": "Nach Jahr",
+                "byGenre": "Nach Genre",
+                "alphabeticalByName": "Nach Name",
+                "newest": "Kürzlich hinzugefügt",
+                "alphabeticalByArtist": "Nach Künstler"
+            },
+            "actions": {
+                "play": "Album abspielen",
+                "view": "Album anzeigen"
+            }
+        },
+        "artist": {
+            "name": "Künstler",
+            "name_plural": "Künstler",
+            "lists": {
+                "sort": "Künstler sortieren",
+                "random": "Zufällig",
+                "alphabeticalByName": "Nach Name",
+                "starred": "Favoriten"
+            },
+            "actions": {
+                "view": "Künstler anzeigen"
+            }
+        },
+        "playlist": {
+            "name": "Wiedergabeliste",
+            "name_plural": "Wiedergabelisten",
+            "actions": {
+                "play": "Wiedergabeliste abspielen"
+            }
+        },
+        "queue": {
+            "name": "Warteschlange",
+            "name_plural": "Warteschlangen"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Markieren",
+            "unstar": "Markierung entfernen"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Startseite",
+            "library": "Bibliothek",
+            "search": "Suche",
+            "settings": "Einstellungen"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "Suche",
+        "headerTitle": "Suche: {{query}}",
+        "nowPlayingContext": "Suchergebnis",
+        "moreResults": "Mehr…"
+    },
+    "settings": {
+        "servers": {
+            "fields": {
+                "address": "Adresse",
+                "password": "Passwort",
+                "username": "Nutzername"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Erzwinge Klartextpasswort",
+                    "descriptionOn": "Passwort im Klartext senden (Veraltet, stellen Sie sicher, dass Ihre Verbindung sicher ist!)"
+                }
+            },
+            "actions": {
+                "add": "Server hinzufügen",
+                "edit": "Server bearbeiten",
+                "testConnection": "Verbindung testen",
+                "delete": "Löschen",
+                "save": "Speichern"
+            },
+            "messages": {
+                "connectionOk": "Verbindung zu {{address}} ist OK!",
+                "connectionFailed": "Verbindung zu {{address}} fehlgeschlagen, überprüfe Einstellungen oder Server."
+            },
+            "name": "Server"
+        },
+        "network": {
+            "name": "Netzwerk",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Unbegrenzt",
+                "seconds": "{{value}} Sekunden"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Maximale Bitrate (WLAN)"
+                },
+                "maxBuffer": {
+                    "title": "Maxilmale Pufferzeit"
+                },
+                "minBuffer": {
+                    "title": "Minimale Pufferzeit"
+                },
+                "maxBitrateMobile": {
+                    "title": "Maximale Bitrate (Mobil)"
+                }
+            }
+        },
+        "music": {
+            "name": "Musik"
+        },
+        "reset": {
+            "name": "Zurücksetzen",
+            "actions": {
+                "clearImageCache": "Bildzwischenspeicher löschen"
+            }
+        },
+        "about": {
+            "name": "Über",
+            "actions": {
+                "projectHomepage": "Projektseite",
+                "licenses": "Lizenzen"
+            },
+            "version": "Version {{version}}"
+        }
+    },
+    "messages": {
+        "nothingHere": "Hier ist nichts…"
+    }
+}
