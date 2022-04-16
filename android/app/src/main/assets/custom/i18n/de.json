@@ -82,7 +82,8 @@
             "options": {
                 "forcePlaintextPassword": {
                     "title": "Erzwinge Klartextpasswort",
-                    "descriptionOn": "Passwort als Klartext senden (Veraltet, stellen Sie sicher, dass Ihre Verbindung sicher ist!)"
+                    "descriptionOn": "Passwort als Klartext senden (Veraltet, stellen Sie sicher, dass Ihre Verbindung sicher ist!)",
+                    "descriptionOff": "Sende Passwort als Token + Salt"
                 }
             },
             "actions": {
@@ -94,7 +95,7 @@
             },
             "messages": {
                 "connectionOk": "Verbindung zu {{address}} ist OK!",
-                "connectionFailed": "Verbindung zu {{address}} fehlgeschlagen, überprüfe Einstellungen oder Server."
+                "connectionFailed": "Verbindung zu {{address}} fehlgeschlagen, überprüfe Einstellungen oder Server"
             },
             "name": "Server"
         },
@@ -124,8 +125,9 @@
             "name": "Musik",
             "options": {
                 "scrobble": {
-                    "descriptionOn": "Scrobble Abspielverlauf",
-                    "descriptionOff": "Kein Scrobble für Wiedergabeverlauf"
+                    "descriptionOn": "Scrobble Wiedergabeverlauf",
+                    "descriptionOff": "Kein Scrobble für Wiedergabeverlauf",
+                    "title": "Scrobble Wiedergabe"
                 }
             }
         },
