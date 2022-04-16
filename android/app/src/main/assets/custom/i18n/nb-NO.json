@@ -25,11 +25,11 @@
                 "artistTopSongs": "Toppspor"
             },
             "name": "Spor",
-            "name_plural": ""
+            "name_plural": "Spor"
         },
         "album": {
             "name": "Album",
-            "name_plural": "",
+            "name_plural": "Album",
             "lists": {
                 "sort": "Sorter album",
                 "random": "Tilfeldig",
