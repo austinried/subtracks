@@ -82,7 +82,7 @@
             "options": {
                 "forcePlaintextPassword": {
                     "title": "Erzwinge Klartextpasswort",
-                    "descriptionOn": "Passwort im Klartext senden (Veraltet, stellen Sie sicher, dass Ihre Verbindung sicher ist!)"
+                    "descriptionOn": "Passwort als Klartext senden (Veraltet, stellen Sie sicher, dass Ihre Verbindung sicher ist!)"
                 }
             },
             "actions": {
@@ -121,7 +121,13 @@
             }
         },
         "music": {
-            "name": "Musik"
+            "name": "Musik",
+            "options": {
+                "scrobble": {
+                    "descriptionOn": "Scrobble Abspielverlauf",
+                    "descriptionOff": "Kein Scrobble für Wiedergabeverlauf"
+                }
+            }
         },
         "reset": {
             "name": "Zurücksetzen",
