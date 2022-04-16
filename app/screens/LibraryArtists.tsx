@@ -21,16 +21,16 @@ const filterValues: ArtistFilterType[] = [
 ]
 
 const ArtistFilterButton = withSuspenseMemo(() => {
-  const { t } = useTranslation('resources.artist.lists')
+  const { t } = useTranslation()
   const filterType = useStoreDeep(store => store.settings.screens.library.artistsFilter.type)
   const setFilterType = useStore(store => store.setLibraryArtistFilterType)
 
   return (
     <FilterButton
-      data={filterValues.map(value => ({ value, text: t(value) }))}
+      data={filterValues.map(value => ({ value, text: t(`resources.artist.lists.${value}`) }))}
       value={filterType}
       onSelect={selection => setFilterType(selection as ArtistFilterType)}
-      title={t('sort')}
+      title={t('resources.artist.lists.sort')}
     />
   )
 })

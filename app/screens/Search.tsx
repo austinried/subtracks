@@ -49,7 +49,7 @@ const ResultsCategory = withSuspenseMemo<{
 }>(
   ({ name, query, type, items }) => {
     const navigation = useNavigation()
-    const { t } = useTranslation('search')
+    const { t } = useTranslation()
 
     if (items.length === 0) {
       return <></>
@@ -67,7 +67,7 @@ const ResultsCategory = withSuspenseMemo<{
         )}
         {items.length === 5 && (
           <Button
-            title={t('moreResults')}
+            title={t('search.moreResults')}
             buttonStyle="hollow"
             style={styles.more}
             onPress={() => navigation.navigate('results', { query, type: items[0].itemType })}
@@ -85,13 +85,28 @@ const Results = withSuspenseMemo<{
   query: string
 }>(
   ({ results, query }) => {
-    const { t } = useTranslation('resources')
+    const { t } = useTranslation()
 
     return (
       <>
-        <ResultsCategory name={t('artist.name', { count: 2 })} query={query} type={'artist'} items={results.artists} />
-        <ResultsCategory name={t('album.name', { count: 2 })} query={query} type={'album'} items={results.albums} />
-        <ResultsCategory name={t('song.name', { count: 2 })} query={query} type={'song'} items={results.songs} />
+        <ResultsCategory
+          name={t('resources.artist.name', { count: 2 })}
+          query={query}
+          type={'artist'}
+          items={results.artists}
+        />
+        <ResultsCategory
+          name={t('resources.album.name', { count: 2 })}
+          query={query}
+          type={'album'}
+          items={results.albums}
+        />
+        <ResultsCategory
+          name={t('resources.song.name', { count: 2 })}
+          query={query}
+          type={'song'}
+          items={results.songs}
+        />
       </>
     )
   },
@@ -102,7 +117,7 @@ const Results = withSuspenseMemo<{
 const Search = withSuspense(() => {
   const [query, setQuery] = useState('')
   const { data, isLoading } = useQuerySearchResults({ query, albumCount: 5, artistCount: 5, songCount: 5 })
-  const { t } = useTranslation('search')
+  const { t } = useTranslation()
 
   const [text, setText] = useState('')
   const searchBarRef = useRef<ReactTextInput>(null)
@@ -154,7 +169,7 @@ const Search = withSuspense(() => {
           <TextInput
             ref={searchBarRef}
             style={styles.textInput}
-            placeholder={t('inputPlaceholder')}
+            placeholder={t('search.inputPlaceholder')}
             value={text}
             onChangeText={onChangeText}
           />

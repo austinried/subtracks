@@ -26,7 +26,7 @@ const ServerItem = withSuspenseMemo<{
   const activeServerId = useStore(store => store.settings.activeServerId)
   const switchActiveServer = useSwitchActiveServer()
   const navigation = useNavigation()
-  const { t } = useTranslation('settings.servers.actions')
+  const { t } = useTranslation()
 
   const setActive = useCallback(() => {
     switchActiveServer(server.id)
@@ -36,7 +36,7 @@ const ServerItem = withSuspenseMemo<{
     <SettingsItem
       title={server.address}
       subtitle={server.username}
-      onPress={() => navigation.navigate('server', { id: server.id, title: t('edit') })}>
+      onPress={() => navigation.navigate('server', { id: server.id, title: t('settings.servers.actions.edit') })}>
       <PressableOpacity style={styles.serverActive} onPress={setActive}>
         {activeServerId === server.id ? (
           <Icon name="checkbox-marked-circle" size={30} color={colors.accent} />
@@ -81,12 +81,16 @@ const BitrateModal = withSuspenseMemo<{
   bitrate: number
   setBitrate: (bitrate: number) => void
 }>(({ title, bitrate, setBitrate }) => {
-  const { t } = useTranslation('settings.network.values')
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   const toggleModal = useCallback(() => setVisible(!visible), [visible])
 
-  const bitrateText = useCallback((value: number) => (value === 0 ? t('unlimitedKbps') : t('kbps', { value })), [t])
+  const bitrateText = useCallback(
+    (value: number) =>
+      value === 0 ? t('settings.network.values.unlimitedKbps') : t('settings.network.values.kbps', { value }),
+    [t],
+  )
 
   const BitrateChoice: React.FC<{ value: number }> = useCallback(
     ({ value }) => {
@@ -178,7 +182,7 @@ const SettingsTextModal = React.memo<{
 })
 
 const SettingsContent = withSuspenseMemo(() => {
-  const { t } = useTranslation('settings')
+  const { t } = useTranslation()
 
   const servers = useStoreDeep(store => store.settings.servers)
   const scrobble = useStore(store => store.settings.scrobble)
@@ -209,77 +213,84 @@ const SettingsContent = withSuspenseMemo(() => {
   const setMinBufferText = useCallback((text: string) => setMinBuffer(parseFloat(text)), [setMinBuffer])
   const setMaxBufferText = useCallback((text: string) => setMaxBuffer(parseFloat(text)), [setMaxBuffer])
 
-  const secondsText = useCallback((value: string) => t('network.values.seconds', { value }), [t])
+  const secondsText = useCallback((value: string) => t('settings.network.values.seconds', { value }), [t])
 
   return (
     <View style={styles.content}>
-      <Header>{t('servers.name')}</Header>
+      <Header>{t('settings.servers.name')}</Header>
       {Object.values(servers).map(s => (
         <ServerItem key={s.id} server={s} />
       ))}
       <Button
         style={styles.button}
-        title={t('servers.actions.add')}
-        onPress={() => navigation.navigate('server', { title: t('servers.actions.add') })}
+        title={t('settings.servers.actions.add')}
+        onPress={() => navigation.navigate('server', { title: t('settings.servers.actions.add') })}
         buttonStyle="hollow"
       />
-      <Header style={styles.header}>{t('network.name')}</Header>
+      <Header style={styles.header}>{t('settings.network.name')}</Header>
       <BitrateModal
-        title={t('network.options.maxBitrateWifi.title')}
+        title={t('settings.network.options.maxBitrateWifi.title')}
         bitrate={maxBitrateWifi}
         setBitrate={setMaxBitrateWifi}
       />
       <BitrateModal
-        title={t('network.options.maxBitrateMobile.title')}
+        title={t('settings.network.options.maxBitrateMobile.title')}
         bitrate={maxBitrateMobile}
         setBitrate={setMaxBitrateMobile}
       />
       <SettingsTextModal
-        title={t('network.options.minBuffer.title')}
+        title={t('settings.network.options.minBuffer.title')}
         value={minBuffer.toString()}
         setValue={setMinBufferText}
         subtitle={secondsText}
         keyboardType="numeric"
       />
       <SettingsTextModal
-        title={t('network.options.maxBuffer.title')}
+        title={t('settings.network.options.maxBuffer.title')}
         value={maxBuffer.toString()}
         setValue={setMaxBufferText}
         subtitle={secondsText}
         keyboardType="numeric"
       />
-      <Header style={styles.header}>{t('music.name')}</Header>
+      <Header style={styles.header}>{t('settings.music.name')}</Header>
       <SettingsSwitch
-        title={t('music.options.scrobble.title')}
-        subtitle={scrobble ? t('music.options.scrobble.descriptionOn') : t('music.options.scrobble.descriptionOff')}
+        title={t('settings.music.options.scrobble.title')}
+        subtitle={
+          scrobble
+            ? t('settings.music.options.scrobble.descriptionOn')
+            : t('settings.music.options.scrobble.descriptionOff')
+        }
         value={scrobble}
         setValue={setScrobble}
       />
-      <Header style={styles.header}>{t('reset.name')}</Header>
+      <Header style={styles.header}>{t('settings.reset.name')}</Header>
       <Button
         disabled={clearing}
         style={styles.button}
-        title={t('reset.actions.clearImageCache')}
+        title={t('settings.reset.actions.clearImageCache')}
         onPress={clear}
         buttonStyle="hollow"
       />
-      <Header style={styles.header}>{t('about.name')}</Header>
+      <Header style={styles.header}>{t('settings.about.name')}</Header>
       <Text style={styles.text}>
-        <Text style={styles.bold}>Subtracks</Text> {t('about.version', { version })}
+        <Text style={styles.bold}>Subtracks</Text> {t('settings.about.version', { version })}
       </Text>
       <Button
         disabled={clearing}
         style={styles.button}
-        title={t('about.actions.projectHomepage')}
+        title={t('settings.about.actions.projectHomepage')}
         onPress={() => Linking.openURL('https://github.com/austinried/subtracks')}
         buttonStyle="hollow"
       />
       <Button
         disabled={clearing}
         style={styles.button}
-        title={t('about.actions.licenses')}
+        title={t('settings.about.actions.licenses')}
         onPress={() =>
-          navigation.navigate('web', { uri: 'file:///android_asset/licenses.html', title: t('about.actions.licenses') })
+          navigation.navigate('web', {
+            uri: 'file:///android_asset/licenses.html',
+            title: t('settings.about.actions.licenses'),
+          })
         }
         buttonStyle="hollow"
       />

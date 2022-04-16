@@ -45,9 +45,9 @@ const AlbumItem = React.memo<{
 }, equal)
 
 const CategoryHeader = withSuspenseMemo<{ type: string }>(({ type }) => {
-  const { t } = useTranslation('resources.album.lists')
-  console.log('type', type, t(type))
-  return <Header style={styles.header}>{t(type)}</Header>
+  const { t } = useTranslation()
+  console.log('type', type, t(`resources.album.lists.${type}`))
+  return <Header style={styles.header}>{t(`resources.album.lists.${type}`)}</Header>
 })
 
 const Category = React.memo<{

@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from 'react-native-screens/native-stack'
 const NowPlayingStack = createNativeStackNavigator()
 
 const NowPlayingNavigator = withSuspense(() => {
-  const { t } = useTranslation('resources.queue')
+  const { t } = useTranslation()
 
   return (
     <NowPlayingStack.Navigator>
@@ -21,7 +21,7 @@ const NowPlayingNavigator = withSuspense(() => {
         name="queue"
         component={NowPlayingQueue}
         options={{
-          title: t('name'),
+          title: t('resources.queue.name'),
           headerStyle: {
             backgroundColor: colors.gradient.high,
           },

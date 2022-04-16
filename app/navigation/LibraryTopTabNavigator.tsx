@@ -14,8 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 const Tab = createMaterialTopTabNavigator()
 
 const LibraryTopTabNavigator = withSuspense(() => {
-  const { t } = useTranslation('resources')
+  const { t } = useTranslation()
   const marginTop = useSafeAreaInsets().top
+
+  console.log('Albums:', t('resources.album.name', { count: 2 }))
 
   return (
     <Tab.Navigator
@@ -25,12 +27,20 @@ const LibraryTopTabNavigator = withSuspense(() => {
         indicatorStyle: styles.tabindicatorStyle,
       }}
       initialRouteName="albums">
-      <Tab.Screen name="albums" component={AlbumsTab} options={{ tabBarLabel: t('album.name', { count: 2 }) }} />
-      <Tab.Screen name="artists" component={ArtistsTab} options={{ tabBarLabel: t('artist.name', { count: 2 }) }} />
+      <Tab.Screen
+        name="albums"
+        component={AlbumsTab}
+        options={{ tabBarLabel: t('resources.album.name', { count: 2 }) }}
+      />
+      <Tab.Screen
+        name="artists"
+        component={ArtistsTab}
+        options={{ tabBarLabel: t('resources.artist.name', { count: 2 }) }}
+      />
       <Tab.Screen
         name="playlists"
         component={PlaylistsTab}
-        options={{ tabBarLabel: t('playlist.name', { count: 2 }) }}
+        options={{ tabBarLabel: t('resources.playlist.name', { count: 2 }) }}
       />
     </Tab.Navigator>
   )

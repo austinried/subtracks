@@ -20,7 +20,7 @@ const ServerView = withSuspense<{
   id?: string
   title?: string
 }>(({ id, title }) => {
-  const { t } = useTranslation('settings.servers')
+  const { t } = useTranslation()
   const navigation = useNavigation()
   const activeServerId = useStore(store => store.settings.activeServerId)
   const servers = useStoreDeep(store => store.settings.servers)
@@ -143,7 +143,7 @@ const ServerView = withSuspense<{
     const ping = async () => {
       const res = await pingServer(potential)
       toast(
-        t(`messages.${res ? 'connectionOk' : 'connectionFailed'}`, {
+        t(`settings.servers.messages.${res ? 'connectionOk' : 'connectionFailed'}`, {
           address: potential.address,
           interpolation: { escapeValue: false },
         }),
@@ -178,7 +178,7 @@ const ServerView = withSuspense<{
   return (
     <GradientScrollView style={styles.scroll}>
       <View style={styles.content}>
-        <Text style={styles.inputTitle}>{t('fields.address')}</Text>
+        <Text style={styles.inputTitle}>{t('settings.servers.fields.address')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -191,7 +191,7 @@ const ServerView = withSuspense<{
           onChangeText={setAddress}
           onBlur={formatAddress}
         />
-        <Text style={styles.inputTitle}>{t('fields.username')}</Text>
+        <Text style={styles.inputTitle}>{t('settings.servers.fields.username')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -204,7 +204,7 @@ const ServerView = withSuspense<{
           value={username}
           onChangeText={setUsername}
         />
-        <Text style={styles.inputTitle}>{t('fields.password')}</Text>
+        <Text style={styles.inputTitle}>{t('settings.servers.fields.password')}</Text>
         <TextInput
           style={styles.input}
           placeholderTextColor="grey"
@@ -219,11 +219,11 @@ const ServerView = withSuspense<{
           onChangeText={setPassword}
         />
         <SettingsSwitch
-          title={t('options.forcePlaintextPassword.title')}
+          title={t('settings.servers.options.forcePlaintextPassword.title')}
           subtitle={
             usePlainPassword
-              ? t('options.forcePlaintextPassword.descriptionOn')
-              : t('options.forcePlaintextPassword.descriptionOff')
+              ? t('settings.servers.options.forcePlaintextPassword.descriptionOn')
+              : t('settings.servers.options.forcePlaintextPassword.descriptionOff')
           }
           value={usePlainPassword}
           setValue={togglePlainPassword}
@@ -231,17 +231,22 @@ const ServerView = withSuspense<{
         <Button
           disabled={disableControls()}
           style={styles.button}
-          title={t('actions.testConnection')}
+          title={t('settings.servers.actions.testConnection')}
           buttonStyle="hollow"
           onPress={test}
         />
         <Button
           disabled={disableControls()}
           style={[styles.button, styles.delete, deleteStyle]}
-          title={t('actions.delete')}
+          title={t('settings.servers.actions.delete')}
           onPress={remove}
         />
-        <Button disabled={disableControls()} style={styles.button} title={t('actions.save')} onPress={save} />
+        <Button
+          disabled={disableControls()}
+          style={styles.button}
+          title={t('settings.servers.actions.save')}
+          onPress={save}
+        />
       </View>
     </GradientScrollView>
   )

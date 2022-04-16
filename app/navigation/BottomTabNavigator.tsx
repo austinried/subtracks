@@ -174,7 +174,7 @@ const SettingsTab = () => {
 const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = withSuspense(() => {
-  const { t } = useTranslation('navigation.tabs')
+  const { t } = useTranslation()
   const firstRun = useFirstRun()
   const resetServer = useStore(store => store.resetServer)
 
@@ -184,12 +184,12 @@ const BottomTabNavigator = withSuspense(() => {
         <></>
       ) : (
         <>
-          <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: t('home') }} />
-          <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: t('library') }} />
-          <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: t('search') }} />
+          <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: t('navigation.tabs.home') }} />
+          <Tab.Screen name="library" component={LibraryTab} options={{ tabBarLabel: t('navigation.tabs.library') }} />
+          <Tab.Screen name="search" component={SearchTab} options={{ tabBarLabel: t('navigation.tabs.search') }} />
         </>
       )}
-      <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: t('settings') }} />
+      <Tab.Screen name="settings" component={SettingsTab} options={{ tabBarLabel: t('navigation.tabs.settings') }} />
     </Tab.Navigator>
   )
 })
