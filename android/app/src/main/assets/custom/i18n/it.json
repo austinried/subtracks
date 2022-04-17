@@ -1,1 +1,152 @@
-{}
+{
+    "resources": {
+        "artist": {
+            "name": "Artista",
+            "name_plural": "Artisti",
+            "actions": {
+                "view": "Vedi artista"
+            },
+            "lists": {
+                "random": "Casuale",
+                "starred": "Preferiti",
+                "sort": "Ordina artisti",
+                "alphabeticalByName": "Per nome"
+            }
+        },
+        "song": {
+            "lists": {
+                "artistTopSongs": "Brani più popolari"
+            },
+            "name": "Brano",
+            "name_plural": "Brani"
+        },
+        "album": {
+            "name": "Album",
+            "name_plural": "Album",
+            "lists": {
+                "random": "Casuale",
+                "newest": "Aggiunti di recente",
+                "recent": "Ascoltati di recente",
+                "alphabeticalByName": "Per nome",
+                "alphabeticalByArtist": "Per artista",
+                "byYear": "Per anno",
+                "byGenre": "Per genere",
+                "sort": "Ordina album",
+                "frequent": "Ascoltati frequentemente",
+                "starred": "Preferiti"
+            },
+            "actions": {
+                "play": "Riproduci album",
+                "view": "Vedi album"
+            }
+        },
+        "playlist": {
+            "name": "Playlist",
+            "name_plural": "Playlist",
+            "actions": {
+                "play": "Riproduci playlist"
+            }
+        },
+        "queue": {
+            "name": "Coda",
+            "name_plural": "Code"
+        }
+    },
+    "settings": {
+        "servers": {
+            "fields": {
+                "password": "Password",
+                "address": "Indirizzo",
+                "username": "Nome utente"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forza password in chiaro",
+                    "descriptionOn": "Invia password in chiaro (deprecato, assicurati che la tua connessione sia sicura!)",
+                    "descriptionOff": "Invia la password come token + salt"
+                }
+            },
+            "actions": {
+                "delete": "Rimuovi",
+                "edit": "Modifica server",
+                "add": "Aggiungi server",
+                "save": "Salva",
+                "testConnection": "Prova connessione"
+            },
+            "name": "Server",
+            "messages": {
+                "connectionOk": "Connesso a {{address}} con successo!",
+                "connectionFailed": "Connessione a {{address}} fallita, controlla le impostazioni o il server"
+            }
+        },
+        "network": {
+            "name": "Rete",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Illimitato",
+                "seconds": "{{value}} secondi"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Bitrate massimo (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Bitrate massimo (rete dati)"
+                },
+                "minBuffer": {
+                    "title": "Tempo di buffer minimo"
+                },
+                "maxBuffer": {
+                    "title": "Tempo di buffer massimo"
+                }
+            }
+        },
+        "music": {
+            "name": "Musica",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobbling delle riproduzioni",
+                    "descriptionOn": "Scrobbling della cronologia di ascolto",
+                    "descriptionOff": "Non eseguire lo scrobbling della cronologia d'ascolto"
+                }
+            }
+        },
+        "reset": {
+            "name": "Reimposta",
+            "actions": {
+                "clearImageCache": "Pulisci la cache delle immagini"
+            }
+        },
+        "about": {
+            "name": "Informazioni",
+            "version": "versione {{version}}",
+            "actions": {
+                "projectHomepage": "Pagina principale del progetto",
+                "licenses": "Licenze"
+            }
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Aggiungi ai preferiti",
+            "unstar": "Rimuovi dai preferiti"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Home",
+            "library": "Libreria",
+            "search": "Cerca",
+            "settings": "Impostazioni"
+        }
+    },
+    "messages": {
+        "nothingHere": "Non c'è niente qui…"
+    },
+    "search": {
+        "inputPlaceholder": "Ricerca",
+        "headerTitle": "Ricerca: {{query}}",
+        "moreResults": "Mostra di più…",
+        "nowPlayingContext": "Risultati della ricerca"
+    }
+}
