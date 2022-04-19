@@ -1,5 +1,5 @@
 import { CacheItemTypeKey } from '@app/models/cache'
-import { Album, AlbumCoverArt, Playlist, Song } from '@app/models/library'
+import { Album, Playlist, Song } from '@app/models/library'
 import { mapAlbum, mapArtist, mapArtistInfo, mapPlaylist, mapSong } from '@app/models/map'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
@@ -31,7 +31,7 @@ function cacheStarredData<T extends { id: string; starred?: undefined | any }>(i
 }
 
 function cacheAlbumCoverArtData<T extends { id: string; coverArt?: string }>(item: T) {
-  queryClient.setQueryData<AlbumCoverArt>(qk.albumCoverArt(item.id), { albumId: item.id, coverArt: item.coverArt })
+  queryClient.setQueryData<string | undefined>(qk.albumCoverArt(item.id), item.coverArt)
 }
 
 export const useFetchArtists = () => {

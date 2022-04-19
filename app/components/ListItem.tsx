@@ -160,6 +160,10 @@ const ListItem: React.FC<{
         size="thumbnail"
       />
     )
+  } else if (item.itemType === 'song') {
+    coverArt = (
+      <CoverArt type="album" albumId={item.albumId} style={artStyle} resizeMode={resizeMode} size="thumbnail" />
+    )
   } else {
     coverArt = (
       <CoverArt type="cover" coverArt={item.coverArt} style={artStyle} resizeMode={resizeMode} size="thumbnail" />

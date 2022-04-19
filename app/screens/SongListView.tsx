@@ -69,13 +69,13 @@ const SongListDetails = React.memo<{
     }
   }
 
-  const { setQueue, isReady, contextId } = useSetQueue(type, _songs)
+  const { setQueue, contextId } = useSetQueue(type, _songs)
 
   if (!songList) {
     return <SongListDetailsFallback />
   }
 
-  const disabled = !isReady || _songs.length === 0
+  const disabled = _songs.length === 0
   const play = (track?: number, shuffle?: boolean) => () =>
     setQueue({ title: songList.name, playTrack: track, shuffle })
 

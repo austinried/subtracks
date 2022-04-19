@@ -99,56 +99,56 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const fetchFile = useFetchFile()
   const fetchExistingFile = useFetchExistingFile()
 
-  const songCoverArt = _.uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
+  // const songCoverArt = _.uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
 
-  const coverArtPaths = useQueries(
-    songCoverArt.map(coverArt => ({
-      queryKey: qk.coverArt(coverArt, 'thumbnail'),
-      queryFn: async () => {
-        if (!client) {
-          return
-        }
+  // const coverArtPaths = useQueries(
+  //   songCoverArt.map(coverArt => ({
+  //     queryKey: qk.coverArt(coverArt, 'thumbnail'),
+  //     queryFn: async () => {
+  //       if (!client) {
+  //         return
+  //       }
 
-        const itemType = 'coverArtThumb'
+  //       const itemType = 'coverArtThumb'
 
-        const existingCache = queryClient.getQueryData<string | undefined>(qk.existingFiles(itemType, coverArt))
-        if (existingCache) {
-          return existingCache
-        }
+  //       const existingCache = queryClient.getQueryData<string | undefined>(qk.existingFiles(itemType, coverArt))
+  //       if (existingCache) {
+  //         return existingCache
+  //       }
 
-        const existingDisk = await fetchExistingFile({ itemId: coverArt, itemType })
-        if (existingDisk) {
-          return existingDisk
-        }
+  //       const existingDisk = await fetchExistingFile({ itemId: coverArt, itemType })
+  //       if (existingDisk) {
+  //         return existingDisk
+  //       }
 
-        const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
-        return await fetchFile({
-          itemType,
-          itemId: coverArt,
-          fromUrl,
-          expectedContentType: 'image',
-        })
-      },
-      enabled: !!client && !!songs,
-      staleTime: Infinity,
-      cacheTime: Infinity,
-      notifyOnChangeProps: ['data', 'isFetched'] as any,
-    })),
-  )
+  //       const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
+  //       return await fetchFile({
+  //         itemType,
+  //         itemId: coverArt,
+  //         fromUrl,
+  //         expectedContentType: 'image',
+  //       })
+  //     },
+  //     enabled: !!client && !!songs,
+  //     staleTime: Infinity,
+  //     cacheTime: Infinity,
+  //     notifyOnChangeProps: ['data', 'isFetched'] as any,
+  //   })),
+  // )
 
-  const songCoverArtToPath = _.zipObject(
-    songCoverArt,
-    coverArtPaths.map(c => c.data),
-  )
+  // const songCoverArtToPath = _.zipObject(
+  //   songCoverArt,
+  //   coverArtPaths.map(c => c.data),
+  // )
 
   const mapSongToTrackExt = (s: Song): TrackExt => {
     let artwork = require('@res/fallback.png')
-    if (s.coverArt) {
-      const filePath = songCoverArtToPath[s.coverArt]
-      if (filePath) {
-        artwork = `file://${filePath}`
-      }
-    }
+    // if (s.coverArt) {
+    //   const filePath = songCoverArtToPath[s.coverArt]
+    //   if (filePath) {
+    //     artwork = `file://${filePath}`
+    //   }
+    // }
 
     return {
       id: s.id,
@@ -158,7 +158,6 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
       url: buildStreamUri(s.id),
       userAgent,
       artwork,
-      coverArt: s.coverArt,
       duration: s.duration,
       artistId: s.artistId,
       albumId: s.albumId,
@@ -174,5 +173,5 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
     return await _setQueue({ queue, type, contextId, ...options })
   }
 
-  return { setQueue, contextId, isReady: coverArtPaths.every(c => c.isFetched) }
+  return { setQueue, contextId }
 }
