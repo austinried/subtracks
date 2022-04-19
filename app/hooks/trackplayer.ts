@@ -5,9 +5,8 @@ import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
 import _ from 'lodash'
+import { useCallback } from 'react'
 import TrackPlayer from 'react-native-track-player'
-import { useQueries } from 'react-query'
-import { useFetchExistingFile, useFetchFile } from './fetch'
 import qk from './queryKeys'
 
 export const usePlay = () => {
@@ -94,82 +93,60 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
 
 export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
-  const client = useStore(store => store.client)
   const buildStreamUri = useStore(store => store.buildStreamUri)
-  const fetchFile = useFetchFile()
-  const fetchExistingFile = useFetchExistingFile()
 
-  // const songCoverArt = _.uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
-
-  // const coverArtPaths = useQueries(
-  //   songCoverArt.map(coverArt => ({
-  //     queryKey: qk.coverArt(coverArt, 'thumbnail'),
-  //     queryFn: async () => {
-  //       if (!client) {
-  //         return
-  //       }
-
-  //       const itemType = 'coverArtThumb'
-
-  //       const existingCache = queryClient.getQueryData<string | undefined>(qk.existingFiles(itemType, coverArt))
-  //       if (existingCache) {
-  //         return existingCache
-  //       }
-
-  //       const existingDisk = await fetchExistingFile({ itemId: coverArt, itemType })
-  //       if (existingDisk) {
-  //         return existingDisk
-  //       }
-
-  //       const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
-  //       return await fetchFile({
-  //         itemType,
-  //         itemId: coverArt,
-  //         fromUrl,
-  //         expectedContentType: 'image',
-  //       })
-  //     },
-  //     enabled: !!client && !!songs,
-  //     staleTime: Infinity,
-  //     cacheTime: Infinity,
-  //     notifyOnChangeProps: ['data', 'isFetched'] as any,
-  //   })),
-  // )
-
-  // const songCoverArtToPath = _.zipObject(
-  //   songCoverArt,
-  //   coverArtPaths.map(c => c.data),
-  // )
-
-  const mapSongToTrackExt = (s: Song): TrackExt => {
-    let artwork = require('@res/fallback.png')
-    // if (s.coverArt) {
-    //   const filePath = songCoverArtToPath[s.coverArt]
-    //   if (filePath) {
-    //     artwork = `file://${filePath}`
-    //   }
-    // }
-
-    return {
-      id: s.id,
-      title: s.title,
-      artist: s.artist || 'Unknown Artist',
-      album: s.album || 'Unknown Album',
-      url: buildStreamUri(s.id),
+  const mapSongToTrackExt = useCallback(
+    (song: Song, artwork: string | number): TrackExt => ({
+      id: song.id,
+      title: song.title,
+      artist: song.artist || 'Unknown Artist',
+      album: song.album || 'Unknown Album',
+      url: buildStreamUri(song.id),
       userAgent,
       artwork,
-      duration: s.duration,
-      artistId: s.artistId,
-      albumId: s.albumId,
-      track: s.track,
-      discNumber: s.discNumber,
-    }
-  }
+      duration: song.duration,
+      artistId: song.artistId,
+      albumId: song.albumId,
+      track: song.track,
+      discNumber: song.discNumber,
+    }),
+    [buildStreamUri],
+  )
+
+  const mapSongs = useCallback((): TrackExt[] => {
+    const fallbackArtwork = require('@res/fallback.png')
+    const albumIds = _.uniq((songs || []).map(s => s.albumId)).filter((id): id is string => id !== undefined)
+
+    const albumCoverArts = albumIds.reduce((acc, id) => {
+      acc[id] = queryClient.getQueryData<string>(qk.albumCoverArt(id))
+      return acc
+    }, {} as { [albumId: string]: string | undefined })
+
+    const filePaths = albumIds.reduce((acc, id) => {
+      const coverArt = albumCoverArts[id]
+
+      acc[id] = queryClient.getQueryData<string>(qk.existingFiles('coverArtThumb', coverArt))
+
+      if (!acc[id]) {
+        acc[id] = queryClient.getQueryData<string>(qk.coverArt(coverArt, 'thumbnail'))
+      }
+
+      return acc
+    }, {} as { [albumId: string]: string | undefined })
+
+    return (songs || []).map(s => {
+      if (s.albumId && filePaths[s.albumId]) {
+        return mapSongToTrackExt(s, `file://${filePaths[s.albumId]}`)
+      } else {
+        return mapSongToTrackExt(s, fallbackArtwork)
+      }
+    })
+  }, [mapSongToTrackExt, songs])
 
   const contextId = `${type}-${songs?.map(s => s.id).join('-')}`
 
   const setQueue = async (options: SetQueueOptions) => {
-    const queue = (songs || []).map(mapSongToTrackExt)
+    const queue = mapSongs()
     return await _setQueue({ queue, type, contextId, ...options })
   }
 
