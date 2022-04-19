@@ -143,7 +143,6 @@ const MenuHeader = React.memo<{
         albumId={albumId}
         style={styles.coverArt}
         resizeMode="cover"
-        round={true}
         size="thumbnail"
         fadeDuration={0}
       />
