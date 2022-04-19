@@ -1,1 +1,152 @@
-{}
+{
+    "resources": {
+        "album": {
+            "lists": {
+                "newest": "Afegit recentment",
+                "sort": "Ordenar els àlbums",
+                "random": "Aleatori",
+                "byGenre": "Per gènere",
+                "alphabeticalByName": "Pel nom",
+                "alphabeticalByArtist": "Per artista",
+                "byYear": "Per any",
+                "frequent": "Escoltat freqüentment",
+                "recent": "Reproduït recentment",
+                "starred": "Favorits"
+            },
+            "actions": {
+                "play": "Reproduir l'àlbum",
+                "view": "Veure l'àlbum"
+            },
+            "name": "Àlbum",
+            "name_plural": "Àlbums"
+        },
+        "artist": {
+            "lists": {
+                "sort": "Ordenar els artistes",
+                "starred": "Preferits",
+                "alphabeticalByName": "Pel nom",
+                "random": "Aleatori"
+            },
+            "name": "Artista",
+            "name_plural": "Artistes",
+            "actions": {
+                "view": "Veure l'artista"
+            }
+        },
+        "queue": {
+            "name": "Cua",
+            "name_plural": "Cues"
+        },
+        "song": {
+            "name": "Cançó",
+            "name_plural": "Cançons",
+            "lists": {
+                "artistTopSongs": "Millors cançons"
+            }
+        },
+        "playlist": {
+            "actions": {
+                "play": "Reproduir la llista de reproducció"
+            },
+            "name": "Playlist",
+            "name_plural": "Playlists"
+        }
+    },
+    "context": {
+        "actions": {
+            "unstar": "Eliminar dels preferits",
+            "star": "Afegir als favorits"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Inici",
+            "search": "Cercar",
+            "library": "Biblioteca",
+            "settings": "Paràmetres"
+        }
+    },
+    "messages": {
+        "nothingHere": "Aquí no hi ha res…"
+    },
+    "settings": {
+        "servers": {
+            "fields": {
+                "username": "Nom d’usuari",
+                "password": "Contrasenya",
+                "address": "Adreça"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forçar la contrasenya de text sense format",
+                    "descriptionOn": "Enviar la contrasenya en text sense format (llegat, assegura't que la teva connexió sigui segura!)",
+                    "descriptionOff": "Enviar la contrasenya com a fitxa + sal"
+                }
+            },
+            "actions": {
+                "add": "Afegir un servidor",
+                "testConnection": "Comprovar la connexió",
+                "save": "Desar",
+                "edit": "Editar el servidor",
+                "delete": "Esborrar"
+            },
+            "messages": {
+                "connectionOk": "Connexió a {{address}} OK!",
+                "connectionFailed": "La connexió a {{address}} ha fallat, comprova la configuració o el servidor"
+            },
+            "name": "Servidors"
+        },
+        "network": {
+            "name": "Xarxa",
+            "values": {
+                "seconds": "{{value}} segons",
+                "kbps": "{{value}}kbit/s",
+                "unlimitedKbps": "Il·limitat"
+            },
+            "options": {
+                "maxBuffer": {
+                    "title": "Temps màxim de buffer"
+                },
+                "maxBitrateWifi": {
+                    "title": "Taxa de bits màxima (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Taxa de bits màxima (mòbil)"
+                },
+                "minBuffer": {
+                    "title": "Temps mínim de buffer"
+                }
+            }
+        },
+        "music": {
+            "options": {
+                "scrobble": {
+                    "title": "Capturar la lectura",
+                    "descriptionOn": "Capturar l'historial de reproduccions",
+                    "descriptionOff": "No capturar l'historial de reproducció"
+                }
+            },
+            "name": "Música"
+        },
+        "reset": {
+            "name": "Reinicialitzar",
+            "actions": {
+                "clearImageCache": "Esborrar la memòria cau d'imatges"
+            }
+        },
+        "about": {
+            "name": "Quant a",
+            "version": "versió {{version}}",
+            "actions": {
+                "projectHomepage": "Pàgina d'inici del projecte",
+                "licenses": "Llicències"
+            }
+        }
+    },
+    "search": {
+        "nowPlayingContext": "Resultats de la cerca",
+        "inputPlaceholder": "Cercar",
+        "moreResults": "Més…",
+        "headerTitle": "Cercar: {{query}}"
+    }
+}
