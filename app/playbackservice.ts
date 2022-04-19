@@ -1,8 +1,12 @@
 import { getCurrentTrack, getPlayerState, trackPlayerCommands } from '@app/state/trackplayer'
-import TrackPlayer, { Event, State } from 'react-native-track-player'
-import { useStore } from './state/store'
-import { unstable_batchedUpdates } from 'react-native'
 import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
+import _ from 'lodash'
+import { unstable_batchedUpdates } from 'react-native'
+import TrackPlayer, { Event, State } from 'react-native-track-player'
+import qk from './hooks/queryKeys'
+import queryClient from './queryClient'
+import queueService from './queueservice'
+import { useStore } from './state/store'
 
 const reset = () => {
   unstable_batchedUpdates(() => {
@@ -31,6 +35,12 @@ const setNetState = (netState: 'mobile' | 'wifi') => {
 const rebuildQueue = (forcePlay?: boolean) => {
   unstable_batchedUpdates(() => {
     useStore.getState().rebuildQueue(forcePlay)
+  })
+}
+
+const updateQueue = () => {
+  unstable_batchedUpdates(() => {
+    useStore.getState().updateQueue()
   })
 }
 
@@ -141,6 +151,37 @@ const createService = async () => {
     if (code === 'playback-source' && message.includes('416')) {
       rebuildQueue(true)
     }
+  })
+
+  queueService.addListener('set', async ({ queue }) => {
+    const albumIds = _.uniq(queue.map(s => s.albumId)).filter((id): id is string => id !== undefined)
+
+    const albumCoverArts = albumIds.reduce((acc, id) => {
+      acc[id] = queryClient.getQueryData<string>(qk.albumCoverArt(id))
+      return acc
+    }, {} as { [albumId: string]: string | undefined })
+
+    const filePaths = albumIds.reduce((acc, id) => {
+      const coverArt = albumCoverArts[id]
+
+      acc[id] = queryClient.getQueryData<string>(qk.existingFiles('coverArtThumb', coverArt))
+
+      if (!acc[id]) {
+        acc[id] = queryClient.getQueryData<string>(qk.coverArt(coverArt, 'thumbnail'))
+      }
+
+      return acc
+    }, {} as { [albumId: string]: string | undefined })
+
+    trackPlayerCommands.enqueue(async () => {
+      for (let i = 0; i < queue.length; i++) {
+        const track = queue[i]
+        if (track.albumId && filePaths[track.albumId]) {
+          await TrackPlayer.updateMetadataForTrack(i, { ...track, artwork: `file://${filePaths[track.albumId]}` })
+        }
+      }
+      updateQueue()
+    })
   })
 }
 

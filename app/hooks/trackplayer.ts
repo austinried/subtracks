@@ -1,11 +1,10 @@
 import { Song } from '@app/models/library'
 import { QueueContextType, TrackExt } from '@app/models/trackplayer'
 import queryClient from '@app/queryClient'
+import queueService from '@app/queueservice'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
-import _ from 'lodash'
-import { useCallback } from 'react'
 import TrackPlayer from 'react-native-track-player'
 import qk from './queryKeys'
 
@@ -91,63 +90,49 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
+export function mapSongToTrackExt(song: Song): TrackExt {
+  return {
+    id: song.id,
+    title: song.title,
+    artist: song.artist || 'Unknown Artist',
+    album: song.album || 'Unknown Album',
+    url: useStore.getState().buildStreamUri(song.id),
+    artwork: require('@res/fallback.png'),
+    userAgent,
+    duration: song.duration,
+    artistId: song.artistId,
+    albumId: song.albumId,
+    track: song.track,
+    discNumber: song.discNumber,
+  }
+}
+
 export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
-  const buildStreamUri = useStore(store => store.buildStreamUri)
-
-  const mapSongToTrackExt = useCallback(
-    (song: Song, artwork: string | number): TrackExt => ({
-      id: song.id,
-      title: song.title,
-      artist: song.artist || 'Unknown Artist',
-      album: song.album || 'Unknown Album',
-      url: buildStreamUri(song.id),
-      userAgent,
-      artwork,
-      duration: song.duration,
-      artistId: song.artistId,
-      albumId: song.albumId,
-      track: song.track,
-      discNumber: song.discNumber,
-    }),
-    [buildStreamUri],
-  )
-
-  const mapSongs = useCallback((): TrackExt[] => {
-    const fallbackArtwork = require('@res/fallback.png')
-    const albumIds = _.uniq((songs || []).map(s => s.albumId)).filter((id): id is string => id !== undefined)
-
-    const albumCoverArts = albumIds.reduce((acc, id) => {
-      acc[id] = queryClient.getQueryData<string>(qk.albumCoverArt(id))
-      return acc
-    }, {} as { [albumId: string]: string | undefined })
-
-    const filePaths = albumIds.reduce((acc, id) => {
-      const coverArt = albumCoverArts[id]
-
-      acc[id] = queryClient.getQueryData<string>(qk.existingFiles('coverArtThumb', coverArt))
-
-      if (!acc[id]) {
-        acc[id] = queryClient.getQueryData<string>(qk.coverArt(coverArt, 'thumbnail'))
-      }
-
-      return acc
-    }, {} as { [albumId: string]: string | undefined })
-
-    return (songs || []).map(s => {
-      if (s.albumId && filePaths[s.albumId]) {
-        return mapSongToTrackExt(s, `file://${filePaths[s.albumId]}`)
-      } else {
-        return mapSongToTrackExt(s, fallbackArtwork)
-      }
-    })
-  }, [mapSongToTrackExt, songs])
 
   const contextId = `${type}-${songs?.map(s => s.id).join('-')}`
 
   const setQueue = async (options: SetQueueOptions) => {
-    const queue = mapSongs()
-    return await _setQueue({ queue, type, contextId, ...options })
+    if (!songs || songs.length === 0) {
+      return
+    }
+
+    const queue = songs.map(mapSongToTrackExt)
+    const first = queue[options.playTrack || 0]
+
+    if (!first.albumId) {
+      first.artwork = require('@res/fallback.png')
+    } else {
+      const albumCoverArt = queryClient.getQueryData<string>(qk.albumCoverArt(first.albumId))
+      const existingFile = queryClient.getQueryData<string>(qk.existingFiles('coverArtThumb', albumCoverArt))
+      const downloadFile = queryClient.getQueryData<string>(qk.coverArt(albumCoverArt, 'thumbnail'))
+      if (existingFile || downloadFile) {
+        first.artwork = `file://${existingFile || downloadFile}`
+      }
+    }
+
+    await _setQueue({ queue, type, contextId, ...options })
+    queueService.emit('set', { queue })
   }
 
   return { setQueue, contextId }
