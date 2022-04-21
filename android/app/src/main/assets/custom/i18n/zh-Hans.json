@@ -1,7 +1,7 @@
 {
     "context": {
         "actions": {
-            "unstar": "未收藏",
+            "unstar": "移除收藏",
             "star": "收藏"
         }
     },
@@ -55,7 +55,28 @@
             }
         },
         "music": {
-            "name": "音乐"
+            "name": "音乐",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble模式",
+                    "descriptionOn": "Scrobble播放历史",
+                    "descriptionOff": "不记录scrobble历史"
+                }
+            }
+        },
+        "reset": {
+            "name": "重置",
+            "actions": {
+                "clearImageCache": "清除图片缓存"
+            }
+        },
+        "about": {
+            "name": "关于",
+            "version": "版本 {{version}}",
+            "actions": {
+                "projectHomepage": "项目地址",
+                "licenses": "许可"
+            }
         }
     },
     "resources": {
