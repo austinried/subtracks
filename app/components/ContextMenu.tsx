@@ -169,7 +169,7 @@ const OptionStar = withSuspenseMemo<{
   return (
     <ContextMenuIconTextOption
       IconComponentRaw={<Star starred={!!query.data} size={26} />}
-      text={(query.data ? t('unstar') : t('context.actions.star')) + (text ? ` ${text}` : '')}
+      text={(query.data ? t('context.actions.unstar') : t('context.actions.star')) + (text ? ` ${text}` : '')}
       onSelect={() => toggle.mutate()}
     />
   )
@@ -191,8 +191,8 @@ const OptionViewArtist = withSuspenseMemo<{
       IconComponent={IconFA}
       name="microphone"
       size={26}
-      text={t('view')}
-      onSelect={() => navigation.navigate('resources.artist.actions.artist', { id: artistId, title: artist })}
+      text={t('resources.artist.actions.view')}
+      onSelect={() => navigation.navigate('artist', { id: artistId, title: artist })}
     />
   )
 })
@@ -213,8 +213,8 @@ const OptionViewAlbum = withSuspenseMemo<{
       IconComponent={IconFA5}
       name="compact-disc"
       size={26}
-      text={t('view')}
-      onSelect={() => navigation.navigate('resources.album.actions.album', { id: albumId, title: album })}
+      text={t('resources.album.actions.view')}
+      onSelect={() => navigation.navigate('album', { id: albumId, title: album })}
     />
   )
 })
