@@ -1,4 +1,4 @@
-import { useQueryArtistArtPath, useQueryCoverArtPath } from '@app/hooks/query'
+import { useQueryAlbumCoverArtPath, useQueryArtistArtPath, useQueryCoverArtPath } from '@app/hooks/query'
 import { CacheImageSize } from '@app/models/cache'
 import colors from '@app/styles/colors'
 import React, { useState } from 'react'
@@ -30,6 +30,11 @@ type ArtistCoverArtProps = BaseProps & {
 type CoverArtProps = BaseProps & {
   type: 'cover'
   coverArt?: string
+}
+
+type AlbumIdProps = BaseProps & {
+  type: 'album'
+  albumId?: string
 }
 
 type ImageSourceProps = BaseProps & {
@@ -82,7 +87,13 @@ const CoverArtImage = React.memo<CoverArtProps>(props => {
   return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
 })
 
-const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {
+const AlbumIdIamge = React.memo<AlbumIdProps>(props => {
+  const { data, isFetching, isExistingFetching } = useQueryAlbumCoverArtPath(props.albumId, props.size)
+
+  return <ImageSource data={data} isFetching={isFetching} isExistingFetching={isExistingFetching} {...props} />
+})
+
+const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps | AlbumIdProps>(props => {
   const viewStyles = [props.style]
   if (props.round) {
     viewStyles.push(styles.round)
@@ -92,6 +103,9 @@ const CoverArt = React.memo<CoverArtProps | ArtistCoverArtProps>(props => {
   switch (props.type) {
     case 'artist':
       imageComponent = <ArtistImage {...(props as ArtistCoverArtProps)} />
+      break
+    case 'album':
+      imageComponent = <AlbumIdIamge {...(props as AlbumIdProps)} />
       break
     default:
       imageComponent = <CoverArtImage {...(props as CoverArtProps)} />

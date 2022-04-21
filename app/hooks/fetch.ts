@@ -1,8 +1,9 @@
 import { CacheItemTypeKey } from '@app/models/cache'
-import { Album, AlbumCoverArt, Playlist, Song } from '@app/models/library'
+import { Album, Playlist, Song } from '@app/models/library'
 import { mapAlbum, mapArtist, mapArtistInfo, mapPlaylist, mapSong } from '@app/models/map'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
+import { SubsonicApiClient } from '@app/subsonic/api'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import { cacheDir } from '@app/util/fs'
 import { mapCollectionById } from '@app/util/state'
@@ -31,7 +32,7 @@ function cacheStarredData<T extends { id: string; starred?: undefined | any }>(i
 }
 
 function cacheAlbumCoverArtData<T extends { id: string; coverArt?: string }>(item: T) {
-  queryClient.setQueryData<AlbumCoverArt>(qk.albumCoverArt(item.id), { albumId: item.id, coverArt: item.coverArt })
+  queryClient.setQueryData<string | undefined>(qk.albumCoverArt(item.id), item.coverArt)
 }
 
 export const useFetchArtists = () => {
@@ -109,22 +110,23 @@ export const useFetchPlaylist = () => {
   }
 }
 
+export async function fetchAlbum(id: string, client: SubsonicApiClient): Promise<{ album: Album; songs?: Song[] }> {
+  const res = await client.getAlbum({ id })
+
+  cacheStarredData(res.data.album)
+  res.data.songs.forEach(cacheStarredData)
+
+  cacheAlbumCoverArtData(res.data.album)
+
+  return {
+    album: mapAlbum(res.data.album),
+    songs: res.data.songs.map(mapSong),
+  }
+}
+
 export const useFetchAlbum = () => {
   const client = useClient()
-
-  return async (id: string): Promise<{ album: Album; songs?: Song[] }> => {
-    const res = await client().getAlbum({ id })
-
-    cacheStarredData(res.data.album)
-    res.data.songs.forEach(cacheStarredData)
-
-    cacheAlbumCoverArtData(res.data.album)
-
-    return {
-      album: mapAlbum(res.data.album),
-      songs: res.data.songs.map(mapSong),
-    }
-  }
+  return async (id: string) => fetchAlbum(id, client())
 }
 
 export const useFetchAlbumList = () => {
@@ -196,17 +198,23 @@ export type FetchExisingFileOptions = {
   itemId: string
 }
 
-export const useFetchExistingFile: () => (options: FetchExisingFileOptions) => Promise<string | undefined> = () => {
-  const serverId = useStore(store => store.settings.activeServerId)
+export async function fetchExistingFile(
+  options: FetchExisingFileOptions,
+  serverId: string | undefined,
+): Promise<string | undefined> {
+  const { itemType, itemId } = options
+  const fileDir = cacheDir(serverId, itemType, itemId)
 
-  return async ({ itemType, itemId }) => {
-    const fileDir = cacheDir(serverId, itemType, itemId)
-    try {
-      const dir = await RNFS.readDir(fileDir)
-      console.log('existing file:', dir[0].path)
-      return dir[0].path
-    } catch {}
-  }
+  try {
+    const dir = await RNFS.readDir(fileDir)
+    console.log('existing file:', dir[0].path)
+    return dir[0].path
+  } catch {}
+}
+
+export const useFetchExistingFile = () => {
+  const serverId = useStore(store => store.settings.activeServerId)
+  return async (options: FetchExisingFileOptions) => fetchExistingFile(options, serverId)
 }
 
 function assertMimeType(expected?: string, actual?: string) {
@@ -237,69 +245,71 @@ export type FetchFileOptions = FetchExisingFileOptions & {
   progress?: (received: number, total: number) => void
 }
 
-export const useFetchFile: () => (options: FetchFileOptions) => Promise<string> = () => {
-  const serverId = useStore(store => store.settings.activeServerId)
+export async function fetchFile(options: FetchFileOptions, serverId: string | undefined): Promise<string> {
+  let { itemType, itemId, fromUrl, useCacheBuster, expectedContentType, progress } = options
+  useCacheBuster = useCacheBuster === undefined ? true : useCacheBuster
 
-  return async ({ itemType, itemId, fromUrl, useCacheBuster, expectedContentType, progress }) => {
-    useCacheBuster = useCacheBuster === undefined ? true : useCacheBuster
+  const fileDir = cacheDir(serverId, itemType, itemId)
+  const filePathNoExt = path.join(fileDir, useCacheBuster ? useStore.getState().settings.cacheBuster : itemType)
 
-    const fileDir = cacheDir(serverId, itemType, itemId)
-    const filePathNoExt = path.join(fileDir, useCacheBuster ? useStore.getState().settings.cacheBuster : itemType)
+  try {
+    await RNFS.unlink(fileDir)
+  } catch {}
 
-    try {
-      await RNFS.unlink(fileDir)
-    } catch {}
+  const headers = { 'User-Agent': userAgent }
 
-    const headers = { 'User-Agent': userAgent }
+  // we send a HEAD first for two reasons:
+  // 1. to follow any redirects and get the actual URL (DownloadManager does not support redirects)
+  // 2. to obtain the mime-type up front so we can use it for the file extension/validation
+  const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
 
-    // we send a HEAD first for two reasons:
-    // 1. to follow any redirects and get the actual URL (DownloadManager does not support redirects)
-    // 2. to obtain the mime-type up front so we can use it for the file extension/validation
-    const headRes = await fetch(fromUrl, { method: 'HEAD', headers })
-
-    if (headRes.status > 399) {
-      throw new Error(`HTTP status error ${headRes.status}. File: ${itemType} ID: ${itemId}`)
-    }
-
-    const contentType = headRes.headers.get('content-type') || undefined
-    assertMimeType(expectedContentType, contentType)
-
-    const contentDisposition = headRes.headers.get('content-disposition') || undefined
-    const filename = contentDisposition ? cd.parse(contentDisposition).parameters.filename : undefined
-
-    let extension: string | undefined
-    if (filename) {
-      extension = path.extname(filename) || undefined
-      if (extension) {
-        extension = extension.substring(1)
-      }
-    } else if (contentType) {
-      extension = mime.extension(contentType) || undefined
-    }
-
-    const config = ReactNativeBlobUtil.config({
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: false,
-        mime: contentType,
-        description: 'subtracks',
-        path: extension ? `${filePathNoExt}.${extension}` : filePathNoExt,
-      },
-    })
-
-    const fetchParams: Parameters<typeof config['fetch']> = ['GET', headRes.url, headers]
-
-    let res: FetchBlobResponse
-    if (progress) {
-      res = await config.fetch(...fetchParams).progress(progress)
-    } else {
-      res = await config.fetch(...fetchParams)
-    }
-
-    const downloadPath = res.path()
-    queryClient.setQueryData<string>(qk.existingFiles(itemType, itemId), downloadPath)
-
-    console.log('downloaded file:', downloadPath)
-    return downloadPath
+  if (headRes.status > 399) {
+    throw new Error(`HTTP status error ${headRes.status}. File: ${itemType} ID: ${itemId}`)
   }
+
+  const contentType = headRes.headers.get('content-type') || undefined
+  assertMimeType(expectedContentType, contentType)
+
+  const contentDisposition = headRes.headers.get('content-disposition') || undefined
+  const filename = contentDisposition ? cd.parse(contentDisposition).parameters.filename : undefined
+
+  let extension: string | undefined
+  if (filename) {
+    extension = path.extname(filename) || undefined
+    if (extension) {
+      extension = extension.substring(1)
+    }
+  } else if (contentType) {
+    extension = mime.extension(contentType) || undefined
+  }
+
+  const config = ReactNativeBlobUtil.config({
+    addAndroidDownloads: {
+      useDownloadManager: true,
+      notification: false,
+      mime: contentType,
+      description: 'subtracks',
+      path: extension ? `${filePathNoExt}.${extension}` : filePathNoExt,
+    },
+  })
+
+  const fetchParams: Parameters<typeof config['fetch']> = ['GET', headRes.url, headers]
+
+  let res: FetchBlobResponse
+  if (progress) {
+    res = await config.fetch(...fetchParams).progress(progress)
+  } else {
+    res = await config.fetch(...fetchParams)
+  }
+
+  const downloadPath = res.path()
+  queryClient.setQueryData<string>(qk.existingFiles(itemType, itemId), downloadPath)
+
+  console.log('downloaded file:', downloadPath)
+  return downloadPath
+}
+
+export const useFetchFile = () => {
+  const serverId = useStore(store => store.settings.activeServerId)
+  return async (options: FetchFileOptions) => fetchFile(options, serverId)
 }

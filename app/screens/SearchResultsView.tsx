@@ -13,7 +13,7 @@ import { StyleSheet } from 'react-native'
 type SearchListItemType = Album | Song | Artist
 
 const SongResultsListItem: React.FC<{ item: Song }> = ({ item }) => {
-  const { setQueue, isReady, contextId } = useSetQueue('song', [item])
+  const { setQueue, contextId } = useSetQueue('song', [item])
 
   return (
     <ListItem
@@ -25,7 +25,6 @@ const SongResultsListItem: React.FC<{ item: Song }> = ({ item }) => {
       listStyle="small"
       onPress={() => setQueue({ title: item.title, playTrack: 0 })}
       style={styles.listItem}
-      disabled={!isReady}
     />
   )
 }

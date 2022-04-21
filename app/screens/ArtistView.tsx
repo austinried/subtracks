@@ -49,7 +49,7 @@ const TopSongs = withSuspenseMemo<{
   name: string
 }>(
   ({ songs, name }) => {
-    const { setQueue, isReady, contextId } = useSetQueue('artist', songs)
+    const { setQueue, contextId } = useSetQueue('artist', songs)
     const { t } = useTranslation()
 
     return (
@@ -64,7 +64,6 @@ const TopSongs = withSuspenseMemo<{
             showArt={true}
             subtitle={s.album}
             onPress={() => setQueue({ title: name, playTrack: i })}
-            disabled={!isReady}
           />
         ))}
       </>

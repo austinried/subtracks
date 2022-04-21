@@ -43,7 +43,6 @@ export interface Song {
   discNumber?: number
   duration?: number
   starred?: number
-  coverArt?: string
   playCount?: number
   userRating?: number
   averageRating?: number

@@ -1,19 +1,11 @@
 import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
-import { Album, AlbumCoverArt, Artist, Playlist, Song, StarrableItemType } from '@app/models/library'
+import { Album, Artist, Playlist, Song, StarrableItemType } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
 import queryClient from '@app/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import _ from 'lodash'
-import {
-  InfiniteData,
-  useInfiniteQuery,
-  UseInfiniteQueryResult,
-  useMutation,
-  useQueries,
-  useQuery,
-  UseQueryResult,
-} from 'react-query'
+import { useInfiniteQuery, useMutation, useQueries, useQuery } from 'react-query'
 import {
   useFetchAlbum,
   useFetchAlbumList,
@@ -88,7 +80,7 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
     },
   )
 
-  return useFixCoverArt(querySuccess ? query : backupQuery)
+  return querySuccess ? query : backupQuery
 }
 
 export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())
@@ -109,7 +101,7 @@ export const useQueryPlaylist = (id: string, placeholderPlaylist?: Playlist) => 
     },
   })
 
-  return useFixCoverArt(query)
+  return query
 }
 
 export const useQueryAlbum = (id: string, placeholderAlbum?: Album) => {
@@ -120,7 +112,7 @@ export const useQueryAlbum = (id: string, placeholderAlbum?: Album) => {
       placeholderAlbum ? { album: placeholderAlbum } : undefined,
   })
 
-  return useFixCoverArt(query)
+  return query
 }
 
 export const useQueryAlbumList = (type: GetAlbumList2TypeBase, size: number) => {
@@ -172,7 +164,7 @@ export const useQuerySearchResults = (params: Search3Params) => {
     },
   )
 
-  return useFixCoverArt(query)
+  return query
 }
 
 export const useQueryHomeLists = (types: GetAlbumList2TypeBase[], size: number) => {
@@ -314,93 +306,18 @@ export const useQueryArtistArtPath = (artistId: string, size: CacheImageSize = '
   return { ...query, data: existing.data || query.data, isExistingFetching: existing.isFetching }
 }
 
-type WithSongs = Song[] | { songs?: Song[] }
-type InfiniteWithSongs = { songs: Song[] }
-type AnyDataWithSongs = WithSongs | InfiniteData<InfiniteWithSongs>
-type AnyQueryWithSongs = UseQueryResult<WithSongs> | UseInfiniteQueryResult<{ songs: Song[] }>
-
-function getSongs<T extends AnyDataWithSongs>(data: T | undefined): Song[] {
-  if (!data) {
-    return []
-  }
-
-  if (Array.isArray(data)) {
-    return data
-  }
-
-  if ('pages' in data) {
-    return data.pages.flatMap(p => p.songs)
-  }
-
-  return data.songs || []
-}
-
-function setSongCoverArt<T extends AnyQueryWithSongs>(query: T, coverArts: UseQueryResult<AlbumCoverArt>[]): T {
-  if (!query.data) {
-    return query
-  }
-
-  const mapSongCoverArt = (song: Song) => ({
-    ...song,
-    coverArt: coverArts.find(c => c.data?.albumId === song.albumId)?.data?.coverArt,
-  })
-
-  if (Array.isArray(query.data)) {
-    return {
-      ...query,
-      data: query.data.map(mapSongCoverArt),
-    }
-  }
-
-  if ('pages' in query.data) {
-    return {
-      ...query,
-      data: {
-        pages: query.data.pages.map(p => ({
-          ...p,
-          songs: p.songs.map(mapSongCoverArt),
-        })),
-      },
-    }
-  }
-
-  if (query.data.songs) {
-    return {
-      ...query,
-      data: {
-        ...query.data,
-        songs: query.data.songs.map(mapSongCoverArt),
-      },
-    }
-  }
-
-  return query
-}
-
-// song cover art comes back from the api as a unique id per song even if it all points to the same
-// album art, which prevents us from caching it once, so we need to use the album's cover art
-const useFixCoverArt = <T extends AnyQueryWithSongs>(query: T) => {
+export const useQueryAlbumCoverArtPath = (albumId?: string, size: CacheImageSize = 'thumbnail') => {
   const fetchAlbum = useFetchAlbum()
 
-  const songs = getSongs(query.data)
-  const albumIds = _.uniq((songs || []).map(s => s.albumId).filter((id): id is string => id !== undefined))
-
-  const coverArts = useQueries(
-    albumIds.map(id => ({
-      queryKey: qk.albumCoverArt(id),
-      queryFn: async (): Promise<AlbumCoverArt> => {
-        const res = await fetchAlbum(id)
-        return { albumId: res.album.id, coverArt: res.album.coverArt }
-      },
+  const query = useQuery(
+    qk.albumCoverArt(albumId || '-1'),
+    async () => (await fetchAlbum(albumId || '-1')).album.coverArt,
+    {
+      enabled: !!albumId,
       staleTime: Infinity,
       cacheTime: Infinity,
-      notifyOnChangeProps: ['data', 'isFetched'] as any,
-    })),
+    },
   )
 
-  if (coverArts.every(c => c.isFetched)) {
-    return setSongCoverArt(query, coverArts)
-  }
-
-  return query
+  return useQueryCoverArtPath(query.data, size)
 }

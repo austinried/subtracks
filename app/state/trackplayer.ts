@@ -55,6 +55,7 @@ export type TrackPlayerSlice = {
   setNetState: (netState: 'mobile' | 'wifi') => Promise<void>
 
   rebuildQueue: (forcePlay?: boolean) => Promise<void>
+  updateQueue: () => Promise<void>
   buildStreamUri: (id: string) => string
   resetTrackPlayerState: () => void
 
@@ -310,6 +311,17 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
 
       if (playerState === State.Playing || forcePlay) {
         await TrackPlayer.play()
+      }
+    })
+  },
+
+  updateQueue: async () => {
+    const newQueue = await getQueue()
+    const currentTrack = await getCurrentTrack()
+    set(state => {
+      state.queue = newQueue
+      if (currentTrack !== undefined) {
+        state.currentTrack = newQueue[currentTrack]
       }
     })
   },
