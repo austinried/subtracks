@@ -79,7 +79,7 @@ const Controls = React.memo(() => {
 const NowPlayingBar = React.memo(() => {
   const navigation = useNavigation()
   const currentTrackExists = useStore(store => !!store.currentTrack)
-  const coverArt = useStore(store => store.currentTrack?.coverArt)
+  const albumId = useStore(store => store.currentTrack?.albumId)
   const title = useStore(store => store.currentTrack?.title)
   const artist = useStore(store => store.currentTrack?.artist)
 
@@ -90,9 +90,9 @@ const NowPlayingBar = React.memo(() => {
       <ProgressBar />
       <View style={styles.subContainer}>
         <CoverArt
-          type="cover"
+          type="album"
           style={{ height: styles.subContainer.height, width: styles.subContainer.height }}
-          coverArt={coverArt}
+          albumId={albumId}
           size="thumbnail"
           fadeDuration={0}
         />

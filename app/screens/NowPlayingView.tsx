@@ -90,11 +90,11 @@ const headerStyles = StyleSheet.create({
 })
 
 const SongCoverArt = () => {
-  const coverArt = useStore(store => store.currentTrack?.coverArt)
+  const albumId = useStore(store => store.currentTrack?.albumId)
 
   return (
     <View style={coverArtStyles.container}>
-      <CoverArt type="cover" size="original" coverArt={coverArt} style={coverArtStyles.image} />
+      <CoverArt type="album" size="original" albumId={albumId} style={coverArtStyles.image} />
     </View>
   )
 }

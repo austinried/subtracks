@@ -75,7 +75,6 @@ export function mapTrackExtToSong(track: TrackExt): Song {
     title: track.title as string,
     artist: track.artist,
     album: track.album,
-    coverArt: track.coverArt,
     duration: track.duration,
     artistId: track.artistId,
     albumId: track.albumId,

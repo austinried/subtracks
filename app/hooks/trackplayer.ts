@@ -1,13 +1,11 @@
 import { Song } from '@app/models/library'
 import { QueueContextType, TrackExt } from '@app/models/trackplayer'
 import queryClient from '@app/queryClient'
+import queueService from '@app/queueservice'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
-import _ from 'lodash'
 import TrackPlayer from 'react-native-track-player'
-import { useQueries } from 'react-query'
-import { useFetchExistingFile, useFetchFile } from './fetch'
 import qk from './queryKeys'
 
 export const usePlay = () => {
@@ -92,87 +90,50 @@ export const useIsPlaying = (contextId: string | undefined, track: number) => {
   return contextId === queueContextId && track === currentTrackIdx
 }
 
+export function mapSongToTrackExt(song: Song): TrackExt {
+  return {
+    id: song.id,
+    title: song.title,
+    artist: song.artist || 'Unknown Artist',
+    album: song.album || 'Unknown Album',
+    url: useStore.getState().buildStreamUri(song.id),
+    artwork: require('@res/fallback.png'),
+    userAgent,
+    duration: song.duration,
+    artistId: song.artistId,
+    albumId: song.albumId,
+    track: song.track,
+    discNumber: song.discNumber,
+  }
+}
+
 export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
   const _setQueue = useStore(store => store.setQueue)
-  const client = useStore(store => store.client)
-  const buildStreamUri = useStore(store => store.buildStreamUri)
-  const fetchFile = useFetchFile()
-  const fetchExistingFile = useFetchExistingFile()
-
-  const songCoverArt = _.uniq((songs || []).map(s => s.coverArt)).filter((c): c is string => c !== undefined)
-
-  const coverArtPaths = useQueries(
-    songCoverArt.map(coverArt => ({
-      queryKey: qk.coverArt(coverArt, 'thumbnail'),
-      queryFn: async () => {
-        if (!client) {
-          return
-        }
-
-        const itemType = 'coverArtThumb'
-
-        const existingCache = queryClient.getQueryData<string | undefined>(qk.existingFiles(itemType, coverArt))
-        if (existingCache) {
-          return existingCache
-        }
-
-        const existingDisk = await fetchExistingFile({ itemId: coverArt, itemType })
-        if (existingDisk) {
-          return existingDisk
-        }
-
-        const fromUrl = client.getCoverArtUri({ id: coverArt, size: '256' })
-        return await fetchFile({
-          itemType,
-          itemId: coverArt,
-          fromUrl,
-          expectedContentType: 'image',
-        })
-      },
-      enabled: !!client && !!songs,
-      staleTime: Infinity,
-      cacheTime: Infinity,
-      notifyOnChangeProps: ['data', 'isFetched'] as any,
-    })),
-  )
-
-  const songCoverArtToPath = _.zipObject(
-    songCoverArt,
-    coverArtPaths.map(c => c.data),
-  )
-
-  const mapSongToTrackExt = (s: Song): TrackExt => {
-    let artwork = require('@res/fallback.png')
-    if (s.coverArt) {
-      const filePath = songCoverArtToPath[s.coverArt]
-      if (filePath) {
-        artwork = `file://${filePath}`
-      }
-    }
-
-    return {
-      id: s.id,
-      title: s.title,
-      artist: s.artist || 'Unknown Artist',
-      album: s.album || 'Unknown Album',
-      url: buildStreamUri(s.id),
-      userAgent,
-      artwork,
-      coverArt: s.coverArt,
-      duration: s.duration,
-      artistId: s.artistId,
-      albumId: s.albumId,
-      track: s.track,
-      discNumber: s.discNumber,
-    }
-  }
 
   const contextId = `${type}-${songs?.map(s => s.id).join('-')}`
 
   const setQueue = async (options: SetQueueOptions) => {
-    const queue = (songs || []).map(mapSongToTrackExt)
-    return await _setQueue({ queue, type, contextId, ...options })
+    if (!songs || songs.length === 0) {
+      return
+    }
+
+    const queue = songs.map(mapSongToTrackExt)
+    const first = queue[options.playTrack || 0]
+
+    if (!first.albumId) {
+      first.artwork = require('@res/fallback.png')
+    } else {
+      const albumCoverArt = queryClient.getQueryData<string>(qk.albumCoverArt(first.albumId))
+      const existingFile = queryClient.getQueryData<string>(qk.existingFiles('coverArtThumb', albumCoverArt))
+      const downloadFile = queryClient.getQueryData<string>(qk.coverArt(albumCoverArt, 'thumbnail'))
+      if (existingFile || downloadFile) {
+        first.artwork = `file://${existingFile || downloadFile}`
+      }
+    }
+
+    await _setQueue({ queue, type, contextId, ...options })
+    queueService.emit('set', { queue })
   }
 
-  return { setQueue, contextId, isReady: coverArtPaths.every(c => c.isFetched) }
+  return { setQueue, contextId }
 }

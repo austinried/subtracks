@@ -119,11 +119,13 @@ const ContextMenuIconTextOption = React.memo<ContextMenuIconTextOptionProps>(
 const MenuHeader = React.memo<{
   coverArt?: string
   artistId?: string
+  albumId?: string
   title: string
   subtitle?: string
-}>(({ coverArt, artistId, title, subtitle }) => (
-  <View style={styles.menuHeader}>
-    {artistId ? (
+}>(({ coverArt, artistId, albumId, title, subtitle }) => {
+  let CoverArtComponent = <></>
+  if (artistId) {
+    CoverArtComponent = (
       <CoverArt
         type="artist"
         artistId={artistId}
@@ -133,7 +135,20 @@ const MenuHeader = React.memo<{
         size="thumbnail"
         fadeDuration={0}
       />
-    ) : (
+    )
+  } else if (albumId) {
+    CoverArtComponent = (
+      <CoverArt
+        type="album"
+        albumId={albumId}
+        style={styles.coverArt}
+        resizeMode="cover"
+        size="thumbnail"
+        fadeDuration={0}
+      />
+    )
+  } else {
+    CoverArtComponent = (
       <CoverArt
         type="cover"
         coverArt={coverArt}
@@ -142,21 +157,27 @@ const MenuHeader = React.memo<{
         size="thumbnail"
         fadeDuration={0}
       />
-    )}
-    <View style={styles.menuHeaderText}>
-      <Text numberOfLines={1} style={styles.menuTitle}>
-        {title}
-      </Text>
-      {subtitle ? (
-        <Text numberOfLines={1} style={styles.menuSubtitle}>
-          {subtitle}
+    )
+  }
+
+  return (
+    <View style={styles.menuHeader}>
+      {CoverArtComponent}
+      <View style={styles.menuHeaderText}>
+        <Text numberOfLines={1} style={styles.menuTitle}>
+          {title}
         </Text>
-      ) : (
-        <></>
-      )}
+        {subtitle ? (
+          <Text numberOfLines={1} style={styles.menuSubtitle}>
+            {subtitle}
+          </Text>
+        ) : (
+          <></>
+        )}
+      </View>
     </View>
-  </View>
-))
+  )
+})
 
 const OptionStar = withSuspenseMemo<{
   id: string
@@ -260,7 +281,7 @@ export const SongContextPressable: React.FC<SongContextPressableProps> = props =
   return (
     <ContextMenu
       {...props}
-      menuHeader={<MenuHeader title={song.title} subtitle={song.artist} coverArt={song.coverArt} />}
+      menuHeader={<MenuHeader title={song.title} subtitle={song.artist} albumId={song.albumId} />}
       menuOptions={
         <>
           <OptionStar id={song.id} type={song.itemType} />
@@ -307,7 +328,7 @@ export const NowPlayingContextPressable: React.FC<NowPlayingContextPressableProp
   return (
     <ContextMenu
       {...props}
-      menuHeader={<MenuHeader title={song.title} subtitle={song.artist} coverArt={song.coverArt} />}
+      menuHeader={<MenuHeader title={song.title} subtitle={song.artist} albumId={song.albumId} />}
       menuOptions={
         <>
           <OptionStar id={song.id} type={song.itemType} />

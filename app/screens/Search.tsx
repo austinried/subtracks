@@ -26,7 +26,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const SongItem = React.memo<{ item: Song }>(({ item }) => {
-  const { setQueue, isReady, contextId } = useSetQueue('song', [item])
+  const { setQueue, contextId } = useSetQueue('song', [item])
 
   return (
     <ListItem
@@ -36,7 +36,6 @@ const SongItem = React.memo<{ item: Song }>(({ item }) => {
       showArt={true}
       showStar={false}
       onPress={() => setQueue({ title: item.title, playTrack: 0 })}
-      disabled={!isReady}
     />
   )
 }, equal)
