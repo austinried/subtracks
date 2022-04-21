@@ -1,0 +1,147 @@
+{
+    "context": {
+        "actions": {
+            "unstar": "移除收藏",
+            "star": "收藏"
+        }
+    },
+    "settings": {
+        "servers": {
+            "name": "服务器",
+            "messages": {
+                "connectionFailed": "连接到 {{address}} 失败，检查设置或服务器",
+                "connectionOk": "连接到 {{address}} 正常！"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "强制使用明文密码",
+                    "descriptionOn": "密码以明文发送（不推荐，注意链接安全！）",
+                    "descriptionOff": "密码以 token + salt 加密发送"
+                }
+            },
+            "actions": {
+                "add": "添加服务器",
+                "testConnection": "测试连接",
+                "save": "保存",
+                "edit": "编辑服务器",
+                "delete": "删除"
+            },
+            "fields": {
+                "password": "密码",
+                "username": "用户名",
+                "address": "地址"
+            }
+        },
+        "network": {
+            "name": "网络",
+            "values": {
+                "seconds": "{{value}} 秒",
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "不限制"
+            },
+            "options": {
+                "maxBitrateMobile": {
+                    "title": "最大比特率 (3G/4G/5G)"
+                },
+                "minBuffer": {
+                    "title": "最小缓冲时间"
+                },
+                "maxBuffer": {
+                    "title": "最大缓冲时间"
+                },
+                "maxBitrateWifi": {
+                    "title": "最大比特率 (Wi-Fi)"
+                }
+            }
+        },
+        "music": {
+            "name": "音乐",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble模式",
+                    "descriptionOn": "Scrobble播放历史",
+                    "descriptionOff": "不记录scrobble历史"
+                }
+            }
+        },
+        "reset": {
+            "name": "重置",
+            "actions": {
+                "clearImageCache": "清除图片缓存"
+            }
+        },
+        "about": {
+            "name": "关于",
+            "version": "版本 {{version}}",
+            "actions": {
+                "projectHomepage": "项目地址",
+                "licenses": "许可"
+            }
+        }
+    },
+    "resources": {
+        "album": {
+            "actions": {
+                "view": "查看专辑",
+                "play": "播放专辑"
+            },
+            "name": "专辑",
+            "lists": {
+                "newest": "最近添加",
+                "frequent": "播放最多",
+                "alphabeticalByName": "根据名称",
+                "alphabeticalByArtist": "根据歌手",
+                "byYear": "根据年份",
+                "random": "随机",
+                "sort": "专辑排序",
+                "recent": "最近播放",
+                "byGenre": "根据类型",
+                "starred": "已收藏"
+            }
+        },
+        "playlist": {
+            "actions": {
+                "play": "全部播放"
+            },
+            "name": "播放列表"
+        },
+        "song": {
+            "name": "歌曲",
+            "lists": {
+                "artistTopSongs": "热门歌曲"
+            }
+        },
+        "artist": {
+            "name": "歌手",
+            "lists": {
+                "starred": "已收藏",
+                "sort": "歌手排序",
+                "random": "随机",
+                "alphabeticalByName": "根据名称"
+            },
+            "actions": {
+                "view": "查看歌手"
+            }
+        },
+        "queue": {
+            "name": "队列"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "首页",
+            "library": "所有",
+            "search": "搜索",
+            "settings": "设置"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "搜索",
+        "headerTitle": "搜索： {{query}}",
+        "moreResults": "更多…",
+        "nowPlayingContext": "搜索结果"
+    },
+    "messages": {
+        "nothingHere": "什么都没有…"
+    }
+}
