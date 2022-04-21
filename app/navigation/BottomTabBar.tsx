@@ -18,10 +18,11 @@ const BottomTabButton = React.memo<{
   isFocused: boolean
   icon: OutlineFillIcon
   navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>
-}>(({ routeKey, label, name, isFocused, icon, navigation }) => {
+  disabled?: boolean
+}>(({ routeKey, label, name, isFocused, icon, navigation, disabled }) => {
   const firstRun = useFirstRun()
 
-  const disabled = firstRun && name !== 'settings'
+  disabled = !!disabled || (firstRun && name !== 'settings')
 
   const onPress = () => {
     const event = navigation.emit({
@@ -67,6 +68,13 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             ? options.title
             : route.name
 
+        let iconKey = route.name
+        let disabled = false
+        if (route.name.endsWith('-disabled')) {
+          iconKey = route.name.split('-')[0]
+          disabled = true
+        }
+
         return (
           <BottomTabButton
             key={route.key}
@@ -74,8 +82,9 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
             label={label}
             name={route.name}
             isFocused={state.index === index}
-            icon={bottomTabIcons[route.name]}
+            icon={bottomTabIcons[iconKey]}
             navigation={navigation}
+            disabled={disabled}
           />
         )
       })}

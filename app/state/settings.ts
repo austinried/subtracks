@@ -27,7 +27,9 @@ export type SettingsSlice = {
   }
 
   client?: SubsonicApiClient
-  resetServer: boolean
+
+  disableMusicTabs: boolean
+  setDisableMusicTabs: (value: boolean) => void
 
   changeCacheBuster: () => void
 
@@ -79,7 +81,12 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     cacheBuster: newCacheBuster(),
   },
 
-  resetServer: false,
+  disableMusicTabs: false,
+  setDisableMusicTabs: value => {
+    set(store => {
+      store.disableMusicTabs = value
+    })
+  },
 
   changeCacheBuster: () => {
     set(store => {
@@ -104,7 +111,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     }
 
     set(state => {
-      state.resetServer = true
+      state.disableMusicTabs = true
     })
 
     set(state => {
@@ -113,7 +120,7 @@ export const createSettingsSlice = (set: SetStore, get: GetStore): SettingsSlice
     })
 
     set(state => {
-      state.resetServer = false
+      state.disableMusicTabs = false
     })
   },
 
