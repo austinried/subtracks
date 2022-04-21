@@ -272,7 +272,14 @@ const createService = async () => {
 
       try {
         throwIfQueueChanged()
-        await TrackPlayer.updateMetadataForTrack(i, { ...track, artwork: `file://${imagePath}` })
+
+        let trackIdx = i
+        const shuffleOrder = useStore.getState().shuffleOrder
+        if (shuffleOrder) {
+          trackIdx = shuffleOrder.indexOf(i)
+        }
+
+        await TrackPlayer.updateMetadataForTrack(trackIdx, { ...track, artwork: `file://${imagePath}` })
       } catch {
         break
       }

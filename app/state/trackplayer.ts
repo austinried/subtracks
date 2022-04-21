@@ -317,8 +317,12 @@ export const createTrackPlayerSlice = (set: SetStore, get: GetStore): TrackPlaye
 
   updateQueue: async () => {
     const newQueue = await getQueue()
+    const currentTrack = await getCurrentTrack()
     set(state => {
       state.queue = newQueue
+      if (currentTrack !== undefined) {
+        state.currentTrack = newQueue[currentTrack]
+      }
     })
   },
 
