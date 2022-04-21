@@ -176,12 +176,24 @@ const Tab = createBottomTabNavigator()
 const BottomTabNavigator = withSuspense(() => {
   const { t } = useTranslation()
   const firstRun = useFirstRun()
-  const resetServer = useStore(store => store.resetServer)
+  const disableMusicTabs = useStore(store => store.disableMusicTabs)
 
   return (
     <Tab.Navigator tabBar={BottomTabBar} initialRouteName={firstRun ? 'settings' : 'home'}>
-      {resetServer ? (
-        <></>
+      {disableMusicTabs ? (
+        <>
+          <Tab.Screen name="home-disabled" children={() => null} options={{ tabBarLabel: t('navigation.tabs.home') }} />
+          <Tab.Screen
+            name="library-disabled"
+            children={() => null}
+            options={{ tabBarLabel: t('navigation.tabs.library') }}
+          />
+          <Tab.Screen
+            name="search-disabled"
+            children={() => null}
+            options={{ tabBarLabel: t('navigation.tabs.search') }}
+          />
+        </>
       ) : (
         <>
           <Tab.Screen name="home" component={HomeTab} options={{ tabBarLabel: t('navigation.tabs.home') }} />
