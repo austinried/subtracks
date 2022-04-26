@@ -20,7 +20,7 @@
                 "byGenre": "Nach Genre",
                 "alphabeticalByName": "Nach Name",
                 "newest": "Kürzlich hinzugefügt",
-                "alphabeticalByArtist": "Nach Künstler"
+                "alphabeticalByArtist": "Nach Interpreten"
             },
             "actions": {
                 "play": "Album abspielen",
@@ -28,16 +28,16 @@
             }
         },
         "artist": {
-            "name": "Künstler",
-            "name_plural": "Künstler",
+            "name": "Interpret",
+            "name_plural": "Interpreten",
             "lists": {
-                "sort": "Künstler sortieren",
+                "sort": "Interpreten sortieren",
                 "random": "Zufällig",
                 "alphabeticalByName": "Nach Name",
                 "starred": "Favoriten"
             },
             "actions": {
-                "view": "Künstler anzeigen"
+                "view": "Interpret anzeigen"
             }
         },
         "playlist": {
