@@ -1,0 +1,10 @@
+**Full Changelog**: https://github.com/austinried/subtracks/compare/v1.2.0...v1.3.0
+
+## What's Changed
+### New
+* Localization support by @austinried in https://github.com/austinried/subtracks/pull/99
+  * 9 new languages: Catalan, Chinese (Simplified), Danish, French, German, Italian, Japanese, Norwegian Bokmål, Russian
+  * Thanks to @comradekingu, @clyhtsuriva, @nortio, @retiolus, @hillwah, @shoddysheep and more users from @weblate!
+### Fixed
+* Remove unused CHECK_LICENSE permission by @austinried in https://github.com/austinried/subtracks/pull/109
+* Fix performance issue/crash with large playlists by @austinried in https://github.com/austinried/subtracks/pull/111
