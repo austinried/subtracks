@@ -2,10 +2,11 @@ changelog:
   exclude:
     labels:
       - ignore-for-release
+      - dependencies
     authors:
       - weblate
   categories:
-    - title: What's New
+    - title: New
       labels:
         - enhancement
     - title: Fixed
