@@ -1,0 +1,92 @@
+{
+    "resources": {
+        "album": {
+            "lists": {
+                "byGenre": "Efter genre",
+                "alphabeticalByName": "Efter navn",
+                "alphabeticalByArtist": "Efter kunstner",
+                "byYear": "Efter år",
+                "sort": "Sortér albums"
+            },
+            "actions": {
+                "play": "Afspil album",
+                "view": "Se album"
+            }
+        },
+        "artist": {
+            "name": "Kunstner",
+            "name_plural": "Kunstnere",
+            "lists": {
+                "sort": "Sortér kunstnere",
+                "alphabeticalByName": "Efter navn"
+            },
+            "actions": {
+                "view": "Se kunstnere"
+            }
+        },
+        "song": {
+            "lists": {
+                "artistTopSongs": "Top sange"
+            },
+            "name": "Sang",
+            "name_plural": "Sange"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "library": "Bibliotek",
+            "search": "Søg",
+            "settings": "Indstillinger"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "Søg",
+        "headerTitle": "Søg: {{query}}",
+        "nowPlayingContext": "Søgeresultater",
+        "moreResults": "Mere…"
+    },
+    "settings": {
+        "servers": {
+            "name": "Servere",
+            "fields": {
+                "address": "Adresse",
+                "username": "Brugernavn",
+                "password": "Adgangskode"
+            },
+            "actions": {
+                "add": "Tilføj server",
+                "edit": "Redigér server",
+                "testConnection": "Test forbindelse",
+                "delete": "Slet",
+                "save": "Gem"
+            },
+            "messages": {
+                "connectionOk": "Forbindelse til {{address}} OK!"
+            }
+        },
+        "network": {
+            "name": "Netværk",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Ubegrænset",
+                "seconds": "{{value}} sekunder"
+            }
+        },
+        "music": {
+            "name": "Musik"
+        },
+        "reset": {
+            "name": "Nulstil",
+            "actions": {
+                "clearImageCache": "Ryd billede cache"
+            }
+        },
+        "about": {
+            "name": "Omkring",
+            "version": "version {{version}}",
+            "actions": {
+                "licenses": "Licenser"
+            }
+        }
+    }
+}
