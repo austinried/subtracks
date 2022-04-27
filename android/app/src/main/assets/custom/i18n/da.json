@@ -6,12 +6,15 @@
                 "alphabeticalByName": "Efter navn",
                 "alphabeticalByArtist": "Efter kunstner",
                 "byYear": "Efter år",
-                "sort": "Sortér albums"
+                "sort": "Sortér albums",
+                "random": "Tilfældig"
             },
             "actions": {
                 "play": "Afspil album",
                 "view": "Se album"
-            }
+            },
+            "name": "Album",
+            "name_plural": "Albums"
         },
         "artist": {
             "name": "Kunstner",
@@ -30,6 +33,10 @@
             },
             "name": "Sang",
             "name_plural": "Sange"
+        },
+        "queue": {
+            "name": "Kø",
+            "name_plural": "Køer"
         }
     },
     "navigation": {
@@ -61,7 +68,8 @@
                 "save": "Gem"
             },
             "messages": {
-                "connectionOk": "Forbindelse til {{address}} OK!"
+                "connectionOk": "Forbindelse til {{address}} OK!",
+                "connectionFailed": "Forbindelse til {{address}} mislykkedes, tjek indstillinger eller server"
             }
         },
         "network": {
@@ -70,6 +78,20 @@
                 "kbps": "{{value}}kbps",
                 "unlimitedKbps": "Ubegrænset",
                 "seconds": "{{value}} sekunder"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Maksimum bitrate (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Maksimum bitrate (mobil)"
+                },
+                "minBuffer": {
+                    "title": "Minimum buffertid"
+                },
+                "maxBuffer": {
+                    "title": "Maksimum buffertid"
+                }
             }
         },
         "music": {
@@ -85,8 +107,12 @@
             "name": "Omkring",
             "version": "version {{version}}",
             "actions": {
-                "licenses": "Licenser"
+                "licenses": "Licenser",
+                "projectHomepage": "Projekt hjemmeside"
             }
         }
+    },
+    "messages": {
+        "nothingHere": "Intet her…"
     }
 }
