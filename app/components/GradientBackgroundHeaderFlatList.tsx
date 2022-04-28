@@ -4,18 +4,18 @@ import colors from '@app/styles/colors'
 import GradientBackground, { GradientBackgroundProps } from '@app/components/GradientBackground'
 import { useLayout } from '@react-native-community/hooks'
 import NothingHere from './NothingHere'
-import ImageGradientBackground, { ImageGradientBackgroundProps } from './ImageGradientBackground'
+import GradientImageBackground, { GradientImageBackgroundProps } from './GradientImageBackground'
 
-export type BackgroundHeaderFlatListPropsBase<ItemT> = FlatListProps<ItemT> & {
+export type GradientBackgroundHeaderFlatListPropsBase<ItemT> = FlatListProps<ItemT> & {
   contentMarginTop?: number
 }
 
-export type BackgroundHeaderFlatListProp<ItemT> = BackgroundHeaderFlatListPropsBase<ItemT> & {
-  BackgroundComponent: typeof ImageGradientBackground | typeof GradientBackground
-  backgroundProps?: ImageGradientBackgroundProps | GradientBackgroundProps
+export type GradientBackgroundHeaderFlatListProp<ItemT> = GradientBackgroundHeaderFlatListPropsBase<ItemT> & {
+  BackgroundComponent: typeof GradientImageBackground | typeof GradientBackground
+  backgroundProps?: GradientImageBackgroundProps | GradientBackgroundProps
 }
 
-function BackgroundHeaderFlatList<ItemT>(props: BackgroundHeaderFlatListProp<ItemT>) {
+function GradientBackgroundHeaderFlatList<ItemT>(props: GradientBackgroundHeaderFlatListProp<ItemT>) {
   const window = useWindowDimensions()
   const headerLayout = useLayout()
 
@@ -51,4 +51,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default BackgroundHeaderFlatList
+export default GradientBackgroundHeaderFlatList

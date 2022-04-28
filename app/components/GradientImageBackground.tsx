@@ -5,12 +5,12 @@ import { AndroidImageColors } from 'react-native-image-colors/lib/typescript/typ
 import colors from '@app/styles/colors'
 import GradientBackground, { GradientBackgroundPropsBase } from '@app/components/GradientBackground'
 
-export type ImageGradientBackgroundProps = GradientBackgroundPropsBase & {
+export type GradientImageBackgroundProps = GradientBackgroundPropsBase & {
   imagePath?: string
   onGetColor?: (color: string) => void
 }
 
-const ImageGradientBackground: React.FC<ImageGradientBackgroundProps> = ({
+const GradientImageBackground: React.FC<GradientImageBackgroundProps> = ({
   height,
   width,
   position,
@@ -83,4 +83,4 @@ const ImageGradientBackground: React.FC<ImageGradientBackgroundProps> = ({
   )
 }
 
-export default ImageGradientBackground
+export default GradientImageBackground

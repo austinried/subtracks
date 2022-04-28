@@ -1,7 +1,7 @@
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import HeaderBar from '@app/components/HeaderBar'
-import ImageGradientFlatList from '@app/components/ImageGradientFlatList'
+import GradientImageFlatList from '@app/components/GradientImageFlatList'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import NothingHere from '@app/components/NothingHere'
@@ -86,7 +86,7 @@ const SongListDetails = React.memo<{
         title={title}
         contextItem={songList.itemType === 'album' ? songList : undefined}
       />
-      <ImageGradientFlatList
+      <GradientImageFlatList
         data={_songs.map((s, i) => ({
           song: s,
           contextId,

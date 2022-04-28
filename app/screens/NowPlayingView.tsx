@@ -1,6 +1,6 @@
 import CoverArt from '@app/components/CoverArt'
 import HeaderBar from '@app/components/HeaderBar'
-import ImageGradientBackground from '@app/components/ImageGradientBackground'
+import GradientImageBackground from '@app/components/GradientImageBackground'
 import PressableOpacity from '@app/components/PressableOpacity'
 import { PressableStar } from '@app/components/Star'
 import { withSuspenseMemo } from '@app/components/withSuspense'
@@ -397,7 +397,7 @@ const NowPlayingView: React.FC<NowPlayingProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ImageGradientBackground imagePath={imagePath} height={'100%'} />
+      <GradientImageBackground imagePath={imagePath} height={'100%'} />
       <NowPlayingHeader track={track} />
       <View style={styles.content}>
         <SongCoverArt />

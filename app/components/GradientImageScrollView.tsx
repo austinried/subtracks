@@ -1,11 +1,11 @@
-import ImageGradientBackground, { ImageGradientBackgroundProps } from '@app/components/ImageGradientBackground'
+import GradientImageBackground, { GradientImageBackgroundProps } from '@app/components/GradientImageBackground'
 import colors from '@app/styles/colors'
 import dimensions from '@app/styles/dimensions'
 import React from 'react'
 import { ScrollView, ScrollViewProps, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const ImageGradientScrollView: React.FC<ScrollViewProps & ImageGradientBackgroundProps> = props => {
+const GradientImageScrollView: React.FC<ScrollViewProps & GradientImageBackgroundProps> = props => {
   const layout = useWindowDimensions()
   const paddingTop = useSafeAreaInsets().top
 
@@ -22,10 +22,10 @@ const ImageGradientScrollView: React.FC<ScrollViewProps & ImageGradientBackgroun
         },
       ]}
       contentContainerStyle={[{ minHeight }, props.contentContainerStyle]}>
-      <ImageGradientBackground height={minHeight} imagePath={props.imagePath} onGetColor={props.onGetColor} />
+      <GradientImageBackground height={minHeight} imagePath={props.imagePath} onGetColor={props.onGetColor} />
       {props.children}
     </ScrollView>
   )
 }
 
-export default ImageGradientScrollView
+export default GradientImageScrollView

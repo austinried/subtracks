@@ -13,7 +13,7 @@ LogBox.ignoreLogs([
 
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import { backend, languageDetector } from '@app/i18n'
+import { backend, languageDetector } from '@app/i18n/i18n'
 import * as RNLocalize from 'react-native-localize'
 
 i18next.use(backend).use(languageDetector).use(initReactI18next).init({
@@ -32,7 +32,7 @@ import { name as appName } from '@app/app.json'
 import TrackPlayer, { Capability } from 'react-native-track-player'
 
 AppRegistry.registerComponent(appName, () => App)
-TrackPlayer.registerPlaybackService(() => require('@app/playbackservice'))
+TrackPlayer.registerPlaybackService(() => require('@app/trackplayer/service'))
 
 async function start() {
   await TrackPlayer.setupPlayer()
