@@ -4,7 +4,7 @@ import { CacheItemTypeKey } from '@app/models/cache'
 
 const serversCacheDir = path.join(RNFS.ExternalDirectoryPath, 's')
 
-export function cacheDir(serverId?: string, itemType?: CacheItemTypeKey, itemId?: string): string {
+function cacheDir(serverId?: string, itemType?: CacheItemTypeKey, itemId?: string): string {
   const segments: string[] = []
 
   serverId && segments.push(serverId)
@@ -13,3 +13,5 @@ export function cacheDir(serverId?: string, itemType?: CacheItemTypeKey, itemId?
 
   return path.join(serversCacheDir, ...segments)
 }
+
+export default cacheDir

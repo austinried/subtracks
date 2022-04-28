@@ -1,10 +1,10 @@
 import { useReset } from '@app/hooks/trackplayer'
 import { CacheItemTypeKey } from '@app/models/cache'
-import queryClient from '@app/queryClient'
+import queryClient from '@app/query/queryClient'
 import { useStore, useStoreDeep } from '@app/state/store'
-import { cacheDir } from '@app/util/fs'
+import cacheDir from '@app/util/cacheDir'
 import RNFS from 'react-native-fs'
-import qk from './queryKeys'
+import qk from '@app/query/queryKeys'
 
 export const useSwitchActiveServer = () => {
   const activeServerId = useStore(store => store.settings.activeServerId)

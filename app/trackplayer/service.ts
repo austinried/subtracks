@@ -1,14 +1,15 @@
+import { fetchAlbum } from '@app/query/fetch/api'
+import { FetchExisingFileOptions, fetchExistingFile, fetchFile, FetchFileOptions } from '@app/query/fetch/file'
+import qk from '@app/query/queryKeys'
 import { getCurrentTrack, getPlayerState, trackPlayerCommands } from '@app/state/trackplayer'
 import NetInfo, { NetInfoStateType } from '@react-native-community/netinfo'
 import _ from 'lodash'
 import { unstable_batchedUpdates } from 'react-native'
 import TrackPlayer, { Event, State } from 'react-native-track-player'
-import { fetchAlbum, FetchExisingFileOptions, fetchExistingFile, fetchFile, FetchFileOptions } from './hooks/fetch'
-import qk from './hooks/queryKeys'
-import queryClient from './queryClient'
-import queueService from './queueservice'
-import { useStore } from './state/store'
-import { ReturnedPromiseResolvedType } from './util/types'
+import queryClient from '../query/queryClient'
+import { useStore } from '../state/store'
+import { ReturnedPromiseResolvedType } from '../util/types'
+import QueueEvents from './QueueEvents'
 
 const reset = () => {
   unstable_batchedUpdates(() => {
@@ -218,7 +219,7 @@ const createService = async () => {
     }
   })
 
-  queueService.addListener('set', async ({ queue }) => {
+  QueueEvents.addListener('set', async ({ queue }) => {
     const contextId = useStore.getState().queueContextId
     const throwIfQueueChanged = () => {
       if (contextId !== useStore.getState().queueContextId) {

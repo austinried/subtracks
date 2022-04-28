@@ -1,8 +1,8 @@
 /* eslint-disable no-dupe-class-members */
 import { EmitterSubscription, NativeEventEmitter } from 'react-native'
-import { TrackExt } from './models/trackplayer'
+import { TrackExt } from '@app/models/trackplayer'
 
-class QueueService extends NativeEventEmitter {
+class QueueEventEmitter extends NativeEventEmitter {
   addListener(eventType: 'set', listener: (event: { queue: TrackExt[] }) => void): EmitterSubscription
   addListener(eventType: string, listener: (event: any) => void, context?: Object): EmitterSubscription {
     return super.addListener(eventType, listener, context)
@@ -14,5 +14,5 @@ class QueueService extends NativeEventEmitter {
   }
 }
 
-const queueService = new QueueService()
-export default queueService
+const QueueEvents = new QueueEventEmitter()
+export default QueueEvents

@@ -1,12 +1,12 @@
 import { Song } from '@app/models/library'
 import { QueueContextType, TrackExt } from '@app/models/trackplayer'
-import queryClient from '@app/queryClient'
-import queueService from '@app/queueservice'
+import queryClient from '@app/query/queryClient'
+import QueueEvents from '@app/trackplayer/QueueEvents'
 import { useStore, useStoreDeep } from '@app/state/store'
 import { getQueue, SetQueueOptions, trackPlayerCommands } from '@app/state/trackplayer'
 import userAgent from '@app/util/userAgent'
 import TrackPlayer from 'react-native-track-player'
-import qk from './queryKeys'
+import qk from '@app/query/queryKeys'
 
 export const usePlay = () => {
   return () => trackPlayerCommands.enqueue(() => TrackPlayer.play())
@@ -132,7 +132,7 @@ export const useSetQueue = (type: QueueContextType, songs?: Song[]) => {
     }
 
     await _setQueue({ queue, type, contextId, ...options })
-    queueService.emit('set', { queue })
+    QueueEvents.emit('set', { queue })
   }
 
   return { setQueue, contextId }

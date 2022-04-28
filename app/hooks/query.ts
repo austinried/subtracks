@@ -1,7 +1,7 @@
 import { CacheImageSize, CacheItemTypeKey } from '@app/models/cache'
 import { Album, Artist, Playlist, Song, StarrableItemType } from '@app/models/library'
 import { CollectionById } from '@app/models/state'
-import queryClient from '@app/queryClient'
+import queryClient from '@app/query/queryClient'
 import { useStore } from '@app/state/store'
 import { GetAlbumList2TypeBase, Search3Params, StarParams } from '@app/subsonic/params'
 import _ from 'lodash'
@@ -13,16 +13,15 @@ import {
   useFetchArtistInfo,
   useFetchArtists,
   useFetchArtistTopSongs,
-  useFetchExistingFile,
-  useFetchFile,
   useFetchPlaylist,
   useFetchPlaylists,
   useFetchSearchResults,
   useFetchSong,
   useFetchStar,
   useFetchUnstar,
-} from './fetch'
-import qk from './queryKeys'
+} from '../query/fetch/api'
+import qk from '@app/query/queryKeys'
+import { useFetchExistingFile, useFetchFile } from '@app/query/fetch/file'
 
 export const useQueryArtists = () => useQuery(qk.artists, useFetchArtists())
 

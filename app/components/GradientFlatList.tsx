@@ -1,13 +1,15 @@
 import GradientBackground, { GradientBackgroundProps } from '@app/components/GradientBackground'
 import React from 'react'
-import BackgroundHeaderFlatList, { BackgroundHeaderFlatListPropsBase } from './BackgroundHeaderFlatList'
+import GradientBackgroundHeaderFlatList, {
+  GradientBackgroundHeaderFlatListPropsBase,
+} from './GradientBackgroundHeaderFlatList'
 
-export type GradientFlatListProps<ItemT> = BackgroundHeaderFlatListPropsBase<ItemT> & {
+export type GradientFlatListProps<ItemT> = GradientBackgroundHeaderFlatListPropsBase<ItemT> & {
   backgroundProps?: GradientBackgroundProps
 }
 
 function GradientFlatList<ItemT>(props: GradientFlatListProps<ItemT>) {
-  return <BackgroundHeaderFlatList BackgroundComponent={GradientBackground} {...props} />
+  return <GradientBackgroundHeaderFlatList BackgroundComponent={GradientBackground} {...props} />
 }
 
 export default GradientFlatList
