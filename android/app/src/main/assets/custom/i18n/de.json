@@ -111,7 +111,7 @@
                     "title": "Maximale Bitrate (WLAN)"
                 },
                 "maxBuffer": {
-                    "title": "Maxilmale Pufferzeit"
+                    "title": "Maximale Pufferzeit"
                 },
                 "minBuffer": {
                     "title": "Minimale Pufferzeit"
