@@ -1,0 +1,11 @@
+{
+    "resources": {
+        "song": {
+            "lists": {
+                "artistTopSongs": "Mejores Canciones"
+            },
+            "name": "Cancion",
+            "name_plural": "Canciones"
+        }
+    }
+}
