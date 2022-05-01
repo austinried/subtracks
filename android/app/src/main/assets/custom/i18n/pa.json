@@ -1,0 +1,20 @@
+{
+    "resources": {
+        "song": {
+            "lists": {
+                "artistTopSongs": "ਉੱਤਮ ਗਾਣੇ"
+            },
+            "name": "ਗਾਣਾ",
+            "name_plural": "ਗਾਣੇ"
+        },
+        "album": {
+            "name": "ਐਲਬਮ",
+            "name_plural": "ਐਲਬਮਾਂ",
+            "lists": {
+                "sort": "ਐਲਬਮਾਂ ਨੂੰ ਕਰਮਬੱਧ ਕਰੋ",
+                "random": "ਅਟਕਲ-ਪੱਚੂ",
+                "newest": "ਤਾਜ਼ਾ ਸ਼ਾਮਿਲ"
+            }
+        }
+    }
+}
