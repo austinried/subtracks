@@ -37,7 +37,8 @@
                 "alphabeticalByName": "By Name"
             },
             "actions": {
-                "view": "View Artist"
+                "view": "View Artist",
+                "play": "Play Artist"
             }
         },
         "playlist": {
