@@ -66,6 +66,22 @@ export const useFetchArtistTopSongs = () => {
   }
 }
 
+export const useFetchArtistAllSongs = () => {
+  const client = useClient()
+
+  return async (id: string) => {
+    const artistResponse = await client().getArtist({ id })
+
+    let songs: Song[] = [];
+    for (const album of artistResponse.data.albums) {
+      const albumResponse = await fetchAlbum(album.id, client())
+      songs = songs.concat(albumResponse.songs || []);
+    }
+
+    return songs
+  }
+}
+
 export const useFetchPlaylists = () => {
   const client = useClient()
 
