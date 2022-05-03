@@ -13,6 +13,7 @@ import {
   useFetchArtistInfo,
   useFetchArtists,
   useFetchArtistTopSongs,
+  useFetchArtistAllSongs,
   useFetchPlaylist,
   useFetchPlaylists,
   useFetchSearchResults,
@@ -80,6 +81,20 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   )
 
   return querySuccess ? query : backupQuery
+}
+
+export const useQueryArtistAllSongs = (id: string) => {
+  const fetchArtistAllSongs = useFetchArtistAllSongs()
+
+  return useQuery(qk.artistAllSongs(id), () => fetchArtistAllSongs(id), {
+    placeholderData: () => {
+      // TODO no idea
+      const artist = queryClient.getQueryData<CollectionById<Artist>>(qk.artists)?.byId[id]
+      if (artist) {
+        return []
+      }
+    },
+  })
 }
 
 export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())

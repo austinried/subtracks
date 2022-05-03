@@ -9,6 +9,7 @@ const qk = {
   artist: (id: string) => ['artist', id],
   artistInfo: (id: string) => ['artistInfo', id],
   artistTopSongs: (artistName: string) => ['artistTopSongs', artistName],
+  artistAllSongs: (id: string) => ['artistAllSongs', id],
 
   playlists: 'playlists',
   playlist: (id: string) => ['playlist', id],
