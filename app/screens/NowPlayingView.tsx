@@ -40,7 +40,7 @@ const NowPlayingHeader = withSuspenseMemo<{
   if (queueContextType === 'album') {
     contextName = t('resources.album.name', { count: 1 })
   } else if (queueContextType === 'artist') {
-    contextName = t('resources.song.lists.artist')
+    contextName = t('resources.artist.name')
   } else if (queueContextType === 'top-songs') {
     contextName = t('resources.song.lists.artistTopSongs')
   } else if (queueContextType === 'playlist') {
