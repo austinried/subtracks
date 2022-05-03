@@ -5,8 +5,9 @@ import GradientScrollView from '@app/components/GradientScrollView'
 import Header from '@app/components/Header'
 import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
+import ListPlayerControls from '@app/components/ListPlayerControls'
 import { withSuspenseMemo } from '@app/components/withSuspense'
-import { useQueryArtist, useQueryArtistTopSongs } from '@app/hooks/query'
+import { useQueryArtist, useQueryArtistTopSongs, useQueryArtistAllSongs } from '@app/hooks/query'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
@@ -111,6 +112,7 @@ const ArtistViewFallback = React.memo(() => (
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
   const { data: artistData } = useQueryArtist(id)
   const { data: topSongs, isError } = useQueryArtistTopSongs(artistData?.artist?.name)
+  const { data: allSongs } = useQueryArtistAllSongs(id)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -133,6 +135,11 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 
   const { artist, albums } = artistData
 
+  const { setQueue, contextId } = useSetQueue('artist', allSongs)
+
+  const play = (shuffle?: boolean) => () =>
+    setQueue({ title: artist.name, playTrack: undefined, shuffle })
+
   return (
     <View style={styles.container}>
       <HeaderBar title={title} headerStyle={[styles.header, animatedOpacity]} />
@@ -149,8 +156,8 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         <ListPlayerControls
           style={styles.controls}
           listType={'artist'}
-          play={/* TODO play(undefined, false)*/}
-          shuffle={/* TODO play(undefined, true)*/}
+          play={play(false)}
+          shuffle={play(true)}
           disabled={false}
         />
         <View style={styles.contentContainer}>
