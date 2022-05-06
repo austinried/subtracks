@@ -7,7 +7,7 @@ import HeaderBar from '@app/components/HeaderBar'
 import ListItem from '@app/components/ListItem'
 import ListPlayerControls from '@app/components/ListPlayerControls'
 import { withSuspenseMemo } from '@app/components/withSuspense'
-import { useQueryArtist, useQueryArtistTopSongs, useQueryArtistAllSongs } from '@app/hooks/query'
+import { useQueryArtist, useQueryArtistTopSongs, useQueriesAllAlbums } from '@app/hooks/query'
 import { useSetQueue } from '@app/hooks/trackplayer'
 import { Album, Song } from '@app/models/library'
 import colors from '@app/styles/colors'
@@ -112,7 +112,19 @@ const ArtistViewFallback = React.memo(() => (
 const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => {
   const { data: artistData } = useQueryArtist(id)
   const { data: topSongs, isError } = useQueryArtistTopSongs(artistData?.artist?.name)
-  const { data: allSongs } = useQueryArtistAllSongs(id)
+
+  const albumQueries = useQueriesAllAlbums(id)
+  // Reduce each album query to a single object containing all songs, and a loading indicator
+  const allSongs = albumQueries?.reduce((state, query) => {
+    const { data: resp, isLoading } = query
+    return { 
+      loading: state.loading || isLoading,
+      songs: state.songs.concat(resp?.songs || [])
+    }
+  }, {
+    loading: false,
+    songs: Array<Song>()
+  })
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -135,10 +147,7 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 
   const { artist, albums } = artistData
 
-  const { setQueue, contextId } = useSetQueue('artist', allSongs)
-
-  const play = (shuffle?: boolean) => () =>
-    setQueue({ title: artist.name, playTrack: undefined, shuffle })
+  const { setQueue, contextId } = useSetQueue('artist', allSongs?.songs)
 
   return (
     <View style={styles.container}>
@@ -156,9 +165,9 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         <ListPlayerControls
           style={styles.controls}
           listType={'artist'}
-          play={play(false)}
-          shuffle={play(true)}
-          disabled={false}
+          play={() => setQueue({ title: artist.name, shuffle: false })}
+          shuffle={() => setQueue({ title: artist.name, shuffle: true })}
+          disabled={allSongs?.loading}
         />
         <View style={styles.contentContainer}>
           {(topSongs || isError) && artist ? (

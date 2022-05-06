@@ -83,9 +83,23 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   return querySuccess ? query : backupQuery
 }
 
-export const useQueryArtistAllSongs = (id: string) => {
-  const fetchArtistAllSongs = useFetchArtistAllSongs()
-  return useQuery(qk.artistAllSongs(id), () => fetchArtistAllSongs(id))
+export const useQueriesAllAlbums = (id: string) => {
+  const { data: artistData } = useQueryArtist(id)
+  const fetchAlbum = useFetchAlbum()
+
+  const albums = artistData?.albums
+
+  if (!albums)
+    return undefined
+
+  return useQueries(
+    albums.map(a => {
+      return {
+        queryKey: qk.album(a.id),
+        queryFn: () => fetchAlbum(a.id)
+      }
+    })
+  )
 }
 
 export const useQueryPlaylists = () => useQuery(qk.playlists, useFetchPlaylists())
