@@ -1,0 +1,147 @@
+{
+    "resources": {
+        "song": {
+            "lists": {
+                "artistTopSongs": "Bài hát hàng đầu"
+            },
+            "name": "Bài hát"
+        },
+        "album": {
+            "name": "Album",
+            "lists": {
+                "sort": "Sắp xếp Album",
+                "alphabeticalByName": "Theo tên",
+                "alphabeticalByArtist": "Theo nghệ sĩ",
+                "byYear": "Theo năm",
+                "byGenre": "Theo thể loại",
+                "random": "Ngẫu Nhiên",
+                "newest": "Thêm vào gần đây",
+                "starred": "Có gắn dấu sao",
+                "frequent": "Thường xuyên chơi",
+                "recent": "Đã phát gần đây"
+            },
+            "actions": {
+                "play": "Phát Album",
+                "view": "Xem Album"
+            }
+        },
+        "artist": {
+            "name": "Nghệ sĩ",
+            "lists": {
+                "sort": "Sắp xếp nghệ sĩ",
+                "random": "Ngẫu Nhiên",
+                "starred": "Có gắn dấu sao",
+                "alphabeticalByName": "Theo tên"
+            },
+            "actions": {
+                "view": "Xem Nghệ sĩ"
+            }
+        },
+        "playlist": {
+            "actions": {
+                "play": "Phát Danh sách phát"
+            },
+            "name": "Danh sách phát"
+        },
+        "queue": {
+            "name": "Hàng chờ"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Đánh dấu sao",
+            "unstar": "Bỏ dấu sao"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Trang chủ",
+            "library": "Thư Viện",
+            "search": "Tìm kiếm",
+            "settings": "Thiết Lập"
+        }
+    },
+    "messages": {
+        "nothingHere": "Không có gì ở đây…"
+    },
+    "search": {
+        "moreResults": "Nhiều hơn…",
+        "nowPlayingContext": "Kết quả tìm kiếm",
+        "headerTitle": "Tìm kiếm: {{query}}",
+        "inputPlaceholder": "Tìm kiếm"
+    },
+    "settings": {
+        "servers": {
+            "name": "Máy chủ",
+            "fields": {
+                "address": "Địa chỉ",
+                "username": "Tên đăng nhập",
+                "password": "Mật Khẩu"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Buộc mật khẩu văn bản thuần túy",
+                    "descriptionOn": "Gửi mật khẩu ở dạng văn bản rõ ràng (kế thừa, đảm bảo kết nối của bạn an toàn!)",
+                    "descriptionOff": "Gửi mật khẩu dưới dạng token + salt"
+                }
+            },
+            "actions": {
+                "add": "Thêm máy chủ",
+                "edit": "Chỉnh sửa máy chủ",
+                "testConnection": "Kiểm tra kết nối",
+                "delete": "Xóa",
+                "save": "Lưu"
+            },
+            "messages": {
+                "connectionOk": "Kết nối với {{address}} OK!",
+                "connectionFailed": "Kết nối với {{address}} không thành công, hãy kiểm tra cài đặt hoặc máy chủ"
+            }
+        },
+        "network": {
+            "name": "Mạng",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Không giới hạn",
+                "seconds": "{{value}} giây"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Tối đa bitrate (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Tối đa bitrate (mobile)"
+                },
+                "minBuffer": {
+                    "title": "Thời gian đệm tối thiểu"
+                },
+                "maxBuffer": {
+                    "title": "Thời gian đệm tối đa"
+                }
+            }
+        },
+        "music": {
+            "name": "Âm nhạc",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble lượt chơi",
+                    "descriptionOn": "Lịch sử chơi Scrobble",
+                    "descriptionOff": "Đừng scrobble lịch sử chơi"
+                }
+            }
+        },
+        "reset": {
+            "name": "Cài đặt lại",
+            "actions": {
+                "clearImageCache": "Xóa bộ nhớ đệm hình ảnh"
+            }
+        },
+        "about": {
+            "name": "Giới thiệu",
+            "version": "phiên bản {{version}}",
+            "actions": {
+                "projectHomepage": "Trang chủ Dự án",
+                "licenses": "Giấy phép"
+            }
+        }
+    }
+}
