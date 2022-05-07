@@ -6,6 +6,147 @@
             },
             "name": "Cancion",
             "name_plural": "Canciones"
+        },
+        "album": {
+            "name": "Álbum",
+            "name_plural": "Álbumes",
+            "lists": {
+                "random": "Aleatorio",
+                "newest": "Recientemente Añadido",
+                "recent": "Recientemente Jugado",
+                "starred": "Estrellas",
+                "alphabeticalByArtist": "Por Artista",
+                "byYear": "Por Año",
+                "byGenre": "Por Género",
+                "sort": "Ordenar Álbumes",
+                "frequent": "Jugado Frecuentemente",
+                "alphabeticalByName": "Por Nombre"
+            },
+            "actions": {
+                "play": "Reproducir Álbum",
+                "view": "Ver Álbum"
+            }
+        },
+        "artist": {
+            "name": "Artista",
+            "name_plural": "Artistas",
+            "lists": {
+                "sort": "Oredenar Artistas",
+                "random": "Aleatorio",
+                "starred": "Estrellas",
+                "alphabeticalByName": "Por Nombre"
+            },
+            "actions": {
+                "view": "Ver Artista"
+            }
+        },
+        "playlist": {
+            "name": "Lista de reproducción",
+            "name_plural": "Listas de reproducción",
+            "actions": {
+                "play": "Reproducir Lista de reproducción"
+            }
+        },
+        "queue": {
+            "name": "Cola",
+            "name_plural": "Colas"
+        }
+    },
+    "context": {
+        "actions": {
+            "unstar": "Retirar estrella",
+            "star": "Estrella"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Casa",
+            "library": "Biblioteca",
+            "settings": "Entorno",
+            "search": "Buscar"
+        }
+    },
+    "messages": {
+        "nothingHere": "Nada aquí…"
+    },
+    "search": {
+        "inputPlaceholder": "Buscar",
+        "headerTitle": "Buscar: {{query}}",
+        "moreResults": "Más…",
+        "nowPlayingContext": "Resultados de la búsqueda"
+    },
+    "settings": {
+        "servers": {
+            "name": "Servidores",
+            "fields": {
+                "address": "Alocución",
+                "username": "Nombre de usuario",
+                "password": "La contraseña"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forzar contraseña de texto sin formato",
+                    "descriptionOff": "Enviar contraseña como token + sal",
+                    "descriptionOn": "Enviar contraseña en texto plano (¡legado, asegúrese de que su conexión sea segura!)"
+                }
+            },
+            "actions": {
+                "testConnection": "Conexión de prueba",
+                "add": "Agregar Servidor",
+                "edit": "Editar Servidor",
+                "save": "Enviar",
+                "delete": "Supr"
+            },
+            "messages": {
+                "connectionOk": "¡Conexión con {{address}} Ok!",
+                "connectionFailed": "La conexión a {{address}} falló, verifique la configuracón o el servidor"
+            }
+        },
+        "network": {
+            "options": {
+                "maxBitrateMobile": {
+                    "title": "Tasa de bits máxima (mobile)"
+                },
+                "minBuffer": {
+                    "title": "Mínimo de buffer tiempo"
+                },
+                "maxBuffer": {
+                    "title": "Máxima de buffer tiempo"
+                },
+                "maxBitrateWifi": {
+                    "title": "Tasa de bits máxima (Wi-Fi)"
+                }
+            },
+            "name": "Sitio",
+            "values": {
+                "kbps": "{{value}} kilobytes por segundo",
+                "unlimitedKbps": "Ilimitados",
+                "seconds": "{{value}} segundos"
+            }
+        },
+        "music": {
+            "name": "Música",
+            "options": {
+                "scrobble": {
+                    "title": "Obras de teatro de Scrobble",
+                    "descriptionOn": "Historial de reproducción de scrobble",
+                    "descriptionOff": "No hagas historial de reproducción de scrobble"
+                }
+            }
+        },
+        "reset": {
+            "actions": {
+                "clearImageCache": "Caché de imágenes claras"
+            },
+            "name": "Reinicializar"
+        },
+        "about": {
+            "name": "Información",
+            "version": "versión {{version}}",
+            "actions": {
+                "projectHomepage": "Página de inicio del proyecto",
+                "licenses": "Licencias"
+            }
         }
     }
 }
