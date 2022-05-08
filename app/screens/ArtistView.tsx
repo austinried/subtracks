@@ -1,4 +1,5 @@
 import { AlbumContextPressable } from '@app/components/ContextMenu'
+import { useState } from 'react';
 import CoverArt from '@app/components/CoverArt'
 import GradientBackground from '@app/components/GradientBackground'
 import GradientScrollView from '@app/components/GradientScrollView'
@@ -113,11 +114,13 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
   const { data: artistData } = useQueryArtist(id)
   const { data: topSongs, isError } = useQueryArtistTopSongs(artistData?.artist?.name)
 
-  const albumQueries = useQueriesAllAlbums(id)
+  const [playAllState, setPlayAllState] = useState("idle");
+  const albumQueries = useQueriesAllAlbums(id, playAllState !== "idle")
+
   // Reduce each album query to a single object containing all songs, and a loading indicator
   const allSongs = albumQueries?.reduce((state, query) => {
     const { data: resp, isLoading } = query
-    return { 
+    return {
       loading: state.loading || isLoading,
       songs: state.songs.concat(resp?.songs || [])
     }
@@ -125,6 +128,8 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
     loading: false,
     songs: Array<Song>()
   })
+
+  const { setQueue, contextId } = useSetQueue('artist', allSongs?.songs)
 
   const coverLayout = useLayout()
   const headerOpacity = useSharedValue(0)
@@ -147,7 +152,11 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
 
   const { artist, albums } = artistData
 
-  const { setQueue, contextId } = useSetQueue('artist', allSongs?.songs)
+  // If playing all songs, set queue once loading complete
+  if (playAllState !== "idle" && !allSongs?.loading) {
+    setQueue({ title: artist.name, shuffle: playAllState === "shuffle" })
+    setPlayAllState("idle")
+  }
 
   return (
     <View style={styles.container}>
@@ -165,9 +174,8 @@ const ArtistView = React.memo<{ id: string; title: string }>(({ id, title }) => 
         <ListPlayerControls
           style={styles.controls}
           listType={'artist'}
-          play={() => setQueue({ title: artist.name, shuffle: false })}
-          shuffle={() => setQueue({ title: artist.name, shuffle: true })}
-          disabled={allSongs?.loading}
+          play={() => setPlayAllState("play")}
+          shuffle={() => setPlayAllState("shuffle")}
         />
         <View style={styles.contentContainer}>
           {(topSongs || isError) && artist ? (

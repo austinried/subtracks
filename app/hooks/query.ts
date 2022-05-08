@@ -83,7 +83,7 @@ export const useQueryArtistTopSongs = (artistName?: string) => {
   return querySuccess ? query : backupQuery
 }
 
-export const useQueriesAllAlbums = (id: string) => {
+export const useQueriesAllAlbums = (id: string, enable: boolean) => {
   const { data: artistData } = useQueryArtist(id)
   const fetchAlbum = useFetchAlbum()
 
@@ -96,7 +96,8 @@ export const useQueriesAllAlbums = (id: string) => {
     albums.map(a => {
       return {
         queryKey: qk.album(a.id),
-        queryFn: () => fetchAlbum(a.id)
+        queryFn: () => fetchAlbum(a.id),
+        enabled: enable
       }
     })
   )
