@@ -1,0 +1,145 @@
+{
+    "resources": {
+        "album": {
+            "name": "Albüm",
+            "name_plural": "Albümler",
+            "lists": {
+                "sort": "Albümleri Sırala",
+                "random": "Rastgele",
+                "frequent": "Sık Dinlenenler",
+                "recent": "Yeni Dinleneler",
+                "newest": "Son Eklenenler",
+                "starred": "Yıldızlı",
+                "alphabeticalByName": "İsme göre",
+                "alphabeticalByArtist": "Sanatçıya Göre",
+                "byYear": "Yıla göre",
+                "byGenre": "Türe göre"
+            },
+            "actions": {
+                "view": "Albüme Git",
+                "play": "Albümü Çal"
+            }
+        },
+        "song": {
+            "lists": {
+                "artistTopSongs": "En İyi Şarkılar"
+            },
+            "name": "Şarkı",
+            "name_plural": "Şarkılar"
+        },
+        "artist": {
+            "lists": {
+                "sort": "Sanatçıları Sırala",
+                "starred": "Yıldızlı",
+                "alphabeticalByName": "İsme Göre",
+                "random": "Rastgele"
+            },
+            "name": "Sanatçı",
+            "name_plural": "Sanatçılar",
+            "actions": {
+                "view": "Sanatçıya Git"
+            }
+        },
+        "queue": {
+            "name": "Sıra",
+            "name_plural": "Sıralar"
+        },
+        "playlist": {
+            "actions": {
+                "play": "Listeyi Çal"
+            },
+            "name": "Çalma Listesi",
+            "name_plural": "Çalma Listeleri"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Giriş",
+            "library": "Kütüphane",
+            "search": "Arama",
+            "settings": "Ayarlar"
+        }
+    },
+    "messages": {
+        "nothingHere": "Burada bir şey yok …"
+    },
+    "search": {
+        "inputPlaceholder": "Ara",
+        "headerTitle": "Aranan: {{query}}",
+        "moreResults": "Tüm Sonuçlar …",
+        "nowPlayingContext": "Arama Sonuçları"
+    },
+    "settings": {
+        "servers": {
+            "name": "Sunucular",
+            "fields": {
+                "address": "Adres",
+                "username": "Kullanıcı Adı",
+                "password": "Şifre"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Düzyazı şifre kullanmayı zorla",
+                    "descriptionOn": "Şifreyi düzmetin olarak gönderir (eski yöntem, bağlantının güvenli (HTTPS) olduğu sunucularda kullanın!)",
+                    "descriptionOff": "Şifreyi dizgecik ve tuz karışımı olarak gönder"
+                }
+            },
+            "actions": {
+                "add": "Sunucu Ekle",
+                "delete": "Kaldır",
+                "save": "Kaydet",
+                "edit": "Sunucu Ayarı",
+                "testConnection": "Bağlantıyı Sına"
+            },
+            "messages": {
+                "connectionOk": "{{address}} ile bağlantı başarılı!",
+                "connectionFailed": "{{address}} ile bağlantı başarısız. Sunucu ayarlarınızın doğrulığundan emin olun."
+            }
+        },
+        "network": {
+            "name": "Ağ",
+            "values": {
+                "kbps": "{{value}}kb/sn",
+                "unlimitedKbps": "Sınırsız",
+                "seconds": "{{value}} saniye"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Azami bithızı (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Azami bithızı (SIM interneti)"
+                },
+                "minBuffer": {
+                    "title": "Asgari arabellek süresi"
+                },
+                "maxBuffer": {
+                    "title": "Azami arabellek süresi"
+                }
+            }
+        },
+        "music": {
+            "name": "Müzik"
+        },
+        "reset": {
+            "name": "Sıfırlama",
+            "actions": {
+                "clearImageCache": "Görüntü Önbelleğini Temizle"
+            }
+        },
+        "about": {
+            "name": "Hakkında",
+            "version": "sürüm {{version}}",
+            "actions": {
+                "projectHomepage": "Proje Ana Sayfası",
+                "licenses": "Lisanslar"
+            }
+        }
+    },
+    "context": {
+        "actions": {
+            "unstar": "Yıldızı Kaldır",
+            "star": "Yıldızla"
+        }
+    }
+}
