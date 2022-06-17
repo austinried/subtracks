@@ -54,7 +54,7 @@
     },
     "context": {
         "actions": {
-            "unstar": "Eliminar dels preferits",
+            "unstar": "Retirar estrella",
             "star": "Afegir als favorits"
         }
     },
@@ -79,8 +79,8 @@
             "options": {
                 "forcePlaintextPassword": {
                     "title": "Forçar la contrasenya de text sense format",
-                    "descriptionOn": "Enviar la contrasenya en text sense format (llegat, assegura't que la teva connexió sigui segura!)",
-                    "descriptionOff": "Enviar la contrasenya com a fitxa + sal"
+                    "descriptionOn": "Enviar la contrasenya en text sense format (obsolet, assegura't que la teva connexió sigui segura!)",
+                    "descriptionOff": "Enviar la contrasenya com a token + sal"
                 }
             },
             "actions": {
@@ -100,12 +100,12 @@
             "name": "Xarxa",
             "values": {
                 "seconds": "{{value}} segons",
-                "kbps": "{{value}}kbit/s",
+                "kbps": "{{value}} kbps",
                 "unlimitedKbps": "Il·limitat"
             },
             "options": {
                 "maxBuffer": {
-                    "title": "Temps màxim de buffer"
+                    "title": "Temps màxim en memòria intermèdia"
                 },
                 "maxBitrateWifi": {
                     "title": "Taxa de bits màxima (Wi-Fi)"
@@ -114,7 +114,7 @@
                     "title": "Taxa de bits màxima (mòbil)"
                 },
                 "minBuffer": {
-                    "title": "Temps mínim de buffer"
+                    "title": "Temps mínim en memòria intermèdia"
                 }
             }
         },
