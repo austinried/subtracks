@@ -13,7 +13,97 @@
             "lists": {
                 "sort": "ਐਲਬਮਾਂ ਨੂੰ ਕਰਮਬੱਧ ਕਰੋ",
                 "random": "ਅਟਕਲ-ਪੱਚੂ",
-                "newest": "ਤਾਜ਼ਾ ਸ਼ਾਮਿਲ"
+                "newest": "ਤਾਜ਼ਾ ਸ਼ਾਮਿਲ",
+                "alphabeticalByArtist": "ਕਲਾਕਾਰ ਦੁਆਰਾ",
+                "byYear": "ਸਾਲ ਦੁਆਰਾ",
+                "alphabeticalByName": "ਨਾਮ ਦੁਆਰਾ",
+                "recent": "ਹਾਲ ਹੀ ਵਿੱਚ ਚਲਾਏ ਗਏ",
+                "frequent": "ਅਕਸਰ ਚਲਾਏ ਗਏ"
+            },
+            "actions": {
+                "play": "ਐਲਬਮ ਚਲਾਓ",
+                "view": "ਐਲਬਮ ਦੇਖੋ"
+            }
+        },
+        "artist": {
+            "name": "ਕਲਾਕਾਰ",
+            "name_plural": "ਕਲਾਕਾਰਾਂ",
+            "lists": {
+                "sort": "ਕਲਾਕਾਰਾਂ ਦੀ ਛਾਂਟੀ",
+                "random": "ਬੇਤਰਤੀਬ",
+                "starred": "ਸਟਾਰ ਕੀਤੇ ਗਏ",
+                "alphabeticalByName": "ਨਾਮ ਦੁਆਰਾ"
+            },
+            "actions": {
+                "view": "ਕਲਾਕਾਰ ਦੇਖੋ"
+            }
+        },
+        "playlist": {
+            "name": "ਪਲੇਲਿਸਟ",
+            "name_plural": "ਪਲੇਲਿਸਟਸ",
+            "actions": {
+                "play": "ਪਲੇਲਿਸਟ ਚਲਾਓ"
+            }
+        },
+        "queue": {
+            "name": "ਕਤਾਰ",
+            "name_plural": "ਕਤਾਰਾਂ"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "library": "ਲਾਇਬ੍ਰੇਰੀ",
+            "settings": "ਸੈਟਿੰਗਾਂ",
+            "home": "ਘਰ",
+            "search": "ਖੋਜ"
+        }
+    },
+    "messages": {
+        "nothingHere": "ਇੱਥੇ ਕੁਝ ਨਹੀਂ ਹੈ…"
+    },
+    "search": {
+        "inputPlaceholder": "ਖੋਜੋ",
+        "moreResults": "ਹੋਰ…",
+        "headerTitle": "ਖੋਜ: {{query}}",
+        "nowPlayingContext": "ਖੋਜ ਨਤੀਜੇ"
+    },
+    "settings": {
+        "servers": {
+            "fields": {
+                "address": "ਪਤਾ",
+                "password": "ਪਾਸਵਰਡ"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "ਸਾਦੇ ਪਾਸਵਰਡ ਨੂੰ ਜਬਰੀ ਕਰੋ"
+                }
+            },
+            "actions": {
+                "testConnection": "ਟੈਸਟ ਕਨੈਕਸ਼ਨ",
+                "delete": "ਮਿਟਾਓ",
+                "save": "ਸੇਵ ਕਰੋ",
+                "add": "ਸਰਵਰ ਸ਼ਾਮਲ ਕਰੋ",
+                "edit": "ਸਰਵਰ ਦਾ ਸੰਪਾਦਨ"
+            },
+            "messages": {
+                "connectionOk": "{{address}} ਨਾਲ ਕਨੈਕਸ਼ਨ ਠੀਕ ਹੈ!",
+                "connectionFailed": "{{address}} ਨਾਲ ਕਨੈਕਸ਼ਨ ਅਸਫਲ, ਸੈਟਿੰਗਾਂ ਜਾਂ ਸਰਵਰ ਦੀ ਜਾਂਚ ਕਰੋ"
+            }
+        },
+        "network": {
+            "name": "ਨੈੱਟਵਰਕ",
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "ਅਸੀਮਿਤ",
+                "seconds": "{{value}} ਸਕਿੰਟ"
+            },
+            "options": {
+                "maxBitrateMobile": {
+                    "title": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਿੱਟਰੇਟ (ਮੋਬਾਈਲ)"
+                },
+                "maxBitrateWifi": {
+                    "title": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਿੱਟਰੇਟ (ਵਾਈ-ਫਾਈ)"
+                }
             }
         }
     }
