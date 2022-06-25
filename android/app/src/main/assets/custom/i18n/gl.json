@@ -1,0 +1,152 @@
+{
+    "resources": {
+        "album": {
+            "lists": {
+                "sort": "Ordenar Álbums",
+                "newest": "Últimas engadidas",
+                "recent": "Reproducidas a miúdo",
+                "starred": "Favoritas",
+                "random": "Ao chou",
+                "frequent": "Reproducidas a miúdo",
+                "byGenre": "Por xénero",
+                "alphabeticalByName": "Por nome",
+                "alphabeticalByArtist": "Por artista",
+                "byYear": "Por ano"
+            },
+            "name": "Álbum",
+            "name_plural": "Álbums",
+            "actions": {
+                "play": "Reproducir",
+                "view": "Ver Álbum"
+            }
+        },
+        "song": {
+            "name": "Canción",
+            "name_plural": "Cancións",
+            "lists": {
+                "artistTopSongs": "Máis reproducidas"
+            }
+        },
+        "artist": {
+            "lists": {
+                "sort": "Ordenar Artistas",
+                "alphabeticalByName": "Por nome",
+                "random": "Ao chou",
+                "starred": "Favoritos"
+            },
+            "name": "Artista",
+            "name_plural": "Artistas",
+            "actions": {
+                "view": "Ver Artista"
+            }
+        },
+        "playlist": {
+            "name": "Listaxe",
+            "name_plural": "Listaxes",
+            "actions": {
+                "play": "Reproducir lista"
+            }
+        },
+        "queue": {
+            "name": "Fila",
+            "name_plural": "Filas"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Estrela",
+            "unstar": "Retirar"
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Inicio",
+            "library": "Biblioteca",
+            "search": "Buscar",
+            "settings": "Axustes"
+        }
+    },
+    "search": {
+        "inputPlaceholder": "Buscar",
+        "headerTitle": "Buscar: {{query}}",
+        "moreResults": "Máis…",
+        "nowPlayingContext": "Resultados"
+    },
+    "settings": {
+        "servers": {
+            "name": "Servidores",
+            "fields": {
+                "address": "Enderezo",
+                "username": "Identificador",
+                "password": "Contrasinal"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Forzar contrasinal en texto plano",
+                    "descriptionOn": "Enviar contrasinal en texto plano (herdado, pon coidado en que a conexión sexa segura!)",
+                    "descriptionOff": "Enviar contrasinal como token + salt"
+                }
+            },
+            "actions": {
+                "add": "Engadir Servidor",
+                "edit": "Editar Servidor",
+                "delete": "Eliminar",
+                "testConnection": "Comprobar Conexión",
+                "save": "Gardar"
+            },
+            "messages": {
+                "connectionOk": "Conexión con {{address}} OK!",
+                "connectionFailed": "Fallou a conexión a {{address}}, comproba os axustes"
+            }
+        },
+        "network": {
+            "values": {
+                "kbps": "{{value}}kbps",
+                "unlimitedKbps": "Sen límite",
+                "seconds": "{{value}} segundos"
+            },
+            "options": {
+                "maxBitrateWifi": {
+                    "title": "Bitrate máx. (Wi-Fi)"
+                },
+                "maxBitrateMobile": {
+                    "title": "Bitrate máx. (móbil)"
+                },
+                "minBuffer": {
+                    "title": "Tempo mínimo na memoria"
+                },
+                "maxBuffer": {
+                    "title": "Tempo máximo na memoria"
+                }
+            },
+            "name": "Rede"
+        },
+        "music": {
+            "name": "Música",
+            "options": {
+                "scrobble": {
+                    "title": "Rexistrar reprodución",
+                    "descriptionOn": "Rexistrar o historial de reprodución",
+                    "descriptionOff": "Non rexistrar o historial de reprodución"
+                }
+            }
+        },
+        "reset": {
+            "name": "Restablecer",
+            "actions": {
+                "clearImageCache": "Limpar a caché de imaxes"
+            }
+        },
+        "about": {
+            "actions": {
+                "licenses": "Licenzas",
+                "projectHomepage": "Web do Proxecto"
+            },
+            "name": "Acerca de",
+            "version": "versión {{version}}"
+        }
+    },
+    "messages": {
+        "nothingHere": "Nada por aquí…"
+    }
+}
