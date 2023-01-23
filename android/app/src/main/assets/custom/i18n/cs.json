@@ -1,0 +1,127 @@
+{
+    "resources": {
+        "song": {
+            "name_0": "Skladba",
+            "name_1": "Skladby",
+            "name_2": "Skladby",
+            "lists": {
+                "artistTopSongs": "Top skladby"
+            }
+        },
+        "artist": {
+            "lists": {
+                "starred": "Ohodnocené",
+                "sort": "Seřadit umělce",
+                "alphabeticalByName": "Podle názvu",
+                "random": "Náhodně"
+            },
+            "name_0": "Umělec",
+            "name_1": "Umělci",
+            "name_2": "Umělci",
+            "actions": {
+                "view": "Zobrazit umělce"
+            }
+        },
+        "album": {
+            "name_0": "Album",
+            "name_1": "Alba",
+            "name_2": "Alba",
+            "lists": {
+                "sort": "Seřadit alba",
+                "newest": "Nedávno přidané",
+                "random": "Náhodně",
+                "frequent": "Často přehrávané",
+                "recent": "Často přehrávané",
+                "starred": "Ohodnocené",
+                "alphabeticalByName": "Podle názvu",
+                "alphabeticalByArtist": "Podle umělce",
+                "byYear": "Podle roku",
+                "byGenre": "Podle žánru"
+            },
+            "actions": {
+                "view": "Zobrazit album",
+                "play": "Přehrát album"
+            }
+        },
+        "playlist": {
+            "name_0": "Seznam skladeb",
+            "name_1": "Seznamy skladeb",
+            "name_2": "Seznamy skladeb",
+            "actions": {
+                "play": "Přehrát seznam skladeb"
+            }
+        },
+        "queue": {
+            "name_0": "Fronta",
+            "name_1": "Fronty",
+            "name_2": "Fronty"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "Ohodnotit",
+            "unstar": "Zrušit hodnocení"
+        }
+    },
+    "settings": {
+        "servers": {
+            "actions": {
+                "add": "Přidat server",
+                "delete": "Odstranit",
+                "testConnection": "Otestovat spojení",
+                "edit": "Upravit server",
+                "save": "Uložit"
+            },
+            "name": "Servery",
+            "fields": {
+                "username": "Uživ. jméno",
+                "address": "Adresa",
+                "password": "Heslo"
+            },
+            "options": {
+                "forcePlaintextPassword": {
+                    "title": "Vynutit heslo ve formátu prostého textu",
+                    "descriptionOn": "Posílat heslo v prostém textu (zastaralé, ujistěte se, že je vaše připojení zabezpečené!)",
+                    "descriptionOff": "Posílat heslo jako token + salt"
+                }
+            },
+            "messages": {
+                "connectionFailed": "Připojení k {{address}} selhalo, zkontrolujte nastavení nebo server",
+                "connectionOk": "Připojení k {{address}} je OK!"
+            }
+        },
+        "network": {
+            "values": {
+                "unlimitedKbps": "Neomezeno",
+                "seconds": "{{value}} sekund",
+                "kbps": "{{value}}kbps"
+            },
+            "name": "Síť",
+            "options": {
+                "maxBitrateMobile": {
+                    "title": "Maximální datový tok (mobil)"
+                },
+                "maxBitrateWifi": {
+                    "title": "Maximální datový tok (Wi-Fi)"
+                }
+            }
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "Domů",
+            "settings": "Nastavení",
+            "library": "Knihovna",
+            "search": "Hledat"
+        }
+    },
+    "search": {
+        "headerTitle": "Hledat: {{query}}",
+        "inputPlaceholder": "Hledat",
+        "moreResults": "Více…",
+        "nowPlayingContext": "Výsledky hledání"
+    },
+    "messages": {
+        "nothingHere": "Zde nic není…"
+    }
+}
