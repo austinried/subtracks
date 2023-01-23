@@ -18,7 +18,9 @@
                 "byYear": "ਸਾਲ ਦੁਆਰਾ",
                 "alphabeticalByName": "ਨਾਮ ਦੁਆਰਾ",
                 "recent": "ਹਾਲ ਹੀ ਵਿੱਚ ਚਲਾਏ ਗਏ",
-                "frequent": "ਅਕਸਰ ਚਲਾਏ ਗਏ"
+                "frequent": "ਅਕਸਰ ਚਲਾਏ ਗਏ",
+                "starred": "ਸਟਾਰ ਕੀਤੇ ਗਏ",
+                "byGenre": "ਸ਼ੈਲੀ ਦੁਆਰਾ"
             },
             "actions": {
                 "play": "ਐਲਬਮ ਚਲਾਓ",
@@ -71,11 +73,14 @@
         "servers": {
             "fields": {
                 "address": "ਪਤਾ",
-                "password": "ਪਾਸਵਰਡ"
+                "password": "ਪਾਸਵਰਡ",
+                "username": "ਯੂਜ਼ਰਨੇਮ"
             },
             "options": {
                 "forcePlaintextPassword": {
-                    "title": "ਸਾਦੇ ਪਾਸਵਰਡ ਨੂੰ ਜਬਰੀ ਕਰੋ"
+                    "title": "ਸਾਦੇ ਪਾਸਵਰਡ ਨੂੰ ਜਬਰੀ ਕਰੋ",
+                    "descriptionOn": "ਪਾਸਵਰਡ ਨੂੰ ਸਾਦੇ ਟੈਕਸਟ ਵਿੱਚ ਭੇਜੋ (ਪੁਰਾਣਾ, ਯਕੀਨੀ ਬਣਾਓ ਕਿ ਤੁਹਾਡਾ ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਹੈ!)",
+                    "descriptionOff": "ਪਾਸਵਰਡ ਨੂੰ ਟੋਕਨ + ਸਾਲ੍ਟ ਵਜੋਂ ਭੇਜੋ"
                 }
             },
             "actions": {
@@ -88,7 +93,8 @@
             "messages": {
                 "connectionOk": "{{address}} ਨਾਲ ਕਨੈਕਸ਼ਨ ਠੀਕ ਹੈ!",
                 "connectionFailed": "{{address}} ਨਾਲ ਕਨੈਕਸ਼ਨ ਅਸਫਲ, ਸੈਟਿੰਗਾਂ ਜਾਂ ਸਰਵਰ ਦੀ ਜਾਂਚ ਕਰੋ"
-            }
+            },
+            "name": "ਸਰਵਰ"
         },
         "network": {
             "name": "ਨੈੱਟਵਰਕ",
@@ -103,8 +109,44 @@
                 },
                 "maxBitrateWifi": {
                     "title": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਿੱਟਰੇਟ (ਵਾਈ-ਫਾਈ)"
+                },
+                "minBuffer": {
+                    "title": "ਘੱਟੋ-ਘੱਟ ਬਫਰ ਸਮਾਂ"
+                },
+                "maxBuffer": {
+                    "title": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਫਰ ਸਮਾਂ"
                 }
             }
+        },
+        "music": {
+            "name": "ਸੰਗੀਤ",
+            "options": {
+                "scrobble": {
+                    "title": "ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਕਰੋ",
+                    "descriptionOn": "ਸੁਣੇ ਹੋਏ ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਕਰੋ",
+                    "descriptionOff": "ਸੁਣੇ ਹੋਏ ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਨਾ ਕਰੋ"
+                }
+            }
+        },
+        "reset": {
+            "actions": {
+                "clearImageCache": "ਚਿੱਤਰ ਕੈਸ਼ ਸਾਫ਼ ਕਰੋ"
+            },
+            "name": "ਰੀਸੈਟ ਕਰੋ"
+        },
+        "about": {
+            "name": "ਬਾਰੇ",
+            "version": "ਸੰਸਕਰਣ {{version}}",
+            "actions": {
+                "licenses": "ਲਾਇਸੰਸ",
+                "projectHomepage": "ਪ੍ਰੋਜੈਕਟ ਹੋਮਪੇਜ"
+            }
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "ਤਾਰਾ",
+            "unstar": "ਤਾਰਾ ਹਟਾਓ"
         }
     }
 }
