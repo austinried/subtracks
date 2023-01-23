@@ -48,8 +48,8 @@
             "actions": {
                 "play": "Reproduir la llista de reproducció"
             },
-            "name": "Playlist",
-            "name_plural": "Playlists"
+            "name": "Llista de reproducció",
+            "name_plural": "Llistes de reproducció"
         }
     },
     "context": {
@@ -80,7 +80,7 @@
                 "forcePlaintextPassword": {
                     "title": "Forçar la contrasenya de text sense format",
                     "descriptionOn": "Enviar la contrasenya en text sense format (obsolet, assegura't que la teva connexió sigui segura!)",
-                    "descriptionOff": "Enviar la contrasenya com a token + sal"
+                    "descriptionOff": "Enviar contrasenya com a token + salt"
                 }
             },
             "actions": {
