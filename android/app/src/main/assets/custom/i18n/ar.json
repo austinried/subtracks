@@ -1,0 +1,172 @@
+{
+    "resources": {
+        "song": {
+            "lists": {
+                "artistTopSongs": "أشهر الأغاني"
+            },
+            "name_0": "",
+            "name_1": "أُغْنِيَة",
+            "name_2": "",
+            "name_3": "",
+            "name_4": "أغاني",
+            "name_5": ""
+        },
+        "album": {
+            "name_0": "",
+            "name_1": "ألبوم",
+            "name_2": "",
+            "name_3": "",
+            "name_4": "ألبومات",
+            "name_5": "",
+            "lists": {
+                "sort": "فرز الألبومات",
+                "newest": "أضيف حديثا",
+                "frequent": "مشغل كثيرا",
+                "starred": "موسوم",
+                "alphabeticalByArtist": "حسب الفنان/ة",
+                "random": "عشوائي",
+                "recent": "شغل حديثا",
+                "alphabeticalByName": "حسب الاسم",
+                "byYear": "حسب السنة",
+                "byGenre": "حسب النوع"
+            },
+            "actions": {
+                "view": "أعرض الألبوم",
+                "play": "شَغل الألبوم"
+            }
+        },
+        "artist": {
+            "lists": {
+                "sort": "فرز الفنانين",
+                "starred": "موسوم",
+                "random": "عشوائي",
+                "alphabeticalByName": "حسب الاسم"
+            },
+            "name_0": "",
+            "name_1": "فنان",
+            "name_2": "فنانان",
+            "name_3": "",
+            "name_4": "فنانون",
+            "name_5": "",
+            "actions": {
+                "view": "أظهر الفنان"
+            }
+        },
+        "playlist": {
+            "name_0": "",
+            "name_1": "قائمة تشغيل",
+            "name_2": "قائمتان تشغيل",
+            "name_3": "",
+            "name_4": "",
+            "name_5": "قوائم تشغيل",
+            "actions": {
+                "play": "شغل قائمة التشغيل"
+            }
+        },
+        "queue": {
+            "name_0": "",
+            "name_1": "صف",
+            "name_2": "صفين",
+            "name_3": "",
+            "name_4": "",
+            "name_5": "صفوف"
+        }
+    },
+    "context": {
+        "actions": {
+            "star": "مميز",
+            "unstar": "ازل التمييز"
+        }
+    },
+    "messages": {
+        "nothingHere": "لا شيء هنا…"
+    },
+    "search": {
+        "headerTitle": "بحث: {{query}}",
+        "nowPlayingContext": "نتائج البحث",
+        "inputPlaceholder": "بحث",
+        "moreResults": "المزيد…"
+    },
+    "settings": {
+        "servers": {
+            "actions": {
+                "edit": "عدل السيرفر",
+                "testConnection": "أخبر الأتصال",
+                "delete": "حذف",
+                "save": "حفظ",
+                "add": "أضف سيرفر"
+            },
+            "messages": {
+                "connectionOk": "الأتصال ب {{address}} جيد!",
+                "connectionFailed": "الأتصال ب {{address}} فشل، ابحث في الإعدادات او السيرفر"
+            },
+            "fields": {
+                "username": "إسم المستخدم",
+                "password": "كلمة المرور",
+                "address": "العناوين"
+            },
+            "name": "السيرفرات",
+            "options": {
+                "forcePlaintextPassword": {
+                    "descriptionOn": "أرسل كلمة المرور بنص عادي (قديم ، تأكد من أن اتصالك آمن!)",
+                    "title": "أظهر كلمة المرور",
+                    "descriptionOff": "أرسل كلمة المرور على شكل توكِن"
+                }
+            }
+        },
+        "network": {
+            "values": {
+                "kbps": "{{value}} كيلو بايت في الثانية",
+                "unlimitedKbps": "غير محدود",
+                "seconds": "{{value}} ثواني"
+            },
+            "name": "الشبكة",
+            "options": {
+                "minBuffer": {
+                    "title": "الحد الأدنى من وقت التخزين المؤقت"
+                },
+                "maxBitrateWifi": {
+                    "title": "أقصى معدل نقل بيانات (Wi-Fi)"
+                },
+                "maxBuffer": {
+                    "title": "الحد الأقصى من وقت التخزين المؤقت"
+                },
+                "maxBitrateMobile": {
+                    "title": "أقصى معدل نقل بيانات (mobile)"
+                }
+            }
+        },
+        "music": {
+            "options": {
+                "scrobble": {
+                    "descriptionOn": "استيراد سجل التشغيل",
+                    "title": "استيراد سجل التشغيل",
+                    "descriptionOff": "لا تستورد سجل التشغيل"
+                }
+            },
+            "name": "موسيقى"
+        },
+        "about": {
+            "name": "حول",
+            "version": "الإصدار {{version}}",
+            "actions": {
+                "projectHomepage": "موقع المشروع",
+                "licenses": "الرخص"
+            }
+        },
+        "reset": {
+            "name": "إعادة ضبط",
+            "actions": {
+                "clearImageCache": "مسح ذاكرة التخزين المؤقت للصور"
+            }
+        }
+    },
+    "navigation": {
+        "tabs": {
+            "home": "الرئيسية",
+            "library": "المكتبة",
+            "settings": "الإعدادات",
+            "search": "بحث"
+        }
+    }
+}
