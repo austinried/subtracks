@@ -119,7 +119,14 @@
             }
         },
         "music": {
-            "name": "Müzik"
+            "name": "Müzik",
+            "options": {
+                "scrobble": {
+                    "descriptionOn": "Müzik geçmişini profilime ekle",
+                    "descriptionOff": "Müzik geçmişini profilime ekleme",
+                    "title": "Çalan müziği profilime ekle"
+                }
+            }
         },
         "reset": {
             "name": "Sıfırlama",
