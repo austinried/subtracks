@@ -37,13 +37,21 @@
         "queue": {
             "name": "Kø",
             "name_plural": "Køer"
+        },
+        "playlist": {
+            "name": "Spilleliste",
+            "name_plural": "Spillelister",
+            "actions": {
+                "play": "Afspil spilleliste"
+            }
         }
     },
     "navigation": {
         "tabs": {
             "library": "Bibliotek",
             "search": "Søg",
-            "settings": "Indstillinger"
+            "settings": "Indstillinger",
+            "home": "Hjem"
         }
     },
     "search": {
@@ -95,7 +103,13 @@
             }
         },
         "music": {
-            "name": "Musik"
+            "name": "Musik",
+            "options": {
+                "scrobble": {
+                    "title": "Scrobble afspilninger",
+                    "descriptionOn": "Scrobble afspilningshistorik"
+                }
+            }
         },
         "reset": {
             "name": "Nulstil",
