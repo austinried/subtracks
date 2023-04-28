@@ -20,8 +20,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - run: flutter pub get
       - run: cp .env.example .env
+      - run: flutter pub get
 
       - name: Retrieve subtracks.keystore
         env:
@@ -56,8 +56,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - run: flutter pub get
       - run: cp .env.example .env
+      - run: flutter pub get
 
       - name: Retrieve subtracks.keystore
         env:
