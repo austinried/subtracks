@@ -148,7 +148,6 @@ class SourcePage extends HookConsumerWidget {
                         }
                       } catch (err) {
                         // TOOD: toast the error or whatever
-                        print(err);
                         error = true;
                       } finally {
                         isSaving.value = false;
