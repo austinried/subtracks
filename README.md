@@ -6,7 +6,7 @@
 
 #### Subtracks is an Android open source music streaming app for [Subsonic-compatible](http://www.subsonic.org/pages/api.jsp) servers ([Subsonic](http://www.subsonic.org/pages/index.jsp), [Navidrome](https://www.navidrome.org/), [Airsonic](https://airsonic.github.io/), and more). It's designed to give you clean and convenient access to your music in the style of modern media players.
 
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/austinried/subtracks/build-release-debugsign.yml?logo=Github)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/austinried/subtracks/build-flutter.yml?logo=Github)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/austinried/subtracks?color=black&label=Stable&logo=github)](https://github.com/austinried/subtracks/releases/latest/)
 [![F-Droid](https://img.shields.io/f-droid/v/com.subtracks?color=b4eb12&label=F-Droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/en/packages/com.subtracks)
 [![GitHub all releases](https://img.shields.io/github/downloads/austinried/subtracks/total?label=Downloads&logo=github)](https://github.com/austinried/subtracks/releases/)
