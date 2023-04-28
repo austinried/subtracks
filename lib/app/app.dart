@@ -1,3 +1,4 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -77,7 +78,8 @@ class App extends HookConsumerWidget {
       ),
       routeInformationParser: appRouter.defaultRouteParser(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
+      supportedLocales: [...AppLocalizations.supportedLocales]
+        ..moveToTheFront(const Locale('en')),
     );
   }
 }
