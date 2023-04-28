@@ -17,7 +17,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - run: touch .env
+      - run: cp .env.example .env
       
       - run: flutter pub get
       - run: flutter build apk
