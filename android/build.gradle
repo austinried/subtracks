@@ -1,69 +1,31 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
-    ext {
-        buildToolsVersion = "30.0.2"
-        minSdkVersion = 21
-        compileSdkVersion = 30
-        targetSdkVersion = 30
-        ndkVersion = "21.4.7075529"
-
-        // react-native-async-storage next
-        kotlinVersion = '1.4.21'
-    }
+    ext.kotlin_version = '1.7.10'
     repositories {
         google()
         mavenCentral()
-        // jcenter()
-        maven {
-            url 'https://plugins.gradle.org/m2/'
-        }
     }
+
     dependencies {
-        classpath("com.android.tools.build:gradle:4.2.2")
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-
-        // react-native-async-storage next
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        classpath "gradle.plugin.com.cookpad.android.plugin:plugin:1.2.8"
+        classpath 'com.android.tools.build:gradle:7.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
-}
-apply plugin: "com.cookpad.android.plugin.license-tools"
-
-licenseTools {
-    outputHtml = "../../../app/src/main/assets/licenses.html"
 }
 
 allprojects {
     repositories {
-        mavenLocal()
-        maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-            url("$rootDir/../node_modules/react-native/android")
-        }
-        maven {
-            // Android JSC is installed from npm
-            url("$rootDir/../node_modules/jsc-android/dist")
-        }
-        mavenCentral {
-            // We don't want to fetch react-native from Maven Central as there are
-            // older versions over there.
-            content {
-                excludeGroup "com.facebook.react"
-            }
-        }
         google()
-        maven { url 'https://www.jitpack.io' }
-        // remove jcenter once the following workarounds are no longer needed
-        jcenter() {
-            content {
-                // used by react-native-track-player, can remove once they use a newer exoplayer
-                includeGroup("com.linkedin.dexmaker")
-                // used by exoplayer
-                includeGroup("com.linkedin.dexmaker-mockito")
-                includeGroup("com.google.android.exoplayer")
-            }
-        }
+        mavenCentral()
     }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

@@ -1,0 +1,166 @@
+{
+    "actionsStar": "Ohodnotit",
+    "@actionsStar": {},
+    "actionsUnstar": "Zrušit hodnocení",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "Zde nic není…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "Domů",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "Knihovna",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "Hledat",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "Nastavení",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "Přehrát album",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "Zobrazit album",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "Seřadit alba",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{Album} few{Alba} many{Alba} other{Alba}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "Zobrazit umělce",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "Seřadit umělce",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{Umělec} few{Umělci} many{Umělci} other{Umělci}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "Podle žánru",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "Ohodnocené",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "Přehrát seznam skladeb",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{Seznam skladeb} few{Seznamy skladeb} many{Seznamy skladeb} other{Seznamy skladeb}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{Fronta} few{Fronty} many{Fronty} other{Fronty}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "Top skladby",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{Skladba} few{Skladby} many{Skladby} other{Skladby}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "Nedávno přidané",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "Podle umělce",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "Často přehrávané",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "Podle názvu",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "Náhodně",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "Často přehrávané",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "Podle roku",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "Hledat: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "Hledat",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "Více…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "Výsledky hledání",
+    "@searchNowPlayingContext": {},
+    "settingsNetworkName": "Síť",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Maximální datový tok (mobil)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Maximální datový tok (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkValuesKbps": "{value}kbps",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} sekund",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "Neomezeno",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsServersActionsAdd": "Přidat server",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "Odstranit",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "Upravit server",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "Uložit",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "Otestovat spojení",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "Adresa",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "Heslo",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "Uživ. jméno",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "Připojení k {address} selhalo, zkontrolujte nastavení nebo server",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "Připojení k {address} je OK!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "Servery",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Posílat heslo jako token + salt",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Posílat heslo v prostém textu (zastaralé, ujistěte se, že je vaše připojení zabezpečené!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Vynutit heslo ve formátu prostého textu",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

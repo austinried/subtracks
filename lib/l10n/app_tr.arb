@@ -1,0 +1,196 @@
+{
+    "actionsStar": "Yıldızla",
+    "@actionsStar": {},
+    "actionsUnstar": "Yıldızı Kaldır",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "Burada bir şey yok …",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "Giriş",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "Kütüphane",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "Arama",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "Ayarlar",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "Albümü Çal",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "Albüme Git",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "Albümleri Sırala",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{Albüm} other{Albümler}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "Sanatçıya Git",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "Sanatçıları Sırala",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{Sanatçı} other{Sanatçılar}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "Türe göre",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "Yıldızlı",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "Listeyi Çal",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{Çalma Listesi} other{Çalma Listeleri}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{Sıra} other{Sıralar}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "En İyi Şarkılar",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{Şarkı} other{Şarkılar}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "Son Eklenenler",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "Sanatçıya Göre",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "Sık Dinlenenler",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "İsme göre",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "Rastgele",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "Yeni Dinleneler",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "Yıla göre",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "Aranan: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "Ara",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "Tüm Sonuçlar …",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "Arama Sonuçları",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "Lisanslar",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "Proje Ana Sayfası",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "Hakkında",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "sürüm {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "Müzik",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "Müzik geçmişini profilime ekleme",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "Müzik geçmişini profilime ekle",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "Çalan müziği profilime ekle",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "Ağ",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Azami bithızı (SIM interneti)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Azami bithızı (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "Azami arabellek süresi",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "Asgari arabellek süresi",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value}kb/sn",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} saniye",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "Sınırsız",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "Görüntü Önbelleğini Temizle",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "Sıfırlama",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "Sunucu Ekle",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "Kaldır",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "Sunucu Ayarı",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "Kaydet",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "Bağlantıyı Sına",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "Adres",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "Şifre",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "Kullanıcı Adı",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "{address} ile bağlantı başarısız. Sunucu ayarlarınızın doğrulığundan emin olun.",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "{address} ile bağlantı başarılı!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "Sunucular",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Şifreyi dizgecik ve tuz karışımı olarak gönder",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Şifreyi düzmetin olarak gönderir (eski yöntem, bağlantının güvenli (HTTPS) olduğu sunucularda kullanın!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Düzyazı şifre kullanmayı zorla",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

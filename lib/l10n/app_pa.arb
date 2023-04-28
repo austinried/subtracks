@@ -1,0 +1,196 @@
+{
+    "actionsStar": "ਤਾਰਾ",
+    "@actionsStar": {},
+    "actionsUnstar": "ਤਾਰਾ ਹਟਾਓ",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "ਇੱਥੇ ਕੁਝ ਨਹੀਂ ਹੈ…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "ਘਰ",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "ਲਾਇਬ੍ਰੇਰੀ",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "ਖੋਜ",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "ਸੈਟਿੰਗਾਂ",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "ਐਲਬਮ ਚਲਾਓ",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "ਐਲਬਮ ਦੇਖੋ",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "ਐਲਬਮਾਂ ਨੂੰ ਕਰਮਬੱਧ ਕਰੋ",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{ਐਲਬਮ} other{ਐਲਬਮਾਂ}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "ਕਲਾਕਾਰ ਦੇਖੋ",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "ਕਲਾਕਾਰਾਂ ਦੀ ਛਾਂਟੀ",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{ਕਲਾਕਾਰ} other{ਕਲਾਕਾਰਾਂ}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "ਸ਼ੈਲੀ ਦੁਆਰਾ",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "ਸਟਾਰ ਕੀਤੇ ਗਏ",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "ਪਲੇਲਿਸਟ ਚਲਾਓ",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{ਪਲੇਲਿਸਟ} other{ਪਲੇਲਿਸਟਸ}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{ਕਤਾਰ} other{ਕਤਾਰਾਂ}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "ਉੱਤਮ ਗਾਣੇ",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{ਗਾਣਾ} other{ਗਾਣੇ}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "ਤਾਜ਼ਾ ਸ਼ਾਮਿਲ",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "ਕਲਾਕਾਰ ਦੁਆਰਾ",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "ਅਕਸਰ ਚਲਾਏ ਗਏ",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "ਨਾਮ ਦੁਆਰਾ",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "ਅਟਕਲ-ਪੱਚੂ",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "ਹਾਲ ਹੀ ਵਿੱਚ ਚਲਾਏ ਗਏ",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "ਸਾਲ ਦੁਆਰਾ",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "ਖੋਜ: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "ਖੋਜੋ",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "ਹੋਰ…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "ਖੋਜ ਨਤੀਜੇ",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "ਲਾਇਸੰਸ",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "ਪ੍ਰੋਜੈਕਟ ਹੋਮਪੇਜ",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "ਬਾਰੇ",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "ਸੰਸਕਰਣ {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "ਸੰਗੀਤ",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "ਸੁਣੇ ਹੋਏ ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਨਾ ਕਰੋ",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "ਸੁਣੇ ਹੋਏ ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਕਰੋ",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "ਗਾਣੇ ਸਕ੍ਰੋਬਲ ਕਰੋ",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "ਨੈੱਟਵਰਕ",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਿੱਟਰੇਟ (ਮੋਬਾਈਲ)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਿੱਟਰੇਟ (ਵਾਈ-ਫਾਈ)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "ਵੱਧ ਤੋਂ ਵੱਧ ਬਫਰ ਸਮਾਂ",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "ਘੱਟੋ-ਘੱਟ ਬਫਰ ਸਮਾਂ",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value}kbps",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} ਸਕਿੰਟ",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "ਅਸੀਮਿਤ",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "ਚਿੱਤਰ ਕੈਸ਼ ਸਾਫ਼ ਕਰੋ",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "ਰੀਸੈਟ ਕਰੋ",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "ਸਰਵਰ ਸ਼ਾਮਲ ਕਰੋ",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "ਮਿਟਾਓ",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "ਸਰਵਰ ਦਾ ਸੰਪਾਦਨ",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "ਸੇਵ ਕਰੋ",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "ਟੈਸਟ ਕਨੈਕਸ਼ਨ",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "ਪਤਾ",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "ਪਾਸਵਰਡ",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "ਯੂਜ਼ਰਨੇਮ",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "{address} ਨਾਲ ਕਨੈਕਸ਼ਨ ਅਸਫਲ, ਸੈਟਿੰਗਾਂ ਜਾਂ ਸਰਵਰ ਦੀ ਜਾਂਚ ਕਰੋ",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "{address} ਨਾਲ ਕਨੈਕਸ਼ਨ ਠੀਕ ਹੈ!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "ਸਰਵਰ",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "ਪਾਸਵਰਡ ਨੂੰ ਟੋਕਨ + ਸਾਲ੍ਟ ਵਜੋਂ ਭੇਜੋ",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "ਪਾਸਵਰਡ ਨੂੰ ਸਾਦੇ ਟੈਕਸਟ ਵਿੱਚ ਭੇਜੋ (ਪੁਰਾਣਾ, ਯਕੀਨੀ ਬਣਾਓ ਕਿ ਤੁਹਾਡਾ ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਹੈ!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "ਸਾਦੇ ਪਾਸਵਰਡ ਨੂੰ ਜਬਰੀ ਕਰੋ",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}
