@@ -1,0 +1,196 @@
+{
+    "actionsStar": "Afegir als favorits",
+    "@actionsStar": {},
+    "actionsUnstar": "Retirar estrella",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "Aquí no hi ha res…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "Inici",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "Biblioteca",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "Cercar",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "Paràmetres",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "Reproduir l'àlbum",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "Veure l'àlbum",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "Ordenar els àlbums",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{Àlbum} other{Àlbums}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "Veure l'artista",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "Ordenar els artistes",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{Artista} other{Artistes}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "Per gènere",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "Favorits",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "Reproduir la llista de reproducció",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{Llista de reproducció} other{Llistes de reproducció}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{Cua} other{Cues}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "Millors cançons",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{Cançó} other{Cançons}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "Afegit recentment",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "Per artista",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "Escoltat freqüentment",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "Pel nom",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "Aleatori",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "Reproduït recentment",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "Per any",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "Cercar: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "Cercar",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "Més…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "Resultats de la cerca",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "Llicències",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "Pàgina d'inici del projecte",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "Quant a",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "versió {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "Música",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "No capturar l'historial de reproducció",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "Capturar l'historial de reproduccions",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "Capturar la lectura",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "Xarxa",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Taxa de bits màxima (mòbil)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Taxa de bits màxima (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "Temps màxim en memòria intermèdia",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "Temps mínim en memòria intermèdia",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value} kbps",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} segons",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "Il·limitat",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "Esborrar la memòria cau d'imatges",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "Reinicialitzar",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "Afegir un servidor",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "Esborrar",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "Editar el servidor",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "Desar",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "Comprovar la connexió",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "Adreça",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "Contrasenya",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "Nom d’usuari",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "La connexió a {address} ha fallat, comprova la configuració o el servidor",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "Connexió a {address} OK!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "Servidors",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Enviar contrasenya com a token + salt",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Enviar la contrasenya en text sense format (obsolet, assegura't que la teva connexió sigui segura!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Forçar la contrasenya de text sense format",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

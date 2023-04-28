@@ -1,0 +1,196 @@
+{
+    "actionsStar": "Estrella",
+    "@actionsStar": {},
+    "actionsUnstar": "Retirar estrella",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "Nada aquí…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "Casa",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "Biblioteca",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "Buscar",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "Entorno",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "Reproducir Álbum",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "Ver Álbum",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "Ordenar Álbumes",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{Álbum} other{Álbumes}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "Ver Artista",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "Oredenar Artistas",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{Artista} other{Artistas}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "Por Género",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "Estrellas",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "Reproducir Lista de reproducción",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{Lista de reproducción} other{Listas de reproducción}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{Cola} other{Colas}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "Mejores Canciones",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{Cancion} other{Canciones}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "Recientemente Añadido",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "Por Artista",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "Jugado Frecuentemente",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "Por Nombre",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "Aleatorio",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "Recientemente Jugado",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "Por Año",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "Buscar: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "Buscar",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "Más…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "Resultados de la búsqueda",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "Licencias",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "Página de inicio del proyecto",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "Información",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "versión {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "Música",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "No hagas historial de reproducción de scrobble",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "Historial de reproducción de scrobble",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "Obras de teatro de Scrobble",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "Sitio",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Tasa de bits máxima (mobile)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Tasa de bits máxima (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "Máxima de buffer tiempo",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "Mínimo de buffer tiempo",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value} kilobytes por segundo",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} segundos",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "Ilimitados",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "Caché de imágenes claras",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "Reinicializar",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "Agregar Servidor",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "Supr",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "Editar Servidor",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "Enviar",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "Conexión de prueba",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "Alocución",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "La contraseña",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "Nombre de usuario",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "La conexión a {address} falló, verifique la configuracón o el servidor",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "¡Conexión con {address} Ok!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "Servidores",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Enviar contraseña como token + sal",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Enviar contraseña en texto plano (¡legado, asegúrese de que su conexión sea segura!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Forzar contraseña de texto sin formato",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

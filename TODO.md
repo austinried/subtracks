@@ -1,0 +1,34 @@
+## To-do
+- [ ] Star/unstar
+- [ ] Context menus
+  - [ ] Download actions for song
+- [ ] Playlist management
+  - [ ] Add to playlist (from context)
+- [ ] Queue management
+  - [ ] View playing queue
+  - [ ] Re-order queue
+  - [ ] Add to queue (from context)
+  - [ ] Remove from queue
+- [ ] Scrobbling
+- [ ] Library filters (year/genre/etc)
+- [ ] Library list display modes
+- [ ] Search
+  - [ ] Individual "more" results pages
+- [ ] Radio modes
+  - [ ] Artist
+- [ ] Now playing gestures
+  - [ ] Swipe bar/album to skip
+  - [ ] Double-tap to seek forward/back (bar only)
+- [ ] Settings
+  - [ ] Sources
+    - [ ] Use plaintext password
+  - [ ] Music
+    - [ ] Scrobble
+  - [ ] Downloads
+    - [ ] Used/available space
+    - [ ] Clear downloads
+    - [ ] Clear images
+  - [ ] About
+    - [ ] Licenses
+- [ ] Welcome/setup flow
+- [ ] Proper loading screen/animation

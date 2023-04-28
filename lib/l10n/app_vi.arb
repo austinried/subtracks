@@ -1,0 +1,196 @@
+{
+    "actionsStar": "Đánh dấu sao",
+    "@actionsStar": {},
+    "actionsUnstar": "Bỏ dấu sao",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "Không có gì ở đây…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "Trang chủ",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "Thư Viện",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "Tìm kiếm",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "Thiết Lập",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "Phát Album",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "Xem Album",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "Sắp xếp Album",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, other{Album}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "Xem Nghệ sĩ",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "Sắp xếp nghệ sĩ",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, other{Nghệ sĩ}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "Theo thể loại",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "Có gắn dấu sao",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "Phát Danh sách phát",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, other{Danh sách phát}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, other{Hàng chờ}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "Bài hát hàng đầu",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, other{Bài hát}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "Thêm vào gần đây",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "Theo nghệ sĩ",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "Thường xuyên chơi",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "Theo tên",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "Ngẫu Nhiên",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "Đã phát gần đây",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "Theo năm",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "Tìm kiếm: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "Tìm kiếm",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "Nhiều hơn…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "Kết quả tìm kiếm",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "Giấy phép",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "Trang chủ Dự án",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "Giới thiệu",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "phiên bản {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "Âm nhạc",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "Đừng scrobble lịch sử chơi",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "Lịch sử chơi Scrobble",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "Scrobble lượt chơi",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "Mạng",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Tối đa bitrate (mobile)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Tối đa bitrate (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "Thời gian đệm tối đa",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "Thời gian đệm tối thiểu",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value}kbps",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} giây",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "Không giới hạn",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "Xóa bộ nhớ đệm hình ảnh",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "Cài đặt lại",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "Thêm máy chủ",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "Xóa",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "Chỉnh sửa máy chủ",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "Lưu",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "Kiểm tra kết nối",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "Địa chỉ",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "Mật Khẩu",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "Tên đăng nhập",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "Kết nối với {address} không thành công, hãy kiểm tra cài đặt hoặc máy chủ",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "Kết nối với {address} OK!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "Máy chủ",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Gửi mật khẩu dưới dạng token + salt",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Gửi mật khẩu ở dạng văn bản rõ ràng (kế thừa, đảm bảo kết nối của bạn an toàn!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Buộc mật khẩu văn bản thuần túy",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

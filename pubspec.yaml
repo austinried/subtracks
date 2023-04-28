@@ -1,0 +1,83 @@
+name: subtracks
+description: A media player for Android.
+homepage: https://github.com/austinried/subtracks
+repository: https://github.com/austinried/subtracks
+issue_tracker: https://github.com/austinried/subtracks/issues
+publish_to: 'none'
+version: 2.0.0-alpha.1+10
+
+environment:
+  sdk: '>=2.19.2 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  xml: ^6.2.2
+  http: ^0.13.5
+  crypto: ^3.0.2
+  freezed_annotation: ^2.2.0
+  fast_immutable_collections: ^9.0.0
+  path: ^1.8.2
+  path_provider: ^2.0.12
+  flutter_dotenv: ^5.0.2 # TODO: remove before release
+  collection: ^1.17.0
+  intl: any
+  flutter_hooks: ^0.18.5+1
+  hooks_riverpod: ^2.3.2
+  riverpod_annotation: ^2.0.2
+  cached_network_image: ^3.2.3
+  flutter_staggered_grid_view: ^0.6.2
+  flutter_cache_manager: ^3.3.0
+  auto_route: ^5.0.0
+  flutter_svg: ^2.0.2
+  audio_service:
+    git:
+      url: https://github.com/austinried/audio_service
+      path: audio_service
+      ref: features/cache-key-resolver
+  just_audio: ^0.9.31
+  sqlite3_flutter_libs: ^0.5.12
+  drift: ^2.6.0
+  sliver_tools: ^0.2.9
+  palette_generator: ^0.3.3+2
+  json_annotation: ^4.8.0
+  text_scroll: ^0.2.0
+  auto_size_text: ^3.0.0
+  stack_trace: ^1.11.0
+  infinite_scroll_pagination: ^3.2.0
+  flutter_downloader: ^1.10.2
+  mime: ^1.0.4
+  rxdart: ^0.27.7
+  worker_manager: ^5.0.3
+  pool: ^1.5.1
+  synchronized: ^3.1.0
+  flutter_keyboard_visibility: ^5.4.0
+  connectivity_plus: ^3.0.4
+  package_info_plus: ^3.1.1
+  url_launcher: ^6.1.10
+
+# https://github.com/dart-lang/intl/issues/522#issuecomment-1469961807
+dependency_overrides:
+  intl: ^0.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  test: ^1.22.0
+  build_runner: 
+  riverpod_generator: ^2.1.4
+  freezed: ^2.3.2
+  auto_route_generator: ^5.0.0
+  drift_dev: ^2.5.2
+  json_serializable: ^6.6.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - .env
+    - assets/

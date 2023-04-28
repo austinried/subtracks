@@ -1,0 +1,23 @@
+name: build-flutter
+
+on:
+  push:
+    branches:
+      - v2
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.11'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:'
+      - run: flutter doctor
+      # - run: flutter pub get
+      # - run: flutter build apk
+      # - run: flutter build appbundle
