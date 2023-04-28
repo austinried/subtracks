@@ -16,8 +16,16 @@ jobs:
           flutter-version: '3.7.11'
           channel: 'stable'
           cache: true
-          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
-          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:'
 
+      - run: touch .env
+      
       - run: flutter pub get
       - run: flutter build apk
+
+      - run: >
+          mv build/app/outputs/flutter-apk/app-release.apk
+          subtracks-$(git rev-parse --short HEAD).apk
+      - uses: actions/upload-artifact@v3
+        with:
+          name: subtracks-testing
+          path: subtracks-$(git rev-parse --short HEAD).apk
