@@ -2,8 +2,9 @@ name: build-flutter
 
 on:
   push:
-    branches:
-      - v2
+    branches: ['main']
+  pull_request:
+    branches: ['main']
 
 jobs:
   build-apk:
