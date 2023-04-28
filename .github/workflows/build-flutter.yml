@@ -28,4 +28,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: subtracks-testing
-          path: subtracks-$(git rev-parse --short HEAD).apk
+          path: subtracks-*.apk
