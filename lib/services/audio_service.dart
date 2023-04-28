@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:pool/pool.dart';
@@ -698,7 +699,9 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
 }
 
 void yell(String msg) {
-  print('===================================================================<');
-  print(msg);
-  print('===================================================================>');
+  if (kDebugMode) {
+    print('=================================================================<');
+    print(msg);
+    print('=================================================================>');
+  }
 }

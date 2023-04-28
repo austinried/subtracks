@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,7 +14,7 @@ class SubtracksHttpClient extends BaseClient {
   @override
   Future<StreamedResponse> send(BaseRequest request) {
     request.headers.addAll(subtracksHeaders);
-    print('${request.method} ${request.url}');
+    if (kDebugMode) print('${request.method} ${request.url}');
     return request.send();
   }
 }

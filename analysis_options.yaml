@@ -5,6 +5,10 @@ linter:
     prefer_relative_imports: true
 
 analyzer:
+  exclude:
+    - '**.freezed.dart'
+    - '**.g.dart'
+    - '**.gr.dart'
   plugins:
     # broken currently and may not get fixed
     # https://github.com/simolus3/drift/issues/2342
