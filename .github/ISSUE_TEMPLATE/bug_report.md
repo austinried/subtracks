@@ -23,10 +23,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. Pixel 4]
+**Device**
+ - Model: [e.g. Pixel 4]
  - OS: [e.g. Android 12]
  - Subtracks version [e.g. 1.2.0]
+
+**Server**
+ - Software: [e.g. Navidrome]
+ - Version: [e.g. 0.49.3]
 
 **Additional context**
 Add any other context about the problem here.
