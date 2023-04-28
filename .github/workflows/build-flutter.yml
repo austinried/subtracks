@@ -17,9 +17,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - run: cp .env.example .env
       - run: flutter pub get
       - run: flutter analyze
-      - run: cp .env.example .env
       - run: flutter build apk
 
       - run: mv build/app/outputs/flutter-apk/app-release.apk subtracks-$(git rev-parse --short HEAD).apk
