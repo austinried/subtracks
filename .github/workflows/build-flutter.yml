@@ -11,21 +11,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.7.11'
-          channel: 'stable'
-          cache: true
-
-      - run: cp .env.example .env
+      - name: Get subtracks version
+        run: echo "SUBTRACKS_VERSION=$(yq '.version' pubspec.yaml)" >> $GITHUB_ENV
       
-      - run: flutter pub get
-      - run: flutter build apk
+      - run: echo ${SUBTRACKS_VERSION}
 
-      - run: >
-          mv build/app/outputs/flutter-apk/app-release.apk
-          subtracks-$(git rev-parse --short HEAD).apk
-      - uses: actions/upload-artifact@v3
-        with:
-          name: subtracks-testing
-          path: subtracks-*.apk
+      # - uses: subosito/flutter-action@v2
+      #   with:
+      #     flutter-version: '3.7.11'
+      #     channel: 'stable'
+      #     cache: true
+
+      # - run: cp .env.example .env
+      
+      # - run: flutter pub get
+      # - run: flutter build apk
+
+      # - run: >
+      #     mv build/app/outputs/flutter-apk/app-release.apk
+      #     subtracks-$(git rev-parse --short HEAD).apk
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: subtracks-testing
+      #     path: subtracks-*.apk
