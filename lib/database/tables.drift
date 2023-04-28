@@ -1,0 +1,547 @@
+import '../models/music.dart';
+import '../models/settings.dart';
+import '../models/support.dart';
+import 'converters.dart';
+
+-- 
+-- SCHEMA
+-- 
+
+CREATE TABLE queue(
+  "index" INT NOT NULL PRIMARY KEY UNIQUE,
+  source_id INT NOT NULL,
+  id TEXT NOT NULL,
+  context ENUM(QueueContextType) NOT NULL,
+  context_id TEXT,
+  current_track BOOLEAN UNIQUE
+);
+CREATE INDEX queue_index ON queue ("index");
+CREATE INDEX queue_current_track ON queue ("current_track");
+
+CREATE TABLE last_audio_state(
+  id INT NOT NULL PRIMARY KEY,
+  queue_mode ENUM(QueueMode) NOT NULL,
+  shuffle_indicies TEXT MAPPED BY `const IListIntConverter()`,
+  repeat ENUM(RepeatMode) NOT NULL
+);
+
+CREATE TABLE last_bottom_nav_state(
+  id INT NOT NULL PRIMARY KEY,
+  tab TEXT NOT NULL
+);
+
+CREATE TABLE last_library_state(
+  id INT NOT NULL PRIMARY KEY,
+  tab TEXT NOT NULL,
+  albums_list TEXT NOT NULL MAPPED BY `const ListQueryConverter()`,
+  artists_list TEXT NOT NULL MAPPED BY `const ListQueryConverter()`,
+  playlists_list TEXT NOT NULL MAPPED BY `const ListQueryConverter()`,
+  songs_list TEXT NOT NULL MAPPED BY `const ListQueryConverter()`
+);
+
+CREATE TABLE app_settings(
+  id INT NOT NULL PRIMARY KEY,
+  max_bitrate_wifi INT NOT NULL,
+  max_bitrate_mobile INT NOT NULL,
+  stream_format TEXT
+) WITH AppSettings;
+
+CREATE TABLE sources(
+  id INT NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE,
+  address TEXT NOT NULL MAPPED BY `const UriConverter()`,
+  is_active BOOLEAN UNIQUE,
+  created_at DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP))
+);
+
+CREATE TABLE subsonic_sources(
+  source_id INT NOT NULL PRIMARY KEY,
+  features TEXT NOT NULL MAPPED BY `const SubsonicFeatureListConverter()`,
+  username TEXT NOT NULL,
+  password TEXT NOT NULL,
+  use_token_auth BOOLEAN NOT NULL DEFAULT 1,
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+);
+
+CREATE TABLE artists(
+  source_id INT NOT NULL,
+  id TEXT NOT NULL,
+  name TEXT NOT NULL COLLATE NOCASE,
+  album_count INT NOT NULL,
+  starred DATETIME,
+  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  PRIMARY KEY (source_id, id),
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+) WITH Artist;
+CREATE INDEX artists_source_id ON artists (source_id);
+
+CREATE VIRTUAL TABLE artists_fts USING fts5(source_id, name, content=artists, content_rowid=rowid);
+
+CREATE TRIGGER artists_ai AFTER INSERT ON artists BEGIN
+  INSERT INTO artists_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TRIGGER artists_ad AFTER DELETE ON artists BEGIN
+  INSERT INTO artists_fts(artists_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+END;
+
+CREATE TRIGGER artists_au AFTER UPDATE ON artists BEGIN
+  INSERT INTO artists_fts(artists_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+  INSERT INTO artists_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TABLE albums(
+  source_id INT NOT NULL,
+  id TEXT NOT NULL,
+  artist_id TEXT,
+  name TEXT NOT NULL COLLATE NOCASE,
+  album_artist TEXT COLLATE NOCASE,
+  created DATETIME NOT NULL,
+  cover_art TEXT,
+  genre TEXT,
+  year INT,
+  starred DATETIME,
+  song_count INT NOT NULL,
+  frequent_rank INT,
+  recent_rank INT,
+  is_deleted BOOLEAN NOT NULL DEFAULT 0,
+  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  PRIMARY KEY (source_id, id),
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+) WITH Album;
+CREATE INDEX albums_source_id ON albums (source_id);
+CREATE INDEX albums_source_id_artist_id_idx ON albums (source_id, artist_id);
+
+CREATE VIRTUAL TABLE albums_fts USING fts5(source_id, name, content=albums, content_rowid=rowid);
+
+CREATE TRIGGER albums_ai AFTER INSERT ON albums BEGIN
+  INSERT INTO albums_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TRIGGER albums_ad AFTER DELETE ON albums BEGIN
+  INSERT INTO albums_fts(albums_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+END;
+
+CREATE TRIGGER albums_au AFTER UPDATE ON albums BEGIN
+  INSERT INTO albums_fts(albums_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+  INSERT INTO albums_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TABLE playlists(
+  source_id INT NOT NULL,
+  id TEXT NOT NULL,
+  name TEXT NOT NULL COLLATE NOCASE,
+  comment TEXT COLLATE NOCASE,
+  cover_art TEXT,
+  song_count INT NOT NULL,
+  created DATETIME NOT NULL,
+  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  PRIMARY KEY (source_id, id),
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+) WITH Playlist;
+CREATE INDEX playlists_source_id ON playlists (source_id);
+CREATE TABLE playlist_songs(
+  source_id INT NOT NULL,
+  playlist_id TEXT NOT NULL,
+  song_id TEXT NOT NULL,
+  position INT NOT NULL,
+  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  PRIMARY KEY (source_id, playlist_id, position),
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+);
+CREATE INDEX playlist_songs_source_id_playlist_id_idx ON playlist_songs (source_id, playlist_id);
+CREATE INDEX playlist_songs_source_id_song_id_idx ON playlist_songs (source_id, song_id);
+
+CREATE VIRTUAL TABLE playlists_fts USING fts5(source_id, name, content=playlists, content_rowid=rowid);
+
+CREATE TRIGGER playlists_ai AFTER INSERT ON playlists BEGIN
+  INSERT INTO playlists_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TRIGGER playlists_ad AFTER DELETE ON playlists BEGIN
+  INSERT INTO playlists_fts(playlists_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+END;
+
+CREATE TRIGGER playlists_au AFTER UPDATE ON playlists BEGIN
+  INSERT INTO playlists_fts(playlists_fts, rowid, source_id, name)
+    VALUES('delete', old.rowid, old.source_id, old.name);
+  INSERT INTO playlists_fts(rowid, source_id, name)
+    VALUES (new.rowid, new.source_id, new.name);
+END;
+
+CREATE TABLE songs(
+  source_id INT NOT NULL,
+  id TEXT NOT NULL,
+  album_id TEXT,
+  artist_id TEXT,
+  title TEXT NOT NULL COLLATE NOCASE,
+  album TEXT COLLATE NOCASE,
+  artist TEXT COLLATE NOCASE,
+  duration INT MAPPED BY `const DurationSecondsConverter()`,
+  track INT,
+  disc INT,
+  starred DATETIME,
+  genre TEXT,
+  download_task_id TEXT UNIQUE,
+  download_file_path TEXT UNIQUE,
+  is_deleted BOOLEAN NOT NULL DEFAULT 0,
+  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  PRIMARY KEY (source_id, id),
+  FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
+) WITH Song;
+CREATE INDEX songs_source_id_album_id_idx ON songs (source_id, album_id);
+CREATE INDEX songs_source_id_artist_id_idx ON songs (source_id, artist_id);
+CREATE INDEX songs_download_task_id_idx ON songs (download_task_id);
+
+CREATE VIRTUAL TABLE songs_fts USING fts5(source_id, title, content=songs, content_rowid=rowid);
+
+CREATE TRIGGER songs_ai AFTER INSERT ON songs BEGIN
+  INSERT INTO songs_fts(rowid, source_id, title)
+    VALUES (new.rowid, new.source_id, new.title);
+END;
+
+CREATE TRIGGER songs_ad AFTER DELETE ON songs BEGIN
+  INSERT INTO songs_fts(songs_fts, rowid, source_id, title)
+    VALUES('delete', old.rowid, old.source_id, old.title);
+END;
+
+CREATE TRIGGER songs_au AFTER UPDATE ON songs BEGIN
+  INSERT INTO songs_fts(songs_fts, rowid, source_id, title)
+    VALUES('delete', old.rowid, old.source_id, old.title);
+  INSERT INTO songs_fts(rowid, source_id, title)
+    VALUES (new.rowid, new.source_id, new.title);
+END;
+
+-- 
+-- QUERIES
+-- 
+
+sourcesCount:
+  SELECT COUNT(*)
+  FROM sources;
+
+allSubsonicSources WITH SubsonicSettings:
+  SELECT 
+    sources.id,
+    sources.name,
+    sources.address,
+    sources.is_active,
+    sources.created_at,
+    subsonic_sources.features,
+    subsonic_sources.username,
+    subsonic_sources.password,
+    subsonic_sources.use_token_auth
+  FROM sources
+  JOIN subsonic_sources ON subsonic_sources.source_id = sources.id;
+
+albumIdsWithDownloaded:
+  SELECT albums.id
+  FROM albums
+  JOIN songs on songs.source_id = albums.source_id AND songs.album_id = albums.id
+  WHERE 
+    albums.source_id = :source_id
+    AND (songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)
+  GROUP BY albums.id;
+
+searchArtists:
+  SELECT rowid
+  FROM artists_fts
+  WHERE artists_fts MATCH :query
+  ORDER BY rank
+  LIMIT :limit OFFSET :offset;
+
+searchAlbums:
+  SELECT rowid
+  FROM albums_fts
+  WHERE albums_fts MATCH :query
+  ORDER BY rank
+  LIMIT :limit OFFSET :offset;
+
+searchPlaylists:
+  SELECT rowid
+  FROM playlists_fts
+  WHERE playlists_fts MATCH :query
+  ORDER BY rank
+  LIMIT :limit OFFSET :offset;
+
+searchSongs:
+  SELECT rowid
+  FROM songs_fts
+  WHERE songs_fts MATCH :query
+  ORDER BY rank
+  LIMIT :limit OFFSET :offset;
+
+artistById:
+  SELECT * FROM artists 
+  WHERE source_id = :source_id AND id = :id;
+
+albumById:
+  SELECT * FROM albums 
+  WHERE source_id = :source_id AND id = :id;
+
+albumsByArtistId:
+  SELECT * FROM albums 
+  WHERE source_id = :source_id AND artist_id = :artist_id;
+
+albumsInIds:
+  SELECT * FROM albums 
+  WHERE source_id = :source_id AND id IN :ids;
+
+playlistById:
+  SELECT * FROM playlists 
+  WHERE source_id = :source_id AND id = :id;
+
+songById:
+  SELECT * FROM songs 
+  WHERE source_id = :source_id AND id = :id;
+
+albumGenres:
+  SELECT
+    genre
+  FROM albums
+  WHERE genre IS NOT NULL AND source_id = :source_id
+  GROUP BY genre
+  ORDER BY COUNT(genre) DESC
+  LIMIT :limit OFFSET :offset;
+
+albumsByGenre:
+  SELECT 
+    albums.*
+  FROM albums
+  JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE songs.source_id = :source_id AND songs.genre = :genre
+  GROUP BY albums.id
+  ORDER BY albums.created DESC, albums.name
+  LIMIT :limit OFFSET :offset;
+
+filterSongsByGenre:
+  SELECT 
+    songs.*
+  FROM songs
+  JOIN albums ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE $predicate
+  ORDER BY $order
+  LIMIT $limit;
+
+songsByGenreCount:
+  SELECT
+    COUNT(*)
+  FROM songs
+  WHERE songs.source_id = :source_id AND songs.genre = :genre;
+
+songsWithDownloadTasks:
+  SELECT * FROM songs
+  WHERE download_task_id IS NOT NULL;
+
+songByDownloadTask:
+  SELECT * FROM songs
+  WHERE download_task_id = :task_id;
+
+clearSongDownloadTaskBySong:
+  UPDATE songs SET
+    download_task_id = NULL
+  WHERE source_id = :source_id AND id = :id;
+
+completeSongDownload:
+  UPDATE songs SET
+    download_task_id = NULL,
+    download_file_path = :file_path
+  WHERE download_task_id = :task_id;
+
+clearSongDownloadTask:
+  UPDATE songs SET
+    download_task_id = NULL,
+    download_file_path = NULL
+  WHERE download_task_id = :task_id;
+
+updateSongDownloadTask:
+  UPDATE songs SET
+    download_task_id = :task_id
+  WHERE source_id = :source_id AND id = :id;
+
+deleteSongDownloadFile:
+  UPDATE songs SET
+    download_task_id = NULL,
+    download_file_path = NULL
+  WHERE source_id = :source_id AND id = :id;
+
+albumDownloadStatus WITH ListDownloadStatus:
+  SELECT
+    COUNT(*) as total,
+    COUNT(CASE WHEN songs.download_file_path IS NOT NULL THEN songs.id ELSE NULL END) AS downloaded,
+    COUNT(CASE WHEN songs.download_task_id IS NOT NULL THEN songs.id ELSE NULL END) AS downloading
+  FROM albums
+  JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE albums.source_id = :source_id AND albums.id = :id;
+
+playlistDownloadStatus WITH ListDownloadStatus:
+  SELECT
+    COUNT(DISTINCT songs.id) as total,
+    COUNT(DISTINCT CASE WHEN songs.download_file_path IS NOT NULL THEN songs.id ELSE NULL END) AS downloaded,
+    COUNT(DISTINCT CASE WHEN songs.download_task_id IS NOT NULL THEN songs.id ELSE NULL END) AS downloading
+  FROM playlists
+  JOIN playlist_songs ON
+    playlist_songs.source_id = playlists.source_id
+    AND playlist_songs.playlist_id = playlists.id
+  JOIN songs ON
+    songs.source_id = playlist_songs.source_id
+    AND songs.id = playlist_songs.song_id
+  WHERE
+    playlists.source_id = :source_id AND playlists.id = :id;
+
+filterAlbums:
+  SELECT 
+    albums.*
+  FROM albums
+  WHERE $predicate
+  ORDER BY $order
+  LIMIT $limit;
+
+filterAlbumsDownloaded:
+  SELECT 
+    albums.*
+  FROM albums
+  LEFT JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE $predicate
+  GROUP BY albums.source_id, albums.id
+  HAVING SUM(CASE WHEN songs.download_file_path IS NOT NULL THEN 1 ELSE 0 END) > 0
+  ORDER BY $order
+  LIMIT $limit;
+
+filterArtists:
+  SELECT 
+    artists.*
+  FROM artists
+  WHERE $predicate
+  ORDER BY $order
+  LIMIT $limit;
+
+filterArtistsDownloaded WITH Artist:
+  SELECT 
+    artists.*,
+    COUNT(DISTINCT CASE WHEN songs.download_file_path IS NOT NULL THEN songs.album_id ELSE NULL END) AS album_count
+  FROM artists
+  LEFT JOIN albums ON artists.source_id = albums.source_id AND artists.id = albums.artist_id
+  LEFT JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE $predicate
+  GROUP BY artists.source_id, artists.id
+  HAVING SUM(CASE WHEN songs.download_file_path IS NOT NULL THEN 1 ELSE 0 END) > 0
+  ORDER BY $order
+  LIMIT $limit;
+
+filterPlaylists:
+  SELECT 
+    playlists.*
+  FROM playlists
+  WHERE $predicate
+  ORDER BY $order
+  LIMIT $limit;
+
+filterPlaylistsDownloaded WITH Playlist:
+  SELECT 
+    playlists.*,
+    COUNT(CASE WHEN songs.download_file_path IS NOT NULL THEN songs.id ELSE NULL END) AS song_count
+  FROM playlists
+  LEFT JOIN playlist_songs ON playlist_songs.source_id = playlists.source_id AND playlist_songs.playlist_id = playlists.id
+  LEFT JOIN songs ON playlist_songs.source_id = songs.source_id AND playlist_songs.song_id = songs.id
+  WHERE $predicate
+  GROUP BY playlists.source_id, playlists.id
+  HAVING SUM(CASE WHEN songs.download_file_path IS NOT NULL THEN 1 ELSE 0 END) > 0
+  ORDER BY $order
+  LIMIT $limit;
+
+filterSongs:
+  SELECT 
+    songs.*
+  FROM songs
+  WHERE $predicate
+  ORDER BY $order
+  LIMIT $limit;
+
+filterSongsDownloaded:
+  SELECT 
+    songs.*
+  FROM songs
+  WHERE $predicate AND songs.download_file_path IS NOT NULL
+  ORDER BY $order
+  LIMIT $limit;
+
+playlistIsDownloaded:
+  SELECT
+    COUNT(*) = 0
+  FROM playlists
+  JOIN playlist_songs ON
+    playlist_songs.source_id = playlists.source_id
+    AND playlist_songs.playlist_id = playlists.id
+  JOIN songs ON
+    songs.source_id = playlist_songs.source_id
+    AND songs.id = playlist_songs.song_id
+  WHERE
+    playlists.source_id = :source_id AND playlists.id = :id
+    AND songs.download_file_path IS NULL;
+
+playlistHasDownloadsInProgress:
+  SELECT
+    COUNT(*) > 0
+  FROM playlists
+  JOIN playlist_songs ON
+    playlist_songs.source_id = playlists.source_id
+    AND playlist_songs.playlist_id = playlists.id
+  JOIN songs ON
+    songs.source_id = playlist_songs.source_id
+    AND songs.id = playlist_songs.song_id
+  WHERE playlists.source_id = :source_id AND playlists.id = :id
+    AND songs.download_task_id IS NOT NULL;
+
+songsInIds:
+  SELECT *
+  FROM songs
+  WHERE source_id = :source_id AND id IN :ids;
+
+songsInRowIds:
+  SELECT *
+  FROM songs
+  WHERE ROWID IN :row_ids;
+
+albumsInRowIds:
+  SELECT *
+  FROM albums
+  WHERE ROWID IN :row_ids;
+
+artistsInRowIds:
+  SELECT *
+  FROM artists
+  WHERE ROWID IN :row_ids;
+
+playlistsInRowIds:
+  SELECT *
+  FROM playlists
+  WHERE ROWID IN :row_ids;
+
+currentTrackIndex:
+  SELECT 
+    queue."index"
+  FROM queue
+  WHERE queue.current_track = 1;
+
+queueLength:
+  SELECT COUNT(*) FROM queue;
+
+queueInIndicies:
+  SELECT *
+  FROM queue
+  WHERE queue."index" IN :indicies;
+
+getAppSettings:
+  SELECT * FROM app_settings
+  WHERE id = 1;

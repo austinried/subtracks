@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_relative_imports: true
+
+analyzer:
+  plugins:
+    # broken currently and may not get fixed
+    # https://github.com/simolus3/drift/issues/2342
+    # - drift
+
+    # also broken but only recently reported
+    # https://github.com/rrousselGit/riverpod/issues/2180
+    # - custom_lint 
