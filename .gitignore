@@ -46,3 +46,4 @@ app.*.map.json
 /.env
 *.sqlite*
 /.fvm/flutter_sdk
+*.keystore
