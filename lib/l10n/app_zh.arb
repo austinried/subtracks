@@ -1,196 +1,230 @@
 {
-    "actionsStar": "收藏",
-    "@actionsStar": {},
-    "actionsUnstar": "移除收藏",
-    "@actionsUnstar": {},
-    "messagesNothingHere": "什么都没有…",
-    "@messagesNothingHere": {},
-    "navigationTabsHome": "首页",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "所有",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "搜索",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "设置",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "播放专辑",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "查看专辑",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "专辑排序",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, other{专辑}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistActionsView": "查看歌手",
-    "@resourcesArtistActionsView": {},
-    "resourcesArtistListsSort": "歌手排序",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, other{歌手}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterGenre": "根据类型",
-    "@resourcesFilterGenre": {},
-    "resourcesFilterStarred": "已收藏",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistActionsPlay": "全部播放",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, other{播放列表}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesQueueName": "{count,plural, other{队列}}",
-    "@resourcesQueueName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "热门歌曲",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, other{歌曲}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByAdded": "最近添加",
-    "@resourcesSortByAdded": {},
-    "resourcesSortByArtist": "根据歌手",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByFrequentlyPlayed": "播放最多",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByName": "根据名称",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "随机",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByRecentlyPlayed": "最近播放",
-    "@resourcesSortByRecentlyPlayed": {},
-    "resourcesSortByYear": "根据年份",
-    "@resourcesSortByYear": {},
-    "searchHeaderTitle": "搜索： {query}",
-    "@searchHeaderTitle": {
-        "placeholders": {
-            "query": {
-                "type": "String"
-            }
-        }
-    },
-    "searchInputPlaceholder": "搜索",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "更多…",
-    "@searchMoreResults": {},
-    "searchNowPlayingContext": "搜索结果",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "许可",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "项目地址",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "关于",
-    "@settingsAboutName": {},
-    "settingsAboutVersion": "版本 {version}",
-    "@settingsAboutVersion": {
-        "placeholders": {
-            "version": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsMusicName": "音乐",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOff": "不记录scrobble历史",
-    "@settingsMusicOptionsScrobbleDescriptionOff": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble播放历史",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Scrobble模式",
-    "@settingsMusicOptionsScrobbleTitle": {},
-    "settingsNetworkName": "网络",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "最大比特率 (3G/4G/5G)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "最大比特率 (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
-    "settingsNetworkOptionsMaxBufferTitle": "最大缓冲时间",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
-    "settingsNetworkOptionsMinBufferTitle": "最小缓冲时间",
-    "@settingsNetworkOptionsMinBufferTitle": {},
-    "settingsNetworkValuesKbps": "{value}kbps",
-    "@settingsNetworkValuesKbps": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesSeconds": "{value} 秒",
-    "@settingsNetworkValuesSeconds": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesUnlimitedKbps": "不限制",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "清除图片缓存",
-    "@settingsResetActionsClearImageCache": {},
-    "settingsResetName": "重置",
-    "@settingsResetName": {},
-    "settingsServersActionsAdd": "添加服务器",
-    "@settingsServersActionsAdd": {},
-    "settingsServersActionsDelete": "删除",
-    "@settingsServersActionsDelete": {},
-    "settingsServersActionsEdit": "编辑服务器",
-    "@settingsServersActionsEdit": {},
-    "settingsServersActionsSave": "保存",
-    "@settingsServersActionsSave": {},
-    "settingsServersActionsTestConnection": "测试连接",
-    "@settingsServersActionsTestConnection": {},
-    "settingsServersFieldsAddress": "地址",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "密码",
-    "@settingsServersFieldsPassword": {},
-    "settingsServersFieldsUsername": "用户名",
-    "@settingsServersFieldsUsername": {},
-    "settingsServersMessagesConnectionFailed": "连接到 {address} 失败，检查设置或服务器",
-    "@settingsServersMessagesConnectionFailed": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersMessagesConnectionOk": "连接到 {address} 正常！",
-    "@settingsServersMessagesConnectionOk": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersName": "服务器",
-    "@settingsServersName": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "密码以 token + salt 加密发送",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "密码以明文发送（不推荐，注意链接安全！）",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-    "settingsServersOptionsForcePlaintextPasswordTitle": "强制使用明文密码",
-    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+  "actionsStar": "收藏",
+  "@actionsStar": {},
+  "actionsUnstar": "移除收藏",
+  "@actionsUnstar": {},
+  "messagesNothingHere": "什么都没有…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "首页",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "所有",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "搜索",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "设置",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "播放专辑",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "查看专辑",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "专辑排序",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, other{专辑}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "查看歌手",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "歌手排序",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, other{歌手}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterGenre": "根据类型",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterStarred": "已收藏",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistActionsPlay": "全部播放",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistName": "{count,plural, other{播放列表}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, other{队列}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "热门歌曲",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, other{歌曲}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "最近添加",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByArtist": "根据歌手",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "播放最多",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByName": "根据名称",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "随机",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "最近播放",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByYear": "根据年份",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "搜索： {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "搜索",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "更多…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "搜索结果",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "许可",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "项目地址",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutName": "关于",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "版本 {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "音乐",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "不记录scrobble历史",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble播放历史",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Scrobble模式",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "网络",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "最大比特率 (3G/4G/5G)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "最大比特率 (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "最大缓冲时间",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "最小缓冲时间",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} 秒",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "不限制",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "清除图片缓存",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "重置",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "添加服务器",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "删除",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "编辑服务器",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "保存",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "测试连接",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "地址",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "密码",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "用户名",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "连接到 {address} 失败，检查设置或服务器",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "连接到 {address} 正常！",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "服务器",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "密码以 token + salt 加密发送",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "密码以明文发送（不推荐，注意链接安全！）",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "强制使用明文密码",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "actionsDownload": "下载",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "取消下载",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "删除已下载",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "确定",
+  "@actionsOk": {},
+  "resourcesFilterArtist": "歌手",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterOwner": "所有者",
+  "@resourcesFilterOwner": {},
+  "resourcesSongListDeleteAllTitle": "删除下载？",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSortByAlbum": "专辑",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "专辑数量",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByUpdated": "最近添加",
+  "@resourcesSortByUpdated": {},
+  "settingsAboutActionsSupport": "支持开发者",
+  "@settingsAboutActionsSupport": {},
+  "resourcesFilterAlbum": "专辑",
+  "@resourcesFilterAlbum": {},
+  "resourcesSortByTitle": "标题",
+  "@resourcesSortByTitle": {},
+  "actionsCancel": "取消",
+  "@actionsCancel": {},
+  "actionsDelete": "删除",
+  "@actionsDelete": {},
+  "resourcesFilterYear": "年份",
+  "@resourcesFilterYear": {},
+  "resourcesSongListDeleteAllContent": "该操作会删除所有已下载的歌曲文件。",
+  "@resourcesSongListDeleteAllContent": {}
 }
