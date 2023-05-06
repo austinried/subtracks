@@ -4596,7 +4596,7 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
         ));
   }
 
-  Selectable<String> albumIdsWithDownloaded(int sourceId) {
+  Selectable<String> albumIdsWithDownloadStatus(int sourceId) {
     return customSelect(
         'SELECT albums.id FROM albums JOIN songs ON songs.source_id = albums.source_id AND songs.album_id = albums.id WHERE albums.source_id = ?1 AND(songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)GROUP BY albums.id',
         variables: [
@@ -4604,6 +4604,32 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
         ],
         readsFrom: {
           albums,
+          songs,
+        }).map((QueryRow row) => row.read<String>('id'));
+  }
+
+  Selectable<String> artistIdsWithDownloadStatus(int sourceId) {
+    return customSelect(
+        'SELECT artists.id FROM artists LEFT JOIN albums ON artists.source_id = albums.source_id AND artists.id = albums.artist_id LEFT JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id WHERE artists.source_id = ?1 AND(songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)GROUP BY artists.id',
+        variables: [
+          Variable<int>(sourceId)
+        ],
+        readsFrom: {
+          artists,
+          albums,
+          songs,
+        }).map((QueryRow row) => row.read<String>('id'));
+  }
+
+  Selectable<String> playlistIdsWithDownloadStatus(int sourceId) {
+    return customSelect(
+        'SELECT playlists.id FROM playlists LEFT JOIN playlist_songs ON playlist_songs.source_id = playlists.source_id AND playlist_songs.playlist_id = playlists.id LEFT JOIN songs ON playlist_songs.source_id = songs.source_id AND playlist_songs.song_id = songs.id WHERE playlists.source_id = ?1 AND(songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)GROUP BY playlists.id',
+        variables: [
+          Variable<int>(sourceId)
+        ],
+        readsFrom: {
+          playlists,
+          playlistSongs,
           songs,
         }).map((QueryRow row) => row.read<String>('id'));
   }

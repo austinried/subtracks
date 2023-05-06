@@ -214,7 +214,7 @@ class DownloadService extends _$DownloadService {
   Future<void> deleteAll(int sourceId) async {
     final db = ref.read(databaseProvider);
 
-    final albumIds = await db.albumIdsWithDownloaded(sourceId).get();
+    final albumIds = await db.albumIdsWithDownloadStatus(sourceId).get();
     for (var id in albumIds) {
       await deleteAlbum(await (db.albumById(sourceId, id)).getSingle());
     }
