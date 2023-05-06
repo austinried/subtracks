@@ -17,6 +17,10 @@ import 'converters.dart';
 
 part 'database.g.dart';
 
+// don't exceed SQLITE_MAX_VARIABLE_NUMBER (32766 for version >= 3.32.0)
+// https://www.sqlite.org/limits.html
+const kSqliteMaxVariableNumber = 32766;
+
 @DriftDatabase(include: {'tables.drift'})
 class SubtracksDatabase extends _$SubtracksDatabase {
   SubtracksDatabase() : super(_openConnection());
@@ -169,12 +173,27 @@ class SubtracksDatabase extends _$SubtracksDatabase {
     });
   }
 
-  Future<void> deleteArtistsNotIn(int sourceId, Iterable<String> ids) async {
-    await (delete(artists)
-          ..where(
-            (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isNotIn(ids),
-          ))
-        .go();
+  Future<void> deleteArtistsNotIn(int sourceId, Set<String> ids) {
+    return transaction(() async {
+      final allIds = (await (selectOnly(artists)
+                ..addColumns([artists.id])
+                ..where(artists.sourceId.equals(sourceId)))
+              .map((row) => row.read(artists.id))
+              .get())
+          .whereNotNull()
+          .toSet();
+      final downloadIds = (await artistIdsWithDownloadStatus(sourceId).get())
+          .whereNotNull()
+          .toSet();
+
+      final diff = allIds.difference(downloadIds).difference(ids);
+      for (var slice in diff.slices(kSqliteMaxVariableNumber)) {
+        await (delete(artists)
+              ..where(
+                  (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isIn(slice)))
+            .go();
+      }
+    });
   }
 
   Future<void> saveAlbums(Iterable<AlbumsCompanion> albums) async {
@@ -183,15 +202,27 @@ class SubtracksDatabase extends _$SubtracksDatabase {
     });
   }
 
-  Future<void> deleteAlbumsNotIn(int sourceId, Iterable<String> ids) async {
-    final alsoKeep = (await albumIdsWithDownloaded(sourceId).get()).toSet();
+  Future<void> deleteAlbumsNotIn(int sourceId, Set<String> ids) {
+    return transaction(() async {
+      final allIds = (await (selectOnly(albums)
+                ..addColumns([albums.id])
+                ..where(albums.sourceId.equals(sourceId)))
+              .map((row) => row.read(albums.id))
+              .get())
+          .whereNotNull()
+          .toSet();
+      final downloadIds = (await albumIdsWithDownloadStatus(sourceId).get())
+          .whereNotNull()
+          .toSet();
 
-    ids = ids.toList()..addAll(alsoKeep);
-    await (delete(albums)
-          ..where(
-            (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isNotIn(ids),
-          ))
-        .go();
+      final diff = allIds.difference(downloadIds).difference(ids);
+      for (var slice in diff.slices(kSqliteMaxVariableNumber)) {
+        await (delete(albums)
+              ..where(
+                  (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isIn(slice)))
+            .go();
+      }
+    });
   }
 
   Future<void> savePlaylists(
@@ -215,18 +246,31 @@ class SubtracksDatabase extends _$SubtracksDatabase {
     });
   }
 
-  Future<void> deletePlaylistsNotIn(int sourceId, Iterable<String> ids) async {
-    await (delete(playlists)
-          ..where(
-            (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isNotIn(ids),
-          ))
-        .go();
-    await (delete(playlistSongs)
-          ..where(
-            (tbl) =>
-                tbl.sourceId.equals(sourceId) & tbl.playlistId.isNotIn(ids),
-          ))
-        .go();
+  Future<void> deletePlaylistsNotIn(int sourceId, Set<String> ids) {
+    return transaction(() async {
+      final allIds = (await (selectOnly(playlists)
+                ..addColumns([playlists.id])
+                ..where(playlists.sourceId.equals(sourceId)))
+              .map((row) => row.read(playlists.id))
+              .get())
+          .whereNotNull()
+          .toSet();
+      final downloadIds = (await playlistIdsWithDownloadStatus(sourceId).get())
+          .whereNotNull()
+          .toSet();
+
+      final diff = allIds.difference(downloadIds).difference(ids);
+      for (var slice in diff.slices(kSqliteMaxVariableNumber)) {
+        await (delete(playlists)
+              ..where(
+                  (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isIn(slice)))
+            .go();
+        await (delete(playlistSongs)
+              ..where((tbl) =>
+                  tbl.sourceId.equals(sourceId) & tbl.playlistId.isIn(slice)))
+            .go();
+      }
+    });
   }
 
   Future<void> savePlaylistSongs(
@@ -250,29 +294,33 @@ class SubtracksDatabase extends _$SubtracksDatabase {
     });
   }
 
-  Future<void> deleteSongsNotIn(int sourceId, Iterable<String> ids) async {
-    await (delete(songs)
-          ..where(
-            (tbl) =>
-                tbl.sourceId.equals(sourceId) &
-                tbl.id.isNotIn(ids) &
-                tbl.downloadFilePath.isNull() &
-                tbl.downloadTaskId.isNull(),
-          ))
-        .go();
-    final remainingIds = (await (selectOnly(songs)
-              ..addColumns([songs.id])
-              ..where(songs.sourceId.equals(sourceId)))
-            .map((row) => row.read(songs.id))
-            .get())
-        .whereNotNull();
-    await (delete(playlistSongs)
-          ..where(
-            (tbl) =>
-                tbl.sourceId.equals(sourceId) &
-                tbl.songId.isNotIn(remainingIds),
-          ))
-        .go();
+  Future<void> deleteSongsNotIn(int sourceId, Set<String> ids) {
+    return transaction(() async {
+      final allIds = (await (selectOnly(songs)
+                ..addColumns([songs.id])
+                ..where(
+                  songs.sourceId.equals(sourceId) &
+                      songs.downloadFilePath.isNull() &
+                      songs.downloadTaskId.isNull(),
+                ))
+              .map((row) => row.read(songs.id))
+              .get())
+          .whereNotNull()
+          .toSet();
+
+      final diff = allIds.difference(ids);
+      for (var slice in diff.slices(kSqliteMaxVariableNumber)) {
+        await (delete(songs)
+              ..where(
+                  (tbl) => tbl.sourceId.equals(sourceId) & tbl.id.isIn(slice)))
+            .go();
+        await (delete(playlistSongs)
+              ..where(
+                (tbl) => tbl.sourceId.equals(sourceId) & tbl.songId.isIn(slice),
+              ))
+            .go();
+      }
+    });
   }
 
   Selectable<LastBottomNavStateData> getLastBottomNavState() {

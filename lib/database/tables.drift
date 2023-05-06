@@ -244,7 +244,7 @@ allSubsonicSources WITH SubsonicSettings:
   FROM sources
   JOIN subsonic_sources ON subsonic_sources.source_id = sources.id;
 
-albumIdsWithDownloaded:
+albumIdsWithDownloadStatus:
   SELECT albums.id
   FROM albums
   JOIN songs on songs.source_id = albums.source_id AND songs.album_id = albums.id
@@ -252,6 +252,26 @@ albumIdsWithDownloaded:
     albums.source_id = :source_id
     AND (songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)
   GROUP BY albums.id;
+
+artistIdsWithDownloadStatus:
+  SELECT artists.id
+  FROM artists
+  LEFT JOIN albums ON artists.source_id = albums.source_id AND artists.id = albums.artist_id
+  LEFT JOIN songs ON albums.source_id = songs.source_id AND albums.id = songs.album_id
+  WHERE
+    artists.source_id = :source_id
+    AND (songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)
+  GROUP BY artists.id;
+
+playlistIdsWithDownloadStatus:
+  SELECT playlists.id
+  FROM playlists
+  LEFT JOIN playlist_songs ON playlist_songs.source_id = playlists.source_id AND playlist_songs.playlist_id = playlists.id
+  LEFT JOIN songs ON playlist_songs.source_id = songs.source_id AND playlist_songs.song_id = songs.id
+  WHERE 
+    playlists.source_id = :source_id
+    AND (songs.download_file_path IS NOT NULL OR songs.download_task_id IS NOT NULL)
+  GROUP BY playlists.id;
 
 searchArtists:
   SELECT rowid

@@ -31,7 +31,7 @@ class SyncService extends _$SyncService {
     final source = ref.read(musicSourceProvider);
     final db = ref.read(databaseProvider);
 
-    final ids = <String>[];
+    final ids = <String>{};
     await for (var artists in source.allArtists()) {
       ids.addAll(artists.map((e) => e.id.value));
       await db.saveArtists(artists);
@@ -44,7 +44,7 @@ class SyncService extends _$SyncService {
     final source = ref.read(musicSourceProvider);
     final db = ref.read(databaseProvider);
 
-    final ids = <String>[];
+    final ids = <String>{};
     await for (var albums in source.allAlbums()) {
       ids.addAll(albums.map((e) => e.id.value));
       await db.saveAlbums(albums);
@@ -57,7 +57,7 @@ class SyncService extends _$SyncService {
     final source = ref.read(musicSourceProvider);
     final db = ref.read(databaseProvider);
 
-    final ids = <String>[];
+    final ids = <String>{};
     await for (var playlists in source.allPlaylists()) {
       ids.addAll(playlists.map((e) => e.playist.id.value));
       await db.savePlaylists(playlists);
@@ -70,7 +70,7 @@ class SyncService extends _$SyncService {
     final source = ref.read(musicSourceProvider);
     final db = ref.read(databaseProvider);
 
-    final ids = <String>[];
+    final ids = <String>{};
     await for (var songs in source.allSongs()) {
       ids.addAll(songs.map((e) => e.id.value));
       await db.saveSongs(songs);
