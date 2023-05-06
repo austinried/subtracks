@@ -61,6 +61,16 @@ class SourcePage extends HookConsumerWidget {
       required: true,
     );
 
+    final forcePlaintextPassword = useState(!(source?.useTokenAuth ?? false));
+    final forcePlaintextSwitch = SwitchListTile(
+      value: forcePlaintextPassword.value,
+      title: Text(l.settingsServersOptionsForcePlaintextPasswordTitle),
+      subtitle: forcePlaintextPassword.value
+          ? Text(l.settingsServersOptionsForcePlaintextPasswordDescriptionOn)
+          : Text(l.settingsServersOptionsForcePlaintextPasswordDescriptionOff),
+      onChanged: (value) => forcePlaintextPassword.value = value,
+    );
+
     return WillPopScope(
       onWillPop: () async => !isSaving.value && !isDeleting.value,
       child: Scaffold(
@@ -128,6 +138,7 @@ class SourcePage extends HookConsumerWidget {
                                   address: Uri.parse(address.value),
                                   username: username.value,
                                   password: password.value,
+                                  useTokenAuth: !forcePlaintextPassword.value,
                                 ),
                               );
                         } else {
@@ -142,7 +153,8 @@ class SourcePage extends HookConsumerWidget {
                                   features: IList(),
                                   username: username.value,
                                   password: password.value,
-                                  useTokenAuth: const Value(true),
+                                  useTokenAuth:
+                                      Value(!forcePlaintextPassword.value),
                                 ),
                               );
                         }
@@ -163,24 +175,26 @@ class SourcePage extends HookConsumerWidget {
         ),
         body: Form(
           key: form,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ListView(
-              children: [
-                const SizedBox(height: 96 - kToolbarHeight),
-                Text(
+          child: ListView(
+            children: [
+              const SizedBox(height: 96 - kToolbarHeight),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
                   source == null
                       ? l.settingsServersActionsAdd
                       : l.settingsServersActionsEdit,
                   style: theme.textTheme.displaySmall,
                 ),
-                name,
-                address,
-                username,
-                password,
-                const FabPadding(),
-              ],
-            ),
+              ),
+              name,
+              address,
+              username,
+              password,
+              const SizedBox(height: 24),
+              forcePlaintextSwitch,
+              const FabPadding(),
+            ],
           ),
         ),
       ),
@@ -224,35 +238,35 @@ class LabeledTextField extends HookConsumerWidget {
     final theme = Theme.of(context);
     _controller = useTextEditingController(text: initialValue);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 24),
-        Text(
-          label,
-          style: theme.textTheme.titleMedium,
-        ),
-        TextFormField(
-          controller: _controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          validator: (value) {
-            String? error;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 24),
+          Text(label, style: theme.textTheme.titleMedium),
+          TextFormField(
+            controller: _controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            validator: (value) {
+              String? error;
 
-            if (required) {
-              error = _requiredValidator(value);
-              if (error != null) {
-                return error;
+              if (required) {
+                error = _requiredValidator(value);
+                if (error != null) {
+                  return error;
+                }
               }
-            }
 
-            if (validator != null) {
-              return validator!(value, label);
-            }
-            return null;
-          },
-        ),
-      ],
+              if (validator != null) {
+                return validator!(value, label);
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
     );
   }
 }

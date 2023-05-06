@@ -82,10 +82,4 @@ class MusicSource implements BaseMusicSource {
 
   @override
   Uri streamUri(String songId) => _source.streamUri(songId);
-
-  @override
-  bool operator ==(other) => other is BaseMusicSource && (other.id == id);
-
-  @override
-  int get hashCode => id;
 }
