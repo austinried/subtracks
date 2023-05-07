@@ -28,6 +28,7 @@ const _$QueueContextTypeEnumMap = {
   QueueContextType.playlist: 'playlist',
   QueueContextType.library: 'library',
   QueueContextType.genre: 'genre',
+  QueueContextType.artist: 'artist',
 };
 
 _$_MediaItemData _$$_MediaItemDataFromJson(Map<String, dynamic> json) =>
