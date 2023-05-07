@@ -18,8 +18,6 @@
   - [ ] Swipe bar/album to skip
   - [ ] Double-tap to seek forward/back (bar only)
 - [ ] Settings
-  - [ ] Sources
-    - [ ] Use plaintext password
   - [ ] Music
     - [ ] Scrobble
   - [ ] Downloads
