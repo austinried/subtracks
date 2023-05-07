@@ -14,8 +14,6 @@
 - [ ] Library list display modes
 - [ ] Search
   - [ ] Individual "more" results pages
-- [ ] Radio modes
-  - [ ] Artist
 - [ ] Now playing gestures
   - [ ] Swipe bar/album to skip
   - [ ] Double-tap to seek forward/back (bar only)

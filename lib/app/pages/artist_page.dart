@@ -1,13 +1,19 @@
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../database/database.dart';
+import '../../models/query.dart';
+import '../../models/support.dart';
+import '../../services/audio_service.dart';
 import '../../state/music.dart';
 import '../../state/settings.dart';
 import '../app_router.dart';
+import '../buttons.dart';
 import '../images.dart';
 import '../items.dart';
 
@@ -27,6 +33,26 @@ class ArtistPage extends HookConsumerWidget {
     final albums = ref.watch(albumsByArtistIdProvider(id));
 
     return Scaffold(
+      floatingActionButton: RadioPlayFab(
+        onPressed: () => artist.hasValue
+            ? ref.read(audioControlProvider).playRadio(
+                  context: QueueContextType.artist,
+                  contextId: artist.valueOrNull!.id,
+                  query: ListQuery(
+                    filters: IList([
+                      FilterWith.equals(
+                        column: 'artist_id',
+                        value: artist.valueOrNull!.id,
+                      )
+                    ]),
+                  ),
+                  getSongs: (query) => ref
+                      .read(databaseProvider)
+                      .songsList(ref.read(sourceIdProvider), query)
+                      .get(),
+                )
+            : null,
+      ),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
