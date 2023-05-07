@@ -4,7 +4,7 @@ homepage: https://github.com/austinried/subtracks
 repository: https://github.com/austinried/subtracks
 issue_tracker: https://github.com/austinried/subtracks/issues
 publish_to: 'none'
-version: 2.0.0-alpha.1+10
+version: 2.0.0-alpha.2+11
 
 environment:
   sdk: '>=2.19.2 <3.0.0'
