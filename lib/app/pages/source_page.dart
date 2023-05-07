@@ -41,6 +41,7 @@ class SourcePage extends HookConsumerWidget {
       label: l.settingsServersFieldsAddress,
       initialValue: source?.address.toString(),
       keyboardType: TextInputType.url,
+      autofillHints: const [AutofillHints.url],
       required: true,
       validator: (value, label) {
         if (Uri.tryParse(value!) == null) {
@@ -52,12 +53,14 @@ class SourcePage extends HookConsumerWidget {
     final username = LabeledTextField(
       label: l.settingsServersFieldsUsername,
       initialValue: source?.username,
+      autofillHints: const [AutofillHints.username],
       required: true,
     );
     final password = LabeledTextField(
       label: l.settingsServersFieldsPassword,
       initialValue: source?.password,
       obscureText: true,
+      autofillHints: const [AutofillHints.password],
       required: true,
     );
 
@@ -175,26 +178,28 @@ class SourcePage extends HookConsumerWidget {
         ),
         body: Form(
           key: form,
-          child: ListView(
-            children: [
-              const SizedBox(height: 96 - kToolbarHeight),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  source == null
-                      ? l.settingsServersActionsAdd
-                      : l.settingsServersActionsEdit,
-                  style: theme.textTheme.displaySmall,
+          child: AutofillGroup(
+            child: ListView(
+              children: [
+                const SizedBox(height: 96 - kToolbarHeight),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    source == null
+                        ? l.settingsServersActionsAdd
+                        : l.settingsServersActionsEdit,
+                    style: theme.textTheme.displaySmall,
+                  ),
                 ),
-              ),
-              name,
-              address,
-              username,
-              password,
-              const SizedBox(height: 24),
-              forcePlaintextSwitch,
-              const FabPadding(),
-            ],
+                name,
+                address,
+                username,
+                password,
+                const SizedBox(height: 24),
+                forcePlaintextSwitch,
+                const FabPadding(),
+              ],
+            ),
           ),
         ),
       ),
@@ -208,6 +213,7 @@ class LabeledTextField extends HookConsumerWidget {
   final bool obscureText;
   final bool required;
   final TextInputType? keyboardType;
+  final Iterable<String>? autofillHints;
   final String? Function(String? value, String label)? validator;
 
   // ignore: prefer_const_constructors_in_immutables
@@ -218,6 +224,7 @@ class LabeledTextField extends HookConsumerWidget {
     this.obscureText = false,
     this.keyboardType,
     this.validator,
+    this.autofillHints,
     this.required = false,
   });
 
@@ -249,6 +256,7 @@ class LabeledTextField extends HookConsumerWidget {
             controller: _controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
+            autofillHints: autofillHints,
             validator: (value) {
               String? error;
 
