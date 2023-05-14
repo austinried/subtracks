@@ -175,7 +175,7 @@
     "@settingsAboutName": {},
     "settingsAboutShareLogs": "Share logs",
     "@settingsAboutShareLogs": {},
-    "settingsAboutChooseLog": "Choose logs file",
+    "settingsAboutChooseLog": "Choose a log file",
     "@settingsAboutChooseLog": {},
     "settingsAboutVersion": "version {version}",
     "@settingsAboutVersion": {
