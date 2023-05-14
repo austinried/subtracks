@@ -65,7 +65,7 @@ class SourcePage extends HookConsumerWidget {
       required: true,
     );
 
-    final forcePlaintextPassword = useState(!(source?.useTokenAuth ?? false));
+    final forcePlaintextPassword = useState(!(source?.useTokenAuth ?? true));
     final forcePlaintextSwitch = SwitchListTile(
       value: forcePlaintextPassword.value,
       title: Text(l.settingsServersOptionsForcePlaintextPasswordTitle),
