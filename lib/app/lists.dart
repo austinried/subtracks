@@ -4,6 +4,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../services/sync_service.dart';
 import 'items.dart';
+import 'snackbars.dart';
 
 class PagedListQueryView<T> extends HookConsumerWidget {
   final PagingController<int, T> pagingController;
@@ -122,7 +123,13 @@ class SyncAllRefresh extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return RefreshIndicator(
-      onRefresh: () => ref.read(syncServiceProvider.notifier).syncAll(),
+      onRefresh: () async {
+        try {
+          await ref.read(syncServiceProvider.notifier).syncAll();
+        } catch (e) {
+          showErrorSnackbar(context, e.toString());
+        }
+      },
       child: child,
     );
   }
