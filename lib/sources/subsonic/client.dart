@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart';
 import 'package:xml/xml.dart';
 
+import '../../log.dart';
 import '../../models/settings.dart';
 import 'xml.dart';
 
@@ -89,7 +90,9 @@ class SubsonicClient {
     final subsonicResponse =
         SubsonicResponse(XmlDocument.parse(utf8.decode(res.bodyBytes)));
     if (subsonicResponse.status == Status.failed) {
-      throw SubsonicException(subsonicResponse.xml);
+      final error = SubsonicException(subsonicResponse.xml);
+      log.severe('Subsonic error', error);
+      throw error;
     }
 
     return subsonicResponse;

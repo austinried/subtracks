@@ -440,7 +440,7 @@ LazyDatabase _openConnection() {
 
     return ErrorLoggingDatabase(
       NativeDatabase.createInBackground(file),
-      (e, s) => log.severe('SQL Error', e, s),
+      (e, s) => log.severe('SQL error', e, s),
     );
   });
 }
