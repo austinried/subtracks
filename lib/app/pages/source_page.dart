@@ -45,10 +45,10 @@ class SourcePage extends HookConsumerWidget {
       autofillHints: const [AutofillHints.url],
       required: true,
       validator: (value, label) {
-        if (Uri.tryParse(value!)?.isAbsolute == false ||
-            !value.contains('http')) {
+        if (!value!.contains(RegExp(r'https?:\/\/'))) {
           return '$label must be a valid URL';
         }
+        return null;
       },
     );
     final username = LabeledTextField(
