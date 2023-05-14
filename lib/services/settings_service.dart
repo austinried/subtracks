@@ -53,6 +53,8 @@ class SettingsService extends _$SettingsService {
       ref.read(httpClientProvider),
     );
 
+    await client.test();
+
     final features = IList([
       if (await client.testFeature(SubsonicFeature.emptyQuerySearch))
         SubsonicFeature.emptyQuerySearch,
@@ -66,6 +68,10 @@ class SettingsService extends _$SettingsService {
   }
 
   Future<void> updateSource(SubsonicSettings source) async {
+    final client = SubsonicClient(source, ref.read(httpClientProvider));
+
+    await client.test();
+
     await _db.updateSource(source);
     await init();
   }
