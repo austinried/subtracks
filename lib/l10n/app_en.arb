@@ -173,6 +173,10 @@
     "@settingsAboutActionsSupport": {},
     "settingsAboutName": "About",
     "@settingsAboutName": {},
+    "settingsAboutShareLogs": "Share logs",
+    "@settingsAboutShareLogs": {},
+    "settingsAboutChooseLog": "Choose logs file",
+    "@settingsAboutChooseLog": {},
     "settingsAboutVersion": "version {version}",
     "@settingsAboutVersion": {
         "placeholders": {
