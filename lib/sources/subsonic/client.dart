@@ -98,6 +98,8 @@ class SubsonicClient {
     return subsonicResponse;
   }
 
+  Future<void> test() => get('ping');
+
   Future<bool> testFeature(SubsonicFeature feature) async {
     switch (feature) {
       case SubsonicFeature.emptyQuerySearch:
