@@ -8,6 +8,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../database/database.dart';
+import '../../log.dart';
 import '../../models/settings.dart';
 import '../../services/settings_service.dart';
 import '../items.dart';
@@ -161,8 +162,9 @@ class SourcePage extends HookConsumerWidget {
                                 ),
                               );
                         }
-                      } catch (err) {
+                      } catch (e, st) {
                         // TOOD: toast the error or whatever
+                        log.severe('Saving source', e, st);
                         error = true;
                       } finally {
                         isSaving.value = false;
