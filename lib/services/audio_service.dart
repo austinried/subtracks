@@ -95,36 +95,36 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
   int get _sourceId => _ref.read(sourceIdProvider);
 
   AudioControl(this._player, this._ref) {
-    _player.playbackEventStream.listen(
-      (PlaybackEvent event) {
-        final playing = _player.playing;
-        playbackState.add(playbackState.value.copyWith(
-          controls: [
-            MediaControl.skipToPrevious,
-            if (playing) MediaControl.pause else MediaControl.play,
-            MediaControl.stop,
-            MediaControl.skipToNext,
-          ],
-          systemActions: const {
-            MediaAction.seek,
-          },
-          androidCompactActionIndices: const [0, 1, 3],
-          processingState: const {
-            ProcessingState.idle: AudioProcessingState.idle,
-            ProcessingState.loading: AudioProcessingState.loading,
-            ProcessingState.buffering: AudioProcessingState.buffering,
-            ProcessingState.ready: AudioProcessingState.ready,
-            ProcessingState.completed: AudioProcessingState.completed,
-          }[_player.processingState]!,
-          playing: playing,
-          updatePosition: _player.position,
-          bufferedPosition: _player.bufferedPosition,
-          queueIndex: event.currentIndex,
-        ));
-      },
-      onError: (e, st) => log.warning('Audio playback error', e, st),
-      cancelOnError: false,
-    );
+    _player.playbackEventStream.listen((PlaybackEvent event) {
+      final playing = _player.playing;
+      playbackState.add(playbackState.value.copyWith(
+        controls: [
+          MediaControl.skipToPrevious,
+          if (playing) MediaControl.pause else MediaControl.play,
+          MediaControl.stop,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.seek,
+        },
+        androidCompactActionIndices: const [0, 1, 3],
+        processingState: const {
+          ProcessingState.idle: AudioProcessingState.idle,
+          ProcessingState.loading: AudioProcessingState.loading,
+          ProcessingState.buffering: AudioProcessingState.buffering,
+          ProcessingState.ready: AudioProcessingState.ready,
+          ProcessingState.completed: AudioProcessingState.completed,
+        }[_player.processingState]!,
+        playing: playing,
+        updatePosition: _player.position,
+        bufferedPosition: _player.bufferedPosition,
+        queueIndex: event.currentIndex,
+      ));
+    });
+
+    _player.playbackEventStream.doOnError((e, st) async {
+      log.warning('playbackEventStream', e, st);
+    });
 
     shuffleIndicies.listen((value) {
       playbackState.add(playbackState.value.copyWith(

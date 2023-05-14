@@ -16,7 +16,14 @@ class SubtracksHttpClient extends BaseClient {
   Future<StreamedResponse> send(BaseRequest request) {
     request.headers.addAll(subtracksHeaders);
     log.info('${request.method} ${_redactUri(request.url)}');
-    return request.send();
+
+    try {
+      return request.send();
+    } catch (e, st) {
+      log.severe(
+          'HTTP client: ${request.method} ${_redactUri(request.url)}', e, st);
+      rethrow;
+    }
   }
 }
 

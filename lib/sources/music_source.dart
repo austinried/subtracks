@@ -1,6 +1,8 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../database/database.dart';
+import '../log.dart';
 import '../state/settings.dart';
 
 abstract class BaseMusicSource {
@@ -40,25 +42,33 @@ class MusicSource implements BaseMusicSource {
   @override
   Stream<Iterable<AlbumsCompanion>> allAlbums() {
     _testOnline();
-    return _source.allAlbums();
+    return _source
+        .allAlbums()
+        .doOnError((e, st) => log.severe('allAlbums', e, st));
   }
 
   @override
   Stream<Iterable<ArtistsCompanion>> allArtists() {
     _testOnline();
-    return _source.allArtists();
+    return _source
+        .allArtists()
+        .doOnError((e, st) => log.severe('allArtists', e, st));
   }
 
   @override
   Stream<Iterable<PlaylistWithSongsCompanion>> allPlaylists() {
     _testOnline();
-    return _source.allPlaylists();
+    return _source
+        .allPlaylists()
+        .doOnError((e, st) => log.severe('allPlaylists', e, st));
   }
 
   @override
   Stream<Iterable<SongsCompanion>> allSongs() {
     _testOnline();
-    return _source.allSongs();
+    return _source
+        .allSongs()
+        .doOnError((e, st) => log.severe('allSongs', e, st));
   }
 
   @override
