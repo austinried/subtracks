@@ -88,6 +88,7 @@ String _format(
   bool color = false,
   bool time = true,
   bool level = true,
+  bool redact = true,
 }) {
   var message = '';
   if (time) message += '${event.time.toIso8601String()} ';
@@ -107,6 +108,11 @@ String _format(
   if (event.error != null) {
     message += '\n${event.error}';
   }
+
+  if (redact) {
+    message = _redactUrl(message);
+  }
+
   if (event.stackTrace != null) {
     message += '\n${event.stackTrace}';
   }
@@ -116,16 +122,23 @@ String _format(
       : message;
 }
 
-Future<void> _printFile(String event, String dir) async {
-  final now = DateTime.now();
-  final file = File(p.join(dir, '${now.year}-${now.month}-${now.day}.txt'));
-
-  if (!event.endsWith('\n')) {
-    event += '\n';
+String _redactUrl(String message) {
+  if (!_queryReplace('u').hasMatch(message)) {
+    return message;
   }
 
-  await file.writeAsString(event, mode: FileMode.writeOnlyAppend, flush: true);
+  message = _redactParam(message, 'u');
+  message = _redactParam(message, 'p');
+  message = _redactParam(message, 's');
+  message = _redactParam(message, 't');
+
+  return message;
 }
+
+RegExp _queryReplace(String key) => RegExp('$key=([^&|\\n|\\t\\s]+)');
+
+String _redactParam(String url, String key) =>
+    url.replaceAll(_queryReplace(key), '$key=REDACTED');
 
 Future<Directory> logDirectory() async {
   return Directory(
@@ -141,10 +154,42 @@ Future<List<File>> logFiles() async {
     );
 }
 
+File _currentLogFile(String logDir) {
+  final now = DateTime.now();
+  return File(p.join(logDir, '${now.year}-${now.month}-${now.day}.txt'));
+}
+
+Future<void> _printFile(String event, String logDir) async {
+  final file = _currentLogFile(logDir);
+
+  if (!event.endsWith('\n')) {
+    event += '\n';
+  }
+
+  await file.writeAsString(event, mode: FileMode.writeOnlyAppend, flush: true);
+}
+
+void _printDebug(LogRecord event) {
+  // ignore: avoid_print
+  print(_format(event, color: true, time: false, level: false, redact: false));
+}
+
+Future<void> _printRelease(LogRecord event, String logDir) async {
+  await _printFile(
+    _format(event, color: false, time: true, level: true, redact: true),
+    logDir,
+  );
+}
+
 final log = Logger('default');
 
 Future<void> initLogging() async {
   final dir = (await logDirectory())..create();
+
+  final file = _currentLogFile(dir.path);
+  if (!(await file.exists())) {
+    await file.create();
+  }
 
   final files = await logFiles();
   if (files.length > 7) {
@@ -156,14 +201,9 @@ Future<void> initLogging() async {
   Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;
   Logger.root.onRecord.asyncMap((event) async {
     if (kDebugMode) {
-      print(_format(event, color: true, time: false, level: false));
+      _printDebug(event);
     } else {
-      await _printFile(
-        _format(event, color: false, time: true, level: true),
-        dir.path,
-      );
+      await _printRelease(event, dir.path);
     }
   }).listen((_) {}, cancelOnError: false);
-
-  log.info('start');
 }
