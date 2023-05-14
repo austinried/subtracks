@@ -9,11 +9,13 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../log.dart';
 import '../models/music.dart';
 import '../models/query.dart';
 import '../models/settings.dart';
 import '../models/support.dart';
 import 'converters.dart';
+import 'error_logging_database.dart';
 
 part 'database.g.dart';
 
@@ -435,7 +437,11 @@ LazyDatabase _openConnection() {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'subtracks.sqlite'));
     // return NativeDatabase.createInBackground(file, logStatements: true);
-    return NativeDatabase.createInBackground(file);
+
+    return ErrorLoggingDatabase(
+      NativeDatabase.createInBackground(file),
+      (e, s) => log.severe('SQL Error', e, s),
+    );
   });
 }
 
