@@ -4,6 +4,7 @@ import 'package:stack_trace/stack_trace.dart' as stack_trace;
 import 'package:worker_manager/worker_manager.dart';
 
 import 'app/app.dart';
+import 'log.dart';
 
 void main() async {
   // TOOD: probably remove before live
@@ -18,5 +19,8 @@ void main() async {
   await Executor().warmUp();
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initLogging();
+
   runApp(const ProviderScope(child: MyApp()));
 }

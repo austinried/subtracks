@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:pool/pool.dart';
@@ -14,6 +13,7 @@ import 'package:synchronized/synchronized.dart';
 
 import '../cache/image_cache.dart';
 import '../database/database.dart';
+import '../log.dart';
 import '../models/music.dart';
 import '../models/query.dart';
 import '../models/support.dart';
@@ -137,7 +137,7 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
     _player.processingStateStream.listen((event) async {
       if (event == ProcessingState.completed) {
         if (_audioSource.length > 0) {
-          yell('completed');
+          log.fine('completed');
           await stop();
           await seek(Duration.zero);
         }
@@ -386,7 +386,7 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
     mediaItem.add(slice.current!.mediaItem);
     queue.add(list.map((e) => e.mediaItem).toList());
 
-    yell('addAll');
+    log.fine('addAll');
     await _audioSource.addAll(list.map((e) => e.audioSource).toList());
     await _player.seek(Duration.zero, index: list.indexOf(slice.current!));
   }
@@ -410,7 +410,7 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
     final sourceNeedsPrev = sourceIndex == 0;
 
     if (sourceNeedsNext && slice.next != null) {
-      yell('add');
+      log.fine('add');
       await _audioSource.add(slice.next!.audioSource);
     }
     if (sourceNeedsPrev && slice.prev != null) {
@@ -497,7 +497,7 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   Future<void> _insertFirstAudioSource(AudioSource source) {
-    yell('insert');
+    log.fine('insert');
     final wait = _audioSource.insert(0, source);
     _currentIndexIgnore.add(1);
     return wait;
@@ -505,20 +505,20 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> _pruneAudioSources(int keepIndex) async {
     if (keepIndex > 0) {
-      yell('removeRange 0');
+      log.fine('removeRange 0');
       final wait = _audioSource.removeRange(0, keepIndex);
       _currentIndexIgnore.add(0);
       await wait;
     }
     if (_audioSource.length > 1) {
-      yell('removeRange 1');
+      log.fine('removeRange 1');
       await _audioSource.removeRange(1, _audioSource.length);
     }
   }
 
   Future<void> _clearAudioSource([bool clearMetadata = false]) async {
     // await _player.stop();
-    yell('_clearAudioSource');
+    log.fine('_clearAudioSource');
     await _audioSource.clear();
 
     if (clearMetadata) {
@@ -695,13 +695,5 @@ class AudioControl extends BaseAudioHandler with QueueHandler, SeekHandler {
       case AudioServiceShuffleMode.none:
         return _shuffle(unshuffle: true);
     }
-  }
-}
-
-void yell(String msg) {
-  if (kDebugMode) {
-    print('=================================================================<');
-    print(msg);
-    print('=================================================================>');
   }
 }

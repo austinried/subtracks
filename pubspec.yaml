@@ -57,6 +57,8 @@ dependencies:
   connectivity_plus: ^3.0.4
   package_info_plus: ^3.1.1
   url_launcher: ^6.1.10
+  logging: ^1.1.1
+  share_plus: ^7.0.0
 
 # https://github.com/dart-lang/intl/issues/522#issuecomment-1469961807
 dependency_overrides:

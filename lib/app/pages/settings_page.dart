@@ -1,11 +1,16 @@
+import 'dart:math';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../log.dart';
 import '../../models/support.dart';
 import '../../services/settings_service.dart';
 import '../../state/init.dart';
@@ -161,6 +166,54 @@ class _About extends HookConsumerWidget {
             _donate,
             mode: LaunchMode.externalApplication,
           ),
+        ),
+        const SizedBox(height: 12),
+        const _ShareLogsButton(),
+      ],
+    );
+  }
+}
+
+class _ShareLogsButton extends StatelessWidget {
+  const _ShareLogsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        OutlinedButton.icon(
+          icon: const Icon(Icons.share),
+          label: Text(l.settingsAboutShareLogs),
+          onPressed: () async {
+            final files = await logFiles();
+            if (files.isEmpty) return;
+
+            // ignore: use_build_context_synchronously
+            final value = await showDialog<String>(
+              context: context,
+              builder: (context) => MultipleChoiceDialog<String>(
+                title: l.settingsAboutChooseLog,
+                current: files.first.path,
+                options: files
+                    .map((e) => MultiChoiceOption.string(
+                          title: p.basename(e.path),
+                          option: e.path,
+                        ))
+                    .toIList(),
+              ),
+            );
+
+            if (value == null) return;
+            Share.shareXFiles(
+              [XFile(value, mimeType: 'text/plain')],
+              subject: 'Logs from subtracks: ${String.fromCharCodes(
+                List.generate(8, (_) => Random().nextInt(26) + 65),
+              )}',
+            );
+          },
         ),
       ],
     );
