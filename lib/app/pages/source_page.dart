@@ -163,9 +163,11 @@ class SourcePage extends HookConsumerWidget {
                               );
                         }
                       } catch (e, st) {
-                        // TOOD: toast the error or whatever
                         log.severe('Saving source', e, st);
                         error = true;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(e.toString()),
+                        ));
                       } finally {
                         isSaving.value = false;
                       }
