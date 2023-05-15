@@ -164,7 +164,6 @@ class SourcePage extends HookConsumerWidget {
                               );
                         }
                       } catch (e, st) {
-                        // TOOD: toast the error or whatever
                         showErrorSnackbar(context, e.toString());
                         log.severe('Saving source', e, st);
                         error = true;
