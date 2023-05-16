@@ -202,5 +202,75 @@
   "controlsShuffle": "Zufall",
   "@controlsShuffle": {},
   "actionsCancel": "Abbrechen",
-  "@actionsCancel": {}
+  "@actionsCancel": {},
+  "actionsDownloadDelete": "Heruntergeladene Inhalte löschen",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} Album} other{{count} Alben}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterAlbum": "Album",
+  "@resourcesFilterAlbum": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} Künstler} other{{count} Künstler}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterArtist": "Künstler",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterOwner": "Besitzer",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterYear": "Jahr",
+  "@resourcesFilterYear": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} Playlist} other{{count} Playlists}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} Song} other{{count} Songs}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "Hierdurch werden alle heruntergeladenen Inhalte entfernt.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSortByAlbum": "Album",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "Albenanzahl",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByTitle": "Titel",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "Kürzlich hinzugefügt",
+  "@resourcesSortByUpdated": {},
+  "settingsAboutActionsSupport": "Den Entwickler unterstützen",
+  "@settingsAboutActionsSupport": {},
+  "settingsNetworkOptionsOfflineMode": "Offline Modus",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "Nutze das Internet um Musik zu synchronisieren.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsOfflineModeOn": "Nutze nicht das Internet um Musik zu synchronisieren.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkOptionsStreamFormat": "Bevorzugtes Streaming-Format",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsServersFieldsName": "Name",
+  "@settingsServersFieldsName": {},
+  "resourcesSongListDeleteAllTitle": "Downloads löschen?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Server-Standard verwenden",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {}
 }
