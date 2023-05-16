@@ -127,31 +127,8 @@
   ],
 
   "de": [
-    "actionsDownloadDelete",
-    "actionsOk",
-    "resourcesAlbumCount",
-    "resourcesArtistCount",
-    "resourcesFilterAlbum",
-    "resourcesFilterArtist",
-    "resourcesFilterOwner",
-    "resourcesFilterYear",
-    "resourcesPlaylistCount",
-    "resourcesSongCount",
-    "resourcesSongListDeleteAllContent",
-    "resourcesSongListDeleteAllTitle",
-    "resourcesSortByAlbum",
-    "resourcesSortByAlbumCount",
-    "resourcesSortByTitle",
-    "resourcesSortByUpdated",
-    "settingsAboutActionsSupport",
     "settingsAboutShareLogs",
-    "settingsAboutChooseLog",
-    "settingsNetworkOptionsOfflineMode",
-    "settingsNetworkOptionsOfflineModeOff",
-    "settingsNetworkOptionsOfflineModeOn",
-    "settingsNetworkOptionsStreamFormat",
-    "settingsNetworkOptionsStreamFormatServerDefault",
-    "settingsServersFieldsName"
+    "settingsAboutChooseLog"
   ],
 
   "es": [
@@ -211,11 +188,6 @@
     "settingsNetworkOptionsStreamFormat",
     "settingsNetworkOptionsStreamFormatServerDefault",
     "settingsServersFieldsName"
-  ],
-
-  "gl": [
-    "settingsAboutShareLogs",
-    "settingsAboutChooseLog"
   ],
 
   "it": [
@@ -440,39 +412,6 @@
     "resourcesSortByUpdated",
     "settingsAboutShareLogs",
     "settingsAboutChooseLog",
-    "settingsNetworkOptionsStreamFormatServerDefault",
-    "settingsServersFieldsName"
-  ],
-
-  "ru": [
-    "actionsCancel",
-    "actionsDelete",
-    "actionsDownload",
-    "actionsDownloadCancel",
-    "actionsDownloadDelete",
-    "actionsOk",
-    "controlsShuffle",
-    "resourcesAlbumCount",
-    "resourcesArtistCount",
-    "resourcesFilterAlbum",
-    "resourcesFilterArtist",
-    "resourcesFilterOwner",
-    "resourcesFilterYear",
-    "resourcesPlaylistCount",
-    "resourcesSongCount",
-    "resourcesSongListDeleteAllContent",
-    "resourcesSongListDeleteAllTitle",
-    "resourcesSortByAlbum",
-    "resourcesSortByAlbumCount",
-    "resourcesSortByTitle",
-    "resourcesSortByUpdated",
-    "settingsAboutActionsSupport",
-    "settingsAboutShareLogs",
-    "settingsAboutChooseLog",
-    "settingsNetworkOptionsOfflineMode",
-    "settingsNetworkOptionsOfflineModeOff",
-    "settingsNetworkOptionsOfflineModeOn",
-    "settingsNetworkOptionsStreamFormat",
     "settingsNetworkOptionsStreamFormatServerDefault",
     "settingsServersFieldsName"
   ],
