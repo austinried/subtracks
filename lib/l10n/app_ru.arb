@@ -1,196 +1,280 @@
 {
-    "actionsStar": "Избранное",
-    "@actionsStar": {},
-    "actionsUnstar": "Убрать из избранного",
-    "@actionsUnstar": {},
-    "messagesNothingHere": "Здесь ничего нет…",
-    "@messagesNothingHere": {},
-    "navigationTabsHome": "Главная",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "Библиотека",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "Поиск",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "Настройки",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "Воспроизвести альбом",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "Посмотреть альбом",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "Сортировка альбомов",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, =1{Альбом} few{Альбомы} many{Альбомов} other{Альбомов}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistActionsView": "Посмотреть исполнителя",
-    "@resourcesArtistActionsView": {},
-    "resourcesArtistListsSort": "Сортировать исполнителей",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, =1{Исполнитель} few{Исполнители} many{Исполнителей} other{Исполнителей}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterGenre": "По жанру",
-    "@resourcesFilterGenre": {},
-    "resourcesFilterStarred": "Избранные",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistActionsPlay": "Воспроизвести плейлист",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, =1{Плейлист} few{Плейлисты} many{Плейлистов} other{Плейлистов}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesQueueName": "{count,plural, =1{Очередь} few{Очереди} many{Очередей} other{Очередей}}",
-    "@resourcesQueueName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "Лучшие треки",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, =1{Трек} few{Трека} many{Треков} other{Треков}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByAdded": "Недавно добавленные",
-    "@resourcesSortByAdded": {},
-    "resourcesSortByArtist": "По исполнителю",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByFrequentlyPlayed": "Часто проигрываемые",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByName": "По имени",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "Случайно",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByRecentlyPlayed": "Недавно проигранные",
-    "@resourcesSortByRecentlyPlayed": {},
-    "resourcesSortByYear": "По году",
-    "@resourcesSortByYear": {},
-    "searchHeaderTitle": "Поиск: {query}",
-    "@searchHeaderTitle": {
-        "placeholders": {
-            "query": {
-                "type": "String"
-            }
-        }
-    },
-    "searchInputPlaceholder": "Поиск",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "Больше…",
-    "@searchMoreResults": {},
-    "searchNowPlayingContext": "Результаты поиска",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "Лицензии",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "Сайт проекта",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "О Subtracks",
-    "@settingsAboutName": {},
-    "settingsAboutVersion": "версия {version}",
-    "@settingsAboutVersion": {
-        "placeholders": {
-            "version": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsMusicName": "Музыка",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOff": "Не отправлять историю воспроизведений",
-    "@settingsMusicOptionsScrobbleDescriptionOff": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Скробблинг истории воспроизведения",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Скробблинг",
-    "@settingsMusicOptionsScrobbleTitle": {},
-    "settingsNetworkName": "Сеть",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "Максимальный битрейт (мобильный интернет)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "Максимальный битрейт (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
-    "settingsNetworkOptionsMaxBufferTitle": "Максимальное время буферизации",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
-    "settingsNetworkOptionsMinBufferTitle": "Минимальное время буферизации",
-    "@settingsNetworkOptionsMinBufferTitle": {},
-    "settingsNetworkValuesKbps": "{value} кбит/с",
-    "@settingsNetworkValuesKbps": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesSeconds": "{value} секунд",
-    "@settingsNetworkValuesSeconds": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesUnlimitedKbps": "Без ограничений",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "Очистить кэш изображения",
-    "@settingsResetActionsClearImageCache": {},
-    "settingsResetName": "Сброс",
-    "@settingsResetName": {},
-    "settingsServersActionsAdd": "Добавить сервер",
-    "@settingsServersActionsAdd": {},
-    "settingsServersActionsDelete": "Удалить",
-    "@settingsServersActionsDelete": {},
-    "settingsServersActionsEdit": "Редактировать сервер",
-    "@settingsServersActionsEdit": {},
-    "settingsServersActionsSave": "Сохранить",
-    "@settingsServersActionsSave": {},
-    "settingsServersActionsTestConnection": "Проверить подключение",
-    "@settingsServersActionsTestConnection": {},
-    "settingsServersFieldsAddress": "Адрес",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "Пароль",
-    "@settingsServersFieldsPassword": {},
-    "settingsServersFieldsUsername": "Имя пользователя",
-    "@settingsServersFieldsUsername": {},
-    "settingsServersMessagesConnectionFailed": "Не удалось подключиться к {address}, проверьте настройки или сервер",
-    "@settingsServersMessagesConnectionFailed": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersMessagesConnectionOk": "Подключение к {address} установлено!",
-    "@settingsServersMessagesConnectionOk": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersName": "Серверы",
-    "@settingsServersName": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Отправить пароль в виде токена",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Отправить пароль в виде текста (устарело, убедитесь, что ваше соединение безопасно!)",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-    "settingsServersOptionsForcePlaintextPasswordTitle": "Принудительно использовать текстовой пароль",
-    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+  "actionsStar": "Избранное",
+  "@actionsStar": {},
+  "actionsUnstar": "Убрать из избранного",
+  "@actionsUnstar": {},
+  "messagesNothingHere": "Здесь ничего нет…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Главная",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "Библиотека",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "Поиск",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Настройки",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Воспроизвести альбом",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Посмотреть альбом",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Сортировка альбомов",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{Альбом} few{Альбомы} many{Альбомов} other{Альбомов}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "Посмотреть исполнителя",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Сортировать исполнителей",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{Исполнитель} few{Исполнители} many{Исполнителей} other{Исполнителей}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterGenre": "По жанру",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterStarred": "Избранные",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistActionsPlay": "Воспроизвести плейлист",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistName": "{count,plural, =1{Плейлист} few{Плейлисты} many{Плейлистов} other{Плейлистов}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Очередь} few{Очереди} many{Очередей} other{Очередей}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "Лучшие треки",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{Трек} few{Трека} many{Треков} other{Треков}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Недавно добавленные",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByArtist": "По исполнителям",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Часто проигрываемые",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByName": "По имени",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "Случайно",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "Недавно проигранные",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByYear": "По году",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "Поиск: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Поиск",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Больше…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Результаты поиска",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Лицензии",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "Сайт проекта",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutName": "О Subtracks",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "версия {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "Музыка",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Не отправлять историю воспроизведений",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Скробблинг истории воспроизведения",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Скробблинг",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Сеть",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Максимальный битрейт (мобильный интернет)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Максимальный битрейт (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Максимальное время буферизации",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Минимальное время буферизации",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkValuesKbps": "{value} кбит/с",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} секунд",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Без ограничений",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Очистить кэш изображения",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Сброс",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "Добавить сервер",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "Удалить",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "Редактировать сервер",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "Сохранить",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Проверить подключение",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "Адрес",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "Пароль",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Имя пользователя",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Не удалось подключиться к {address}, проверьте настройки или сервер",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Подключение к {address} установлено!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Серверы",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Отправить пароль в виде токена",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Отправить пароль в виде текста (устарело, убедитесь, что ваше соединение безопасно!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Принудительно использовать текстовой пароль",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "settingsAboutShareLogs": "Поделиться журналами",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Выбрать файл журнала",
+  "@settingsAboutChooseLog": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Использовать сервер по умолчанию",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "actionsDownload": "Скачать",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "Отменить загрузку",
+  "@actionsDownloadCancel": {},
+  "actionsCancel": "Отменить",
+  "@actionsCancel": {},
+  "resourcesSongCount": "{count,plural, =1{{count} трек} other{{count} треки}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAlbum": "По альбомам",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByTitle": "По заголовку",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "По недавно обновленному",
+  "@resourcesSortByUpdated": {},
+  "resourcesSortByAlbumCount": "По количеству альбомов",
+  "@resourcesSortByAlbumCount": {},
+  "settingsNetworkOptionsOfflineMode": "Автономный режим",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "Использовать интернет для синхронизации музыки.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsServersFieldsName": "Имя",
+  "@settingsServersFieldsName": {},
+  "actionsDelete": "Удалить",
+  "@actionsDelete": {},
+  "actionsDownloadDelete": "Удалить загруженное",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "ОК",
+  "@actionsOk": {},
+  "controlsShuffle": "Перемешать",
+  "@controlsShuffle": {},
+  "resourcesFilterArtist": "По исполнителю",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterAlbum": "По альбомам",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterYear": "По годам",
+  "@resourcesFilterYear": {},
+  "resourcesFilterOwner": "По владельцу",
+  "@resourcesFilterOwner": {},
+  "resourcesSongListDeleteAllContent": "Это удалит все загруженные файлы песен.",
+  "@resourcesSongListDeleteAllContent": {},
+  "settingsNetworkOptionsStreamFormat": "Предпочтительный формат потока",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "resourcesSongListDeleteAllTitle": "Удалить загрузки?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "settingsNetworkOptionsOfflineModeOn": "Не использовать интернет для синхронизации или воспроизведения музыки.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsAboutActionsSupport": "Поддержать разработчика",
+  "@settingsAboutActionsSupport": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} исполнитель} other{{count} исполнители}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistCount": "{count,plural, =1{{count} плейлист} other{{count} плейлисты}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumCount": "{count,plural, =1{{count} альбом} other{{count} альбомы}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
