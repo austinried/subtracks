@@ -272,5 +272,9 @@
   "resourcesSortByTitle": "Título",
   "@resourcesSortByTitle": {},
   "resourcesSortByUpdated": "Actualizado recentemente",
-  "@resourcesSortByUpdated": {}
+  "@resourcesSortByUpdated": {},
+  "settingsAboutShareLogs": "Compartir rexistros",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Escolle un ficheiro de rexistro",
+  "@settingsAboutChooseLog": {}
 }
