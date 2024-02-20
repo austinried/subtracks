@@ -5,13 +5,13 @@
   "@actionsUnstar": {},
   "messagesNothingHere": "Nada aquí…",
   "@messagesNothingHere": {},
-  "navigationTabsHome": "Casa",
+  "navigationTabsHome": "Inicio",
   "@navigationTabsHome": {},
   "navigationTabsLibrary": "Biblioteca",
   "@navigationTabsLibrary": {},
   "navigationTabsSearch": "Buscar",
   "@navigationTabsSearch": {},
-  "navigationTabsSettings": "Entorno",
+  "navigationTabsSettings": "Configuración",
   "@navigationTabsSettings": {},
   "resourcesAlbumActionsPlay": "Reproducir Álbum",
   "@resourcesAlbumActionsPlay": {},
@@ -39,11 +39,11 @@
       }
     }
   },
-  "resourcesFilterGenre": "Por Género",
+  "resourcesFilterGenre": "Género",
   "@resourcesFilterGenre": {},
   "resourcesFilterStarred": "Estrellas",
   "@resourcesFilterStarred": {},
-  "resourcesPlaylistActionsPlay": "Reproducir Lista de reproducción",
+  "resourcesPlaylistActionsPlay": "Reproducir lista de reproducción",
   "@resourcesPlaylistActionsPlay": {},
   "resourcesPlaylistName": "{count,plural, =1{Lista de reproducción} other{Listas de reproducción}}",
   "@resourcesPlaylistName": {
@@ -75,13 +75,13 @@
   "@resourcesSortByAdded": {},
   "resourcesSortByArtist": "Por Artista",
   "@resourcesSortByArtist": {},
-  "resourcesSortByFrequentlyPlayed": "Jugado Frecuentemente",
+  "resourcesSortByFrequentlyPlayed": "Escuchado frecuentemente",
   "@resourcesSortByFrequentlyPlayed": {},
   "resourcesSortByName": "Por Nombre",
   "@resourcesSortByName": {},
   "resourcesSortByRandom": "Aleatorio",
   "@resourcesSortByRandom": {},
-  "resourcesSortByRecentlyPlayed": "Recientemente Jugado",
+  "resourcesSortByRecentlyPlayed": "Escuchado recientemente",
   "@resourcesSortByRecentlyPlayed": {},
   "resourcesSortByYear": "Por Año",
   "@resourcesSortByYear": {},
@@ -115,7 +115,7 @@
   },
   "settingsMusicName": "Música",
   "@settingsMusicName": {},
-  "settingsMusicOptionsScrobbleDescriptionOff": "No hagas historial de reproducción de scrobble",
+  "settingsMusicOptionsScrobbleDescriptionOff": "No hacer historial de reproducción de scrobble",
   "@settingsMusicOptionsScrobbleDescriptionOff": {},
   "settingsMusicOptionsScrobbleDescriptionOn": "Historial de reproducción de scrobble",
   "@settingsMusicOptionsScrobbleDescriptionOn": {},
@@ -155,17 +155,17 @@
   "@settingsResetName": {},
   "settingsServersActionsAdd": "Agregar Servidor",
   "@settingsServersActionsAdd": {},
-  "settingsServersActionsDelete": "Supr",
+  "settingsServersActionsDelete": "Eliminar",
   "@settingsServersActionsDelete": {},
   "settingsServersActionsEdit": "Editar Servidor",
   "@settingsServersActionsEdit": {},
-  "settingsServersActionsSave": "Enviar",
+  "settingsServersActionsSave": "Guardar",
   "@settingsServersActionsSave": {},
-  "settingsServersActionsTestConnection": "Conexión de prueba",
+  "settingsServersActionsTestConnection": "Probar conexión",
   "@settingsServersActionsTestConnection": {},
-  "settingsServersFieldsAddress": "Alocución",
+  "settingsServersFieldsAddress": "Dirección",
   "@settingsServersFieldsAddress": {},
-  "settingsServersFieldsPassword": "La contraseña",
+  "settingsServersFieldsPassword": "Contraseña",
   "@settingsServersFieldsPassword": {},
   "settingsServersFieldsUsername": "Nombre de usuario",
   "@settingsServersFieldsUsername": {},
@@ -191,20 +191,90 @@
   "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
   "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Enviar contraseña en texto plano (¡legado, asegúrese de que su conexión sea segura!)",
   "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-  "settingsServersOptionsForcePlaintextPasswordTitle": "Forzar contraseña de texto sin formato",
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Forzar contraseña como texto sin formato",
   "@settingsServersOptionsForcePlaintextPasswordTitle": {},
   "actionsDelete": "Borrar",
   "@actionsDelete": {},
-  "actionsOk": "Ok",
+  "actionsOk": "OK",
   "@actionsOk": {},
   "actionsDownload": "Descargar",
   "@actionsDownload": {},
-  "actionsDownloadCancel": "Anular descargar",
+  "actionsDownloadCancel": "Anular descarga",
   "@actionsDownloadCancel": {},
   "controlsShuffle": "Reproducir aleatoriamente",
   "@controlsShuffle": {},
   "actionsCancel": "Cancelar",
   "@actionsCancel": {},
   "actionsDownloadDelete": "Eliminar descargado",
-  "@actionsDownloadDelete": {}
+  "@actionsDownloadDelete": {},
+  "settingsNetworkOptionsOfflineModeOn": "No se usa internet para sincronizar o reproducir música.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Utilizar predeterminado del servidor",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsAboutShareLogs": "Compartir registros",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Escoger un archivo de registro",
+  "@settingsAboutChooseLog": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} Álbum} other{{count} Álbumes}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterAlbum": "Álbum",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "Artista",
+  "@resourcesFilterArtist": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} Lista de reproducción} other{{count} Listas de reproducción}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} Canción} other{{count} Canciones}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "Esto eliminará todos los archivos de las canciones descargadas.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSongListDeleteAllTitle": "¿Eliminar descargas?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSortByAlbum": "Álbum",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "Número de álbumes",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByTitle": "Título",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "Actualizado recientemente",
+  "@resourcesSortByUpdated": {},
+  "settingsAboutActionsSupport": "Apoya al desarrollador 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsNetworkOptionsOfflineMode": "Modo sin conexión",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "Se usa internet para sincronizar música.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsStreamFormat": "Formato de reproducción favorito",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsServersFieldsName": "Nombre",
+  "@settingsServersFieldsName": {},
+  "resourcesFilterOwner": "Dueño",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterYear": "Año",
+  "@resourcesFilterYear": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} artista} other{{count} artistas}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
