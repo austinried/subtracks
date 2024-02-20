@@ -1,64 +1,82 @@
 {
-    "navigationTabsHome": "ホーム",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "ライブラリ",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "検索",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "設定",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumName": "{count,plural, other{アルバム}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistName": "{count,plural, other{アーティスト}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterStarred": "星付きアルバム",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistName": "{count,plural, other{プレイリスト}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "人気曲",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, other{歌}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByFrequentlyPlayed": "よく聴くアルバム",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByRandom": "ランダムアルバム",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByRecentlyPlayed": "最近再生した",
-    "@resourcesSortByRecentlyPlayed": {},
-    "searchInputPlaceholder": "検索",
-    "@searchInputPlaceholder": {},
-    "settingsAboutActionsProjectHomepage": "ホームページ",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsMusicName": "音楽",
-    "@settingsMusicName": {},
-    "settingsNetworkName": "ネット",
-    "@settingsNetworkName": {},
-    "settingsResetName": "リセット",
-    "@settingsResetName": {},
-    "settingsServersName": "サーバ",
-    "@settingsServersName": {}
+  "navigationTabsHome": "ホーム",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "ライブラリ",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "検索",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "設定",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumName": "{count,plural, other{アルバム}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistName": "{count,plural, other{アーティスト}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterStarred": "星付きアルバム",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistName": "{count,plural, other{プレイリスト}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "人気曲",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, other{歌}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByFrequentlyPlayed": "よく聴くアルバム",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByRandom": "ランダムアルバム",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "最近再生した",
+  "@resourcesSortByRecentlyPlayed": {},
+  "searchInputPlaceholder": "検索",
+  "@searchInputPlaceholder": {},
+  "settingsAboutActionsProjectHomepage": "ホームページ",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsMusicName": "音楽",
+  "@settingsMusicName": {},
+  "settingsNetworkName": "ネット",
+  "@settingsNetworkName": {},
+  "settingsResetName": "リセット",
+  "@settingsResetName": {},
+  "settingsServersName": "サーバ",
+  "@settingsServersName": {},
+  "settingsServersFieldsPassword": "パスワルド",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "ウーザ名",
+  "@settingsServersFieldsUsername": {},
+  "actionsDelete": "削除",
+  "@actionsDelete": {},
+  "actionsCancel": "キャンセル",
+  "@actionsCancel": {},
+  "actionsOk": "はい",
+  "@actionsOk": {},
+  "resourcesFilterYear": "年",
+  "@resourcesFilterYear": {},
+  "resourcesFilterAlbum": "アルブム",
+  "@resourcesFilterAlbum": {},
+  "settingsServersActionsDelete": "削除",
+  "@settingsServersActionsDelete": {},
+  "settingsServersFieldsName": "名前",
+  "@settingsServersFieldsName": {}
 }
