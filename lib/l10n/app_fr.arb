@@ -232,7 +232,5 @@
   "resourcesSongListDeleteAllContent": "Tous les fichiers de musique téléchargés vont être supprimés.",
   "@resourcesSongListDeleteAllContent": {},
   "resourcesSongListDeleteAllTitle": "Supprimer le(s) téléchargement(s) ?",
-  "@resourcesSongListDeleteAllTitle": {},
-  "resourcesSortByAlbumCount": "",
-  "@resourcesSortByAlbumCount": {}
+  "@resourcesSongListDeleteAllTitle": {}
 }
