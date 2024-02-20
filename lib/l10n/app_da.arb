@@ -178,5 +178,9 @@
   "actionsOk": "OK",
   "@actionsOk": {},
   "actionsDelete": "Slet",
-  "@actionsDelete": {}
+  "@actionsDelete": {},
+  "actionsCancel": "Afbryd",
+  "@actionsCancel": {},
+  "actionsDownloadCancel": "Afbryd download",
+  "@actionsDownloadCancel": {}
 }
