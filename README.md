@@ -39,7 +39,7 @@
 
 - Album and artist art display by default (full-res in detail/now playing views)
 - Gapless playback
-- Mulitple server support
+- Multiple server support
 - Filterable/sortable album and artist library views
 - Search artists, albums, and songs
 - Scrobble support
