@@ -25,7 +25,7 @@ Future<T?> showContextMenu<T>({
   required WidgetBuilder builder,
 }) {
   return showModalBottomSheet<T>(
-    backgroundColor: ref.read(baseThemeProvider).theme.colorScheme.background,
+    backgroundColor: ref.read(baseThemeProvider).theme.colorScheme.surface,
     useRootNavigator: true,
     isScrollControlled: true,
     context: context,

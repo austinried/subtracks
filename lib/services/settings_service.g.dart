@@ -6,7 +6,7 @@ part of 'settings_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsServiceHash() => r'85f2bd5eedc3f791fe03a6707748bc95277c6aaf';
+String _$settingsServiceHash() => r'b53814d7d06c5d0a7ac82f447ac510e59a9598f0';
 
 /// See also [SettingsService].
 @ProviderFor(SettingsService)
@@ -22,4 +22,5 @@ final settingsServiceProvider =
 );
 
 typedef _$SettingsService = Notifier<Settings>;
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

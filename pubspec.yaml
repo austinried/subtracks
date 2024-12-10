@@ -7,7 +7,7 @@ publish_to: 'none'
 version: 2.0.0-alpha.3+12
 
 environment:
-  sdk: '>=2.19.2 <3.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -22,7 +22,7 @@ dependencies:
   path: ^1.8.2
   path_provider: ^2.0.12
   flutter_dotenv: ^5.0.2 # TODO: remove before release
-  collection: ^1.17.0
+  collection: ^1.17.1
   intl: any
   flutter_hooks: ^0.18.5+1
   hooks_riverpod: ^2.3.2
@@ -55,7 +55,7 @@ dependencies:
   synchronized: ^3.1.0
   flutter_keyboard_visibility: ^5.4.0
   connectivity_plus: ^3.0.4
-  package_info_plus: ^3.1.1
+  package_info_plus: ^8.1.1
   url_launcher: ^6.1.10
   logging: ^1.1.1
   share_plus: ^7.0.0
@@ -65,10 +65,7 @@ dependency_overrides:
   intl: ^0.18.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   flutter_lints: ^2.0.0
-  test: ^1.22.0
   build_runner: 
   riverpod_generator: ^2.1.4
   freezed: ^2.3.2

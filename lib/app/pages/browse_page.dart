@@ -79,17 +79,22 @@ class BrowsePage extends HookConsumerWidget {
         )))
         .valueOrNull;
 
+    final songs = ref.watch(songsListProvider(const ListQuery())).valueOrNull;
+
+    void onPlayRadioPressed() {
+      ref.read(audioControlProvider).playRadio(
+            context: QueueContextType.library,
+            getSongs: (query) => ref
+                .read(databaseProvider)
+                .songsList(ref.read(sourceIdProvider), query)
+                .get(),
+          );
+    }
+
     return Scaffold(
       floatingActionButton: RadioPlayFab(
-        onPressed: () {
-          ref.read(audioControlProvider).playRadio(
-                context: QueueContextType.library,
-                getSongs: (query) => ref
-                    .read(databaseProvider)
-                    .songsList(ref.read(sourceIdProvider), query)
-                    .get(),
-              );
-        },
+        onPressed:
+            songs != null && songs.isNotEmpty ? onPlayRadioPressed : null,
       ),
       body: CustomScrollView(
         slivers: [

@@ -150,3 +150,14 @@ Stream<int> songsByGenreCount(SongsByGenreCountRef ref, String genre) {
 
   return db.songsByGenreCount(sourceId, genre).watchSingle();
 }
+
+@riverpod
+Stream<IList<Song>> songsList(SongsListRef ref, ListQuery opt) {
+  final db = ref.watch(databaseProvider);
+  final sourceId = ref.watch(sourceIdProvider);
+
+  return db
+      .songsList(sourceId, opt)
+      .watch()
+      .map((event) => event.withNullsRemoved().toIList());
+}

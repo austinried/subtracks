@@ -15,16 +15,6 @@ import '../lists.dart';
 import 'library_page.dart';
 import 'songs_page.dart';
 
-part 'library_songs_page.g.dart';
-
-@riverpod
-Future<List<Song>> songsList(SongsListRef ref, ListQuery opt) {
-  final db = ref.watch(databaseProvider);
-  final sourceId = ref.watch(sourceIdProvider);
-
-  return db.songsList(sourceId, opt).get();
-}
-
 class LibrarySongsPage extends HookConsumerWidget {
   const LibrarySongsPage({super.key});
 

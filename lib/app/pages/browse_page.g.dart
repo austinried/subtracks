@@ -30,8 +30,6 @@ class _SystemHash {
   }
 }
 
-typedef AlbumsCategoryListRef = AutoDisposeStreamProviderRef<List<Album>>;
-
 /// See also [albumsCategoryList].
 @ProviderFor(albumsCategoryList)
 const albumsCategoryListProvider = AlbumsCategoryListFamily();
@@ -79,10 +77,10 @@ class AlbumsCategoryListProvider
     extends AutoDisposeStreamProvider<List<Album>> {
   /// See also [albumsCategoryList].
   AlbumsCategoryListProvider(
-    this.opt,
-  ) : super.internal(
+    ListQuery opt,
+  ) : this._internal(
           (ref) => albumsCategoryList(
-            ref,
+            ref as AlbumsCategoryListRef,
             opt,
           ),
           from: albumsCategoryListProvider,
@@ -94,9 +92,43 @@ class AlbumsCategoryListProvider
           dependencies: AlbumsCategoryListFamily._dependencies,
           allTransitiveDependencies:
               AlbumsCategoryListFamily._allTransitiveDependencies,
+          opt: opt,
         );
 
+  AlbumsCategoryListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.opt,
+  }) : super.internal();
+
   final ListQuery opt;
+
+  @override
+  Override overrideWith(
+    Stream<List<Album>> Function(AlbumsCategoryListRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumsCategoryListProvider._internal(
+        (ref) => create(ref as AlbumsCategoryListRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        opt: opt,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<Album>> createElement() {
+    return _AlbumsCategoryListProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -111,4 +143,19 @@ class AlbumsCategoryListProvider
     return _SystemHash.finish(hash);
   }
 }
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+
+mixin AlbumsCategoryListRef on AutoDisposeStreamProviderRef<List<Album>> {
+  /// The parameter `opt` of this provider.
+  ListQuery get opt;
+}
+
+class _AlbumsCategoryListProviderElement
+    extends AutoDisposeStreamProviderElement<List<Album>>
+    with AlbumsCategoryListRef {
+  _AlbumsCategoryListProviderElement(super.provider);
+
+  @override
+  ListQuery get opt => (origin as AlbumsCategoryListProvider).opt;
+}
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

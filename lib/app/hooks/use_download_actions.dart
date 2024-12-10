@@ -112,9 +112,9 @@ List<DownloadAction> useListDownloadActions({
   DownloadAction cancel() {
     return DownloadAction(
       type: DownloadActionType.cancel,
-      iconBuilder: (context) => Stack(
+      iconBuilder: (context) => const Stack(
         alignment: Alignment.center,
-        children: const [
+        children: [
           Icon(Icons.cancel_rounded),
           SizedBox(
             height: 32,

@@ -53,9 +53,10 @@ class Queue extends Table with TableInfo<Queue, QueueData> {
   List<GeneratedColumn> get $columns =>
       [index, sourceId, id, context, contextId, currentTrack];
   @override
-  String get aliasedName => _alias ?? 'queue';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'queue';
+  String get actualTableName => $name;
+  static const String $name = 'queue';
   @override
   VerificationContext validateIntegrity(Insertable<QueueData> instance,
       {bool isInserting = false}) {
@@ -144,8 +145,7 @@ class QueueData extends DataClass implements Insertable<QueueData> {
     map['source_id'] = Variable<int>(sourceId);
     map['id'] = Variable<String>(id);
     {
-      final converter = Queue.$convertercontext;
-      map['context'] = Variable<String>(converter.toSql(context));
+      map['context'] = Variable<String>(Queue.$convertercontext.toSql(context));
     }
     if (!nullToAbsent || contextId != null) {
       map['context_id'] = Variable<String>(contextId);
@@ -315,8 +315,8 @@ class QueueCompanion extends UpdateCompanion<QueueData> {
       map['id'] = Variable<String>(id.value);
     }
     if (context.present) {
-      final converter = Queue.$convertercontext;
-      map['context'] = Variable<String>(converter.toSql(context.value));
+      map['context'] =
+          Variable<String>(Queue.$convertercontext.toSql(context.value));
     }
     if (contextId.present) {
       map['context_id'] = Variable<String>(contextId.value);
@@ -382,9 +382,10 @@ class LastAudioState extends Table
   List<GeneratedColumn> get $columns =>
       [id, queueMode, shuffleIndicies, repeat];
   @override
-  String get aliasedName => _alias ?? 'last_audio_state';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'last_audio_state';
+  String get actualTableName => $name;
+  static const String $name = 'last_audio_state';
   @override
   VerificationContext validateIntegrity(Insertable<LastAudioStateData> instance,
       {bool isInserting = false}) {
@@ -452,17 +453,16 @@ class LastAudioStateData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     {
-      final converter = LastAudioState.$converterqueueMode;
-      map['queue_mode'] = Variable<int>(converter.toSql(queueMode));
+      map['queue_mode'] =
+          Variable<int>(LastAudioState.$converterqueueMode.toSql(queueMode));
     }
     if (!nullToAbsent || shuffleIndicies != null) {
-      final converter = LastAudioState.$convertershuffleIndiciesn;
-      map['shuffle_indicies'] =
-          Variable<String>(converter.toSql(shuffleIndicies));
+      map['shuffle_indicies'] = Variable<String>(
+          LastAudioState.$convertershuffleIndiciesn.toSql(shuffleIndicies));
     }
     {
-      final converter = LastAudioState.$converterrepeat;
-      map['repeat'] = Variable<int>(converter.toSql(repeat));
+      map['repeat'] =
+          Variable<int>(LastAudioState.$converterrepeat.toSql(repeat));
     }
     return map;
   }
@@ -592,17 +592,17 @@ class LastAudioStateCompanion extends UpdateCompanion<LastAudioStateData> {
       map['id'] = Variable<int>(id.value);
     }
     if (queueMode.present) {
-      final converter = LastAudioState.$converterqueueMode;
-      map['queue_mode'] = Variable<int>(converter.toSql(queueMode.value));
+      map['queue_mode'] = Variable<int>(
+          LastAudioState.$converterqueueMode.toSql(queueMode.value));
     }
     if (shuffleIndicies.present) {
-      final converter = LastAudioState.$convertershuffleIndiciesn;
-      map['shuffle_indicies'] =
-          Variable<String>(converter.toSql(shuffleIndicies.value));
+      map['shuffle_indicies'] = Variable<String>(LastAudioState
+          .$convertershuffleIndiciesn
+          .toSql(shuffleIndicies.value));
     }
     if (repeat.present) {
-      final converter = LastAudioState.$converterrepeat;
-      map['repeat'] = Variable<int>(converter.toSql(repeat.value));
+      map['repeat'] =
+          Variable<int>(LastAudioState.$converterrepeat.toSql(repeat.value));
     }
     return map;
   }
@@ -640,9 +640,10 @@ class LastBottomNavState extends Table
   @override
   List<GeneratedColumn> get $columns => [id, tab];
   @override
-  String get aliasedName => _alias ?? 'last_bottom_nav_state';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'last_bottom_nav_state';
+  String get actualTableName => $name;
+  static const String $name = 'last_bottom_nav_state';
   @override
   VerificationContext validateIntegrity(
       Insertable<LastBottomNavStateData> instance,
@@ -849,9 +850,10 @@ class LastLibraryState extends Table
   List<GeneratedColumn> get $columns =>
       [id, tab, albumsList, artistsList, playlistsList, songsList];
   @override
-  String get aliasedName => _alias ?? 'last_library_state';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'last_library_state';
+  String get actualTableName => $name;
+  static const String $name = 'last_library_state';
   @override
   VerificationContext validateIntegrity(
       Insertable<LastLibraryStateData> instance,
@@ -937,20 +939,20 @@ class LastLibraryStateData extends DataClass
     map['id'] = Variable<int>(id);
     map['tab'] = Variable<String>(tab);
     {
-      final converter = LastLibraryState.$converteralbumsList;
-      map['albums_list'] = Variable<String>(converter.toSql(albumsList));
+      map['albums_list'] = Variable<String>(
+          LastLibraryState.$converteralbumsList.toSql(albumsList));
     }
     {
-      final converter = LastLibraryState.$converterartistsList;
-      map['artists_list'] = Variable<String>(converter.toSql(artistsList));
+      map['artists_list'] = Variable<String>(
+          LastLibraryState.$converterartistsList.toSql(artistsList));
     }
     {
-      final converter = LastLibraryState.$converterplaylistsList;
-      map['playlists_list'] = Variable<String>(converter.toSql(playlistsList));
+      map['playlists_list'] = Variable<String>(
+          LastLibraryState.$converterplaylistsList.toSql(playlistsList));
     }
     {
-      final converter = LastLibraryState.$convertersongsList;
-      map['songs_list'] = Variable<String>(converter.toSql(songsList));
+      map['songs_list'] = Variable<String>(
+          LastLibraryState.$convertersongsList.toSql(songsList));
     }
     return map;
   }
@@ -1106,22 +1108,20 @@ class LastLibraryStateCompanion extends UpdateCompanion<LastLibraryStateData> {
       map['tab'] = Variable<String>(tab.value);
     }
     if (albumsList.present) {
-      final converter = LastLibraryState.$converteralbumsList;
-      map['albums_list'] = Variable<String>(converter.toSql(albumsList.value));
+      map['albums_list'] = Variable<String>(
+          LastLibraryState.$converteralbumsList.toSql(albumsList.value));
     }
     if (artistsList.present) {
-      final converter = LastLibraryState.$converterartistsList;
-      map['artists_list'] =
-          Variable<String>(converter.toSql(artistsList.value));
+      map['artists_list'] = Variable<String>(
+          LastLibraryState.$converterartistsList.toSql(artistsList.value));
     }
     if (playlistsList.present) {
-      final converter = LastLibraryState.$converterplaylistsList;
-      map['playlists_list'] =
-          Variable<String>(converter.toSql(playlistsList.value));
+      map['playlists_list'] = Variable<String>(
+          LastLibraryState.$converterplaylistsList.toSql(playlistsList.value));
     }
     if (songsList.present) {
-      final converter = LastLibraryState.$convertersongsList;
-      map['songs_list'] = Variable<String>(converter.toSql(songsList.value));
+      map['songs_list'] = Variable<String>(
+          LastLibraryState.$convertersongsList.toSql(songsList.value));
     }
     return map;
   }
@@ -1177,9 +1177,10 @@ class AppSettingsTable extends Table
   List<GeneratedColumn> get $columns =>
       [id, maxBitrateWifi, maxBitrateMobile, streamFormat];
   @override
-  String get aliasedName => _alias ?? 'app_settings';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'app_settings';
+  String get actualTableName => $name;
+  static const String $name = 'app_settings';
   @override
   VerificationContext validateIntegrity(Insertable<AppSettings> instance,
       {bool isInserting = false}) {
@@ -1359,9 +1360,10 @@ class Sources extends Table with TableInfo<Sources, Source> {
   List<GeneratedColumn> get $columns =>
       [id, name, address, isActive, createdAt];
   @override
-  String get aliasedName => _alias ?? 'sources';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'sources';
+  String get actualTableName => $name;
+  static const String $name = 'sources';
   @override
   VerificationContext validateIntegrity(Insertable<Source> instance,
       {bool isInserting = false}) {
@@ -1435,8 +1437,8 @@ class Source extends DataClass implements Insertable<Source> {
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     {
-      final converter = Sources.$converteraddress;
-      map['address'] = Variable<String>(converter.toSql(address));
+      map['address'] =
+          Variable<String>(Sources.$converteraddress.toSql(address));
     }
     if (!nullToAbsent || isActive != null) {
       map['is_active'] = Variable<bool>(isActive);
@@ -1580,8 +1582,8 @@ class SourcesCompanion extends UpdateCompanion<Source> {
       map['name'] = Variable<String>(name.value);
     }
     if (address.present) {
-      final converter = Sources.$converteraddress;
-      map['address'] = Variable<String>(converter.toSql(address.value));
+      map['address'] =
+          Variable<String>(Sources.$converteraddress.toSql(address.value));
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
@@ -1653,9 +1655,10 @@ class SubsonicSources extends Table
   List<GeneratedColumn> get $columns =>
       [sourceId, features, username, password, useTokenAuth];
   @override
-  String get aliasedName => _alias ?? 'subsonic_sources';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'subsonic_sources';
+  String get actualTableName => $name;
+  static const String $name = 'subsonic_sources';
   @override
   VerificationContext validateIntegrity(Insertable<SubsonicSource> instance,
       {bool isInserting = false}) {
@@ -1738,8 +1741,8 @@ class SubsonicSource extends DataClass implements Insertable<SubsonicSource> {
     final map = <String, Expression>{};
     map['source_id'] = Variable<int>(sourceId);
     {
-      final converter = SubsonicSources.$converterfeatures;
-      map['features'] = Variable<String>(converter.toSql(features));
+      map['features'] =
+          Variable<String>(SubsonicSources.$converterfeatures.toSql(features));
     }
     map['username'] = Variable<String>(username);
     map['password'] = Variable<String>(password);
@@ -1879,8 +1882,8 @@ class SubsonicSourcesCompanion extends UpdateCompanion<SubsonicSource> {
       map['source_id'] = Variable<int>(sourceId.value);
     }
     if (features.present) {
-      final converter = SubsonicSources.$converterfeatures;
-      map['features'] = Variable<String>(converter.toSql(features.value));
+      map['features'] = Variable<String>(
+          SubsonicSources.$converterfeatures.toSql(features.value));
     }
     if (username.present) {
       map['username'] = Variable<String>(username.value);
@@ -1959,9 +1962,10 @@ class Artists extends Table with TableInfo<Artists, Artist> {
   List<GeneratedColumn> get $columns =>
       [sourceId, id, name, albumCount, starred, updated];
   @override
-  String get aliasedName => _alias ?? 'artists';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'artists';
+  String get actualTableName => $name;
+  static const String $name = 'artists';
   @override
   VerificationContext validateIntegrity(Insertable<Artist> instance,
       {bool isInserting = false}) {
@@ -2170,9 +2174,10 @@ class ArtistsFts extends Table
   @override
   List<GeneratedColumn> get $columns => [sourceId, name];
   @override
-  String get aliasedName => _alias ?? 'artists_fts';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'artists_fts';
+  String get actualTableName => $name;
+  static const String $name = 'artists_fts';
   @override
   VerificationContext validateIntegrity(Insertable<ArtistsFt> instance,
       {bool isInserting = false}) {
@@ -2468,9 +2473,10 @@ class Albums extends Table with TableInfo<Albums, Album> {
         updated
       ];
   @override
-  String get aliasedName => _alias ?? 'albums';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'albums';
+  String get actualTableName => $name;
+  static const String $name = 'albums';
   @override
   VerificationContext validateIntegrity(Insertable<Album> instance,
       {bool isInserting = false}) {
@@ -2837,9 +2843,10 @@ class AlbumsFts extends Table
   @override
   List<GeneratedColumn> get $columns => [sourceId, name];
   @override
-  String get aliasedName => _alias ?? 'albums_fts';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'albums_fts';
+  String get actualTableName => $name;
+  static const String $name = 'albums_fts';
   @override
   VerificationContext validateIntegrity(Insertable<AlbumsFt> instance,
       {bool isInserting = false}) {
@@ -3072,9 +3079,10 @@ class Playlists extends Table with TableInfo<Playlists, Playlist> {
   List<GeneratedColumn> get $columns =>
       [sourceId, id, name, comment, coverArt, songCount, created, updated];
   @override
-  String get aliasedName => _alias ?? 'playlists';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'playlists';
+  String get actualTableName => $name;
+  static const String $name = 'playlists';
   @override
   VerificationContext validateIntegrity(Insertable<Playlist> instance,
       {bool isInserting = false}) {
@@ -3340,9 +3348,10 @@ class PlaylistSongs extends Table with TableInfo<PlaylistSongs, PlaylistSong> {
   List<GeneratedColumn> get $columns =>
       [sourceId, playlistId, songId, position, updated];
   @override
-  String get aliasedName => _alias ?? 'playlist_songs';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'playlist_songs';
+  String get actualTableName => $name;
+  static const String $name = 'playlist_songs';
   @override
   VerificationContext validateIntegrity(Insertable<PlaylistSong> instance,
       {bool isInserting = false}) {
@@ -3632,9 +3641,10 @@ class PlaylistsFts extends Table
   @override
   List<GeneratedColumn> get $columns => [sourceId, name];
   @override
-  String get aliasedName => _alias ?? 'playlists_fts';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'playlists_fts';
+  String get actualTableName => $name;
+  static const String $name = 'playlists_fts';
   @override
   VerificationContext validateIntegrity(Insertable<PlaylistsFt> instance,
       {bool isInserting = false}) {
@@ -3936,9 +3946,10 @@ class Songs extends Table with TableInfo<Songs, Song> {
         updated
       ];
   @override
-  String get aliasedName => _alias ?? 'songs';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'songs';
+  String get actualTableName => $name;
+  static const String $name = 'songs';
   @override
   VerificationContext validateIntegrity(Insertable<Song> instance,
       {bool isInserting = false}) {
@@ -4236,8 +4247,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
       map['artist'] = Variable<String>(artist.value);
     }
     if (duration.present) {
-      final converter = Songs.$converterdurationn;
-      map['duration'] = Variable<int>(converter.toSql(duration.value));
+      map['duration'] =
+          Variable<int>(Songs.$converterdurationn.toSql(duration.value));
     }
     if (track.present) {
       map['track'] = Variable<int>(track.value);
@@ -4316,9 +4327,10 @@ class SongsFts extends Table
   @override
   List<GeneratedColumn> get $columns => [sourceId, title];
   @override
-  String get aliasedName => _alias ?? 'songs_fts';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'songs_fts';
+  String get actualTableName => $name;
+  static const String $name = 'songs_fts';
   @override
   VerificationContext validateIntegrity(Insertable<SongsFt> instance,
       {bool isInserting = false}) {
@@ -5570,4 +5582,5 @@ final databaseProvider = Provider<SubtracksDatabase>.internal(
 );
 
 typedef DatabaseRef = ProviderRef<SubtracksDatabase>;
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -191,7 +191,7 @@ class _ShareLogsButton extends StatelessWidget {
             final files = await logFiles();
             if (files.isEmpty) return;
 
-            // ignore: use_build_context_synchronously
+            if (!context.mounted) return;
             final value = await showDialog<String>(
               context: context,
               builder: (context) => MultipleChoiceDialog<String>(
