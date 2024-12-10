@@ -30,13 +30,13 @@ class NowPlayingBar extends HookConsumerWidget {
         elevation: 3,
         color: colors?.darkBackground,
         // surfaceTintColor: theme?.colorScheme.background,
-        child: Column(
+        child: const Column(
           children: [
             SizedBox(
               height: 70,
               child: Row(
                 mainAxisSize: MainAxisSize.max,
-                children: const [
+                children: [
                   Padding(
                     padding: EdgeInsets.all(10),
                     child: _ArtImage(),
@@ -54,7 +54,7 @@ class NowPlayingBar extends HookConsumerWidget {
                 ],
               ),
             ),
-            const _ProgressBar(),
+            _ProgressBar(),
           ],
         ),
       ),
@@ -112,6 +112,8 @@ class _TrackInfo extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final item = ref.watch(mediaItemProvider);
 
     return Column(
@@ -125,11 +127,11 @@ class _TrackInfo extends HookConsumerWidget {
             //   maxLines: 1,
             //   softWrap: false,
             //   overflow: TextOverflow.fade,
-            //   style: Theme.of(context).textTheme.labelLarge,
+            //   style: theme.textTheme.labelLarge,
             // ),
             ScrollableText(
               data?.title ?? 'Nothing!!!',
-              style: Theme.of(context).textTheme.labelLarge,
+              style: theme.textTheme.labelLarge,
             ),
             const SizedBox(height: 2),
             Text(
@@ -137,7 +139,7 @@ class _TrackInfo extends HookConsumerWidget {
               maxLines: 1,
               softWrap: false,
               overflow: TextOverflow.fade,
-              style: Theme.of(context).textTheme.labelMedium,
+              style: theme.textTheme.labelMedium,
             ),
           ],
           error: (_, __) => const [Text('Error!')],
@@ -158,6 +160,8 @@ class PlayPauseButton extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final playing = ref.watch(playingProvider);
     final state = ref.watch(processingStateProvider);
 
@@ -173,7 +177,7 @@ class PlayPauseButton extends HookConsumerWidget {
             width: size / 3,
             child: CircularProgressIndicator(
               strokeWidth: size / 16,
-              color: Theme.of(context).colorScheme.background,
+              color: theme.colorScheme.surface,
             ),
           ),
         ],
@@ -195,7 +199,7 @@ class PlayPauseButton extends HookConsumerWidget {
         }
       },
       icon: icon,
-      color: Theme.of(context).colorScheme.onBackground,
+      color: theme.colorScheme.surface,
     );
   }
 }

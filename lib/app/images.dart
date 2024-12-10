@@ -103,6 +103,8 @@ class ArtistArtImage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final cache = ref.watch(_artistArtUriCacheInfoProvider(
       artistId: artistId,
       thumbnail: thumbnail,
@@ -123,7 +125,7 @@ class ArtistArtImage extends HookConsumerWidget {
         width: width,
       ),
       loading: () => Container(
-        color: Theme.of(context).colorScheme.secondaryContainer,
+        color: theme.colorScheme.secondaryContainer,
         height: height,
         width: width,
       ),
@@ -211,9 +213,11 @@ class CardClip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardShape = Theme.of(context).cardTheme.shape;
+
     return ClipRRect(
-      borderRadius:
-          cardShape is RoundedRectangleBorder ? cardShape.borderRadius : null,
+      borderRadius: cardShape is RoundedRectangleBorder
+          ? cardShape.borderRadius
+          : BorderRadius.zero,
       child: !square
           ? child
           : AspectRatio(
@@ -247,6 +251,8 @@ class UriCacheInfoImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return CachedNetworkImage(
       imageUrl: cache.uri.toString(),
       cacheKey: cache.cacheKey,
@@ -260,7 +266,7 @@ class UriCacheInfoImage extends StatelessWidget {
           placeholderStyle == PlaceholderStyle.spinner
               ? Container()
               : Container(
-                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  color: theme.colorScheme.secondaryContainer,
                 ),
       errorWidget: (context, url, error) => PlaceholderImage(
         fit: fit,

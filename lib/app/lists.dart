@@ -72,6 +72,8 @@ class PagedGridQueryView<T> extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mediaQuery = MediaQuery.of(context);
+
     SliverGridDelegate gridDelegate;
     double spacing;
 
@@ -92,7 +94,7 @@ class PagedGridQueryView<T> extends HookConsumerWidget {
     }
 
     final listView = PagedGridView<int, T>(
-      padding: MediaQuery.of(context).padding + EdgeInsets.all(spacing),
+      padding: mediaQuery.padding + EdgeInsets.all(spacing),
       pagingController: pagingController,
       builderDelegate: PagedChildBuilderDelegate(
         itemBuilder: (context, item, index) =>
@@ -127,6 +129,7 @@ class SyncAllRefresh extends HookConsumerWidget {
         try {
           await ref.read(syncServiceProvider.notifier).syncAll();
         } catch (e) {
+          if (!context.mounted) return;
           showErrorSnackbar(context, e.toString());
         }
       },

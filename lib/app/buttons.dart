@@ -32,6 +32,8 @@ class RadioPlayFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FloatingActionButton(
       heroTag: null,
       onPressed: onPressed,
@@ -44,7 +46,7 @@ class RadioPlayFab extends StatelessWidget {
             right: -10,
             child: Icon(
               Icons.play_arrow_rounded,
-              color: Theme.of(context).colorScheme.primaryContainer,
+              color: theme.colorScheme.primaryContainer,
               size: 26,
             ),
           ),

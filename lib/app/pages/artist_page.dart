@@ -118,10 +118,11 @@ class _Title extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.displayMedium!.copyWith(
+      style: theme.textTheme.displayMedium!.copyWith(
         fontWeight: FontWeight.bold,
         color: Colors.white,
         shadows: [

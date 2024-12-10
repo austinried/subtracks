@@ -131,11 +131,11 @@ class _SectionHeader extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Text(title, style: theme.headlineMedium),
+      child: Text(title, style: theme.textTheme.headlineMedium),
     );
   }
 }

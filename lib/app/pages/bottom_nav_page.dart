@@ -46,6 +46,8 @@ class BottomNavTabsPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final observer = ref.watch(bottomTabObserverProvider);
     const navElevation = 3.0;
 
@@ -63,8 +65,8 @@ class BottomNavTabsPage extends HookConsumerWidget {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle.light.copyWith(
             systemNavigationBarColor: ElevationOverlay.applySurfaceTint(
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surfaceTint,
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceTint,
               navElevation,
             ),
             statusBarColor: Colors.transparent,
@@ -111,13 +113,13 @@ class OfflineIndicator extends HookConsumerWidget {
       ),
       child: FilledButton.tonal(
         style: const ButtonStyle(
-          padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(
+          padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
             EdgeInsets.zero,
           ),
-          fixedSize: MaterialStatePropertyAll<Size>(
+          fixedSize: WidgetStatePropertyAll<Size>(
             Size(42, 42),
           ),
-          minimumSize: MaterialStatePropertyAll<Size>(
+          minimumSize: WidgetStatePropertyAll<Size>(
             Size(42, 42),
           ),
         ),
@@ -136,7 +138,6 @@ class OfflineIndicator extends HookConsumerWidget {
                 padding: EdgeInsets.only(left: 2, bottom: 2),
                 child: Icon(
                   Icons.cloud_off_rounded,
-                  // color: Theme.of(context).colorScheme.secondary,
                   size: 20,
                 ),
               ),
@@ -154,6 +155,7 @@ class _BottomNavBar extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final iconTheme = IconTheme.of(context);
     final tabsRouter = AutoTabsRouter.of(context);
 
     useListenableSelector(tabsRouter, () => tabsRouter.activeIndex);
@@ -190,9 +192,7 @@ class _BottomNavBar extends HookConsumerWidget {
                 return SvgPicture.asset(
                   'assets/tag_FILL0_wght400_GRAD0_opsz24.svg',
                   colorFilter: ColorFilter.mode(
-                    IconTheme.of(context).color!.withOpacity(
-                          IconTheme.of(context).opacity ?? 1,
-                        ),
+                    iconTheme.color!.withOpacity(iconTheme.opacity ?? 1),
                     BlendMode.srcIn,
                   ),
                   height: 28,

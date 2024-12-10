@@ -12,7 +12,7 @@ part of 'query.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Pagination _$PaginationFromJson(Map<String, dynamic> json) {
   return _Pagination.fromJson(json);
@@ -68,22 +68,22 @@ class _$PaginationCopyWithImpl<$Res, $Val extends Pagination>
 }
 
 /// @nodoc
-abstract class _$$_PaginationCopyWith<$Res>
+abstract class _$$PaginationImplCopyWith<$Res>
     implements $PaginationCopyWith<$Res> {
-  factory _$$_PaginationCopyWith(
-          _$_Pagination value, $Res Function(_$_Pagination) then) =
-      __$$_PaginationCopyWithImpl<$Res>;
+  factory _$$PaginationImplCopyWith(
+          _$PaginationImpl value, $Res Function(_$PaginationImpl) then) =
+      __$$PaginationImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int limit, int offset});
 }
 
 /// @nodoc
-class __$$_PaginationCopyWithImpl<$Res>
-    extends _$PaginationCopyWithImpl<$Res, _$_Pagination>
-    implements _$$_PaginationCopyWith<$Res> {
-  __$$_PaginationCopyWithImpl(
-      _$_Pagination _value, $Res Function(_$_Pagination) _then)
+class __$$PaginationImplCopyWithImpl<$Res>
+    extends _$PaginationCopyWithImpl<$Res, _$PaginationImpl>
+    implements _$$PaginationImplCopyWith<$Res> {
+  __$$PaginationImplCopyWithImpl(
+      _$PaginationImpl _value, $Res Function(_$PaginationImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -92,7 +92,7 @@ class __$$_PaginationCopyWithImpl<$Res>
     Object? limit = null,
     Object? offset = null,
   }) {
-    return _then(_$_Pagination(
+    return _then(_$PaginationImpl(
       limit: null == limit
           ? _value.limit
           : limit // ignore: cast_nullable_to_non_nullable
@@ -107,11 +107,11 @@ class __$$_PaginationCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_Pagination implements _Pagination {
-  const _$_Pagination({required this.limit, this.offset = 0});
+class _$PaginationImpl implements _Pagination {
+  const _$PaginationImpl({required this.limit, this.offset = 0});
 
-  factory _$_Pagination.fromJson(Map<String, dynamic> json) =>
-      _$$_PaginationFromJson(json);
+  factory _$PaginationImpl.fromJson(Map<String, dynamic> json) =>
+      _$$PaginationImplFromJson(json);
 
   @override
   final int limit;
@@ -125,10 +125,10 @@ class _$_Pagination implements _Pagination {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Pagination &&
+            other is _$PaginationImpl &&
             (identical(other.limit, limit) || other.limit == limit) &&
             (identical(other.offset, offset) || other.offset == offset));
   }
@@ -140,12 +140,12 @@ class _$_Pagination implements _Pagination {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_PaginationCopyWith<_$_Pagination> get copyWith =>
-      __$$_PaginationCopyWithImpl<_$_Pagination>(this, _$identity);
+  _$$PaginationImplCopyWith<_$PaginationImpl> get copyWith =>
+      __$$PaginationImplCopyWithImpl<_$PaginationImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_PaginationToJson(
+    return _$$PaginationImplToJson(
       this,
     );
   }
@@ -153,10 +153,10 @@ class _$_Pagination implements _Pagination {
 
 abstract class _Pagination implements Pagination {
   const factory _Pagination({required final int limit, final int offset}) =
-      _$_Pagination;
+      _$PaginationImpl;
 
   factory _Pagination.fromJson(Map<String, dynamic> json) =
-      _$_Pagination.fromJson;
+      _$PaginationImpl.fromJson;
 
   @override
   int get limit;
@@ -164,7 +164,7 @@ abstract class _Pagination implements Pagination {
   int get offset;
   @override
   @JsonKey(ignore: true)
-  _$$_PaginationCopyWith<_$_Pagination> get copyWith =>
+  _$$PaginationImplCopyWith<_$PaginationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -220,19 +220,21 @@ class _$SortByCopyWithImpl<$Res, $Val extends SortBy>
 }
 
 /// @nodoc
-abstract class _$$_SortByCopyWith<$Res> implements $SortByCopyWith<$Res> {
-  factory _$$_SortByCopyWith(_$_SortBy value, $Res Function(_$_SortBy) then) =
-      __$$_SortByCopyWithImpl<$Res>;
+abstract class _$$SortByImplCopyWith<$Res> implements $SortByCopyWith<$Res> {
+  factory _$$SortByImplCopyWith(
+          _$SortByImpl value, $Res Function(_$SortByImpl) then) =
+      __$$SortByImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, SortDirection dir});
 }
 
 /// @nodoc
-class __$$_SortByCopyWithImpl<$Res>
-    extends _$SortByCopyWithImpl<$Res, _$_SortBy>
-    implements _$$_SortByCopyWith<$Res> {
-  __$$_SortByCopyWithImpl(_$_SortBy _value, $Res Function(_$_SortBy) _then)
+class __$$SortByImplCopyWithImpl<$Res>
+    extends _$SortByCopyWithImpl<$Res, _$SortByImpl>
+    implements _$$SortByImplCopyWith<$Res> {
+  __$$SortByImplCopyWithImpl(
+      _$SortByImpl _value, $Res Function(_$SortByImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -241,7 +243,7 @@ class __$$_SortByCopyWithImpl<$Res>
     Object? column = null,
     Object? dir = null,
   }) {
-    return _then(_$_SortBy(
+    return _then(_$SortByImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -256,11 +258,11 @@ class __$$_SortByCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_SortBy implements _SortBy {
-  const _$_SortBy({required this.column, this.dir = SortDirection.asc});
+class _$SortByImpl implements _SortBy {
+  const _$SortByImpl({required this.column, this.dir = SortDirection.asc});
 
-  factory _$_SortBy.fromJson(Map<String, dynamic> json) =>
-      _$$_SortByFromJson(json);
+  factory _$SortByImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SortByImplFromJson(json);
 
   @override
   final String column;
@@ -274,10 +276,10 @@ class _$_SortBy implements _SortBy {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_SortBy &&
+            other is _$SortByImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.dir, dir) || other.dir == dir));
   }
@@ -289,12 +291,12 @@ class _$_SortBy implements _SortBy {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_SortByCopyWith<_$_SortBy> get copyWith =>
-      __$$_SortByCopyWithImpl<_$_SortBy>(this, _$identity);
+  _$$SortByImplCopyWith<_$SortByImpl> get copyWith =>
+      __$$SortByImplCopyWithImpl<_$SortByImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_SortByToJson(
+    return _$$SortByImplToJson(
       this,
     );
   }
@@ -302,9 +304,9 @@ class _$_SortBy implements _SortBy {
 
 abstract class _SortBy implements SortBy {
   const factory _SortBy(
-      {required final String column, final SortDirection dir}) = _$_SortBy;
+      {required final String column, final SortDirection dir}) = _$SortByImpl;
 
-  factory _SortBy.fromJson(Map<String, dynamic> json) = _$_SortBy.fromJson;
+  factory _SortBy.fromJson(Map<String, dynamic> json) = _$SortByImpl.fromJson;
 
   @override
   String get column;
@@ -312,7 +314,7 @@ abstract class _SortBy implements SortBy {
   SortDirection get dir;
   @override
   @JsonKey(ignore: true)
-  _$$_SortByCopyWith<_$_SortBy> get copyWith =>
+  _$$SortByImplCopyWith<_$SortByImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -436,22 +438,22 @@ class _$FilterWithCopyWithImpl<$Res, $Val extends FilterWith>
 }
 
 /// @nodoc
-abstract class _$$_FilterWithEqualsCopyWith<$Res>
+abstract class _$$FilterWithEqualsImplCopyWith<$Res>
     implements $FilterWithCopyWith<$Res> {
-  factory _$$_FilterWithEqualsCopyWith(
-          _$_FilterWithEquals value, $Res Function(_$_FilterWithEquals) then) =
-      __$$_FilterWithEqualsCopyWithImpl<$Res>;
+  factory _$$FilterWithEqualsImplCopyWith(_$FilterWithEqualsImpl value,
+          $Res Function(_$FilterWithEqualsImpl) then) =
+      __$$FilterWithEqualsImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, String value, bool invert});
 }
 
 /// @nodoc
-class __$$_FilterWithEqualsCopyWithImpl<$Res>
-    extends _$FilterWithCopyWithImpl<$Res, _$_FilterWithEquals>
-    implements _$$_FilterWithEqualsCopyWith<$Res> {
-  __$$_FilterWithEqualsCopyWithImpl(
-      _$_FilterWithEquals _value, $Res Function(_$_FilterWithEquals) _then)
+class __$$FilterWithEqualsImplCopyWithImpl<$Res>
+    extends _$FilterWithCopyWithImpl<$Res, _$FilterWithEqualsImpl>
+    implements _$$FilterWithEqualsImplCopyWith<$Res> {
+  __$$FilterWithEqualsImplCopyWithImpl(_$FilterWithEqualsImpl _value,
+      $Res Function(_$FilterWithEqualsImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -461,7 +463,7 @@ class __$$_FilterWithEqualsCopyWithImpl<$Res>
     Object? value = null,
     Object? invert = null,
   }) {
-    return _then(_$_FilterWithEquals(
+    return _then(_$FilterWithEqualsImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -480,16 +482,16 @@ class __$$_FilterWithEqualsCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FilterWithEquals implements _FilterWithEquals {
-  const _$_FilterWithEquals(
+class _$FilterWithEqualsImpl implements _FilterWithEquals {
+  const _$FilterWithEqualsImpl(
       {required this.column,
       required this.value,
       this.invert = false,
       final String? $type})
       : $type = $type ?? 'equals';
 
-  factory _$_FilterWithEquals.fromJson(Map<String, dynamic> json) =>
-      _$$_FilterWithEqualsFromJson(json);
+  factory _$FilterWithEqualsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FilterWithEqualsImplFromJson(json);
 
   @override
   final String column;
@@ -508,10 +510,10 @@ class _$_FilterWithEquals implements _FilterWithEquals {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FilterWithEquals &&
+            other is _$FilterWithEqualsImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.value, value) || other.value == value) &&
             (identical(other.invert, invert) || other.invert == invert));
@@ -524,8 +526,9 @@ class _$_FilterWithEquals implements _FilterWithEquals {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FilterWithEqualsCopyWith<_$_FilterWithEquals> get copyWith =>
-      __$$_FilterWithEqualsCopyWithImpl<_$_FilterWithEquals>(this, _$identity);
+  _$$FilterWithEqualsImplCopyWith<_$FilterWithEqualsImpl> get copyWith =>
+      __$$FilterWithEqualsImplCopyWithImpl<_$FilterWithEqualsImpl>(
+          this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -611,7 +614,7 @@ class _$_FilterWithEquals implements _FilterWithEquals {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FilterWithEqualsToJson(
+    return _$$FilterWithEqualsImplToJson(
       this,
     );
   }
@@ -621,10 +624,10 @@ abstract class _FilterWithEquals implements FilterWith {
   const factory _FilterWithEquals(
       {required final String column,
       required final String value,
-      final bool invert}) = _$_FilterWithEquals;
+      final bool invert}) = _$FilterWithEqualsImpl;
 
   factory _FilterWithEquals.fromJson(Map<String, dynamic> json) =
-      _$_FilterWithEquals.fromJson;
+      _$FilterWithEqualsImpl.fromJson;
 
   @override
   String get column;
@@ -632,27 +635,28 @@ abstract class _FilterWithEquals implements FilterWith {
   bool get invert;
   @override
   @JsonKey(ignore: true)
-  _$$_FilterWithEqualsCopyWith<_$_FilterWithEquals> get copyWith =>
+  _$$FilterWithEqualsImplCopyWith<_$FilterWithEqualsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_FilterWithGreaterThanCopyWith<$Res>
+abstract class _$$FilterWithGreaterThanImplCopyWith<$Res>
     implements $FilterWithCopyWith<$Res> {
-  factory _$$_FilterWithGreaterThanCopyWith(_$_FilterWithGreaterThan value,
-          $Res Function(_$_FilterWithGreaterThan) then) =
-      __$$_FilterWithGreaterThanCopyWithImpl<$Res>;
+  factory _$$FilterWithGreaterThanImplCopyWith(
+          _$FilterWithGreaterThanImpl value,
+          $Res Function(_$FilterWithGreaterThanImpl) then) =
+      __$$FilterWithGreaterThanImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, String value, bool orEquals});
 }
 
 /// @nodoc
-class __$$_FilterWithGreaterThanCopyWithImpl<$Res>
-    extends _$FilterWithCopyWithImpl<$Res, _$_FilterWithGreaterThan>
-    implements _$$_FilterWithGreaterThanCopyWith<$Res> {
-  __$$_FilterWithGreaterThanCopyWithImpl(_$_FilterWithGreaterThan _value,
-      $Res Function(_$_FilterWithGreaterThan) _then)
+class __$$FilterWithGreaterThanImplCopyWithImpl<$Res>
+    extends _$FilterWithCopyWithImpl<$Res, _$FilterWithGreaterThanImpl>
+    implements _$$FilterWithGreaterThanImplCopyWith<$Res> {
+  __$$FilterWithGreaterThanImplCopyWithImpl(_$FilterWithGreaterThanImpl _value,
+      $Res Function(_$FilterWithGreaterThanImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -662,7 +666,7 @@ class __$$_FilterWithGreaterThanCopyWithImpl<$Res>
     Object? value = null,
     Object? orEquals = null,
   }) {
-    return _then(_$_FilterWithGreaterThan(
+    return _then(_$FilterWithGreaterThanImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -681,16 +685,16 @@ class __$$_FilterWithGreaterThanCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FilterWithGreaterThan implements _FilterWithGreaterThan {
-  const _$_FilterWithGreaterThan(
+class _$FilterWithGreaterThanImpl implements _FilterWithGreaterThan {
+  const _$FilterWithGreaterThanImpl(
       {required this.column,
       required this.value,
       this.orEquals = false,
       final String? $type})
       : $type = $type ?? 'greaterThan';
 
-  factory _$_FilterWithGreaterThan.fromJson(Map<String, dynamic> json) =>
-      _$$_FilterWithGreaterThanFromJson(json);
+  factory _$FilterWithGreaterThanImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FilterWithGreaterThanImplFromJson(json);
 
   @override
   final String column;
@@ -709,10 +713,10 @@ class _$_FilterWithGreaterThan implements _FilterWithGreaterThan {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FilterWithGreaterThan &&
+            other is _$FilterWithGreaterThanImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.value, value) || other.value == value) &&
             (identical(other.orEquals, orEquals) ||
@@ -726,9 +730,9 @@ class _$_FilterWithGreaterThan implements _FilterWithGreaterThan {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FilterWithGreaterThanCopyWith<_$_FilterWithGreaterThan> get copyWith =>
-      __$$_FilterWithGreaterThanCopyWithImpl<_$_FilterWithGreaterThan>(
-          this, _$identity);
+  _$$FilterWithGreaterThanImplCopyWith<_$FilterWithGreaterThanImpl>
+      get copyWith => __$$FilterWithGreaterThanImplCopyWithImpl<
+          _$FilterWithGreaterThanImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -814,7 +818,7 @@ class _$_FilterWithGreaterThan implements _FilterWithGreaterThan {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FilterWithGreaterThanToJson(
+    return _$$FilterWithGreaterThanImplToJson(
       this,
     );
   }
@@ -824,10 +828,10 @@ abstract class _FilterWithGreaterThan implements FilterWith {
   const factory _FilterWithGreaterThan(
       {required final String column,
       required final String value,
-      final bool orEquals}) = _$_FilterWithGreaterThan;
+      final bool orEquals}) = _$FilterWithGreaterThanImpl;
 
   factory _FilterWithGreaterThan.fromJson(Map<String, dynamic> json) =
-      _$_FilterWithGreaterThan.fromJson;
+      _$FilterWithGreaterThanImpl.fromJson;
 
   @override
   String get column;
@@ -835,27 +839,27 @@ abstract class _FilterWithGreaterThan implements FilterWith {
   bool get orEquals;
   @override
   @JsonKey(ignore: true)
-  _$$_FilterWithGreaterThanCopyWith<_$_FilterWithGreaterThan> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$FilterWithGreaterThanImplCopyWith<_$FilterWithGreaterThanImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_FilterWithIsNullCopyWith<$Res>
+abstract class _$$FilterWithIsNullImplCopyWith<$Res>
     implements $FilterWithCopyWith<$Res> {
-  factory _$$_FilterWithIsNullCopyWith(
-          _$_FilterWithIsNull value, $Res Function(_$_FilterWithIsNull) then) =
-      __$$_FilterWithIsNullCopyWithImpl<$Res>;
+  factory _$$FilterWithIsNullImplCopyWith(_$FilterWithIsNullImpl value,
+          $Res Function(_$FilterWithIsNullImpl) then) =
+      __$$FilterWithIsNullImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, bool invert});
 }
 
 /// @nodoc
-class __$$_FilterWithIsNullCopyWithImpl<$Res>
-    extends _$FilterWithCopyWithImpl<$Res, _$_FilterWithIsNull>
-    implements _$$_FilterWithIsNullCopyWith<$Res> {
-  __$$_FilterWithIsNullCopyWithImpl(
-      _$_FilterWithIsNull _value, $Res Function(_$_FilterWithIsNull) _then)
+class __$$FilterWithIsNullImplCopyWithImpl<$Res>
+    extends _$FilterWithCopyWithImpl<$Res, _$FilterWithIsNullImpl>
+    implements _$$FilterWithIsNullImplCopyWith<$Res> {
+  __$$FilterWithIsNullImplCopyWithImpl(_$FilterWithIsNullImpl _value,
+      $Res Function(_$FilterWithIsNullImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -864,7 +868,7 @@ class __$$_FilterWithIsNullCopyWithImpl<$Res>
     Object? column = null,
     Object? invert = null,
   }) {
-    return _then(_$_FilterWithIsNull(
+    return _then(_$FilterWithIsNullImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -879,13 +883,13 @@ class __$$_FilterWithIsNullCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FilterWithIsNull implements _FilterWithIsNull {
-  const _$_FilterWithIsNull(
+class _$FilterWithIsNullImpl implements _FilterWithIsNull {
+  const _$FilterWithIsNullImpl(
       {required this.column, this.invert = false, final String? $type})
       : $type = $type ?? 'isNull';
 
-  factory _$_FilterWithIsNull.fromJson(Map<String, dynamic> json) =>
-      _$$_FilterWithIsNullFromJson(json);
+  factory _$FilterWithIsNullImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FilterWithIsNullImplFromJson(json);
 
   @override
   final String column;
@@ -902,10 +906,10 @@ class _$_FilterWithIsNull implements _FilterWithIsNull {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FilterWithIsNull &&
+            other is _$FilterWithIsNullImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.invert, invert) || other.invert == invert));
   }
@@ -917,8 +921,9 @@ class _$_FilterWithIsNull implements _FilterWithIsNull {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FilterWithIsNullCopyWith<_$_FilterWithIsNull> get copyWith =>
-      __$$_FilterWithIsNullCopyWithImpl<_$_FilterWithIsNull>(this, _$identity);
+  _$$FilterWithIsNullImplCopyWith<_$FilterWithIsNullImpl> get copyWith =>
+      __$$FilterWithIsNullImplCopyWithImpl<_$FilterWithIsNullImpl>(
+          this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1004,7 +1009,7 @@ class _$_FilterWithIsNull implements _FilterWithIsNull {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FilterWithIsNullToJson(
+    return _$$FilterWithIsNullImplToJson(
       this,
     );
   }
@@ -1012,37 +1017,38 @@ class _$_FilterWithIsNull implements _FilterWithIsNull {
 
 abstract class _FilterWithIsNull implements FilterWith {
   const factory _FilterWithIsNull(
-      {required final String column, final bool invert}) = _$_FilterWithIsNull;
+      {required final String column,
+      final bool invert}) = _$FilterWithIsNullImpl;
 
   factory _FilterWithIsNull.fromJson(Map<String, dynamic> json) =
-      _$_FilterWithIsNull.fromJson;
+      _$FilterWithIsNullImpl.fromJson;
 
   @override
   String get column;
   bool get invert;
   @override
   @JsonKey(ignore: true)
-  _$$_FilterWithIsNullCopyWith<_$_FilterWithIsNull> get copyWith =>
+  _$$FilterWithIsNullImplCopyWith<_$FilterWithIsNullImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_FilterWithBetweenIntCopyWith<$Res>
+abstract class _$$FilterWithBetweenIntImplCopyWith<$Res>
     implements $FilterWithCopyWith<$Res> {
-  factory _$$_FilterWithBetweenIntCopyWith(_$_FilterWithBetweenInt value,
-          $Res Function(_$_FilterWithBetweenInt) then) =
-      __$$_FilterWithBetweenIntCopyWithImpl<$Res>;
+  factory _$$FilterWithBetweenIntImplCopyWith(_$FilterWithBetweenIntImpl value,
+          $Res Function(_$FilterWithBetweenIntImpl) then) =
+      __$$FilterWithBetweenIntImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, int from, int to});
 }
 
 /// @nodoc
-class __$$_FilterWithBetweenIntCopyWithImpl<$Res>
-    extends _$FilterWithCopyWithImpl<$Res, _$_FilterWithBetweenInt>
-    implements _$$_FilterWithBetweenIntCopyWith<$Res> {
-  __$$_FilterWithBetweenIntCopyWithImpl(_$_FilterWithBetweenInt _value,
-      $Res Function(_$_FilterWithBetweenInt) _then)
+class __$$FilterWithBetweenIntImplCopyWithImpl<$Res>
+    extends _$FilterWithCopyWithImpl<$Res, _$FilterWithBetweenIntImpl>
+    implements _$$FilterWithBetweenIntImplCopyWith<$Res> {
+  __$$FilterWithBetweenIntImplCopyWithImpl(_$FilterWithBetweenIntImpl _value,
+      $Res Function(_$FilterWithBetweenIntImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1052,7 +1058,7 @@ class __$$_FilterWithBetweenIntCopyWithImpl<$Res>
     Object? from = null,
     Object? to = null,
   }) {
-    return _then(_$_FilterWithBetweenInt(
+    return _then(_$FilterWithBetweenIntImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -1071,16 +1077,16 @@ class __$$_FilterWithBetweenIntCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FilterWithBetweenInt implements _FilterWithBetweenInt {
-  const _$_FilterWithBetweenInt(
+class _$FilterWithBetweenIntImpl implements _FilterWithBetweenInt {
+  const _$FilterWithBetweenIntImpl(
       {required this.column,
       required this.from,
       required this.to,
       final String? $type})
       : $type = $type ?? 'betweenInt';
 
-  factory _$_FilterWithBetweenInt.fromJson(Map<String, dynamic> json) =>
-      _$$_FilterWithBetweenIntFromJson(json);
+  factory _$FilterWithBetweenIntImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FilterWithBetweenIntImplFromJson(json);
 
   @override
   final String column;
@@ -1098,10 +1104,10 @@ class _$_FilterWithBetweenInt implements _FilterWithBetweenInt {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FilterWithBetweenInt &&
+            other is _$FilterWithBetweenIntImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.from, from) || other.from == from) &&
             (identical(other.to, to) || other.to == to));
@@ -1114,9 +1120,10 @@ class _$_FilterWithBetweenInt implements _FilterWithBetweenInt {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FilterWithBetweenIntCopyWith<_$_FilterWithBetweenInt> get copyWith =>
-      __$$_FilterWithBetweenIntCopyWithImpl<_$_FilterWithBetweenInt>(
-          this, _$identity);
+  _$$FilterWithBetweenIntImplCopyWith<_$FilterWithBetweenIntImpl>
+      get copyWith =>
+          __$$FilterWithBetweenIntImplCopyWithImpl<_$FilterWithBetweenIntImpl>(
+              this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1202,7 +1209,7 @@ class _$_FilterWithBetweenInt implements _FilterWithBetweenInt {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FilterWithBetweenIntToJson(
+    return _$$FilterWithBetweenIntImplToJson(
       this,
     );
   }
@@ -1212,10 +1219,10 @@ abstract class _FilterWithBetweenInt implements FilterWith {
   const factory _FilterWithBetweenInt(
       {required final String column,
       required final int from,
-      required final int to}) = _$_FilterWithBetweenInt;
+      required final int to}) = _$FilterWithBetweenIntImpl;
 
   factory _FilterWithBetweenInt.fromJson(Map<String, dynamic> json) =
-      _$_FilterWithBetweenInt.fromJson;
+      _$FilterWithBetweenIntImpl.fromJson;
 
   @override
   String get column;
@@ -1223,27 +1230,27 @@ abstract class _FilterWithBetweenInt implements FilterWith {
   int get to;
   @override
   @JsonKey(ignore: true)
-  _$$_FilterWithBetweenIntCopyWith<_$_FilterWithBetweenInt> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$FilterWithBetweenIntImplCopyWith<_$FilterWithBetweenIntImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_FilterWithIsInCopyWith<$Res>
+abstract class _$$FilterWithIsInImplCopyWith<$Res>
     implements $FilterWithCopyWith<$Res> {
-  factory _$$_FilterWithIsInCopyWith(
-          _$_FilterWithIsIn value, $Res Function(_$_FilterWithIsIn) then) =
-      __$$_FilterWithIsInCopyWithImpl<$Res>;
+  factory _$$FilterWithIsInImplCopyWith(_$FilterWithIsInImpl value,
+          $Res Function(_$FilterWithIsInImpl) then) =
+      __$$FilterWithIsInImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String column, bool invert, IList<String> values});
 }
 
 /// @nodoc
-class __$$_FilterWithIsInCopyWithImpl<$Res>
-    extends _$FilterWithCopyWithImpl<$Res, _$_FilterWithIsIn>
-    implements _$$_FilterWithIsInCopyWith<$Res> {
-  __$$_FilterWithIsInCopyWithImpl(
-      _$_FilterWithIsIn _value, $Res Function(_$_FilterWithIsIn) _then)
+class __$$FilterWithIsInImplCopyWithImpl<$Res>
+    extends _$FilterWithCopyWithImpl<$Res, _$FilterWithIsInImpl>
+    implements _$$FilterWithIsInImplCopyWith<$Res> {
+  __$$FilterWithIsInImplCopyWithImpl(
+      _$FilterWithIsInImpl _value, $Res Function(_$FilterWithIsInImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1253,7 +1260,7 @@ class __$$_FilterWithIsInCopyWithImpl<$Res>
     Object? invert = null,
     Object? values = null,
   }) {
-    return _then(_$_FilterWithIsIn(
+    return _then(_$FilterWithIsInImpl(
       column: null == column
           ? _value.column
           : column // ignore: cast_nullable_to_non_nullable
@@ -1272,16 +1279,16 @@ class __$$_FilterWithIsInCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FilterWithIsIn implements _FilterWithIsIn {
-  const _$_FilterWithIsIn(
+class _$FilterWithIsInImpl implements _FilterWithIsIn {
+  const _$FilterWithIsInImpl(
       {required this.column,
       this.invert = false,
       this.values = const IListConst([]),
       final String? $type})
       : $type = $type ?? 'isIn';
 
-  factory _$_FilterWithIsIn.fromJson(Map<String, dynamic> json) =>
-      _$$_FilterWithIsInFromJson(json);
+  factory _$FilterWithIsInImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FilterWithIsInImplFromJson(json);
 
   @override
   final String column;
@@ -1301,10 +1308,10 @@ class _$_FilterWithIsIn implements _FilterWithIsIn {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FilterWithIsIn &&
+            other is _$FilterWithIsInImpl &&
             (identical(other.column, column) || other.column == column) &&
             (identical(other.invert, invert) || other.invert == invert) &&
             const DeepCollectionEquality().equals(other.values, values));
@@ -1318,8 +1325,9 @@ class _$_FilterWithIsIn implements _FilterWithIsIn {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FilterWithIsInCopyWith<_$_FilterWithIsIn> get copyWith =>
-      __$$_FilterWithIsInCopyWithImpl<_$_FilterWithIsIn>(this, _$identity);
+  _$$FilterWithIsInImplCopyWith<_$FilterWithIsInImpl> get copyWith =>
+      __$$FilterWithIsInImplCopyWithImpl<_$FilterWithIsInImpl>(
+          this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1405,7 +1413,7 @@ class _$_FilterWithIsIn implements _FilterWithIsIn {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FilterWithIsInToJson(
+    return _$$FilterWithIsInImplToJson(
       this,
     );
   }
@@ -1415,10 +1423,10 @@ abstract class _FilterWithIsIn implements FilterWith {
   const factory _FilterWithIsIn(
       {required final String column,
       final bool invert,
-      final IList<String> values}) = _$_FilterWithIsIn;
+      final IList<String> values}) = _$FilterWithIsInImpl;
 
   factory _FilterWithIsIn.fromJson(Map<String, dynamic> json) =
-      _$_FilterWithIsIn.fromJson;
+      _$FilterWithIsInImpl.fromJson;
 
   @override
   String get column;
@@ -1426,7 +1434,7 @@ abstract class _FilterWithIsIn implements FilterWith {
   IList<String> get values;
   @override
   @JsonKey(ignore: true)
-  _$$_FilterWithIsInCopyWith<_$_FilterWithIsIn> get copyWith =>
+  _$$FilterWithIsInImplCopyWith<_$FilterWithIsInImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1512,10 +1520,11 @@ class _$ListQueryCopyWithImpl<$Res, $Val extends ListQuery>
 }
 
 /// @nodoc
-abstract class _$$_ListQueryCopyWith<$Res> implements $ListQueryCopyWith<$Res> {
-  factory _$$_ListQueryCopyWith(
-          _$_ListQuery value, $Res Function(_$_ListQuery) then) =
-      __$$_ListQueryCopyWithImpl<$Res>;
+abstract class _$$ListQueryImplCopyWith<$Res>
+    implements $ListQueryCopyWith<$Res> {
+  factory _$$ListQueryImplCopyWith(
+          _$ListQueryImpl value, $Res Function(_$ListQueryImpl) then) =
+      __$$ListQueryImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({Pagination page, SortBy? sort, IList<FilterWith> filters});
@@ -1527,11 +1536,11 @@ abstract class _$$_ListQueryCopyWith<$Res> implements $ListQueryCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_ListQueryCopyWithImpl<$Res>
-    extends _$ListQueryCopyWithImpl<$Res, _$_ListQuery>
-    implements _$$_ListQueryCopyWith<$Res> {
-  __$$_ListQueryCopyWithImpl(
-      _$_ListQuery _value, $Res Function(_$_ListQuery) _then)
+class __$$ListQueryImplCopyWithImpl<$Res>
+    extends _$ListQueryCopyWithImpl<$Res, _$ListQueryImpl>
+    implements _$$ListQueryImplCopyWith<$Res> {
+  __$$ListQueryImplCopyWithImpl(
+      _$ListQueryImpl _value, $Res Function(_$ListQueryImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1541,7 +1550,7 @@ class __$$_ListQueryCopyWithImpl<$Res>
     Object? sort = freezed,
     Object? filters = null,
   }) {
-    return _then(_$_ListQuery(
+    return _then(_$ListQueryImpl(
       page: null == page
           ? _value.page
           : page // ignore: cast_nullable_to_non_nullable
@@ -1560,14 +1569,14 @@ class __$$_ListQueryCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_ListQuery implements _ListQuery {
-  const _$_ListQuery(
+class _$ListQueryImpl implements _ListQuery {
+  const _$ListQueryImpl(
       {this.page = const Pagination(limit: -1, offset: 0),
       this.sort,
       this.filters = const IListConst([])});
 
-  factory _$_ListQuery.fromJson(Map<String, dynamic> json) =>
-      _$$_ListQueryFromJson(json);
+  factory _$ListQueryImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ListQueryImplFromJson(json);
 
   @override
   @JsonKey()
@@ -1584,10 +1593,10 @@ class _$_ListQuery implements _ListQuery {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ListQuery &&
+            other is _$ListQueryImpl &&
             (identical(other.page, page) || other.page == page) &&
             (identical(other.sort, sort) || other.sort == sort) &&
             const DeepCollectionEquality().equals(other.filters, filters));
@@ -1601,12 +1610,12 @@ class _$_ListQuery implements _ListQuery {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ListQueryCopyWith<_$_ListQuery> get copyWith =>
-      __$$_ListQueryCopyWithImpl<_$_ListQuery>(this, _$identity);
+  _$$ListQueryImplCopyWith<_$ListQueryImpl> get copyWith =>
+      __$$ListQueryImplCopyWithImpl<_$ListQueryImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_ListQueryToJson(
+    return _$$ListQueryImplToJson(
       this,
     );
   }
@@ -1616,10 +1625,10 @@ abstract class _ListQuery implements ListQuery {
   const factory _ListQuery(
       {final Pagination page,
       final SortBy? sort,
-      final IList<FilterWith> filters}) = _$_ListQuery;
+      final IList<FilterWith> filters}) = _$ListQueryImpl;
 
   factory _ListQuery.fromJson(Map<String, dynamic> json) =
-      _$_ListQuery.fromJson;
+      _$ListQueryImpl.fromJson;
 
   @override
   Pagination get page;
@@ -1629,7 +1638,7 @@ abstract class _ListQuery implements ListQuery {
   IList<FilterWith> get filters;
   @override
   @JsonKey(ignore: true)
-  _$$_ListQueryCopyWith<_$_ListQuery> get copyWith =>
+  _$$ListQueryImplCopyWith<_$ListQueryImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1682,22 +1691,22 @@ class _$ListQueryOptionsCopyWithImpl<$Res, $Val extends ListQueryOptions>
 }
 
 /// @nodoc
-abstract class _$$_ListQueryOptionsCopyWith<$Res>
+abstract class _$$ListQueryOptionsImplCopyWith<$Res>
     implements $ListQueryOptionsCopyWith<$Res> {
-  factory _$$_ListQueryOptionsCopyWith(
-          _$_ListQueryOptions value, $Res Function(_$_ListQueryOptions) then) =
-      __$$_ListQueryOptionsCopyWithImpl<$Res>;
+  factory _$$ListQueryOptionsImplCopyWith(_$ListQueryOptionsImpl value,
+          $Res Function(_$ListQueryOptionsImpl) then) =
+      __$$ListQueryOptionsImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({IList<String> sortColumns, IList<String> filterColumns});
 }
 
 /// @nodoc
-class __$$_ListQueryOptionsCopyWithImpl<$Res>
-    extends _$ListQueryOptionsCopyWithImpl<$Res, _$_ListQueryOptions>
-    implements _$$_ListQueryOptionsCopyWith<$Res> {
-  __$$_ListQueryOptionsCopyWithImpl(
-      _$_ListQueryOptions _value, $Res Function(_$_ListQueryOptions) _then)
+class __$$ListQueryOptionsImplCopyWithImpl<$Res>
+    extends _$ListQueryOptionsCopyWithImpl<$Res, _$ListQueryOptionsImpl>
+    implements _$$ListQueryOptionsImplCopyWith<$Res> {
+  __$$ListQueryOptionsImplCopyWithImpl(_$ListQueryOptionsImpl _value,
+      $Res Function(_$ListQueryOptionsImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1706,7 +1715,7 @@ class __$$_ListQueryOptionsCopyWithImpl<$Res>
     Object? sortColumns = null,
     Object? filterColumns = null,
   }) {
-    return _then(_$_ListQueryOptions(
+    return _then(_$ListQueryOptionsImpl(
       sortColumns: null == sortColumns
           ? _value.sortColumns
           : sortColumns // ignore: cast_nullable_to_non_nullable
@@ -1721,8 +1730,8 @@ class __$$_ListQueryOptionsCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ListQueryOptions implements _ListQueryOptions {
-  const _$_ListQueryOptions(
+class _$ListQueryOptionsImpl implements _ListQueryOptions {
+  const _$ListQueryOptionsImpl(
       {required this.sortColumns, required this.filterColumns});
 
   @override
@@ -1736,10 +1745,10 @@ class _$_ListQueryOptions implements _ListQueryOptions {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ListQueryOptions &&
+            other is _$ListQueryOptionsImpl &&
             const DeepCollectionEquality()
                 .equals(other.sortColumns, sortColumns) &&
             const DeepCollectionEquality()
@@ -1755,14 +1764,15 @@ class _$_ListQueryOptions implements _ListQueryOptions {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ListQueryOptionsCopyWith<_$_ListQueryOptions> get copyWith =>
-      __$$_ListQueryOptionsCopyWithImpl<_$_ListQueryOptions>(this, _$identity);
+  _$$ListQueryOptionsImplCopyWith<_$ListQueryOptionsImpl> get copyWith =>
+      __$$ListQueryOptionsImplCopyWithImpl<_$ListQueryOptionsImpl>(
+          this, _$identity);
 }
 
 abstract class _ListQueryOptions implements ListQueryOptions {
   const factory _ListQueryOptions(
       {required final IList<String> sortColumns,
-      required final IList<String> filterColumns}) = _$_ListQueryOptions;
+      required final IList<String> filterColumns}) = _$ListQueryOptionsImpl;
 
   @override
   IList<String> get sortColumns;
@@ -1770,7 +1780,7 @@ abstract class _ListQueryOptions implements ListQueryOptions {
   IList<String> get filterColumns;
   @override
   @JsonKey(ignore: true)
-  _$$_ListQueryOptionsCopyWith<_$_ListQueryOptions> get copyWith =>
+  _$$ListQueryOptionsImplCopyWith<_$ListQueryOptionsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1842,11 +1852,11 @@ class _$LibraryListQueryCopyWithImpl<$Res, $Val extends LibraryListQuery>
 }
 
 /// @nodoc
-abstract class _$$_LibraryListQueryCopyWith<$Res>
+abstract class _$$LibraryListQueryImplCopyWith<$Res>
     implements $LibraryListQueryCopyWith<$Res> {
-  factory _$$_LibraryListQueryCopyWith(
-          _$_LibraryListQuery value, $Res Function(_$_LibraryListQuery) then) =
-      __$$_LibraryListQueryCopyWithImpl<$Res>;
+  factory _$$LibraryListQueryImplCopyWith(_$LibraryListQueryImpl value,
+          $Res Function(_$LibraryListQueryImpl) then) =
+      __$$LibraryListQueryImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({ListQueryOptions options, ListQuery query});
@@ -1858,11 +1868,11 @@ abstract class _$$_LibraryListQueryCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_LibraryListQueryCopyWithImpl<$Res>
-    extends _$LibraryListQueryCopyWithImpl<$Res, _$_LibraryListQuery>
-    implements _$$_LibraryListQueryCopyWith<$Res> {
-  __$$_LibraryListQueryCopyWithImpl(
-      _$_LibraryListQuery _value, $Res Function(_$_LibraryListQuery) _then)
+class __$$LibraryListQueryImplCopyWithImpl<$Res>
+    extends _$LibraryListQueryCopyWithImpl<$Res, _$LibraryListQueryImpl>
+    implements _$$LibraryListQueryImplCopyWith<$Res> {
+  __$$LibraryListQueryImplCopyWithImpl(_$LibraryListQueryImpl _value,
+      $Res Function(_$LibraryListQueryImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1871,7 +1881,7 @@ class __$$_LibraryListQueryCopyWithImpl<$Res>
     Object? options = null,
     Object? query = null,
   }) {
-    return _then(_$_LibraryListQuery(
+    return _then(_$LibraryListQueryImpl(
       options: null == options
           ? _value.options
           : options // ignore: cast_nullable_to_non_nullable
@@ -1886,8 +1896,8 @@ class __$$_LibraryListQueryCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_LibraryListQuery implements _LibraryListQuery {
-  const _$_LibraryListQuery({required this.options, required this.query});
+class _$LibraryListQueryImpl implements _LibraryListQuery {
+  const _$LibraryListQueryImpl({required this.options, required this.query});
 
   @override
   final ListQueryOptions options;
@@ -1900,10 +1910,10 @@ class _$_LibraryListQuery implements _LibraryListQuery {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_LibraryListQuery &&
+            other is _$LibraryListQueryImpl &&
             (identical(other.options, options) || other.options == options) &&
             (identical(other.query, query) || other.query == query));
   }
@@ -1914,14 +1924,15 @@ class _$_LibraryListQuery implements _LibraryListQuery {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_LibraryListQueryCopyWith<_$_LibraryListQuery> get copyWith =>
-      __$$_LibraryListQueryCopyWithImpl<_$_LibraryListQuery>(this, _$identity);
+  _$$LibraryListQueryImplCopyWith<_$LibraryListQueryImpl> get copyWith =>
+      __$$LibraryListQueryImplCopyWithImpl<_$LibraryListQueryImpl>(
+          this, _$identity);
 }
 
 abstract class _LibraryListQuery implements LibraryListQuery {
   const factory _LibraryListQuery(
       {required final ListQueryOptions options,
-      required final ListQuery query}) = _$_LibraryListQuery;
+      required final ListQuery query}) = _$LibraryListQueryImpl;
 
   @override
   ListQueryOptions get options;
@@ -1929,6 +1940,6 @@ abstract class _LibraryListQuery implements LibraryListQuery {
   ListQuery get query;
   @override
   @JsonKey(ignore: true)
-  _$$_LibraryListQueryCopyWith<_$_LibraryListQuery> get copyWith =>
+  _$$LibraryListQueryImplCopyWith<_$LibraryListQueryImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

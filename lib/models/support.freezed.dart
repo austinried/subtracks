@@ -12,7 +12,7 @@ part of 'support.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$UriCacheInfo {
@@ -69,22 +69,22 @@ class _$UriCacheInfoCopyWithImpl<$Res, $Val extends UriCacheInfo>
 }
 
 /// @nodoc
-abstract class _$$_UriCacheInfoCopyWith<$Res>
+abstract class _$$UriCacheInfoImplCopyWith<$Res>
     implements $UriCacheInfoCopyWith<$Res> {
-  factory _$$_UriCacheInfoCopyWith(
-          _$_UriCacheInfo value, $Res Function(_$_UriCacheInfo) then) =
-      __$$_UriCacheInfoCopyWithImpl<$Res>;
+  factory _$$UriCacheInfoImplCopyWith(
+          _$UriCacheInfoImpl value, $Res Function(_$UriCacheInfoImpl) then) =
+      __$$UriCacheInfoImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({Uri uri, String cacheKey, CacheManager cacheManager});
 }
 
 /// @nodoc
-class __$$_UriCacheInfoCopyWithImpl<$Res>
-    extends _$UriCacheInfoCopyWithImpl<$Res, _$_UriCacheInfo>
-    implements _$$_UriCacheInfoCopyWith<$Res> {
-  __$$_UriCacheInfoCopyWithImpl(
-      _$_UriCacheInfo _value, $Res Function(_$_UriCacheInfo) _then)
+class __$$UriCacheInfoImplCopyWithImpl<$Res>
+    extends _$UriCacheInfoCopyWithImpl<$Res, _$UriCacheInfoImpl>
+    implements _$$UriCacheInfoImplCopyWith<$Res> {
+  __$$UriCacheInfoImplCopyWithImpl(
+      _$UriCacheInfoImpl _value, $Res Function(_$UriCacheInfoImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -94,7 +94,7 @@ class __$$_UriCacheInfoCopyWithImpl<$Res>
     Object? cacheKey = null,
     Object? cacheManager = null,
   }) {
-    return _then(_$_UriCacheInfo(
+    return _then(_$UriCacheInfoImpl(
       uri: null == uri
           ? _value.uri
           : uri // ignore: cast_nullable_to_non_nullable
@@ -113,8 +113,8 @@ class __$$_UriCacheInfoCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_UriCacheInfo implements _UriCacheInfo {
-  const _$_UriCacheInfo(
+class _$UriCacheInfoImpl implements _UriCacheInfo {
+  const _$UriCacheInfoImpl(
       {required this.uri, required this.cacheKey, required this.cacheManager});
 
   @override
@@ -130,10 +130,10 @@ class _$_UriCacheInfo implements _UriCacheInfo {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_UriCacheInfo &&
+            other is _$UriCacheInfoImpl &&
             (identical(other.uri, uri) || other.uri == uri) &&
             (identical(other.cacheKey, cacheKey) ||
                 other.cacheKey == cacheKey) &&
@@ -147,15 +147,15 @@ class _$_UriCacheInfo implements _UriCacheInfo {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_UriCacheInfoCopyWith<_$_UriCacheInfo> get copyWith =>
-      __$$_UriCacheInfoCopyWithImpl<_$_UriCacheInfo>(this, _$identity);
+  _$$UriCacheInfoImplCopyWith<_$UriCacheInfoImpl> get copyWith =>
+      __$$UriCacheInfoImplCopyWithImpl<_$UriCacheInfoImpl>(this, _$identity);
 }
 
 abstract class _UriCacheInfo implements UriCacheInfo {
   const factory _UriCacheInfo(
       {required final Uri uri,
       required final String cacheKey,
-      required final CacheManager cacheManager}) = _$_UriCacheInfo;
+      required final CacheManager cacheManager}) = _$UriCacheInfoImpl;
 
   @override
   Uri get uri;
@@ -165,7 +165,7 @@ abstract class _UriCacheInfo implements UriCacheInfo {
   CacheManager get cacheManager;
   @override
   @JsonKey(ignore: true)
-  _$$_UriCacheInfoCopyWith<_$_UriCacheInfo> get copyWith =>
+  _$$UriCacheInfoImplCopyWith<_$UriCacheInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -217,21 +217,22 @@ class _$CacheInfoCopyWithImpl<$Res, $Val extends CacheInfo>
 }
 
 /// @nodoc
-abstract class _$$_CacheInfoCopyWith<$Res> implements $CacheInfoCopyWith<$Res> {
-  factory _$$_CacheInfoCopyWith(
-          _$_CacheInfo value, $Res Function(_$_CacheInfo) then) =
-      __$$_CacheInfoCopyWithImpl<$Res>;
+abstract class _$$CacheInfoImplCopyWith<$Res>
+    implements $CacheInfoCopyWith<$Res> {
+  factory _$$CacheInfoImplCopyWith(
+          _$CacheInfoImpl value, $Res Function(_$CacheInfoImpl) then) =
+      __$$CacheInfoImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String cacheKey, CacheManager cacheManager});
 }
 
 /// @nodoc
-class __$$_CacheInfoCopyWithImpl<$Res>
-    extends _$CacheInfoCopyWithImpl<$Res, _$_CacheInfo>
-    implements _$$_CacheInfoCopyWith<$Res> {
-  __$$_CacheInfoCopyWithImpl(
-      _$_CacheInfo _value, $Res Function(_$_CacheInfo) _then)
+class __$$CacheInfoImplCopyWithImpl<$Res>
+    extends _$CacheInfoCopyWithImpl<$Res, _$CacheInfoImpl>
+    implements _$$CacheInfoImplCopyWith<$Res> {
+  __$$CacheInfoImplCopyWithImpl(
+      _$CacheInfoImpl _value, $Res Function(_$CacheInfoImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -240,7 +241,7 @@ class __$$_CacheInfoCopyWithImpl<$Res>
     Object? cacheKey = null,
     Object? cacheManager = null,
   }) {
-    return _then(_$_CacheInfo(
+    return _then(_$CacheInfoImpl(
       cacheKey: null == cacheKey
           ? _value.cacheKey
           : cacheKey // ignore: cast_nullable_to_non_nullable
@@ -255,8 +256,8 @@ class __$$_CacheInfoCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_CacheInfo implements _CacheInfo {
-  const _$_CacheInfo({required this.cacheKey, required this.cacheManager});
+class _$CacheInfoImpl implements _CacheInfo {
+  const _$CacheInfoImpl({required this.cacheKey, required this.cacheManager});
 
   @override
   final String cacheKey;
@@ -269,10 +270,10 @@ class _$_CacheInfo implements _CacheInfo {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_CacheInfo &&
+            other is _$CacheInfoImpl &&
             (identical(other.cacheKey, cacheKey) ||
                 other.cacheKey == cacheKey) &&
             (identical(other.cacheManager, cacheManager) ||
@@ -285,14 +286,14 @@ class _$_CacheInfo implements _CacheInfo {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_CacheInfoCopyWith<_$_CacheInfo> get copyWith =>
-      __$$_CacheInfoCopyWithImpl<_$_CacheInfo>(this, _$identity);
+  _$$CacheInfoImplCopyWith<_$CacheInfoImpl> get copyWith =>
+      __$$CacheInfoImplCopyWithImpl<_$CacheInfoImpl>(this, _$identity);
 }
 
 abstract class _CacheInfo implements CacheInfo {
   const factory _CacheInfo(
       {required final String cacheKey,
-      required final CacheManager cacheManager}) = _$_CacheInfo;
+      required final CacheManager cacheManager}) = _$CacheInfoImpl;
 
   @override
   String get cacheKey;
@@ -300,7 +301,7 @@ abstract class _CacheInfo implements CacheInfo {
   CacheManager get cacheManager;
   @override
   @JsonKey(ignore: true)
-  _$$_CacheInfoCopyWith<_$_CacheInfo> get copyWith =>
+  _$$CacheInfoImplCopyWith<_$CacheInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -388,10 +389,10 @@ class _$PaletteCopyWithImpl<$Res, $Val extends Palette>
 }
 
 /// @nodoc
-abstract class _$$_PaletteCopyWith<$Res> implements $PaletteCopyWith<$Res> {
-  factory _$$_PaletteCopyWith(
-          _$_Palette value, $Res Function(_$_Palette) then) =
-      __$$_PaletteCopyWithImpl<$Res>;
+abstract class _$$PaletteImplCopyWith<$Res> implements $PaletteCopyWith<$Res> {
+  factory _$$PaletteImplCopyWith(
+          _$PaletteImpl value, $Res Function(_$PaletteImpl) then) =
+      __$$PaletteImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -405,10 +406,11 @@ abstract class _$$_PaletteCopyWith<$Res> implements $PaletteCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_PaletteCopyWithImpl<$Res>
-    extends _$PaletteCopyWithImpl<$Res, _$_Palette>
-    implements _$$_PaletteCopyWith<$Res> {
-  __$$_PaletteCopyWithImpl(_$_Palette _value, $Res Function(_$_Palette) _then)
+class __$$PaletteImplCopyWithImpl<$Res>
+    extends _$PaletteCopyWithImpl<$Res, _$PaletteImpl>
+    implements _$$PaletteImplCopyWith<$Res> {
+  __$$PaletteImplCopyWithImpl(
+      _$PaletteImpl _value, $Res Function(_$PaletteImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -422,7 +424,7 @@ class __$$_PaletteCopyWithImpl<$Res>
     Object? lightMutedColor = freezed,
     Object? lightVibrantColor = freezed,
   }) {
-    return _then(_$_Palette(
+    return _then(_$PaletteImpl(
       vibrantColor: freezed == vibrantColor
           ? _value.vibrantColor
           : vibrantColor // ignore: cast_nullable_to_non_nullable
@@ -457,8 +459,8 @@ class __$$_PaletteCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_Palette extends _Palette {
-  const _$_Palette(
+class _$PaletteImpl extends _Palette {
+  const _$PaletteImpl(
       {this.vibrantColor,
       this.dominantColor,
       this.mutedColor,
@@ -489,10 +491,10 @@ class _$_Palette extends _Palette {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Palette &&
+            other is _$PaletteImpl &&
             (identical(other.vibrantColor, vibrantColor) ||
                 other.vibrantColor == vibrantColor) &&
             (identical(other.dominantColor, dominantColor) ||
@@ -523,8 +525,8 @@ class _$_Palette extends _Palette {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_PaletteCopyWith<_$_Palette> get copyWith =>
-      __$$_PaletteCopyWithImpl<_$_Palette>(this, _$identity);
+  _$$PaletteImplCopyWith<_$PaletteImpl> get copyWith =>
+      __$$PaletteImplCopyWithImpl<_$PaletteImpl>(this, _$identity);
 }
 
 abstract class _Palette extends Palette {
@@ -535,7 +537,7 @@ abstract class _Palette extends Palette {
       final PaletteColor? darkMutedColor,
       final PaletteColor? darkVibrantColor,
       final PaletteColor? lightMutedColor,
-      final PaletteColor? lightVibrantColor}) = _$_Palette;
+      final PaletteColor? lightVibrantColor}) = _$PaletteImpl;
   const _Palette._() : super._();
 
   @override
@@ -554,7 +556,7 @@ abstract class _Palette extends Palette {
   PaletteColor? get lightVibrantColor;
   @override
   @JsonKey(ignore: true)
-  _$$_PaletteCopyWith<_$_Palette> get copyWith =>
+  _$$PaletteImplCopyWith<_$PaletteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -637,11 +639,11 @@ class _$ColorThemeCopyWithImpl<$Res, $Val extends ColorTheme>
 }
 
 /// @nodoc
-abstract class _$$_ColorThemeCopyWith<$Res>
+abstract class _$$ColorThemeImplCopyWith<$Res>
     implements $ColorThemeCopyWith<$Res> {
-  factory _$$_ColorThemeCopyWith(
-          _$_ColorTheme value, $Res Function(_$_ColorTheme) then) =
-      __$$_ColorThemeCopyWithImpl<$Res>;
+  factory _$$ColorThemeImplCopyWith(
+          _$ColorThemeImpl value, $Res Function(_$ColorThemeImpl) then) =
+      __$$ColorThemeImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -654,11 +656,11 @@ abstract class _$$_ColorThemeCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_ColorThemeCopyWithImpl<$Res>
-    extends _$ColorThemeCopyWithImpl<$Res, _$_ColorTheme>
-    implements _$$_ColorThemeCopyWith<$Res> {
-  __$$_ColorThemeCopyWithImpl(
-      _$_ColorTheme _value, $Res Function(_$_ColorTheme) _then)
+class __$$ColorThemeImplCopyWithImpl<$Res>
+    extends _$ColorThemeCopyWithImpl<$Res, _$ColorThemeImpl>
+    implements _$$ColorThemeImplCopyWith<$Res> {
+  __$$ColorThemeImplCopyWithImpl(
+      _$ColorThemeImpl _value, $Res Function(_$ColorThemeImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -671,7 +673,7 @@ class __$$_ColorThemeCopyWithImpl<$Res>
     Object? darkerBackground = null,
     Object? onDarkerBackground = null,
   }) {
-    return _then(_$_ColorTheme(
+    return _then(_$ColorThemeImpl(
       theme: null == theme
           ? _value.theme
           : theme // ignore: cast_nullable_to_non_nullable
@@ -702,8 +704,8 @@ class __$$_ColorThemeCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ColorTheme implements _ColorTheme {
-  const _$_ColorTheme(
+class _$ColorThemeImpl implements _ColorTheme {
+  const _$ColorThemeImpl(
       {required this.theme,
       required this.gradientHigh,
       required this.gradientLow,
@@ -730,10 +732,10 @@ class _$_ColorTheme implements _ColorTheme {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ColorTheme &&
+            other is _$ColorThemeImpl &&
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.gradientHigh, gradientHigh) ||
                 other.gradientHigh == gradientHigh) &&
@@ -754,8 +756,8 @@ class _$_ColorTheme implements _ColorTheme {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ColorThemeCopyWith<_$_ColorTheme> get copyWith =>
-      __$$_ColorThemeCopyWithImpl<_$_ColorTheme>(this, _$identity);
+  _$$ColorThemeImplCopyWith<_$ColorThemeImpl> get copyWith =>
+      __$$ColorThemeImplCopyWithImpl<_$ColorThemeImpl>(this, _$identity);
 }
 
 abstract class _ColorTheme implements ColorTheme {
@@ -765,7 +767,7 @@ abstract class _ColorTheme implements ColorTheme {
       required final Color gradientLow,
       required final Color darkBackground,
       required final Color darkerBackground,
-      required final Color onDarkerBackground}) = _$_ColorTheme;
+      required final Color onDarkerBackground}) = _$ColorThemeImpl;
 
   @override
   ThemeData get theme;
@@ -781,7 +783,7 @@ abstract class _ColorTheme implements ColorTheme {
   Color get onDarkerBackground;
   @override
   @JsonKey(ignore: true)
-  _$$_ColorThemeCopyWith<_$_ColorTheme> get copyWith =>
+  _$$ColorThemeImplCopyWith<_$ColorThemeImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -855,11 +857,11 @@ class _$QueueItemStateCopyWithImpl<$Res, $Val extends QueueItemState>
 }
 
 /// @nodoc
-abstract class _$$_QueueItemStateCopyWith<$Res>
+abstract class _$$QueueItemStateImplCopyWith<$Res>
     implements $QueueItemStateCopyWith<$Res> {
-  factory _$$_QueueItemStateCopyWith(
-          _$_QueueItemState value, $Res Function(_$_QueueItemState) then) =
-      __$$_QueueItemStateCopyWithImpl<$Res>;
+  factory _$$QueueItemStateImplCopyWith(_$QueueItemStateImpl value,
+          $Res Function(_$QueueItemStateImpl) then) =
+      __$$QueueItemStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -870,11 +872,11 @@ abstract class _$$_QueueItemStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_QueueItemStateCopyWithImpl<$Res>
-    extends _$QueueItemStateCopyWithImpl<$Res, _$_QueueItemState>
-    implements _$$_QueueItemStateCopyWith<$Res> {
-  __$$_QueueItemStateCopyWithImpl(
-      _$_QueueItemState _value, $Res Function(_$_QueueItemState) _then)
+class __$$QueueItemStateImplCopyWithImpl<$Res>
+    extends _$QueueItemStateCopyWithImpl<$Res, _$QueueItemStateImpl>
+    implements _$$QueueItemStateImplCopyWith<$Res> {
+  __$$QueueItemStateImplCopyWithImpl(
+      _$QueueItemStateImpl _value, $Res Function(_$QueueItemStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -885,7 +887,7 @@ class __$$_QueueItemStateCopyWithImpl<$Res>
     Object? contextId = freezed,
     Object? contextTitle = freezed,
   }) {
-    return _then(_$_QueueItemState(
+    return _then(_$QueueItemStateImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -908,15 +910,15 @@ class __$$_QueueItemStateCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_QueueItemState implements _QueueItemState {
-  const _$_QueueItemState(
+class _$QueueItemStateImpl implements _QueueItemState {
+  const _$QueueItemStateImpl(
       {required this.id,
       required this.contextType,
       this.contextId,
       this.contextTitle});
 
-  factory _$_QueueItemState.fromJson(Map<String, dynamic> json) =>
-      _$$_QueueItemStateFromJson(json);
+  factory _$QueueItemStateImpl.fromJson(Map<String, dynamic> json) =>
+      _$$QueueItemStateImplFromJson(json);
 
   @override
   final String id;
@@ -933,10 +935,10 @@ class _$_QueueItemState implements _QueueItemState {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_QueueItemState &&
+            other is _$QueueItemStateImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.contextType, contextType) ||
                 other.contextType == contextType) &&
@@ -954,12 +956,13 @@ class _$_QueueItemState implements _QueueItemState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_QueueItemStateCopyWith<_$_QueueItemState> get copyWith =>
-      __$$_QueueItemStateCopyWithImpl<_$_QueueItemState>(this, _$identity);
+  _$$QueueItemStateImplCopyWith<_$QueueItemStateImpl> get copyWith =>
+      __$$QueueItemStateImplCopyWithImpl<_$QueueItemStateImpl>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_QueueItemStateToJson(
+    return _$$QueueItemStateImplToJson(
       this,
     );
   }
@@ -970,10 +973,10 @@ abstract class _QueueItemState implements QueueItemState {
       {required final String id,
       required final QueueContextType contextType,
       final String? contextId,
-      final String? contextTitle}) = _$_QueueItemState;
+      final String? contextTitle}) = _$QueueItemStateImpl;
 
   factory _QueueItemState.fromJson(Map<String, dynamic> json) =
-      _$_QueueItemState.fromJson;
+      _$QueueItemStateImpl.fromJson;
 
   @override
   String get id;
@@ -985,7 +988,7 @@ abstract class _QueueItemState implements QueueItemState {
   String? get contextTitle;
   @override
   @JsonKey(ignore: true)
-  _$$_QueueItemStateCopyWith<_$_QueueItemState> get copyWith =>
+  _$$QueueItemStateImplCopyWith<_$QueueItemStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1081,11 +1084,11 @@ class _$MediaItemDataCopyWithImpl<$Res, $Val extends MediaItemData>
 }
 
 /// @nodoc
-abstract class _$$_MediaItemDataCopyWith<$Res>
+abstract class _$$MediaItemDataImplCopyWith<$Res>
     implements $MediaItemDataCopyWith<$Res> {
-  factory _$$_MediaItemDataCopyWith(
-          _$_MediaItemData value, $Res Function(_$_MediaItemData) then) =
-      __$$_MediaItemDataCopyWithImpl<$Res>;
+  factory _$$MediaItemDataImplCopyWith(
+          _$MediaItemDataImpl value, $Res Function(_$MediaItemDataImpl) then) =
+      __$$MediaItemDataImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1100,11 +1103,11 @@ abstract class _$$_MediaItemDataCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_MediaItemDataCopyWithImpl<$Res>
-    extends _$MediaItemDataCopyWithImpl<$Res, _$_MediaItemData>
-    implements _$$_MediaItemDataCopyWith<$Res> {
-  __$$_MediaItemDataCopyWithImpl(
-      _$_MediaItemData _value, $Res Function(_$_MediaItemData) _then)
+class __$$MediaItemDataImplCopyWithImpl<$Res>
+    extends _$MediaItemDataCopyWithImpl<$Res, _$MediaItemDataImpl>
+    implements _$$MediaItemDataImplCopyWith<$Res> {
+  __$$MediaItemDataImplCopyWithImpl(
+      _$MediaItemDataImpl _value, $Res Function(_$MediaItemDataImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1116,7 +1119,7 @@ class __$$_MediaItemDataCopyWithImpl<$Res>
     Object? contextType = null,
     Object? contextId = freezed,
   }) {
-    return _then(_$_MediaItemData(
+    return _then(_$MediaItemDataImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -1143,16 +1146,16 @@ class __$$_MediaItemDataCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_MediaItemData implements _MediaItemData {
-  const _$_MediaItemData(
+class _$MediaItemDataImpl implements _MediaItemData {
+  const _$MediaItemDataImpl(
       {required this.sourceId,
       this.albumId,
       @MediaItemArtCacheConverter() this.artCache,
       required this.contextType,
       this.contextId});
 
-  factory _$_MediaItemData.fromJson(Map<String, dynamic> json) =>
-      _$$_MediaItemDataFromJson(json);
+  factory _$MediaItemDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MediaItemDataImplFromJson(json);
 
   @override
   final int sourceId;
@@ -1172,10 +1175,10 @@ class _$_MediaItemData implements _MediaItemData {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MediaItemData &&
+            other is _$MediaItemDataImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.albumId, albumId) || other.albumId == albumId) &&
@@ -1195,12 +1198,12 @@ class _$_MediaItemData implements _MediaItemData {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MediaItemDataCopyWith<_$_MediaItemData> get copyWith =>
-      __$$_MediaItemDataCopyWithImpl<_$_MediaItemData>(this, _$identity);
+  _$$MediaItemDataImplCopyWith<_$MediaItemDataImpl> get copyWith =>
+      __$$MediaItemDataImplCopyWithImpl<_$MediaItemDataImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_MediaItemDataToJson(
+    return _$$MediaItemDataImplToJson(
       this,
     );
   }
@@ -1212,10 +1215,10 @@ abstract class _MediaItemData implements MediaItemData {
       final String? albumId,
       @MediaItemArtCacheConverter() final MediaItemArtCache? artCache,
       required final QueueContextType contextType,
-      final String? contextId}) = _$_MediaItemData;
+      final String? contextId}) = _$MediaItemDataImpl;
 
   factory _MediaItemData.fromJson(Map<String, dynamic> json) =
-      _$_MediaItemData.fromJson;
+      _$MediaItemDataImpl.fromJson;
 
   @override
   int get sourceId;
@@ -1230,7 +1233,7 @@ abstract class _MediaItemData implements MediaItemData {
   String? get contextId;
   @override
   @JsonKey(ignore: true)
-  _$$_MediaItemDataCopyWith<_$_MediaItemData> get copyWith =>
+  _$$MediaItemDataImplCopyWith<_$MediaItemDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1304,11 +1307,11 @@ class _$MediaItemArtCacheCopyWithImpl<$Res, $Val extends MediaItemArtCache>
 }
 
 /// @nodoc
-abstract class _$$_MediaItemArtCacheCopyWith<$Res>
+abstract class _$$MediaItemArtCacheImplCopyWith<$Res>
     implements $MediaItemArtCacheCopyWith<$Res> {
-  factory _$$_MediaItemArtCacheCopyWith(_$_MediaItemArtCache value,
-          $Res Function(_$_MediaItemArtCache) then) =
-      __$$_MediaItemArtCacheCopyWithImpl<$Res>;
+  factory _$$MediaItemArtCacheImplCopyWith(_$MediaItemArtCacheImpl value,
+          $Res Function(_$MediaItemArtCacheImpl) then) =
+      __$$MediaItemArtCacheImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1319,11 +1322,11 @@ abstract class _$$_MediaItemArtCacheCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_MediaItemArtCacheCopyWithImpl<$Res>
-    extends _$MediaItemArtCacheCopyWithImpl<$Res, _$_MediaItemArtCache>
-    implements _$$_MediaItemArtCacheCopyWith<$Res> {
-  __$$_MediaItemArtCacheCopyWithImpl(
-      _$_MediaItemArtCache _value, $Res Function(_$_MediaItemArtCache) _then)
+class __$$MediaItemArtCacheImplCopyWithImpl<$Res>
+    extends _$MediaItemArtCacheCopyWithImpl<$Res, _$MediaItemArtCacheImpl>
+    implements _$$MediaItemArtCacheImplCopyWith<$Res> {
+  __$$MediaItemArtCacheImplCopyWithImpl(_$MediaItemArtCacheImpl _value,
+      $Res Function(_$MediaItemArtCacheImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1334,7 +1337,7 @@ class __$$_MediaItemArtCacheCopyWithImpl<$Res>
     Object? thumbnailArtUri = null,
     Object? thumbnailArtCacheKey = null,
   }) {
-    return _then(_$_MediaItemArtCache(
+    return _then(_$MediaItemArtCacheImpl(
       fullArtUri: null == fullArtUri
           ? _value.fullArtUri
           : fullArtUri // ignore: cast_nullable_to_non_nullable
@@ -1357,15 +1360,15 @@ class __$$_MediaItemArtCacheCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_MediaItemArtCache implements _MediaItemArtCache {
-  const _$_MediaItemArtCache(
+class _$MediaItemArtCacheImpl implements _MediaItemArtCache {
+  const _$MediaItemArtCacheImpl(
       {required this.fullArtUri,
       required this.fullArtCacheKey,
       required this.thumbnailArtUri,
       required this.thumbnailArtCacheKey});
 
-  factory _$_MediaItemArtCache.fromJson(Map<String, dynamic> json) =>
-      _$$_MediaItemArtCacheFromJson(json);
+  factory _$MediaItemArtCacheImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MediaItemArtCacheImplFromJson(json);
 
   @override
   final Uri fullArtUri;
@@ -1382,10 +1385,10 @@ class _$_MediaItemArtCache implements _MediaItemArtCache {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MediaItemArtCache &&
+            other is _$MediaItemArtCacheImpl &&
             (identical(other.fullArtUri, fullArtUri) ||
                 other.fullArtUri == fullArtUri) &&
             (identical(other.fullArtCacheKey, fullArtCacheKey) ||
@@ -1404,13 +1407,13 @@ class _$_MediaItemArtCache implements _MediaItemArtCache {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MediaItemArtCacheCopyWith<_$_MediaItemArtCache> get copyWith =>
-      __$$_MediaItemArtCacheCopyWithImpl<_$_MediaItemArtCache>(
+  _$$MediaItemArtCacheImplCopyWith<_$MediaItemArtCacheImpl> get copyWith =>
+      __$$MediaItemArtCacheImplCopyWithImpl<_$MediaItemArtCacheImpl>(
           this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_MediaItemArtCacheToJson(
+    return _$$MediaItemArtCacheImplToJson(
       this,
     );
   }
@@ -1421,10 +1424,10 @@ abstract class _MediaItemArtCache implements MediaItemArtCache {
       {required final Uri fullArtUri,
       required final String fullArtCacheKey,
       required final Uri thumbnailArtUri,
-      required final String thumbnailArtCacheKey}) = _$_MediaItemArtCache;
+      required final String thumbnailArtCacheKey}) = _$MediaItemArtCacheImpl;
 
   factory _MediaItemArtCache.fromJson(Map<String, dynamic> json) =
-      _$_MediaItemArtCache.fromJson;
+      _$MediaItemArtCacheImpl.fromJson;
 
   @override
   Uri get fullArtUri;
@@ -1436,7 +1439,7 @@ abstract class _MediaItemArtCache implements MediaItemArtCache {
   String get thumbnailArtCacheKey;
   @override
   @JsonKey(ignore: true)
-  _$$_MediaItemArtCacheCopyWith<_$_MediaItemArtCache> get copyWith =>
+  _$$MediaItemArtCacheImplCopyWith<_$MediaItemArtCacheImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1495,22 +1498,22 @@ class _$ListDownloadStatusCopyWithImpl<$Res, $Val extends ListDownloadStatus>
 }
 
 /// @nodoc
-abstract class _$$_ListDownloadStatusCopyWith<$Res>
+abstract class _$$ListDownloadStatusImplCopyWith<$Res>
     implements $ListDownloadStatusCopyWith<$Res> {
-  factory _$$_ListDownloadStatusCopyWith(_$_ListDownloadStatus value,
-          $Res Function(_$_ListDownloadStatus) then) =
-      __$$_ListDownloadStatusCopyWithImpl<$Res>;
+  factory _$$ListDownloadStatusImplCopyWith(_$ListDownloadStatusImpl value,
+          $Res Function(_$ListDownloadStatusImpl) then) =
+      __$$ListDownloadStatusImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int total, int downloaded, int downloading});
 }
 
 /// @nodoc
-class __$$_ListDownloadStatusCopyWithImpl<$Res>
-    extends _$ListDownloadStatusCopyWithImpl<$Res, _$_ListDownloadStatus>
-    implements _$$_ListDownloadStatusCopyWith<$Res> {
-  __$$_ListDownloadStatusCopyWithImpl(
-      _$_ListDownloadStatus _value, $Res Function(_$_ListDownloadStatus) _then)
+class __$$ListDownloadStatusImplCopyWithImpl<$Res>
+    extends _$ListDownloadStatusCopyWithImpl<$Res, _$ListDownloadStatusImpl>
+    implements _$$ListDownloadStatusImplCopyWith<$Res> {
+  __$$ListDownloadStatusImplCopyWithImpl(_$ListDownloadStatusImpl _value,
+      $Res Function(_$ListDownloadStatusImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1520,7 +1523,7 @@ class __$$_ListDownloadStatusCopyWithImpl<$Res>
     Object? downloaded = null,
     Object? downloading = null,
   }) {
-    return _then(_$_ListDownloadStatus(
+    return _then(_$ListDownloadStatusImpl(
       total: null == total
           ? _value.total
           : total // ignore: cast_nullable_to_non_nullable
@@ -1539,8 +1542,8 @@ class __$$_ListDownloadStatusCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ListDownloadStatus implements _ListDownloadStatus {
-  const _$_ListDownloadStatus(
+class _$ListDownloadStatusImpl implements _ListDownloadStatus {
+  const _$ListDownloadStatusImpl(
       {required this.total,
       required this.downloaded,
       required this.downloading});
@@ -1558,10 +1561,10 @@ class _$_ListDownloadStatus implements _ListDownloadStatus {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ListDownloadStatus &&
+            other is _$ListDownloadStatusImpl &&
             (identical(other.total, total) || other.total == total) &&
             (identical(other.downloaded, downloaded) ||
                 other.downloaded == downloaded) &&
@@ -1575,8 +1578,8 @@ class _$_ListDownloadStatus implements _ListDownloadStatus {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ListDownloadStatusCopyWith<_$_ListDownloadStatus> get copyWith =>
-      __$$_ListDownloadStatusCopyWithImpl<_$_ListDownloadStatus>(
+  _$$ListDownloadStatusImplCopyWith<_$ListDownloadStatusImpl> get copyWith =>
+      __$$ListDownloadStatusImplCopyWithImpl<_$ListDownloadStatusImpl>(
           this, _$identity);
 }
 
@@ -1584,7 +1587,7 @@ abstract class _ListDownloadStatus implements ListDownloadStatus {
   const factory _ListDownloadStatus(
       {required final int total,
       required final int downloaded,
-      required final int downloading}) = _$_ListDownloadStatus;
+      required final int downloading}) = _$ListDownloadStatusImpl;
 
   @override
   int get total;
@@ -1594,7 +1597,7 @@ abstract class _ListDownloadStatus implements ListDownloadStatus {
   int get downloading;
   @override
   @JsonKey(ignore: true)
-  _$$_ListDownloadStatusCopyWith<_$_ListDownloadStatus> get copyWith =>
+  _$$ListDownloadStatusImplCopyWith<_$ListDownloadStatusImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1685,22 +1688,22 @@ class _$MultiChoiceOptionCopyWithImpl<$Res, $Val extends MultiChoiceOption>
 }
 
 /// @nodoc
-abstract class _$$_MultiChoiceOptionCopyWith<$Res>
+abstract class _$$MultiChoiceOptionImplCopyWith<$Res>
     implements $MultiChoiceOptionCopyWith<$Res> {
-  factory _$$_MultiChoiceOptionCopyWith(_$_MultiChoiceOption value,
-          $Res Function(_$_MultiChoiceOption) then) =
-      __$$_MultiChoiceOptionCopyWithImpl<$Res>;
+  factory _$$MultiChoiceOptionImplCopyWith(_$MultiChoiceOptionImpl value,
+          $Res Function(_$MultiChoiceOptionImpl) then) =
+      __$$MultiChoiceOptionImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String title});
 }
 
 /// @nodoc
-class __$$_MultiChoiceOptionCopyWithImpl<$Res>
-    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$_MultiChoiceOption>
-    implements _$$_MultiChoiceOptionCopyWith<$Res> {
-  __$$_MultiChoiceOptionCopyWithImpl(
-      _$_MultiChoiceOption _value, $Res Function(_$_MultiChoiceOption) _then)
+class __$$MultiChoiceOptionImplCopyWithImpl<$Res>
+    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$MultiChoiceOptionImpl>
+    implements _$$MultiChoiceOptionImplCopyWith<$Res> {
+  __$$MultiChoiceOptionImplCopyWithImpl(_$MultiChoiceOptionImpl _value,
+      $Res Function(_$MultiChoiceOptionImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1708,7 +1711,7 @@ class __$$_MultiChoiceOptionCopyWithImpl<$Res>
   $Res call({
     Object? title = null,
   }) {
-    return _then(_$_MultiChoiceOption(
+    return _then(_$MultiChoiceOptionImpl(
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -1719,8 +1722,8 @@ class __$$_MultiChoiceOptionCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MultiChoiceOption implements _MultiChoiceOption {
-  const _$_MultiChoiceOption({required this.title});
+class _$MultiChoiceOptionImpl implements _MultiChoiceOption {
+  const _$MultiChoiceOptionImpl({required this.title});
 
   @override
   final String title;
@@ -1731,10 +1734,10 @@ class _$_MultiChoiceOption implements _MultiChoiceOption {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MultiChoiceOption &&
+            other is _$MultiChoiceOptionImpl &&
             (identical(other.title, title) || other.title == title));
   }
 
@@ -1744,8 +1747,8 @@ class _$_MultiChoiceOption implements _MultiChoiceOption {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MultiChoiceOptionCopyWith<_$_MultiChoiceOption> get copyWith =>
-      __$$_MultiChoiceOptionCopyWithImpl<_$_MultiChoiceOption>(
+  _$$MultiChoiceOptionImplCopyWith<_$MultiChoiceOptionImpl> get copyWith =>
+      __$$MultiChoiceOptionImplCopyWithImpl<_$MultiChoiceOptionImpl>(
           this, _$identity);
 
   @override
@@ -1819,33 +1822,33 @@ class _$_MultiChoiceOption implements _MultiChoiceOption {
 
 abstract class _MultiChoiceOption implements MultiChoiceOption {
   const factory _MultiChoiceOption({required final String title}) =
-      _$_MultiChoiceOption;
+      _$MultiChoiceOptionImpl;
 
   @override
   String get title;
   @override
   @JsonKey(ignore: true)
-  _$$_MultiChoiceOptionCopyWith<_$_MultiChoiceOption> get copyWith =>
+  _$$MultiChoiceOptionImplCopyWith<_$MultiChoiceOptionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_MultiChoiceOptionIntCopyWith<$Res>
+abstract class _$$MultiChoiceOptionIntImplCopyWith<$Res>
     implements $MultiChoiceOptionCopyWith<$Res> {
-  factory _$$_MultiChoiceOptionIntCopyWith(_$_MultiChoiceOptionInt value,
-          $Res Function(_$_MultiChoiceOptionInt) then) =
-      __$$_MultiChoiceOptionIntCopyWithImpl<$Res>;
+  factory _$$MultiChoiceOptionIntImplCopyWith(_$MultiChoiceOptionIntImpl value,
+          $Res Function(_$MultiChoiceOptionIntImpl) then) =
+      __$$MultiChoiceOptionIntImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String title, int option});
 }
 
 /// @nodoc
-class __$$_MultiChoiceOptionIntCopyWithImpl<$Res>
-    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$_MultiChoiceOptionInt>
-    implements _$$_MultiChoiceOptionIntCopyWith<$Res> {
-  __$$_MultiChoiceOptionIntCopyWithImpl(_$_MultiChoiceOptionInt _value,
-      $Res Function(_$_MultiChoiceOptionInt) _then)
+class __$$MultiChoiceOptionIntImplCopyWithImpl<$Res>
+    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$MultiChoiceOptionIntImpl>
+    implements _$$MultiChoiceOptionIntImplCopyWith<$Res> {
+  __$$MultiChoiceOptionIntImplCopyWithImpl(_$MultiChoiceOptionIntImpl _value,
+      $Res Function(_$MultiChoiceOptionIntImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1854,7 +1857,7 @@ class __$$_MultiChoiceOptionIntCopyWithImpl<$Res>
     Object? title = null,
     Object? option = null,
   }) {
-    return _then(_$_MultiChoiceOptionInt(
+    return _then(_$MultiChoiceOptionIntImpl(
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -1869,8 +1872,8 @@ class __$$_MultiChoiceOptionIntCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MultiChoiceOptionInt implements _MultiChoiceOptionInt {
-  _$_MultiChoiceOptionInt({required this.title, required this.option});
+class _$MultiChoiceOptionIntImpl implements _MultiChoiceOptionInt {
+  _$MultiChoiceOptionIntImpl({required this.title, required this.option});
 
   @override
   final String title;
@@ -1883,10 +1886,10 @@ class _$_MultiChoiceOptionInt implements _MultiChoiceOptionInt {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MultiChoiceOptionInt &&
+            other is _$MultiChoiceOptionIntImpl &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.option, option) || other.option == option));
   }
@@ -1897,9 +1900,10 @@ class _$_MultiChoiceOptionInt implements _MultiChoiceOptionInt {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MultiChoiceOptionIntCopyWith<_$_MultiChoiceOptionInt> get copyWith =>
-      __$$_MultiChoiceOptionIntCopyWithImpl<_$_MultiChoiceOptionInt>(
-          this, _$identity);
+  _$$MultiChoiceOptionIntImplCopyWith<_$MultiChoiceOptionIntImpl>
+      get copyWith =>
+          __$$MultiChoiceOptionIntImplCopyWithImpl<_$MultiChoiceOptionIntImpl>(
+              this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -1973,34 +1977,36 @@ class _$_MultiChoiceOptionInt implements _MultiChoiceOptionInt {
 abstract class _MultiChoiceOptionInt implements MultiChoiceOption {
   factory _MultiChoiceOptionInt(
       {required final String title,
-      required final int option}) = _$_MultiChoiceOptionInt;
+      required final int option}) = _$MultiChoiceOptionIntImpl;
 
   @override
   String get title;
   int get option;
   @override
   @JsonKey(ignore: true)
-  _$$_MultiChoiceOptionIntCopyWith<_$_MultiChoiceOptionInt> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$MultiChoiceOptionIntImplCopyWith<_$MultiChoiceOptionIntImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$$_MultiChoiceOptionStringCopyWith<$Res>
+abstract class _$$MultiChoiceOptionStringImplCopyWith<$Res>
     implements $MultiChoiceOptionCopyWith<$Res> {
-  factory _$$_MultiChoiceOptionStringCopyWith(_$_MultiChoiceOptionString value,
-          $Res Function(_$_MultiChoiceOptionString) then) =
-      __$$_MultiChoiceOptionStringCopyWithImpl<$Res>;
+  factory _$$MultiChoiceOptionStringImplCopyWith(
+          _$MultiChoiceOptionStringImpl value,
+          $Res Function(_$MultiChoiceOptionStringImpl) then) =
+      __$$MultiChoiceOptionStringImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String title, String option});
 }
 
 /// @nodoc
-class __$$_MultiChoiceOptionStringCopyWithImpl<$Res>
-    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$_MultiChoiceOptionString>
-    implements _$$_MultiChoiceOptionStringCopyWith<$Res> {
-  __$$_MultiChoiceOptionStringCopyWithImpl(_$_MultiChoiceOptionString _value,
-      $Res Function(_$_MultiChoiceOptionString) _then)
+class __$$MultiChoiceOptionStringImplCopyWithImpl<$Res>
+    extends _$MultiChoiceOptionCopyWithImpl<$Res, _$MultiChoiceOptionStringImpl>
+    implements _$$MultiChoiceOptionStringImplCopyWith<$Res> {
+  __$$MultiChoiceOptionStringImplCopyWithImpl(
+      _$MultiChoiceOptionStringImpl _value,
+      $Res Function(_$MultiChoiceOptionStringImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -2009,7 +2015,7 @@ class __$$_MultiChoiceOptionStringCopyWithImpl<$Res>
     Object? title = null,
     Object? option = null,
   }) {
-    return _then(_$_MultiChoiceOptionString(
+    return _then(_$MultiChoiceOptionStringImpl(
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -2024,8 +2030,8 @@ class __$$_MultiChoiceOptionStringCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MultiChoiceOptionString implements _MultiChoiceOptionString {
-  _$_MultiChoiceOptionString({required this.title, required this.option});
+class _$MultiChoiceOptionStringImpl implements _MultiChoiceOptionString {
+  _$MultiChoiceOptionStringImpl({required this.title, required this.option});
 
   @override
   final String title;
@@ -2038,10 +2044,10 @@ class _$_MultiChoiceOptionString implements _MultiChoiceOptionString {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MultiChoiceOptionString &&
+            other is _$MultiChoiceOptionStringImpl &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.option, option) || other.option == option));
   }
@@ -2052,10 +2058,9 @@ class _$_MultiChoiceOptionString implements _MultiChoiceOptionString {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MultiChoiceOptionStringCopyWith<_$_MultiChoiceOptionString>
-      get copyWith =>
-          __$$_MultiChoiceOptionStringCopyWithImpl<_$_MultiChoiceOptionString>(
-              this, _$identity);
+  _$$MultiChoiceOptionStringImplCopyWith<_$MultiChoiceOptionStringImpl>
+      get copyWith => __$$MultiChoiceOptionStringImplCopyWithImpl<
+          _$MultiChoiceOptionStringImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -2129,13 +2134,13 @@ class _$_MultiChoiceOptionString implements _MultiChoiceOptionString {
 abstract class _MultiChoiceOptionString implements MultiChoiceOption {
   factory _MultiChoiceOptionString(
       {required final String title,
-      required final String option}) = _$_MultiChoiceOptionString;
+      required final String option}) = _$MultiChoiceOptionStringImpl;
 
   @override
   String get title;
   String get option;
   @override
   @JsonKey(ignore: true)
-  _$$_MultiChoiceOptionStringCopyWith<_$_MultiChoiceOptionString>
+  _$$MultiChoiceOptionStringImplCopyWith<_$MultiChoiceOptionStringImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

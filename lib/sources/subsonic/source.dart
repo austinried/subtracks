@@ -144,7 +144,7 @@ class SubsonicSource implements MusicSource {
     return Uri.tryParse(res.xml
             .getElement('artistInfo2')
             ?.getElement(thumbnail ? 'smallImageUrl' : 'largeImageUrl')
-            ?.text ??
+            ?.value ??
         '');
   }
 

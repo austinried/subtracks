@@ -249,6 +249,8 @@ class _Category extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     return MultiSliver(
       children: [
         SliverToBoxAdapter(
@@ -256,7 +258,7 @@ class _Category extends HookConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Text(
               title,
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: theme.textTheme.headlineMedium,
             ),
           ),
         ),

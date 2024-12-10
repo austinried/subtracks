@@ -6,7 +6,7 @@ part of 'theme.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$colorThemeHash() => r'f5cc23cb5e2af379c02ae4b9756df72f9f6da5e6';
+String _$colorThemeHash() => r'37d4eb17395341800b67f4f257c2cc49bf3dc91b';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -28,8 +28,6 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
-
-typedef _ColorThemeRef = AutoDisposeProviderRef<ColorTheme>;
 
 /// See also [_colorTheme].
 @ProviderFor(_colorTheme)
@@ -77,10 +75,10 @@ class _ColorThemeFamily extends Family<ColorTheme> {
 class _ColorThemeProvider extends AutoDisposeProvider<ColorTheme> {
   /// See also [_colorTheme].
   _ColorThemeProvider(
-    this.palette,
-  ) : super.internal(
+    Palette palette,
+  ) : this._internal(
           (ref) => _colorTheme(
-            ref,
+            ref as _ColorThemeRef,
             palette,
           ),
           from: _colorThemeProvider,
@@ -92,9 +90,43 @@ class _ColorThemeProvider extends AutoDisposeProvider<ColorTheme> {
           dependencies: _ColorThemeFamily._dependencies,
           allTransitiveDependencies:
               _ColorThemeFamily._allTransitiveDependencies,
+          palette: palette,
         );
 
+  _ColorThemeProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.palette,
+  }) : super.internal();
+
   final Palette palette;
+
+  @override
+  Override overrideWith(
+    ColorTheme Function(_ColorThemeRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: _ColorThemeProvider._internal(
+        (ref) => create(ref as _ColorThemeRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        palette: palette,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeProviderElement<ColorTheme> createElement() {
+    return _ColorThemeProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -110,7 +142,20 @@ class _ColorThemeProvider extends AutoDisposeProvider<ColorTheme> {
   }
 }
 
-String _$baseThemeHash() => r'317a5ef77def208357a54b7938ef3d91666fce70';
+mixin _ColorThemeRef on AutoDisposeProviderRef<ColorTheme> {
+  /// The parameter `palette` of this provider.
+  Palette get palette;
+}
+
+class _ColorThemeProviderElement extends AutoDisposeProviderElement<ColorTheme>
+    with _ColorThemeRef {
+  _ColorThemeProviderElement(super.provider);
+
+  @override
+  Palette get palette => (origin as _ColorThemeProvider).palette;
+}
+
+String _$baseThemeHash() => r'489ea7dcf66a57e6eda300c75d8af5fcaef85e8e';
 
 /// See also [baseTheme].
 @ProviderFor(baseTheme)
@@ -125,7 +170,6 @@ final baseThemeProvider = AutoDisposeProvider<ColorTheme>.internal(
 
 typedef BaseThemeRef = AutoDisposeProviderRef<ColorTheme>;
 String _$albumArtPaletteHash() => r'8130b954ee3c67f53207593d4ed3dfbffb00c95d';
-typedef AlbumArtPaletteRef = AutoDisposeFutureProviderRef<Palette>;
 
 /// See also [albumArtPalette].
 @ProviderFor(albumArtPalette)
@@ -173,10 +217,10 @@ class AlbumArtPaletteFamily extends Family<AsyncValue<Palette>> {
 class AlbumArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
   /// See also [albumArtPalette].
   AlbumArtPaletteProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => albumArtPalette(
-            ref,
+            ref as AlbumArtPaletteRef,
             id,
           ),
           from: albumArtPaletteProvider,
@@ -188,9 +232,43 @@ class AlbumArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
           dependencies: AlbumArtPaletteFamily._dependencies,
           allTransitiveDependencies:
               AlbumArtPaletteFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  AlbumArtPaletteProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<Palette> Function(AlbumArtPaletteRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumArtPaletteProvider._internal(
+        (ref) => create(ref as AlbumArtPaletteRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Palette> createElement() {
+    return _AlbumArtPaletteProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -206,9 +284,21 @@ class AlbumArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
   }
 }
 
+mixin AlbumArtPaletteRef on AutoDisposeFutureProviderRef<Palette> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AlbumArtPaletteProviderElement
+    extends AutoDisposeFutureProviderElement<Palette> with AlbumArtPaletteRef {
+  _AlbumArtPaletteProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumArtPaletteProvider).id;
+}
+
 String _$playlistArtPaletteHash() =>
     r'6bc015688f354ea8d91dde86e2a7191ef1ef6496';
-typedef PlaylistArtPaletteRef = AutoDisposeFutureProviderRef<Palette>;
 
 /// See also [playlistArtPalette].
 @ProviderFor(playlistArtPalette)
@@ -256,10 +346,10 @@ class PlaylistArtPaletteFamily extends Family<AsyncValue<Palette>> {
 class PlaylistArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
   /// See also [playlistArtPalette].
   PlaylistArtPaletteProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => playlistArtPalette(
-            ref,
+            ref as PlaylistArtPaletteRef,
             id,
           ),
           from: playlistArtPaletteProvider,
@@ -271,9 +361,43 @@ class PlaylistArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
           dependencies: PlaylistArtPaletteFamily._dependencies,
           allTransitiveDependencies:
               PlaylistArtPaletteFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  PlaylistArtPaletteProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<Palette> Function(PlaylistArtPaletteRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PlaylistArtPaletteProvider._internal(
+        (ref) => create(ref as PlaylistArtPaletteRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Palette> createElement() {
+    return _PlaylistArtPaletteProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -287,6 +411,20 @@ class PlaylistArtPaletteProvider extends AutoDisposeFutureProvider<Palette> {
 
     return _SystemHash.finish(hash);
   }
+}
+
+mixin PlaylistArtPaletteRef on AutoDisposeFutureProviderRef<Palette> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _PlaylistArtPaletteProviderElement
+    extends AutoDisposeFutureProviderElement<Palette>
+    with PlaylistArtPaletteRef {
+  _PlaylistArtPaletteProviderElement(super.provider);
+
+  @override
+  String get id => (origin as PlaylistArtPaletteProvider).id;
 }
 
 String _$mediaItemPaletteHash() => r'2f2744aa735c6056919197c283a367714d7e04e4';
@@ -320,7 +458,6 @@ final mediaItemThemeProvider = AutoDisposeFutureProvider<ColorTheme>.internal(
 
 typedef MediaItemThemeRef = AutoDisposeFutureProviderRef<ColorTheme>;
 String _$albumArtThemeHash() => r'd3ee71b2df856f1763ec925e158ae2e0f613b9e0';
-typedef AlbumArtThemeRef = AutoDisposeFutureProviderRef<ColorTheme>;
 
 /// See also [albumArtTheme].
 @ProviderFor(albumArtTheme)
@@ -368,10 +505,10 @@ class AlbumArtThemeFamily extends Family<AsyncValue<ColorTheme>> {
 class AlbumArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
   /// See also [albumArtTheme].
   AlbumArtThemeProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => albumArtTheme(
-            ref,
+            ref as AlbumArtThemeRef,
             id,
           ),
           from: albumArtThemeProvider,
@@ -383,9 +520,43 @@ class AlbumArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
           dependencies: AlbumArtThemeFamily._dependencies,
           allTransitiveDependencies:
               AlbumArtThemeFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  AlbumArtThemeProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<ColorTheme> Function(AlbumArtThemeRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumArtThemeProvider._internal(
+        (ref) => create(ref as AlbumArtThemeRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<ColorTheme> createElement() {
+    return _AlbumArtThemeProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -401,8 +572,20 @@ class AlbumArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
   }
 }
 
+mixin AlbumArtThemeRef on AutoDisposeFutureProviderRef<ColorTheme> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AlbumArtThemeProviderElement
+    extends AutoDisposeFutureProviderElement<ColorTheme> with AlbumArtThemeRef {
+  _AlbumArtThemeProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumArtThemeProvider).id;
+}
+
 String _$playlistArtThemeHash() => r'1629552e1f3aa2a1e7d223ac1e078893042e5e3b';
-typedef PlaylistArtThemeRef = AutoDisposeFutureProviderRef<ColorTheme>;
 
 /// See also [playlistArtTheme].
 @ProviderFor(playlistArtTheme)
@@ -450,10 +633,10 @@ class PlaylistArtThemeFamily extends Family<AsyncValue<ColorTheme>> {
 class PlaylistArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
   /// See also [playlistArtTheme].
   PlaylistArtThemeProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => playlistArtTheme(
-            ref,
+            ref as PlaylistArtThemeRef,
             id,
           ),
           from: playlistArtThemeProvider,
@@ -465,9 +648,43 @@ class PlaylistArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
           dependencies: PlaylistArtThemeFamily._dependencies,
           allTransitiveDependencies:
               PlaylistArtThemeFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  PlaylistArtThemeProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<ColorTheme> Function(PlaylistArtThemeRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PlaylistArtThemeProvider._internal(
+        (ref) => create(ref as PlaylistArtThemeRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<ColorTheme> createElement() {
+    return _PlaylistArtThemeProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -482,4 +699,19 @@ class PlaylistArtThemeProvider extends AutoDisposeFutureProvider<ColorTheme> {
     return _SystemHash.finish(hash);
   }
 }
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+
+mixin PlaylistArtThemeRef on AutoDisposeFutureProviderRef<ColorTheme> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _PlaylistArtThemeProviderElement
+    extends AutoDisposeFutureProviderElement<ColorTheme>
+    with PlaylistArtThemeRef {
+  _PlaylistArtThemeProviderElement(super.provider);
+
+  @override
+  String get id => (origin as PlaylistArtThemeProvider).id;
+}
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -228,6 +228,8 @@ class _LibraryFilterFab extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final tabsRouter = AutoTabsRouter.of(context);
     final activeIndex =
         useListenableSelector(tabsRouter, () => tabsRouter.activeIndex);
@@ -242,7 +244,7 @@ class _LibraryFilterFab extends HookConsumerWidget {
           end: 0,
           child: Icon(
             Icons.circle,
-            color: Theme.of(context).colorScheme.primaryContainer,
+            color: theme.colorScheme.primaryContainer,
             size: 11,
           ),
         ),
@@ -449,6 +451,8 @@ class ListSortFilterOptions extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final list = ref.watch(libraryListQueryProvider(index));
 
     return SliverList(
@@ -457,7 +461,7 @@ class ListSortFilterOptions extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Sort by',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: theme.textTheme.titleLarge,
           ),
         ),
         const SizedBox(height: 8),
@@ -480,7 +484,7 @@ class ListSortFilterOptions extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             'Filter',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: theme.textTheme.titleLarge,
           ),
         ),
         for (var column in list.options.filterColumns)

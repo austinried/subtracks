@@ -204,12 +204,14 @@ class ArtistListTile extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+
     return ListTile(
       leading: CircleClip(
         child: ArtistArtImage(artistId: artist.id),
       ),
       title: Text(artist.name),
-      subtitle: Text(AppLocalizations.of(context).resourcesAlbumCount(
+      subtitle: Text(l.resourcesAlbumCount(
         artist.albumCount,
       )),
       onTap: onTap,
@@ -239,6 +241,8 @@ class PlaylistListTile extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+
     // generate the palette used in other views ahead of time
     ref.watch(playlistArtPaletteProvider(playlist.id));
     final cache = ref.watch(cacheServiceProvider).playlistArt(playlist);
@@ -248,7 +252,7 @@ class PlaylistListTile extends HookConsumerWidget {
         child: UriCacheInfoImage(cache: cache),
       ),
       title: Text(playlist.name),
-      subtitle: Text(AppLocalizations.of(context).resourcesSongCount(
+      subtitle: Text(l.resourcesSongCount(
         playlist.songCount,
       )),
       onTap: onTap,

@@ -55,13 +55,13 @@ class NowPlayingPage extends HookConsumerWidget {
             ],
           ),
         ),
-        body: Stack(
+        body: const Stack(
           children: [
-            const MediaItemGradient(),
+            MediaItemGradient(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Column(
-                children: const [
+                children: [
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -215,6 +215,8 @@ class _Progress extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final colors = ref.watch(mediaItemThemeProvider).valueOrNull;
     final position = ref.watch(positionProvider);
     final duration = ref.watch(durationProvider);
@@ -229,8 +231,8 @@ class _Progress extends HookConsumerWidget {
           value: changing.value ? changeValue.value : position.toDouble(),
           min: 0,
           max: max(duration.toDouble(), position.toDouble()),
-          thumbColor: colors?.theme.colorScheme.onBackground,
-          activeColor: colors?.theme.colorScheme.onBackground,
+          thumbColor: colors?.theme.colorScheme.surface,
+          activeColor: colors?.theme.colorScheme.surface,
           inactiveColor: colors?.theme.colorScheme.surface,
           onChanged: (value) {
             changeValue.value = value;
@@ -246,7 +248,7 @@ class _Progress extends HookConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: DefaultTextStyle(
-            style: Theme.of(context).textTheme.titleMedium!,
+            style: theme.textTheme.titleMedium!,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -354,7 +356,7 @@ class _Controls extends HookConsumerWidget {
     final audio = ref.watch(audioControlProvider);
 
     return IconTheme(
-      data: IconThemeData(color: base.theme.colorScheme.onBackground),
+      data: IconThemeData(color: base.theme.colorScheme.surface),
       child: Column(
         children: [
           SizedBox(

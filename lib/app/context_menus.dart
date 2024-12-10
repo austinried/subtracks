@@ -25,7 +25,7 @@ Future<T?> showContextMenu<T>({
   required WidgetBuilder builder,
 }) {
   return showModalBottomSheet<T>(
-    backgroundColor: ref.read(baseThemeProvider).theme.colorScheme.background,
+    backgroundColor: ref.read(baseThemeProvider).theme.colorScheme.surface,
     useRootNavigator: true,
     isScrollControlled: true,
     context: context,
@@ -327,8 +327,9 @@ class _DownloadAction extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return _MenuItem(
-      title: _actionText(AppLocalizations.of(context)),
+      title: _actionText(l),
       icon: downloadAction.iconBuilder(context),
       onTap: downloadAction.action,
     );

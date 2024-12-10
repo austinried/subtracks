@@ -54,11 +54,12 @@ class BackgroundGradient extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mediaQuery = MediaQuery.of(context);
     final base = ref.watch(baseThemeProvider);
 
     return SizedBox(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height,
+      height: mediaQuery.size.height,
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
