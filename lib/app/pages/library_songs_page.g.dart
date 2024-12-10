@@ -29,8 +29,6 @@ class _SystemHash {
   }
 }
 
-typedef SongsListRef = AutoDisposeFutureProviderRef<List<Song>>;
-
 /// See also [songsList].
 @ProviderFor(songsList)
 const songsListProvider = SongsListFamily();
@@ -77,10 +75,10 @@ class SongsListFamily extends Family<AsyncValue<List<Song>>> {
 class SongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
   /// See also [songsList].
   SongsListProvider(
-    this.opt,
-  ) : super.internal(
+    ListQuery opt,
+  ) : this._internal(
           (ref) => songsList(
-            ref,
+            ref as SongsListRef,
             opt,
           ),
           from: songsListProvider,
@@ -91,9 +89,43 @@ class SongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
                   : _$songsListHash,
           dependencies: SongsListFamily._dependencies,
           allTransitiveDependencies: SongsListFamily._allTransitiveDependencies,
+          opt: opt,
         );
 
+  SongsListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.opt,
+  }) : super.internal();
+
   final ListQuery opt;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Song>> Function(SongsListRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SongsListProvider._internal(
+        (ref) => create(ref as SongsListRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        opt: opt,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Song>> createElement() {
+    return _SongsListProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -108,4 +140,18 @@ class SongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
     return _SystemHash.finish(hash);
   }
 }
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+
+mixin SongsListRef on AutoDisposeFutureProviderRef<List<Song>> {
+  /// The parameter `opt` of this provider.
+  ListQuery get opt;
+}
+
+class _SongsListProviderElement
+    extends AutoDisposeFutureProviderElement<List<Song>> with SongsListRef {
+  _SongsListProviderElement(super.provider);
+
+  @override
+  ListQuery get opt => (origin as SongsListProvider).opt;
+}
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

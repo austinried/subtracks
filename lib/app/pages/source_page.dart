@@ -76,8 +76,8 @@ class SourcePage extends HookConsumerWidget {
       onChanged: (value) => forcePlaintextPassword.value = value,
     );
 
-    return WillPopScope(
-      onWillPop: () async => !isSaving.value && !isDeleting.value,
+    return PopScope(
+      canPop: !isSaving.value && !isDeleting.value,
       child: Scaffold(
         appBar: AppBar(),
         floatingActionButton: Row(
@@ -164,6 +164,7 @@ class SourcePage extends HookConsumerWidget {
                               );
                         }
                       } catch (e, st) {
+                        if (!context.mounted) return;
                         showErrorSnackbar(context, e.toString());
                         log.severe('Saving source', e, st);
                         error = true;

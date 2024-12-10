@@ -12,7 +12,7 @@ part of 'music.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$SourceId {
@@ -62,21 +62,22 @@ class _$SourceIdCopyWithImpl<$Res, $Val extends SourceId>
 }
 
 /// @nodoc
-abstract class _$$_SourceIdCopyWith<$Res> implements $SourceIdCopyWith<$Res> {
-  factory _$$_SourceIdCopyWith(
-          _$_SourceId value, $Res Function(_$_SourceId) then) =
-      __$$_SourceIdCopyWithImpl<$Res>;
+abstract class _$$SourceIdImplCopyWith<$Res>
+    implements $SourceIdCopyWith<$Res> {
+  factory _$$SourceIdImplCopyWith(
+          _$SourceIdImpl value, $Res Function(_$SourceIdImpl) then) =
+      __$$SourceIdImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int sourceId, String id});
 }
 
 /// @nodoc
-class __$$_SourceIdCopyWithImpl<$Res>
-    extends _$SourceIdCopyWithImpl<$Res, _$_SourceId>
-    implements _$$_SourceIdCopyWith<$Res> {
-  __$$_SourceIdCopyWithImpl(
-      _$_SourceId _value, $Res Function(_$_SourceId) _then)
+class __$$SourceIdImplCopyWithImpl<$Res>
+    extends _$SourceIdCopyWithImpl<$Res, _$SourceIdImpl>
+    implements _$$SourceIdImplCopyWith<$Res> {
+  __$$SourceIdImplCopyWithImpl(
+      _$SourceIdImpl _value, $Res Function(_$SourceIdImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -85,7 +86,7 @@ class __$$_SourceIdCopyWithImpl<$Res>
     Object? sourceId = null,
     Object? id = null,
   }) {
-    return _then(_$_SourceId(
+    return _then(_$SourceIdImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -100,8 +101,8 @@ class __$$_SourceIdCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_SourceId with DiagnosticableTreeMixin implements _SourceId {
-  const _$_SourceId({required this.sourceId, required this.id});
+class _$SourceIdImpl with DiagnosticableTreeMixin implements _SourceId {
+  const _$SourceIdImpl({required this.sourceId, required this.id});
 
   @override
   final int sourceId;
@@ -123,10 +124,10 @@ class _$_SourceId with DiagnosticableTreeMixin implements _SourceId {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_SourceId &&
+            other is _$SourceIdImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.id, id) || other.id == id));
@@ -138,13 +139,13 @@ class _$_SourceId with DiagnosticableTreeMixin implements _SourceId {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_SourceIdCopyWith<_$_SourceId> get copyWith =>
-      __$$_SourceIdCopyWithImpl<_$_SourceId>(this, _$identity);
+  _$$SourceIdImplCopyWith<_$SourceIdImpl> get copyWith =>
+      __$$SourceIdImplCopyWithImpl<_$SourceIdImpl>(this, _$identity);
 }
 
 abstract class _SourceId implements SourceId {
   const factory _SourceId(
-      {required final int sourceId, required final String id}) = _$_SourceId;
+      {required final int sourceId, required final String id}) = _$SourceIdImpl;
 
   @override
   int get sourceId;
@@ -152,7 +153,7 @@ abstract class _SourceId implements SourceId {
   String get id;
   @override
   @JsonKey(ignore: true)
-  _$$_SourceIdCopyWith<_$_SourceId> get copyWith =>
+  _$$SourceIdImplCopyWith<_$SourceIdImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -205,22 +206,22 @@ class _$SourceIdSetCopyWithImpl<$Res, $Val extends SourceIdSet>
 }
 
 /// @nodoc
-abstract class _$$_SourceIdSetCopyWith<$Res>
+abstract class _$$SourceIdSetImplCopyWith<$Res>
     implements $SourceIdSetCopyWith<$Res> {
-  factory _$$_SourceIdSetCopyWith(
-          _$_SourceIdSet value, $Res Function(_$_SourceIdSet) then) =
-      __$$_SourceIdSetCopyWithImpl<$Res>;
+  factory _$$SourceIdSetImplCopyWith(
+          _$SourceIdSetImpl value, $Res Function(_$SourceIdSetImpl) then) =
+      __$$SourceIdSetImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int sourceId, ISet<String> ids});
 }
 
 /// @nodoc
-class __$$_SourceIdSetCopyWithImpl<$Res>
-    extends _$SourceIdSetCopyWithImpl<$Res, _$_SourceIdSet>
-    implements _$$_SourceIdSetCopyWith<$Res> {
-  __$$_SourceIdSetCopyWithImpl(
-      _$_SourceIdSet _value, $Res Function(_$_SourceIdSet) _then)
+class __$$SourceIdSetImplCopyWithImpl<$Res>
+    extends _$SourceIdSetCopyWithImpl<$Res, _$SourceIdSetImpl>
+    implements _$$SourceIdSetImplCopyWith<$Res> {
+  __$$SourceIdSetImplCopyWithImpl(
+      _$SourceIdSetImpl _value, $Res Function(_$SourceIdSetImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -229,7 +230,7 @@ class __$$_SourceIdSetCopyWithImpl<$Res>
     Object? sourceId = null,
     Object? ids = null,
   }) {
-    return _then(_$_SourceIdSet(
+    return _then(_$SourceIdSetImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -244,8 +245,8 @@ class __$$_SourceIdSetCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_SourceIdSet with DiagnosticableTreeMixin implements _SourceIdSet {
-  const _$_SourceIdSet({required this.sourceId, required this.ids});
+class _$SourceIdSetImpl with DiagnosticableTreeMixin implements _SourceIdSet {
+  const _$SourceIdSetImpl({required this.sourceId, required this.ids});
 
   @override
   final int sourceId;
@@ -267,10 +268,10 @@ class _$_SourceIdSet with DiagnosticableTreeMixin implements _SourceIdSet {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_SourceIdSet &&
+            other is _$SourceIdSetImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             const DeepCollectionEquality().equals(other.ids, ids));
@@ -283,14 +284,14 @@ class _$_SourceIdSet with DiagnosticableTreeMixin implements _SourceIdSet {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_SourceIdSetCopyWith<_$_SourceIdSet> get copyWith =>
-      __$$_SourceIdSetCopyWithImpl<_$_SourceIdSet>(this, _$identity);
+  _$$SourceIdSetImplCopyWith<_$SourceIdSetImpl> get copyWith =>
+      __$$SourceIdSetImplCopyWithImpl<_$SourceIdSetImpl>(this, _$identity);
 }
 
 abstract class _SourceIdSet implements SourceIdSet {
   const factory _SourceIdSet(
       {required final int sourceId,
-      required final ISet<String> ids}) = _$_SourceIdSet;
+      required final ISet<String> ids}) = _$SourceIdSetImpl;
 
   @override
   int get sourceId;
@@ -298,7 +299,7 @@ abstract class _SourceIdSet implements SourceIdSet {
   ISet<String> get ids;
   @override
   @JsonKey(ignore: true)
-  _$$_SourceIdSetCopyWith<_$_SourceIdSet> get copyWith =>
+  _$$SourceIdSetImplCopyWith<_$SourceIdSetImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -372,9 +373,10 @@ class _$ArtistCopyWithImpl<$Res, $Val extends Artist>
 }
 
 /// @nodoc
-abstract class _$$_ArtistCopyWith<$Res> implements $ArtistCopyWith<$Res> {
-  factory _$$_ArtistCopyWith(_$_Artist value, $Res Function(_$_Artist) then) =
-      __$$_ArtistCopyWithImpl<$Res>;
+abstract class _$$ArtistImplCopyWith<$Res> implements $ArtistCopyWith<$Res> {
+  factory _$$ArtistImplCopyWith(
+          _$ArtistImpl value, $Res Function(_$ArtistImpl) then) =
+      __$$ArtistImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -386,10 +388,11 @@ abstract class _$$_ArtistCopyWith<$Res> implements $ArtistCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_ArtistCopyWithImpl<$Res>
-    extends _$ArtistCopyWithImpl<$Res, _$_Artist>
-    implements _$$_ArtistCopyWith<$Res> {
-  __$$_ArtistCopyWithImpl(_$_Artist _value, $Res Function(_$_Artist) _then)
+class __$$ArtistImplCopyWithImpl<$Res>
+    extends _$ArtistCopyWithImpl<$Res, _$ArtistImpl>
+    implements _$$ArtistImplCopyWith<$Res> {
+  __$$ArtistImplCopyWithImpl(
+      _$ArtistImpl _value, $Res Function(_$ArtistImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -401,7 +404,7 @@ class __$$_ArtistCopyWithImpl<$Res>
     Object? albumCount = null,
     Object? starred = freezed,
   }) {
-    return _then(_$_Artist(
+    return _then(_$ArtistImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -428,8 +431,8 @@ class __$$_ArtistCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_Artist with DiagnosticableTreeMixin implements _Artist {
-  const _$_Artist(
+class _$ArtistImpl with DiagnosticableTreeMixin implements _Artist {
+  const _$ArtistImpl(
       {required this.sourceId,
       required this.id,
       required this.name,
@@ -465,10 +468,10 @@ class _$_Artist with DiagnosticableTreeMixin implements _Artist {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Artist &&
+            other is _$ArtistImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.id, id) || other.id == id) &&
@@ -485,8 +488,8 @@ class _$_Artist with DiagnosticableTreeMixin implements _Artist {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ArtistCopyWith<_$_Artist> get copyWith =>
-      __$$_ArtistCopyWithImpl<_$_Artist>(this, _$identity);
+  _$$ArtistImplCopyWith<_$ArtistImpl> get copyWith =>
+      __$$ArtistImplCopyWithImpl<_$ArtistImpl>(this, _$identity);
 }
 
 abstract class _Artist implements Artist {
@@ -495,7 +498,7 @@ abstract class _Artist implements Artist {
       required final String id,
       required final String name,
       required final int albumCount,
-      final DateTime? starred}) = _$_Artist;
+      final DateTime? starred}) = _$ArtistImpl;
 
   @override
   int get sourceId;
@@ -509,7 +512,7 @@ abstract class _Artist implements Artist {
   DateTime? get starred;
   @override
   @JsonKey(ignore: true)
-  _$$_ArtistCopyWith<_$_Artist> get copyWith =>
+  _$$ArtistImplCopyWith<_$ArtistImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -648,9 +651,10 @@ class _$AlbumCopyWithImpl<$Res, $Val extends Album>
 }
 
 /// @nodoc
-abstract class _$$_AlbumCopyWith<$Res> implements $AlbumCopyWith<$Res> {
-  factory _$$_AlbumCopyWith(_$_Album value, $Res Function(_$_Album) then) =
-      __$$_AlbumCopyWithImpl<$Res>;
+abstract class _$$AlbumImplCopyWith<$Res> implements $AlbumCopyWith<$Res> {
+  factory _$$AlbumImplCopyWith(
+          _$AlbumImpl value, $Res Function(_$AlbumImpl) then) =
+      __$$AlbumImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -671,9 +675,11 @@ abstract class _$$_AlbumCopyWith<$Res> implements $AlbumCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_AlbumCopyWithImpl<$Res> extends _$AlbumCopyWithImpl<$Res, _$_Album>
-    implements _$$_AlbumCopyWith<$Res> {
-  __$$_AlbumCopyWithImpl(_$_Album _value, $Res Function(_$_Album) _then)
+class __$$AlbumImplCopyWithImpl<$Res>
+    extends _$AlbumCopyWithImpl<$Res, _$AlbumImpl>
+    implements _$$AlbumImplCopyWith<$Res> {
+  __$$AlbumImplCopyWithImpl(
+      _$AlbumImpl _value, $Res Function(_$AlbumImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -694,7 +700,7 @@ class __$$_AlbumCopyWithImpl<$Res> extends _$AlbumCopyWithImpl<$Res, _$_Album>
     Object? frequentRank = freezed,
     Object? recentRank = freezed,
   }) {
-    return _then(_$_Album(
+    return _then(_$AlbumImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -757,8 +763,8 @@ class __$$_AlbumCopyWithImpl<$Res> extends _$AlbumCopyWithImpl<$Res, _$_Album>
 
 /// @nodoc
 
-class _$_Album with DiagnosticableTreeMixin implements _Album {
-  const _$_Album(
+class _$AlbumImpl with DiagnosticableTreeMixin implements _Album {
+  const _$AlbumImpl(
       {required this.sourceId,
       required this.id,
       required this.name,
@@ -833,10 +839,10 @@ class _$_Album with DiagnosticableTreeMixin implements _Album {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Album &&
+            other is _$AlbumImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.id, id) || other.id == id) &&
@@ -882,8 +888,8 @@ class _$_Album with DiagnosticableTreeMixin implements _Album {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_AlbumCopyWith<_$_Album> get copyWith =>
-      __$$_AlbumCopyWithImpl<_$_Album>(this, _$identity);
+  _$$AlbumImplCopyWith<_$AlbumImpl> get copyWith =>
+      __$$AlbumImplCopyWithImpl<_$AlbumImpl>(this, _$identity);
 }
 
 abstract class _Album implements Album {
@@ -901,7 +907,7 @@ abstract class _Album implements Album {
       required final int songCount,
       final bool isDeleted,
       final int? frequentRank,
-      final int? recentRank}) = _$_Album;
+      final int? recentRank}) = _$AlbumImpl;
 
   @override
   int get sourceId;
@@ -933,7 +939,7 @@ abstract class _Album implements Album {
   int? get recentRank;
   @override
   @JsonKey(ignore: true)
-  _$$_AlbumCopyWith<_$_Album> get copyWith =>
+  _$$AlbumImplCopyWith<_$AlbumImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1022,10 +1028,11 @@ class _$PlaylistCopyWithImpl<$Res, $Val extends Playlist>
 }
 
 /// @nodoc
-abstract class _$$_PlaylistCopyWith<$Res> implements $PlaylistCopyWith<$Res> {
-  factory _$$_PlaylistCopyWith(
-          _$_Playlist value, $Res Function(_$_Playlist) then) =
-      __$$_PlaylistCopyWithImpl<$Res>;
+abstract class _$$PlaylistImplCopyWith<$Res>
+    implements $PlaylistCopyWith<$Res> {
+  factory _$$PlaylistImplCopyWith(
+          _$PlaylistImpl value, $Res Function(_$PlaylistImpl) then) =
+      __$$PlaylistImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1039,11 +1046,11 @@ abstract class _$$_PlaylistCopyWith<$Res> implements $PlaylistCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_PlaylistCopyWithImpl<$Res>
-    extends _$PlaylistCopyWithImpl<$Res, _$_Playlist>
-    implements _$$_PlaylistCopyWith<$Res> {
-  __$$_PlaylistCopyWithImpl(
-      _$_Playlist _value, $Res Function(_$_Playlist) _then)
+class __$$PlaylistImplCopyWithImpl<$Res>
+    extends _$PlaylistCopyWithImpl<$Res, _$PlaylistImpl>
+    implements _$$PlaylistImplCopyWith<$Res> {
+  __$$PlaylistImplCopyWithImpl(
+      _$PlaylistImpl _value, $Res Function(_$PlaylistImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1057,7 +1064,7 @@ class __$$_PlaylistCopyWithImpl<$Res>
     Object? songCount = null,
     Object? created = null,
   }) {
-    return _then(_$_Playlist(
+    return _then(_$PlaylistImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -1092,8 +1099,8 @@ class __$$_PlaylistCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_Playlist with DiagnosticableTreeMixin implements _Playlist {
-  const _$_Playlist(
+class _$PlaylistImpl with DiagnosticableTreeMixin implements _Playlist {
+  const _$PlaylistImpl(
       {required this.sourceId,
       required this.id,
       required this.name,
@@ -1137,10 +1144,10 @@ class _$_Playlist with DiagnosticableTreeMixin implements _Playlist {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Playlist &&
+            other is _$PlaylistImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.id, id) || other.id == id) &&
@@ -1160,8 +1167,8 @@ class _$_Playlist with DiagnosticableTreeMixin implements _Playlist {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_PlaylistCopyWith<_$_Playlist> get copyWith =>
-      __$$_PlaylistCopyWithImpl<_$_Playlist>(this, _$identity);
+  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
+      __$$PlaylistImplCopyWithImpl<_$PlaylistImpl>(this, _$identity);
 }
 
 abstract class _Playlist implements Playlist {
@@ -1172,7 +1179,7 @@ abstract class _Playlist implements Playlist {
       final String? comment,
       final String? coverArt,
       required final int songCount,
-      required final DateTime created}) = _$_Playlist;
+      required final DateTime created}) = _$PlaylistImpl;
 
   @override
   int get sourceId;
@@ -1190,7 +1197,7 @@ abstract class _Playlist implements Playlist {
   DateTime get created;
   @override
   @JsonKey(ignore: true)
-  _$$_PlaylistCopyWith<_$_Playlist> get copyWith =>
+  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1334,9 +1341,10 @@ class _$SongCopyWithImpl<$Res, $Val extends Song>
 }
 
 /// @nodoc
-abstract class _$$_SongCopyWith<$Res> implements $SongCopyWith<$Res> {
-  factory _$$_SongCopyWith(_$_Song value, $Res Function(_$_Song) then) =
-      __$$_SongCopyWithImpl<$Res>;
+abstract class _$$SongImplCopyWith<$Res> implements $SongCopyWith<$Res> {
+  factory _$$SongImplCopyWith(
+          _$SongImpl value, $Res Function(_$SongImpl) then) =
+      __$$SongImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1358,9 +1366,10 @@ abstract class _$$_SongCopyWith<$Res> implements $SongCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_SongCopyWithImpl<$Res> extends _$SongCopyWithImpl<$Res, _$_Song>
-    implements _$$_SongCopyWith<$Res> {
-  __$$_SongCopyWithImpl(_$_Song _value, $Res Function(_$_Song) _then)
+class __$$SongImplCopyWithImpl<$Res>
+    extends _$SongCopyWithImpl<$Res, _$SongImpl>
+    implements _$$SongImplCopyWith<$Res> {
+  __$$SongImplCopyWithImpl(_$SongImpl _value, $Res Function(_$SongImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1382,7 +1391,7 @@ class __$$_SongCopyWithImpl<$Res> extends _$SongCopyWithImpl<$Res, _$_Song>
     Object? downloadFilePath = freezed,
     Object? isDeleted = null,
   }) {
-    return _then(_$_Song(
+    return _then(_$SongImpl(
       sourceId: null == sourceId
           ? _value.sourceId
           : sourceId // ignore: cast_nullable_to_non_nullable
@@ -1449,8 +1458,8 @@ class __$$_SongCopyWithImpl<$Res> extends _$SongCopyWithImpl<$Res, _$_Song>
 
 /// @nodoc
 
-class _$_Song with DiagnosticableTreeMixin implements _Song {
-  const _$_Song(
+class _$SongImpl with DiagnosticableTreeMixin implements _Song {
+  const _$SongImpl(
       {required this.sourceId,
       required this.id,
       this.albumId,
@@ -1527,10 +1536,10 @@ class _$_Song with DiagnosticableTreeMixin implements _Song {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Song &&
+            other is _$SongImpl &&
             (identical(other.sourceId, sourceId) ||
                 other.sourceId == sourceId) &&
             (identical(other.id, id) || other.id == id) &&
@@ -1576,8 +1585,8 @@ class _$_Song with DiagnosticableTreeMixin implements _Song {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_SongCopyWith<_$_Song> get copyWith =>
-      __$$_SongCopyWithImpl<_$_Song>(this, _$identity);
+  _$$SongImplCopyWith<_$SongImpl> get copyWith =>
+      __$$SongImplCopyWithImpl<_$SongImpl>(this, _$identity);
 }
 
 abstract class _Song implements Song {
@@ -1596,7 +1605,7 @@ abstract class _Song implements Song {
       final String? genre,
       final String? downloadTaskId,
       final String? downloadFilePath,
-      final bool isDeleted}) = _$_Song;
+      final bool isDeleted}) = _$SongImpl;
 
   @override
   int get sourceId;
@@ -1630,7 +1639,8 @@ abstract class _Song implements Song {
   bool get isDeleted;
   @override
   @JsonKey(ignore: true)
-  _$$_SongCopyWith<_$_Song> get copyWith => throw _privateConstructorUsedError;
+  _$$SongImplCopyWith<_$SongImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -1698,11 +1708,11 @@ class _$SearchResultsCopyWithImpl<$Res, $Val extends SearchResults>
 }
 
 /// @nodoc
-abstract class _$$_SearchResultsCopyWith<$Res>
+abstract class _$$SearchResultsImplCopyWith<$Res>
     implements $SearchResultsCopyWith<$Res> {
-  factory _$$_SearchResultsCopyWith(
-          _$_SearchResults value, $Res Function(_$_SearchResults) then) =
-      __$$_SearchResultsCopyWithImpl<$Res>;
+  factory _$$SearchResultsImplCopyWith(
+          _$SearchResultsImpl value, $Res Function(_$SearchResultsImpl) then) =
+      __$$SearchResultsImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -1713,11 +1723,11 @@ abstract class _$$_SearchResultsCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_SearchResultsCopyWithImpl<$Res>
-    extends _$SearchResultsCopyWithImpl<$Res, _$_SearchResults>
-    implements _$$_SearchResultsCopyWith<$Res> {
-  __$$_SearchResultsCopyWithImpl(
-      _$_SearchResults _value, $Res Function(_$_SearchResults) _then)
+class __$$SearchResultsImplCopyWithImpl<$Res>
+    extends _$SearchResultsCopyWithImpl<$Res, _$SearchResultsImpl>
+    implements _$$SearchResultsImplCopyWith<$Res> {
+  __$$SearchResultsImplCopyWithImpl(
+      _$SearchResultsImpl _value, $Res Function(_$SearchResultsImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -1728,7 +1738,7 @@ class __$$_SearchResultsCopyWithImpl<$Res>
     Object? albums = null,
     Object? artists = null,
   }) {
-    return _then(_$_SearchResults(
+    return _then(_$SearchResultsImpl(
       query: freezed == query
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
@@ -1751,8 +1761,10 @@ class __$$_SearchResultsCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_SearchResults with DiagnosticableTreeMixin implements _SearchResults {
-  const _$_SearchResults(
+class _$SearchResultsImpl
+    with DiagnosticableTreeMixin
+    implements _SearchResults {
+  const _$SearchResultsImpl(
       {this.query,
       this.songs = const IListConst([]),
       this.albums = const IListConst([]),
@@ -1787,10 +1799,10 @@ class _$_SearchResults with DiagnosticableTreeMixin implements _SearchResults {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_SearchResults &&
+            other is _$SearchResultsImpl &&
             (identical(other.query, query) || other.query == query) &&
             const DeepCollectionEquality().equals(other.songs, songs) &&
             const DeepCollectionEquality().equals(other.albums, albums) &&
@@ -1808,8 +1820,8 @@ class _$_SearchResults with DiagnosticableTreeMixin implements _SearchResults {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_SearchResultsCopyWith<_$_SearchResults> get copyWith =>
-      __$$_SearchResultsCopyWithImpl<_$_SearchResults>(this, _$identity);
+  _$$SearchResultsImplCopyWith<_$SearchResultsImpl> get copyWith =>
+      __$$SearchResultsImplCopyWithImpl<_$SearchResultsImpl>(this, _$identity);
 }
 
 abstract class _SearchResults implements SearchResults {
@@ -1817,7 +1829,7 @@ abstract class _SearchResults implements SearchResults {
       {final String? query,
       final IList<Song> songs,
       final IList<Album> albums,
-      final IList<Artist> artists}) = _$_SearchResults;
+      final IList<Artist> artists}) = _$SearchResultsImpl;
 
   @override
   String? get query;
@@ -1829,6 +1841,6 @@ abstract class _SearchResults implements SearchResults {
   IList<Artist> get artists;
   @override
   @JsonKey(ignore: true)
-  _$$_SearchResultsCopyWith<_$_SearchResults> get copyWith =>
+  _$$SearchResultsImplCopyWith<_$SearchResultsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

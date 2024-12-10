@@ -6,7 +6,7 @@ part of 'download_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$downloadServiceHash() => r'c72c49f980e307f3013467e76b6564d14a34a736';
+String _$downloadServiceHash() => r'd2aeed2c026de4dc7fa26b2331244b49e7e9f003';
 
 /// See also [DownloadService].
 @ProviderFor(DownloadService)
@@ -22,4 +22,5 @@ final downloadServiceProvider =
 );
 
 typedef _$DownloadService = Notifier<DownloadState>;
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

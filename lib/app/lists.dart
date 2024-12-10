@@ -127,6 +127,7 @@ class SyncAllRefresh extends HookConsumerWidget {
         try {
           await ref.read(syncServiceProvider.notifier).syncAll();
         } catch (e) {
+          if (!context.mounted) return;
           showErrorSnackbar(context, e.toString());
         }
       },

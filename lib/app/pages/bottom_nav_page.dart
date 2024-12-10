@@ -111,13 +111,13 @@ class OfflineIndicator extends HookConsumerWidget {
       ),
       child: FilledButton.tonal(
         style: const ButtonStyle(
-          padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(
+          padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
             EdgeInsets.zero,
           ),
-          fixedSize: MaterialStatePropertyAll<Size>(
+          fixedSize: WidgetStatePropertyAll<Size>(
             Size(42, 42),
           ),
-          minimumSize: MaterialStatePropertyAll<Size>(
+          minimumSize: WidgetStatePropertyAll<Size>(
             Size(42, 42),
           ),
         ),

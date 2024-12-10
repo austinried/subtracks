@@ -12,7 +12,7 @@ part of 'download_service.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$DownloadState {
@@ -86,11 +86,11 @@ class _$DownloadStateCopyWithImpl<$Res, $Val extends DownloadState>
 }
 
 /// @nodoc
-abstract class _$$_DownloadStateCopyWith<$Res>
+abstract class _$$DownloadStateImplCopyWith<$Res>
     implements $DownloadStateCopyWith<$Res> {
-  factory _$$_DownloadStateCopyWith(
-          _$_DownloadState value, $Res Function(_$_DownloadState) then) =
-      __$$_DownloadStateCopyWithImpl<$Res>;
+  factory _$$DownloadStateImplCopyWith(
+          _$DownloadStateImpl value, $Res Function(_$DownloadStateImpl) then) =
+      __$$DownloadStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -102,11 +102,11 @@ abstract class _$$_DownloadStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_DownloadStateCopyWithImpl<$Res>
-    extends _$DownloadStateCopyWithImpl<$Res, _$_DownloadState>
-    implements _$$_DownloadStateCopyWith<$Res> {
-  __$$_DownloadStateCopyWithImpl(
-      _$_DownloadState _value, $Res Function(_$_DownloadState) _then)
+class __$$DownloadStateImplCopyWithImpl<$Res>
+    extends _$DownloadStateCopyWithImpl<$Res, _$DownloadStateImpl>
+    implements _$$DownloadStateImplCopyWith<$Res> {
+  __$$DownloadStateImplCopyWithImpl(
+      _$DownloadStateImpl _value, $Res Function(_$DownloadStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -118,7 +118,7 @@ class __$$_DownloadStateCopyWithImpl<$Res>
     Object? listCancels = null,
     Object? saveDir = null,
   }) {
-    return _then(_$_DownloadState(
+    return _then(_$DownloadStateImpl(
       downloads: null == downloads
           ? _value.downloads
           : downloads // ignore: cast_nullable_to_non_nullable
@@ -145,8 +145,8 @@ class __$$_DownloadStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_DownloadState implements _DownloadState {
-  const _$_DownloadState(
+class _$DownloadStateImpl implements _DownloadState {
+  const _$DownloadStateImpl(
       {this.downloads = const IListConst([]),
       this.deletes = const IListConst([]),
       this.listDownloads = const IListConst([]),
@@ -174,10 +174,10 @@ class _$_DownloadState implements _DownloadState {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_DownloadState &&
+            other is _$DownloadStateImpl &&
             const DeepCollectionEquality().equals(other.downloads, downloads) &&
             const DeepCollectionEquality().equals(other.deletes, deletes) &&
             const DeepCollectionEquality()
@@ -199,8 +199,8 @@ class _$_DownloadState implements _DownloadState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_DownloadStateCopyWith<_$_DownloadState> get copyWith =>
-      __$$_DownloadStateCopyWithImpl<_$_DownloadState>(this, _$identity);
+  _$$DownloadStateImplCopyWith<_$DownloadStateImpl> get copyWith =>
+      __$$DownloadStateImplCopyWithImpl<_$DownloadStateImpl>(this, _$identity);
 }
 
 abstract class _DownloadState implements DownloadState {
@@ -209,7 +209,7 @@ abstract class _DownloadState implements DownloadState {
       final IList<SourceId> deletes,
       final IList<SourceId> listDownloads,
       final IList<SourceId> listCancels,
-      required final String saveDir}) = _$_DownloadState;
+      required final String saveDir}) = _$DownloadStateImpl;
 
   @override
   IList<Download> get downloads;
@@ -223,7 +223,7 @@ abstract class _DownloadState implements DownloadState {
   String get saveDir;
   @override
   @JsonKey(ignore: true)
-  _$$_DownloadStateCopyWith<_$_DownloadState> get copyWith =>
+  _$$DownloadStateImplCopyWith<_$DownloadStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -319,10 +319,11 @@ class _$DownloadCopyWithImpl<$Res, $Val extends Download>
 }
 
 /// @nodoc
-abstract class _$$_DownloadCopyWith<$Res> implements $DownloadCopyWith<$Res> {
-  factory _$$_DownloadCopyWith(
-          _$_Download value, $Res Function(_$_Download) then) =
-      __$$_DownloadCopyWithImpl<$Res>;
+abstract class _$$DownloadImplCopyWith<$Res>
+    implements $DownloadCopyWith<$Res> {
+  factory _$$DownloadImplCopyWith(
+          _$DownloadImpl value, $Res Function(_$DownloadImpl) then) =
+      __$$DownloadImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -337,11 +338,11 @@ abstract class _$$_DownloadCopyWith<$Res> implements $DownloadCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_DownloadCopyWithImpl<$Res>
-    extends _$DownloadCopyWithImpl<$Res, _$_Download>
-    implements _$$_DownloadCopyWith<$Res> {
-  __$$_DownloadCopyWithImpl(
-      _$_Download _value, $Res Function(_$_Download) _then)
+class __$$DownloadImplCopyWithImpl<$Res>
+    extends _$DownloadCopyWithImpl<$Res, _$DownloadImpl>
+    implements _$$DownloadImplCopyWith<$Res> {
+  __$$DownloadImplCopyWithImpl(
+      _$DownloadImpl _value, $Res Function(_$DownloadImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -356,7 +357,7 @@ class __$$_DownloadCopyWithImpl<$Res>
     Object? timeCreated = null,
     Object? allowCellular = null,
   }) {
-    return _then(_$_Download(
+    return _then(_$DownloadImpl(
       taskId: null == taskId
           ? _value.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
@@ -395,8 +396,8 @@ class __$$_DownloadCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_Download extends _Download {
-  const _$_Download(
+class _$DownloadImpl extends _Download {
+  const _$DownloadImpl(
       {required this.taskId,
       required this.status,
       required this.progress,
@@ -430,10 +431,10 @@ class _$_Download extends _Download {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Download &&
+            other is _$DownloadImpl &&
             (identical(other.taskId, taskId) || other.taskId == taskId) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.progress, progress) ||
@@ -456,8 +457,8 @@ class _$_Download extends _Download {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_DownloadCopyWith<_$_Download> get copyWith =>
-      __$$_DownloadCopyWithImpl<_$_Download>(this, _$identity);
+  _$$DownloadImplCopyWith<_$DownloadImpl> get copyWith =>
+      __$$DownloadImplCopyWithImpl<_$DownloadImpl>(this, _$identity);
 }
 
 abstract class _Download extends Download {
@@ -469,7 +470,7 @@ abstract class _Download extends Download {
       required final String? filename,
       required final String savedDir,
       required final int timeCreated,
-      required final bool allowCellular}) = _$_Download;
+      required final bool allowCellular}) = _$DownloadImpl;
   const _Download._() : super._();
 
   @override
@@ -490,6 +491,6 @@ abstract class _Download extends Download {
   bool get allowCellular;
   @override
   @JsonKey(ignore: true)
-  _$$_DownloadCopyWith<_$_Download> get copyWith =>
+  _$$DownloadImplCopyWith<_$DownloadImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

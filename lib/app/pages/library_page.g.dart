@@ -60,8 +60,6 @@ class _SystemHash {
   }
 }
 
-typedef LibraryListQueryRef = ProviderRef<LibraryListQuery>;
-
 /// See also [libraryListQuery].
 @ProviderFor(libraryListQuery)
 const libraryListQueryProvider = LibraryListQueryFamily();
@@ -108,10 +106,10 @@ class LibraryListQueryFamily extends Family<LibraryListQuery> {
 class LibraryListQueryProvider extends Provider<LibraryListQuery> {
   /// See also [libraryListQuery].
   LibraryListQueryProvider(
-    this.index,
-  ) : super.internal(
+    int index,
+  ) : this._internal(
           (ref) => libraryListQuery(
-            ref,
+            ref as LibraryListQueryRef,
             index,
           ),
           from: libraryListQueryProvider,
@@ -123,9 +121,43 @@ class LibraryListQueryProvider extends Provider<LibraryListQuery> {
           dependencies: LibraryListQueryFamily._dependencies,
           allTransitiveDependencies:
               LibraryListQueryFamily._allTransitiveDependencies,
+          index: index,
         );
 
+  LibraryListQueryProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.index,
+  }) : super.internal();
+
   final int index;
+
+  @override
+  Override overrideWith(
+    LibraryListQuery Function(LibraryListQueryRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: LibraryListQueryProvider._internal(
+        (ref) => create(ref as LibraryListQueryRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        index: index,
+      ),
+    );
+  }
+
+  @override
+  ProviderElement<LibraryListQuery> createElement() {
+    return _LibraryListQueryProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -139,6 +171,19 @@ class LibraryListQueryProvider extends Provider<LibraryListQuery> {
 
     return _SystemHash.finish(hash);
   }
+}
+
+mixin LibraryListQueryRef on ProviderRef<LibraryListQuery> {
+  /// The parameter `index` of this provider.
+  int get index;
+}
+
+class _LibraryListQueryProviderElement extends ProviderElement<LibraryListQuery>
+    with LibraryListQueryRef {
+  _LibraryListQueryProviderElement(super.provider);
+
+  @override
+  int get index => (origin as LibraryListQueryProvider).index;
 }
 
 String _$lastLibraryStateServiceHash() =>
@@ -173,4 +218,5 @@ final libraryListsProvider =
 );
 
 typedef _$LibraryLists = Notifier<IList<LibraryListQuery>>;
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

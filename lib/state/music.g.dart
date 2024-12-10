@@ -29,8 +29,6 @@ class _SystemHash {
   }
 }
 
-typedef ArtistRef = AutoDisposeStreamProviderRef<Artist>;
-
 /// See also [artist].
 @ProviderFor(artist)
 const artistProvider = ArtistFamily();
@@ -77,10 +75,10 @@ class ArtistFamily extends Family<AsyncValue<Artist>> {
 class ArtistProvider extends AutoDisposeStreamProvider<Artist> {
   /// See also [artist].
   ArtistProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => artist(
-            ref,
+            ref as ArtistRef,
             id,
           ),
           from: artistProvider,
@@ -91,9 +89,43 @@ class ArtistProvider extends AutoDisposeStreamProvider<Artist> {
                   : _$artistHash,
           dependencies: ArtistFamily._dependencies,
           allTransitiveDependencies: ArtistFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  ArtistProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<Artist> Function(ArtistRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ArtistProvider._internal(
+        (ref) => create(ref as ArtistRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Artist> createElement() {
+    return _ArtistProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -109,8 +141,20 @@ class ArtistProvider extends AutoDisposeStreamProvider<Artist> {
   }
 }
 
+mixin ArtistRef on AutoDisposeStreamProviderRef<Artist> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _ArtistProviderElement extends AutoDisposeStreamProviderElement<Artist>
+    with ArtistRef {
+  _ArtistProviderElement(super.provider);
+
+  @override
+  String get id => (origin as ArtistProvider).id;
+}
+
 String _$albumHash() => r'914f37fe8bc2d883de2548ce9411aa10e8a9868a';
-typedef AlbumRef = AutoDisposeStreamProviderRef<Album>;
 
 /// See also [album].
 @ProviderFor(album)
@@ -158,10 +202,10 @@ class AlbumFamily extends Family<AsyncValue<Album>> {
 class AlbumProvider extends AutoDisposeStreamProvider<Album> {
   /// See also [album].
   AlbumProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => album(
-            ref,
+            ref as AlbumRef,
             id,
           ),
           from: albumProvider,
@@ -172,9 +216,43 @@ class AlbumProvider extends AutoDisposeStreamProvider<Album> {
                   : _$albumHash,
           dependencies: AlbumFamily._dependencies,
           allTransitiveDependencies: AlbumFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  AlbumProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<Album> Function(AlbumRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumProvider._internal(
+        (ref) => create(ref as AlbumRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Album> createElement() {
+    return _AlbumProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -190,10 +268,21 @@ class AlbumProvider extends AutoDisposeStreamProvider<Album> {
   }
 }
 
+mixin AlbumRef on AutoDisposeStreamProviderRef<Album> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AlbumProviderElement extends AutoDisposeStreamProviderElement<Album>
+    with AlbumRef {
+  _AlbumProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumProvider).id;
+}
+
 String _$albumDownloadStatusHash() =>
     r'0b6c5f09f8327a624172d7ef33e1911c87b2cb60';
-typedef AlbumDownloadStatusRef
-    = AutoDisposeStreamProviderRef<ListDownloadStatus>;
 
 /// See also [albumDownloadStatus].
 @ProviderFor(albumDownloadStatus)
@@ -242,10 +331,10 @@ class AlbumDownloadStatusProvider
     extends AutoDisposeStreamProvider<ListDownloadStatus> {
   /// See also [albumDownloadStatus].
   AlbumDownloadStatusProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => albumDownloadStatus(
-            ref,
+            ref as AlbumDownloadStatusRef,
             id,
           ),
           from: albumDownloadStatusProvider,
@@ -257,9 +346,43 @@ class AlbumDownloadStatusProvider
           dependencies: AlbumDownloadStatusFamily._dependencies,
           allTransitiveDependencies:
               AlbumDownloadStatusFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  AlbumDownloadStatusProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<ListDownloadStatus> Function(AlbumDownloadStatusRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumDownloadStatusProvider._internal(
+        (ref) => create(ref as AlbumDownloadStatusRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<ListDownloadStatus> createElement() {
+    return _AlbumDownloadStatusProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -275,10 +398,23 @@ class AlbumDownloadStatusProvider
   }
 }
 
+mixin AlbumDownloadStatusRef
+    on AutoDisposeStreamProviderRef<ListDownloadStatus> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AlbumDownloadStatusProviderElement
+    extends AutoDisposeStreamProviderElement<ListDownloadStatus>
+    with AlbumDownloadStatusRef {
+  _AlbumDownloadStatusProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumDownloadStatusProvider).id;
+}
+
 String _$playlistDownloadStatusHash() =>
     r'd563e8746265b2022c59e70869d136cdf6c03ab9';
-typedef PlaylistDownloadStatusRef
-    = AutoDisposeStreamProviderRef<ListDownloadStatus>;
 
 /// See also [playlistDownloadStatus].
 @ProviderFor(playlistDownloadStatus)
@@ -328,10 +464,10 @@ class PlaylistDownloadStatusProvider
     extends AutoDisposeStreamProvider<ListDownloadStatus> {
   /// See also [playlistDownloadStatus].
   PlaylistDownloadStatusProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => playlistDownloadStatus(
-            ref,
+            ref as PlaylistDownloadStatusRef,
             id,
           ),
           from: playlistDownloadStatusProvider,
@@ -343,9 +479,44 @@ class PlaylistDownloadStatusProvider
           dependencies: PlaylistDownloadStatusFamily._dependencies,
           allTransitiveDependencies:
               PlaylistDownloadStatusFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  PlaylistDownloadStatusProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<ListDownloadStatus> Function(PlaylistDownloadStatusRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PlaylistDownloadStatusProvider._internal(
+        (ref) => create(ref as PlaylistDownloadStatusRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<ListDownloadStatus> createElement() {
+    return _PlaylistDownloadStatusProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -361,8 +532,22 @@ class PlaylistDownloadStatusProvider
   }
 }
 
+mixin PlaylistDownloadStatusRef
+    on AutoDisposeStreamProviderRef<ListDownloadStatus> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _PlaylistDownloadStatusProviderElement
+    extends AutoDisposeStreamProviderElement<ListDownloadStatus>
+    with PlaylistDownloadStatusRef {
+  _PlaylistDownloadStatusProviderElement(super.provider);
+
+  @override
+  String get id => (origin as PlaylistDownloadStatusProvider).id;
+}
+
 String _$songHash() => r'bd8ac3b046180c9fa7676e437542d5afe4dcdb7d';
-typedef SongRef = AutoDisposeStreamProviderRef<Song>;
 
 /// See also [song].
 @ProviderFor(song)
@@ -410,10 +595,10 @@ class SongFamily extends Family<AsyncValue<Song>> {
 class SongProvider extends AutoDisposeStreamProvider<Song> {
   /// See also [song].
   SongProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => song(
-            ref,
+            ref as SongRef,
             id,
           ),
           from: songProvider,
@@ -422,9 +607,43 @@ class SongProvider extends AutoDisposeStreamProvider<Song> {
               const bool.fromEnvironment('dart.vm.product') ? null : _$songHash,
           dependencies: SongFamily._dependencies,
           allTransitiveDependencies: SongFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  SongProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<Song> Function(SongRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SongProvider._internal(
+        (ref) => create(ref as SongRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Song> createElement() {
+    return _SongProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -440,8 +659,20 @@ class SongProvider extends AutoDisposeStreamProvider<Song> {
   }
 }
 
+mixin SongRef on AutoDisposeStreamProviderRef<Song> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _SongProviderElement extends AutoDisposeStreamProviderElement<Song>
+    with SongRef {
+  _SongProviderElement(super.provider);
+
+  @override
+  String get id => (origin as SongProvider).id;
+}
+
 String _$albumSongsListHash() => r'dfc357b4c2b6a7dcc5e4701dc395c49ec8c8b88a';
-typedef AlbumSongsListRef = AutoDisposeFutureProviderRef<List<Song>>;
 
 /// See also [albumSongsList].
 @ProviderFor(albumSongsList)
@@ -492,11 +723,11 @@ class AlbumSongsListFamily extends Family<AsyncValue<List<Song>>> {
 class AlbumSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
   /// See also [albumSongsList].
   AlbumSongsListProvider(
-    this.id,
-    this.opt,
-  ) : super.internal(
+    String id,
+    ListQuery opt,
+  ) : this._internal(
           (ref) => albumSongsList(
-            ref,
+            ref as AlbumSongsListRef,
             id,
             opt,
           ),
@@ -509,10 +740,47 @@ class AlbumSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
           dependencies: AlbumSongsListFamily._dependencies,
           allTransitiveDependencies:
               AlbumSongsListFamily._allTransitiveDependencies,
+          id: id,
+          opt: opt,
         );
+
+  AlbumSongsListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+    required this.opt,
+  }) : super.internal();
 
   final String id;
   final ListQuery opt;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Song>> Function(AlbumSongsListRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumSongsListProvider._internal(
+        (ref) => create(ref as AlbumSongsListRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+        opt: opt,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Song>> createElement() {
+    return _AlbumSongsListProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -531,8 +799,26 @@ class AlbumSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
   }
 }
 
+mixin AlbumSongsListRef on AutoDisposeFutureProviderRef<List<Song>> {
+  /// The parameter `id` of this provider.
+  String get id;
+
+  /// The parameter `opt` of this provider.
+  ListQuery get opt;
+}
+
+class _AlbumSongsListProviderElement
+    extends AutoDisposeFutureProviderElement<List<Song>>
+    with AlbumSongsListRef {
+  _AlbumSongsListProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumSongsListProvider).id;
+  @override
+  ListQuery get opt => (origin as AlbumSongsListProvider).opt;
+}
+
 String _$songsByAlbumListHash() => r'd6ed7fd9d8ceb3c5743b8c5538c7ffd50d2a8284';
-typedef SongsByAlbumListRef = AutoDisposeFutureProviderRef<List<Song>>;
 
 /// See also [songsByAlbumList].
 @ProviderFor(songsByAlbumList)
@@ -580,10 +866,10 @@ class SongsByAlbumListFamily extends Family<AsyncValue<List<Song>>> {
 class SongsByAlbumListProvider extends AutoDisposeFutureProvider<List<Song>> {
   /// See also [songsByAlbumList].
   SongsByAlbumListProvider(
-    this.opt,
-  ) : super.internal(
+    ListQuery opt,
+  ) : this._internal(
           (ref) => songsByAlbumList(
-            ref,
+            ref as SongsByAlbumListRef,
             opt,
           ),
           from: songsByAlbumListProvider,
@@ -595,9 +881,43 @@ class SongsByAlbumListProvider extends AutoDisposeFutureProvider<List<Song>> {
           dependencies: SongsByAlbumListFamily._dependencies,
           allTransitiveDependencies:
               SongsByAlbumListFamily._allTransitiveDependencies,
+          opt: opt,
         );
 
+  SongsByAlbumListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.opt,
+  }) : super.internal();
+
   final ListQuery opt;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Song>> Function(SongsByAlbumListRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SongsByAlbumListProvider._internal(
+        (ref) => create(ref as SongsByAlbumListRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        opt: opt,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Song>> createElement() {
+    return _SongsByAlbumListProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -613,8 +933,21 @@ class SongsByAlbumListProvider extends AutoDisposeFutureProvider<List<Song>> {
   }
 }
 
+mixin SongsByAlbumListRef on AutoDisposeFutureProviderRef<List<Song>> {
+  /// The parameter `opt` of this provider.
+  ListQuery get opt;
+}
+
+class _SongsByAlbumListProviderElement
+    extends AutoDisposeFutureProviderElement<List<Song>>
+    with SongsByAlbumListRef {
+  _SongsByAlbumListProviderElement(super.provider);
+
+  @override
+  ListQuery get opt => (origin as SongsByAlbumListProvider).opt;
+}
+
 String _$playlistHash() => r'df0c8441c67c487155574caeeb11f4cdfe25ed31';
-typedef PlaylistRef = AutoDisposeStreamProviderRef<Playlist>;
 
 /// See also [playlist].
 @ProviderFor(playlist)
@@ -662,10 +995,10 @@ class PlaylistFamily extends Family<AsyncValue<Playlist>> {
 class PlaylistProvider extends AutoDisposeStreamProvider<Playlist> {
   /// See also [playlist].
   PlaylistProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => playlist(
-            ref,
+            ref as PlaylistRef,
             id,
           ),
           from: playlistProvider,
@@ -676,9 +1009,43 @@ class PlaylistProvider extends AutoDisposeStreamProvider<Playlist> {
                   : _$playlistHash,
           dependencies: PlaylistFamily._dependencies,
           allTransitiveDependencies: PlaylistFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  PlaylistProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<Playlist> Function(PlaylistRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PlaylistProvider._internal(
+        (ref) => create(ref as PlaylistRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<Playlist> createElement() {
+    return _PlaylistProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -694,8 +1061,20 @@ class PlaylistProvider extends AutoDisposeStreamProvider<Playlist> {
   }
 }
 
+mixin PlaylistRef on AutoDisposeStreamProviderRef<Playlist> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _PlaylistProviderElement
+    extends AutoDisposeStreamProviderElement<Playlist> with PlaylistRef {
+  _PlaylistProviderElement(super.provider);
+
+  @override
+  String get id => (origin as PlaylistProvider).id;
+}
+
 String _$playlistSongsListHash() => r'c3593829c6c91dc6958df6dc4cb6e89e3e7647a5';
-typedef PlaylistSongsListRef = AutoDisposeFutureProviderRef<List<Song>>;
 
 /// See also [playlistSongsList].
 @ProviderFor(playlistSongsList)
@@ -746,11 +1125,11 @@ class PlaylistSongsListFamily extends Family<AsyncValue<List<Song>>> {
 class PlaylistSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
   /// See also [playlistSongsList].
   PlaylistSongsListProvider(
-    this.id,
-    this.opt,
-  ) : super.internal(
+    String id,
+    ListQuery opt,
+  ) : this._internal(
           (ref) => playlistSongsList(
-            ref,
+            ref as PlaylistSongsListRef,
             id,
             opt,
           ),
@@ -763,10 +1142,47 @@ class PlaylistSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
           dependencies: PlaylistSongsListFamily._dependencies,
           allTransitiveDependencies:
               PlaylistSongsListFamily._allTransitiveDependencies,
+          id: id,
+          opt: opt,
         );
+
+  PlaylistSongsListProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+    required this.opt,
+  }) : super.internal();
 
   final String id;
   final ListQuery opt;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Song>> Function(PlaylistSongsListRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PlaylistSongsListProvider._internal(
+        (ref) => create(ref as PlaylistSongsListRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+        opt: opt,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Song>> createElement() {
+    return _PlaylistSongsListProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -785,8 +1201,26 @@ class PlaylistSongsListProvider extends AutoDisposeFutureProvider<List<Song>> {
   }
 }
 
+mixin PlaylistSongsListRef on AutoDisposeFutureProviderRef<List<Song>> {
+  /// The parameter `id` of this provider.
+  String get id;
+
+  /// The parameter `opt` of this provider.
+  ListQuery get opt;
+}
+
+class _PlaylistSongsListProviderElement
+    extends AutoDisposeFutureProviderElement<List<Song>>
+    with PlaylistSongsListRef {
+  _PlaylistSongsListProviderElement(super.provider);
+
+  @override
+  String get id => (origin as PlaylistSongsListProvider).id;
+  @override
+  ListQuery get opt => (origin as PlaylistSongsListProvider).opt;
+}
+
 String _$albumsInIdsHash() => r'089ceafa122e1b3ce87c216bf3650cae5f656bdc';
-typedef AlbumsInIdsRef = AutoDisposeFutureProviderRef<List<Album>>;
 
 /// See also [albumsInIds].
 @ProviderFor(albumsInIds)
@@ -834,10 +1268,10 @@ class AlbumsInIdsFamily extends Family<AsyncValue<List<Album>>> {
 class AlbumsInIdsProvider extends AutoDisposeFutureProvider<List<Album>> {
   /// See also [albumsInIds].
   AlbumsInIdsProvider(
-    this.ids,
-  ) : super.internal(
+    IList<String> ids,
+  ) : this._internal(
           (ref) => albumsInIds(
-            ref,
+            ref as AlbumsInIdsRef,
             ids,
           ),
           from: albumsInIdsProvider,
@@ -849,9 +1283,43 @@ class AlbumsInIdsProvider extends AutoDisposeFutureProvider<List<Album>> {
           dependencies: AlbumsInIdsFamily._dependencies,
           allTransitiveDependencies:
               AlbumsInIdsFamily._allTransitiveDependencies,
+          ids: ids,
         );
 
+  AlbumsInIdsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.ids,
+  }) : super.internal();
+
   final IList<String> ids;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Album>> Function(AlbumsInIdsRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumsInIdsProvider._internal(
+        (ref) => create(ref as AlbumsInIdsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        ids: ids,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Album>> createElement() {
+    return _AlbumsInIdsProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -867,8 +1335,20 @@ class AlbumsInIdsProvider extends AutoDisposeFutureProvider<List<Album>> {
   }
 }
 
+mixin AlbumsInIdsRef on AutoDisposeFutureProviderRef<List<Album>> {
+  /// The parameter `ids` of this provider.
+  IList<String> get ids;
+}
+
+class _AlbumsInIdsProviderElement
+    extends AutoDisposeFutureProviderElement<List<Album>> with AlbumsInIdsRef {
+  _AlbumsInIdsProviderElement(super.provider);
+
+  @override
+  IList<String> get ids => (origin as AlbumsInIdsProvider).ids;
+}
+
 String _$albumsByArtistIdHash() => r'e9a5c9255b6c7b6cfb22f4a4bacc4e518787465d';
-typedef AlbumsByArtistIdRef = AutoDisposeStreamProviderRef<IList<Album>>;
 
 /// See also [albumsByArtistId].
 @ProviderFor(albumsByArtistId)
@@ -916,10 +1396,10 @@ class AlbumsByArtistIdFamily extends Family<AsyncValue<IList<Album>>> {
 class AlbumsByArtistIdProvider extends AutoDisposeStreamProvider<IList<Album>> {
   /// See also [albumsByArtistId].
   AlbumsByArtistIdProvider(
-    this.id,
-  ) : super.internal(
+    String id,
+  ) : this._internal(
           (ref) => albumsByArtistId(
-            ref,
+            ref as AlbumsByArtistIdRef,
             id,
           ),
           from: albumsByArtistIdProvider,
@@ -931,9 +1411,43 @@ class AlbumsByArtistIdProvider extends AutoDisposeStreamProvider<IList<Album>> {
           dependencies: AlbumsByArtistIdFamily._dependencies,
           allTransitiveDependencies:
               AlbumsByArtistIdFamily._allTransitiveDependencies,
+          id: id,
         );
 
+  AlbumsByArtistIdProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
   final String id;
+
+  @override
+  Override overrideWith(
+    Stream<IList<Album>> Function(AlbumsByArtistIdRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumsByArtistIdProvider._internal(
+        (ref) => create(ref as AlbumsByArtistIdRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<IList<Album>> createElement() {
+    return _AlbumsByArtistIdProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -949,8 +1463,21 @@ class AlbumsByArtistIdProvider extends AutoDisposeStreamProvider<IList<Album>> {
   }
 }
 
+mixin AlbumsByArtistIdRef on AutoDisposeStreamProviderRef<IList<Album>> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AlbumsByArtistIdProviderElement
+    extends AutoDisposeStreamProviderElement<IList<Album>>
+    with AlbumsByArtistIdRef {
+  _AlbumsByArtistIdProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AlbumsByArtistIdProvider).id;
+}
+
 String _$albumGenresHash() => r'17ba64391a678a4eb88017d782a843eeb92b2049';
-typedef AlbumGenresRef = AutoDisposeStreamProviderRef<IList<String>>;
 
 /// See also [albumGenres].
 @ProviderFor(albumGenres)
@@ -998,10 +1525,10 @@ class AlbumGenresFamily extends Family<AsyncValue<IList<String>>> {
 class AlbumGenresProvider extends AutoDisposeStreamProvider<IList<String>> {
   /// See also [albumGenres].
   AlbumGenresProvider(
-    this.page,
-  ) : super.internal(
+    Pagination page,
+  ) : this._internal(
           (ref) => albumGenres(
-            ref,
+            ref as AlbumGenresRef,
             page,
           ),
           from: albumGenresProvider,
@@ -1013,9 +1540,43 @@ class AlbumGenresProvider extends AutoDisposeStreamProvider<IList<String>> {
           dependencies: AlbumGenresFamily._dependencies,
           allTransitiveDependencies:
               AlbumGenresFamily._allTransitiveDependencies,
+          page: page,
         );
 
+  AlbumGenresProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.page,
+  }) : super.internal();
+
   final Pagination page;
+
+  @override
+  Override overrideWith(
+    Stream<IList<String>> Function(AlbumGenresRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumGenresProvider._internal(
+        (ref) => create(ref as AlbumGenresRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        page: page,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<IList<String>> createElement() {
+    return _AlbumGenresProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -1031,8 +1592,21 @@ class AlbumGenresProvider extends AutoDisposeStreamProvider<IList<String>> {
   }
 }
 
+mixin AlbumGenresRef on AutoDisposeStreamProviderRef<IList<String>> {
+  /// The parameter `page` of this provider.
+  Pagination get page;
+}
+
+class _AlbumGenresProviderElement
+    extends AutoDisposeStreamProviderElement<IList<String>>
+    with AlbumGenresRef {
+  _AlbumGenresProviderElement(super.provider);
+
+  @override
+  Pagination get page => (origin as AlbumGenresProvider).page;
+}
+
 String _$albumsByGenreHash() => r'd35cb85a50df93b7f50c28c934ea182b69534b8b';
-typedef AlbumsByGenreRef = AutoDisposeStreamProviderRef<IList<Album>>;
 
 /// See also [albumsByGenre].
 @ProviderFor(albumsByGenre)
@@ -1083,11 +1657,11 @@ class AlbumsByGenreFamily extends Family<AsyncValue<IList<Album>>> {
 class AlbumsByGenreProvider extends AutoDisposeStreamProvider<IList<Album>> {
   /// See also [albumsByGenre].
   AlbumsByGenreProvider(
-    this.genre,
-    this.page,
-  ) : super.internal(
+    String genre,
+    Pagination page,
+  ) : this._internal(
           (ref) => albumsByGenre(
-            ref,
+            ref as AlbumsByGenreRef,
             genre,
             page,
           ),
@@ -1100,10 +1674,47 @@ class AlbumsByGenreProvider extends AutoDisposeStreamProvider<IList<Album>> {
           dependencies: AlbumsByGenreFamily._dependencies,
           allTransitiveDependencies:
               AlbumsByGenreFamily._allTransitiveDependencies,
+          genre: genre,
+          page: page,
         );
+
+  AlbumsByGenreProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.genre,
+    required this.page,
+  }) : super.internal();
 
   final String genre;
   final Pagination page;
+
+  @override
+  Override overrideWith(
+    Stream<IList<Album>> Function(AlbumsByGenreRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlbumsByGenreProvider._internal(
+        (ref) => create(ref as AlbumsByGenreRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        genre: genre,
+        page: page,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<IList<Album>> createElement() {
+    return _AlbumsByGenreProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -1122,8 +1733,26 @@ class AlbumsByGenreProvider extends AutoDisposeStreamProvider<IList<Album>> {
   }
 }
 
+mixin AlbumsByGenreRef on AutoDisposeStreamProviderRef<IList<Album>> {
+  /// The parameter `genre` of this provider.
+  String get genre;
+
+  /// The parameter `page` of this provider.
+  Pagination get page;
+}
+
+class _AlbumsByGenreProviderElement
+    extends AutoDisposeStreamProviderElement<IList<Album>>
+    with AlbumsByGenreRef {
+  _AlbumsByGenreProviderElement(super.provider);
+
+  @override
+  String get genre => (origin as AlbumsByGenreProvider).genre;
+  @override
+  Pagination get page => (origin as AlbumsByGenreProvider).page;
+}
+
 String _$songsByGenreCountHash() => r'408bc1d82a6dae29e7b9a85fbf6988ba854551f7';
-typedef SongsByGenreCountRef = AutoDisposeStreamProviderRef<int>;
 
 /// See also [songsByGenreCount].
 @ProviderFor(songsByGenreCount)
@@ -1171,10 +1800,10 @@ class SongsByGenreCountFamily extends Family<AsyncValue<int>> {
 class SongsByGenreCountProvider extends AutoDisposeStreamProvider<int> {
   /// See also [songsByGenreCount].
   SongsByGenreCountProvider(
-    this.genre,
-  ) : super.internal(
+    String genre,
+  ) : this._internal(
           (ref) => songsByGenreCount(
-            ref,
+            ref as SongsByGenreCountRef,
             genre,
           ),
           from: songsByGenreCountProvider,
@@ -1186,9 +1815,43 @@ class SongsByGenreCountProvider extends AutoDisposeStreamProvider<int> {
           dependencies: SongsByGenreCountFamily._dependencies,
           allTransitiveDependencies:
               SongsByGenreCountFamily._allTransitiveDependencies,
+          genre: genre,
         );
 
+  SongsByGenreCountProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.genre,
+  }) : super.internal();
+
   final String genre;
+
+  @override
+  Override overrideWith(
+    Stream<int> Function(SongsByGenreCountRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: SongsByGenreCountProvider._internal(
+        (ref) => create(ref as SongsByGenreCountRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        genre: genre,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<int> createElement() {
+    return _SongsByGenreCountProviderElement(this);
+  }
 
   @override
   bool operator ==(Object other) {
@@ -1203,4 +1866,18 @@ class SongsByGenreCountProvider extends AutoDisposeStreamProvider<int> {
     return _SystemHash.finish(hash);
   }
 }
-// ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions
+
+mixin SongsByGenreCountRef on AutoDisposeStreamProviderRef<int> {
+  /// The parameter `genre` of this provider.
+  String get genre;
+}
+
+class _SongsByGenreCountProviderElement
+    extends AutoDisposeStreamProviderElement<int> with SongsByGenreCountRef {
+  _SongsByGenreCountProviderElement(super.provider);
+
+  @override
+  String get genre => (origin as SongsByGenreCountProvider).genre;
+}
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

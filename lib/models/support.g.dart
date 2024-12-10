@@ -6,15 +6,16 @@ part of 'support.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_QueueItemState _$$_QueueItemStateFromJson(Map<String, dynamic> json) =>
-    _$_QueueItemState(
+_$QueueItemStateImpl _$$QueueItemStateImplFromJson(Map<String, dynamic> json) =>
+    _$QueueItemStateImpl(
       id: json['id'] as String,
       contextType: $enumDecode(_$QueueContextTypeEnumMap, json['contextType']),
       contextId: json['contextId'] as String?,
       contextTitle: json['contextTitle'] as String?,
     );
 
-Map<String, dynamic> _$$_QueueItemStateToJson(_$_QueueItemState instance) =>
+Map<String, dynamic> _$$QueueItemStateImplToJson(
+        _$QueueItemStateImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'contextType': _$QueueContextTypeEnumMap[instance.contextType]!,
@@ -31,9 +32,9 @@ const _$QueueContextTypeEnumMap = {
   QueueContextType.artist: 'artist',
 };
 
-_$_MediaItemData _$$_MediaItemDataFromJson(Map<String, dynamic> json) =>
-    _$_MediaItemData(
-      sourceId: json['sourceId'] as int,
+_$MediaItemDataImpl _$$MediaItemDataImplFromJson(Map<String, dynamic> json) =>
+    _$MediaItemDataImpl(
+      sourceId: (json['sourceId'] as num).toInt(),
       albumId: json['albumId'] as String?,
       artCache:
           _$JsonConverterFromJson<Map<String, dynamic>, MediaItemArtCache>(
@@ -42,7 +43,7 @@ _$_MediaItemData _$$_MediaItemDataFromJson(Map<String, dynamic> json) =>
       contextId: json['contextId'] as String?,
     );
 
-Map<String, dynamic> _$$_MediaItemDataToJson(_$_MediaItemData instance) =>
+Map<String, dynamic> _$$MediaItemDataImplToJson(_$MediaItemDataImpl instance) =>
     <String, dynamic>{
       'sourceId': instance.sourceId,
       'albumId': instance.albumId,
@@ -65,16 +66,17 @@ Json? _$JsonConverterToJson<Json, Value>(
 ) =>
     value == null ? null : toJson(value);
 
-_$_MediaItemArtCache _$$_MediaItemArtCacheFromJson(Map<String, dynamic> json) =>
-    _$_MediaItemArtCache(
+_$MediaItemArtCacheImpl _$$MediaItemArtCacheImplFromJson(
+        Map<String, dynamic> json) =>
+    _$MediaItemArtCacheImpl(
       fullArtUri: Uri.parse(json['fullArtUri'] as String),
       fullArtCacheKey: json['fullArtCacheKey'] as String,
       thumbnailArtUri: Uri.parse(json['thumbnailArtUri'] as String),
       thumbnailArtCacheKey: json['thumbnailArtCacheKey'] as String,
     );
 
-Map<String, dynamic> _$$_MediaItemArtCacheToJson(
-        _$_MediaItemArtCache instance) =>
+Map<String, dynamic> _$$MediaItemArtCacheImplToJson(
+        _$MediaItemArtCacheImpl instance) =>
     <String, dynamic>{
       'fullArtUri': instance.fullArtUri.toString(),
       'fullArtCacheKey': instance.fullArtCacheKey,
