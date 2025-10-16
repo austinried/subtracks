@@ -1,0 +1,5 @@
+[tools]
+android-sdk = "latest"
+flutter = "3.35"
+java = "17"
+yq = "latest"
