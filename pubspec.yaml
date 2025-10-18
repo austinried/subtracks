@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  go_router: ^16.2.5
+  material_symbols_icons: ^4.2874.0
 
 dev_dependencies:
   flutter_test:
