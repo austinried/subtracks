@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../util/custom_scroll_fix.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class LibraryScreen extends StatefulWidget {
+  const LibraryScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _LibraryScreenState extends State<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late final TabController tabController;
 
@@ -18,11 +19,11 @@ class _HomeScreenState extends State<HomeScreen>
   final tabHeight = 32.0;
 
   late final List<(String, Widget)> tabs = [
-    ("Home", Icon(Symbols.home_rounded, size: iconSize)),
-    ("Albums", Icon(Symbols.album_rounded, size: iconSize)),
-    ("Artists", Icon(Symbols.person_rounded, size: iconSize)),
-    ("Songs", Icon(Symbols.music_note_rounded, size: iconSize)),
-    ("Playlists", Icon(Symbols.playlist_play_rounded, size: iconSize)),
+    ('Home', Icon(Symbols.home_rounded, size: iconSize)),
+    ('Albums', Icon(Symbols.album_rounded, size: iconSize)),
+    ('Artists', Icon(Symbols.person_rounded, size: iconSize)),
+    ('Songs', Icon(Symbols.music_note_rounded, size: iconSize)),
+    ('Playlists', Icon(Symbols.playlist_play_rounded, size: iconSize)),
   ];
 
   @override
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen>
                           vertical: 16,
                         ),
                         child: Text(
-                          "Albums",
+                          'Albums',
                           style: TextTheme.of(context).headlineLarge?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -125,7 +126,9 @@ class _HomeScreenState extends State<HomeScreen>
                                 .toList(),
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/settings');
+                            },
                             icon: Icon(
                               Symbols.settings_rounded,
                             ),
@@ -205,7 +208,9 @@ class _NewWidgetState extends State<NewWidget>
               (BuildContext context, int index) {
                 return ListTile(
                   title: Text('Item $index'),
-                  onTap: () {},
+                  onTap: () {
+                    context.push('/album');
+                  },
                 );
               },
               childCount: 30,
