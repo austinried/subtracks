@@ -1,4 +1,10 @@
-include: package:flutter_lints/flutter.yaml
+include:
+  - package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_relative_imports: true
+    prefer_single_quotes: true
 
 formatter:
   trailing_commas: preserve
