@@ -7,15 +7,21 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  cached_network_image: ^3.4.1
   flutter:
     sdk: flutter
+  flutter_hooks: ^0.21.3+1
   go_router: ^16.2.5
+  hooks_riverpod: ^3.0.3
+  infinite_scroll_pagination: ^5.1.1
   material_symbols_icons: ^4.2874.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+  custom_lint: ^0.8.0
+  riverpod_lint: ^3.0.3
 
 flutter:
   uses-material-design: true

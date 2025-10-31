@@ -8,3 +8,7 @@ linter:
 
 formatter:
   trailing_commas: preserve
+
+analyzer:
+  plugins:
+    - custom_lint

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../lists/albums_grid.dart';
 import '../util/custom_scroll_fix.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   late final TabController tabController;
 
   final iconSize = 26.0;
-  final tabHeight = 32.0;
+  final tabHeight = 36.0;
 
   late final List<(String, Widget)> tabs = [
     ('Home', Icon(Symbols.home_rounded, size: iconSize)),
@@ -202,20 +203,7 @@ class _NewWidgetState extends State<NewWidget>
         ),
         SliverPadding(
           padding: const EdgeInsets.all(8.0),
-          sliver: SliverFixedExtentList(
-            itemExtent: 48.0,
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                return ListTile(
-                  title: Text('Item $index'),
-                  onTap: () {
-                    context.push('/album');
-                  },
-                );
-              },
-              childCount: 30,
-            ),
-          ),
+          sliver: AlbumsGrid(),
         ),
       ],
     );
