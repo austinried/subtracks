@@ -1,5 +1,6 @@
 [tools]
 android-sdk = "latest"
+deno = "2.5.3"
 flutter = "3.35"
 java = "17"
 yq = "latest"

@@ -1,0 +1,22 @@
+services:
+  library-manager:
+    build: ./docker/library-manager
+    volumes:
+      - deno-dir:/deno-dir
+      - music:/music
+
+  navidrome:
+    image: deluan/navidrome:latest
+    ports:
+      - "4533:4533"
+    restart: unless-stopped
+    environment:
+      ND_LOGLEVEL: debug
+    volumes:
+      - navidrome-data:/data
+      - music:/music:ro
+
+volumes:
+  deno-dir:
+  music:
+  navidrome-data:
