@@ -3,6 +3,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'models.freezed.dart';
+part 'models.g.dart';
 
 mixin Starred {
   DateTime? get starred;
@@ -67,6 +68,9 @@ abstract class SourceItem with _$SourceItem {
     String? genre,
     String? coverArt,
   }) = SourceSong;
+
+  factory SourceItem.fromJson(Map<String, dynamic> json) =>
+      _$SourceItemFromJson(json);
 }
 
 @freezed
@@ -76,4 +80,7 @@ abstract class SourcePlaylistSong with _$SourcePlaylistSong {
     required String songId,
     required int position,
   }) = _SourcePlaylistSong;
+
+  factory SourcePlaylistSong.fromJson(Map<String, dynamic> json) =>
+      _$SourcePlaylistSongFromJson(json);
 }

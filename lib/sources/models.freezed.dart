@@ -11,6 +11,38 @@ part of 'models.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
+SourceItem _$SourceItemFromJson(
+  Map<String, dynamic> json
+) {
+        switch (json['runtimeType']) {
+                  case 'artist':
+          return SourceArtist.fromJson(
+            json
+          );
+                case 'album':
+          return SourceAlbum.fromJson(
+            json
+          );
+                case 'playlist':
+          return SourcePlaylist.fromJson(
+            json
+          );
+                case 'song':
+          return SourceSong.fromJson(
+            json
+          );
+        
+          default:
+            throw CheckedFromJsonException(
+  json,
+  'runtimeType',
+  'SourceItem',
+  'Invalid union type "${json['runtimeType']}"!'
+);
+        }
+      
+}
+
 /// @nodoc
 mixin _$SourceItem {
 
@@ -21,6 +53,8 @@ mixin _$SourceItem {
 @pragma('vm:prefer-inline')
 $SourceItemCopyWith<SourceItem> get copyWith => _$SourceItemCopyWithImpl<SourceItem>(this as SourceItem, _$identity);
 
+  /// Serializes this SourceItem to a JSON map.
+  Map<String, dynamic> toJson();
 
 
 @override
@@ -28,7 +62,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceItem&&(identical(other.id, id) || other.id == id));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id);
 
@@ -221,11 +255,11 @@ return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class SourceArtist with Starred implements SourceItem {
-  const SourceArtist({required this.id, required this.name, this.starred, this.smallImage, this.largeImage});
-  
+  const SourceArtist({required this.id, required this.name, this.starred, this.smallImage, this.largeImage, final  String? $type}): $type = $type ?? 'artist';
+  factory SourceArtist.fromJson(Map<String, dynamic> json) => _$SourceArtistFromJson(json);
 
 @override final  String id;
  final  String name;
@@ -233,20 +267,27 @@ class SourceArtist with Starred implements SourceItem {
  final  Uri? smallImage;
  final  Uri? largeImage;
 
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $SourceArtistCopyWith<SourceArtist> get copyWith => _$SourceArtistCopyWithImpl<SourceArtist>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$SourceArtistToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceArtist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,name,starred,smallImage,largeImage);
 
@@ -295,11 +336,11 @@ as Uri?,
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class SourceAlbum with Starred, CoverArt implements SourceItem {
-  const SourceAlbum({required this.id, this.artistId, required this.name, this.albumArtist, required this.created, this.coverArt, this.year, this.starred, this.genre, this.frequentRank, this.recentRank});
-  
+  const SourceAlbum({required this.id, this.artistId, required this.name, this.albumArtist, required this.created, this.coverArt, this.year, this.starred, this.genre, this.frequentRank, this.recentRank, final  String? $type}): $type = $type ?? 'album';
+  factory SourceAlbum.fromJson(Map<String, dynamic> json) => _$SourceAlbumFromJson(json);
 
 @override final  String id;
  final  String? artistId;
@@ -313,20 +354,27 @@ class SourceAlbum with Starred, CoverArt implements SourceItem {
  final  int? frequentRank;
  final  int? recentRank;
 
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $SourceAlbumCopyWith<SourceAlbum> get copyWith => _$SourceAlbumCopyWithImpl<SourceAlbum>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$SourceAlbumToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceAlbum&&(identical(other.id, id) || other.id == id)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.name, name) || other.name == name)&&(identical(other.albumArtist, albumArtist) || other.albumArtist == albumArtist)&&(identical(other.created, created) || other.created == created)&&(identical(other.coverArt, coverArt) || other.coverArt == coverArt)&&(identical(other.year, year) || other.year == year)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.frequentRank, frequentRank) || other.frequentRank == frequentRank)&&(identical(other.recentRank, recentRank) || other.recentRank == recentRank));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,artistId,name,albumArtist,created,coverArt,year,starred,genre,frequentRank,recentRank);
 
@@ -381,11 +429,11 @@ as int?,
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class SourcePlaylist with CoverArt implements SourceItem {
-  const SourcePlaylist({required this.id, required this.name, this.comment, required this.created, required this.changed, this.coverArt, this.owner, this.public});
-  
+  const SourcePlaylist({required this.id, required this.name, this.comment, required this.created, required this.changed, this.coverArt, this.owner, this.public, final  String? $type}): $type = $type ?? 'playlist';
+  factory SourcePlaylist.fromJson(Map<String, dynamic> json) => _$SourcePlaylistFromJson(json);
 
 @override final  String id;
  final  String name;
@@ -396,20 +444,27 @@ class SourcePlaylist with CoverArt implements SourceItem {
  final  String? owner;
  final  bool? public;
 
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $SourcePlaylistCopyWith<SourcePlaylist> get copyWith => _$SourcePlaylistCopyWithImpl<SourcePlaylist>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$SourcePlaylistToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourcePlaylist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.created, created) || other.created == created)&&(identical(other.changed, changed) || other.changed == changed)&&(identical(other.coverArt, coverArt) || other.coverArt == coverArt)&&(identical(other.owner, owner) || other.owner == owner)&&(identical(other.public, public) || other.public == public));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,name,comment,created,changed,coverArt,owner,public);
 
@@ -461,11 +516,11 @@ as bool?,
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class SourceSong with Starred, CoverArt implements SourceItem {
-  const SourceSong({required this.id, this.albumId, this.artistId, required this.title, this.artist, this.album, this.duration, this.track, this.disc, this.starred, this.genre, this.coverArt});
-  
+  const SourceSong({required this.id, this.albumId, this.artistId, required this.title, this.artist, this.album, this.duration, this.track, this.disc, this.starred, this.genre, this.coverArt, final  String? $type}): $type = $type ?? 'song';
+  factory SourceSong.fromJson(Map<String, dynamic> json) => _$SourceSongFromJson(json);
 
 @override final  String id;
  final  String? albumId;
@@ -480,20 +535,27 @@ class SourceSong with Starred, CoverArt implements SourceItem {
  final  String? genre;
  final  String? coverArt;
 
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $SourceSongCopyWith<SourceSong> get copyWith => _$SourceSongCopyWithImpl<SourceSong>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$SourceSongToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceSong&&(identical(other.id, id) || other.id == id)&&(identical(other.albumId, albumId) || other.albumId == albumId)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.title, title) || other.title == title)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.album, album) || other.album == album)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.track, track) || other.track == track)&&(identical(other.disc, disc) || other.disc == disc)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.coverArt, coverArt) || other.coverArt == coverArt));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,albumId,artistId,title,artist,album,duration,track,disc,starred,genre,coverArt);
 
@@ -548,6 +610,7 @@ as String?,
 
 }
 
+
 /// @nodoc
 mixin _$SourcePlaylistSong {
 
@@ -558,6 +621,8 @@ mixin _$SourcePlaylistSong {
 @pragma('vm:prefer-inline')
 $SourcePlaylistSongCopyWith<SourcePlaylistSong> get copyWith => _$SourcePlaylistSongCopyWithImpl<SourcePlaylistSong>(this as SourcePlaylistSong, _$identity);
 
+  /// Serializes this SourcePlaylistSong to a JSON map.
+  Map<String, dynamic> toJson();
 
 
 @override
@@ -565,7 +630,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is SourcePlaylistSong&&(identical(other.playlistId, playlistId) || other.playlistId == playlistId)&&(identical(other.songId, songId) || other.songId == songId)&&(identical(other.position, position) || other.position == position));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,playlistId,songId,position);
 
@@ -742,11 +807,11 @@ return $default(_that.playlistId,_that.songId,_that.position);case _:
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class _SourcePlaylistSong implements SourcePlaylistSong {
   const _SourcePlaylistSong({required this.playlistId, required this.songId, required this.position});
-  
+  factory _SourcePlaylistSong.fromJson(Map<String, dynamic> json) => _$SourcePlaylistSongFromJson(json);
 
 @override final  String playlistId;
 @override final  String songId;
@@ -758,14 +823,17 @@ class _SourcePlaylistSong implements SourcePlaylistSong {
 @pragma('vm:prefer-inline')
 _$SourcePlaylistSongCopyWith<_SourcePlaylistSong> get copyWith => __$SourcePlaylistSongCopyWithImpl<_SourcePlaylistSong>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$SourcePlaylistSongToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _SourcePlaylistSong&&(identical(other.playlistId, playlistId) || other.playlistId == playlistId)&&(identical(other.songId, songId) || other.songId == songId)&&(identical(other.position, position) || other.position == position));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,playlistId,songId,position);
 

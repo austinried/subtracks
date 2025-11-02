@@ -13,7 +13,7 @@ const client = new SubsonicClient(
 );
 
 for (const id of ["197", "199", "321"]) {
-  const res = await client.get("download", { id });
+  const { res } = await client.get("download", { id });
 
   let filename = res.headers.get("Content-Disposition")
     ?.split(";")[1];

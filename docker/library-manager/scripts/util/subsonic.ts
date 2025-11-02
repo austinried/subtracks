@@ -1,3 +1,6 @@
+// @deno-types="npm:@types/jsdom@27.0.0"
+import { JSDOM } from "npm:jsdom@27.1.0";
+
 export class SubsonicClient {
   constructor(
     readonly baseUrl: string,
@@ -5,7 +8,18 @@ export class SubsonicClient {
     readonly password: string,
   ) {}
 
-  get(method: string, params?: Record<string, string>) {
+  async get(
+    method: "download",
+    params?: Record<string, string>,
+  ): Promise<{ res: Response; xml: undefined }>;
+  async get(
+    method: string,
+    params?: Record<string, string>,
+  ): Promise<{ res: Response; xml: Document }>;
+  async get(
+    method: string,
+    params?: Record<string, string>,
+  ): Promise<{ res: Response; xml: Document | undefined }> {
     const url = new URL(`rest/${method}.view`, this.baseUrl);
 
     url.searchParams.set("u", this.username);
@@ -19,6 +33,26 @@ export class SubsonicClient {
       );
     }
 
-    return fetch(url);
+    const res = await fetch(url);
+
+    let xml: Document | undefined;
+    if (res.headers.get("content-type")?.includes("xml")) {
+      xml = new JSDOM(await res.text(), {
+        contentType: "text/xml",
+      }).window.document;
+    }
+
+    if (!res.ok) {
+      let message = `HTTP error ${res.status}`;
+      if (xml) {
+        const error = xml.querySelector("error");
+        const errorCode = error?.getAttribute("code");
+        const errorMessage = error?.getAttribute("message");
+        message += `\nSubsonic error${errorCode}: ${errorMessage}`;
+      }
+      throw new Error(message);
+    }
+
+    return { res, xml };
   }
 }
