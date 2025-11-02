@@ -2,10 +2,12 @@ import 'package:xml/xml.dart';
 
 import '../models.dart';
 
-SourceArtist mapArtist(XmlElement e) => SourceArtist(
+SourceArtist mapArtist(XmlElement e, XmlElement? info) => SourceArtist(
   id: e.getAttribute('id')!,
   name: e.getAttribute('name')!,
   starred: DateTime.tryParse(e.getAttribute('starred').toString()),
+  smallImage: Uri.tryParse(info?.getElement('smallImageUrl')?.innerText ?? ''),
+  largeImage: Uri.tryParse(info?.getElement('largeImageUrl')?.innerText ?? ''),
 );
 
 SourceAlbum mapAlbum(

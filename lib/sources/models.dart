@@ -19,6 +19,8 @@ abstract class SourceItem with _$SourceItem {
     required String id,
     required String name,
     DateTime? starred,
+    Uri? smallImage,
+    Uri? largeImage,
   }) = SourceArtist;
 
   @With<Starred>()

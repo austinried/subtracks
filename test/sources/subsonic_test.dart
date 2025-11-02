@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:http/http.dart';
 import 'package:subtracks/sources/subsonic/client.dart';
 import 'package:subtracks/sources/subsonic/source.dart';
@@ -32,12 +31,21 @@ void main() {
         password: 'password',
       ),
     ),
+    Server(
+      name: 'gonic',
+      client: SubsonicClient(
+        http: TestHttpClient(),
+        address: Uri.parse('http://localhost:4747/'),
+        username: 'admin',
+        password: 'admin',
+      ),
+    ),
   ];
 
   for (final Server(:name, :client) in clients) {
     group(name, () {
       setUp(() async {
-        source = SubsonicSource(client: client, maxBitrate: 196);
+        source = SubsonicSource(client);
       });
 
       test('ping', () async {
@@ -45,21 +53,33 @@ void main() {
       });
 
       test('allAlbums', () async {
-        final items = (await source.allAlbums().toList()).flattened.toList();
+        final items = await source.allAlbums().toList();
 
         expect(items.length, equals(3));
       });
 
       test('allArtists', () async {
-        final items = (await source.allArtists().toList()).flattened.toList();
+        final items = await source.allArtists().toList();
 
         expect(items.length, equals(2));
       });
 
       test('allSongs', () async {
-        final items = (await source.allSongs().toList()).flattened.toList();
+        final items = await source.allSongs().toList();
 
         expect(items.length, equals(20));
+      });
+
+      test('allPlaylists', () async {
+        final items = await source.allPlaylists().toList();
+
+        expect(items.length, equals(0));
+      });
+
+      test('allPlaylistSongs', () async {
+        final items = await source.allPlaylistSongs().toList();
+
+        expect(items.length, equals(0));
       });
     });
   }

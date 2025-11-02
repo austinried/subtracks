@@ -159,10 +159,10 @@ return song(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String name,  DateTime? starred)?  artist,TResult Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)?  album,TResult Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)?  playlist,TResult Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)?  song,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)?  artist,TResult Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)?  album,TResult Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)?  playlist,TResult Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)?  song,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SourceArtist() when artist != null:
-return artist(_that.id,_that.name,_that.starred);case SourceAlbum() when album != null:
+return artist(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case SourceAlbum() when album != null:
 return album(_that.id,_that.artistId,_that.name,_that.albumArtist,_that.created,_that.coverArt,_that.year,_that.starred,_that.genre,_that.frequentRank,_that.recentRank);case SourcePlaylist() when playlist != null:
 return playlist(_that.id,_that.name,_that.comment,_that.created,_that.changed,_that.coverArt,_that.owner,_that.public);case SourceSong() when song != null:
 return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that.album,_that.duration,_that.track,_that.disc,_that.starred,_that.genre,_that.coverArt);case _:
@@ -183,10 +183,10 @@ return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String name,  DateTime? starred)  artist,required TResult Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)  album,required TResult Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)  playlist,required TResult Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)  song,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)  artist,required TResult Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)  album,required TResult Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)  playlist,required TResult Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)  song,}) {final _that = this;
 switch (_that) {
 case SourceArtist():
-return artist(_that.id,_that.name,_that.starred);case SourceAlbum():
+return artist(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case SourceAlbum():
 return album(_that.id,_that.artistId,_that.name,_that.albumArtist,_that.created,_that.coverArt,_that.year,_that.starred,_that.genre,_that.frequentRank,_that.recentRank);case SourcePlaylist():
 return playlist(_that.id,_that.name,_that.comment,_that.created,_that.changed,_that.coverArt,_that.owner,_that.public);case SourceSong():
 return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that.album,_that.duration,_that.track,_that.disc,_that.starred,_that.genre,_that.coverArt);case _:
@@ -206,10 +206,10 @@ return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String name,  DateTime? starred)?  artist,TResult? Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)?  album,TResult? Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)?  playlist,TResult? Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)?  song,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)?  artist,TResult? Function( String id,  String? artistId,  String name,  String? albumArtist,  DateTime created,  String? coverArt,  int? year,  DateTime? starred,  String? genre,  int? frequentRank,  int? recentRank)?  album,TResult? Function( String id,  String name,  String? comment,  DateTime created,  DateTime changed,  String? coverArt,  String? owner,  bool? public)?  playlist,TResult? Function( String id,  String? albumId,  String? artistId,  String title,  String? artist,  String? album,  Duration? duration,  int? track,  int? disc,  DateTime? starred,  String? genre,  String? coverArt)?  song,}) {final _that = this;
 switch (_that) {
 case SourceArtist() when artist != null:
-return artist(_that.id,_that.name,_that.starred);case SourceAlbum() when album != null:
+return artist(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case SourceAlbum() when album != null:
 return album(_that.id,_that.artistId,_that.name,_that.albumArtist,_that.created,_that.coverArt,_that.year,_that.starred,_that.genre,_that.frequentRank,_that.recentRank);case SourcePlaylist() when playlist != null:
 return playlist(_that.id,_that.name,_that.comment,_that.created,_that.changed,_that.coverArt,_that.owner,_that.public);case SourceSong() when song != null:
 return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that.album,_that.duration,_that.track,_that.disc,_that.starred,_that.genre,_that.coverArt);case _:
@@ -224,12 +224,14 @@ return song(_that.id,_that.albumId,_that.artistId,_that.title,_that.artist,_that
 
 
 class SourceArtist with Starred implements SourceItem {
-  const SourceArtist({required this.id, required this.name, this.starred});
+  const SourceArtist({required this.id, required this.name, this.starred, this.smallImage, this.largeImage});
   
 
 @override final  String id;
  final  String name;
  final  DateTime? starred;
+ final  Uri? smallImage;
+ final  Uri? largeImage;
 
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +243,16 @@ $SourceArtistCopyWith<SourceArtist> get copyWith => _$SourceArtistCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceArtist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SourceArtist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,starred);
+int get hashCode => Object.hash(runtimeType,id,name,starred,smallImage,largeImage);
 
 @override
 String toString() {
-  return 'SourceItem.artist(id: $id, name: $name, starred: $starred)';
+  return 'SourceItem.artist(id: $id, name: $name, starred: $starred, smallImage: $smallImage, largeImage: $largeImage)';
 }
 
 
@@ -261,7 +263,7 @@ abstract mixin class $SourceArtistCopyWith<$Res> implements $SourceItemCopyWith<
   factory $SourceArtistCopyWith(SourceArtist value, $Res Function(SourceArtist) _then) = _$SourceArtistCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, DateTime? starred
+ String id, String name, DateTime? starred, Uri? smallImage, Uri? largeImage
 });
 
 
@@ -278,12 +280,14 @@ class _$SourceArtistCopyWithImpl<$Res>
 
 /// Create a copy of SourceItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? starred = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? starred = freezed,Object? smallImage = freezed,Object? largeImage = freezed,}) {
   return _then(SourceArtist(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,starred: freezed == starred ? _self.starred : starred // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,smallImage: freezed == smallImage ? _self.smallImage : smallImage // ignore: cast_nullable_to_non_nullable
+as Uri?,largeImage: freezed == largeImage ? _self.largeImage : largeImage // ignore: cast_nullable_to_non_nullable
+as Uri?,
   ));
 }
 

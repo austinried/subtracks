@@ -8,15 +8,34 @@ services:
   navidrome:
     image: deluan/navidrome:latest
     ports:
-      - "4533:4533"
+      - 4533:4533
     restart: unless-stopped
     environment:
       ND_LOGLEVEL: debug
     volumes:
       - navidrome-data:/data
       - music:/music:ro
+  
+  gonic:
+    image: sentriz/gonic:latest
+    environment:
+      - TZ
+      - GONIC_SCAN_AT_START_ENABLED=true
+      - GONIC_SCAN_WATCHER_ENABLED=true
+    ports:
+      - 4747:80
+    volumes:
+      - gonic-data:/data
+      - music:/music:ro
+      - gonic-podcasts:/podcasts
+      - gonic-playlists:/playlists
+      - gonic-cache:/cache
 
 volumes:
   deno-dir:
   music:
   navidrome-data:
+  gonic-data:
+  gonic-podcasts:
+  gonic-playlists:
+  gonic-cache:

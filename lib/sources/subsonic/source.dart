@@ -9,17 +9,17 @@ import 'client.dart';
 import 'mapping.dart';
 
 class SubsonicSource implements MusicSource {
-  SubsonicSource({
-    required this.client,
-    required this.maxBitrate,
-    this.streamFormat,
+  SubsonicSource(
+    this.client, {
+    this.maxConnections = 10,
+    this.connectionPoolTimeout = const Duration(seconds: 60),
   });
 
   final SubsonicClient client;
-  final int maxBitrate;
-  final String? streamFormat;
+  final int maxConnections;
+  final Duration connectionPoolTimeout;
 
-  final _pool = Pool(10, timeout: const Duration(seconds: 60));
+  late final _pool = Pool(maxConnections, timeout: connectionPoolTimeout);
 
   bool? _featureEmptyQuerySearch;
   Future<bool> get supportsFastSongSync async {
@@ -41,23 +41,31 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<Iterable<SourceArtist>> allArtists() async* {
-    final res = await client.get('getArtists');
+  Stream<SourceArtist> allArtists() async* {
+    final getArtistsRes = await _pool.withResource(
+      () => client.get('getArtists'),
+    );
 
-    for (var artists in res.xml.findAllElements('artist').slices(200)) {
-      yield artists.map(mapArtist);
-    }
+    yield* _pool.forEach(getArtistsRes.xml.findAllElements('artist'), (
+      artist,
+    ) async {
+      final res = await client.get('getArtistInfo2', {
+        'id': artist.getAttribute('id')!,
+      });
+
+      return mapArtist(artist, res.xml.getElement('artistInfo2'));
+    });
   }
 
   @override
-  Stream<Iterable<SourceAlbum>> allAlbums() async* {
+  Stream<SourceAlbum> allAlbums() async* {
     final extras = await Future.wait([
       _albumList(
         'frequent',
-      ).flatten().map((element) => element.getAttribute('id')!).toList(),
+      ).flatten().map((e) => e.getAttribute('id')!).toList(),
       _albumList(
         'recent',
-      ).flatten().map((element) => element.getAttribute('id')!).toList(),
+      ).flatten().map((e) => e.getAttribute('id')!).toList(),
     ]);
 
     final frequentlyPlayed = {
@@ -67,65 +75,73 @@ class SubsonicSource implements MusicSource {
       for (var i = 0; i < extras[1].length; i++) extras[1][i]: i,
     };
 
-    await for (var albums in _albumList('newest')) {
-      yield albums.map(
-        (e) => mapAlbum(
-          e,
-          frequentRank: frequentlyPlayed[e.getAttribute('id')!],
-          recentRank: recentlyPlayed[e.getAttribute('id')!],
+    await for (final albums in _albumList('newest')) {
+      yield* Stream.fromIterable(
+        albums.map(
+          (album) => mapAlbum(
+            album,
+            frequentRank: frequentlyPlayed[album.getAttribute('id')!],
+            recentRank: recentlyPlayed[album.getAttribute('id')!],
+          ),
         ),
       );
     }
   }
 
   @override
-  Stream<Iterable<SourcePlaylist>> allPlaylists() async* {
-    final res = await client.get('getPlaylists');
+  Stream<SourcePlaylist> allPlaylists() async* {
+    final res = await _pool.withResource(() => client.get('getPlaylists'));
 
-    for (var playlists in res.xml.findAllElements('playlist').slices(200)) {
-      yield playlists.map(mapPlaylist);
-    }
+    yield* Stream.fromIterable(
+      res.xml.findAllElements('playlist').map(mapPlaylist),
+    );
   }
 
   @override
-  Stream<Iterable<SourcePlaylistSong>> allPlaylistSongs() async* {
-    final allPlaylists = await client.get('getPlaylists');
+  Stream<SourcePlaylistSong> allPlaylistSongs() async* {
+    final allPlaylists = await _pool.withResource(
+      () => client.get('getPlaylists'),
+    );
 
-    yield* _pool.forEach(allPlaylists.xml.findAllElements('playlist'), (
-      playlist,
-    ) async {
-      final id = playlist.getAttribute('id')!;
-      final res = await client.get('getPlaylist', {'id': id});
+    yield* _pool
+        .forEach(allPlaylists.xml.findAllElements('playlist'), (
+          playlist,
+        ) async {
+          final id = playlist.getAttribute('id')!;
+          final res = await client.get('getPlaylist', {'id': id});
 
-      return res.xml.findAllElements('entry').mapIndexed(mapPlaylistSong);
-    });
+          return res.xml.findAllElements('entry').mapIndexed(mapPlaylistSong);
+        })
+        .expand((a) => a);
   }
 
   @override
-  Stream<Iterable<SourceSong>> allSongs() async* {
+  Stream<SourceSong> allSongs() async* {
     if (await supportsFastSongSync) {
       await for (var songs in _songSearch()) {
-        yield songs.map(mapSong);
+        yield* Stream.fromIterable(songs.map(mapSong));
       }
     } else {
       await for (var albumsList in _albumList('alphabeticalByName')) {
-        yield* _pool.forEach(albumsList, (album) async {
-          final albums = await client.get('getAlbum', {
-            'id': album.getAttribute('id')!,
-          });
-          return albums.xml.findAllElements('song').map(mapSong);
-        });
+        yield* _pool
+            .forEach(albumsList, (album) async {
+              final albums = await client.get('getAlbum', {
+                'id': album.getAttribute('id')!,
+              });
+              return albums.xml.findAllElements('song').map(mapSong);
+            })
+            .expand((a) => a);
       }
     }
   }
 
   @override
-  Uri streamUri(String songId) {
+  Uri streamUri(String songId, {int? maxBitrate, String? format}) {
     return client.uri('stream', {
       'id': songId,
       'estimateContentLength': true.toString(),
       'maxBitRate': maxBitrate.toString(),
-      'format': streamFormat?.toString(),
+      'format': format.toString(),
     });
   }
 
@@ -143,28 +159,18 @@ class SubsonicSource implements MusicSource {
     return client.uri('getCoverArt', opts);
   }
 
-  @override
-  Future<Uri?> artistArtUri(String artistId, {bool thumbnail = true}) async {
-    final res = await client.get('getArtistInfo2', {'id': artistId});
-    return Uri.tryParse(
-      res.xml
-              .getElement('artistInfo2')
-              ?.getElement(thumbnail ? 'smallImageUrl' : 'largeImageUrl')
-              ?.text ??
-          '',
-    );
-  }
-
   Stream<Iterable<XmlElement>> _albumList(String type) async* {
     const size = 500;
     var offset = 0;
 
     while (true) {
-      final res = await client.get('getAlbumList2', {
-        'type': type,
-        'size': size.toString(),
-        'offset': offset.toString(),
-      });
+      final res = await _pool.withResource(
+        () => client.get('getAlbumList2', {
+          'type': type,
+          'size': size.toString(),
+          'offset': offset.toString(),
+        }),
+      );
 
       final albums = res.xml.findAllElements('album');
       offset += albums.length;
@@ -182,13 +188,15 @@ class SubsonicSource implements MusicSource {
     var offset = 0;
 
     while (true) {
-      final res = await client.get('search3', {
-        'query': '""',
-        'songCount': size.toString(),
-        'songOffset': offset.toString(),
-        'artistCount': '0',
-        'albumCount': '0',
-      });
+      final res = await _pool.withResource(
+        () => client.get('search3', {
+          'query': '""',
+          'songCount': size.toString(),
+          'songOffset': offset.toString(),
+          'artistCount': '0',
+          'albumCount': '0',
+        }),
+      );
 
       final songs = res.xml.findAllElements('song');
       offset += songs.length;
