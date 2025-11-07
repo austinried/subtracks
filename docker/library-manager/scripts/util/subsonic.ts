@@ -10,15 +10,15 @@ export class SubsonicClient {
 
   async get(
     method: "download",
-    params?: Record<string, string>,
+    params?: [string, string][],
   ): Promise<{ res: Response; xml: undefined }>;
   async get(
     method: string,
-    params?: Record<string, string>,
+    params?: [string, string][],
   ): Promise<{ res: Response; xml: Document }>;
   async get(
     method: string,
-    params?: Record<string, string>,
+    params?: [string, string][],
   ): Promise<{ res: Response; xml: Document | undefined }> {
     const url = new URL(`rest/${method}.view`, this.baseUrl);
 
@@ -28,9 +28,9 @@ export class SubsonicClient {
     url.searchParams.set("c", "subtracks-test-fixture");
 
     if (params) {
-      Object.entries(params).forEach(([key, value]) =>
-        url.searchParams.append(key, value)
-      );
+      for (const [key, value] of params) {
+        url.searchParams.append(key, value);
+      }
     }
 
     const res = await fetch(url);

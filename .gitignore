@@ -46,3 +46,6 @@ app.*.map.json
 
 # VSCode
 .vscode/settings.json
+
+# subtracks
+/music

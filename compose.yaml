@@ -3,7 +3,7 @@ services:
     build: ./docker/library-manager
     volumes:
       - deno-dir:/deno-dir
-      - music:/music
+      - ./music:/music
 
   navidrome:
     image: deluan/navidrome:latest
@@ -14,7 +14,7 @@ services:
       ND_LOGLEVEL: debug
     volumes:
       - navidrome-data:/data
-      - music:/music:ro
+      - ./music:/music:ro
   
   gonic:
     image: sentriz/gonic:latest
@@ -26,7 +26,7 @@ services:
       - 4747:80
     volumes:
       - gonic-data:/data
-      - music:/music:ro
+      - ./music:/music:ro
       - gonic-podcasts:/podcasts
       - gonic-playlists:/playlists
       - gonic-cache:/cache

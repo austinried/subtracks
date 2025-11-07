@@ -440,6 +440,61 @@ extension ArtistToDb on models.Artist {
   );
 }
 
+extension AlbumToDb on models.Album {
+  AlbumsCompanion toDb(int sourceId) => AlbumsCompanion.insert(
+    sourceId: sourceId,
+    id: id,
+    artistId: Value(artistId),
+    name: name,
+    albumArtist: Value(albumArtist),
+    created: created,
+    coverArt: Value(coverArt),
+    genre: Value(genre),
+    year: Value(year),
+    starred: Value(starred),
+    frequentRank: Value(frequentRank),
+    recentRank: Value(recentRank),
+  );
+}
+
+extension SongToDb on models.Song {
+  SongsCompanion toDb(int sourceId) => SongsCompanion.insert(
+    sourceId: sourceId,
+    id: id,
+    albumId: Value(albumId),
+    artistId: Value(artistId),
+    title: title,
+    album: Value(album),
+    artist: Value(artist),
+    duration: Value(duration),
+    track: Value(track),
+    disc: Value(disc),
+    starred: Value(starred),
+    genre: Value(genre),
+  );
+}
+
+extension PlaylistToDb on models.Playlist {
+  PlaylistsCompanion toDb(int sourceId) => PlaylistsCompanion.insert(
+    sourceId: sourceId,
+    id: id,
+    name: name,
+    comment: Value(comment),
+    coverArt: Value(coverArt),
+    created: created,
+    changed: changed,
+  );
+}
+
+extension PlaylistSongToDb on models.PlaylistSong {
+  PlaylistSongsCompanion toDb(int sourceId) => PlaylistSongsCompanion.insert(
+    sourceId: sourceId,
+    playlistId: playlistId,
+    songId: songId,
+    position: position,
+  );
+}
+
 // LazyDatabase _openConnection() {
 //   return LazyDatabase(() async {
 //     final dbFolder = await getApplicationDocumentsDirectory();

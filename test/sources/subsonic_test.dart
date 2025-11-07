@@ -64,13 +64,13 @@ void main() {
     test('allPlaylists', () async {
       final items = await source.allPlaylists().toList();
 
-      expect(items.length, equals(0));
+      expect(items.length, equals(1));
     });
 
     test('allPlaylistSongs', () async {
       final items = await source.allPlaylistSongs().toList();
 
-      expect(items.length, equals(0));
+      expect(items.length, equals(7));
     });
 
     test('album-artist relation', () async {

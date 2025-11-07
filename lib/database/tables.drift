@@ -133,9 +133,8 @@ CREATE TABLE playlists(
   name TEXT NOT NULL COLLATE NOCASE,
   comment TEXT COLLATE NOCASE,
   cover_art TEXT,
-  song_count INT NOT NULL,
   created DATETIME NOT NULL,
-  changed DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+  changed DATETIME NOT NULL,
   PRIMARY KEY (source_id, id),
   FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
 ) WITH Playlist;
@@ -184,7 +183,6 @@ CREATE TABLE songs(
   disc INT,
   starred DATETIME,
   genre TEXT,
-  updated DATETIME NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
   PRIMARY KEY (source_id, id),
   FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
 ) WITH Song;

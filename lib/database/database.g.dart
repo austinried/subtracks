@@ -1419,17 +1419,6 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     requiredDuringInsert: false,
     $customConstraints: '',
   );
-  static const VerificationMeta _songCountMeta = const VerificationMeta(
-    'songCount',
-  );
-  late final GeneratedColumn<int> songCount = GeneratedColumn<int>(
-    'song_count',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
-  );
   static const VerificationMeta _createdMeta = const VerificationMeta(
     'created',
   );
@@ -1449,10 +1438,8 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     aliasedName,
     false,
     type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    $customConstraints:
-        'NOT NULL DEFAULT (strftime(\'%s\', CURRENT_TIMESTAMP))',
-    defaultValue: const CustomExpression('strftime(\'%s\', CURRENT_TIMESTAMP)'),
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -1461,7 +1448,6 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     name,
     comment,
     coverArt,
-    songCount,
     created,
     changed,
   ];
@@ -1510,14 +1496,6 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
         coverArt.isAcceptableOrUnknown(data['cover_art']!, _coverArtMeta),
       );
     }
-    if (data.containsKey('song_count')) {
-      context.handle(
-        _songCountMeta,
-        songCount.isAcceptableOrUnknown(data['song_count']!, _songCountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_songCountMeta);
-    }
     if (data.containsKey('created')) {
       context.handle(
         _createdMeta,
@@ -1531,6 +1509,8 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
         _changedMeta,
         changed.isAcceptableOrUnknown(data['changed']!, _changedMeta),
       );
+    } else if (isInserting) {
+      context.missing(_changedMeta);
     }
     return context;
   }
@@ -1588,7 +1568,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
   final Value<String> name;
   final Value<String?> comment;
   final Value<String?> coverArt;
-  final Value<int> songCount;
   final Value<DateTime> created;
   final Value<DateTime> changed;
   final Value<int> rowid;
@@ -1598,7 +1577,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     this.name = const Value.absent(),
     this.comment = const Value.absent(),
     this.coverArt = const Value.absent(),
-    this.songCount = const Value.absent(),
     this.created = const Value.absent(),
     this.changed = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1609,22 +1587,20 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     required String name,
     this.comment = const Value.absent(),
     this.coverArt = const Value.absent(),
-    required int songCount,
     required DateTime created,
-    this.changed = const Value.absent(),
+    required DateTime changed,
     this.rowid = const Value.absent(),
   }) : sourceId = Value(sourceId),
        id = Value(id),
        name = Value(name),
-       songCount = Value(songCount),
-       created = Value(created);
+       created = Value(created),
+       changed = Value(changed);
   static Insertable<models.Playlist> custom({
     Expression<int>? sourceId,
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? comment,
     Expression<String>? coverArt,
-    Expression<int>? songCount,
     Expression<DateTime>? created,
     Expression<DateTime>? changed,
     Expression<int>? rowid,
@@ -1635,7 +1611,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
       if (name != null) 'name': name,
       if (comment != null) 'comment': comment,
       if (coverArt != null) 'cover_art': coverArt,
-      if (songCount != null) 'song_count': songCount,
       if (created != null) 'created': created,
       if (changed != null) 'changed': changed,
       if (rowid != null) 'rowid': rowid,
@@ -1648,7 +1623,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     Value<String>? name,
     Value<String?>? comment,
     Value<String?>? coverArt,
-    Value<int>? songCount,
     Value<DateTime>? created,
     Value<DateTime>? changed,
     Value<int>? rowid,
@@ -1659,7 +1633,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
       name: name ?? this.name,
       comment: comment ?? this.comment,
       coverArt: coverArt ?? this.coverArt,
-      songCount: songCount ?? this.songCount,
       created: created ?? this.created,
       changed: changed ?? this.changed,
       rowid: rowid ?? this.rowid,
@@ -1684,9 +1657,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     if (coverArt.present) {
       map['cover_art'] = Variable<String>(coverArt.value);
     }
-    if (songCount.present) {
-      map['song_count'] = Variable<int>(songCount.value);
-    }
     if (created.present) {
       map['created'] = Variable<DateTime>(created.value);
     }
@@ -1707,7 +1677,6 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
           ..write('name: $name, ')
           ..write('comment: $comment, ')
           ..write('coverArt: $coverArt, ')
-          ..write('songCount: $songCount, ')
           ..write('created: $created, ')
           ..write('changed: $changed, ')
           ..write('rowid: $rowid')
@@ -2063,19 +2032,6 @@ class Songs extends Table with TableInfo<Songs, models.Song> {
     requiredDuringInsert: false,
     $customConstraints: '',
   );
-  static const VerificationMeta _updatedMeta = const VerificationMeta(
-    'updated',
-  );
-  late final GeneratedColumn<DateTime> updated = GeneratedColumn<DateTime>(
-    'updated',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    $customConstraints:
-        'NOT NULL DEFAULT (strftime(\'%s\', CURRENT_TIMESTAMP))',
-    defaultValue: const CustomExpression('strftime(\'%s\', CURRENT_TIMESTAMP)'),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     sourceId,
@@ -2090,7 +2046,6 @@ class Songs extends Table with TableInfo<Songs, models.Song> {
     disc,
     starred,
     genre,
-    updated,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2171,12 +2126,6 @@ class Songs extends Table with TableInfo<Songs, models.Song> {
       context.handle(
         _genreMeta,
         genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
-      );
-    }
-    if (data.containsKey('updated')) {
-      context.handle(
-        _updatedMeta,
-        updated.isAcceptableOrUnknown(data['updated']!, _updatedMeta),
       );
     }
     return context;
@@ -2268,7 +2217,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
   final Value<int?> disc;
   final Value<DateTime?> starred;
   final Value<String?> genre;
-  final Value<DateTime> updated;
   final Value<int> rowid;
   const SongsCompanion({
     this.sourceId = const Value.absent(),
@@ -2283,7 +2231,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
     this.disc = const Value.absent(),
     this.starred = const Value.absent(),
     this.genre = const Value.absent(),
-    this.updated = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SongsCompanion.insert({
@@ -2299,7 +2246,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
     this.disc = const Value.absent(),
     this.starred = const Value.absent(),
     this.genre = const Value.absent(),
-    this.updated = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : sourceId = Value(sourceId),
        id = Value(id),
@@ -2317,7 +2263,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
     Expression<int>? disc,
     Expression<DateTime>? starred,
     Expression<String>? genre,
-    Expression<DateTime>? updated,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2333,7 +2278,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
       if (disc != null) 'disc': disc,
       if (starred != null) 'starred': starred,
       if (genre != null) 'genre': genre,
-      if (updated != null) 'updated': updated,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2351,7 +2295,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
     Value<int?>? disc,
     Value<DateTime?>? starred,
     Value<String?>? genre,
-    Value<DateTime>? updated,
     Value<int>? rowid,
   }) {
     return SongsCompanion(
@@ -2367,7 +2310,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
       disc: disc ?? this.disc,
       starred: starred ?? this.starred,
       genre: genre ?? this.genre,
-      updated: updated ?? this.updated,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2413,9 +2355,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
     if (genre.present) {
       map['genre'] = Variable<String>(genre.value);
     }
-    if (updated.present) {
-      map['updated'] = Variable<DateTime>(updated.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2437,7 +2376,6 @@ class SongsCompanion extends UpdateCompanion<models.Song> {
           ..write('disc: $disc, ')
           ..write('starred: $starred, ')
           ..write('genre: $genre, ')
-          ..write('updated: $updated, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3448,9 +3386,8 @@ typedef $PlaylistsCreateCompanionBuilder =
       required String name,
       Value<String?> comment,
       Value<String?> coverArt,
-      required int songCount,
       required DateTime created,
-      Value<DateTime> changed,
+      required DateTime changed,
       Value<int> rowid,
     });
 typedef $PlaylistsUpdateCompanionBuilder =
@@ -3460,7 +3397,6 @@ typedef $PlaylistsUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> comment,
       Value<String?> coverArt,
-      Value<int> songCount,
       Value<DateTime> created,
       Value<DateTime> changed,
       Value<int> rowid,
@@ -3497,11 +3433,6 @@ class $PlaylistsFilterComposer
 
   ColumnFilters<String> get coverArt => $composableBuilder(
     column: $table.coverArt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get songCount => $composableBuilder(
-    column: $table.songCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3550,11 +3481,6 @@ class $PlaylistsOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get songCount => $composableBuilder(
-    column: $table.songCount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get created => $composableBuilder(
     column: $table.created,
     builder: (column) => ColumnOrderings(column),
@@ -3589,9 +3515,6 @@ class $PlaylistsAnnotationComposer
 
   GeneratedColumn<String> get coverArt =>
       $composableBuilder(column: $table.coverArt, builder: (column) => column);
-
-  GeneratedColumn<int> get songCount =>
-      $composableBuilder(column: $table.songCount, builder: (column) => column);
 
   GeneratedColumn<DateTime> get created =>
       $composableBuilder(column: $table.created, builder: (column) => column);
@@ -3636,7 +3559,6 @@ class $PlaylistsTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> comment = const Value.absent(),
                 Value<String?> coverArt = const Value.absent(),
-                Value<int> songCount = const Value.absent(),
                 Value<DateTime> created = const Value.absent(),
                 Value<DateTime> changed = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -3646,7 +3568,6 @@ class $PlaylistsTableManager
                 name: name,
                 comment: comment,
                 coverArt: coverArt,
-                songCount: songCount,
                 created: created,
                 changed: changed,
                 rowid: rowid,
@@ -3658,9 +3579,8 @@ class $PlaylistsTableManager
                 required String name,
                 Value<String?> comment = const Value.absent(),
                 Value<String?> coverArt = const Value.absent(),
-                required int songCount,
                 required DateTime created,
-                Value<DateTime> changed = const Value.absent(),
+                required DateTime changed,
                 Value<int> rowid = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 sourceId: sourceId,
@@ -3668,7 +3588,6 @@ class $PlaylistsTableManager
                 name: name,
                 comment: comment,
                 coverArt: coverArt,
-                songCount: songCount,
                 created: created,
                 changed: changed,
                 rowid: rowid,
@@ -3899,7 +3818,6 @@ typedef $SongsCreateCompanionBuilder =
       Value<int?> disc,
       Value<DateTime?> starred,
       Value<String?> genre,
-      Value<DateTime> updated,
       Value<int> rowid,
     });
 typedef $SongsUpdateCompanionBuilder =
@@ -3916,7 +3834,6 @@ typedef $SongsUpdateCompanionBuilder =
       Value<int?> disc,
       Value<DateTime?> starred,
       Value<String?> genre,
-      Value<DateTime> updated,
       Value<int> rowid,
     });
 
@@ -3988,11 +3905,6 @@ class $SongsFilterComposer extends Composer<_$SubtracksDatabase, Songs> {
     column: $table.genre,
     builder: (column) => ColumnFilters(column),
   );
-
-  ColumnFilters<DateTime> get updated => $composableBuilder(
-    column: $table.updated,
-    builder: (column) => ColumnFilters(column),
-  );
 }
 
 class $SongsOrderingComposer extends Composer<_$SubtracksDatabase, Songs> {
@@ -4062,11 +3974,6 @@ class $SongsOrderingComposer extends Composer<_$SubtracksDatabase, Songs> {
     column: $table.genre,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<DateTime> get updated => $composableBuilder(
-    column: $table.updated,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $SongsAnnotationComposer extends Composer<_$SubtracksDatabase, Songs> {
@@ -4112,9 +4019,6 @@ class $SongsAnnotationComposer extends Composer<_$SubtracksDatabase, Songs> {
 
   GeneratedColumn<String> get genre =>
       $composableBuilder(column: $table.genre, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updated =>
-      $composableBuilder(column: $table.updated, builder: (column) => column);
 }
 
 class $SongsTableManager
@@ -4160,7 +4064,6 @@ class $SongsTableManager
                 Value<int?> disc = const Value.absent(),
                 Value<DateTime?> starred = const Value.absent(),
                 Value<String?> genre = const Value.absent(),
-                Value<DateTime> updated = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SongsCompanion(
                 sourceId: sourceId,
@@ -4175,7 +4078,6 @@ class $SongsTableManager
                 disc: disc,
                 starred: starred,
                 genre: genre,
-                updated: updated,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4192,7 +4094,6 @@ class $SongsTableManager
                 Value<int?> disc = const Value.absent(),
                 Value<DateTime?> starred = const Value.absent(),
                 Value<String?> genre = const Value.absent(),
-                Value<DateTime> updated = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SongsCompanion.insert(
                 sourceId: sourceId,
@@ -4207,7 +4108,6 @@ class $SongsTableManager
                 disc: disc,
                 starred: starred,
                 genre: genre,
-                updated: updated,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

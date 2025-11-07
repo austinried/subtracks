@@ -3,9 +3,6 @@ import * as path from "jsr:@std/path@1.1.2";
 import { MUSIC_DIR } from "./util/env.ts";
 import { SubsonicClient } from "./util/subsonic.ts";
 
-await new Deno.Command("rm", { args: ["-rf", path.join(MUSIC_DIR, "*")] })
-  .output();
-
 const client = new SubsonicClient(
   "http://demo.subsonic.org",
   "guest1",
@@ -13,7 +10,7 @@ const client = new SubsonicClient(
 );
 
 for (const id of ["197", "199", "321"]) {
-  const { res } = await client.get("download", { id });
+  const { res } = await client.get("download", [["id", id]]);
 
   let filename = res.headers.get("Content-Disposition")
     ?.split(";")[1];
