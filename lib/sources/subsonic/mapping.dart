@@ -2,7 +2,7 @@ import 'package:xml/xml.dart';
 
 import '../models.dart';
 
-SourceArtist mapArtist(XmlElement e, XmlElement? info) => SourceArtist(
+Artist mapArtist(XmlElement e, XmlElement? info) => Artist(
   id: e.getAttribute('id')!,
   name: e.getAttribute('name')!,
   starred: DateTime.tryParse(e.getAttribute('starred').toString()),
@@ -10,11 +10,11 @@ SourceArtist mapArtist(XmlElement e, XmlElement? info) => SourceArtist(
   largeImage: Uri.tryParse(info?.getElement('largeImageUrl')?.innerText ?? ''),
 );
 
-SourceAlbum mapAlbum(
+Album mapAlbum(
   XmlElement e, {
   int? frequentRank,
   int? recentRank,
-}) => SourceAlbum(
+}) => Album(
   id: e.getAttribute('id')!,
   artistId: e.getAttribute('artistId'),
   name: e.getAttribute('name')!,
@@ -28,7 +28,7 @@ SourceAlbum mapAlbum(
   recentRank: recentRank,
 );
 
-SourcePlaylist mapPlaylist(XmlElement e) => SourcePlaylist(
+Playlist mapPlaylist(XmlElement e) => Playlist(
   id: e.getAttribute('id')!,
   name: e.getAttribute('name')!,
   comment: e.getAttribute('comment'),
@@ -36,10 +36,9 @@ SourcePlaylist mapPlaylist(XmlElement e) => SourcePlaylist(
   created: DateTime.parse(e.getAttribute('created')!),
   changed: DateTime.parse(e.getAttribute('changed')!),
   owner: e.getAttribute('owner'),
-  public: bool.tryParse(e.getAttribute('public').toString()),
 );
 
-SourceSong mapSong(XmlElement e) => SourceSong(
+Song mapSong(XmlElement e) => Song(
   id: e.getAttribute('id')!,
   albumId: e.getAttribute('albumId'),
   artistId: e.getAttribute('artistId'),
@@ -57,10 +56,10 @@ SourceSong mapSong(XmlElement e) => SourceSong(
   genre: e.getAttribute('genre'),
 );
 
-SourcePlaylistSong mapPlaylistSong(
+PlaylistSong mapPlaylistSong(
   int index,
   XmlElement e,
-) => SourcePlaylistSong(
+) => PlaylistSong(
   playlistId: e.parentElement!.getAttribute('id')!,
   songId: e.getAttribute('id')!,
   position: index,

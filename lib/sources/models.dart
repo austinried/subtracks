@@ -1,32 +1,21 @@
-// ignore_for_file: annotate_overrides
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'models.freezed.dart';
-part 'models.g.dart';
-
-mixin Starred {
-  DateTime? get starred;
-}
-
-mixin CoverArt {
-  String? get coverArt;
-}
 
 @freezed
-abstract class SourceItem with _$SourceItem {
-  @With<Starred>()
-  const factory SourceItem.artist({
+abstract class Artist with _$Artist {
+  const factory Artist({
     required String id,
     required String name,
     DateTime? starred,
     Uri? smallImage,
     Uri? largeImage,
-  }) = SourceArtist;
+  }) = _Artist;
+}
 
-  @With<Starred>()
-  @With<CoverArt>()
-  const factory SourceItem.album({
+@freezed
+abstract class Album with _$Album {
+  const factory Album({
     required String id,
     String? artistId,
     required String name,
@@ -38,10 +27,12 @@ abstract class SourceItem with _$SourceItem {
     String? genre,
     int? frequentRank,
     int? recentRank,
-  }) = SourceAlbum;
+  }) = _Album;
+}
 
-  @With<CoverArt>()
-  const factory SourceItem.playlist({
+@freezed
+abstract class Playlist with _$Playlist {
+  const factory Playlist({
     required String id,
     required String name,
     String? comment,
@@ -50,11 +41,12 @@ abstract class SourceItem with _$SourceItem {
     String? coverArt,
     String? owner,
     bool? public,
-  }) = SourcePlaylist;
+  }) = _Playlist;
+}
 
-  @With<Starred>()
-  @With<CoverArt>()
-  const factory SourceItem.song({
+@freezed
+abstract class Song with _$Song {
+  const factory Song({
     required String id,
     String? albumId,
     String? artistId,
@@ -67,20 +59,14 @@ abstract class SourceItem with _$SourceItem {
     DateTime? starred,
     String? genre,
     String? coverArt,
-  }) = SourceSong;
-
-  factory SourceItem.fromJson(Map<String, dynamic> json) =>
-      _$SourceItemFromJson(json);
+  }) = _Song;
 }
 
 @freezed
-abstract class SourcePlaylistSong with _$SourcePlaylistSong {
-  const factory SourcePlaylistSong({
+abstract class PlaylistSong with _$PlaylistSong {
+  const factory PlaylistSong({
     required String playlistId,
     required String songId,
     required int position,
-  }) = _SourcePlaylistSong;
-
-  factory SourcePlaylistSong.fromJson(Map<String, dynamic> json) =>
-      _$SourcePlaylistSongFromJson(json);
+  }) = _PlaylistSong;
 }

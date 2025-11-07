@@ -7,9 +7,13 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  async: ^2.13.0
   cached_network_image: ^3.4.1
   collection: ^1.19.1
   crypto: ^3.0.6
+  drift: ^2.29.0
+  drift_flutter: ^0.2.7
+  fast_immutable_collections: ^11.1.0
   flutter:
     sdk: flutter
   flutter_hooks: ^0.21.3+1
@@ -20,6 +24,8 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   json_annotation: ^4.9.0
   material_symbols_icons: ^4.2874.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
   pool: ^1.5.2
   xml: ^6.6.1
 
@@ -33,6 +39,7 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.11.1
   test: ^1.26.2
+  drift_dev: ^2.29.0
 
 flutter:
   uses-material-design: true

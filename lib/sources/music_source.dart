@@ -3,11 +3,11 @@ import 'models.dart';
 abstract class MusicSource {
   Future<void> ping();
 
-  Stream<SourceAlbum> allAlbums();
-  Stream<SourceArtist> allArtists();
-  Stream<SourcePlaylist> allPlaylists();
-  Stream<SourceSong> allSongs();
-  Stream<SourcePlaylistSong> allPlaylistSongs();
+  Stream<Album> allAlbums();
+  Stream<Artist> allArtists();
+  Stream<Playlist> allPlaylists();
+  Stream<Song> allSongs();
+  Stream<PlaylistSong> allPlaylistSongs();
 
   Uri streamUri(String songId);
   Uri downloadUri(String songId);

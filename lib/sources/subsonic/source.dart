@@ -41,7 +41,7 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<SourceArtist> allArtists() async* {
+  Stream<Artist> allArtists() async* {
     final getArtistsRes = await _pool.withResource(
       () => client.get('getArtists'),
     );
@@ -58,7 +58,7 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<SourceAlbum> allAlbums() async* {
+  Stream<Album> allAlbums() async* {
     final extras = await Future.wait([
       _albumList(
         'frequent',
@@ -89,7 +89,7 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<SourcePlaylist> allPlaylists() async* {
+  Stream<Playlist> allPlaylists() async* {
     final res = await _pool.withResource(() => client.get('getPlaylists'));
 
     yield* Stream.fromIterable(
@@ -98,7 +98,7 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<SourcePlaylistSong> allPlaylistSongs() async* {
+  Stream<PlaylistSong> allPlaylistSongs() async* {
     final allPlaylists = await _pool.withResource(
       () => client.get('getPlaylists'),
     );
@@ -116,7 +116,7 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Stream<SourceSong> allSongs() async* {
+  Stream<Song> allSongs() async* {
     if (await supportsFastSongSync) {
       await for (var songs in _songSearch()) {
         yield* Stream.fromIterable(songs.map(mapSong));
