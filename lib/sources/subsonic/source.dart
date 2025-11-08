@@ -151,8 +151,8 @@ class SubsonicSource implements MusicSource {
   }
 
   @override
-  Uri coverArtUri(String id, {bool thumbnail = true}) {
-    final opts = {'id': id};
+  Uri coverArtUri(String coverArt, {bool thumbnail = false}) {
+    final opts = {'id': coverArt};
     if (thumbnail) {
       opts['size'] = 256.toString();
     }

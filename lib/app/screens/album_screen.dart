@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class AlbumScreen extends StatelessWidget {
-  const AlbumScreen({super.key});
+  const AlbumScreen({
+    super.key,
+    required this.id,
+  });
+
+  final String id;
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +17,7 @@ class AlbumScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Album!'),
+            Text('Album $id!'),
             TextButton(
               onPressed: () {
                 context.push('/artist');

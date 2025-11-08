@@ -24,6 +24,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   json_annotation: ^4.9.0
   material_symbols_icons: ^4.2874.0
+  octo_image: ^2.1.0
   path: ^1.9.1
   path_provider: ^2.1.5
   pool: ^1.5.2

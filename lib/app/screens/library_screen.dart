@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../lists/albums_grid.dart';
+import '../state/services.dart';
 import '../util/custom_scroll_fix.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -126,13 +128,18 @@ class _LibraryScreenState extends State<LibraryScreen>
                                 )
                                 .toList(),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              context.push('/settings');
-                            },
-                            icon: Icon(
-                              Symbols.settings_rounded,
-                            ),
+                          Row(
+                            children: [
+                              SyncButton(),
+                              IconButton(
+                                onPressed: () {
+                                  context.push('/settings');
+                                },
+                                icon: Icon(
+                                  Symbols.settings_rounded,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -206,6 +213,22 @@ class _NewWidgetState extends State<NewWidget>
           sliver: AlbumsGrid(),
         ),
       ],
+    );
+  }
+}
+
+class SyncButton extends HookConsumerWidget {
+  const SyncButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final syncService = ref.watch(syncServiceProvider);
+
+    return IconButton(
+      icon: Icon(Symbols.sync_rounded),
+      onPressed: () {
+        syncService.sync();
+      },
     );
   }
 }

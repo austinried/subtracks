@@ -17,8 +17,9 @@ final router = GoRouter(
           builder: (context, state) => LibraryScreen(),
           routes: [
             GoRoute(
-              path: 'album',
-              builder: (context, state) => AlbumScreen(),
+              path: 'album/:id',
+              builder: (context, state) =>
+                  AlbumScreen(id: state.pathParameters['id']!),
             ),
             GoRoute(
               path: 'artist',

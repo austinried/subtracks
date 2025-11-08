@@ -12,5 +12,5 @@ abstract class MusicSource {
   Uri streamUri(String songId);
   Uri downloadUri(String songId);
 
-  Uri coverArtUri(String coverArtId, {bool thumbnail = true});
+  Uri coverArtUri(String coverArt, {bool thumbnail = false});
 }

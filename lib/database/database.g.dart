@@ -300,12 +300,12 @@ class SourcesCompanion extends UpdateCompanion<Source> {
   }
 }
 
-class SubsonicSourceOptions extends Table
-    with TableInfo<SubsonicSourceOptions, SubsonicSourceOption> {
+class SubsonicSettings extends Table
+    with TableInfo<SubsonicSettings, SubsonicSetting> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  SubsonicSourceOptions(this.attachedDatabase, [this._alias]);
+  SubsonicSettings(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _sourceIdMeta = const VerificationMeta(
     'sourceId',
   );
@@ -325,7 +325,7 @@ class SubsonicSourceOptions extends Table
         type: DriftSqlType.string,
         requiredDuringInsert: true,
         $customConstraints: 'NOT NULL',
-      ).withConverter<Uri>(SubsonicSourceOptions.$converteraddress);
+      ).withConverter<Uri>(SubsonicSettings.$converteraddress);
   static const VerificationMeta _usernameMeta = const VerificationMeta(
     'username',
   );
@@ -372,10 +372,10 @@ class SubsonicSourceOptions extends Table
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'subsonic_source_options';
+  static const String $name = 'subsonic_settings';
   @override
   VerificationContext validateIntegrity(
-    Insertable<SubsonicSourceOption> instance, {
+    Insertable<SubsonicSetting> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -417,14 +417,14 @@ class SubsonicSourceOptions extends Table
   @override
   Set<GeneratedColumn> get $primaryKey => {sourceId};
   @override
-  SubsonicSourceOption map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SubsonicSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SubsonicSourceOption(
+    return SubsonicSetting(
       sourceId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}source_id'],
       )!,
-      address: SubsonicSourceOptions.$converteraddress.fromSql(
+      address: SubsonicSettings.$converteraddress.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}address'],
@@ -446,8 +446,8 @@ class SubsonicSourceOptions extends Table
   }
 
   @override
-  SubsonicSourceOptions createAlias(String alias) {
-    return SubsonicSourceOptions(attachedDatabase, alias);
+  SubsonicSettings createAlias(String alias) {
+    return SubsonicSettings(attachedDatabase, alias);
   }
 
   static TypeConverter<Uri, String> $converteraddress = const UriConverter();
@@ -459,14 +459,13 @@ class SubsonicSourceOptions extends Table
   bool get dontWriteConstraints => true;
 }
 
-class SubsonicSourceOption extends DataClass
-    implements Insertable<SubsonicSourceOption> {
+class SubsonicSetting extends DataClass implements Insertable<SubsonicSetting> {
   final int sourceId;
   final Uri address;
   final String username;
   final String password;
   final bool useTokenAuth;
-  const SubsonicSourceOption({
+  const SubsonicSetting({
     required this.sourceId,
     required this.address,
     required this.username,
@@ -479,7 +478,7 @@ class SubsonicSourceOption extends DataClass
     map['source_id'] = Variable<int>(sourceId);
     {
       map['address'] = Variable<String>(
-        SubsonicSourceOptions.$converteraddress.toSql(address),
+        SubsonicSettings.$converteraddress.toSql(address),
       );
     }
     map['username'] = Variable<String>(username);
@@ -488,8 +487,8 @@ class SubsonicSourceOption extends DataClass
     return map;
   }
 
-  SubsonicSourceOptionsCompanion toCompanion(bool nullToAbsent) {
-    return SubsonicSourceOptionsCompanion(
+  SubsonicSettingsCompanion toCompanion(bool nullToAbsent) {
+    return SubsonicSettingsCompanion(
       sourceId: Value(sourceId),
       address: Value(address),
       username: Value(username),
@@ -498,12 +497,12 @@ class SubsonicSourceOption extends DataClass
     );
   }
 
-  factory SubsonicSourceOption.fromJson(
+  factory SubsonicSetting.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SubsonicSourceOption(
+    return SubsonicSetting(
       sourceId: serializer.fromJson<int>(json['source_id']),
       address: serializer.fromJson<Uri>(json['address']),
       username: serializer.fromJson<String>(json['username']),
@@ -523,21 +522,21 @@ class SubsonicSourceOption extends DataClass
     };
   }
 
-  SubsonicSourceOption copyWith({
+  SubsonicSetting copyWith({
     int? sourceId,
     Uri? address,
     String? username,
     String? password,
     bool? useTokenAuth,
-  }) => SubsonicSourceOption(
+  }) => SubsonicSetting(
     sourceId: sourceId ?? this.sourceId,
     address: address ?? this.address,
     username: username ?? this.username,
     password: password ?? this.password,
     useTokenAuth: useTokenAuth ?? this.useTokenAuth,
   );
-  SubsonicSourceOption copyWithCompanion(SubsonicSourceOptionsCompanion data) {
-    return SubsonicSourceOption(
+  SubsonicSetting copyWithCompanion(SubsonicSettingsCompanion data) {
+    return SubsonicSetting(
       sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
       address: data.address.present ? data.address.value : this.address,
       username: data.username.present ? data.username.value : this.username,
@@ -550,7 +549,7 @@ class SubsonicSourceOption extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('SubsonicSourceOption(')
+    return (StringBuffer('SubsonicSetting(')
           ..write('sourceId: $sourceId, ')
           ..write('address: $address, ')
           ..write('username: $username, ')
@@ -566,7 +565,7 @@ class SubsonicSourceOption extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is SubsonicSourceOption &&
+      (other is SubsonicSetting &&
           other.sourceId == this.sourceId &&
           other.address == this.address &&
           other.username == this.username &&
@@ -574,21 +573,20 @@ class SubsonicSourceOption extends DataClass
           other.useTokenAuth == this.useTokenAuth);
 }
 
-class SubsonicSourceOptionsCompanion
-    extends UpdateCompanion<SubsonicSourceOption> {
+class SubsonicSettingsCompanion extends UpdateCompanion<SubsonicSetting> {
   final Value<int> sourceId;
   final Value<Uri> address;
   final Value<String> username;
   final Value<String> password;
   final Value<bool> useTokenAuth;
-  const SubsonicSourceOptionsCompanion({
+  const SubsonicSettingsCompanion({
     this.sourceId = const Value.absent(),
     this.address = const Value.absent(),
     this.username = const Value.absent(),
     this.password = const Value.absent(),
     this.useTokenAuth = const Value.absent(),
   });
-  SubsonicSourceOptionsCompanion.insert({
+  SubsonicSettingsCompanion.insert({
     this.sourceId = const Value.absent(),
     required Uri address,
     required String username,
@@ -597,7 +595,7 @@ class SubsonicSourceOptionsCompanion
   }) : address = Value(address),
        username = Value(username),
        password = Value(password);
-  static Insertable<SubsonicSourceOption> custom({
+  static Insertable<SubsonicSetting> custom({
     Expression<int>? sourceId,
     Expression<String>? address,
     Expression<String>? username,
@@ -613,14 +611,14 @@ class SubsonicSourceOptionsCompanion
     });
   }
 
-  SubsonicSourceOptionsCompanion copyWith({
+  SubsonicSettingsCompanion copyWith({
     Value<int>? sourceId,
     Value<Uri>? address,
     Value<String>? username,
     Value<String>? password,
     Value<bool>? useTokenAuth,
   }) {
-    return SubsonicSourceOptionsCompanion(
+    return SubsonicSettingsCompanion(
       sourceId: sourceId ?? this.sourceId,
       address: address ?? this.address,
       username: username ?? this.username,
@@ -637,7 +635,7 @@ class SubsonicSourceOptionsCompanion
     }
     if (address.present) {
       map['address'] = Variable<String>(
-        SubsonicSourceOptions.$converteraddress.toSql(address.value),
+        SubsonicSettings.$converteraddress.toSql(address.value),
       );
     }
     if (username.present) {
@@ -654,7 +652,7 @@ class SubsonicSourceOptionsCompanion
 
   @override
   String toString() {
-    return (StringBuffer('SubsonicSourceOptionsCompanion(')
+    return (StringBuffer('SubsonicSettingsCompanion(')
           ..write('sourceId: $sourceId, ')
           ..write('address: $address, ')
           ..write('username: $username, ')
@@ -2386,8 +2384,7 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
   _$SubtracksDatabase(QueryExecutor e) : super(e);
   $SubtracksDatabaseManager get managers => $SubtracksDatabaseManager(this);
   late final Sources sources = Sources(this);
-  late final SubsonicSourceOptions subsonicSourceOptions =
-      SubsonicSourceOptions(this);
+  late final SubsonicSettings subsonicSettings = SubsonicSettings(this);
   late final Artists artists = Artists(this);
   late final Index artistsSourceId = Index(
     'artists_source_id',
@@ -2431,7 +2428,7 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     sources,
-    subsonicSourceOptions,
+    subsonicSettings,
     artists,
     artistsSourceId,
     albums,
@@ -2453,7 +2450,7 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
         'sources',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('subsonic_source_options', kind: UpdateKind.delete)],
+      result: [TableUpdate('subsonic_settings', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -2660,16 +2657,16 @@ typedef $SourcesProcessedTableManager =
       Source,
       PrefetchHooks Function()
     >;
-typedef $SubsonicSourceOptionsCreateCompanionBuilder =
-    SubsonicSourceOptionsCompanion Function({
+typedef $SubsonicSettingsCreateCompanionBuilder =
+    SubsonicSettingsCompanion Function({
       Value<int> sourceId,
       required Uri address,
       required String username,
       required String password,
       Value<bool> useTokenAuth,
     });
-typedef $SubsonicSourceOptionsUpdateCompanionBuilder =
-    SubsonicSourceOptionsCompanion Function({
+typedef $SubsonicSettingsUpdateCompanionBuilder =
+    SubsonicSettingsCompanion Function({
       Value<int> sourceId,
       Value<Uri> address,
       Value<String> username,
@@ -2677,9 +2674,9 @@ typedef $SubsonicSourceOptionsUpdateCompanionBuilder =
       Value<bool> useTokenAuth,
     });
 
-class $SubsonicSourceOptionsFilterComposer
-    extends Composer<_$SubtracksDatabase, SubsonicSourceOptions> {
-  $SubsonicSourceOptionsFilterComposer({
+class $SubsonicSettingsFilterComposer
+    extends Composer<_$SubtracksDatabase, SubsonicSettings> {
+  $SubsonicSettingsFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2713,9 +2710,9 @@ class $SubsonicSourceOptionsFilterComposer
   );
 }
 
-class $SubsonicSourceOptionsOrderingComposer
-    extends Composer<_$SubtracksDatabase, SubsonicSourceOptions> {
-  $SubsonicSourceOptionsOrderingComposer({
+class $SubsonicSettingsOrderingComposer
+    extends Composer<_$SubtracksDatabase, SubsonicSettings> {
+  $SubsonicSettingsOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2748,9 +2745,9 @@ class $SubsonicSourceOptionsOrderingComposer
   );
 }
 
-class $SubsonicSourceOptionsAnnotationComposer
-    extends Composer<_$SubtracksDatabase, SubsonicSourceOptions> {
-  $SubsonicSourceOptionsAnnotationComposer({
+class $SubsonicSettingsAnnotationComposer
+    extends Composer<_$SubtracksDatabase, SubsonicSettings> {
+  $SubsonicSettingsAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2775,41 +2772,39 @@ class $SubsonicSourceOptionsAnnotationComposer
   );
 }
 
-class $SubsonicSourceOptionsTableManager
+class $SubsonicSettingsTableManager
     extends
         RootTableManager<
           _$SubtracksDatabase,
-          SubsonicSourceOptions,
-          SubsonicSourceOption,
-          $SubsonicSourceOptionsFilterComposer,
-          $SubsonicSourceOptionsOrderingComposer,
-          $SubsonicSourceOptionsAnnotationComposer,
-          $SubsonicSourceOptionsCreateCompanionBuilder,
-          $SubsonicSourceOptionsUpdateCompanionBuilder,
+          SubsonicSettings,
+          SubsonicSetting,
+          $SubsonicSettingsFilterComposer,
+          $SubsonicSettingsOrderingComposer,
+          $SubsonicSettingsAnnotationComposer,
+          $SubsonicSettingsCreateCompanionBuilder,
+          $SubsonicSettingsUpdateCompanionBuilder,
           (
-            SubsonicSourceOption,
+            SubsonicSetting,
             BaseReferences<
               _$SubtracksDatabase,
-              SubsonicSourceOptions,
-              SubsonicSourceOption
+              SubsonicSettings,
+              SubsonicSetting
             >,
           ),
-          SubsonicSourceOption,
+          SubsonicSetting,
           PrefetchHooks Function()
         > {
-  $SubsonicSourceOptionsTableManager(
-    _$SubtracksDatabase db,
-    SubsonicSourceOptions table,
-  ) : super(
+  $SubsonicSettingsTableManager(_$SubtracksDatabase db, SubsonicSettings table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $SubsonicSourceOptionsFilterComposer($db: db, $table: table),
+              $SubsonicSettingsFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $SubsonicSourceOptionsOrderingComposer($db: db, $table: table),
+              $SubsonicSettingsOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $SubsonicSourceOptionsAnnotationComposer($db: db, $table: table),
+              $SubsonicSettingsAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> sourceId = const Value.absent(),
@@ -2817,7 +2812,7 @@ class $SubsonicSourceOptionsTableManager
                 Value<String> username = const Value.absent(),
                 Value<String> password = const Value.absent(),
                 Value<bool> useTokenAuth = const Value.absent(),
-              }) => SubsonicSourceOptionsCompanion(
+              }) => SubsonicSettingsCompanion(
                 sourceId: sourceId,
                 address: address,
                 username: username,
@@ -2831,7 +2826,7 @@ class $SubsonicSourceOptionsTableManager
                 required String username,
                 required String password,
                 Value<bool> useTokenAuth = const Value.absent(),
-              }) => SubsonicSourceOptionsCompanion.insert(
+              }) => SubsonicSettingsCompanion.insert(
                 sourceId: sourceId,
                 address: address,
                 username: username,
@@ -2846,25 +2841,21 @@ class $SubsonicSourceOptionsTableManager
       );
 }
 
-typedef $SubsonicSourceOptionsProcessedTableManager =
+typedef $SubsonicSettingsProcessedTableManager =
     ProcessedTableManager<
       _$SubtracksDatabase,
-      SubsonicSourceOptions,
-      SubsonicSourceOption,
-      $SubsonicSourceOptionsFilterComposer,
-      $SubsonicSourceOptionsOrderingComposer,
-      $SubsonicSourceOptionsAnnotationComposer,
-      $SubsonicSourceOptionsCreateCompanionBuilder,
-      $SubsonicSourceOptionsUpdateCompanionBuilder,
+      SubsonicSettings,
+      SubsonicSetting,
+      $SubsonicSettingsFilterComposer,
+      $SubsonicSettingsOrderingComposer,
+      $SubsonicSettingsAnnotationComposer,
+      $SubsonicSettingsCreateCompanionBuilder,
+      $SubsonicSettingsUpdateCompanionBuilder,
       (
-        SubsonicSourceOption,
-        BaseReferences<
-          _$SubtracksDatabase,
-          SubsonicSourceOptions,
-          SubsonicSourceOption
-        >,
+        SubsonicSetting,
+        BaseReferences<_$SubtracksDatabase, SubsonicSettings, SubsonicSetting>,
       ),
-      SubsonicSourceOption,
+      SubsonicSetting,
       PrefetchHooks Function()
     >;
 typedef $ArtistsCreateCompanionBuilder =
@@ -4137,8 +4128,8 @@ class $SubtracksDatabaseManager {
   final _$SubtracksDatabase _db;
   $SubtracksDatabaseManager(this._db);
   $SourcesTableManager get sources => $SourcesTableManager(_db, _db.sources);
-  $SubsonicSourceOptionsTableManager get subsonicSourceOptions =>
-      $SubsonicSourceOptionsTableManager(_db, _db.subsonicSourceOptions);
+  $SubsonicSettingsTableManager get subsonicSettings =>
+      $SubsonicSettingsTableManager(_db, _db.subsonicSettings);
   $ArtistsTableManager get artists => $ArtistsTableManager(_db, _db.artists);
   $AlbumsTableManager get albums => $AlbumsTableManager(_db, _db.albums);
   $PlaylistsTableManager get playlists =>
