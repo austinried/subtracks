@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../lists/albums_grid.dart';
+import '../lists/artists_list.dart';
 import '../state/services.dart';
 import '../util/custom_scroll_fix.dart';
 
@@ -210,7 +210,7 @@ class _NewWidgetState extends State<NewWidget>
         ),
         SliverPadding(
           padding: const EdgeInsets.all(8.0),
-          sliver: AlbumsGrid(),
+          sliver: ArtistsList(),
         ),
       ],
     );

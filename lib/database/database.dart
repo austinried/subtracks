@@ -437,6 +437,9 @@ extension ArtistToDb on models.Artist {
     id: id,
     name: name,
     starred: Value(starred),
+    coverArt: Value(coverArt),
+    smallImage: Value(smallImage),
+    largeImage: Value(largeImage),
   );
 }
 

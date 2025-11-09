@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Artist {
 
- String get id; String get name; DateTime? get starred; Uri? get smallImage; Uri? get largeImage;
+ String get id; String get name; DateTime? get starred; String? get coverArt; Uri? get smallImage; Uri? get largeImage;
 /// Create a copy of Artist
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ArtistCopyWith<Artist> get copyWith => _$ArtistCopyWithImpl<Artist>(this as Art
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Artist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Artist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.coverArt, coverArt) || other.coverArt == coverArt)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,starred,smallImage,largeImage);
+int get hashCode => Object.hash(runtimeType,id,name,starred,coverArt,smallImage,largeImage);
 
 @override
 String toString() {
-  return 'Artist(id: $id, name: $name, starred: $starred, smallImage: $smallImage, largeImage: $largeImage)';
+  return 'Artist(id: $id, name: $name, starred: $starred, coverArt: $coverArt, smallImage: $smallImage, largeImage: $largeImage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ArtistCopyWith<$Res>  {
   factory $ArtistCopyWith(Artist value, $Res Function(Artist) _then) = _$ArtistCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, DateTime? starred, Uri? smallImage, Uri? largeImage
+ String id, String name, DateTime? starred, String? coverArt, Uri? smallImage, Uri? largeImage
 });
 
 
@@ -62,12 +62,13 @@ class _$ArtistCopyWithImpl<$Res>
 
 /// Create a copy of Artist
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? starred = freezed,Object? smallImage = freezed,Object? largeImage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? starred = freezed,Object? coverArt = freezed,Object? smallImage = freezed,Object? largeImage = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,starred: freezed == starred ? _self.starred : starred // ignore: cast_nullable_to_non_nullable
-as DateTime?,smallImage: freezed == smallImage ? _self.smallImage : smallImage // ignore: cast_nullable_to_non_nullable
+as DateTime?,coverArt: freezed == coverArt ? _self.coverArt : coverArt // ignore: cast_nullable_to_non_nullable
+as String?,smallImage: freezed == smallImage ? _self.smallImage : smallImage // ignore: cast_nullable_to_non_nullable
 as Uri?,largeImage: freezed == largeImage ? _self.largeImage : largeImage // ignore: cast_nullable_to_non_nullable
 as Uri?,
   ));
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  DateTime? starred,  String? coverArt,  Uri? smallImage,  Uri? largeImage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Artist() when $default != null:
-return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case _:
+return $default(_that.id,_that.name,_that.starred,_that.coverArt,_that.smallImage,_that.largeImage);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeIm
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  DateTime? starred,  String? coverArt,  Uri? smallImage,  Uri? largeImage)  $default,) {final _that = this;
 switch (_that) {
 case _Artist():
-return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case _:
+return $default(_that.id,_that.name,_that.starred,_that.coverArt,_that.smallImage,_that.largeImage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeIm
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  DateTime? starred,  Uri? smallImage,  Uri? largeImage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  DateTime? starred,  String? coverArt,  Uri? smallImage,  Uri? largeImage)?  $default,) {final _that = this;
 switch (_that) {
 case _Artist() when $default != null:
-return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeImage);case _:
+return $default(_that.id,_that.name,_that.starred,_that.coverArt,_that.smallImage,_that.largeImage);case _:
   return null;
 
 }
@@ -210,12 +211,13 @@ return $default(_that.id,_that.name,_that.starred,_that.smallImage,_that.largeIm
 
 
 class _Artist implements Artist {
-  const _Artist({required this.id, required this.name, this.starred, this.smallImage, this.largeImage});
+  const _Artist({required this.id, required this.name, this.starred, this.coverArt, this.smallImage, this.largeImage});
   
 
 @override final  String id;
 @override final  String name;
 @override final  DateTime? starred;
+@override final  String? coverArt;
 @override final  Uri? smallImage;
 @override final  Uri? largeImage;
 
@@ -229,16 +231,16 @@ _$ArtistCopyWith<_Artist> get copyWith => __$ArtistCopyWithImpl<_Artist>(this, _
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Artist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Artist&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.starred, starred) || other.starred == starred)&&(identical(other.coverArt, coverArt) || other.coverArt == coverArt)&&(identical(other.smallImage, smallImage) || other.smallImage == smallImage)&&(identical(other.largeImage, largeImage) || other.largeImage == largeImage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,starred,smallImage,largeImage);
+int get hashCode => Object.hash(runtimeType,id,name,starred,coverArt,smallImage,largeImage);
 
 @override
 String toString() {
-  return 'Artist(id: $id, name: $name, starred: $starred, smallImage: $smallImage, largeImage: $largeImage)';
+  return 'Artist(id: $id, name: $name, starred: $starred, coverArt: $coverArt, smallImage: $smallImage, largeImage: $largeImage)';
 }
 
 
@@ -249,7 +251,7 @@ abstract mixin class _$ArtistCopyWith<$Res> implements $ArtistCopyWith<$Res> {
   factory _$ArtistCopyWith(_Artist value, $Res Function(_Artist) _then) = __$ArtistCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, DateTime? starred, Uri? smallImage, Uri? largeImage
+ String id, String name, DateTime? starred, String? coverArt, Uri? smallImage, Uri? largeImage
 });
 
 
@@ -266,12 +268,13 @@ class __$ArtistCopyWithImpl<$Res>
 
 /// Create a copy of Artist
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? starred = freezed,Object? smallImage = freezed,Object? largeImage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? starred = freezed,Object? coverArt = freezed,Object? smallImage = freezed,Object? largeImage = freezed,}) {
   return _then(_Artist(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,starred: freezed == starred ? _self.starred : starred // ignore: cast_nullable_to_non_nullable
-as DateTime?,smallImage: freezed == smallImage ? _self.smallImage : smallImage // ignore: cast_nullable_to_non_nullable
+as DateTime?,coverArt: freezed == coverArt ? _self.coverArt : coverArt // ignore: cast_nullable_to_non_nullable
+as String?,smallImage: freezed == smallImage ? _self.smallImage : smallImage // ignore: cast_nullable_to_non_nullable
 as Uri?,largeImage: freezed == largeImage ? _self.largeImage : largeImage // ignore: cast_nullable_to_non_nullable
 as Uri?,
   ));

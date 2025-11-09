@@ -22,9 +22,12 @@ void main() async {
       .insertOnConflictUpdate(
         SubsonicSettingsCompanion.insert(
           sourceId: Value(1),
-          address: Uri.parse('http://10.0.2.2:4533'),
-          username: 'admin',
-          password: 'password',
+          address: Uri.parse('http://demo.subsonic.org'),
+          username: 'guest1',
+          password: 'guest',
+          // address: Uri.parse('http://10.0.2.2:4533'),
+          // username: 'admin',
+          // password: 'password',
           useTokenAuth: Value(true),
         ),
       );

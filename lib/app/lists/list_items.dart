@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -33,19 +32,28 @@ class AlbumGridTile extends HookConsumerWidget {
 }
 
 class ArtistListTile extends StatelessWidget {
-  const ArtistListTile({super.key});
+  const ArtistListTile({
+    super.key,
+    required this.artist,
+    this.albumCount,
+    this.onTap,
+  });
+
+  final Artist artist;
+  final int? albumCount;
+  final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleClip(
-        child: CachedNetworkImage(
-          imageUrl: 'https://placehold.net/400x400.png',
-          placeholder: (context, url) => CircularProgressIndicator(),
-          errorWidget: (context, url, error) => Icon(Icons.error),
-        ),
+        child: artist.coverArt != null
+            ? CoverArtImage(coverArt: artist.coverArt)
+            : CachedImage(artist.smallImage),
       ),
-      title: Text('Some Artist'),
+      title: Text(artist.name),
+      subtitle: albumCount != null ? Text('$albumCount albums') : null,
+      onTap: onTap,
     );
   }
 }

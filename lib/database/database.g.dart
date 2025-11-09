@@ -708,8 +708,45 @@ class Artists extends Table with TableInfo<Artists, models.Artist> {
     requiredDuringInsert: false,
     $customConstraints: '',
   );
+  static const VerificationMeta _coverArtMeta = const VerificationMeta(
+    'coverArt',
+  );
+  late final GeneratedColumn<String> coverArt = GeneratedColumn<String>(
+    'cover_art',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  late final GeneratedColumnWithTypeConverter<Uri?, String> smallImage =
+      GeneratedColumn<String>(
+        'small_image',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: '',
+      ).withConverter<Uri?>(Artists.$convertersmallImagen);
+  late final GeneratedColumnWithTypeConverter<Uri?, String> largeImage =
+      GeneratedColumn<String>(
+        'large_image',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: '',
+      ).withConverter<Uri?>(Artists.$converterlargeImagen);
   @override
-  List<GeneratedColumn> get $columns => [sourceId, id, name, starred];
+  List<GeneratedColumn> get $columns => [
+    sourceId,
+    id,
+    name,
+    starred,
+    coverArt,
+    smallImage,
+    largeImage,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -749,6 +786,12 @@ class Artists extends Table with TableInfo<Artists, models.Artist> {
         starred.isAcceptableOrUnknown(data['starred']!, _starredMeta),
       );
     }
+    if (data.containsKey('cover_art')) {
+      context.handle(
+        _coverArtMeta,
+        coverArt.isAcceptableOrUnknown(data['cover_art']!, _coverArtMeta),
+      );
+    }
     return context;
   }
 
@@ -770,6 +813,22 @@ class Artists extends Table with TableInfo<Artists, models.Artist> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}starred'],
       ),
+      coverArt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_art'],
+      ),
+      smallImage: Artists.$convertersmallImagen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}small_image'],
+        ),
+      ),
+      largeImage: Artists.$converterlargeImagen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}large_image'],
+        ),
+      ),
     );
   }
 
@@ -778,6 +837,12 @@ class Artists extends Table with TableInfo<Artists, models.Artist> {
     return Artists(attachedDatabase, alias);
   }
 
+  static TypeConverter<Uri, String> $convertersmallImage = const UriConverter();
+  static TypeConverter<Uri?, String?> $convertersmallImagen =
+      NullAwareTypeConverter.wrap($convertersmallImage);
+  static TypeConverter<Uri, String> $converterlargeImage = const UriConverter();
+  static TypeConverter<Uri?, String?> $converterlargeImagen =
+      NullAwareTypeConverter.wrap($converterlargeImage);
   @override
   List<String> get customConstraints => const [
     'PRIMARY KEY(source_id, id)',
@@ -792,12 +857,18 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
   final Value<String> id;
   final Value<String> name;
   final Value<DateTime?> starred;
+  final Value<String?> coverArt;
+  final Value<Uri?> smallImage;
+  final Value<Uri?> largeImage;
   final Value<int> rowid;
   const ArtistsCompanion({
     this.sourceId = const Value.absent(),
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.starred = const Value.absent(),
+    this.coverArt = const Value.absent(),
+    this.smallImage = const Value.absent(),
+    this.largeImage = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ArtistsCompanion.insert({
@@ -805,6 +876,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
     required String id,
     required String name,
     this.starred = const Value.absent(),
+    this.coverArt = const Value.absent(),
+    this.smallImage = const Value.absent(),
+    this.largeImage = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : sourceId = Value(sourceId),
        id = Value(id),
@@ -814,6 +888,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<DateTime>? starred,
+    Expression<String>? coverArt,
+    Expression<String>? smallImage,
+    Expression<String>? largeImage,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -821,6 +898,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (starred != null) 'starred': starred,
+      if (coverArt != null) 'cover_art': coverArt,
+      if (smallImage != null) 'small_image': smallImage,
+      if (largeImage != null) 'large_image': largeImage,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -830,6 +910,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
     Value<String>? id,
     Value<String>? name,
     Value<DateTime?>? starred,
+    Value<String?>? coverArt,
+    Value<Uri?>? smallImage,
+    Value<Uri?>? largeImage,
     Value<int>? rowid,
   }) {
     return ArtistsCompanion(
@@ -837,6 +920,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
       id: id ?? this.id,
       name: name ?? this.name,
       starred: starred ?? this.starred,
+      coverArt: coverArt ?? this.coverArt,
+      smallImage: smallImage ?? this.smallImage,
+      largeImage: largeImage ?? this.largeImage,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -856,6 +942,19 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
     if (starred.present) {
       map['starred'] = Variable<DateTime>(starred.value);
     }
+    if (coverArt.present) {
+      map['cover_art'] = Variable<String>(coverArt.value);
+    }
+    if (smallImage.present) {
+      map['small_image'] = Variable<String>(
+        Artists.$convertersmallImagen.toSql(smallImage.value),
+      );
+    }
+    if (largeImage.present) {
+      map['large_image'] = Variable<String>(
+        Artists.$converterlargeImagen.toSql(largeImage.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -869,6 +968,9 @@ class ArtistsCompanion extends UpdateCompanion<models.Artist> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('starred: $starred, ')
+          ..write('coverArt: $coverArt, ')
+          ..write('smallImage: $smallImage, ')
+          ..write('largeImage: $largeImage, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2864,6 +2966,9 @@ typedef $ArtistsCreateCompanionBuilder =
       required String id,
       required String name,
       Value<DateTime?> starred,
+      Value<String?> coverArt,
+      Value<Uri?> smallImage,
+      Value<Uri?> largeImage,
       Value<int> rowid,
     });
 typedef $ArtistsUpdateCompanionBuilder =
@@ -2872,6 +2977,9 @@ typedef $ArtistsUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<DateTime?> starred,
+      Value<String?> coverArt,
+      Value<Uri?> smallImage,
+      Value<Uri?> largeImage,
       Value<int> rowid,
     });
 
@@ -2902,6 +3010,23 @@ class $ArtistsFilterComposer extends Composer<_$SubtracksDatabase, Artists> {
     column: $table.starred,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get coverArt => $composableBuilder(
+    column: $table.coverArt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Uri?, Uri, String> get smallImage =>
+      $composableBuilder(
+        column: $table.smallImage,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Uri?, Uri, String> get largeImage =>
+      $composableBuilder(
+        column: $table.largeImage,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 }
 
 class $ArtistsOrderingComposer extends Composer<_$SubtracksDatabase, Artists> {
@@ -2931,6 +3056,21 @@ class $ArtistsOrderingComposer extends Composer<_$SubtracksDatabase, Artists> {
     column: $table.starred,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get coverArt => $composableBuilder(
+    column: $table.coverArt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get smallImage => $composableBuilder(
+    column: $table.smallImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get largeImage => $composableBuilder(
+    column: $table.largeImage,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $ArtistsAnnotationComposer
@@ -2953,6 +3093,21 @@ class $ArtistsAnnotationComposer
 
   GeneratedColumn<DateTime> get starred =>
       $composableBuilder(column: $table.starred, builder: (column) => column);
+
+  GeneratedColumn<String> get coverArt =>
+      $composableBuilder(column: $table.coverArt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Uri?, String> get smallImage =>
+      $composableBuilder(
+        column: $table.smallImage,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Uri?, String> get largeImage =>
+      $composableBuilder(
+        column: $table.largeImage,
+        builder: (column) => column,
+      );
 }
 
 class $ArtistsTableManager
@@ -2990,12 +3145,18 @@ class $ArtistsTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<DateTime?> starred = const Value.absent(),
+                Value<String?> coverArt = const Value.absent(),
+                Value<Uri?> smallImage = const Value.absent(),
+                Value<Uri?> largeImage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtistsCompanion(
                 sourceId: sourceId,
                 id: id,
                 name: name,
                 starred: starred,
+                coverArt: coverArt,
+                smallImage: smallImage,
+                largeImage: largeImage,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3004,12 +3165,18 @@ class $ArtistsTableManager
                 required String id,
                 required String name,
                 Value<DateTime?> starred = const Value.absent(),
+                Value<String?> coverArt = const Value.absent(),
+                Value<Uri?> smallImage = const Value.absent(),
+                Value<Uri?> largeImage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ArtistsCompanion.insert(
                 sourceId: sourceId,
                 id: id,
                 name: name,
                 starred: starred,
+                coverArt: coverArt,
+                smallImage: smallImage,
+                largeImage: largeImage,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

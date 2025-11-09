@@ -8,6 +8,7 @@ abstract class Artist with _$Artist {
     required String id,
     required String name,
     DateTime? starred,
+    String? coverArt,
     Uri? smallImage,
     Uri? largeImage,
   }) = _Artist;

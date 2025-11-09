@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:octo_image/octo_image.dart';
 
+import '../app/state/settings.dart';
 import '../app/state/source.dart';
 
 class CoverArtImage extends HookConsumerWidget {
@@ -20,13 +21,15 @@ class CoverArtImage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final source = ref.watch(sourceProvider);
+    final sourceId = ref.watch(sourceIdProvider);
 
-    final imageProviderKeys = [source, coverArt, thumbnail];
+    final imageProviderKeys = [source, sourceId, coverArt, thumbnail];
     final buildImageProvider = useCallback(
       () => CachedNetworkImageProvider(
         coverArt != null
             ? source.coverArtUri(coverArt!, thumbnail: thumbnail).toString()
             : 'https://placehold.net/400x400.png',
+        cacheKey: '$sourceId$coverArt$thumbnail',
       ),
       imageProviderKeys,
     );
@@ -40,11 +43,63 @@ class CoverArtImage extends HookConsumerWidget {
       imageProviderKeys,
     );
 
-    return OctoImage(
+    return BaseImage(
       image: imageProvider.value,
-      placeholderBuilder: (context) => Icon(Symbols.album_rounded),
+    );
+  }
+}
+
+class CachedImage extends HookConsumerWidget {
+  const CachedImage(
+    this.uri, {
+    super.key,
+  });
+
+  final Uri? uri;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imageProviderKeys = [uri];
+    final buildImageProvider = useCallback(
+      () {
+        final imageUrl = uri?.toString() ?? 'https://placehold.net/400x400.png';
+        return CachedNetworkImageProvider(imageUrl, cacheKey: imageUrl);
+      },
+      imageProviderKeys,
+    );
+
+    final imageProvider = useState(buildImageProvider());
+    useEffect(
+      () {
+        imageProvider.value = buildImageProvider();
+        return;
+      },
+      imageProviderKeys,
+    );
+
+    return BaseImage(
+      image: imageProvider.value,
+    );
+  }
+}
+
+class BaseImage extends HookConsumerWidget {
+  const BaseImage({
+    super.key,
+    required this.image,
+    this.fit = BoxFit.cover,
+  });
+
+  final ImageProvider image;
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return OctoImage(
+      image: image,
+      placeholderBuilder: (context) => Icon(Symbols.cached_rounded),
       errorBuilder: (context, error, trace) => Icon(Icons.error),
-      fit: BoxFit.cover,
+      fit: fit,
       fadeOutDuration: Duration(milliseconds: 100),
       fadeInDuration: Duration(milliseconds: 200),
     );

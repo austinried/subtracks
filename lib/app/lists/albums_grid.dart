@@ -10,7 +10,7 @@ import '../state/database.dart';
 import '../state/settings.dart';
 import 'list_items.dart';
 
-const kPageSize = 30;
+const kPageSize = 60;
 
 class AlbumsGrid extends HookConsumerWidget {
   const AlbumsGrid({super.key});
