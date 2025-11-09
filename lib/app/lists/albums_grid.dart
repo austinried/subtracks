@@ -35,18 +35,21 @@ class AlbumsGrid extends HookConsumerWidget {
     return PagingListener(
       controller: controller,
       builder: (context, state, fetchNextPage) {
-        return PagedSliverGrid(
-          state: state,
-          fetchNextPage: fetchNextPage,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-          ),
-          builderDelegate: PagedChildBuilderDelegate<Album>(
-            itemBuilder: (context, item, index) => AlbumGridTile(
-              album: item,
-              onTap: () async {
-                context.push('/album/${item.id}');
-              },
+        return SliverPadding(
+          padding: const EdgeInsets.all(8.0),
+          sliver: PagedSliverGrid(
+            state: state,
+            fetchNextPage: fetchNextPage,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+            ),
+            builderDelegate: PagedChildBuilderDelegate<Album>(
+              itemBuilder: (context, item, index) => AlbumGridTile(
+                album: item,
+                onTap: () async {
+                  context.push('/album/${item.id}');
+                },
+              ),
             ),
           ),
         );

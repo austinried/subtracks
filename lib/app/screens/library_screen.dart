@@ -1,173 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../lists/albums_grid.dart';
 import '../lists/artists_list.dart';
 import '../state/services.dart';
 import '../util/custom_scroll_fix.dart';
 
-class LibraryScreen extends StatefulWidget {
+const kIconSize = 26.0;
+const kTabHeight = 36.0;
+
+enum LibraryTab {
+  home(Icon(Symbols.home_rounded)),
+  albums(Icon(Symbols.album_rounded)),
+  artists(Icon(Symbols.person_rounded)),
+  songs(Icon(Symbols.music_note_rounded)),
+  playlists(Icon(Symbols.playlist_play_rounded));
+
+  const LibraryTab(this.icon);
+
+  final Widget icon;
+
+  @override
+  toString() => name;
+}
+
+class LibraryScreen extends HookConsumerWidget {
   const LibraryScreen({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
-}
-
-class _LibraryScreenState extends State<LibraryScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController tabController;
-
-  final iconSize = 26.0;
-  final tabHeight = 36.0;
-
-  late final List<(String, Widget)> tabs = [
-    ('Home', Icon(Symbols.home_rounded, size: iconSize)),
-    ('Albums', Icon(Symbols.album_rounded, size: iconSize)),
-    ('Artists', Icon(Symbols.person_rounded, size: iconSize)),
-    ('Songs', Icon(Symbols.music_note_rounded, size: iconSize)),
-    ('Playlists', Icon(Symbols.playlist_play_rounded, size: iconSize)),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(
-      length: tabs.length,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tabController = useTabController(
+      initialLength: LibraryTab.values.length,
       initialIndex: 1,
-      vsync: this,
     );
-  }
 
-  @override
-  void dispose() {
-    tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IconTheme(
-      data: IconThemeData(
-        fill: 1,
-        color: TextTheme.of(context).headlineLarge?.color,
-        weight: 600,
-        opticalSize: iconSize,
-      ),
-      child: Scaffold(
-        body: NestedScrollView(
-          floatHeaderSlivers: true,
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return <Widget>[
-              SliverOverlapAbsorber(
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                  context,
-                ),
-                sliver: SliverAppBar(
-                  flexibleSpace: FlexibleSpaceBar(
-                    collapseMode: CollapseMode.pin,
-                    background: SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        child: Text(
-                          'Albums',
-                          style: TextTheme.of(context).headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
+    return Scaffold(
+      body: NestedScrollView(
+        floatHeaderSlivers: true,
+        headerSliverBuilder: (context, innerBoxIsScrolled) => <Widget>[
+          SliverOverlapAbsorber(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            sliver: LibraryTabsHeader(tabController: tabController),
+          ),
+        ],
+        body: Builder(
+          builder: (context) => CustomScrollProvider(
+            tabController: tabController,
+            parent: PrimaryScrollController.of(context),
+            child: TabBarView(
+              controller: tabController,
+              children: LibraryTab.values
+                  .map(
+                    (tab) => TabScrollView(
+                      index: LibraryTab.values.indexOf(tab),
+                      sliver: switch (tab) {
+                        LibraryTab.albums => AlbumsGrid(),
+                        _ => ArtistsList(),
+                      },
                     ),
-                  ),
-                  pinned: true,
-                  floating: true,
-                  bottom: PreferredSize(
-                    preferredSize: Size.fromHeight(tabHeight + 18),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TabBar(
-                            controller: tabController,
-                            dividerColor: Colors.transparent,
-                            isScrollable: true,
-                            tabAlignment: TabAlignment.start,
-                            indicatorSize: TabBarIndicatorSize.label,
-                            labelPadding: EdgeInsets.symmetric(
-                              horizontal: 2,
-                            ),
-                            labelColor: Theme.of(context).primaryColorDark,
-                            unselectedLabelColor: Theme.of(
-                              context,
-                            ).textTheme.headlineLarge?.color,
-                            padding: EdgeInsets.symmetric(
-                              // horizontal: 12,
-                              vertical: 8,
-                            ),
-                            splashBorderRadius: BorderRadius.circular(8),
-                            indicator: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).primaryTextTheme.headlineLarge?.color,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            tabs: tabs
-                                .map(
-                                  (tab) => Tab(
-                                    height: tabHeight,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                      ),
-                                      child: tab.$2,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          Row(
-                            children: [
-                              SyncButton(),
-                              IconButton(
-                                onPressed: () {
-                                  context.push('/settings');
-                                },
-                                icon: Icon(
-                                  Symbols.settings_rounded,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ];
-          },
-          body: Builder(
-            builder: (context) {
-              return CustomScrollProvider(
-                tabController: tabController,
-                parent: PrimaryScrollController.of(context),
-                child: TabBarView(
-                  // These are the contents of the tab views, below the tabs.
-                  controller: tabController,
-                  children: tabs.map((tab) {
-                    final index = tabs.indexOf(tab);
-                    return SafeArea(
-                      top: false,
-                      bottom: false,
-                      child: NewWidget(index: index, tab: tab),
-                    );
-                  }).toList(),
-                ),
-              );
-            },
+                  )
+                  .toList(),
+            ),
           ),
         ),
       ),
@@ -175,43 +71,135 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
-class NewWidget extends StatefulWidget {
-  const NewWidget({
+class LibraryTabsHeader extends HookConsumerWidget {
+  const LibraryTabsHeader({
+    super.key,
+    required this.tabController,
+  });
+
+  final TabController tabController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    return SliverAppBar(
+      pinned: true,
+      floating: true,
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.pin,
+        background: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: TabTitleText(tabController: tabController),
+          ),
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(kTabHeight + 18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: IconTheme(
+            data: IconThemeData(
+              fill: 1,
+              color: theme.textTheme.headlineLarge?.color,
+              weight: 600,
+              opticalSize: kIconSize,
+              size: kIconSize,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TabBar(
+                  controller: tabController,
+                  dividerColor: Colors.transparent,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  labelPadding: EdgeInsets.symmetric(horizontal: 2),
+                  labelColor: theme.primaryColorDark,
+                  unselectedLabelColor: theme.textTheme.headlineLarge?.color,
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  splashBorderRadius: BorderRadius.circular(8),
+                  indicator: BoxDecoration(
+                    color: theme.primaryTextTheme.headlineLarge?.color,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  tabs: LibraryTab.values
+                      .map(
+                        (tab) => Tab(
+                          height: kTabHeight,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: tab.icon,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+                Spacer(),
+                SyncButton(),
+                SettingsButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TabTitleText extends HookConsumerWidget {
+  const TabTitleText({
+    super.key,
+    required this.tabController,
+  });
+
+  final TabController tabController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final tabText = useState(LibraryTab.home.toString());
+
+    useListenable(tabController);
+    useEffect(() {
+      tabText.value = LibraryTab.values[tabController.index].toString();
+      return;
+    }, [tabController.index]);
+
+    return Text(
+      tabText.value,
+      style: theme.textTheme.headlineLarge?.copyWith(
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class TabScrollView extends HookConsumerWidget {
+  const TabScrollView({
     super.key,
     required this.index,
-    required this.tab,
+    required this.sliver,
   });
 
   final int index;
-  final (String, Widget) tab;
+  final Widget sliver;
 
   @override
-  State<NewWidget> createState() => _NewWidgetState();
-}
-
-class _NewWidgetState extends State<NewWidget>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    useAutomaticKeepAlive();
 
     final scrollProvider = CustomScrollProviderData.of(context);
 
     return CustomScrollView(
-      controller: scrollProvider.scrollControllers[widget.index],
+      controller: scrollProvider.scrollControllers[index],
       slivers: <Widget>[
         SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-            context,
-          ),
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.all(8.0),
-          sliver: ArtistsList(),
-        ),
+        sliver,
       ],
     );
   }
@@ -228,6 +216,20 @@ class SyncButton extends HookConsumerWidget {
       icon: Icon(Symbols.sync_rounded),
       onPressed: () {
         syncService.sync();
+      },
+    );
+  }
+}
+
+class SettingsButton extends HookConsumerWidget {
+  const SettingsButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      icon: Icon(Symbols.settings_rounded),
+      onPressed: () {
+        context.push('/settings');
       },
     );
   }
