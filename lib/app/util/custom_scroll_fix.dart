@@ -119,14 +119,14 @@ class CustomScrollController extends ScrollController {
     ScrollContext context,
     ScrollPosition? oldPosition,
   ) {
-    debugPrint('$debugLabel-createScrollPosition: $isActive');
+    // debugPrint('$debugLabel-createScrollPosition: $isActive');
 
     return parent.createScrollPosition(physics, context, oldPosition);
   }
 
   @override
   void attach(ScrollPosition position) {
-    debugPrint('$debugLabel-attach: $isActive');
+    // debugPrint('$debugLabel-attach: $isActive');
 
     super.attach(position);
     if (isActive && !parent.positions.contains(position)) {
@@ -136,7 +136,7 @@ class CustomScrollController extends ScrollController {
 
   @override
   void detach(ScrollPosition position) {
-    debugPrint('$debugLabel-detach: $isActive');
+    // debugPrint('$debugLabel-detach: $isActive');
 
     if (parent.positions.contains(position)) {
       parent.detach(position);
@@ -146,7 +146,7 @@ class CustomScrollController extends ScrollController {
   }
 
   void forceDetach() {
-    debugPrint('$debugLabel-forceDetach: $isActive');
+    // debugPrint('$debugLabel-forceDetach: $isActive');
 
     for (final position in positions) {
       if (parent.positions.contains(position)) {
@@ -156,7 +156,7 @@ class CustomScrollController extends ScrollController {
   }
 
   void forceAttach() {
-    debugPrint('$debugLabel-forceAttach: $isActive');
+    // debugPrint('$debugLabel-forceAttach: $isActive');
 
     for (final position in positions) {
       if (!parent.positions.contains(position)) {
@@ -167,7 +167,7 @@ class CustomScrollController extends ScrollController {
 
   @override
   void dispose() {
-    debugPrint('$debugLabel-dispose: $isActive');
+    // debugPrint('$debugLabel-dispose: $isActive');
 
     forceDetach();
     super.dispose();
