@@ -1,5 +1,5 @@
 import 'package:subtracks/database/database.dart';
-import 'package:subtracks/services/sync_services.dart';
+import 'package:subtracks/services/sync_service.dart';
 import 'package:subtracks/sources/subsonic/source.dart';
 import 'package:test/test.dart';
 

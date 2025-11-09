@@ -2,21 +2,11 @@ import 'package:xml/xml.dart';
 
 import '../models.dart';
 
-Uri? uriOrNullParse(String? value) {
-  if (value == null || value.trim().isEmpty) {
-    return null;
-  }
-
-  return Uri.tryParse(value);
-}
-
-Artist mapArtist(XmlElement e, XmlElement? info) => Artist(
+Artist mapArtist(XmlElement e) => Artist(
   id: e.getAttribute('id')!,
   name: e.getAttribute('name')!,
   starred: DateTime.tryParse(e.getAttribute('starred').toString()),
   coverArt: e.getAttribute('coverArt'),
-  smallImage: uriOrNullParse(info?.getElement('smallImageUrl')?.innerText),
-  largeImage: uriOrNullParse(info?.getElement('largeImageUrl')?.innerText),
 );
 
 Album mapAlbum(

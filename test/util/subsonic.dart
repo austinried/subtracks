@@ -23,12 +23,14 @@ Map<Servers, SubsonicClient> testServerClients() => {
   ),
 };
 
-void groupByTestServer(void Function(SubsonicClient client) callback) {
+void groupByTestServer(
+  void Function(Servers server, SubsonicClient client) callback,
+) {
   final clients = testServerClients();
 
   for (final MapEntry(key: server, value: client) in clients.entries) {
     group(server.name, () {
-      callback(client);
+      callback(server, client);
     });
   }
 }

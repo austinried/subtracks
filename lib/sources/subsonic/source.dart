@@ -42,19 +42,13 @@ class SubsonicSource implements MusicSource {
 
   @override
   Stream<Artist> allArtists() async* {
-    final getArtistsRes = await _pool.withResource(
+    final res = await _pool.withResource(
       () => client.get('getArtists'),
     );
 
-    yield* _pool.forEach(getArtistsRes.xml.findAllElements('artist'), (
-      artist,
-    ) async {
-      final res = await client.get('getArtistInfo2', {
-        'id': artist.getAttribute('id')!,
-      });
-
-      return mapArtist(artist, res.xml.getElement('artistInfo2'));
-    });
+    yield* Stream.fromIterable(
+      res.xml.findAllElements('artist').map(mapArtist),
+    );
   }
 
   @override

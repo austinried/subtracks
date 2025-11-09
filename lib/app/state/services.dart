@@ -1,6 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../services/sync_services.dart';
+import '../../services/sync_service.dart';
 import 'database.dart';
 import 'settings.dart';
 import 'source.dart';

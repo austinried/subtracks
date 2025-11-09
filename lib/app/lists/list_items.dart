@@ -47,9 +47,7 @@ class ArtistListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleClip(
-        child: artist.coverArt != null
-            ? CoverArtImage(coverArt: artist.coverArt)
-            : CachedImage(artist.smallImage),
+        child: CoverArtImage(coverArt: artist.coverArt),
       ),
       title: Text(artist.name),
       subtitle: albumCount != null ? Text('$albumCount albums') : null,

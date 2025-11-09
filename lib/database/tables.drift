@@ -66,8 +66,6 @@ CREATE TABLE artists(
   name TEXT NOT NULL COLLATE NOCASE,
   starred DATETIME,
   cover_art TEXT,
-  small_image TEXT MAPPED BY `const UriConverter()`,
-  large_image TEXT MAPPED BY `const UriConverter()`,
   PRIMARY KEY (source_id, id),
   FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
 ) WITH Artist;

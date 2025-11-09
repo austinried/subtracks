@@ -2,30 +2,64 @@
 import { SubsonicClient } from "./util/subsonic.ts";
 import { sleep } from "./util/util.ts";
 
+async function getArtistId(
+  client: SubsonicClient,
+  artist: string,
+): Promise<string> {
+  const { xml } = await client.get("getArtists");
+
+  return xml.querySelector(
+    `artist[name='${artist.replaceAll("'", "\\'")}']`,
+  )?.id!;
+}
+
+async function getAlbumId(
+  client: SubsonicClient,
+  album: string,
+): Promise<string> {
+  const { xml } = await client.get("getAlbumList2", [
+    ["type", "newest"],
+  ]);
+
+  return xml.querySelector(
+    `album[name='${album.replaceAll("'", "\\'")}']`,
+  )?.id!;
+}
+
 async function getSongId(
   client: SubsonicClient,
   album: string,
   track: number,
 ): Promise<string> {
-  const { xml: albumsXml } = await client.get("getAlbumList2", [
-    ["type", "newest"],
-  ]);
-  const albumId = albumsXml.querySelector(
-    `album[name='${album.replaceAll("'", "\\'")}']`,
-  )?.id;
+  const albumId = await getAlbumId(client, album);
 
-  const { xml: songsXml } = await client.get("getAlbum", [["id", albumId!]]);
-  return songsXml.querySelector(`song[track='${track}']`)?.id!;
+  const { xml } = await client.get("getAlbum", [["id", albumId!]]);
+  return xml.querySelector(`song[track='${track}']`)?.id!;
 }
 
 async function scrobbleTrack(
   client: SubsonicClient,
-  songId: string,
+  album: string,
+  track: number,
 ) {
+  const songId = await getSongId(client, album, track);
+
   await client.get("scrobble", [
     ["id", songId!],
     ["submission", "true"],
   ]);
+}
+
+async function starAlbum(client: SubsonicClient, album: string) {
+  const albumId = await getAlbumId(client, album);
+
+  await client.get("star", [["albumId", albumId]]);
+}
+
+async function starArtist(client: SubsonicClient, artist: string) {
+  const artistId = await getArtistId(client, artist);
+
+  await client.get("star", [["artistId", artistId]]);
 }
 
 async function createPlaylist(
@@ -44,17 +78,11 @@ async function createPlaylist(
 }
 
 async function setupTestData(client: SubsonicClient) {
-  await scrobbleTrack(
-    client,
-    await getSongId(client, "Retroconnaissance EP", 1),
-  );
+  await scrobbleTrack(client, "Retroconnaissance EP", 1);
   await sleep(1_000);
-  await scrobbleTrack(
-    client,
-    await getSongId(client, "Retroconnaissance EP", 2),
-  );
+  await scrobbleTrack(client, "Retroconnaissance EP", 2);
   await sleep(1_000);
-  await scrobbleTrack(client, await getSongId(client, "Kosmonaut", 1));
+  await scrobbleTrack(client, "Kosmonaut", 1);
 
   await createPlaylist(client, "Playlist 1", [
     { album: "Retroconnaissance EP", track: 2 },
@@ -65,6 +93,9 @@ async function setupTestData(client: SubsonicClient) {
     { album: "I Don't Know What I'm Doing", track: 10 },
     { album: "I Don't Know What I'm Doing", track: 11 },
   ]);
+
+  await starAlbum(client, "Kosmonaut");
+  await starArtist(client, "Ugress");
 }
 
 async function setupNavidrome() {
