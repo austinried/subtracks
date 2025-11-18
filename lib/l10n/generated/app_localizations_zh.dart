@@ -42,6 +42,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationTabsHome => '首页';
 
   @override
+  String get navigationTabsAlbums => 'Albums';
+
+  @override
+  String get navigationTabsArtists => 'Artists';
+
+  @override
+  String get navigationTabsPlaylists => 'Playlists';
+
+  @override
+  String get navigationTabsSongs => 'Songs';
+
+  @override
   String get navigationTabsLibrary => '所有';
 
   @override

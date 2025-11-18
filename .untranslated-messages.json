@@ -7,6 +7,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -40,6 +44,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -66,6 +74,10 @@
   ],
 
   "cs": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesPlaylistCount",
@@ -93,6 +105,10 @@
     "actionsStar",
     "actionsUnstar",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -127,11 +143,19 @@
   ],
 
   "de": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "settingsAboutShareLogs",
     "settingsAboutChooseLog"
   ],
 
   "es": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -165,6 +189,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -190,6 +218,13 @@
     "settingsServersFieldsName"
   ],
 
+  "gl": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs"
+  ],
+
   "it": [
     "actionsCancel",
     "actionsDelete",
@@ -198,6 +233,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -234,6 +273,10 @@
     "actionsUnstar",
     "controlsShuffle",
     "messagesNothingHere",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumActionsPlay",
     "resourcesAlbumActionsView",
     "resourcesAlbumCount",
@@ -309,6 +352,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -342,6 +389,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -375,6 +426,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -401,6 +456,10 @@
   ],
 
   "pt": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterOwner",
@@ -416,6 +475,13 @@
     "settingsServersFieldsName"
   ],
 
+  "ru": [
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs"
+  ],
+
   "tr": [
     "actionsCancel",
     "actionsDelete",
@@ -424,6 +490,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -457,6 +527,10 @@
     "actionsDownloadDelete",
     "actionsOk",
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesFilterAlbum",
@@ -484,6 +558,10 @@
 
   "zh": [
     "controlsShuffle",
+    "navigationTabsAlbums",
+    "navigationTabsArtists",
+    "navigationTabsPlaylists",
+    "navigationTabsSongs",
     "resourcesAlbumCount",
     "resourcesArtistCount",
     "resourcesPlaylistCount",

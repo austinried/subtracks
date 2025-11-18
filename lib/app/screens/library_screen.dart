@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../lists/albums_grid.dart';
 import '../lists/artists_list.dart';
 import '../state/services.dart';
+import '../ui/text.dart';
 import '../util/custom_scroll_fix.dart';
 
 const kIconSize = 26.0;
@@ -159,21 +161,26 @@ class TabTitleText extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final tabText = useState(LibraryTab.home.toString());
+    final l = AppLocalizations.of(context);
+
+    String tabLocalization(LibraryTab tab) => switch (tab) {
+      LibraryTab.albums => l.navigationTabsAlbums,
+      LibraryTab.home => l.navigationTabsHome,
+      LibraryTab.artists => l.navigationTabsArtists,
+      LibraryTab.songs => l.navigationTabsSongs,
+      LibraryTab.playlists => l.navigationTabsPlaylists,
+    };
+
+    final tabName = tabLocalization(LibraryTab.values[tabController.index]);
+    final tabText = useState(tabName);
 
     useListenable(tabController);
     useEffect(() {
-      tabText.value = LibraryTab.values[tabController.index].toString();
+      tabText.value = tabName;
       return;
-    }, [tabController.index]);
+    }, [tabName]);
 
-    return Text(
-      tabText.value,
-      style: theme.textTheme.headlineLarge?.copyWith(
-        fontWeight: FontWeight.w800,
-      ),
-    );
+    return TextH1(tabText.value);
   }
 }
 

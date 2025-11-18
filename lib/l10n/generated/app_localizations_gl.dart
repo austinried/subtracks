@@ -42,6 +42,18 @@ class AppLocalizationsGl extends AppLocalizations {
   String get navigationTabsHome => 'Inicio';
 
   @override
+  String get navigationTabsAlbums => 'Albums';
+
+  @override
+  String get navigationTabsArtists => 'Artists';
+
+  @override
+  String get navigationTabsPlaylists => 'Playlists';
+
+  @override
+  String get navigationTabsSongs => 'Songs';
+
+  @override
   String get navigationTabsLibrary => 'Biblioteca';
 
   @override

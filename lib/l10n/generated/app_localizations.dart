@@ -198,6 +198,30 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get navigationTabsHome;
 
+  /// No description provided for @navigationTabsAlbums.
+  ///
+  /// In en, this message translates to:
+  /// **'Albums'**
+  String get navigationTabsAlbums;
+
+  /// No description provided for @navigationTabsArtists.
+  ///
+  /// In en, this message translates to:
+  /// **'Artists'**
+  String get navigationTabsArtists;
+
+  /// No description provided for @navigationTabsPlaylists.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlists'**
+  String get navigationTabsPlaylists;
+
+  /// No description provided for @navigationTabsSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Songs'**
+  String get navigationTabsSongs;
+
   /// No description provided for @navigationTabsLibrary.
   ///
   /// In en, this message translates to:
