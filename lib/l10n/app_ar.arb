@@ -1,0 +1,196 @@
+{
+    "actionsStar": "مميز",
+    "@actionsStar": {},
+    "actionsUnstar": "ازل التمييز",
+    "@actionsUnstar": {},
+    "messagesNothingHere": "لا شيء هنا…",
+    "@messagesNothingHere": {},
+    "navigationTabsHome": "الرئيسية",
+    "@navigationTabsHome": {},
+    "navigationTabsLibrary": "المكتبة",
+    "@navigationTabsLibrary": {},
+    "navigationTabsSearch": "بحث",
+    "@navigationTabsSearch": {},
+    "navigationTabsSettings": "الإعدادات",
+    "@navigationTabsSettings": {},
+    "resourcesAlbumActionsPlay": "شَغل الألبوم",
+    "@resourcesAlbumActionsPlay": {},
+    "resourcesAlbumActionsView": "أعرض الألبوم",
+    "@resourcesAlbumActionsView": {},
+    "resourcesAlbumListsSort": "فرز الألبومات",
+    "@resourcesAlbumListsSort": {},
+    "resourcesAlbumName": "{count,plural, =1{} few{ألبوم} many{} other{}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "أظهر الفنان",
+    "@resourcesArtistActionsView": {},
+    "resourcesArtistListsSort": "فرز الفنانين",
+    "@resourcesArtistListsSort": {},
+    "resourcesArtistName": "{count,plural, =1{} few{فنان} many{فنانان} other{فنانان}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterGenre": "حسب النوع",
+    "@resourcesFilterGenre": {},
+    "resourcesFilterStarred": "موسوم",
+    "@resourcesFilterStarred": {},
+    "resourcesPlaylistActionsPlay": "شغل قائمة التشغيل",
+    "@resourcesPlaylistActionsPlay": {},
+    "resourcesPlaylistName": "{count,plural, =1{} few{قائمة تشغيل} many{قائمتان تشغيل} other{قائمتان تشغيل}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, =1{} few{صف} many{صفين} other{صفين}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListsArtistTopSongs": "أشهر الأغاني",
+    "@resourcesSongListsArtistTopSongs": {},
+    "resourcesSongName": "{count,plural, =1{} few{أُغْنِيَة} many{} other{}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "أضيف حديثا",
+    "@resourcesSortByAdded": {},
+    "resourcesSortByArtist": "حسب الفنان/ة",
+    "@resourcesSortByArtist": {},
+    "resourcesSortByFrequentlyPlayed": "مشغل كثيرا",
+    "@resourcesSortByFrequentlyPlayed": {},
+    "resourcesSortByName": "حسب الاسم",
+    "@resourcesSortByName": {},
+    "resourcesSortByRandom": "عشوائي",
+    "@resourcesSortByRandom": {},
+    "resourcesSortByRecentlyPlayed": "شغل حديثا",
+    "@resourcesSortByRecentlyPlayed": {},
+    "resourcesSortByYear": "حسب السنة",
+    "@resourcesSortByYear": {},
+    "searchHeaderTitle": "بحث: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "بحث",
+    "@searchInputPlaceholder": {},
+    "searchMoreResults": "المزيد…",
+    "@searchMoreResults": {},
+    "searchNowPlayingContext": "نتائج البحث",
+    "@searchNowPlayingContext": {},
+    "settingsAboutActionsLicenses": "الرخص",
+    "@settingsAboutActionsLicenses": {},
+    "settingsAboutActionsProjectHomepage": "موقع المشروع",
+    "@settingsAboutActionsProjectHomepage": {},
+    "settingsAboutName": "حول",
+    "@settingsAboutName": {},
+    "settingsAboutVersion": "الإصدار {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "موسيقى",
+    "@settingsMusicName": {},
+    "settingsMusicOptionsScrobbleDescriptionOff": "لا تستورد سجل التشغيل",
+    "@settingsMusicOptionsScrobbleDescriptionOff": {},
+    "settingsMusicOptionsScrobbleDescriptionOn": "استيراد سجل التشغيل",
+    "@settingsMusicOptionsScrobbleDescriptionOn": {},
+    "settingsMusicOptionsScrobbleTitle": "استيراد سجل التشغيل",
+    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsNetworkName": "الشبكة",
+    "@settingsNetworkName": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "أقصى معدل نقل بيانات (mobile)",
+    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "أقصى معدل نقل بيانات (Wi-Fi)",
+    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBufferTitle": "الحد الأقصى من وقت التخزين المؤقت",
+    "@settingsNetworkOptionsMaxBufferTitle": {},
+    "settingsNetworkOptionsMinBufferTitle": "الحد الأدنى من وقت التخزين المؤقت",
+    "@settingsNetworkOptionsMinBufferTitle": {},
+    "settingsNetworkValuesKbps": "{value} كيلو بايت في الثانية",
+    "@settingsNetworkValuesKbps": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesSeconds": "{value} ثواني",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "غير محدود",
+    "@settingsNetworkValuesUnlimitedKbps": {},
+    "settingsResetActionsClearImageCache": "مسح ذاكرة التخزين المؤقت للصور",
+    "@settingsResetActionsClearImageCache": {},
+    "settingsResetName": "إعادة ضبط",
+    "@settingsResetName": {},
+    "settingsServersActionsAdd": "أضف سيرفر",
+    "@settingsServersActionsAdd": {},
+    "settingsServersActionsDelete": "حذف",
+    "@settingsServersActionsDelete": {},
+    "settingsServersActionsEdit": "عدل السيرفر",
+    "@settingsServersActionsEdit": {},
+    "settingsServersActionsSave": "حفظ",
+    "@settingsServersActionsSave": {},
+    "settingsServersActionsTestConnection": "أخبر الأتصال",
+    "@settingsServersActionsTestConnection": {},
+    "settingsServersFieldsAddress": "العناوين",
+    "@settingsServersFieldsAddress": {},
+    "settingsServersFieldsPassword": "كلمة المرور",
+    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsUsername": "إسم المستخدم",
+    "@settingsServersFieldsUsername": {},
+    "settingsServersMessagesConnectionFailed": "الأتصال ب {address} فشل، ابحث في الإعدادات او السيرفر",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "الأتصال ب {address} جيد!",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "السيرفرات",
+    "@settingsServersName": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "أرسل كلمة المرور على شكل توكِن",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "أرسل كلمة المرور بنص عادي (قديم ، تأكد من أن اتصالك آمن!)",
+    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+    "settingsServersOptionsForcePlaintextPasswordTitle": "أظهر كلمة المرور",
+    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}

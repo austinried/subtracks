@@ -8,7 +8,7 @@ import '../../util/http.dart';
 import 'database.dart';
 import 'settings.dart';
 
-final _sourceProvider = FutureProvider<MusicSource>((ref) async {
+final sourceInitializer = FutureProvider<MusicSource>((ref) async {
   final db = ref.watch(databaseProvider);
   final sourceId = ref.watch(sourceIdProvider);
 
@@ -34,6 +34,5 @@ final _sourceProvider = FutureProvider<MusicSource>((ref) async {
 });
 
 final sourceProvider = Provider<MusicSource>((ref) {
-  final source = ref.watch(_sourceProvider);
-  return source.requireValue;
+  return ref.watch(sourceInitializer).value!;
 });

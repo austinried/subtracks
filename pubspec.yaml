@@ -17,17 +17,22 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_hooks: ^0.21.3+1
+  flutter_localizations:
+    sdk: flutter
   freezed_annotation: ^3.1.0
   go_router: ^16.2.5
   hooks_riverpod: ^3.0.3
   http: ^1.5.0
   infinite_scroll_pagination: ^5.1.1
+  intl: any
   json_annotation: ^4.9.0
   material_symbols_icons: ^4.2874.0
   octo_image: ^2.1.0
+  package_info_plus: ^9.0.0
   path: ^1.9.1
   path_provider: ^2.1.5
   pool: ^1.5.2
+  url_launcher: ^6.3.2
   xml: ^6.6.1
 
 dev_dependencies:
@@ -44,3 +49,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
