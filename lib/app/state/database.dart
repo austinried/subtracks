@@ -12,6 +12,7 @@ final databaseInitializer = FutureProvider<SubtracksDatabase>((ref) async {
         SourcesCompanion.insert(
           id: Value(1),
           name: 'test navidrome',
+          isActive: Value(true),
         ),
       );
   await db

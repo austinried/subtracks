@@ -1,38 +1,43 @@
-import 'package:drift/drift.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../sources/music_source.dart';
 import '../../sources/subsonic/client.dart';
 import '../../sources/subsonic/source.dart';
 import '../../util/http.dart';
 import 'database.dart';
-import 'settings.dart';
 
-final sourceInitializer = FutureProvider<MusicSource>((ref) async {
+final activeSourceInitializer = StreamProvider<(int, SubsonicSource)>((
+  ref,
+) async* {
   final db = ref.watch(databaseProvider);
-  final sourceId = ref.watch(sourceIdProvider);
 
-  final query = db.sources.select().join([
-    leftOuterJoin(
-      db.subsonicSettings,
-      db.subsonicSettings.sourceId.equalsExp(db.sources.id),
-    ),
-  ])..where(db.sources.id.equals(sourceId));
+  final activeSource = db.managers.sources
+      .filter((f) => f.isActive.equals(true))
+      .watchSingle();
 
-  final result = await query.getSingle();
-  final subsonicSettings = result.readTable(db.subsonicSettings);
+  await for (final source in activeSource) {
+    final subsonicSettings = await db.managers.subsonicSettings
+        .filter((f) => f.sourceId.equals(source.id))
+        .getSingle();
 
-  return SubsonicSource(
-    SubsonicClient(
-      http: SubtracksHttpClient(),
-      address: subsonicSettings.address,
-      username: subsonicSettings.username,
-      password: subsonicSettings.password,
-      useTokenAuth: subsonicSettings.useTokenAuth,
-    ),
-  );
+    yield (
+      source.id,
+      SubsonicSource(
+        SubsonicClient(
+          http: SubtracksHttpClient(),
+          address: subsonicSettings.address,
+          username: subsonicSettings.username,
+          password: subsonicSettings.password,
+          useTokenAuth: subsonicSettings.useTokenAuth,
+        ),
+      ),
+    );
+  }
 });
 
-final sourceProvider = Provider<MusicSource>((ref) {
-  return ref.watch(sourceInitializer).value!;
+final sourceProvider = Provider<SubsonicSource>((ref) {
+  return ref.watch(activeSourceInitializer).value!.$2;
+});
+
+final sourceIdProvider = Provider<int>((ref) {
+  return ref.watch(activeSourceInitializer).value!.$1;
 });

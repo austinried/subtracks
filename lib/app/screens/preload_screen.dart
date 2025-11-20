@@ -13,7 +13,7 @@ class PreloadScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final initializers = [
       ref.watch(databaseInitializer),
-      ref.watch(sourceInitializer),
+      ref.watch(activeSourceInitializer),
       ref.watch(packageInfoInitializer),
     ];
 

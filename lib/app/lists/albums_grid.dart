@@ -7,7 +7,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../../sources/models.dart';
 import '../hooks/use_paging_controller.dart';
 import '../state/database.dart';
-import '../state/settings.dart';
+import '../state/source.dart';
 import 'list_items.dart';
 
 const kPageSize = 60;
