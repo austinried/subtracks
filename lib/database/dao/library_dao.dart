@@ -5,6 +5,8 @@ import '../database.dart';
 
 part 'library_dao.g.dart';
 
+typedef AristListItem = ({models.Artist artist, int? albumCount});
+
 @DriftAccessor(include: {'../tables.drift'})
 class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
     with _$LibraryDaoMixin {
@@ -25,7 +27,7 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
     return query.get();
   }
 
-  Future<List<({models.Artist artist, int albumCount})>> listArtists({
+  Future<List<AristListItem>> listArtists({
     required int limit,
     required int offset,
   }) async {

@@ -1,13 +1,14 @@
 import 'package:async/async.dart';
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 
 import '../database/database.dart';
 import '../sources/music_source.dart';
 
 const kSliceSize = 200;
 
-class SyncService {
+class SyncService with ChangeNotifier {
   SyncService({
     required this.source,
     required this.db,
@@ -28,6 +29,7 @@ class SyncService {
         syncPlaylistSongs(),
       ]);
     });
+    notifyListeners();
   }
 
   Future<void> syncArtists() async {

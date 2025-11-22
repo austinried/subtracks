@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../../sources/models.dart';
+import '../hooks/use_on_source.dart';
 import '../hooks/use_paging_controller.dart';
 import '../state/database.dart';
-import '../state/source.dart';
 import 'list_items.dart';
 
 const kPageSize = 60;
@@ -18,8 +17,6 @@ class AlbumsGrid extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
-    final sourceId = ref.watch(sourceIdProvider);
-
     final controller = usePagingController<int, Album>(
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
@@ -29,10 +26,8 @@ class AlbumsGrid extends HookConsumerWidget {
       ),
     );
 
-    useEffect(() {
-      controller.refresh();
-      return;
-    }, [sourceId]);
+    useOnSourceChange(ref, (_) => controller.refresh());
+    useOnSourceSync(ref, controller.refresh);
 
     return PagingListener(
       controller: controller,

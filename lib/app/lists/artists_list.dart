@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import '../../sources/models.dart';
+import '../../database/dao/library_dao.dart';
+import '../hooks/use_on_source.dart';
 import '../hooks/use_paging_controller.dart';
 import '../state/database.dart';
-import '../state/source.dart';
 import 'list_items.dart';
 
 const kPageSize = 30;
-
-typedef _ArtistItem = ({Artist artist, int? albumCount});
 
 class ArtistsList extends HookConsumerWidget {
   const ArtistsList({super.key});
@@ -20,9 +17,7 @@ class ArtistsList extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
-    final sourceId = ref.watch(sourceIdProvider);
-
-    final controller = usePagingController<int, _ArtistItem>(
+    final controller = usePagingController<int, AristListItem>(
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
       fetchPage: (pageKey) => db.libraryDao.listArtists(
@@ -31,10 +26,8 @@ class ArtistsList extends HookConsumerWidget {
       ),
     );
 
-    useEffect(() {
-      controller.refresh();
-      return;
-    }, [sourceId]);
+    useOnSourceChange(ref, (_) => controller.refresh());
+    useOnSourceSync(ref, controller.refresh);
 
     return PagingListener(
       controller: controller,
@@ -42,7 +35,7 @@ class ArtistsList extends HookConsumerWidget {
         return PagedSliverList(
           state: state,
           fetchNextPage: fetchNextPage,
-          builderDelegate: PagedChildBuilderDelegate<_ArtistItem>(
+          builderDelegate: PagedChildBuilderDelegate<AristListItem>(
             itemBuilder: (context, item, index) {
               final (:artist, :albumCount) = item;
 
