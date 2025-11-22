@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../app/state/settings.dart';
 import '../app/state/source.dart';
 
 class CoverArtImage extends HookConsumerWidget {

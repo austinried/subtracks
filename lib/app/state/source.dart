@@ -10,17 +10,17 @@ final activeSourceInitializer = StreamProvider<(int, SubsonicSource)>((
 ) async* {
   final db = ref.watch(databaseProvider);
 
-  final activeSource = db.managers.sources
-      .filter((f) => f.isActive.equals(true))
-      .watchSingle();
+  final activeSource = db.sourcesDao.activeSourceId().watchSingle();
 
   await for (final source in activeSource) {
+    final sourceId = source.read(db.sources.id)!;
+
     final subsonicSettings = await db.managers.subsonicSettings
-        .filter((f) => f.sourceId.equals(source.id))
+        .filter((f) => f.sourceId.equals(sourceId))
         .getSingle();
 
     yield (
-      source.id,
+      sourceId,
       SubsonicSource(
         SubsonicClient(
           http: SubtracksHttpClient(),

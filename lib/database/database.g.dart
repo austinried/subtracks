@@ -2454,6 +2454,8 @@ abstract class _$SubtracksDatabase extends GeneratedDatabase {
     'songs_source_id_artist_id_idx',
     'CREATE INDEX songs_source_id_artist_id_idx ON songs (source_id, artist_id)',
   );
+  late final SourcesDao sourcesDao = SourcesDao(this as SubtracksDatabase);
+  late final LibraryDao libraryDao = LibraryDao(this as SubtracksDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

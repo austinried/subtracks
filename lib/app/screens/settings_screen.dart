@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../state/database.dart';
+import '../state/source.dart';
+import '../ui/text.dart';
 
-const kHorizontalPadding = 16.0;
+const kHorizontalPadding = 18.0;
 
 class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
@@ -13,11 +17,14 @@ class SettingsScreen extends HookConsumerWidget {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: TextH1(l.navigationTabsSettings),
+      ),
       body: ListView(
         children: [
-          const SizedBox(height: 96),
+          // const SizedBox(height: 96),
           _SectionHeader(l.settingsServersName),
-          // const _Sources(),
+          const _Sources(),
           // _SectionHeader(l.settingsNetworkName),
           // const _Network(),
           // _SectionHeader(l.settingsAboutName),
@@ -29,9 +36,9 @@ class SettingsScreen extends HookConsumerWidget {
 }
 
 class _Section extends StatelessWidget {
-  final List<Widget> children;
-
   const _Section({required this.children});
+
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
@@ -46,27 +53,22 @@ class _Section extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  final String title;
-
   const _SectionHeader(this.title);
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       children: [
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: kHorizontalPadding),
-            child: Text(
-              title,
-              style: theme.textTheme.displaySmall,
-            ),
+            child: TextH2(title),
           ),
         ),
-        const SizedBox(height: 12),
       ],
     );
   }
@@ -346,79 +348,66 @@ class _SectionHeader extends StatelessWidget {
 //   }
 // }
 
-// class _Sources extends HookConsumerWidget {
-//   const _Sources();
+class _Sources extends HookConsumerWidget {
+  const _Sources();
 
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final sources = ref.watch(
-//       settingsServiceProvider.select(
-//         (value) => value.sources,
-//       ),
-//     );
-//     final activeSource = ref.watch(
-//       settingsServiceProvider.select(
-//         (value) => value.activeSource,
-//       ),
-//     );
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final db = ref.watch(databaseProvider);
+    final activeSourceId = ref.watch(sourceIdProvider);
+    final sources = useStream(db.sourcesDao.listSources()).data;
 
-//     final l = AppLocalizations.of(context);
+    final l = AppLocalizations.of(context);
 
-//     return _Section(
-//       children: [
-//         for (var source in sources)
-//           RadioListTile<int>(
-//             value: source.id,
-//             groupValue: activeSource?.id,
-//             onChanged: (value) {
-//               ref
-//                   .read(settingsServiceProvider.notifier)
-//                   .setActiveSource(source.id);
-//             },
-//             title: Text(source.name),
-//             subtitle: Text(
-//               source.address.toString(),
-//               maxLines: 1,
-//               softWrap: false,
-//               overflow: TextOverflow.fade,
-//             ),
-//             secondary: IconButton(
-//               icon: const Icon(Icons.edit_rounded),
-//               onPressed: () {
-//                 context.pushRoute(SourceRoute(id: source.id));
-//               },
-//             ),
-//           ),
-//         const SizedBox(height: 8),
-//         Row(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             OutlinedButton.icon(
-//               icon: const Icon(Icons.add_rounded),
-//               label: Text(l.settingsServersActionsAdd),
-//               onPressed: () {
-//                 context.pushRoute(SourceRoute());
-//               },
-//             ),
-//           ],
-//         ),
-//         // TODO: remove
-//         if (kDebugMode)
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               OutlinedButton.icon(
-//                 icon: const Icon(Icons.add_rounded),
-//                 label: const Text('Add TEST'),
-//                 onPressed: () {
-//                   ref
-//                       .read(settingsServiceProvider.notifier)
-//                       .addTestSource('TEST');
-//                 },
-//               ),
-//             ],
-//           ),
-//       ],
-//     );
-//   }
-// }
+    if (sources == null) {
+      return Container();
+    }
+
+    return _Section(
+      children: [
+        RadioGroup<int>(
+          groupValue: activeSourceId,
+          onChanged: (value) {
+            if (value != null) {
+              db.sourcesDao.setActiveSource(value);
+            }
+          },
+          child: Column(
+            children: [
+              for (final (source, settings) in sources)
+                RadioListTile<int>(
+                  value: source.id,
+                  title: Text(source.name),
+                  subtitle: Text(
+                    settings.address.toString(),
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                  ),
+                  secondary: IconButton(
+                    icon: const Icon(Icons.edit_rounded),
+                    onPressed: () {
+                      // context.pushRoute(SourceRoute(id: source.id));
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              icon: const Icon(Icons.add_rounded),
+              label: Text(l.settingsServersActionsAdd),
+              onPressed: () {
+                // context.pushRoute(SourceRoute());
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

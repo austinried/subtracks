@@ -11,8 +11,8 @@ final databaseInitializer = FutureProvider<SubtracksDatabase>((ref) async {
       .insertOnConflictUpdate(
         SourcesCompanion.insert(
           id: Value(1),
-          name: 'test navidrome',
-          isActive: Value(true),
+          name: 'test subsonic',
+          // isActive: Value(true),
         ),
       );
   await db
@@ -23,9 +23,26 @@ final databaseInitializer = FutureProvider<SubtracksDatabase>((ref) async {
           address: Uri.parse('http://demo.subsonic.org'),
           username: 'guest1',
           password: 'guest',
-          // address: Uri.parse('http://10.0.2.2:4533'),
-          // username: 'admin',
-          // password: 'password',
+          useTokenAuth: Value(true),
+        ),
+      );
+  await db
+      .into(db.sources)
+      .insertOnConflictUpdate(
+        SourcesCompanion.insert(
+          id: Value(2),
+          name: 'test navidrome',
+          // isActive: Value(null),
+        ),
+      );
+  await db
+      .into(db.subsonicSettings)
+      .insertOnConflictUpdate(
+        SubsonicSettingsCompanion.insert(
+          sourceId: Value(2),
+          address: Uri.parse('http://10.0.2.2:4533'),
+          username: 'admin',
+          password: 'password',
           useTokenAuth: Value(true),
         ),
       );

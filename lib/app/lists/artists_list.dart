@@ -1,5 +1,5 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -25,35 +25,16 @@ class ArtistsList extends HookConsumerWidget {
     final controller = usePagingController<int, _ArtistItem>(
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
-      fetchPage: (pageKey) async {
-        final albumCount = db.albums.id.count();
-
-        final query =
-            db.artists.select().join([
-                leftOuterJoin(
-                  db.albums,
-                  db.albums.artistId.equalsExp(db.artists.id),
-                ),
-              ])
-              ..addColumns([albumCount])
-              ..where(
-                db.artists.sourceId.equals(sourceId) &
-                    db.albums.sourceId.equals(sourceId),
-              )
-              ..groupBy([db.artists.sourceId, db.artists.id])
-              ..orderBy([OrderingTerm.asc(db.artists.name)])
-              ..limit(kPageSize, offset: (pageKey - 1) * kPageSize);
-
-        return (await query.get())
-            .map(
-              (row) => (
-                artist: row.readTable(db.artists),
-                albumCount: row.read(albumCount),
-              ),
-            )
-            .toList();
-      },
+      fetchPage: (pageKey) => db.libraryDao.listArtists(
+        limit: kPageSize,
+        offset: (pageKey - 1) * kPageSize,
+      ),
     );
+
+    useEffect(() {
+      controller.refresh();
+      return;
+    }, [sourceId]);
 
     return PagingListener(
       controller: controller,
