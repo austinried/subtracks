@@ -7,6 +7,7 @@ import '../../database/dao/library_dao.dart';
 import '../hooks/use_on_source.dart';
 import '../hooks/use_paging_controller.dart';
 import '../state/database.dart';
+import '../state/source.dart';
 import 'list_items.dart';
 
 const kPageSize = 30;
@@ -21,6 +22,7 @@ class ArtistsList extends HookConsumerWidget {
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
       fetchPage: (pageKey) => db.libraryDao.listArtists(
+        sourceId: ref.read(sourceIdProvider),
         limit: kPageSize,
         offset: (pageKey - 1) * kPageSize,
       ),

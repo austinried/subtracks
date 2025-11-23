@@ -13,14 +13,13 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
   LibraryDao(super.db);
 
   Future<List<models.Album>> listAlbums({
+    required int sourceId,
     required int limit,
     required int offset,
   }) {
     final query = albums.select()
       ..where(
-        (f) => f.sourceId.equalsExp(
-          subqueryExpression(db.sourcesDao.activeSourceId()),
-        ),
+        (f) => f.sourceId.equals(sourceId),
       )
       ..limit(limit, offset: offset);
 
@@ -28,6 +27,7 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
   }
 
   Future<List<AristListItem>> listArtists({
+    required int sourceId,
     required int limit,
     required int offset,
   }) async {
@@ -42,12 +42,8 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
           ])
           ..addColumns([albumCount])
           ..where(
-            artists.sourceId.equalsExp(
-                  subqueryExpression(db.sourcesDao.activeSourceId()),
-                ) &
-                albums.sourceId.equalsExp(
-                  subqueryExpression(db.sourcesDao.activeSourceId()),
-                ),
+            artists.sourceId.equals(sourceId) &
+                albums.sourceId.equals(sourceId),
           )
           ..groupBy([artists.sourceId, artists.id])
           ..orderBy([OrderingTerm.asc(artists.name)])

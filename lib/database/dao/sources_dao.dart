@@ -9,10 +9,11 @@ class SourcesDao extends DatabaseAccessor<SubtracksDatabase>
     with _$SourcesDaoMixin {
   SourcesDao(super.db);
 
-  JoinedSelectStatement<Sources, Source> activeSourceId() {
-    return selectOnly(sources)
-      ..addColumns([sources.id])
-      ..where(sources.isActive.equals(true));
+  Selectable<int?> activeSourceId() {
+    return (selectOnly(sources)
+          ..addColumns([sources.id])
+          ..where(sources.isActive.equals(true)))
+        .map((row) => row.read(sources.id));
   }
 
   Stream<List<(Source, SubsonicSetting)>> listSources() {
