@@ -5,7 +5,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../state/database.dart';
 import '../state/source.dart';
-import '../ui/text.dart';
 
 const kHorizontalPadding = 18.0;
 
@@ -15,10 +14,11 @@ class SettingsScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final text = TextTheme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: TextH1(l.navigationTabsSettings),
+        title: Text(l.navigationTabsSettings, style: text.headlineLarge),
       ),
       body: ListView(
         children: [
@@ -59,6 +59,8 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = TextTheme.of(context);
+
     return Column(
       children: [
         const SizedBox(height: 16),
@@ -66,7 +68,7 @@ class _SectionHeader extends StatelessWidget {
           width: double.infinity,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: kHorizontalPadding),
-            child: TextH2(title),
+            child: Text(title, style: text.headlineMedium),
           ),
         ),
       ],

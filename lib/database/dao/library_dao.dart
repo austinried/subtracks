@@ -58,4 +58,10 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
         )
         .toList();
   }
+
+  Selectable<models.Album> getAlbum(int sourceId, String id) {
+    return db.managers.albums.filter(
+      (f) => f.sourceId.equals(sourceId) & f.id.equals(id),
+    );
+  }
 }

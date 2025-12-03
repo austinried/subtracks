@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'app/router.dart';
+import 'app/ui/theme.dart';
 import 'l10n/generated/app_localizations.dart';
 
 void main() async {
@@ -17,7 +18,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       themeMode: ThemeMode.dark,
-      darkTheme: ThemeData.dark(useMaterial3: true),
+      darkTheme: subtracksTheme(),
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,

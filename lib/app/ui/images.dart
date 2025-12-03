@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../app/state/source.dart';
+import '../state/source.dart';
 
 class CoverArtImage extends HookConsumerWidget {
   const CoverArtImage({
     super.key,
     this.coverArt,
-    this.thumbnail = false,
+    this.thumbnail = true,
+    this.fit,
+    this.height,
+    this.width,
   });
 
   final String? coverArt;
   final bool thumbnail;
+  final BoxFit? fit;
+  final double? height;
+  final double? width;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,31 +30,11 @@ class CoverArtImage extends HookConsumerWidget {
         ? source.coverArtUri(coverArt!, thumbnail: thumbnail).toString()
         : 'https://placehold.net/400x400.png';
 
-    return BaseImage(
-      imageUrl: imageUrl,
-      // can't use the URL because of token auth, which is a cache-buster
-      cacheKey: '$sourceId$coverArt$thumbnail',
-    );
-  }
-}
-
-class BaseImage extends HookConsumerWidget {
-  const BaseImage({
-    super.key,
-    required this.imageUrl,
-    this.cacheKey,
-    this.fit = BoxFit.cover,
-  });
-
-  final String imageUrl;
-  final String? cacheKey;
-  final BoxFit fit;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
     return CachedNetworkImage(
+      height: height,
+      width: width,
       imageUrl: imageUrl,
-      cacheKey: cacheKey,
+      cacheKey: '$sourceId$coverArt$thumbnail',
       placeholder: (context, url) => Icon(Symbols.cached_rounded),
       errorWidget: (context, url, error) => Icon(Icons.error),
       fit: BoxFit.cover,

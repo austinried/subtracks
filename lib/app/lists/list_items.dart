@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../images/images.dart';
 import '../../sources/models.dart';
+import '../ui/images.dart';
 import '../util/clip.dart';
 
 class AlbumGridTile extends HookConsumerWidget {
@@ -25,7 +25,10 @@ class AlbumGridTile extends HookConsumerWidget {
       margin: EdgeInsets.all(2),
       child: ImageCard(
         onTap: onTap,
-        child: CoverArtImage(coverArt: album.coverArt),
+        child: CoverArtImage(
+          coverArt: album.coverArt,
+          thumbnail: true,
+        ),
       ),
     );
   }
@@ -47,7 +50,10 @@ class ArtistListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleClip(
-        child: CoverArtImage(coverArt: artist.coverArt),
+        child: CoverArtImage(
+          coverArt: artist.coverArt,
+          thumbnail: true,
+        ),
       ),
       title: Text(artist.name),
       subtitle: albumCount != null ? Text('$albumCount albums') : null,

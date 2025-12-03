@@ -8,7 +8,6 @@ import '../../l10n/generated/app_localizations.dart';
 import '../lists/albums_grid.dart';
 import '../lists/artists_list.dart';
 import '../state/services.dart';
-import '../ui/text.dart';
 import '../util/custom_scroll_fix.dart';
 
 const kIconSize = 26.0;
@@ -162,6 +161,7 @@ class TabTitleText extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final text = TextTheme.of(context);
 
     String tabLocalization(LibraryTab tab) => switch (tab) {
       LibraryTab.albums => l.navigationTabsAlbums,
@@ -180,7 +180,7 @@ class TabTitleText extends HookConsumerWidget {
       return;
     }, [tabName]);
 
-    return TextH1(tabText.value);
+    return Text(tabText.value, style: text.headlineLarge);
   }
 }
 
