@@ -1,14 +1,16 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import '../../sources/models.dart';
-import '../hooks/use_on_source.dart';
-import '../hooks/use_paging_controller.dart';
-import '../state/database.dart';
-import '../state/source.dart';
-import 'list_items.dart';
+import '../../../database/query.dart';
+import '../../../sources/models.dart';
+import '../../hooks/use_on_source.dart';
+import '../../hooks/use_paging_controller.dart';
+import '../../state/database.dart';
+import '../../state/source.dart';
+import 'items.dart';
 
 const kPageSize = 60;
 
@@ -22,9 +24,17 @@ class AlbumsGrid extends HookConsumerWidget {
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
       fetchPage: (pageKey) => db.libraryDao.listAlbums(
-        sourceId: ref.read(sourceIdProvider),
-        limit: kPageSize,
-        offset: (pageKey - 1) * kPageSize,
+        AlbumsQuery(
+          sourceId: ref.read(sourceIdProvider),
+          sort: IList([
+            AlbumsSortingTerm(
+              dir: SortDirection.desc,
+              by: AlbumsColumn.created,
+            ),
+          ]),
+          limit: kPageSize,
+          offset: (pageKey - 1) * kPageSize,
+        ),
       ),
     );
 

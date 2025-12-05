@@ -5,9 +5,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../lists/albums_grid.dart';
-import '../lists/artists_list.dart';
 import '../state/services.dart';
+import '../ui/lists/albums_grid.dart';
+import '../ui/lists/artists_list.dart';
 import '../util/custom_scroll_fix.dart';
 
 const kIconSize = 26.0;

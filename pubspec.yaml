@@ -33,6 +33,7 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.5
   pool: ^1.5.2
+  sliver_tools: ^0.2.12
   url_launcher: ^6.3.2
   xml: ^6.6.1
 

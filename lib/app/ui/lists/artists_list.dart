@@ -1,14 +1,16 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import '../../database/dao/library_dao.dart';
-import '../hooks/use_on_source.dart';
-import '../hooks/use_paging_controller.dart';
-import '../state/database.dart';
-import '../state/source.dart';
-import 'list_items.dart';
+import '../../../database/dao/library_dao.dart';
+import '../../../database/query.dart';
+import '../../hooks/use_on_source.dart';
+import '../../hooks/use_paging_controller.dart';
+import '../../state/database.dart';
+import '../../state/source.dart';
+import 'items.dart';
 
 const kPageSize = 30;
 
@@ -22,9 +24,17 @@ class ArtistsList extends HookConsumerWidget {
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
       fetchPage: (pageKey) => db.libraryDao.listArtists(
-        sourceId: ref.read(sourceIdProvider),
-        limit: kPageSize,
-        offset: (pageKey - 1) * kPageSize,
+        ArtistsQuery(
+          sourceId: ref.read(sourceIdProvider),
+          sort: IList([
+            ArtistsSortingTerm(
+              dir: SortDirection.asc,
+              by: ArtistsColumn.name,
+            ),
+          ]),
+          limit: kPageSize,
+          offset: (pageKey - 1) * kPageSize,
+        ),
       ),
     );
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../sources/models.dart';
-import '../ui/images.dart';
-import '../util/clip.dart';
+import '../../../sources/models.dart';
+import '../../util/clip.dart';
+import '../images.dart';
 
 class AlbumGridTile extends HookConsumerWidget {
   const AlbumGridTile({
@@ -57,6 +57,30 @@ class ArtistListTile extends StatelessWidget {
       ),
       title: Text(artist.name),
       subtitle: albumCount != null ? Text('$albumCount albums') : null,
+      onTap: onTap,
+    );
+  }
+}
+
+class SongListTile extends StatelessWidget {
+  const SongListTile({
+    super.key,
+    required this.song,
+    this.onTap,
+  });
+
+  final Song song;
+  final void Function()? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      // leading: CoverArtImage(
+      //   coverArt: song.coverArt,
+      //   thumbnail: true,
+      // ),
+      title: Text(song.title),
+      subtitle: Text(song.artist ?? ''),
       onTap: onTap,
     );
   }
