@@ -46,11 +46,11 @@ class CoverArtTheme extends HookConsumerWidget {
 
     final colorScheme = useFuture(getColorScheme).data;
 
-    return colorScheme != null
-        ? Theme(
-            data: subtracksTheme(colorScheme),
-            child: child,
-          )
-        : child;
+    return Theme(
+      data: colorScheme == null
+          ? Theme.of(context)
+          : subtracksTheme(colorScheme),
+      child: child,
+    );
   }
 }
