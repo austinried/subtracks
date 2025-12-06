@@ -52,7 +52,7 @@ class ArtistsList extends HookConsumerWidget {
                 artist: artist,
                 albumCount: albumCount,
                 onTap: () async {
-                  context.push('/artist/${artist.id}');
+                  context.push('/artists/${artist.id}');
                 },
               );
             },

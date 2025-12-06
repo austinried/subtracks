@@ -62,11 +62,12 @@ class SongsListHeader extends HookConsumerWidget {
                 style: theme.textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
-              Text(
-                subtitle ?? '',
-                style: theme.textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
+              if (subtitle != null)
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
             ],
           ),
           const SizedBox(height: 20),

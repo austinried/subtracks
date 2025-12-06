@@ -53,7 +53,7 @@ class AlbumsGrid extends HookConsumerWidget {
               itemBuilder: (context, item, index) => AlbumGridTile(
                 album: item,
                 onTap: () async {
-                  context.push('/album/${item.id}');
+                  context.push('/albums/${item.id}');
                 },
               ),
             ),

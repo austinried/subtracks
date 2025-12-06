@@ -74,6 +74,7 @@ const _$SongsColumnEnumMap = {
   SongsColumn.album: 'album',
   SongsColumn.artist: 'artist',
   SongsColumn.albumArtist: 'albumArtist',
+  SongsColumn.playlistPosition: 'playlistPosition',
 };
 
 PlaylistsSortingTerm _$PlaylistsSortingTermFromJson(

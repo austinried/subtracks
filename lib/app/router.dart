@@ -4,6 +4,7 @@ import 'screens/album_screen.dart';
 import 'screens/artist_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/now_playing_screen.dart';
+import 'screens/playlist_screen.dart';
 import 'screens/preload_screen.dart';
 import 'screens/root_shell_screen.dart';
 import 'screens/settings_screen.dart';
@@ -23,13 +24,18 @@ final router = GoRouter(
           builder: (context, state) => LibraryScreen(),
           routes: [
             GoRoute(
-              path: 'album/:id',
+              path: 'albums/:id',
               builder: (context, state) =>
                   AlbumScreen(id: state.pathParameters['id']!),
             ),
             GoRoute(
-              path: 'artist',
+              path: 'artists',
               builder: (context, state) => ArtistScreen(),
+            ),
+            GoRoute(
+              path: 'playlists/:id',
+              builder: (context, state) =>
+                  PlaylistScreen(id: state.pathParameters['id']!),
             ),
           ],
         ),

@@ -30,6 +30,7 @@ enum SongsColumn {
   album,
   artist,
   albumArtist,
+  playlistPosition,
 }
 
 enum PlaylistsColumn {

@@ -1,5 +1,6 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
@@ -47,7 +48,9 @@ class PlaylistsList extends HookConsumerWidget {
             itemBuilder: (context, item, index) {
               return PlaylistListTile(
                 playlist: item,
-                onTap: () {},
+                onTap: () {
+                  context.push('/playlists/${item.id}');
+                },
               );
             },
           ),

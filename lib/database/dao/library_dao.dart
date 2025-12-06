@@ -163,6 +163,7 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
                       SongsColumn.album => songs.album,
                       SongsColumn.artist => songs.artist,
                       SongsColumn.albumArtist => albums.albumArtist,
+                      SongsColumn.playlistPosition => playlistSongs.position,
                     },
                     mode: sort.dir.toMode(),
                   ),
@@ -220,6 +221,12 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
 
   Selectable<models.Album> getAlbum(int sourceId, String id) {
     return db.managers.albums.filter(
+      (f) => f.sourceId.equals(sourceId) & f.id.equals(id),
+    );
+  }
+
+  Selectable<models.Playlist> getPlaylist(int sourceId, String id) {
+    return db.managers.playlists.filter(
       (f) => f.sourceId.equals(sourceId) & f.id.equals(id),
     );
   }
