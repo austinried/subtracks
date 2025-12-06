@@ -12,6 +12,7 @@ import '../state/source.dart';
 import '../ui/lists/albums_grid.dart';
 import '../ui/lists/artists_list.dart';
 import '../ui/lists/items.dart';
+import '../ui/lists/playlists_list.dart';
 import '../ui/lists/songs_list.dart';
 import '../util/custom_scroll_fix.dart';
 
@@ -79,11 +80,11 @@ class LibraryTabBarView extends HookConsumerWidget {
     final songsQuery = SongsQuery(
       sourceId: sourceId,
       sort: IList([
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.albumArtist),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.album),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.disc),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.track),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.title),
+        SortingTerm.songsAsc(SongsColumn.albumArtist),
+        SortingTerm.songsAsc(SongsColumn.album),
+        SortingTerm.songsAsc(SongsColumn.disc),
+        SortingTerm.songsAsc(SongsColumn.track),
+        SortingTerm.songsAsc(SongsColumn.title),
       ]),
     );
 
@@ -96,6 +97,7 @@ class LibraryTabBarView extends HookConsumerWidget {
               sliver: switch (tab) {
                 LibraryTab.albums => AlbumsGrid(),
                 LibraryTab.artists => ArtistsList(),
+                LibraryTab.playlists => PlaylistsList(),
                 LibraryTab.songs => SongsList(
                   query: songsQuery,
                   itemBuilder: (context, item, index) => SongListTile(

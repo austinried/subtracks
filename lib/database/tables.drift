@@ -136,6 +136,7 @@ CREATE TABLE playlists(
   cover_art TEXT,
   created DATETIME NOT NULL,
   changed DATETIME NOT NULL,
+  public BOOLEAN,
   PRIMARY KEY (source_id, id),
   FOREIGN KEY (source_id) REFERENCES sources (id) ON DELETE CASCADE
 ) WITH Playlist;

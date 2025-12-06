@@ -38,12 +38,12 @@ class ArtistListTile extends StatelessWidget {
   const ArtistListTile({
     super.key,
     required this.artist,
-    this.albumCount,
+    required this.albumCount,
     this.onTap,
   });
 
   final Artist artist;
-  final int? albumCount;
+  final int albumCount;
   final void Function()? onTap;
 
   @override
@@ -56,7 +56,33 @@ class ArtistListTile extends StatelessWidget {
         ),
       ),
       title: Text(artist.name),
-      subtitle: albumCount != null ? Text('$albumCount albums') : null,
+      subtitle: Text('$albumCount albums'),
+      onTap: onTap,
+    );
+  }
+}
+
+class PlaylistListTile extends StatelessWidget {
+  const PlaylistListTile({
+    super.key,
+    required this.playlist,
+    this.albumCount,
+    this.onTap,
+  });
+
+  final Playlist playlist;
+  final int? albumCount;
+  final void Function()? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CoverArtImage(
+        coverArt: playlist.coverArt,
+        thumbnail: true,
+      ),
+      title: Text(playlist.name),
+      subtitle: Text(playlist.comment ?? ''),
       onTap: onTap,
     );
   }

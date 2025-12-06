@@ -41,9 +41,9 @@ class AlbumScreen extends HookConsumerWidget {
       sourceId: sourceId,
       filter: IList([SongsFilter.albumId(album.id)]),
       sort: IList([
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.disc),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.track),
-        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.title),
+        SortingTerm.songsAsc(SongsColumn.disc),
+        SortingTerm.songsAsc(SongsColumn.track),
+        SortingTerm.songsAsc(SongsColumn.title),
       ]),
     );
 

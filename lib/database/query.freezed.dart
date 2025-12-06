@@ -27,6 +27,10 @@ SortingTerm _$SortingTermFromJson(
           return SongsSortingTerm.fromJson(
             json
           );
+                case 'playlists':
+          return PlaylistsSortingTerm.fromJson(
+            json
+          );
         
           default:
             throw CheckedFromJsonException(
@@ -116,13 +120,14 @@ extension SortingTermPatterns on SortingTerm {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AlbumsSortingTerm value)?  albums,TResult Function( ArtistsSortingTerm value)?  artists,TResult Function( SongsSortingTerm value)?  songs,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AlbumsSortingTerm value)?  albums,TResult Function( ArtistsSortingTerm value)?  artists,TResult Function( SongsSortingTerm value)?  songs,TResult Function( PlaylistsSortingTerm value)?  playlists,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AlbumsSortingTerm() when albums != null:
 return albums(_that);case ArtistsSortingTerm() when artists != null:
 return artists(_that);case SongsSortingTerm() when songs != null:
-return songs(_that);case _:
+return songs(_that);case PlaylistsSortingTerm() when playlists != null:
+return playlists(_that);case _:
   return orElse();
 
 }
@@ -140,13 +145,14 @@ return songs(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AlbumsSortingTerm value)  albums,required TResult Function( ArtistsSortingTerm value)  artists,required TResult Function( SongsSortingTerm value)  songs,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AlbumsSortingTerm value)  albums,required TResult Function( ArtistsSortingTerm value)  artists,required TResult Function( SongsSortingTerm value)  songs,required TResult Function( PlaylistsSortingTerm value)  playlists,}){
 final _that = this;
 switch (_that) {
 case AlbumsSortingTerm():
 return albums(_that);case ArtistsSortingTerm():
 return artists(_that);case SongsSortingTerm():
-return songs(_that);case _:
+return songs(_that);case PlaylistsSortingTerm():
+return playlists(_that);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -163,13 +169,14 @@ return songs(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AlbumsSortingTerm value)?  albums,TResult? Function( ArtistsSortingTerm value)?  artists,TResult? Function( SongsSortingTerm value)?  songs,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AlbumsSortingTerm value)?  albums,TResult? Function( ArtistsSortingTerm value)?  artists,TResult? Function( SongsSortingTerm value)?  songs,TResult? Function( PlaylistsSortingTerm value)?  playlists,}){
 final _that = this;
 switch (_that) {
 case AlbumsSortingTerm() when albums != null:
 return albums(_that);case ArtistsSortingTerm() when artists != null:
 return artists(_that);case SongsSortingTerm() when songs != null:
-return songs(_that);case _:
+return songs(_that);case PlaylistsSortingTerm() when playlists != null:
+return playlists(_that);case _:
   return null;
 
 }
@@ -186,12 +193,13 @@ return songs(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( SortDirection dir,  AlbumsColumn by)?  albums,TResult Function( SortDirection dir,  ArtistsColumn by)?  artists,TResult Function( SortDirection dir,  SongsColumn by)?  songs,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( SortDirection dir,  AlbumsColumn by)?  albums,TResult Function( SortDirection dir,  ArtistsColumn by)?  artists,TResult Function( SortDirection dir,  SongsColumn by)?  songs,TResult Function( SortDirection dir,  PlaylistsColumn by)?  playlists,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AlbumsSortingTerm() when albums != null:
 return albums(_that.dir,_that.by);case ArtistsSortingTerm() when artists != null:
 return artists(_that.dir,_that.by);case SongsSortingTerm() when songs != null:
-return songs(_that.dir,_that.by);case _:
+return songs(_that.dir,_that.by);case PlaylistsSortingTerm() when playlists != null:
+return playlists(_that.dir,_that.by);case _:
   return orElse();
 
 }
@@ -209,12 +217,13 @@ return songs(_that.dir,_that.by);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( SortDirection dir,  AlbumsColumn by)  albums,required TResult Function( SortDirection dir,  ArtistsColumn by)  artists,required TResult Function( SortDirection dir,  SongsColumn by)  songs,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( SortDirection dir,  AlbumsColumn by)  albums,required TResult Function( SortDirection dir,  ArtistsColumn by)  artists,required TResult Function( SortDirection dir,  SongsColumn by)  songs,required TResult Function( SortDirection dir,  PlaylistsColumn by)  playlists,}) {final _that = this;
 switch (_that) {
 case AlbumsSortingTerm():
 return albums(_that.dir,_that.by);case ArtistsSortingTerm():
 return artists(_that.dir,_that.by);case SongsSortingTerm():
-return songs(_that.dir,_that.by);case _:
+return songs(_that.dir,_that.by);case PlaylistsSortingTerm():
+return playlists(_that.dir,_that.by);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -231,12 +240,13 @@ return songs(_that.dir,_that.by);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( SortDirection dir,  AlbumsColumn by)?  albums,TResult? Function( SortDirection dir,  ArtistsColumn by)?  artists,TResult? Function( SortDirection dir,  SongsColumn by)?  songs,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( SortDirection dir,  AlbumsColumn by)?  albums,TResult? Function( SortDirection dir,  ArtistsColumn by)?  artists,TResult? Function( SortDirection dir,  SongsColumn by)?  songs,TResult? Function( SortDirection dir,  PlaylistsColumn by)?  playlists,}) {final _that = this;
 switch (_that) {
 case AlbumsSortingTerm() when albums != null:
 return albums(_that.dir,_that.by);case ArtistsSortingTerm() when artists != null:
 return artists(_that.dir,_that.by);case SongsSortingTerm() when songs != null:
-return songs(_that.dir,_that.by);case _:
+return songs(_that.dir,_that.by);case PlaylistsSortingTerm() when playlists != null:
+return playlists(_that.dir,_that.by);case _:
   return null;
 
 }
@@ -463,6 +473,81 @@ class _$SongsSortingTermCopyWithImpl<$Res>
 dir: null == dir ? _self.dir : dir // ignore: cast_nullable_to_non_nullable
 as SortDirection,by: null == by ? _self.by : by // ignore: cast_nullable_to_non_nullable
 as SongsColumn,
+  ));
+}
+
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class PlaylistsSortingTerm implements SortingTerm {
+  const PlaylistsSortingTerm({required this.dir, required this.by, final  String? $type}): $type = $type ?? 'playlists';
+  factory PlaylistsSortingTerm.fromJson(Map<String, dynamic> json) => _$PlaylistsSortingTermFromJson(json);
+
+@override final  SortDirection dir;
+@override final  PlaylistsColumn by;
+
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
+/// Create a copy of SortingTerm
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlaylistsSortingTermCopyWith<PlaylistsSortingTerm> get copyWith => _$PlaylistsSortingTermCopyWithImpl<PlaylistsSortingTerm>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PlaylistsSortingTermToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaylistsSortingTerm&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.by, by) || other.by == by));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,dir,by);
+
+@override
+String toString() {
+  return 'SortingTerm.playlists(dir: $dir, by: $by)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlaylistsSortingTermCopyWith<$Res> implements $SortingTermCopyWith<$Res> {
+  factory $PlaylistsSortingTermCopyWith(PlaylistsSortingTerm value, $Res Function(PlaylistsSortingTerm) _then) = _$PlaylistsSortingTermCopyWithImpl;
+@override @useResult
+$Res call({
+ SortDirection dir, PlaylistsColumn by
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlaylistsSortingTermCopyWithImpl<$Res>
+    implements $PlaylistsSortingTermCopyWith<$Res> {
+  _$PlaylistsSortingTermCopyWithImpl(this._self, this._then);
+
+  final PlaylistsSortingTerm _self;
+  final $Res Function(PlaylistsSortingTerm) _then;
+
+/// Create a copy of SortingTerm
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? dir = null,Object? by = null,}) {
+  return _then(PlaylistsSortingTerm(
+dir: null == dir ? _self.dir : dir // ignore: cast_nullable_to_non_nullable
+as SortDirection,by: null == by ? _self.by : by // ignore: cast_nullable_to_non_nullable
+as PlaylistsColumn,
   ));
 }
 
@@ -2302,6 +2387,619 @@ class _$SongsFilterPlaylistIdCopyWithImpl<$Res>
   return _then(SongsFilterPlaylistId(
 null == playlistId ? _self.playlistId : playlistId // ignore: cast_nullable_to_non_nullable
 as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$PlaylistsQuery {
+
+ int get sourceId; IList<PlaylistsFilter> get filter; IList<PlaylistsSortingTerm> get sort; int? get limit; int? get offset;
+/// Create a copy of PlaylistsQuery
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlaylistsQueryCopyWith<PlaylistsQuery> get copyWith => _$PlaylistsQueryCopyWithImpl<PlaylistsQuery>(this as PlaylistsQuery, _$identity);
+
+  /// Serializes this PlaylistsQuery to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaylistsQuery&&(identical(other.sourceId, sourceId) || other.sourceId == sourceId)&&const DeepCollectionEquality().equals(other.filter, filter)&&const DeepCollectionEquality().equals(other.sort, sort)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.offset, offset) || other.offset == offset));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sourceId,const DeepCollectionEquality().hash(filter),const DeepCollectionEquality().hash(sort),limit,offset);
+
+@override
+String toString() {
+  return 'PlaylistsQuery(sourceId: $sourceId, filter: $filter, sort: $sort, limit: $limit, offset: $offset)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlaylistsQueryCopyWith<$Res>  {
+  factory $PlaylistsQueryCopyWith(PlaylistsQuery value, $Res Function(PlaylistsQuery) _then) = _$PlaylistsQueryCopyWithImpl;
+@useResult
+$Res call({
+ int sourceId, IList<PlaylistsFilter> filter, IList<PlaylistsSortingTerm> sort, int? limit, int? offset
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlaylistsQueryCopyWithImpl<$Res>
+    implements $PlaylistsQueryCopyWith<$Res> {
+  _$PlaylistsQueryCopyWithImpl(this._self, this._then);
+
+  final PlaylistsQuery _self;
+  final $Res Function(PlaylistsQuery) _then;
+
+/// Create a copy of PlaylistsQuery
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? sourceId = null,Object? filter = null,Object? sort = null,Object? limit = freezed,Object? offset = freezed,}) {
+  return _then(_self.copyWith(
+sourceId: null == sourceId ? _self.sourceId : sourceId // ignore: cast_nullable_to_non_nullable
+as int,filter: null == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
+as IList<PlaylistsFilter>,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as IList<PlaylistsSortingTerm>,limit: freezed == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as int?,offset: freezed == offset ? _self.offset : offset // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PlaylistsQuery].
+extension PlaylistsQueryPatterns on PlaylistsQuery {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PlaylistsQuery value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PlaylistsQuery() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PlaylistsQuery value)  $default,){
+final _that = this;
+switch (_that) {
+case _PlaylistsQuery():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PlaylistsQuery value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PlaylistsQuery() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int sourceId,  IList<PlaylistsFilter> filter,  IList<PlaylistsSortingTerm> sort,  int? limit,  int? offset)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PlaylistsQuery() when $default != null:
+return $default(_that.sourceId,_that.filter,_that.sort,_that.limit,_that.offset);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int sourceId,  IList<PlaylistsFilter> filter,  IList<PlaylistsSortingTerm> sort,  int? limit,  int? offset)  $default,) {final _that = this;
+switch (_that) {
+case _PlaylistsQuery():
+return $default(_that.sourceId,_that.filter,_that.sort,_that.limit,_that.offset);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int sourceId,  IList<PlaylistsFilter> filter,  IList<PlaylistsSortingTerm> sort,  int? limit,  int? offset)?  $default,) {final _that = this;
+switch (_that) {
+case _PlaylistsQuery() when $default != null:
+return $default(_that.sourceId,_that.filter,_that.sort,_that.limit,_that.offset);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _PlaylistsQuery implements PlaylistsQuery {
+  const _PlaylistsQuery({required this.sourceId, this.filter = const IListConst([]), required this.sort, this.limit, this.offset});
+  factory _PlaylistsQuery.fromJson(Map<String, dynamic> json) => _$PlaylistsQueryFromJson(json);
+
+@override final  int sourceId;
+@override@JsonKey() final  IList<PlaylistsFilter> filter;
+@override final  IList<PlaylistsSortingTerm> sort;
+@override final  int? limit;
+@override final  int? offset;
+
+/// Create a copy of PlaylistsQuery
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PlaylistsQueryCopyWith<_PlaylistsQuery> get copyWith => __$PlaylistsQueryCopyWithImpl<_PlaylistsQuery>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PlaylistsQueryToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlaylistsQuery&&(identical(other.sourceId, sourceId) || other.sourceId == sourceId)&&const DeepCollectionEquality().equals(other.filter, filter)&&const DeepCollectionEquality().equals(other.sort, sort)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.offset, offset) || other.offset == offset));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sourceId,const DeepCollectionEquality().hash(filter),const DeepCollectionEquality().hash(sort),limit,offset);
+
+@override
+String toString() {
+  return 'PlaylistsQuery(sourceId: $sourceId, filter: $filter, sort: $sort, limit: $limit, offset: $offset)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PlaylistsQueryCopyWith<$Res> implements $PlaylistsQueryCopyWith<$Res> {
+  factory _$PlaylistsQueryCopyWith(_PlaylistsQuery value, $Res Function(_PlaylistsQuery) _then) = __$PlaylistsQueryCopyWithImpl;
+@override @useResult
+$Res call({
+ int sourceId, IList<PlaylistsFilter> filter, IList<PlaylistsSortingTerm> sort, int? limit, int? offset
+});
+
+
+
+
+}
+/// @nodoc
+class __$PlaylistsQueryCopyWithImpl<$Res>
+    implements _$PlaylistsQueryCopyWith<$Res> {
+  __$PlaylistsQueryCopyWithImpl(this._self, this._then);
+
+  final _PlaylistsQuery _self;
+  final $Res Function(_PlaylistsQuery) _then;
+
+/// Create a copy of PlaylistsQuery
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? sourceId = null,Object? filter = null,Object? sort = null,Object? limit = freezed,Object? offset = freezed,}) {
+  return _then(_PlaylistsQuery(
+sourceId: null == sourceId ? _self.sourceId : sourceId // ignore: cast_nullable_to_non_nullable
+as int,filter: null == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
+as IList<PlaylistsFilter>,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as IList<PlaylistsSortingTerm>,limit: freezed == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as int?,offset: freezed == offset ? _self.offset : offset // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+PlaylistsFilter _$PlaylistsFilterFromJson(
+  Map<String, dynamic> json
+) {
+        switch (json['runtimeType']) {
+                  case 'nameSearch':
+          return PlaylistsFilterNameSearch.fromJson(
+            json
+          );
+                case 'public':
+          return PlaylistsFilterPublic.fromJson(
+            json
+          );
+        
+          default:
+            throw CheckedFromJsonException(
+  json,
+  'runtimeType',
+  'PlaylistsFilter',
+  'Invalid union type "${json['runtimeType']}"!'
+);
+        }
+      
+}
+
+/// @nodoc
+mixin _$PlaylistsFilter {
+
+
+
+  /// Serializes this PlaylistsFilter to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaylistsFilter);
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'PlaylistsFilter()';
+}
+
+
+}
+
+/// @nodoc
+class $PlaylistsFilterCopyWith<$Res>  {
+$PlaylistsFilterCopyWith(PlaylistsFilter _, $Res Function(PlaylistsFilter) __);
+}
+
+
+/// Adds pattern-matching-related methods to [PlaylistsFilter].
+extension PlaylistsFilterPatterns on PlaylistsFilter {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlaylistsFilterNameSearch value)?  nameSearch,TResult Function( PlaylistsFilterPublic value)?  public,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch() when nameSearch != null:
+return nameSearch(_that);case PlaylistsFilterPublic() when public != null:
+return public(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlaylistsFilterNameSearch value)  nameSearch,required TResult Function( PlaylistsFilterPublic value)  public,}){
+final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch():
+return nameSearch(_that);case PlaylistsFilterPublic():
+return public(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlaylistsFilterNameSearch value)?  nameSearch,TResult? Function( PlaylistsFilterPublic value)?  public,}){
+final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch() when nameSearch != null:
+return nameSearch(_that);case PlaylistsFilterPublic() when public != null:
+return public(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String name)?  nameSearch,TResult Function( bool public)?  public,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch() when nameSearch != null:
+return nameSearch(_that.name);case PlaylistsFilterPublic() when public != null:
+return public(_that.public);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String name)  nameSearch,required TResult Function( bool public)  public,}) {final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch():
+return nameSearch(_that.name);case PlaylistsFilterPublic():
+return public(_that.public);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String name)?  nameSearch,TResult? Function( bool public)?  public,}) {final _that = this;
+switch (_that) {
+case PlaylistsFilterNameSearch() when nameSearch != null:
+return nameSearch(_that.name);case PlaylistsFilterPublic() when public != null:
+return public(_that.public);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class PlaylistsFilterNameSearch implements PlaylistsFilter {
+  const PlaylistsFilterNameSearch(this.name, {final  String? $type}): $type = $type ?? 'nameSearch';
+  factory PlaylistsFilterNameSearch.fromJson(Map<String, dynamic> json) => _$PlaylistsFilterNameSearchFromJson(json);
+
+ final  String name;
+
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
+/// Create a copy of PlaylistsFilter
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlaylistsFilterNameSearchCopyWith<PlaylistsFilterNameSearch> get copyWith => _$PlaylistsFilterNameSearchCopyWithImpl<PlaylistsFilterNameSearch>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PlaylistsFilterNameSearchToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaylistsFilterNameSearch&&(identical(other.name, name) || other.name == name));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name);
+
+@override
+String toString() {
+  return 'PlaylistsFilter.nameSearch(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlaylistsFilterNameSearchCopyWith<$Res> implements $PlaylistsFilterCopyWith<$Res> {
+  factory $PlaylistsFilterNameSearchCopyWith(PlaylistsFilterNameSearch value, $Res Function(PlaylistsFilterNameSearch) _then) = _$PlaylistsFilterNameSearchCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlaylistsFilterNameSearchCopyWithImpl<$Res>
+    implements $PlaylistsFilterNameSearchCopyWith<$Res> {
+  _$PlaylistsFilterNameSearchCopyWithImpl(this._self, this._then);
+
+  final PlaylistsFilterNameSearch _self;
+  final $Res Function(PlaylistsFilterNameSearch) _then;
+
+/// Create a copy of PlaylistsFilter
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(PlaylistsFilterNameSearch(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class PlaylistsFilterPublic implements PlaylistsFilter {
+  const PlaylistsFilterPublic(this.public, {final  String? $type}): $type = $type ?? 'public';
+  factory PlaylistsFilterPublic.fromJson(Map<String, dynamic> json) => _$PlaylistsFilterPublicFromJson(json);
+
+ final  bool public;
+
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
+/// Create a copy of PlaylistsFilter
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlaylistsFilterPublicCopyWith<PlaylistsFilterPublic> get copyWith => _$PlaylistsFilterPublicCopyWithImpl<PlaylistsFilterPublic>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PlaylistsFilterPublicToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaylistsFilterPublic&&(identical(other.public, public) || other.public == public));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,public);
+
+@override
+String toString() {
+  return 'PlaylistsFilter.public(public: $public)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlaylistsFilterPublicCopyWith<$Res> implements $PlaylistsFilterCopyWith<$Res> {
+  factory $PlaylistsFilterPublicCopyWith(PlaylistsFilterPublic value, $Res Function(PlaylistsFilterPublic) _then) = _$PlaylistsFilterPublicCopyWithImpl;
+@useResult
+$Res call({
+ bool public
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlaylistsFilterPublicCopyWithImpl<$Res>
+    implements $PlaylistsFilterPublicCopyWith<$Res> {
+  _$PlaylistsFilterPublicCopyWithImpl(this._self, this._then);
+
+  final PlaylistsFilterPublic _self;
+  final $Res Function(PlaylistsFilterPublic) _then;
+
+/// Create a copy of PlaylistsFilter
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? public = null,}) {
+  return _then(PlaylistsFilterPublic(
+null == public ? _self.public : public // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

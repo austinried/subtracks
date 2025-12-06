@@ -71,6 +71,30 @@ const _$SongsColumnEnumMap = {
   SongsColumn.starred: 'starred',
   SongsColumn.disc: 'disc',
   SongsColumn.track: 'track',
+  SongsColumn.album: 'album',
+  SongsColumn.artist: 'artist',
+  SongsColumn.albumArtist: 'albumArtist',
+};
+
+PlaylistsSortingTerm _$PlaylistsSortingTermFromJson(
+  Map<String, dynamic> json,
+) => PlaylistsSortingTerm(
+  dir: $enumDecode(_$SortDirectionEnumMap, json['dir']),
+  by: $enumDecode(_$PlaylistsColumnEnumMap, json['by']),
+  $type: json['runtimeType'] as String?,
+);
+
+Map<String, dynamic> _$PlaylistsSortingTermToJson(
+  PlaylistsSortingTerm instance,
+) => <String, dynamic>{
+  'dir': _$SortDirectionEnumMap[instance.dir]!,
+  'by': _$PlaylistsColumnEnumMap[instance.by]!,
+  'runtimeType': instance.$type,
+};
+
+const _$PlaylistsColumnEnumMap = {
+  PlaylistsColumn.name: 'name',
+  PlaylistsColumn.created: 'created',
 };
 
 _AlbumsQuery _$AlbumsQueryFromJson(Map<String, dynamic> json) => _AlbumsQuery(
@@ -222,5 +246,57 @@ Map<String, dynamic> _$SongsFilterPlaylistIdToJson(
   SongsFilterPlaylistId instance,
 ) => <String, dynamic>{
   'playlistId': instance.playlistId,
+  'runtimeType': instance.$type,
+};
+
+_PlaylistsQuery _$PlaylistsQueryFromJson(Map<String, dynamic> json) =>
+    _PlaylistsQuery(
+      sourceId: (json['sourceId'] as num).toInt(),
+      filter: json['filter'] == null
+          ? const IListConst([])
+          : IList<PlaylistsFilter>.fromJson(
+              json['filter'],
+              (value) =>
+                  PlaylistsFilter.fromJson(value as Map<String, dynamic>),
+            ),
+      sort: IList<PlaylistsSortingTerm>.fromJson(
+        json['sort'],
+        (value) => PlaylistsSortingTerm.fromJson(value as Map<String, dynamic>),
+      ),
+      limit: (json['limit'] as num?)?.toInt(),
+      offset: (json['offset'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$PlaylistsQueryToJson(_PlaylistsQuery instance) =>
+    <String, dynamic>{
+      'sourceId': instance.sourceId,
+      'filter': instance.filter.toJson((value) => value),
+      'sort': instance.sort.toJson((value) => value),
+      'limit': instance.limit,
+      'offset': instance.offset,
+    };
+
+PlaylistsFilterNameSearch _$PlaylistsFilterNameSearchFromJson(
+  Map<String, dynamic> json,
+) => PlaylistsFilterNameSearch(
+  json['name'] as String,
+  $type: json['runtimeType'] as String?,
+);
+
+Map<String, dynamic> _$PlaylistsFilterNameSearchToJson(
+  PlaylistsFilterNameSearch instance,
+) => <String, dynamic>{'name': instance.name, 'runtimeType': instance.$type};
+
+PlaylistsFilterPublic _$PlaylistsFilterPublicFromJson(
+  Map<String, dynamic> json,
+) => PlaylistsFilterPublic(
+  json['public'] as bool,
+  $type: json['runtimeType'] as String?,
+);
+
+Map<String, dynamic> _$PlaylistsFilterPublicToJson(
+  PlaylistsFilterPublic instance,
+) => <String, dynamic>{
+  'public': instance.public,
   'runtimeType': instance.$type,
 };

@@ -27,10 +27,7 @@ class ArtistsList extends HookConsumerWidget {
         ArtistsQuery(
           sourceId: ref.read(sourceIdProvider),
           sort: IList([
-            ArtistsSortingTerm(
-              dir: SortDirection.asc,
-              by: ArtistsColumn.name,
-            ),
+            SortingTerm.artistsAsc(ArtistsColumn.name),
           ]),
           limit: kPageSize,
           offset: (pageKey - 1) * kPageSize,

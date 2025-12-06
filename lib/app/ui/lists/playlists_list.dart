@@ -1,6 +1,5 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
@@ -12,22 +11,22 @@ import '../../state/database.dart';
 import '../../state/source.dart';
 import 'items.dart';
 
-const kPageSize = 60;
+const kPageSize = 30;
 
-class AlbumsGrid extends HookConsumerWidget {
-  const AlbumsGrid({super.key});
+class PlaylistsList extends HookConsumerWidget {
+  const PlaylistsList({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
-    final controller = usePagingController<int, Album>(
+    final controller = usePagingController<int, Playlist>(
       getNextPageKey: (state) =>
           state.lastPageIsEmpty ? null : state.nextIntPageKey,
-      fetchPage: (pageKey) => db.libraryDao.listAlbums(
-        AlbumsQuery(
+      fetchPage: (pageKey) => db.libraryDao.listPlaylists(
+        PlaylistsQuery(
           sourceId: ref.read(sourceIdProvider),
           sort: IList([
-            SortingTerm.albumsDesc(AlbumsColumn.created),
+            SortingTerm.playlistsDesc(PlaylistsColumn.created),
           ]),
           limit: kPageSize,
           offset: (pageKey - 1) * kPageSize,
@@ -41,22 +40,16 @@ class AlbumsGrid extends HookConsumerWidget {
     return PagingListener(
       controller: controller,
       builder: (context, state, fetchNextPage) {
-        return SliverPadding(
-          padding: const EdgeInsets.all(8.0),
-          sliver: PagedSliverGrid(
-            state: state,
-            fetchNextPage: fetchNextPage,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-            ),
-            builderDelegate: PagedChildBuilderDelegate<Album>(
-              itemBuilder: (context, item, index) => AlbumGridTile(
-                album: item,
-                onTap: () async {
-                  context.push('/album/${item.id}');
-                },
-              ),
-            ),
+        return PagedSliverList(
+          state: state,
+          fetchNextPage: fetchNextPage,
+          builderDelegate: PagedChildBuilderDelegate<Playlist>(
+            itemBuilder: (context, item, index) {
+              return PlaylistListTile(
+                playlist: item,
+                onTap: () {},
+              );
+            },
           ),
         );
       },

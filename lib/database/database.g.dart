@@ -1471,6 +1471,15 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _publicMeta = const VerificationMeta('public');
+  late final GeneratedColumn<bool> public = GeneratedColumn<bool>(
+    'public',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     sourceId,
@@ -1480,6 +1489,7 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     coverArt,
     created,
     changed,
+    public,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1542,6 +1552,12 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
     } else if (isInserting) {
       context.missing(_changedMeta);
     }
+    if (data.containsKey('public')) {
+      context.handle(
+        _publicMeta,
+        public.isAcceptableOrUnknown(data['public']!, _publicMeta),
+      );
+    }
     return context;
   }
 
@@ -1575,6 +1591,10 @@ class Playlists extends Table with TableInfo<Playlists, models.Playlist> {
         DriftSqlType.string,
         data['${effectivePrefix}cover_art'],
       ),
+      public: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}public'],
+      ),
     );
   }
 
@@ -1600,6 +1620,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
   final Value<String?> coverArt;
   final Value<DateTime> created;
   final Value<DateTime> changed;
+  final Value<bool?> public;
   final Value<int> rowid;
   const PlaylistsCompanion({
     this.sourceId = const Value.absent(),
@@ -1609,6 +1630,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     this.coverArt = const Value.absent(),
     this.created = const Value.absent(),
     this.changed = const Value.absent(),
+    this.public = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PlaylistsCompanion.insert({
@@ -1619,6 +1641,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     this.coverArt = const Value.absent(),
     required DateTime created,
     required DateTime changed,
+    this.public = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : sourceId = Value(sourceId),
        id = Value(id),
@@ -1633,6 +1656,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     Expression<String>? coverArt,
     Expression<DateTime>? created,
     Expression<DateTime>? changed,
+    Expression<bool>? public,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1643,6 +1667,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
       if (coverArt != null) 'cover_art': coverArt,
       if (created != null) 'created': created,
       if (changed != null) 'changed': changed,
+      if (public != null) 'public': public,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1655,6 +1680,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     Value<String?>? coverArt,
     Value<DateTime>? created,
     Value<DateTime>? changed,
+    Value<bool?>? public,
     Value<int>? rowid,
   }) {
     return PlaylistsCompanion(
@@ -1665,6 +1691,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
       coverArt: coverArt ?? this.coverArt,
       created: created ?? this.created,
       changed: changed ?? this.changed,
+      public: public ?? this.public,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1693,6 +1720,9 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
     if (changed.present) {
       map['changed'] = Variable<DateTime>(changed.value);
     }
+    if (public.present) {
+      map['public'] = Variable<bool>(public.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1709,6 +1739,7 @@ class PlaylistsCompanion extends UpdateCompanion<models.Playlist> {
           ..write('coverArt: $coverArt, ')
           ..write('created: $created, ')
           ..write('changed: $changed, ')
+          ..write('public: $public, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3432,6 +3463,7 @@ typedef $PlaylistsCreateCompanionBuilder =
       Value<String?> coverArt,
       required DateTime created,
       required DateTime changed,
+      Value<bool?> public,
       Value<int> rowid,
     });
 typedef $PlaylistsUpdateCompanionBuilder =
@@ -3443,6 +3475,7 @@ typedef $PlaylistsUpdateCompanionBuilder =
       Value<String?> coverArt,
       Value<DateTime> created,
       Value<DateTime> changed,
+      Value<bool?> public,
       Value<int> rowid,
     });
 
@@ -3487,6 +3520,11 @@ class $PlaylistsFilterComposer
 
   ColumnFilters<DateTime> get changed => $composableBuilder(
     column: $table.changed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get public => $composableBuilder(
+    column: $table.public,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3534,6 +3572,11 @@ class $PlaylistsOrderingComposer
     column: $table.changed,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get public => $composableBuilder(
+    column: $table.public,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $PlaylistsAnnotationComposer
@@ -3565,6 +3608,9 @@ class $PlaylistsAnnotationComposer
 
   GeneratedColumn<DateTime> get changed =>
       $composableBuilder(column: $table.changed, builder: (column) => column);
+
+  GeneratedColumn<bool> get public =>
+      $composableBuilder(column: $table.public, builder: (column) => column);
 }
 
 class $PlaylistsTableManager
@@ -3605,6 +3651,7 @@ class $PlaylistsTableManager
                 Value<String?> coverArt = const Value.absent(),
                 Value<DateTime> created = const Value.absent(),
                 Value<DateTime> changed = const Value.absent(),
+                Value<bool?> public = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PlaylistsCompanion(
                 sourceId: sourceId,
@@ -3614,6 +3661,7 @@ class $PlaylistsTableManager
                 coverArt: coverArt,
                 created: created,
                 changed: changed,
+                public: public,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3625,6 +3673,7 @@ class $PlaylistsTableManager
                 Value<String?> coverArt = const Value.absent(),
                 required DateTime created,
                 required DateTime changed,
+                Value<bool?> public = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PlaylistsCompanion.insert(
                 sourceId: sourceId,
@@ -3634,6 +3683,7 @@ class $PlaylistsTableManager
                 coverArt: coverArt,
                 created: created,
                 changed: changed,
+                public: public,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

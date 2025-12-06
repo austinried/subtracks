@@ -8,7 +8,7 @@ part 'library_dao.g.dart';
 
 typedef AristListItem = ({
   models.Artist artist,
-  int? albumCount,
+  int albumCount,
 });
 
 typedef SongListItem = ({
@@ -180,6 +180,42 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
           ),
         )
         .get();
+  }
+
+  Future<List<models.Playlist>> listPlaylists(PlaylistsQuery q) {
+    final query = playlists.select()
+      ..where((playlists) {
+        var filter = playlists.sourceId.equals(q.sourceId);
+        for (final queryFilter in q.filter) {
+          filter &= switch (queryFilter) {
+            PlaylistsFilterPublic(:final public) => playlists.public.equals(
+              public,
+            ),
+            PlaylistsFilterNameSearch() => CustomExpression(''),
+            _ => CustomExpression(''),
+          };
+        }
+
+        return filter;
+      })
+      ..orderBy(
+        q.sort
+            .map(
+              (sort) =>
+                  (albums) => OrderingTerm(
+                    expression: switch (sort.by) {
+                      PlaylistsColumn.name => playlists.name,
+                      PlaylistsColumn.created => playlists.created,
+                    },
+                    mode: sort.dir.toMode(),
+                  ),
+            )
+            .toList(),
+      );
+
+    _limitQuery(query: query, limit: q.limit, offset: q.offset);
+
+    return query.get();
   }
 
   Selectable<models.Album> getAlbum(int sourceId, String id) {

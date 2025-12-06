@@ -34,6 +34,7 @@ Playlist mapPlaylist(XmlElement e) => Playlist(
   coverArt: e.getAttribute('coverArt'),
   created: DateTime.parse(e.getAttribute('created')!),
   changed: DateTime.parse(e.getAttribute('changed')!),
+  public: bool.tryParse(e.getAttribute('public') ?? ''),
   owner: e.getAttribute('owner'),
 );
 
