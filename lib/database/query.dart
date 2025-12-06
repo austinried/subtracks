@@ -27,6 +27,9 @@ enum SongsColumn {
   starred,
   disc,
   track,
+  album,
+  artist,
+  albumArtist,
 }
 
 @freezed

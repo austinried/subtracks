@@ -66,19 +66,25 @@ class SongListTile extends StatelessWidget {
   const SongListTile({
     super.key,
     required this.song,
+    this.coverArt,
+    this.showLeading = false,
     this.onTap,
   });
 
   final Song song;
+  final String? coverArt;
+  final bool showLeading;
   final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      // leading: CoverArtImage(
-      //   coverArt: song.coverArt,
-      //   thumbnail: true,
-      // ),
+      leading: showLeading
+          ? CoverArtImage(
+              coverArt: coverArt,
+              thumbnail: true,
+            )
+          : null,
       title: Text(song.title),
       subtitle: Text(song.artist ?? ''),
       onTap: onTap,

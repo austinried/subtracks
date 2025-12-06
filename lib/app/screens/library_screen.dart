@@ -1,13 +1,18 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../database/query.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../state/services.dart';
+import '../state/source.dart';
 import '../ui/lists/albums_grid.dart';
 import '../ui/lists/artists_list.dart';
+import '../ui/lists/items.dart';
+import '../ui/lists/songs_list.dart';
 import '../util/custom_scroll_fix.dart';
 
 const kIconSize = 26.0;
@@ -51,23 +56,60 @@ class LibraryScreen extends HookConsumerWidget {
           builder: (context) => CustomScrollProvider(
             tabController: tabController,
             parent: PrimaryScrollController.of(context),
-            child: TabBarView(
-              controller: tabController,
-              children: LibraryTab.values
-                  .map(
-                    (tab) => TabScrollView(
-                      index: LibraryTab.values.indexOf(tab),
-                      sliver: switch (tab) {
-                        LibraryTab.albums => AlbumsGrid(),
-                        _ => ArtistsList(),
-                      },
-                    ),
-                  )
-                  .toList(),
-            ),
+            child: LibraryTabBarView(tabController: tabController),
           ),
         ),
       ),
+    );
+  }
+}
+
+class LibraryTabBarView extends HookConsumerWidget {
+  const LibraryTabBarView({
+    super.key,
+    required this.tabController,
+  });
+
+  final TabController tabController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sourceId = ref.watch(sourceIdProvider);
+
+    final songsQuery = SongsQuery(
+      sourceId: sourceId,
+      sort: IList([
+        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.albumArtist),
+        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.album),
+        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.disc),
+        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.track),
+        SongsSortingTerm(dir: SortDirection.asc, by: SongsColumn.title),
+      ]),
+    );
+
+    return TabBarView(
+      controller: tabController,
+      children: LibraryTab.values
+          .map(
+            (tab) => TabScrollView(
+              index: LibraryTab.values.indexOf(tab),
+              sliver: switch (tab) {
+                LibraryTab.albums => AlbumsGrid(),
+                LibraryTab.artists => ArtistsList(),
+                LibraryTab.songs => SongsList(
+                  query: songsQuery,
+                  itemBuilder: (context, item, index) => SongListTile(
+                    song: item.song,
+                    coverArt: item.albumCoverArt,
+                    showLeading: true,
+                    onTap: () {},
+                  ),
+                ),
+                _ => ArtistsList(),
+              },
+            ),
+          )
+          .toList(),
     );
   }
 }

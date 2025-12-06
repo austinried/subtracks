@@ -10,6 +10,7 @@ import '../state/source.dart';
 import '../ui/cover_art_theme.dart';
 import '../ui/gradient.dart';
 import '../ui/lists/header.dart';
+import '../ui/lists/items.dart';
 import '../ui/lists/songs_list.dart';
 
 class AlbumScreen extends HookConsumerWidget {
@@ -61,7 +62,13 @@ class AlbumScreen extends HookConsumerWidget {
                 onMore: () {},
               ),
             ),
-            SongsList(query: query),
+            SongsList(
+              query: query,
+              itemBuilder: (context, item, index) => SongListTile(
+                song: item.song,
+                onTap: () {},
+              ),
+            ),
           ],
         ),
       ),

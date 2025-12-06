@@ -6,7 +6,15 @@ import '../query.dart';
 
 part 'library_dao.g.dart';
 
-typedef AristListItem = ({models.Artist artist, int? albumCount});
+typedef AristListItem = ({
+  models.Artist artist,
+  int? albumCount,
+});
+
+typedef SongListItem = ({
+  models.Song song,
+  String? albumCoverArt,
+});
 
 extension on SortDirection {
   OrderingMode toMode() => switch (this) {
@@ -111,7 +119,7 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
         .get();
   }
 
-  Future<List<models.Song>> listSongs(SongsQuery q) {
+  Future<List<SongListItem>> listSongs(SongsQuery q) {
     var joinPlaylistSongs = false;
     var filter = songs.sourceId.equals(q.sourceId);
 
@@ -127,12 +135,20 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
 
     final query =
         songs.select().join([
+            leftOuterJoin(
+              albums,
+              albums.id.equalsExp(songs.albumId) &
+                  albums.sourceId.equals(q.sourceId),
+            ),
             if (joinPlaylistSongs)
               leftOuterJoin(
                 playlistSongs,
                 playlistSongs.sourceId.equals(q.sourceId) &
                     playlistSongs.songId.equalsExp(songs.id),
               ),
+          ])
+          ..addColumns([
+            albums.coverArt,
           ])
           ..where(filter)
           ..orderBy(
@@ -144,6 +160,9 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
                       SongsColumn.starred => songs.starred,
                       SongsColumn.disc => songs.disc,
                       SongsColumn.track => songs.track,
+                      SongsColumn.album => songs.album,
+                      SongsColumn.artist => songs.artist,
+                      SongsColumn.albumArtist => albums.albumArtist,
                     },
                     mode: sort.dir.toMode(),
                   ),
@@ -153,7 +172,14 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
 
     _limitQuery(query: query, limit: q.limit, offset: q.offset);
 
-    return query.map((row) => (row.readTable(songs))).get();
+    return query
+        .map(
+          (row) => (
+            song: row.readTable(songs),
+            albumCoverArt: row.read(albums.coverArt),
+          ),
+        )
+        .get();
   }
 
   Selectable<models.Album> getAlbum(int sourceId, String id) {
