@@ -20,7 +20,7 @@ const kIconSize = 26.0;
 const kTabHeight = 36.0;
 
 enum LibraryTab {
-  home(Icon(Symbols.home_rounded)),
+  // home(Icon(Symbols.home_rounded)),
   albums(Icon(Symbols.album_rounded)),
   artists(Icon(Symbols.person_rounded)),
   songs(Icon(Symbols.music_note_rounded)),
@@ -41,7 +41,7 @@ class LibraryScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tabController = useTabController(
       initialLength: LibraryTab.values.length,
-      initialIndex: 1,
+      initialIndex: 0,
     );
 
     return Scaffold(
@@ -114,7 +114,7 @@ class LibraryTabBarView extends HookConsumerWidget {
                     onTap: () {},
                   ),
                 ),
-                _ => SliverToBoxAdapter(child: Container()),
+                // _ => SliverToBoxAdapter(child: Container()),
               },
             ),
           )
@@ -216,7 +216,7 @@ class TabTitleText extends HookConsumerWidget {
 
     String tabLocalization(LibraryTab tab) => switch (tab) {
       LibraryTab.albums => l.navigationTabsAlbums,
-      LibraryTab.home => l.navigationTabsHome,
+      // LibraryTab.home => l.navigationTabsHome,
       LibraryTab.artists => l.navigationTabsArtists,
       LibraryTab.songs => l.navigationTabsSongs,
       LibraryTab.playlists => l.navigationTabsPlaylists,
