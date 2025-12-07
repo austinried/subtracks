@@ -36,7 +36,7 @@ class ArtistScreen extends HookConsumerWidget {
 
     final query = AlbumsQuery(
       sourceId: sourceId,
-      // filter: IList([AlbumsFilter.artistId(artist.id)]),
+      filter: IList([AlbumsFilter.artistId(artist.id)]),
       sort: IList([
         SortingTerm.albumsDesc(AlbumsColumn.year),
         SortingTerm.albumsAsc(AlbumsColumn.name),
@@ -79,24 +79,43 @@ class ArtistHeader extends StatelessWidget {
             fit: BoxFit.cover,
             coverArt: artist.coverArt,
             thumbnail: false,
+            height: 350,
           ),
-          Container(
-            color: colorScheme.surface.withAlpha(120),
-            child: Padding(
-              padding: EdgeInsetsGeometry.symmetric(vertical: 12),
-              child: Text(
-                artist.name,
-                textAlign: TextAlign.center,
-                style: textTheme.headlineLarge?.copyWith(
-                  shadows: [
-                    Shadow(
-                      blurRadius: 20,
-                      color: colorScheme.surface,
+          Column(
+            children: [
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: AlignmentGeometry.centerRight,
+                    end: AlignmentGeometry.centerLeft,
+                    colors: [
+                      colorScheme.surface.withAlpha(220),
+                      colorScheme.surface.withAlpha(150),
+                      colorScheme.surface.withAlpha(20),
+                    ],
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  child: Text(
+                    artist.name,
+                    textAlign: TextAlign.right,
+                    style: textTheme.headlineLarge?.copyWith(
+                      shadows: [
+                        Shadow(
+                          blurRadius: 20,
+                          color: colorScheme.surface,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
