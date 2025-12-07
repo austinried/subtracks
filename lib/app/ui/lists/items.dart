@@ -62,6 +62,63 @@ class ArtistListTile extends StatelessWidget {
   }
 }
 
+class AlbumListTile extends StatelessWidget {
+  const AlbumListTile({
+    super.key,
+    required this.album,
+    this.onTap,
+  });
+
+  final Album album;
+  final void Function()? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = TextTheme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 8, right: 18),
+              child: RoundedBoxClip(
+                child: CoverArtImage(
+                  coverArt: album.coverArt,
+                  thumbnail: true,
+                  width: 80,
+                  height: 80,
+                ),
+              ),
+            ),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    album.name,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  Text(
+                    album.albumArtist ?? 'Unknown album artist',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PlaylistListTile extends StatelessWidget {
   const PlaylistListTile({
     super.key,

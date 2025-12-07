@@ -36,6 +36,8 @@ class SongsListHeader extends HookConsumerWidget {
         children: [
           const SizedBox(height: 24),
           Container(
+            height: 300,
+            width: 300,
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
@@ -48,7 +50,6 @@ class SongsListHeader extends HookConsumerWidget {
               ],
             ),
             child: CoverArtImage(
-              height: 300,
               thumbnail: false,
               coverArt: coverArt,
               fit: BoxFit.contain,

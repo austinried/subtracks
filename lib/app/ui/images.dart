@@ -10,14 +10,14 @@ class CoverArtImage extends HookConsumerWidget {
     super.key,
     this.coverArt,
     this.thumbnail = true,
-    this.fit,
+    this.fit = BoxFit.cover,
     this.height,
     this.width,
   });
 
   final String? coverArt;
   final bool thumbnail;
-  final BoxFit? fit;
+  final BoxFit fit;
   final double? height;
   final double? width;
 
@@ -37,7 +37,7 @@ class CoverArtImage extends HookConsumerWidget {
       cacheKey: '$sourceId$coverArt$thumbnail',
       placeholder: (context, url) => Icon(Symbols.cached_rounded),
       errorWidget: (context, url, error) => Icon(Icons.error),
-      fit: BoxFit.cover,
+      fit: fit,
       fadeOutDuration: Duration(milliseconds: 100),
       fadeInDuration: Duration(milliseconds: 200),
     );

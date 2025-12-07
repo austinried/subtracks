@@ -225,6 +225,12 @@ class LibraryDao extends DatabaseAccessor<SubtracksDatabase>
     );
   }
 
+  Selectable<models.Artist> getArtist(int sourceId, String id) {
+    return db.managers.artists.filter(
+      (f) => f.sourceId.equals(sourceId) & f.id.equals(id),
+    );
+  }
+
   Selectable<models.Playlist> getPlaylist(int sourceId, String id) {
     return db.managers.playlists.filter(
       (f) => f.sourceId.equals(sourceId) & f.id.equals(id),

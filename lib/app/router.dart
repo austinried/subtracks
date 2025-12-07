@@ -29,8 +29,9 @@ final router = GoRouter(
                   AlbumScreen(id: state.pathParameters['id']!),
             ),
             GoRoute(
-              path: 'artists',
-              builder: (context, state) => ArtistScreen(),
+              path: 'artists/:id',
+              builder: (context, state) =>
+                  ArtistScreen(id: state.pathParameters['id']!),
             ),
             GoRoute(
               path: 'playlists/:id',

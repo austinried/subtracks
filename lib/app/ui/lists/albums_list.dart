@@ -11,10 +11,10 @@ import '../../state/database.dart';
 import '../../state/source.dart';
 import 'items.dart';
 
-const kPageSize = 60;
+const kPageSize = 30;
 
-class AlbumsGrid extends HookConsumerWidget {
-  const AlbumsGrid({
+class AlbumsList extends HookConsumerWidget {
+  const AlbumsList({
     super.key,
     required this.query,
   });
@@ -42,22 +42,46 @@ class AlbumsGrid extends HookConsumerWidget {
     return PagingListener(
       controller: controller,
       builder: (context, state, fetchNextPage) {
-        return SliverPadding(
-          padding: const EdgeInsets.all(8.0),
-          sliver: PagedSliverGrid(
-            state: state,
-            fetchNextPage: fetchNextPage,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-            ),
-            builderDelegate: PagedChildBuilderDelegate<Album>(
-              itemBuilder: (context, item, index) => AlbumGridTile(
+        return PagedSliverList(
+          state: state,
+          fetchNextPage: fetchNextPage,
+          builderDelegate: PagedChildBuilderDelegate<Album>(
+            itemBuilder: (context, item, index) {
+              final tile = AlbumListTile(
                 album: item,
-                onTap: () async {
+                onTap: () {
                   context.push('/albums/${item.id}');
                 },
-              ),
-            ),
+              );
+
+              final currentItemYear = item.year;
+              final previousItemYear = index == 0
+                  ? currentItemYear
+                  : controller.items?.elementAtOrNull(index - 1)?.year;
+
+              if (index == 0 || currentItemYear != previousItemYear) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 24,
+                        bottom: 8,
+                        left: 16,
+                        right: 16,
+                      ),
+                      child: Text(
+                        item.year?.toString() ?? 'Unknown year',
+                        style: TextTheme.of(context).headlineMedium,
+                      ),
+                    ),
+                    tile,
+                  ],
+                );
+              }
+
+              return tile;
+            },
           ),
         );
       },

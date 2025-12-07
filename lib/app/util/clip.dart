@@ -19,3 +19,21 @@ class CircleClip extends StatelessWidget {
     );
   }
 }
+
+class RoundedBoxClip extends StatelessWidget {
+  const RoundedBoxClip({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadiusGeometry.circular(3),
+      child: child,
+    );
+  }
+}

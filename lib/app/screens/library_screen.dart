@@ -77,6 +77,13 @@ class LibraryTabBarView extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sourceId = ref.watch(sourceIdProvider);
 
+    final albumsQuery = AlbumsQuery(
+      sourceId: sourceId,
+      sort: IList([
+        SortingTerm.albumsDesc(AlbumsColumn.created),
+      ]),
+    );
+
     final songsQuery = SongsQuery(
       sourceId: sourceId,
       sort: IList([
@@ -95,7 +102,7 @@ class LibraryTabBarView extends HookConsumerWidget {
             (tab) => TabScrollView(
               index: LibraryTab.values.indexOf(tab),
               sliver: switch (tab) {
-                LibraryTab.albums => AlbumsGrid(),
+                LibraryTab.albums => AlbumsGrid(query: albumsQuery),
                 LibraryTab.artists => ArtistsList(),
                 LibraryTab.playlists => PlaylistsList(),
                 LibraryTab.songs => SongsList(
@@ -107,7 +114,7 @@ class LibraryTabBarView extends HookConsumerWidget {
                     onTap: () {},
                   ),
                 ),
-                _ => ArtistsList(),
+                _ => SliverToBoxAdapter(child: Container()),
               },
             ),
           )
