@@ -134,9 +134,11 @@ class PlaylistListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CoverArtImage(
-        coverArt: playlist.coverArt,
-        thumbnail: true,
+      leading: RoundedBoxClip(
+        child: CoverArtImage(
+          coverArt: playlist.coverArt,
+          thumbnail: true,
+        ),
       ),
       title: Text(playlist.name),
       subtitle: Text(playlist.comment ?? ''),
@@ -163,9 +165,11 @@ class SongListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: showLeading
-          ? CoverArtImage(
-              coverArt: coverArt,
-              thumbnail: true,
+          ? RoundedBoxClip(
+              child: CoverArtImage(
+                coverArt: coverArt,
+                thumbnail: true,
+              ),
             )
           : null,
       title: Text(song.title),
