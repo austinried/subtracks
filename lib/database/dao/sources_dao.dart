@@ -4,6 +4,8 @@ import '../database.dart';
 
 part 'sources_dao.g.dart';
 
+typedef SourceSetting = ({Source source, SubsonicSetting subsonicSetting});
+
 @DriftAccessor(include: {'../tables.drift'})
 class SourcesDao extends DatabaseAccessor<SubtracksDatabase>
     with _$SourcesDaoMixin {
@@ -16,7 +18,7 @@ class SourcesDao extends DatabaseAccessor<SubtracksDatabase>
         .map((row) => row.read(sources.id));
   }
 
-  Stream<List<(Source, SubsonicSetting)>> listSources() {
+  Stream<List<SourceSetting>> listSources() {
     final query = select(sources).join([
       innerJoin(
         subsonicSettings,
@@ -24,16 +26,54 @@ class SourcesDao extends DatabaseAccessor<SubtracksDatabase>
       ),
     ]);
 
-    return query.watch().map(
-      (rows) => rows
-          .map(
-            (row) => (
-              row.readTable(sources),
-              row.readTable(subsonicSettings),
-            ),
-          )
-          .toList(),
+    return query
+        .map(
+          (row) => (
+            source: row.readTable(sources),
+            subsonicSetting: row.readTable(subsonicSettings),
+          ),
+        )
+        .watch();
+  }
+
+  Selectable<SourceSetting> getSource(int id) {
+    final query = select(sources).join([
+      innerJoin(
+        subsonicSettings,
+        sources.id.equalsExp(subsonicSettings.sourceId),
+      ),
+    ])..where(sources.id.equals(id));
+
+    return query.map(
+      (row) => (
+        source: row.readTable(sources),
+        subsonicSetting: row.readTable(subsonicSettings),
+      ),
     );
+  }
+
+  Future<void> deleteSource(int id) async {
+    await sources.deleteWhere((f) => f.id.equals(id));
+  }
+
+  Future<void> updateSource(Source source, SubsonicSetting subsonic) async {
+    await db.transaction(() async {
+      await sources.update().replace(source);
+      await subsonicSettings.update().replace(subsonic);
+    });
+  }
+
+  Future<void> createSource(
+    SourcesCompanion source,
+    SubsonicSettingsCompanion subsonic,
+  ) async {
+    await db.transaction(() async {
+      final sourceId = await sources.insertOnConflictUpdate(source);
+
+      await subsonicSettings.insertOnConflictUpdate(
+        subsonic.copyWith(sourceId: Value(sourceId)),
+      );
+    });
   }
 
   Future<void> setActiveSource(int id) async {

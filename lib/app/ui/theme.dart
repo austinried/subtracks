@@ -11,18 +11,19 @@ ThemeData subtracksTheme([ColorScheme? colorScheme]) {
     useMaterial3: true,
   );
 
-  final text = theme.textTheme;
-  return theme.copyWith(
-    textTheme: text.copyWith(
-      headlineLarge: text.headlineLarge?.copyWith(
-        fontWeight: FontWeight.w800,
-      ),
-      headlineMedium: text.headlineMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      headlineSmall: text.headlineSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
+  final text = theme.textTheme.copyWith(
+    headlineLarge: theme.textTheme.headlineLarge?.copyWith(
+      fontWeight: FontWeight.w800,
     ),
+    headlineMedium: theme.textTheme.headlineMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+    ),
+    headlineSmall: theme.textTheme.headlineSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+    ),
+  );
+
+  return theme.copyWith(
+    textTheme: text,
   );
 }

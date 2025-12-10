@@ -8,6 +8,7 @@ import 'screens/playlist_screen.dart';
 import 'screens/preload_screen.dart';
 import 'screens/root_shell_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/settings_source_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/preload',
@@ -49,6 +50,13 @@ final router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/sources/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id'];
+        return SettingsSourceScreen(id: id == 'add' ? null : int.parse(id!));
+      },
     ),
   ],
 );

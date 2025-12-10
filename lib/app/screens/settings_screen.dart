@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -14,15 +15,14 @@ class SettingsScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final text = TextTheme.of(context);
+    final textTheme = TextTheme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.navigationTabsSettings, style: text.headlineLarge),
+        title: Text(l.navigationTabsSettings, style: textTheme.headlineLarge),
       ),
       body: ListView(
         children: [
-          // const SizedBox(height: 96),
           _SectionHeader(l.settingsServersName),
           const _Sources(),
           // _SectionHeader(l.settingsNetworkName),
@@ -36,7 +36,9 @@ class SettingsScreen extends HookConsumerWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.children});
+  const _Section({
+    required this.children,
+  });
 
   final List<Widget> children;
 
@@ -46,14 +48,15 @@ class _Section extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...children,
-        const SizedBox(height: 32),
       ],
     );
   }
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
+  const _SectionHeader(
+    this.title,
+  );
 
   final String title;
 
@@ -61,17 +64,14 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = TextTheme.of(context);
 
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: kHorizontalPadding),
-            child: Text(title, style: text.headlineMedium),
-          ),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsetsGeometry.directional(
+        start: kHorizontalPadding,
+        end: kHorizontalPadding,
+        top: 32,
+        bottom: 8,
+      ),
+      child: Text(title, style: text.headlineMedium),
     );
   }
 }
@@ -376,12 +376,12 @@ class _Sources extends HookConsumerWidget {
           },
           child: Column(
             children: [
-              for (final (source, settings) in sources)
+              for (final (:source, :subsonicSetting) in sources)
                 RadioListTile<int>(
                   value: source.id,
                   title: Text(source.name),
                   subtitle: Text(
-                    settings.address.toString(),
+                    subsonicSetting.address.toString(),
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.fade,
@@ -389,7 +389,7 @@ class _Sources extends HookConsumerWidget {
                   secondary: IconButton(
                     icon: const Icon(Icons.edit_rounded),
                     onPressed: () {
-                      // context.pushRoute(SourceRoute(id: source.id));
+                      context.push('/sources/${source.id}');
                     },
                   ),
                 ),
@@ -404,7 +404,7 @@ class _Sources extends HookConsumerWidget {
               icon: const Icon(Icons.add_rounded),
               label: Text(l.settingsServersActionsAdd),
               onPressed: () {
-                // context.pushRoute(SourceRoute());
+                context.push('/sources/add');
               },
             ),
           ],
