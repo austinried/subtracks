@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../util/logger.dart';
 import '../state/source.dart';
 import '../util/color_scheme.dart';
 import 'theme.dart';
@@ -36,8 +37,12 @@ class CoverArtTheme extends HookConsumerWidget {
                   : 'https://placehold.net/400x400.png',
             ),
           );
-        } catch (err) {
-          print(err);
+        } catch (error, stackTrace) {
+          logger.w(
+            'Could not create color scheme from image provider',
+            error: error,
+            stackTrace: stackTrace,
+          );
           return null;
         }
       },

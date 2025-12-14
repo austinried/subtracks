@@ -26,6 +26,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   intl: any
   json_annotation: ^4.9.0
+  logger: ^2.6.2
   material_color_utilities: ^0.11.1
   material_symbols_icons: ^4.2874.0
   octo_image: ^2.1.0

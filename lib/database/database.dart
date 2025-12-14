@@ -7,6 +7,7 @@ import '../sources/models.dart' as models;
 import 'converters.dart';
 import 'dao/library_dao.dart';
 import 'dao/sources_dao.dart';
+import 'log_interceptor.dart';
 
 part 'database.g.dart';
 
@@ -27,14 +28,14 @@ class SubtracksDatabase extends _$SubtracksDatabase {
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
-      name: 'my_database',
+      name: 'subtracks_database',
       native: DriftNativeOptions(
         databasePath: () async {
           final directory = await getApplicationSupportDirectory();
           return path.join(directory.absolute.path, 'subtracks.sqlite');
         },
       ),
-    );
+    ).interceptWith(LogInterceptor());
   }
 
   @override

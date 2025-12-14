@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../database/dao/sources_dao.dart';
 import '../../database/database.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../util/logger.dart';
 import '../state/database.dart';
 import '../util/padding.dart';
 
@@ -216,6 +217,7 @@ class _SettingsSourceScreen extends HookConsumerWidget {
                       } catch (e, _) {
                         // showErrorSnackbar(context, e.toString());
                         // log.severe('Saving source', e, st);
+                        logger.w('fuck');
                         error = true;
                       } finally {
                         isSaving.value = false;
