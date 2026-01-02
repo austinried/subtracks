@@ -1,19 +1,18 @@
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../database/query.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../state/lists.dart';
 import '../state/services.dart';
-import '../state/source.dart';
 import '../ui/lists/albums_grid.dart';
 import '../ui/lists/artists_list.dart';
 import '../ui/lists/items.dart';
 import '../ui/lists/playlists_list.dart';
 import '../ui/lists/songs_list.dart';
+import '../ui/menus.dart';
 import '../util/custom_scroll_fix.dart';
 
 const kIconSize = 26.0;
@@ -75,25 +74,7 @@ class LibraryTabBarView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sourceId = ref.watch(sourceIdProvider);
-
-    final albumsQuery = AlbumsQuery(
-      sourceId: sourceId,
-      sort: IList([
-        SortingTerm.albumsDesc(AlbumsColumn.created),
-      ]),
-    );
-
-    final songsQuery = SongsQuery(
-      sourceId: sourceId,
-      sort: IList([
-        SortingTerm.songsAsc(SongsColumn.albumArtist),
-        SortingTerm.songsAsc(SongsColumn.album),
-        SortingTerm.songsAsc(SongsColumn.disc),
-        SortingTerm.songsAsc(SongsColumn.track),
-        SortingTerm.songsAsc(SongsColumn.title),
-      ]),
-    );
+    final songsQuery = ref.watch(songsQueryProvider);
 
     return TabBarView(
       controller: tabController,
@@ -102,7 +83,7 @@ class LibraryTabBarView extends HookConsumerWidget {
             (tab) => TabScrollView(
               index: LibraryTab.values.indexOf(tab),
               sliver: switch (tab) {
-                LibraryTab.albums => AlbumsGrid(query: albumsQuery),
+                LibraryTab.albums => AlbumsGrid(),
                 LibraryTab.artists => ArtistsList(),
                 LibraryTab.playlists => PlaylistsList(),
                 LibraryTab.songs => SongsList(
@@ -115,6 +96,13 @@ class LibraryTabBarView extends HookConsumerWidget {
                   ),
                 ),
                 // _ => SliverToBoxAdapter(child: Container()),
+              },
+              menuBuilder: switch (tab) {
+                LibraryTab.albums => (_) => AlbumsGridFilters(),
+                // LibraryTab.artists => (_) => AlbumsGridFilters(),
+                // LibraryTab.playlists => (_) => AlbumsGridFilters(),
+                // LibraryTab.songs => (_) => AlbumsGridFilters(),
+                _ => null,
               },
             ),
           )
@@ -240,10 +228,12 @@ class TabScrollView extends HookConsumerWidget {
     super.key,
     required this.index,
     required this.sliver,
+    this.menuBuilder,
   });
 
   final int index;
   final Widget sliver;
+  final WidgetBuilder? menuBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -251,14 +241,24 @@ class TabScrollView extends HookConsumerWidget {
 
     final scrollProvider = CustomScrollProviderData.of(context);
 
-    return CustomScrollView(
-      controller: scrollProvider.scrollControllers[index],
-      slivers: <Widget>[
-        SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        ),
-        sliver,
-      ],
+    final listBuilder = menuBuilder;
+    final floatingActionButton = listBuilder != null
+        ? FabFilter(
+            listBuilder: listBuilder,
+          )
+        : null;
+
+    return Scaffold(
+      floatingActionButton: floatingActionButton,
+      body: CustomScrollView(
+        controller: scrollProvider.scrollControllers[index],
+        slivers: <Widget>[
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          sliver,
+        ],
+      ),
     );
   }
 }

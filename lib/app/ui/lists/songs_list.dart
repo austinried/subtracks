@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
@@ -8,6 +9,7 @@ import '../../hooks/use_on_source.dart';
 import '../../hooks/use_paging_controller.dart';
 import '../../state/database.dart';
 import '../../state/source.dart';
+import '../menus.dart';
 
 const kPageSize = 30;
 
@@ -37,8 +39,8 @@ class SongsList extends HookConsumerWidget {
       ),
     );
 
-    useOnSourceChange(ref, (_) => controller.refresh());
     useOnSourceSync(ref, controller.refresh);
+    useValueChanged(query, (_, _) => controller.refresh());
 
     return PagingListener(
       controller: controller,
@@ -47,6 +49,7 @@ class SongsList extends HookConsumerWidget {
           state: state,
           fetchNextPage: fetchNextPage,
           builderDelegate: PagedChildBuilderDelegate<SongListItem>(
+            noMoreItemsIndicatorBuilder: (context) => FabPadding(),
             itemBuilder: itemBuilder,
           ),
         );

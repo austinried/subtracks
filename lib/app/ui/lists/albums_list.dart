@@ -9,6 +9,7 @@ import '../../hooks/use_on_source.dart';
 import '../../hooks/use_paging_controller.dart';
 import '../../state/database.dart';
 import '../../state/source.dart';
+import '../menus.dart';
 import 'items.dart';
 
 const kPageSize = 30;
@@ -46,6 +47,7 @@ class AlbumsList extends HookConsumerWidget {
           state: state,
           fetchNextPage: fetchNextPage,
           builderDelegate: PagedChildBuilderDelegate<Album>(
+            noMoreItemsIndicatorBuilder: (context) => FabPadding(),
             itemBuilder: (context, item, index) {
               final tile = AlbumListTile(
                 album: item,
