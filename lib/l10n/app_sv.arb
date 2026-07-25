@@ -1,0 +1,280 @@
+{
+  "actionsDownload": "Ladda ned",
+  "@actionsDownload": {},
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "resourcesQueueName": "{count,plural, =1{Kö} other{Köer}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsMusicOptionsScrobbleDescriptionOff": "Skrobbla ej spelhistorik",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsNetworkValuesSeconds": "{value} sekunder",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "Topplåtar",
+  "@resourcesSongListsArtistTopSongs": {},
+  "navigationTabsSettings": "Inställningar",
+  "@navigationTabsSettings": {},
+  "actionsStar": "Markera",
+  "@actionsStar": {},
+  "resourcesSortByName": "Namn",
+  "@resourcesSortByName": {},
+  "settingsServersActionsAdd": "Lägg till källa",
+  "@settingsServersActionsAdd": {},
+  "resourcesArtistActionsView": "Visa artist",
+  "@resourcesArtistActionsView": {},
+  "resourcesFilterStarred": "Markerad",
+  "@resourcesFilterStarred": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Maximal bitrate (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "actionsDelete": "Radera",
+  "@actionsDelete": {},
+  "settingsAboutName": "Om",
+  "@settingsAboutName": {},
+  "resourcesFilterAlbum": "Album",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterOwner": "Ägare",
+  "@resourcesFilterOwner": {},
+  "navigationTabsSearch": "Sök",
+  "@navigationTabsSearch": {},
+  "resourcesSongListDeleteAllTitle": "Radera nedladdningar?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "settingsServersMessagesConnectionFailed": "Anslutning till {adress} misslyckades, kontrollera inställningar eller server",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "actionsDownloadDelete": "Radera nedladdat",
+  "@actionsDownloadDelete": {},
+  "actionsCancel": "Avbryt",
+  "@actionsCancel": {},
+  "settingsAboutActionsProjectHomepage": "Projekthemsida",
+  "@settingsAboutActionsProjectHomepage": {},
+  "resourcesFilterArtist": "Artist",
+  "@resourcesFilterArtist": {},
+  "resourcesAlbumListsSort": "Sortera album",
+  "@resourcesAlbumListsSort": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Maximal bufferttid",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsServersActionsSave": "Spara",
+  "@settingsServersActionsSave": {},
+  "settingsNetworkOptionsMinBufferTitle": "Minimum buffertid",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "resourcesSortByFrequentlyPlayed": "Spelas oftast",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "settingsResetName": "Återställ",
+  "@settingsResetName": {},
+  "searchMoreResults": "Mer …",
+  "@searchMoreResults": {},
+  "navigationTabsHome": "Hem",
+  "@navigationTabsHome": {},
+  "resourcesArtistName": "{count,plural, =1{Artist} other{Artister}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByUpdated": "Nyligen uppdaterade",
+  "@resourcesSortByUpdated": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkOptionsOfflineModeOn": "Använd inte internet för att uppdatera eller spela upp musik.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} other{Album}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsResetActionsClearImageCache": "Rensa bildcache",
+  "@settingsResetActionsClearImageCache": {},
+  "searchInputPlaceholder": "Sök",
+  "@searchInputPlaceholder": {},
+  "settingsAboutVersion": "version {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Nyligen tillagda",
+  "@resourcesSortByAdded": {},
+  "settingsNetworkValuesUnlimitedKbps": "Obegränsad",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "resourcesFilterGenre": "Genre",
+  "@resourcesFilterGenre": {},
+  "settingsServersFieldsPassword": "Lösenord",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Användarnamn",
+  "@settingsServersFieldsUsername": {},
+  "searchHeaderTitle": "Sök: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "actionsUnstar": "Omarkera",
+  "@actionsUnstar": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} spellista} other{{count} spellistor}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByYear": "Efter år",
+  "@resourcesSortByYear": {},
+  "resourcesSortByTitle": "Titel",
+  "@resourcesSortByTitle": {},
+  "actionsDownloadCancel": "Avbryt Nedladdning",
+  "@actionsDownloadCancel": {},
+  "settingsServersActionsDelete": "Radera",
+  "@settingsServersActionsDelete": {},
+  "settingsServersFieldsName": "Namn",
+  "@settingsServersFieldsName": {},
+  "resourcesPlaylistName": "{count,plural, =1{Spellista} other{Spellistor}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Skicka lösenord som token + salt",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "resourcesArtistListsSort": "Sortera artister",
+  "@resourcesArtistListsSort": {},
+  "controlsShuffle": "Blanda",
+  "@controlsShuffle": {},
+  "searchNowPlayingContext": "Sökresultat",
+  "@searchNowPlayingContext": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Skicka lösenord i klartext (Föråldrat. Se till att din uppkoppling är säker!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "messagesNothingHere": "Inget här…",
+  "@messagesNothingHere": {},
+  "settingsNetworkOptionsStreamFormat": "Föredraget streamformat",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsAboutActionsSupport": "Stöd utvecklaren 💜",
+  "@settingsAboutActionsSupport": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} artist} other{{count} artister}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumActionsPlay": "Spela album",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesSortByRandom": "Slumpmässig",
+  "@resourcesSortByRandom": {},
+  "navigationTabsLibrary": "Bibliotek",
+  "@navigationTabsLibrary": {},
+  "resourcesFilterYear": "År",
+  "@resourcesFilterYear": {},
+  "settingsNetworkOptionsOfflineModeOff": "Använd internet för att uppdatera musik.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsServersFieldsAddress": "Adress",
+  "@settingsServersFieldsAddress": {},
+  "settingsMusicName": "Musik",
+  "@settingsMusicName": {},
+  "settingsAboutChooseLog": "Välj en loggfil",
+  "@settingsAboutChooseLog": {},
+  "resourcesSortByArtist": "Konstnär",
+  "@resourcesSortByArtist": {},
+  "settingsServersMessagesConnectionOk": "Anslutning till {adress} OK!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutShareLogs": "Dela loggarna",
+  "@settingsAboutShareLogs": {},
+  "settingsServersActionsEdit": "Redigera källa",
+  "@settingsServersActionsEdit": {},
+  "resourcesPlaylistActionsPlay": "Spela upp spellista",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesSortByRecentlyPlayed": "Senast spelade",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSongName": "{count,plural, =1{Låt} other{Låtar}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAlbumCount": "Albumantal",
+  "@resourcesSortByAlbumCount": {},
+  "settingsMusicOptionsScrobbleTitle": "Skrobbla uppspelningar",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsAboutActionsLicenses": "Licenser",
+  "@settingsAboutActionsLicenses": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Använd serverns standardinställning",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Skrobbla spelhistorik",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "resourcesSortByAlbum": "Album",
+  "@resourcesSortByAlbum": {},
+  "settingsNetworkOptionsOfflineMode": "Offline-läge",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "resourcesSongListDeleteAllContent": "Detta tar bort alla nedladdade låtfiler.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesAlbumActionsView": "Visa album",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} album}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Maximal bitrate (mobilnätverk)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkName": "Nätverk",
+  "@settingsNetworkName": {},
+  "settingsServersActionsTestConnection": "Testanslutning",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersName": "Källor",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Tvinga lösenord i klartext",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "resourcesSongCount": "{count,plural, =1{{count} låt} other{{count} låtar}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
