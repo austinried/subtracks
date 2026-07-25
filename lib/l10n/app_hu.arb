@@ -1,0 +1,224 @@
+{
+  "settingsServersActionsEdit": "Forrás szerkesztése",
+  "@settingsServersActionsEdit": {},
+  "actionsCancel": "Mégsem",
+  "@actionsCancel": {},
+  "actionsDelete": "Törlés",
+  "@actionsDelete": {},
+  "actionsDownload": "Letöltés",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "Letöltés visszavonása",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "Letöltések törlése",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "Rendben",
+  "@actionsOk": {},
+  "actionsStar": "Kedvencekhez adás",
+  "@actionsStar": {},
+  "resourcesAlbumActionsView": "Album megtekintése",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Albumok rendezése",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} other{Album}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actionsUnstar": "Kedvencekből törlés",
+  "@actionsUnstar": {},
+  "navigationTabsHome": "Kezdőoldal",
+  "@navigationTabsHome": {},
+  "messagesNothingHere": "Nincs itt semmi…",
+  "@messagesNothingHere": {},
+  "controlsShuffle": "Véletlen sorrend",
+  "@controlsShuffle": {},
+  "resourcesArtistActionsView": "Előadó megtekintése",
+  "@resourcesArtistActionsView": {},
+  "resourcesFilterAlbum": "Album",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "Előadó",
+  "@resourcesFilterArtist": {},
+  "resourcesArtistName": "{count,plural, =1{Előadó} other{Előadó}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistCount": "{count,plural, =1{{count} előadó} other{{count} előadó}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterYear": "Év",
+  "@resourcesFilterYear": {},
+  "resourcesFilterStarred": "Kedvencek között",
+  "@resourcesFilterStarred": {},
+  "resourcesSongListDeleteAllContent": "Ezzel törlöd az összes letöltött zenefájlt.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSortByAdded": "Legutóbb hozzáadva",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByArtist": "Előadó",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Gyakran játszott",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByRandom": "Véletlenszerű",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "Legutóbb játszott",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByUpdated": "Legutóbb frissült",
+  "@resourcesSortByUpdated": {},
+  "searchNowPlayingContext": "Keresés eredménye",
+  "@searchNowPlayingContext": {},
+  "searchMoreResults": "Tovább…",
+  "@searchMoreResults": {},
+  "settingsAboutActionsLicenses": "Licenszek",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsSupport": "Támogasd a fejlesztőt 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsAboutVersion": "{version} verzió",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutName": "Az alkalmazásról",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "Logfájlok megosztása",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Logfájl kiválasztása",
+  "@settingsAboutChooseLog": {},
+  "settingsMusicName": "Zene",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Ne scrobble-ozza a lejátszási előzményeket",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsNetworkOptionsOfflineMode": "Offline mód",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Maximum bitráta (mobil adattal)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Maximum bitráta (Wi-Fi-n)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Minimum bufferelési idő",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Maximum bufferelési idő",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Szerver alapértelmezés használata",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Lejátszási előzmények scrobble-ozása",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Scrobble lejátszások",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Hálózat",
+  "@settingsNetworkName": {},
+  "settingsServersActionsSave": "Mentés",
+  "@settingsServersActionsSave": {},
+  "settingsNetworkValuesSeconds": "{value} másodperc",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Korlátlan",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Kép Gyorsítótár Ürítése",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Alaphelyzet",
+  "@settingsResetName": {},
+  "settingsServersFieldsAddress": "Cím",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersMessagesConnectionOk": "Csatlakozás a {address} címhez rendben!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Források",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Jelszó küldése egyszerű szövegként (elavult, győződj meg róla hogy a kapcsolat biztonságos!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Egyszerű szöveges jelszó kényszerítése",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "resourcesFilterGenre": "Stílus",
+  "@resourcesFilterGenre": {},
+  "navigationTabsSearch": "Keresés",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Beállítások",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Album lejátszása",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesSortByName": "Név",
+  "@resourcesSortByName": {},
+  "resourcesSortByTitle": "Cím",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByYear": "Év",
+  "@resourcesSortByYear": {},
+  "settingsAboutActionsProjectHomepage": "Projekt weboldal",
+  "@settingsAboutActionsProjectHomepage": {},
+  "searchHeaderTitle": "Keresés erre: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Keresés",
+  "@searchInputPlaceholder": {},
+  "settingsServersActionsDelete": "Törlés",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsTestConnection": "Kapcsolat tesztelése",
+  "@settingsServersActionsTestConnection": {},
+  "resourcesSortByAlbum": "Album",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "Albumok száma",
+  "@resourcesSortByAlbumCount": {},
+  "settingsServersActionsAdd": "Forrás hozzáadása",
+  "@settingsServersActionsAdd": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} album}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersFieldsName": "Név",
+  "@settingsServersFieldsName": {},
+  "settingsServersFieldsPassword": "Jelszó",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Felhasználónév",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Csatlakozás a {address} címhez sikertelen, ellenőrizd a beállításokat vagy a szervert",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "resourcesArtistListsSort": "Előadók rendezése",
+  "@resourcesArtistListsSort": {},
+  "resourcesSongListDeleteAllTitle": "Törlöd a letöltéseket?",
+  "@resourcesSongListDeleteAllTitle": {}
+}
