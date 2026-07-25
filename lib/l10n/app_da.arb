@@ -1,176 +1,182 @@
 {
-    "messagesNothingHere": "Intet her…",
-    "@messagesNothingHere": {},
-    "navigationTabsHome": "Hjem",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "Bibliotek",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "Søg",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "Indstillinger",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "Afspil album",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "Se album",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "Sortér albums",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, =1{Album} other{Albums}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistActionsView": "Se kunstnere",
-    "@resourcesArtistActionsView": {},
-    "resourcesArtistListsSort": "Sortér kunstnere",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, =1{Kunstner} other{Kunstnere}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterGenre": "Efter genre",
-    "@resourcesFilterGenre": {},
-    "resourcesPlaylistActionsPlay": "Afspil spilleliste",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, =1{Spilleliste} other{Spillelister}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesQueueName": "{count,plural, =1{Kø} other{Køer}}",
-    "@resourcesQueueName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "Top sange",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, =1{Sang} other{Sange}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByArtist": "Efter kunstner",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByName": "Efter navn",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "Tilfældig",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByYear": "Efter år",
-    "@resourcesSortByYear": {},
-    "searchHeaderTitle": "Søg: {query}",
-    "@searchHeaderTitle": {
-        "placeholders": {
-            "query": {
-                "type": "String"
-            }
-        }
-    },
-    "searchInputPlaceholder": "Søg",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "Mere…",
-    "@searchMoreResults": {},
-    "searchNowPlayingContext": "Søgeresultater",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "Licenser",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "Projekt hjemmeside",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "Omkring",
-    "@settingsAboutName": {},
-    "settingsAboutVersion": "version {version}",
-    "@settingsAboutVersion": {
-        "placeholders": {
-            "version": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsMusicName": "Musik",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble afspilningshistorik",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Scrobble afspilninger",
-    "@settingsMusicOptionsScrobbleTitle": {},
-    "settingsNetworkName": "Netværk",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksimum bitrate (mobil)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksimum bitrate (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
-    "settingsNetworkOptionsMaxBufferTitle": "Maksimum buffertid",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
-    "settingsNetworkOptionsMinBufferTitle": "Minimum buffertid",
-    "@settingsNetworkOptionsMinBufferTitle": {},
-    "settingsNetworkValuesKbps": "{value}kbps",
-    "@settingsNetworkValuesKbps": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesSeconds": "{value} sekunder",
-    "@settingsNetworkValuesSeconds": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesUnlimitedKbps": "Ubegrænset",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "Ryd billede cache",
-    "@settingsResetActionsClearImageCache": {},
-    "settingsResetName": "Nulstil",
-    "@settingsResetName": {},
-    "settingsServersActionsAdd": "Tilføj server",
-    "@settingsServersActionsAdd": {},
-    "settingsServersActionsDelete": "Slet",
-    "@settingsServersActionsDelete": {},
-    "settingsServersActionsEdit": "Redigér server",
-    "@settingsServersActionsEdit": {},
-    "settingsServersActionsSave": "Gem",
-    "@settingsServersActionsSave": {},
-    "settingsServersActionsTestConnection": "Test forbindelse",
-    "@settingsServersActionsTestConnection": {},
-    "settingsServersFieldsAddress": "Adresse",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "Adgangskode",
-    "@settingsServersFieldsPassword": {},
-    "settingsServersFieldsUsername": "Brugernavn",
-    "@settingsServersFieldsUsername": {},
-    "settingsServersMessagesConnectionFailed": "Forbindelse til {address} mislykkedes, tjek indstillinger eller server",
-    "@settingsServersMessagesConnectionFailed": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersMessagesConnectionOk": "Forbindelse til {address} OK!",
-    "@settingsServersMessagesConnectionOk": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersName": "Servere",
-    "@settingsServersName": {}
+  "messagesNothingHere": "Intet her…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Hjem",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "Bibliotek",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "Søg",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Indstillinger",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Afspil album",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Se album",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Sortér albums",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} other{Albums}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "Se kunstnere",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Sortér kunstnere",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{Kunstner} other{Kunstnere}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterGenre": "Efter genre",
+  "@resourcesFilterGenre": {},
+  "resourcesPlaylistActionsPlay": "Afspil spilleliste",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistName": "{count,plural, =1{Spilleliste} other{Spillelister}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Kø} other{Køer}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "Top sange",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{Sang} other{Sange}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByArtist": "Efter kunstner",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByName": "Efter navn",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "Tilfældig",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByYear": "Efter år",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "Søg: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Søg",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Mere…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Søgeresultater",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Licenser",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "Projekt hjemmeside",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutName": "Omkring",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "version {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "Musik",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble afspilningshistorik",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Scrobble afspilninger",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Netværk",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksimum bitrate (mobil)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksimum bitrate (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Maksimum buffertid",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Minimum buffertid",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} sekunder",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Ubegrænset",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Ryd billede cache",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Nulstil",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "Tilføj server",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "Slet",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "Redigér server",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "Gem",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Test forbindelse",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "Adresse",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "Adgangskode",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Brugernavn",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Forbindelse til {address} mislykkedes, tjek indstillinger eller server",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Forbindelse til {address} OK!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Servere",
+  "@settingsServersName": {},
+  "actionsDownload": "Hent",
+  "@actionsDownload": {},
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "actionsDelete": "Slet",
+  "@actionsDelete": {}
 }
