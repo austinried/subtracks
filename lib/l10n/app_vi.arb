@@ -1,25 +1,15 @@
 {
-    "actionsStar": "Đánh dấu sao",
-    "@actionsStar": {},
-    "actionsUnstar": "Bỏ dấu sao",
-    "@actionsUnstar": {},
+    "actionsStar": "Yêu thích",
+    "actionsUnstar": "Bỏ yêu thích",
     "messagesNothingHere": "Không có gì ở đây…",
-    "@messagesNothingHere": {},
     "navigationTabsHome": "Trang chủ",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "Thư Viện",
-    "@navigationTabsLibrary": {},
+    "navigationTabsLibrary": "Thư viện",
     "navigationTabsSearch": "Tìm kiếm",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "Thiết Lập",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "Phát Album",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "Xem Album",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "Sắp xếp Album",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, other{Album}}",
+    "navigationTabsSettings": "Cài đặt",
+    "resourcesAlbumActionsPlay": "Phát album",
+    "resourcesAlbumActionsView": "Xem album",
+    "resourcesAlbumListsSort": "Sắp xếp album",
+    "resourcesAlbumName": "{count,plural, =1{album} other{album}}",
     "@resourcesAlbumName": {
         "placeholders": {
             "count": {
@@ -27,11 +17,9 @@
             }
         }
     },
-    "resourcesArtistActionsView": "Xem Nghệ sĩ",
-    "@resourcesArtistActionsView": {},
+    "resourcesArtistActionsView": "Xem nghệ sĩ",
     "resourcesArtistListsSort": "Sắp xếp nghệ sĩ",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, other{Nghệ sĩ}}",
+    "resourcesArtistName": "{count,plural, =1{Nghệ sĩ} other{Nghệ sĩ}}",
     "@resourcesArtistName": {
         "placeholders": {
             "count": {
@@ -40,12 +28,9 @@
         }
     },
     "resourcesFilterGenre": "Theo thể loại",
-    "@resourcesFilterGenre": {},
-    "resourcesFilterStarred": "Có gắn dấu sao",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistActionsPlay": "Phát Danh sách phát",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, other{Danh sách phát}}",
+    "resourcesFilterStarred": "Theo yêu thích",
+    "resourcesPlaylistActionsPlay": "Phát playlist",
+    "resourcesPlaylistName": "{count,plural, =1{Playlist} other{Playlist}}",
     "@resourcesPlaylistName": {
         "placeholders": {
             "count": {
@@ -53,7 +38,7 @@
             }
         }
     },
-    "resourcesQueueName": "{count,plural, other{Hàng chờ}}",
+    "resourcesQueueName": "{count,plural, =1{Danh sách chờ} other{Danh sách chờ}}",
     "@resourcesQueueName": {
         "placeholders": {
             "count": {
@@ -61,9 +46,8 @@
             }
         }
     },
-    "resourcesSongListsArtistTopSongs": "Bài hát hàng đầu",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, other{Bài hát}}",
+    "resourcesSongListsArtistTopSongs": "Những bài hát thịnh hành",
+    "resourcesSongName": "{count,plural, =1{Bài hát} other{Bài hát}}",
     "@resourcesSongName": {
         "placeholders": {
             "count": {
@@ -71,20 +55,13 @@
             }
         }
     },
-    "resourcesSortByAdded": "Thêm vào gần đây",
-    "@resourcesSortByAdded": {},
-    "resourcesSortByArtist": "Theo nghệ sĩ",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByFrequentlyPlayed": "Thường xuyên chơi",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByName": "Theo tên",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "Ngẫu Nhiên",
-    "@resourcesSortByRandom": {},
+    "resourcesSortByAdded": "Vừa thêm",
+    "resourcesSortByArtist": "Nghệ sĩ",
+    "resourcesSortByFrequentlyPlayed": "Thường nghe",
+    "resourcesSortByName": "Tên",
+    "resourcesSortByRandom": "Ngẫu nhiên",
     "resourcesSortByRecentlyPlayed": "Đã phát gần đây",
-    "@resourcesSortByRecentlyPlayed": {},
-    "resourcesSortByYear": "Theo năm",
-    "@resourcesSortByYear": {},
+    "resourcesSortByYear": "Năm",
     "searchHeaderTitle": "Tìm kiếm: {query}",
     "@searchHeaderTitle": {
         "placeholders": {
@@ -94,17 +71,11 @@
         }
     },
     "searchInputPlaceholder": "Tìm kiếm",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "Nhiều hơn…",
-    "@searchMoreResults": {},
+    "searchMoreResults": "Thêm…",
     "searchNowPlayingContext": "Kết quả tìm kiếm",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "Giấy phép",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "Trang chủ Dự án",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "Giới thiệu",
-    "@settingsAboutName": {},
+    "settingsAboutActionsLicenses": "Bản quyền",
+    "settingsAboutActionsProjectHomepage": "Trang chủ dự án",
+    "settingsAboutName": "Về ứng dụng",
     "settingsAboutVersion": "phiên bản {version}",
     "@settingsAboutVersion": {
         "placeholders": {
@@ -113,24 +84,15 @@
             }
         }
     },
-    "settingsMusicName": "Âm nhạc",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOff": "Đừng scrobble lịch sử chơi",
-    "@settingsMusicOptionsScrobbleDescriptionOff": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Lịch sử chơi Scrobble",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Scrobble lượt chơi",
-    "@settingsMusicOptionsScrobbleTitle": {},
+    "settingsMusicName": "Nhạc",
+    "settingsMusicOptionsScrobbleDescriptionOff": "Không đồng bộ lịch sử phát nhạc",
+    "settingsMusicOptionsScrobbleDescriptionOn": "Đồng bộ lịch sử phát nhạc",
+    "settingsMusicOptionsScrobbleTitle": "Đồng bộ lượt nghe",
     "settingsNetworkName": "Mạng",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "Tối đa bitrate (mobile)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "Tối đa bitrate (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "Bitrate tối đa (mạng di động)",
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "Bitrate tối đa (Wi-Fi)",
     "settingsNetworkOptionsMaxBufferTitle": "Thời gian đệm tối đa",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
     "settingsNetworkOptionsMinBufferTitle": "Thời gian đệm tối thiểu",
-    "@settingsNetworkOptionsMinBufferTitle": {},
     "settingsNetworkValuesKbps": "{value}kbps",
     "@settingsNetworkValuesKbps": {
         "placeholders": {
@@ -147,28 +109,17 @@
             }
         }
     },
-    "settingsNetworkValuesUnlimitedKbps": "Không giới hạn",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "Xóa bộ nhớ đệm hình ảnh",
-    "@settingsResetActionsClearImageCache": {},
+    "settingsNetworkValuesUnlimitedKbps": "Vô giới hạn",
+    "settingsResetActionsClearImageCache": "Xóa cache ảnh",
     "settingsResetName": "Cài đặt lại",
-    "@settingsResetName": {},
     "settingsServersActionsAdd": "Thêm máy chủ",
-    "@settingsServersActionsAdd": {},
     "settingsServersActionsDelete": "Xóa",
-    "@settingsServersActionsDelete": {},
     "settingsServersActionsEdit": "Chỉnh sửa máy chủ",
-    "@settingsServersActionsEdit": {},
     "settingsServersActionsSave": "Lưu",
-    "@settingsServersActionsSave": {},
     "settingsServersActionsTestConnection": "Kiểm tra kết nối",
-    "@settingsServersActionsTestConnection": {},
     "settingsServersFieldsAddress": "Địa chỉ",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "Mật Khẩu",
-    "@settingsServersFieldsPassword": {},
+    "settingsServersFieldsPassword": "Mật khẩu",
     "settingsServersFieldsUsername": "Tên đăng nhập",
-    "@settingsServersFieldsUsername": {},
     "settingsServersMessagesConnectionFailed": "Kết nối với {address} không thành công, hãy kiểm tra cài đặt hoặc máy chủ",
     "@settingsServersMessagesConnectionFailed": {
         "placeholders": {
@@ -186,11 +137,65 @@
         }
     },
     "settingsServersName": "Máy chủ",
-    "@settingsServersName": {},
     "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Gửi mật khẩu dưới dạng token + salt",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Gửi mật khẩu ở dạng văn bản rõ ràng (kế thừa, đảm bảo kết nối của bạn an toàn!)",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-    "settingsServersOptionsForcePlaintextPasswordTitle": "Buộc mật khẩu văn bản thuần túy",
-    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Gửi mật khẩu không mã hóa (tính năng cũ, đảm bảo kết nối an toàn!)",
+    "settingsServersOptionsForcePlaintextPasswordTitle": "Buộc mật khẩu không mã hóa",
+    "actionsCancel": "Hủy",
+    "actionsDelete": "Xóa",
+    "actionsDownload": "Tải xuống",
+    "actionsDownloadCancel": "Hủy tải xuống",
+    "actionsOk": "OK",
+    "controlsShuffle": "Phát ngẫu nhiên",
+    "resourcesFilterAlbum": "Theo album",
+    "resourcesFilterArtist": "Theo nghệ sĩ",
+    "resourcesFilterYear": "Theo năm",
+    "actionsDownloadDelete": "Xóa khỏi máy",
+    "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} album}}",
+    "@resourcesAlbumCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistCount": "{count,plural, =1{{count} nghệ sĩ} other{{count} nghệ sĩ}}",
+    "@resourcesArtistCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterOwner": "Theo người tải lên",
+    "resourcesPlaylistCount": "{count,plural, =1{{count} playlist} other{{count} playlist}}",
+    "@resourcesPlaylistCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongCount": "{count,plural, =1{{count} bài hát} other{{count} bài hát}}",
+    "@resourcesSongCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListDeleteAllContent": "Thao tác này sẽ xóa tất cả những bài hát đã tải về.",
+    "resourcesSongListDeleteAllTitle": "Xóa nhạc đã tải?",
+    "resourcesSortByAlbum": "Album",
+    "resourcesSortByAlbumCount": "Lượng album",
+    "resourcesSortByTitle": "Tiêu đề",
+    "resourcesSortByUpdated": "Mới cập nhật",
+    "settingsAboutActionsSupport": "Hỗ trợ nhà phát triển 💜",
+    "settingsAboutShareLogs": "Chia sẻ log",
+    "settingsAboutChooseLog": "Chọn file log",
+    "settingsNetworkOptionsOfflineMode": "Chế độ ngoại tuyến",
+    "settingsNetworkOptionsOfflineModeOff": "Đồng bộ nhạc qua mạng.",
+    "settingsNetworkOptionsOfflineModeOn": "Không dùng internet để đồng bô hoặc phát nhạc.",
+    "settingsNetworkOptionsStreamFormat": "Định dạng phát nhạc mặc định",
+    "settingsNetworkOptionsStreamFormatServerDefault": "Theo mặc định máy chủ",
+    "settingsServersFieldsName": "Tên"
 }
