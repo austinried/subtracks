@@ -255,7 +255,7 @@
   "@resourcesSortByAlbumCount": {},
   "resourcesSortByTitle": "Titel",
   "@resourcesSortByTitle": {},
-  "resourcesSortByUpdated": "Kürzlich hinzugefügt",
+  "resourcesSortByUpdated": "Kürzlich aktualisiert",
   "@resourcesSortByUpdated": {},
   "settingsAboutActionsSupport": "Den Entwickler unterstützen",
   "@settingsAboutActionsSupport": {},
@@ -271,6 +271,10 @@
   "@settingsServersFieldsName": {},
   "resourcesSongListDeleteAllTitle": "Downloads löschen?",
   "@resourcesSongListDeleteAllTitle": {},
-  "settingsNetworkOptionsStreamFormatServerDefault": "Server-Standard verwenden",
-  "@settingsNetworkOptionsStreamFormatServerDefault": {}
+  "settingsNetworkOptionsStreamFormatServerDefault": "Standardserver verwenden",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsAboutShareLogs": "Protokolle teilen",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Wählen Sie eine Protokolldatei",
+  "@settingsAboutChooseLog": {}
 }
