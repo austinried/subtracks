@@ -1,196 +1,280 @@
 {
-    "actionsStar": "Stjernemerk",
-    "@actionsStar": {},
-    "actionsUnstar": "Fjern stjernemerking",
-    "@actionsUnstar": {},
-    "messagesNothingHere": "Ingenting her …",
-    "@messagesNothingHere": {},
-    "navigationTabsHome": "Hjem",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "Bibliotek",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "Søk",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "Innstillinger",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "Spill album",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "Vis album",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "Sorter album",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, =1{Album} other{Album}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistActionsView": "Vis artist",
-    "@resourcesArtistActionsView": {},
-    "resourcesArtistListsSort": "Sorter artister",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, =1{Artist} other{Artister}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterGenre": "Etter sjanger",
-    "@resourcesFilterGenre": {},
-    "resourcesFilterStarred": "Stjernemerket",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistActionsPlay": "Spill av spilleliste",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, =1{Spilleliste} other{Spillelister}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesQueueName": "{count,plural, =1{Kø} other{Køer}}",
-    "@resourcesQueueName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "Toppspor",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, =1{Spor} other{Spor}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByAdded": "Nylig tillagt",
-    "@resourcesSortByAdded": {},
-    "resourcesSortByArtist": "Etter artist",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByFrequentlyPlayed": "Ofte spilt",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByName": "Etter navn",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "Tilfeldig",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByRecentlyPlayed": "Nylig spilt",
-    "@resourcesSortByRecentlyPlayed": {},
-    "resourcesSortByYear": "Etter år",
-    "@resourcesSortByYear": {},
-    "searchHeaderTitle": "Søk: {query}",
-    "@searchHeaderTitle": {
-        "placeholders": {
-            "query": {
-                "type": "String"
-            }
-        }
-    },
-    "searchInputPlaceholder": "Søk",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "Mer …",
-    "@searchMoreResults": {},
-    "searchNowPlayingContext": "Søkeresultater",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "Lisenser",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "Prosjekthjemmeside",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "Om",
-    "@settingsAboutName": {},
-    "settingsAboutVersion": "versjon {version}",
-    "@settingsAboutVersion": {
-        "placeholders": {
-            "version": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsMusicName": "Musikk",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOff": "Ikke utfør sporinfodeling av avspillingshistorikk",
-    "@settingsMusicOptionsScrobbleDescriptionOff": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Sporinfodelings-avspillinghistorikk",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Sporinfodelingsavspillinger",
-    "@settingsMusicOptionsScrobbleTitle": {},
-    "settingsNetworkName": "Nettverk",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksimal bitrate (mobil)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksimal bitrate (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
-    "settingsNetworkOptionsMaxBufferTitle": "Maksimal mellomlagringstid",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
-    "settingsNetworkOptionsMinBufferTitle": "Minimal mellomlagringstid",
-    "@settingsNetworkOptionsMinBufferTitle": {},
-    "settingsNetworkValuesKbps": "{value} kbps",
-    "@settingsNetworkValuesKbps": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesSeconds": "{value} sekunder",
-    "@settingsNetworkValuesSeconds": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesUnlimitedKbps": "Ubegrenset",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "Tøm bildehurtiglager",
-    "@settingsResetActionsClearImageCache": {},
-    "settingsResetName": "Tilbakestill",
-    "@settingsResetName": {},
-    "settingsServersActionsAdd": "Legg til tjener",
-    "@settingsServersActionsAdd": {},
-    "settingsServersActionsDelete": "Slett",
-    "@settingsServersActionsDelete": {},
-    "settingsServersActionsEdit": "Rediger tjener",
-    "@settingsServersActionsEdit": {},
-    "settingsServersActionsSave": "Lagre",
-    "@settingsServersActionsSave": {},
-    "settingsServersActionsTestConnection": "Test tilkobling",
-    "@settingsServersActionsTestConnection": {},
-    "settingsServersFieldsAddress": "Adresse",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "Passord",
-    "@settingsServersFieldsPassword": {},
-    "settingsServersFieldsUsername": "Brukernavn",
-    "@settingsServersFieldsUsername": {},
-    "settingsServersMessagesConnectionFailed": "Tilkobling til {address} mislyktes. Sjekk innstillingene eller tjeneren.",
-    "@settingsServersMessagesConnectionFailed": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersMessagesConnectionOk": "Tilkobling til {address} OK.",
-    "@settingsServersMessagesConnectionOk": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersName": "Tjenere",
-    "@settingsServersName": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Send passord som symbol + salt",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Send passord i klartekst (Foreldet. Forsikre deg om at tilkoblingen er sikker.)",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-    "settingsServersOptionsForcePlaintextPasswordTitle": "Påtving klartekstspassord",
-    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+  "actionsStar": "Stjernemerk",
+  "@actionsStar": {},
+  "actionsUnstar": "Fjern stjernemerking",
+  "@actionsUnstar": {},
+  "messagesNothingHere": "Ingenting her …",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Hjem",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "Bibliotek",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "Søk",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Innstillinger",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Spill album",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Vis album",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Sorter album",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} other{Album}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "Vis artist",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Sorter artister",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{Artist} other{Artister}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterGenre": "Etter sjanger",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterStarred": "Stjernemerket",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistActionsPlay": "Spill av spilleliste",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistName": "{count,plural, =1{Spilleliste} other{Spillelister}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Kø} other{Køer}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "Toppspor",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{Spor} other{Spor}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Nylig tillagt",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByArtist": "Etter artist",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Ofte spilt",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByName": "Etter navn",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "Tilfeldig",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "Nylig spilt",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByYear": "Etter år",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "Søk: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Søk",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Mer …",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Søkeresultater",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Lisenser",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "Prosjekthjemmeside",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutName": "Om",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "versjon {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "Musikk",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Ikke utfør sporinfodeling av avspillingshistorikk",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Sporinfodelings-avspillinghistorikk",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Sporinfodelingsavspillinger",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Nettverk",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksimal bitrate (mobil)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksimal bitrate (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Maksimal mellomlagringstid",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Minimal mellomlagringstid",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkValuesKbps": "{value} kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} sekunder",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Ubegrenset",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Tøm bildehurtiglager",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Tilbakestill",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "Legg til tjener",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "Slett",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "Rediger tjener",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "Lagre",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Test tilkobling",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "Adresse",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "Passord",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Brukernavn",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Tilkobling til {address} mislyktes. Sjekk innstillingene eller tjeneren.",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Tilkobling til {address} OK.",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Tjenere",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Send passord som symbol + salt",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Send passord i klartekst (Foreldet. Forsikre deg om at tilkoblingen er sikker.)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Påtving klartekstspassord",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "actionsDownload": "Last ned",
+  "@actionsDownload": {},
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "actionsDelete": "Slett",
+  "@actionsDelete": {},
+  "resourcesFilterAlbum": "Album",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterOwner": "Eier",
+  "@resourcesFilterOwner": {},
+  "resourcesSongListDeleteAllTitle": "Slette nedlastinger?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "actionsDownloadDelete": "Slett nedlastet",
+  "@actionsDownloadDelete": {},
+  "actionsCancel": "Avbryt",
+  "@actionsCancel": {},
+  "resourcesFilterArtist": "Artist",
+  "@resourcesFilterArtist": {},
+  "resourcesSortByUpdated": "Nylig oppdatert",
+  "@resourcesSortByUpdated": {},
+  "settingsNetworkOptionsOfflineModeOn": "Bruk ikke Internett til å synkronisere eller spille av musikk.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} spilleliste} other{{count} spillelister}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByTitle": "Tittel",
+  "@resourcesSortByTitle": {},
+  "actionsDownloadCancel": "Avbryt nedlasting",
+  "@actionsDownloadCancel": {},
+  "settingsServersFieldsName": "Navn",
+  "@settingsServersFieldsName": {},
+  "controlsShuffle": "Miks",
+  "@controlsShuffle": {},
+  "settingsNetworkOptionsStreamFormat": "Foretrukket streamingformat",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsAboutActionsSupport": "Støtt utvikleren 💜",
+  "@settingsAboutActionsSupport": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} artist} other{{count} artister}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterYear": "År",
+  "@resourcesFilterYear": {},
+  "settingsNetworkOptionsOfflineModeOff": "Bruk Internett til å synkronisere musikk.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsAboutChooseLog": "Velg en loggfil",
+  "@settingsAboutChooseLog": {},
+  "settingsAboutShareLogs": "Dele logger",
+  "@settingsAboutShareLogs": {},
+  "resourcesSortByAlbumCount": "Albumantall",
+  "@resourcesSortByAlbumCount": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Bruk serverens standardinnstilling",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "resourcesSortByAlbum": "Album",
+  "@resourcesSortByAlbum": {},
+  "settingsNetworkOptionsOfflineMode": "Offline-modus",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "resourcesSongListDeleteAllContent": "Dette fjerner alle nedlastede sangfiler.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} album}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} sang} other{{count} sanger}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
