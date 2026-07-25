@@ -1,0 +1,280 @@
+{
+  "actionsDelete": "Deletar",
+  "@actionsDelete": {},
+  "actionsDownload": "Download",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "Cancelar download",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "Excluir arquivos baixados",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "actionsStar": "Estrela",
+  "@actionsStar": {},
+  "controlsShuffle": "Misturar",
+  "@controlsShuffle": {},
+  "messagesNothingHere": "Nada aqui…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Home",
+  "@navigationTabsHome": {},
+  "navigationTabsSearch": "Procurar",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Configurações",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Tocar álbum",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Ver álbum",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Classificar álbuns",
+  "@resourcesAlbumListsSort": {},
+  "resourcesArtistActionsView": "Ver artistas",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Classificar artistas",
+  "@resourcesArtistListsSort": {},
+  "resourcesFilterArtist": "Artista",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterGenre": "Gênero",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterOwner": "Proprietário",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterStarred": "Estrelado por",
+  "@resourcesFilterStarred": {},
+  "resourcesFilterYear": "Ano",
+  "@resourcesFilterYear": {},
+  "resourcesPlaylistActionsPlay": "Tocar lista",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesSongListDeleteAllTitle": "Deletar arquivos baixados?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSongListsArtistTopSongs": "Melhores músicas",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSortByAdded": "Adicionado recentemente",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbum": "Álbum",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "Contagem de álbuns",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "Artista",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Mais tocados",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByRandom": "Aleatório",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "Tocado recentemente",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByTitle": "Título",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "Atualizado recentemente",
+  "@resourcesSortByUpdated": {},
+  "actionsUnstar": "Sem estrela",
+  "@actionsUnstar": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} albums}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongName": "{count,plural, =1{Song} other{Songs}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Pesquisar",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Mais…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Resultado da pesquisa",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Licenças",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutName": "Sobre",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "Compartilhar logs",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Escolha um arquivo de log",
+  "@settingsAboutChooseLog": {},
+  "settingsNetworkName": "Rede",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Qualidade máxima (rede móvel)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Qualidade máxima (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Tempo máximo de buffer",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Tempo mínimo de buffer",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkOptionsOfflineMode": "Modo off-line",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "Usar a internet para sincronizar as músicas.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsStreamFormat": "Formato preferido para stream",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Usar servidor padrão",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkValuesUnlimitedKbps": "Ilimitado",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Limpar cache de imagens",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Resetar",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "Adicionar fonte",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "Deletar",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "Editar fonte",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "Salvar",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Testar conexão",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "Endereço",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "Senha",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Usuário",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "A conexão com {address} falhou, verifique as configurações ou servidor",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Conexãocom {address} feita com sucesso!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Fontes",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Enviar senha como token + salt",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "searchHeaderTitle": "Pesquisa: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutActionsProjectHomepage": "Página do projeto",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutVersion": "Versão {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicOptionsScrobbleDescriptionOff": "Não fazer scrobble do histórico de reproduções",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble do histórico de reproduções",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Fazer scrobble das reproduções",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} segundos",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "actionsCancel": "Cancelar",
+  "@actionsCancel": {},
+  "navigationTabsLibrary": "Biblioteca",
+  "@navigationTabsLibrary": {},
+  "resourcesFilterAlbum": "Álbum",
+  "@resourcesFilterAlbum": {},
+  "resourcesSongListDeleteAllContent": "Isso irá remover todos os arquivos de músicas baixados.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSortByName": "Nome",
+  "@resourcesSortByName": {},
+  "resourcesSortByYear": "Ano",
+  "@resourcesSortByYear": {},
+  "settingsAboutActionsSupport": "Apoie o desenvolvedor 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsMusicName": "Música",
+  "@settingsMusicName": {},
+  "settingsServersFieldsName": "Nome",
+  "@settingsServersFieldsName": {},
+  "settingsNetworkOptionsOfflineModeOn": "Não usar a Internet para sincronizar ou tocar músicas.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Forçar senha em texto simples",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Enviar senha em texto simples (tenha certeza que sua conexão é segura!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} other{Albums}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistCount": "{count,plural, =1{{count} artist} other{{count} artists}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistCount": "{count,plural, =1{{count} playlist} other{{count} playlists}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Queue} other{Queues}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistName": "{count,plural, =1{Artist} other{Artists}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, =1{Playlist} other{Playlists}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} song} other{{count} songs}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
