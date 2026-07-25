@@ -1,5 +1,5 @@
 {
-  "actionsStar": "Mettre en favoris",
+  "actionsStar": "Ajouter aux favoris",
   "@actionsStar": {},
   "actionsUnstar": "Enlever des favoris",
   "@actionsUnstar": {},
@@ -231,12 +231,50 @@
   "@actionsDownload": {},
   "resourcesSongListDeleteAllContent": "Tous les fichiers de musique téléchargés vont être supprimés.",
   "@resourcesSongListDeleteAllContent": {},
-  "resourcesSongListDeleteAllTitle": "Supprimer le(s) téléchargement(s) ?",
+  "resourcesSongListDeleteAllTitle": "Supprimer les téléchargements ?",
   "@resourcesSongListDeleteAllTitle": {},
   "controlsShuffle": "Aléatoire",
   "@controlsShuffle": {},
   "resourcesSortByUpdated": "Récemment mis à jour",
   "@resourcesSortByUpdated": {},
   "settingsNetworkOptionsOfflineModeOn": "Ne pas se connecter à internet pour synchroniser ou jouer de la musique.",
-  "@settingsNetworkOptionsOfflineModeOn": {}
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} album} other{{count} albums}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistCount": "{count,plural, =1{{count} artiste} other{{count} artistes}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterOwner": "Propriétaire",
+  "@resourcesFilterOwner": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} playlist} other{{count} playlists}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} chanson} other{{count} chansons}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNetworkOptionsStreamFormatServerDefault": "Utiliser les paramètres par défaut du serveur",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "resourcesSortByAlbumCount": "Nombre d'albums",
+  "@resourcesSortByAlbumCount": {}
 }
