@@ -1,0 +1,280 @@
+{
+  "actionsStar": "Зірка",
+  "@actionsStar": {},
+  "navigationTabsSearch": "Пошук",
+  "@navigationTabsSearch": {},
+  "settingsServersFieldsPassword": "Пароль",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Ім'я користувача",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Не вдалося підключитися до {address}, перевірте налаштування або сервер",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Підключення до {address} вдале!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Джерела",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Надішліть пароль як токен + сіль",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Надішліть пароль у відкритому тексті (застарілий, переконайтеся, що ваше з'єднання захищене!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Примусове введення простого текстового пароля",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "navigationTabsSettings": "Налаштування",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Відтворити альбом",
+  "@resourcesAlbumActionsPlay": {},
+  "searchHeaderTitle": "Пошук: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicOptionsScrobbleTitle": "Відстеження відтворення",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "actionsCancel": "Скасувати",
+  "@actionsCancel": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Слідкувати за історією відтворення",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} виконавець} other{{count} виконавці}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByUpdated": "Нещодавно оновлені",
+  "@resourcesSortByUpdated": {},
+  "actionsDelete": "Видалити",
+  "@actionsDelete": {},
+  "resourcesSortByAlbum": "Альбом",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByName": "Ім'я",
+  "@resourcesSortByName": {},
+  "resourcesSortByRecentlyPlayed": "Нещодавно відворені",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByFrequentlyPlayed": "Часто відтворювані",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSongListsArtistTopSongs": "Найкращі пісні",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSortByYear": "Рік",
+  "@resourcesSortByYear": {},
+  "resourcesFilterStarred": "Улюблене",
+  "@resourcesFilterStarred": {},
+  "resourcesFilterYear": "Рік",
+  "@resourcesFilterYear": {},
+  "actionsDownloadDelete": "Видалити завантажене",
+  "@actionsDownloadDelete": {},
+  "resourcesAlbumName": "{count,plural, =1{Альбом} other{Альбоми}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actionsOk": "OK",
+  "@actionsOk": {},
+  "actionsDownload": "Завантажити",
+  "@actionsDownload": {},
+  "controlsShuffle": "Перемішати",
+  "@controlsShuffle": {},
+  "actionsDownloadCancel": "Скасувати завантаження",
+  "@actionsDownloadCancel": {},
+  "actionsUnstar": "Зняти зірку",
+  "@actionsUnstar": {},
+  "navigationTabsLibrary": "Бібліотека",
+  "@navigationTabsLibrary": {},
+  "messagesNothingHere": "Тут нічого немає…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Головна",
+  "@navigationTabsHome": {},
+  "resourcesArtistName": "{count,plural, =1{Виконавець} other{Виконавці}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumActionsView": "Переглянути альбом",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} альбом} other{{count} альбоми}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumListsSort": "Сортувати альбоми",
+  "@resourcesAlbumListsSort": {},
+  "resourcesFilterGenre": "Жанр",
+  "@resourcesFilterGenre": {},
+  "resourcesArtistActionsView": "Переглянути виконавця",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Сортувати виконавців",
+  "@resourcesArtistListsSort": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Максимальний бітрейт (мобільні дані)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "resourcesSongCount": "{count,plural, =1{{count} пісня} other{{count} пісні}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "Це призведе до видалення всіх завантажених файлів пісень.",
+  "@resourcesSongListDeleteAllContent": {},
+  "settingsNetworkName": "Мережа",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Максимальний час буферизації",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Мінімальний час буферизації",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "resourcesFilterAlbum": "Альбом",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "Виконавець",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterOwner": "Власник",
+  "@resourcesFilterOwner": {},
+  "resourcesPlaylistActionsPlay": "Відтворити плейлист",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} плейлист} other{{count} плейлисти}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, =1{Плейлист} other{Плейлисти}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllTitle": "Видалити завантаження?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "settingsAboutName": "Про застосунок",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "Поділитися журналами",
+  "@settingsAboutShareLogs": {},
+  "resourcesQueueName": "{count,plural, =1{Черга} other{Черги}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongName": "{count,plural, =1{Пісня} other{Пісні}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Нещодавно додані",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbumCount": "Кількість альбомів",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "Виконавець",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByRandom": "Випадково",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByTitle": "Назва",
+  "@resourcesSortByTitle": {},
+  "searchInputPlaceholder": "Введіть заголовок/опис",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Більше…",
+  "@searchMoreResults": {},
+  "settingsAboutActionsProjectHomepage": "Головна сторінка проєкту",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Не слідкувати за історією відтворення",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "searchNowPlayingContext": "Результати пошуку",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Ліцензії",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsSupport": "Підтримайте розробника 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsNetworkOptionsOfflineMode": "Автономний режим",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsAboutChooseLog": "Виберіть файл журналу",
+  "@settingsAboutChooseLog": {},
+  "settingsAboutVersion": "версія {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "Музика",
+  "@settingsMusicName": {},
+  "settingsNetworkOptionsOfflineModeOn": "Не використовувати інтернет для синхронізації або відтворення музики.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Максимальний бітрейт (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsOfflineModeOff": "Використовувати інтернет для синхронізації музики.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "Використовувати сервер за замовчуванням",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkOptionsStreamFormat": "Бажаний формат потоку",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsNetworkValuesKbps": "{value}кбіт/с",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} секунд",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Необмежено",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsServersActionsAdd": "Додати джерело",
+  "@settingsServersActionsAdd": {},
+  "settingsResetActionsClearImageCache": "Очистити кеш зображень",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsServersActionsSave": "Зберегти",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Тестове підключення",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersActionsEdit": "Редагувати джерело",
+  "@settingsServersActionsEdit": {},
+  "settingsServersFieldsAddress": "Адреса",
+  "@settingsServersFieldsAddress": {},
+  "settingsResetName": "Скинути",
+  "@settingsResetName": {},
+  "settingsServersActionsDelete": "Видалити",
+  "@settingsServersActionsDelete": {},
+  "settingsServersFieldsName": "Ім'я",
+  "@settingsServersFieldsName": {}
+}

@@ -1,0 +1,200 @@
+{
+  "actionsCancel": "Utzi",
+  "@actionsCancel": {},
+  "actionsDelete": "Ezabatu",
+  "@actionsDelete": {},
+  "actionsDownload": "Deskargatu",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "Utzi deskargatzeari",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "Ezabatu deskargak",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "Ados",
+  "@actionsOk": {},
+  "actionsStar": "Gogokoetan sartu",
+  "@actionsStar": {},
+  "actionsUnstar": "Gogokoetatik kendu",
+  "@actionsUnstar": {},
+  "controlsShuffle": "Nahastu",
+  "@controlsShuffle": {},
+  "messagesNothingHere": "Kilkerrak besterik ez hemen…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Hasiera",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "Liburutegia",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "Bilatu",
+  "@navigationTabsSearch": {},
+  "resourcesAlbumActionsPlay": "Jarri albuma",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Ikusi albuma",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumCount": "{count,plural, =1{Album bat} other{{count} album}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumName": "{count,plural, =1{Albuma} other{Albumak}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistListsSort": "Ordenatu musikariak",
+  "@resourcesArtistListsSort": {},
+  "resourcesAlbumListsSort": "Ordenatu albumak",
+  "@resourcesAlbumListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{Musikaria} other{Musikariak}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterAlbum": "Albuma",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "Musikaria",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterGenre": "Generoa",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterOwner": "Jabea",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterStarred": "Gogokoak",
+  "@resourcesFilterStarred": {},
+  "resourcesFilterYear": "Urtea",
+  "@resourcesFilterYear": {},
+  "resourcesPlaylistActionsPlay": "Jarri zerrenda",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistCount": "{count,plural, =1{Zerrenda bat} other{{count} zerrenda}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, =1{Zerrenda} other{Zerrendak}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Ilara} other{Ilarak}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{Kanta bat} other{{count} kanta}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "Deskargatutako musika-fitxategi guztiak ezabatuko dira.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSongListDeleteAllTitle": "Deskargak ezabatu nahi?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSongListsArtistTopSongs": "Kanta onenak",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{Kanta} other{Kantak}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Berriki gehituak",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbum": "Albuma",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "Album kopurua",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "Musikaria",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Askotan jarritakoak",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByRandom": "Ausaz",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByName": "Alfabetikoki",
+  "@resourcesSortByName": {},
+  "resourcesSortByRecentlyPlayed": "Duela gutxi jarritakoak",
+  "@resourcesSortByRecentlyPlayed": {},
+  "searchHeaderTitle": "Bilatu... {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Bilatu",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Gehiago ikusi",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Bilaketaren emaitzak",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Lizentziak",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "Proiektuaren webgunea",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutActionsSupport": "Lagundu garatzaileari 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsAboutShareLogs": "Partekatu erregistroak",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "Aukeratu erregistro-fitxategi bat",
+  "@settingsAboutChooseLog": {},
+  "settingsMusicName": "Musika",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Ez igo internetera erreprodukzio-erregistroa",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Igo internetera erreprodukzio-erregistroa",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Igo internetera erreprodukzio-erregistroa",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Sarea",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Gehienezko bitrate-a (wifiz)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Gehienezko bitrate-a (datu mugikorretan)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "navigationTabsSettings": "Ezarpenak",
+  "@navigationTabsSettings": {},
+  "resourcesArtistActionsView": "Ikusi musikaria",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistCount": "{count,plural, =1{Musikari bat} other{{count} musikari}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByUpdated": "Duela gutxi gehituak",
+  "@resourcesSortByUpdated": {},
+  "resourcesSortByYear": "Urtearen arabera",
+  "@resourcesSortByYear": {},
+  "settingsAboutName": "Honi buruz",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "{version} bertsioa",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
+}

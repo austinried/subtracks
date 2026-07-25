@@ -1,196 +1,232 @@
 {
-    "actionsStar": "Ulubione",
-    "@actionsStar": {},
-    "actionsUnstar": "Usuń ulubione",
-    "@actionsUnstar": {},
-    "messagesNothingHere": "Pusto tu…",
-    "@messagesNothingHere": {},
-    "navigationTabsHome": "Strona główna",
-    "@navigationTabsHome": {},
-    "navigationTabsLibrary": "Kolekcja",
-    "@navigationTabsLibrary": {},
-    "navigationTabsSearch": "Wyszukaj",
-    "@navigationTabsSearch": {},
-    "navigationTabsSettings": "Ustawienia",
-    "@navigationTabsSettings": {},
-    "resourcesAlbumActionsPlay": "Otwarzaj album",
-    "@resourcesAlbumActionsPlay": {},
-    "resourcesAlbumActionsView": "Zobacz album",
-    "@resourcesAlbumActionsView": {},
-    "resourcesAlbumListsSort": "Sortowanie albumów",
-    "@resourcesAlbumListsSort": {},
-    "resourcesAlbumName": "{count,plural, =1{Album} few{Albumy} many{Albumów} other{Albumów}}",
-    "@resourcesAlbumName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesArtistActionsView": "Zobacz wykonawcę",
-    "@resourcesArtistActionsView": {},
-    "resourcesArtistListsSort": "Sortowanie wykonawców",
-    "@resourcesArtistListsSort": {},
-    "resourcesArtistName": "{count,plural, =1{Wykonawca} few{Wykonawcy} many{Wykonawców} other{Wykonawców}}",
-    "@resourcesArtistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesFilterGenre": "Wg gatunku",
-    "@resourcesFilterGenre": {},
-    "resourcesFilterStarred": "Ulubione",
-    "@resourcesFilterStarred": {},
-    "resourcesPlaylistActionsPlay": "Odtwarzaj playlistę",
-    "@resourcesPlaylistActionsPlay": {},
-    "resourcesPlaylistName": "{count,plural, =1{Playlista} few{Playlisty} many{Playlist} other{Playlist}}",
-    "@resourcesPlaylistName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesQueueName": "{count,plural, =1{Kolejka} few{Kolejki} many{Kolejek} other{Kolejek}}",
-    "@resourcesQueueName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSongListsArtistTopSongs": "Najpopularniejsze utwory",
-    "@resourcesSongListsArtistTopSongs": {},
-    "resourcesSongName": "{count,plural, =1{Utwór} few{Utwory} many{Utworów} other{Utworów}}",
-    "@resourcesSongName": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "resourcesSortByAdded": "Ostatnio dodane",
-    "@resourcesSortByAdded": {},
-    "resourcesSortByArtist": "Wg wykonawcy",
-    "@resourcesSortByArtist": {},
-    "resourcesSortByFrequentlyPlayed": "Często odtwarzane",
-    "@resourcesSortByFrequentlyPlayed": {},
-    "resourcesSortByName": "Wg nazwy",
-    "@resourcesSortByName": {},
-    "resourcesSortByRandom": "Losowo",
-    "@resourcesSortByRandom": {},
-    "resourcesSortByRecentlyPlayed": "Ostatnio odtwarzane",
-    "@resourcesSortByRecentlyPlayed": {},
-    "resourcesSortByYear": "Wg roku",
-    "@resourcesSortByYear": {},
-    "searchHeaderTitle": "Szukaj: {query}",
-    "@searchHeaderTitle": {
-        "placeholders": {
-            "query": {
-                "type": "String"
-            }
-        }
-    },
-    "searchInputPlaceholder": "Szukaj",
-    "@searchInputPlaceholder": {},
-    "searchMoreResults": "Więcej…",
-    "@searchMoreResults": {},
-    "searchNowPlayingContext": "Wyniki wyszukiwania",
-    "@searchNowPlayingContext": {},
-    "settingsAboutActionsLicenses": "Licencje",
-    "@settingsAboutActionsLicenses": {},
-    "settingsAboutActionsProjectHomepage": "Strona główna projektu",
-    "@settingsAboutActionsProjectHomepage": {},
-    "settingsAboutName": "Informacje o projekcie",
-    "@settingsAboutName": {},
-    "settingsAboutVersion": "wersja {version}",
-    "@settingsAboutVersion": {
-        "placeholders": {
-            "version": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsMusicName": "Muzyka",
-    "@settingsMusicName": {},
-    "settingsMusicOptionsScrobbleDescriptionOff": "Nie śledź swojej historii odtwarzania",
-    "@settingsMusicOptionsScrobbleDescriptionOff": {},
-    "settingsMusicOptionsScrobbleDescriptionOn": "Śledź swoją histrorię odtwarzania",
-    "@settingsMusicOptionsScrobbleDescriptionOn": {},
-    "settingsMusicOptionsScrobbleTitle": "Śledzenie odtworzeń",
-    "@settingsMusicOptionsScrobbleTitle": {},
-    "settingsNetworkName": "Sieć",
-    "@settingsNetworkName": {},
-    "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksymalny bitrate (sieć komórkowa)",
-    "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
-    "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksymalny bitrate (Wi-Fi)",
-    "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
-    "settingsNetworkOptionsMaxBufferTitle": "Maksymalny czas buforowania",
-    "@settingsNetworkOptionsMaxBufferTitle": {},
-    "settingsNetworkOptionsMinBufferTitle": "Minimalny czas buforowania",
-    "@settingsNetworkOptionsMinBufferTitle": {},
-    "settingsNetworkValuesKbps": "{value}kbps",
-    "@settingsNetworkValuesKbps": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesSeconds": "{value} sekund",
-    "@settingsNetworkValuesSeconds": {
-        "placeholders": {
-            "value": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsNetworkValuesUnlimitedKbps": "Bez ograniczeń",
-    "@settingsNetworkValuesUnlimitedKbps": {},
-    "settingsResetActionsClearImageCache": "Wyczyść pamięć podręczną obrazów",
-    "@settingsResetActionsClearImageCache": {},
-    "settingsResetName": "Przywracanie",
-    "@settingsResetName": {},
-    "settingsServersActionsAdd": "Dodaj serwer",
-    "@settingsServersActionsAdd": {},
-    "settingsServersActionsDelete": "Usuń",
-    "@settingsServersActionsDelete": {},
-    "settingsServersActionsEdit": "Edytuj serwer",
-    "@settingsServersActionsEdit": {},
-    "settingsServersActionsSave": "Zapisz",
-    "@settingsServersActionsSave": {},
-    "settingsServersActionsTestConnection": "Przetestuj połączenie",
-    "@settingsServersActionsTestConnection": {},
-    "settingsServersFieldsAddress": "Adres serwera",
-    "@settingsServersFieldsAddress": {},
-    "settingsServersFieldsPassword": "Hasło",
-    "@settingsServersFieldsPassword": {},
-    "settingsServersFieldsUsername": "Nazwa użytkownika",
-    "@settingsServersFieldsUsername": {},
-    "settingsServersMessagesConnectionFailed": "Błąd połączenia z {address}, sprawdź ustawienia lub serwer",
-    "@settingsServersMessagesConnectionFailed": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersMessagesConnectionOk": "Połączeno poprawnie z {address}!",
-    "@settingsServersMessagesConnectionOk": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            }
-        }
-    },
-    "settingsServersName": "Serwery",
-    "@settingsServersName": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Wyślij hasło jako token i ciąg zaburzający",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
-    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Wyślij hasło jako tekst (przestarzałe, upewnij się, że Twoje połączenie jest zabezpieczone)",
-    "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
-    "settingsServersOptionsForcePlaintextPasswordTitle": "Wymuś hasło jako tekst (plaintext)",
-    "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+  "actionsStar": "Ulubione",
+  "@actionsStar": {},
+  "actionsUnstar": "Usuń ulubione",
+  "@actionsUnstar": {},
+  "messagesNothingHere": "Pusto tu…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "Strona główna",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "Kolekcja",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "Wyszukaj",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "Ustawienia",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsPlay": "Otwarzaj album",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "Zobacz album",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumListsSort": "Sortowanie albumów",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{Album} few{Albumy} many{Albumów} other{Albumów}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "Zobacz wykonawcę",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "Sortowanie wykonawców",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{Wykonawca} few{Wykonawcy} many{Wykonawców} other{Wykonawców}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterGenre": "Wg gatunku",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterStarred": "Ulubione",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistActionsPlay": "Odtwarzaj playlistę",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistName": "{count,plural, =1{Playlista} few{Playlisty} many{Playlist} other{Playlist}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{Kolejka} few{Kolejki} many{Kolejek} other{Kolejek}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "Najpopularniejsze utwory",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{Utwór} few{Utwory} many{Utworów} other{Utworów}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "Ostatnio dodane",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByArtist": "Wg wykonawcy",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByFrequentlyPlayed": "Często odtwarzane",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByName": "Wg nazwy",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "Losowo",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "Ostatnio odtwarzane",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByYear": "Wg roku",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "Szukaj: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "Szukaj",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "Więcej…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "Wyniki wyszukiwania",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "Licencje",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "Strona główna projektu",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutName": "Informacje o projekcie",
+  "@settingsAboutName": {},
+  "settingsAboutVersion": "wersja {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "Muzyka",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "Nie śledź swojej historii odtwarzania",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "Śledź swoją histrorię odtwarzania",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "Śledzenie odtworzeń",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "Sieć",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "Maksymalny bitrate (sieć komórkowa)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "Maksymalny bitrate (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "Maksymalny czas buforowania",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "Minimalny czas buforowania",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} sekund",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "Bez ograniczeń",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "Wyczyść pamięć podręczną obrazów",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "Przywracanie",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "Dodaj serwer",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "Usuń",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "Edytuj serwer",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "Zapisz",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "Przetestuj połączenie",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "Adres serwera",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsPassword": "Hasło",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "Nazwa użytkownika",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "Błąd połączenia z {address}, sprawdź ustawienia lub serwer",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "Połączeno poprawnie z {address}!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "Serwery",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "Wyślij hasło jako token i ciąg zaburzający",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "Wyślij hasło jako tekst (przestarzałe, upewnij się, że Twoje połączenie jest zabezpieczone)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "Wymuś hasło jako tekst (plaintext)",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "actionsDownload": "Pobierz",
+  "@actionsDownload": {},
+  "actionsOk": "Ok",
+  "@actionsOk": {},
+  "actionsDelete": "Usuń",
+  "@actionsDelete": {},
+  "resourcesFilterAlbum": "Album",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterOwner": "Posiadacz",
+  "@resourcesFilterOwner": {},
+  "resourcesSongListDeleteAllTitle": "Usunąć pobrane?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "actionsDownloadDelete": "Usuń pobrane",
+  "@actionsDownloadDelete": {},
+  "actionsCancel": "Anuluj",
+  "@actionsCancel": {},
+  "resourcesFilterArtist": "Artysta",
+  "@resourcesFilterArtist": {},
+  "resourcesSortByUpdated": "Ostatnio zaktualizowane",
+  "@resourcesSortByUpdated": {},
+  "resourcesSortByTitle": "Tytuł",
+  "@resourcesSortByTitle": {},
+  "actionsDownloadCancel": "Anuluj pobieranie",
+  "@actionsDownloadCancel": {},
+  "settingsServersFieldsName": "Nazwa",
+  "@settingsServersFieldsName": {},
+  "controlsShuffle": "Losowo",
+  "@controlsShuffle": {},
+  "settingsNetworkOptionsStreamFormat": "Preferowany format streamów",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "resourcesFilterYear": "Rok",
+  "@resourcesFilterYear": {},
+  "resourcesSortByAlbum": "Album",
+  "@resourcesSortByAlbum": {},
+  "settingsNetworkOptionsOfflineMode": "Tryb offline",
+  "@settingsNetworkOptionsOfflineMode": {}
 }
