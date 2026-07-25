@@ -1,0 +1,280 @@
+{
+  "actionsStar": "ดาว",
+  "@actionsStar": {},
+  "settingsNetworkValuesKbps": "{value}{value}กิโลบิตต่อวินาที (kbps)",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "actionsDelete": "ลบ",
+  "@actionsDelete": {},
+  "resourcesAlbumCount": "{count,plural, other{{count} อัลบั้ม}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actionsDownload": "ดาวน์โหลด",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "ยกเลิกการดาวน์โหลด",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "ลบรายการที่ดาวน์โหลดเสร็จแล้ว",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "ตกลง",
+  "@actionsOk": {},
+  "actionsUnstar": "ยกเลิกดาว",
+  "@actionsUnstar": {},
+  "controlsShuffle": "เล่นแบบสุ่ม",
+  "@controlsShuffle": {},
+  "navigationTabsHome": "หน้าหลัก",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "ห้องสมุด",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "ค้นหา",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "การตั้งค่า",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumActionsView": "ดูอัลบั้ม",
+  "@resourcesAlbumActionsView": {},
+  "resourcesArtistActionsView": "ดูศิลปิน",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistListsSort": "จัดเรียงศิลปิน",
+  "@resourcesArtistListsSort": {},
+  "resourcesAlbumName": "{count,plural, other{อัลบั้ม}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterAlbum": "อัลบั้ม",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterOwner": "เจ้าของ",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterStarred": "ให้ดาว",
+  "@resourcesFilterStarred": {},
+  "resourcesFilterYear": "ปี",
+  "@resourcesFilterYear": {},
+  "resourcesPlaylistActionsPlay": "เล่นเพลย์ลิส",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesQueueName": "{count,plural, =1{คิว} other{คิว}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, =1{{count} เพลง} other{{count} เพลง}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllTitle": "ต้องการลบดาวน์โหลด?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSongListsArtistTopSongs": "เพลงยอดนิยม",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSortByAdded": "เพลงที่เพิ่มล่าสุด",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbum": "อัลบั้ม",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByName": "ชื่อเพลง",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "สุ่มเพลง",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByYear": "ปี",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "ค้นหา: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "ค้นหา",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "เพิ่มเติม…",
+  "@searchMoreResults": {},
+  "settingsAboutActionsLicenses": "ใบอนุญาต",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "โฮมเพจของโครงการ",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutActionsSupport": "ให้การสนับสนุนผู้พัฒนา 💜",
+  "@settingsAboutActionsSupport": {},
+  "settingsAboutName": "เกี่ยวกับ",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "แบ่งปันล็อกไฟล์",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "เลือก log ไฟล์",
+  "@settingsAboutChooseLog": {},
+  "settingsAboutVersion": "เวอร์ชั่น {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicOptionsScrobbleDescriptionOn": "เปิด scrobble การเล่นเพลงในอดีต",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "เล่น scrobble",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "เคลือข่าย",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "บิทเรตสูงสุด (ไวไฟ)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "บัฟเฟอร์เวลาต่ำสุด",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkOptionsOfflineModeOn": "ปิดใช้อินเตอร์เน็ตเพื่อให้ข้อมูลเพลงเหมือนกันหรือเล่นเพลง",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkOptionsStreamFormat": "รูปแบบการสตรีมเพลงที่ต้องการ",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "ใช้ค่าเริ่มต้นของเซิร์ฟเวอร์",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkValuesSeconds": "{value} วินาที",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "ไม่จำกัด",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetName": "เริ่มใหม่",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "เพิ่มเซิร์ฟเวอร์",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "ลบ",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsSave": "บันทึก",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "ทดสอบการเชื่อมต่อ",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsName": "ชื่อ",
+  "@settingsServersFieldsName": {},
+  "settingsServersFieldsPassword": "รหัสผ่าน",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "ชื่อผู้ใช้",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersName": "เซิร์ฟเวอร์",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "บังคับใช้รหัสผ่านแบบข้อความ",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "actionsCancel": "ยกเลิก",
+  "@actionsCancel": {},
+  "resourcesAlbumListsSort": "จัดเรียงอัลบั้ม",
+  "@resourcesAlbumListsSort": {},
+  "settingsServersActionsEdit": "แก้ไขเซิร์ฟเวอร์",
+  "@settingsServersActionsEdit": {},
+  "resourcesSongListDeleteAllContent": "นำเพลงที่ดาวน์โหลดมาทั้งหมดออก",
+  "@resourcesSongListDeleteAllContent": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "บิทเรตสูงสุด (อินเตอร์เน็ตมือถือ)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "resourcesArtistCount": "{count,plural, other{{count} ศิลปิน}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, =1{เพลย์ลิส} other{เพลย์ลิส}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistName": "{count,plural, other{ศิลปิน}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterArtist": "ศิลปิน",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterGenre": "ประเภท",
+  "@resourcesFilterGenre": {},
+  "resourcesSortByRecentlyPlayed": "เล่นล่าสุด",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByTitle": "ชื่อเพลง",
+  "@resourcesSortByTitle": {},
+  "settingsServersFieldsAddress": "ที่อยู่ไอพี",
+  "@settingsServersFieldsAddress": {},
+  "settingsNetworkOptionsOfflineMode": "โหมดอ๊อฟไลน์",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsMaxBufferTitle": "บัฟเฟอร์เวลาสูงสุด",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsServersMessagesConnectionOk": "เชื่อต่อกับ {address} สำเร็จ!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "ส่งรหัสผ่านเป็นโทเคน",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "messagesNothingHere": "ไม่มีอะไรที่นี่…",
+  "@messagesNothingHere": {},
+  "resourcesSortByFrequentlyPlayed": "เพลงที่เล่นบ่อย",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByAlbumCount": "จำนวนอัลบัม",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "ศิลปิน",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByUpdated": "อัพเดทล่าสุด",
+  "@resourcesSortByUpdated": {},
+  "settingsMusicName": "ดนตรี",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "ปิดการ scrobble การเล่นเพลงในอดีต",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsServersMessagesConnectionFailed": "เชื่อต่อกับ {address} ล้มเหลว, ตรวจสอบการตั้งค่าหรือเซิร์ฟเวอร์",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "searchNowPlayingContext": "ผลการค้นหา",
+  "@searchNowPlayingContext": {},
+  "settingsResetActionsClearImageCache": "ลบแคชของรูปภาพ",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "ส่งรหัสผ่านเป็นข้อความ (ล้าสมัย ต้องแน่ใจว่าการเชื่อมต่อของคุณปลอดภัย)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "resourcesAlbumActionsPlay": "เล่นอัลบั้ม",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} เพลย์ลิส} other{{count} เพลย์ลิส}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongName": "{count,plural, =1{เพลง} other{เพลง}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNetworkOptionsOfflineModeOff": "เปิดใช้อินเตอร์เน็ตเพื่อให้ข้อมูลเพลงเหมือนกัน",
+  "@settingsNetworkOptionsOfflineModeOff": {}
+}
