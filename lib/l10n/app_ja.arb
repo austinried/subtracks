@@ -78,5 +78,11 @@
   "settingsServersActionsDelete": "削除",
   "@settingsServersActionsDelete": {},
   "settingsServersFieldsName": "名前",
-  "@settingsServersFieldsName": {}
+  "@settingsServersFieldsName": {},
+  "actionsDownloadCancel": "ダウンロードをキャンセル",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "ダウンロード削除",
+  "@actionsDownloadDelete": {},
+  "actionsDownload": "ダウンロード",
+  "@actionsDownload": {}
 }
