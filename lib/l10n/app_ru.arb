@@ -19,7 +19,7 @@
   "@resourcesAlbumActionsView": {},
   "resourcesAlbumListsSort": "Сортировка альбомов",
   "@resourcesAlbumListsSort": {},
-  "resourcesAlbumName": "{count,plural, =1{Альбом} few{Альбомы} many{Альбомов} other{Альбомов}}",
+  "resourcesAlbumName": "{count,plural, =1{Альбом} few{Альбомов} many{Альбомов} other{Альбомы}}",
   "@resourcesAlbumName": {
     "placeholders": {
       "count": {
@@ -31,7 +31,7 @@
   "@resourcesArtistActionsView": {},
   "resourcesArtistListsSort": "Сортировать исполнителей",
   "@resourcesArtistListsSort": {},
-  "resourcesArtistName": "{count,plural, =1{Исполнитель} few{Исполнители} many{Исполнителей} other{Исполнителей}}",
+  "resourcesArtistName": "{count,plural, =1{Исполнитель} few{Исполнителей} many{Исполнителей} other{Исполнители}}",
   "@resourcesArtistName": {
     "placeholders": {
       "count": {
@@ -45,7 +45,7 @@
   "@resourcesFilterStarred": {},
   "resourcesPlaylistActionsPlay": "Воспроизвести плейлист",
   "@resourcesPlaylistActionsPlay": {},
-  "resourcesPlaylistName": "{count,plural, =1{Плейлист} few{Плейлисты} many{Плейлистов} other{Плейлистов}}",
+  "resourcesPlaylistName": "{count,plural, =1{Плейлист} few{Плейлистов} many{Плейлистов} other{Плейлисты}}",
   "@resourcesPlaylistName": {
     "placeholders": {
       "count": {
@@ -53,7 +53,7 @@
       }
     }
   },
-  "resourcesQueueName": "{count,plural, =1{Очередь} few{Очереди} many{Очередей} other{Очередей}}",
+  "resourcesQueueName": "{count,plural, =1{Очередь} few{Очередей} many{Очередей} other{Очереди}}",
   "@resourcesQueueName": {
     "placeholders": {
       "count": {
@@ -63,7 +63,7 @@
   },
   "resourcesSongListsArtistTopSongs": "Лучшие треки",
   "@resourcesSongListsArtistTopSongs": {},
-  "resourcesSongName": "{count,plural, =1{Трек} few{Трека} many{Треков} other{Треков}}",
+  "resourcesSongName": "{count,plural, =1{Трек} few{Треков} many{Треков} other{Треки}}",
   "@resourcesSongName": {
     "placeholders": {
       "count": {
@@ -205,7 +205,7 @@
   "@actionsDownloadCancel": {},
   "actionsCancel": "Отменить",
   "@actionsCancel": {},
-  "resourcesSongCount": "{count,plural, =1{{count} трек} other{{count} треки}}",
+  "resourcesSongCount": "{count,plural, =1{{count} трек} few{{count} треков} many{{count} треков} other{{count} треки}}",
   "@resourcesSongCount": {
     "placeholders": {
       "count": {
