@@ -1,0 +1,280 @@
+{
+  "messagesNothingHere": "什麼都沒有…",
+  "@messagesNothingHere": {},
+  "resourcesFilterYear": "年份",
+  "@resourcesFilterYear": {},
+  "settingsServersFieldsPassword": "密碼",
+  "@settingsServersFieldsPassword": {},
+  "actionsDownloadDelete": "刪除已下載",
+  "@actionsDownloadDelete": {},
+  "actionsOk": "確定",
+  "@actionsOk": {},
+  "actionsStar": "收藏",
+  "@actionsStar": {},
+  "actionsCancel": "取消",
+  "@actionsCancel": {},
+  "actionsDelete": "刪除",
+  "@actionsDelete": {},
+  "actionsDownload": "下載",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "取消下載",
+  "@actionsDownloadCancel": {},
+  "actionsUnstar": "移除收藏",
+  "@actionsUnstar": {},
+  "controlsShuffle": "隨機播放",
+  "@controlsShuffle": {},
+  "navigationTabsHome": "首頁",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "所有",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "搜尋",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "設定",
+  "@navigationTabsSettings": {},
+  "resourcesArtistActionsView": "查看歌手",
+  "@resourcesArtistActionsView": {},
+  "resourcesAlbumActionsPlay": "播放專輯",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesArtistCount": "{count,plural, other{{count} 位歌手}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumActionsView": "查看專輯",
+  "@resourcesAlbumActionsView": {},
+  "resourcesAlbumCount": "{count,plural, other{{count} 張專輯}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumListsSort": "專輯排序",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, other{專輯}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistListsSort": "歌手排序",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, other{歌手}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterOwner": "所有者",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterStarred": "已收藏",
+  "@resourcesFilterStarred": {},
+  "resourcesPlaylistActionsPlay": "全部播放",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesFilterAlbum": "專輯",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "歌手",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterGenre": "根據類型",
+  "@resourcesFilterGenre": {},
+  "resourcesPlaylistCount": "{count,plural, other{{count} 張播放清單}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, other{播放清單}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, other{佇列}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "熱門歌曲",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongCount": "{count,plural, other{{count} 首歌曲}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "此操作會刪除所有已下載的歌曲檔。",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSongListDeleteAllTitle": "刪除下載的內容？",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSongName": "{count,plural, other{歌曲}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "最近新增",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbum": "專輯",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "專輯數量",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "根據歌手",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByName": "根據名稱",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "隨機",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "最近播放",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByFrequentlyPlayed": "最常播放",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "resourcesSortByTitle": "標題",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "最近新增",
+  "@resourcesSortByUpdated": {},
+  "resourcesSortByYear": "根據年份",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "搜尋： {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "搜尋",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "更多…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "搜尋結果",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "許可",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsProjectHomepage": "專案首頁",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsAboutActionsSupport": "支援開發者",
+  "@settingsAboutActionsSupport": {},
+  "settingsAboutName": "關於",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "分享日誌",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "選擇一份日誌檔",
+  "@settingsAboutChooseLog": {},
+  "settingsAboutVersion": "版本 {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicName": "音樂",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "不記錄您的播放歷史",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsMusicOptionsScrobbleDescriptionOn": "記錄您的播放歷史",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "記錄播放歷史",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "網路",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "最大位元速率 (行動流量)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "最大位元速率 (Wi-Fi)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "最大緩衝時間",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "最小緩衝時間",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkOptionsOfflineMode": "離線模式",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "使用網際網路同步音樂。",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsStreamFormat": "偏好的串流媒體格式",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "使用伺服器預設設定",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkOptionsOfflineModeOn": "不使用網際網路同步或播放音樂。",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkValuesKbps": "{value}kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} 秒",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "不限制",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "清除圖片暫存",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "重置",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "新增伺服器",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "刪除",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "編輯伺服器",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "保存",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "測試連線",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "地址",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsName": "名稱",
+  "@settingsServersFieldsName": {},
+  "settingsServersFieldsUsername": "用戶名稱",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "連接到 {address} 失敗，檢查設定或伺服器",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "連接到 {address} 正常！",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersName": "伺服器",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "密碼以 token + salt 加密發送",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "密碼以明文發送（不推薦，注意網路連線安全！）",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "強制使用純文字密碼",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {}
+}
