@@ -1,0 +1,189 @@
+{
+    "actionsDelete": "삭제",
+    "actionsCancel": "취소",
+    "actionsDownload": "다운로드",
+    "actionsDownloadCancel": "다운로드 중단",
+    "actionsDownloadDelete": "다운로드된 파일 삭제",
+    "actionsOk": "확인",
+    "actionsStar": "별점",
+    "actionsUnstar": "별점 제거",
+    "controlsShuffle": "무작위 재생",
+    "messagesNothingHere": "항목 없음…",
+    "navigationTabsHome": "홈",
+    "navigationTabsLibrary": "라이브러리",
+    "navigationTabsSearch": "검색",
+    "navigationTabsSettings": "설정",
+    "resourcesAlbumActionsPlay": "앨범 재생",
+    "resourcesAlbumActionsView": "앨범 보기",
+    "resourcesAlbumCount": "{count,plural, other{{count}개 앨범}}",
+    "@resourcesAlbumCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesAlbumListsSort": "앨범 정렬",
+    "resourcesAlbumName": "{count,plural, other{앨범}}",
+    "@resourcesAlbumName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistActionsView": "아티스트 보기",
+    "resourcesArtistCount": "{count,plural, other{{count} 아티스트}}",
+    "@resourcesArtistCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesArtistListsSort": "아티스트 정렬",
+    "resourcesArtistName": "{count,plural, other{아티스트}}",
+    "@resourcesArtistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesFilterAlbum": "앨범",
+    "resourcesFilterArtist": "아티스트",
+    "resourcesFilterGenre": "장르",
+    "resourcesFilterOwner": "소유자",
+    "resourcesFilterStarred": "평가됨",
+    "resourcesFilterYear": "년",
+    "resourcesPlaylistActionsPlay": "재생목록 재생",
+    "resourcesPlaylistCount": "{count,plural, other{{count} 재생목록}}",
+    "@resourcesPlaylistCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesPlaylistName": "{count,plural, other{재생목록}}",
+    "@resourcesPlaylistName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesQueueName": "{count,plural, other{대기열}}",
+    "@resourcesQueueName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongCount": "{count,plural, other{{count} 노래}}",
+    "@resourcesSongCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSongListDeleteAllContent": "다운로드한 모든 노래를 삭제합니다.",
+    "resourcesSongListDeleteAllTitle": "다운로드한 노래를 삭제하시겠습니까?",
+    "resourcesSongName": "{count,plural, other{노래}}",
+    "@resourcesSongName": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "resourcesSortByAdded": "새로 추가됨",
+    "resourcesSortByAlbum": "앨범",
+    "resourcesSortByAlbumCount": "앨범 개수",
+    "resourcesSortByArtist": "아티스트",
+    "resourcesSortByFrequentlyPlayed": "자주 듣는 노래",
+    "resourcesSortByName": "이름",
+    "resourcesSortByRandom": "랜덤",
+    "resourcesSortByRecentlyPlayed": "최근 재생된 순",
+    "resourcesSortByTitle": "곡명",
+    "resourcesSortByUpdated": "수정된 날짜",
+    "resourcesSortByYear": "년",
+    "searchHeaderTitle": "검색: {query}",
+    "@searchHeaderTitle": {
+        "placeholders": {
+            "query": {
+                "type": "String"
+            }
+        }
+    },
+    "searchInputPlaceholder": "검색",
+    "searchMoreResults": "더 보기…",
+    "searchNowPlayingContext": "검색 결과",
+    "settingsAboutActionsLicenses": "저작권",
+    "settingsAboutActionsProjectHomepage": "프로젝트 홈페이지",
+    "settingsAboutActionsSupport": "개발자 지원하기💜",
+    "settingsAboutName": "subtracks에 대하여",
+    "settingsAboutShareLogs": "로그 공유",
+    "settingsAboutChooseLog": "로그 파일을 선택해주세요",
+    "settingsAboutVersion": "버전: {version}",
+    "@settingsAboutVersion": {
+        "placeholders": {
+            "version": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsMusicName": "음악",
+    "settingsNetworkName": "네트워크",
+    "settingsNetworkOptionsMaxBitrateMobileTitle": "최대 비트레이트 (모바일 데이터 사용 시)",
+    "settingsNetworkOptionsMaxBitrateWifiTitle": "최대 비트레이트 (와이파이 사용 시)",
+    "settingsNetworkOptionsMaxBufferTitle": "최대 버퍼 시간",
+    "settingsNetworkOptionsMinBufferTitle": "최소 버퍼 시간",
+    "settingsNetworkOptionsOfflineMode": "오프라인 모드",
+    "settingsNetworkOptionsOfflineModeOff": "노래를 동기화하기 위해 인터넷을 사용합니다.",
+    "settingsNetworkOptionsOfflineModeOn": "노래를 듣거나 동기화하기 위해 인터넷을 사용하지 않습니다.",
+    "settingsNetworkOptionsStreamFormat": "선호하는 스트리밍 포맷",
+    "settingsNetworkOptionsStreamFormatServerDefault": "서버를 우선하여 사용합니다",
+    "settingsNetworkValuesSeconds": "{value} 초",
+    "@settingsNetworkValuesSeconds": {
+        "placeholders": {
+            "value": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsNetworkValuesUnlimitedKbps": "제한하지 않음",
+    "settingsResetActionsClearImageCache": "이미지 캐시 비우기",
+    "settingsResetName": "초기화",
+    "settingsServersActionsAdd": "서버 추가",
+    "settingsServersActionsDelete": "삭제",
+    "settingsServersActionsEdit": "서버 수정",
+    "settingsServersActionsSave": "저장",
+    "settingsServersActionsTestConnection": "연결 테스트",
+    "settingsServersFieldsAddress": "주소",
+    "settingsServersFieldsName": "이름",
+    "settingsServersFieldsPassword": "비밀번호",
+    "settingsServersFieldsUsername": "사용자 이름",
+    "settingsServersMessagesConnectionFailed": "{address}에 연결하지 못했습니다. 서버 구성이 올바른지 확인해주세요",
+    "@settingsServersMessagesConnectionFailed": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersMessagesConnectionOk": "{address}에 연결했습니다",
+    "@settingsServersMessagesConnectionOk": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            }
+        }
+    },
+    "settingsServersName": "서버",
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "비밀번호를 토큰과 솔트로 전달",
+    "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "평문으로 비밀번호 전송(legacy, 보안연결 사용 시에만 사용하세요)",
+    "settingsServersOptionsForcePlaintextPasswordTitle": "비밀번호를 평문으로 보내기"
+}
