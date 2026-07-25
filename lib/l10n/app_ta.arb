@@ -1,0 +1,280 @@
+{
+  "resourcesAlbumActionsPlay": "தொகுப்பு இயக்கு",
+  "@resourcesAlbumActionsPlay": {},
+  "resourcesAlbumActionsView": "ஆல்பத்தைக் காண்க",
+  "@resourcesAlbumActionsView": {},
+  "resourcesSortByFrequentlyPlayed": "அடிக்கடி விளையாடியது",
+  "@resourcesSortByFrequentlyPlayed": {},
+  "settingsAboutActionsProjectHomepage": "திட்ட முகப்புப்பக்கம்",
+  "@settingsAboutActionsProjectHomepage": {},
+  "settingsMusicName": "இசை",
+  "@settingsMusicName": {},
+  "settingsMusicOptionsScrobbleDescriptionOff": "நாடக வரலாற்றை வெல்ல வேண்டாம்",
+  "@settingsMusicOptionsScrobbleDescriptionOff": {},
+  "settingsServersName": "மூலங்கள்",
+  "@settingsServersName": {},
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOn": "கடவுச்சொல்லை எளிய உரையில் அனுப்பவும் (மரபு, உங்கள் இணைப்பு பாதுகாப்பானது என்பதை உறுதிப்படுத்திக் கொள்ளுங்கள்!)",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOn": {},
+  "actionsOk": "சரி",
+  "@actionsOk": {},
+  "actionsStar": "விண்மீன்",
+  "@actionsStar": {},
+  "actionsUnstar": "ச்டார்",
+  "@actionsUnstar": {},
+  "controlsShuffle": "கலக்கு",
+  "@controlsShuffle": {},
+  "messagesNothingHere": "இங்கே எதுவும் இல்லை…",
+  "@messagesNothingHere": {},
+  "navigationTabsHome": "வீடு",
+  "@navigationTabsHome": {},
+  "navigationTabsLibrary": "நூலகம்",
+  "@navigationTabsLibrary": {},
+  "navigationTabsSearch": "தேடல்",
+  "@navigationTabsSearch": {},
+  "navigationTabsSettings": "அமைப்புகள்",
+  "@navigationTabsSettings": {},
+  "resourcesAlbumCount": "{count,plural, =1{{count} செருகேடு} other{{count} செருகேடுகள்}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesAlbumListsSort": "ஆல்பங்களை வரிசைப்படுத்துங்கள்",
+  "@resourcesAlbumListsSort": {},
+  "resourcesAlbumName": "{count,plural, =1{செருகேடு} other{செருகேடுகள்}}",
+  "@resourcesAlbumName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistActionsView": "கலைஞரைக் காண்க",
+  "@resourcesArtistActionsView": {},
+  "resourcesArtistCount": "{count,plural, =1{{count} கலைஞர்} other{{count} கலைஞர்கள்}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistListsSort": "கலைஞர்களை வரிசைப்படுத்துங்கள்",
+  "@resourcesArtistListsSort": {},
+  "resourcesArtistName": "{count,plural, =1{கலைஞர்} other{கலைஞர்கள்}}",
+  "@resourcesArtistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesFilterAlbum": "ஆல்பம்",
+  "@resourcesFilterAlbum": {},
+  "resourcesFilterArtist": "கலைஞர்",
+  "@resourcesFilterArtist": {},
+  "resourcesFilterGenre": "வகை",
+  "@resourcesFilterGenre": {},
+  "resourcesFilterOwner": "உரிமையாளர்",
+  "@resourcesFilterOwner": {},
+  "resourcesFilterStarred": "நடித்தார்",
+  "@resourcesFilterStarred": {},
+  "resourcesFilterYear": "ஆண்டு",
+  "@resourcesFilterYear": {},
+  "resourcesPlaylistActionsPlay": "பிளேலிச்ட்டை விளையாடுங்கள்",
+  "@resourcesPlaylistActionsPlay": {},
+  "resourcesPlaylistCount": "{count,plural, =1{{count} இசைப்பட்டியல்} other{{count} இசைப்பட்டியல்கள்}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesPlaylistName": "{count,plural, =1{இசைப்பட்டியல்} other{இசைப்பட்டியல்கள்}}",
+  "@resourcesPlaylistName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesQueueName": "{count,plural, =1{வரிசை} other{வரிசைகள்}}",
+  "@resourcesQueueName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListDeleteAllContent": "இது பதிவிறக்கம் செய்யப்பட்ட அனைத்து பாடல் கோப்புகளையும் அகற்றும்.",
+  "@resourcesSongListDeleteAllContent": {},
+  "resourcesSongListDeleteAllTitle": "பதிவிறக்கங்களை நீக்கவா?",
+  "@resourcesSongListDeleteAllTitle": {},
+  "resourcesSongCount": "{count,plural, =1{{count} பாடல்} other{{count} பாடல்கள்}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongListsArtistTopSongs": "சிறந்த பாடல்கள்",
+  "@resourcesSongListsArtistTopSongs": {},
+  "resourcesSongName": "{count,plural, =1{பாடல்} other{பாடல்கள்}}",
+  "@resourcesSongName": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSortByAdded": "அண்மைக் காலத்தில் சேர்க்கப்பட்டது",
+  "@resourcesSortByAdded": {},
+  "resourcesSortByAlbum": "ஆல்பம்",
+  "@resourcesSortByAlbum": {},
+  "resourcesSortByAlbumCount": "ஆல்பம் எண்ணிக்கை",
+  "@resourcesSortByAlbumCount": {},
+  "resourcesSortByArtist": "கலைஞர்",
+  "@resourcesSortByArtist": {},
+  "resourcesSortByName": "பெயர்",
+  "@resourcesSortByName": {},
+  "resourcesSortByRandom": "சீரற்ற",
+  "@resourcesSortByRandom": {},
+  "resourcesSortByRecentlyPlayed": "அண்மைக் காலத்தில் விளையாடியது",
+  "@resourcesSortByRecentlyPlayed": {},
+  "resourcesSortByTitle": "தலைப்பு",
+  "@resourcesSortByTitle": {},
+  "resourcesSortByUpdated": "அண்மைக் காலத்தில் புதுப்பிக்கப்பட்டது",
+  "@resourcesSortByUpdated": {},
+  "resourcesSortByYear": "ஆண்டு",
+  "@resourcesSortByYear": {},
+  "searchHeaderTitle": "தேடல்: {query}",
+  "@searchHeaderTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInputPlaceholder": "தேடல்",
+  "@searchInputPlaceholder": {},
+  "searchMoreResults": "மேலும்…",
+  "@searchMoreResults": {},
+  "searchNowPlayingContext": "தேடல் முடிவுகள்",
+  "@searchNowPlayingContext": {},
+  "settingsAboutActionsLicenses": "உரிமங்கள்",
+  "@settingsAboutActionsLicenses": {},
+  "settingsAboutActionsSupport": "டெவலப்பரை ஆதரிக்கவும்",
+  "@settingsAboutActionsSupport": {},
+  "settingsAboutName": "பற்றி",
+  "@settingsAboutName": {},
+  "settingsAboutShareLogs": "பதிவுகளைப் பகிரவும்",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "பதிவு கோப்பைத் தேர்வுசெய்க",
+  "@settingsAboutChooseLog": {},
+  "settingsAboutVersion": "பதிப்பு {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMusicOptionsScrobbleDescriptionOn": "ச்க்ரோபல் ப்ளே வரலாறு",
+  "@settingsMusicOptionsScrobbleDescriptionOn": {},
+  "settingsMusicOptionsScrobbleTitle": "ச்க்ரோபில் நாடகங்கள்",
+  "@settingsMusicOptionsScrobbleTitle": {},
+  "settingsNetworkName": "பிணையம்",
+  "@settingsNetworkName": {},
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "அதிகபட்ச பிட்ரேட் (மொபைல் தரவு)",
+  "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
+  "settingsNetworkOptionsMaxBitrateWifiTitle": "அதிகபட்ச பிட்ரேட் (வைஃபை)",
+  "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
+  "settingsNetworkOptionsMinBufferTitle": "குறைந்தபட்ச இடையக நேரம்",
+  "@settingsNetworkOptionsMinBufferTitle": {},
+  "settingsNetworkOptionsMaxBufferTitle": "அதிகபட்ச இடையக நேரம்",
+  "@settingsNetworkOptionsMaxBufferTitle": {},
+  "settingsNetworkOptionsOfflineMode": "இணைப்பில்லாத பயன்முறை",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsOfflineModeOff": "இசையை ஒத்திசைக்க இணையத்தைப் பயன்படுத்தவும்.",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsOfflineModeOn": "இசையை ஒத்திசைக்க அல்லது இசைக்க இணையத்தைப் பயன்படுத்த வேண்டாம்.",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "settingsNetworkOptionsStreamFormat": "விருப்பமான ச்ட்ரீம் வடிவம்",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "சேவையக இயல்புநிலையைப் பயன்படுத்தவும்",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkValuesKbps": "{value} kbps",
+  "@settingsNetworkValuesKbps": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesSeconds": "{value} விநாடிகள்",
+  "@settingsNetworkValuesSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsNetworkValuesUnlimitedKbps": "வரம்பற்றது",
+  "@settingsNetworkValuesUnlimitedKbps": {},
+  "settingsResetActionsClearImageCache": "தெளிவான பட தற்காலிக சேமிப்பு",
+  "@settingsResetActionsClearImageCache": {},
+  "settingsResetName": "மீட்டமை",
+  "@settingsResetName": {},
+  "settingsServersActionsAdd": "மூலத்தைச் சேர்க்கவும்",
+  "@settingsServersActionsAdd": {},
+  "settingsServersActionsDelete": "நீக்கு",
+  "@settingsServersActionsDelete": {},
+  "settingsServersActionsEdit": "மூலத்தைத் திருத்து",
+  "@settingsServersActionsEdit": {},
+  "settingsServersActionsSave": "சேமி",
+  "@settingsServersActionsSave": {},
+  "settingsServersActionsTestConnection": "சோதனை இணைப்பு",
+  "@settingsServersActionsTestConnection": {},
+  "settingsServersFieldsAddress": "முகவரி",
+  "@settingsServersFieldsAddress": {},
+  "settingsServersFieldsName": "பெயர்",
+  "@settingsServersFieldsName": {},
+  "settingsServersFieldsPassword": "கடவுச்சொல்",
+  "@settingsServersFieldsPassword": {},
+  "settingsServersFieldsUsername": "பயனர்பெயர்",
+  "@settingsServersFieldsUsername": {},
+  "settingsServersMessagesConnectionFailed": "{address} தோல்வியுற்றது, அமைப்புகள் அல்லது சேவையகத்தை சரிபார்க்கவும்",
+  "@settingsServersMessagesConnectionFailed": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersMessagesConnectionOk": "{address} சரி!",
+  "@settingsServersMessagesConnectionOk": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsServersOptionsForcePlaintextPasswordDescriptionOff": "கடவுச்சொல்லை கிள்ளாக்கு + உப்பு என அனுப்பவும்",
+  "@settingsServersOptionsForcePlaintextPasswordDescriptionOff": {},
+  "settingsServersOptionsForcePlaintextPasswordTitle": "எளிய கடவுச்சொல்லை கட்டாயப்படுத்துங்கள்",
+  "@settingsServersOptionsForcePlaintextPasswordTitle": {},
+  "actionsCancel": "ரத்துசெய்",
+  "@actionsCancel": {},
+  "actionsDelete": "நீக்கு",
+  "@actionsDelete": {},
+  "actionsDownload": "பதிவிறக்கம்",
+  "@actionsDownload": {},
+  "actionsDownloadCancel": "பதிவிறக்கத்தை ரத்துசெய்",
+  "@actionsDownloadCancel": {},
+  "actionsDownloadDelete": "பதிவிறக்கம் செய்யப்பட்டதை நீக்கு",
+  "@actionsDownloadDelete": {}
+}
