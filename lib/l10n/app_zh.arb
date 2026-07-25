@@ -115,15 +115,15 @@
   },
   "settingsMusicName": "音乐",
   "@settingsMusicName": {},
-  "settingsMusicOptionsScrobbleDescriptionOff": "不记录scrobble历史",
+  "settingsMusicOptionsScrobbleDescriptionOff": "不记录你的播放历史",
   "@settingsMusicOptionsScrobbleDescriptionOff": {},
-  "settingsMusicOptionsScrobbleDescriptionOn": "Scrobble播放历史",
+  "settingsMusicOptionsScrobbleDescriptionOn": "记录你的播放历史",
   "@settingsMusicOptionsScrobbleDescriptionOn": {},
-  "settingsMusicOptionsScrobbleTitle": "Scrobble模式",
+  "settingsMusicOptionsScrobbleTitle": "记录播放历史",
   "@settingsMusicOptionsScrobbleTitle": {},
   "settingsNetworkName": "网络",
   "@settingsNetworkName": {},
-  "settingsNetworkOptionsMaxBitrateMobileTitle": "最大比特率 (3G/4G/5G)",
+  "settingsNetworkOptionsMaxBitrateMobileTitle": "最大比特率 (移动数据/流量)",
   "@settingsNetworkOptionsMaxBitrateMobileTitle": {},
   "settingsNetworkOptionsMaxBitrateWifiTitle": "最大比特率 (Wi-Fi)",
   "@settingsNetworkOptionsMaxBitrateWifiTitle": {},
@@ -205,7 +205,7 @@
   "@resourcesFilterArtist": {},
   "resourcesFilterOwner": "所有者",
   "@resourcesFilterOwner": {},
-  "resourcesSongListDeleteAllTitle": "删除下载？",
+  "resourcesSongListDeleteAllTitle": "删除下载的内容？",
   "@resourcesSongListDeleteAllTitle": {},
   "resourcesSortByAlbum": "专辑",
   "@resourcesSortByAlbum": {},
@@ -226,5 +226,55 @@
   "resourcesFilterYear": "年份",
   "@resourcesFilterYear": {},
   "resourcesSongListDeleteAllContent": "该操作会删除所有已下载的歌曲文件。",
-  "@resourcesSongListDeleteAllContent": {}
+  "@resourcesSongListDeleteAllContent": {},
+  "settingsAboutShareLogs": "分享日志",
+  "@settingsAboutShareLogs": {},
+  "settingsAboutChooseLog": "选择一份日志文件",
+  "@settingsAboutChooseLog": {},
+  "settingsNetworkOptionsOfflineModeOff": "使用互联网同步音乐。",
+  "@settingsNetworkOptionsOfflineModeOff": {},
+  "settingsNetworkOptionsOfflineModeOn": "不使用互联网同步或播放音乐。",
+  "@settingsNetworkOptionsOfflineModeOn": {},
+  "controlsShuffle": "随机播放",
+  "@controlsShuffle": {},
+  "resourcesAlbumCount": "{count,plural, other{{count} 张专辑}}",
+  "@resourcesAlbumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesArtistCount": "{count,plural, other{{count} 位歌手}}",
+  "@resourcesArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resourcesSongCount": "{count,plural, other{{count} 首歌曲}}",
+  "@resourcesSongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNetworkOptionsOfflineMode": "离线模式",
+  "@settingsNetworkOptionsOfflineMode": {},
+  "settingsNetworkOptionsStreamFormatServerDefault": "使用服务器默认设置",
+  "@settingsNetworkOptionsStreamFormatServerDefault": {},
+  "settingsNetworkOptionsStreamFormat": "偏好的流媒体格式",
+  "@settingsNetworkOptionsStreamFormat": {},
+  "settingsServersFieldsName": "名称",
+  "@settingsServersFieldsName": {},
+  "resourcesPlaylistCount": "{count,plural, other{{count} 张播放列表}}",
+  "@resourcesPlaylistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
