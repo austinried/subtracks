@@ -24,7 +24,8 @@
           };
           android = pkgs.androidenv.composeAndroidPackages {
             platformVersions = [ "35" ];
-            buildToolsVersions = [ "latest" ];
+            buildToolsVersions = [ "37.0.0" ];
+            platformToolsVersion = "37.0.0";
             includeEmulator = false;
             includeSystemImages = false;
             includeNDK = false;
