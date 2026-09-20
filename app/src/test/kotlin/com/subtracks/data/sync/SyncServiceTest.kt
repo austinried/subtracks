@@ -1,0 +1,171 @@
+package com.subtracks.data.sync
+
+import android.content.Context
+import androidx.room3.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.model.Album
+import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSong
+import com.subtracks.data.model.Song
+import com.subtracks.data.model.Source
+import com.subtracks.data.source.MusicSource
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class SyncServiceTest {
+    private lateinit var db: SubtracksDatabase
+
+    @Before
+    fun setUp() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        db = Room.inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
+            .setDriver(BundledSQLiteDriver())
+            .build()
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
+    }
+
+    @Test
+    fun syncInsertsAndPrunesRemovedRows() = runTest {
+        insertSource()
+        val source = FakeMusicSource(
+            artists = listOf(artist("a1"), artist("a2")),
+            albums = listOf(album("al1")),
+            songs = listOf(song("s1"), song("s2")),
+            playlists = listOf(playlist("p1")),
+            playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
+        )
+
+        SyncService(db, source).sync()
+
+        assertEquals(2, db.libraryDao().artists(1).first().size)
+        assertEquals(2, db.libraryDao().songs(1).first().size)
+        assertEquals(1, db.libraryDao().songsByPlaylist(1, "p1").first().size)
+
+        source.artists = listOf(artist("a1"))
+        source.songs = listOf(song("s1"))
+
+        SyncService(db, source).sync()
+
+        assertEquals(listOf("a1"), db.libraryDao().artists(1).first().map { it.id })
+        assertEquals(listOf("s1"), db.libraryDao().songs(1).first().map { it.id })
+    }
+
+    @Test
+    fun searchIndexMatchesSubstrings() = runTest {
+        insertSource()
+        val source = FakeMusicSource(
+            artists = listOf(artist("a1", name = "Radiohead")),
+            songs = listOf(song("s1")),
+        )
+
+        SyncService(db, source).sync()
+
+        val results = db.searchDao().search("1", "adio", 10)
+        assertEquals(1, results.size)
+        assertEquals("a1", results.single().itemId)
+        assertEquals("artist", results.single().type)
+    }
+
+    @Test
+    fun searchIgnoresTooShortQueries() = runTest {
+        insertSource()
+        SyncService(db, FakeMusicSource(artists = listOf(artist("a1", name = "Radiohead")))).sync()
+
+        assertEquals(0, db.searchDao().search("1", "ad", 10).size)
+        assertEquals(0, db.searchDao().search("1", "", 10).size)
+        assertEquals(1, db.searchDao().search("1", "adi", 10).size)
+    }
+
+    @Test
+    fun syncUpdatesExistingRows() = runTest {
+        insertSource()
+        val source = FakeMusicSource(artists = listOf(artist("a1", name = "Old")))
+
+        SyncService(db, source).sync()
+        assertEquals("Old", db.libraryDao().artists(1).first().single().name)
+
+        source.artists = listOf(artist("a1", name = "New"))
+        SyncService(db, source).sync()
+
+        assertEquals("New", db.libraryDao().artists(1).first().single().name)
+    }
+
+    private suspend fun insertSource() {
+        db.sourcesDao().upsertSource(
+            Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+        )
+    }
+
+    private fun artist(id: String, name: String = "Artist $id") =
+        Artist(sourceId = 1, id = id, name = name, albumCount = 1, starred = null)
+
+    private fun album(id: String) = Album(
+        sourceId = 1,
+        id = id,
+        artistId = "a1",
+        name = "Album $id",
+        albumArtist = "Artist",
+        created = 0,
+        coverArt = null,
+        genre = null,
+        year = null,
+        starred = null,
+        songCount = 1,
+        frequentRank = null,
+        recentRank = null,
+    )
+
+    private fun song(id: String) = Song(
+        sourceId = 1,
+        id = id,
+        albumId = "al1",
+        artistId = "a1",
+        title = "Song $id",
+        album = "Album",
+        artist = "Artist",
+        duration = 100,
+        track = 1,
+        disc = 1,
+        starred = null,
+        genre = null,
+    )
+
+    private fun playlist(id: String) =
+        Playlist(sourceId = 1, id = id, name = "Playlist $id", comment = null, coverArt = null, songCount = 1, created = 0)
+}
+
+private class FakeMusicSource(
+    var artists: List<Artist> = emptyList(),
+    var albums: List<Album> = emptyList(),
+    var songs: List<Song> = emptyList(),
+    var playlists: List<Playlist> = emptyList(),
+    var playlistSongs: List<PlaylistSong> = emptyList(),
+) : MusicSource {
+    override val id: Long = 1
+
+    override suspend fun ping() = Unit
+
+    override suspend fun getArtists(): List<Artist> = artists
+
+    override suspend fun getAlbums(): List<Album> = albums
+
+    override suspend fun getSongs(): List<Song> = songs
+
+    override suspend fun getPlaylists(): List<Playlist> = playlists
+
+    override suspend fun getPlaylistSongs(playlists: List<Playlist>): List<PlaylistSong> = playlistSongs
+}
