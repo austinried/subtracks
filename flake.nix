@@ -2,7 +2,7 @@
   description = "Subtracks - Kotlin/Jetpack Compose Android development shell";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/6b316287bae2ee04c9b93c8c858d930fd07d7338";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs =
@@ -23,9 +23,9 @@
             };
           };
           android = pkgs.androidenv.composeAndroidPackages {
-            platformVersions = [ "35" ];
+            platformVersions = [ "37" ];
             buildToolsVersions = [ "37.0.0" ];
-            platformToolsVersion = "37.0.0";
+            platformToolsVersion = "37.0.1";
             includeEmulator = false;
             includeSystemImages = false;
             includeNDK = false;
@@ -38,8 +38,13 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.jdk21
-              pkgs.gradle
+              pkgs.gradle_9
               pkgs.git
+              pkgs.curl
+              pkgs.unzip
+              pkgs.nushell
+              pkgs.navidrome
+              pkgs.gonic
               androidSdk
               android.platform-tools
             ];

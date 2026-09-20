@@ -12,6 +12,8 @@ captures/
 .vscode/
 
 .kotlin/
+.direnv/
 .preview/
+.integration/
 
 .DS_Store
