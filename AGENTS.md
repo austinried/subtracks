@@ -22,7 +22,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Lint: `gradle :app:ktlintCheck :app:lintDebug`
 - Format: `gradle :app:ktlintFormat`
 - Integration tests: `./tools/integration-test.nu` (starts navidrome and gonic, then runs `:app:integrationTest`)
-- Screenshots: `gradle :app:recordRoborazziDebug` to record, `gradle :app:verifyRoborazziDebug` to check
+- Screenshots: `gradle :app:recordRoborazziDebug` renders the `*Screen` composables to `app/src/test/screenshots/` (gitignored) plus an HTML report in `app/build/reports/roborazzi/`, for local review. No golden images are committed and `verifyRoborazziDebug` is not part of CI.
 
 ## Testing layout
 
@@ -49,7 +49,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 ## Gotchas
 
-- Robolectric runs at SDK 35 while `targetSdk` is 37; raising it means re-recording the Roborazzi goldens.
+- Robolectric runs at SDK 35 while `targetSdk` is 37; raising it changes the on-demand Roborazzi renders (there are no committed goldens to re-record).
 - Room 3 does not map `PagingSource` automatically: a DAO that returns it needs `@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)`.
 - Material icons are not pulled in by `material3`; use the BOM-managed `material-icons-core`/`material-icons-extended` (frozen at 1.7.8). Extended is large in debug builds but R8 strips unused icons from release.
 - Robolectric creates a fresh `Application` per test in one JVM, so `SubtracksApp.onCreate` stops any running Koin before `startKoin`.

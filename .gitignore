@@ -15,5 +15,6 @@ captures/
 .direnv/
 .preview/
 .integration/
+app/src/test/screenshots/
 
 .DS_Store

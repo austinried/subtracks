@@ -122,9 +122,9 @@ No analytics or third-party telemetry. Credentials are stored locally in app dat
 
 ## Testing
 
-- Unit tests use Robolectric, Roborazzi (screenshot goldens) and MockWebServer (client), plus an in-memory Room database on the bundled SQLite JVM driver (Robolectric's SQLite has no FTS5).
-- Screenshot goldens exercise the stateless `*Screen` composables with fake data; paging screens are fed `PagingData.from(...)`. Record with `gradle :app:recordRoborazziDebug`, check with `:app:verifyRoborazziDebug`.
-- Cover art in goldens is generated deterministically in the test and served through Coil's `FakeImageLoaderEngine` (synchronous, and no third-party images are committed); a real `ImageLoader` is installed for the run and reset afterwards. Each image is two or three flat colours in a pattern that identifies its type — stripes for albums, dots for playlists, rings for artists.
+- Unit tests use Robolectric, Roborazzi (screenshots) and MockWebServer (client), plus an in-memory Room database on the bundled SQLite JVM driver (Robolectric's SQLite has no FTS5).
+- Roborazzi screenshots exercise the stateless `*Screen` composables with fake data; paging screens are fed `PagingData.from(...)`. They are rendered on demand with `gradle :app:recordRoborazziDebug` (into the gitignored `app/src/test/screenshots/`) for local review; no images are committed and nothing verifies them in CI.
+- Cover art in the screenshots is generated deterministically in the test and served through Coil's `FakeImageLoaderEngine` (synchronous, and no third-party images are committed); a real `ImageLoader` is installed for the run and reset afterwards. Each image is two or three flat colours in a pattern that identifies its type — stripes for albums, dots for playlists, rings for artists.
 - Integration tests run `SubsonicSourceIntegrationTest` against real navidrome and gonic instances, driven by `tools/integration-test.nu`.
 
 ## Build and CI
