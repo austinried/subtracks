@@ -18,6 +18,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -26,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +46,6 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.subtracks.data.model.CoverArtRef
@@ -54,14 +58,12 @@ import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.library.SongRow
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class QueueViewModel(
     private val queueRepository: QueueRepository,
     private val playbackController: PlaybackController,
@@ -70,8 +72,8 @@ class QueueViewModel(
 
     val items: Flow<PagingData<QueueWindowItem>> =
         Pager(PagingConfig(pageSize = QUEUE_PAGE_SIZE, enablePlaceholders = false)) {
-            QueuePagingSource(queueRepository).also { source = it }
-        }.flow.cachedIn(viewModelScope)
+            QueuePagingSource(queueRepository, playbackController.state.value.position ?: 0L).also { source = it }
+        }.flow
 
     fun play(position: Long) {
         viewModelScope.launch { playbackController.playAt(position) }
@@ -94,6 +96,13 @@ class QueueViewModel(
             source?.invalidate()
         }
     }
+
+    fun undo() {
+        viewModelScope.launch {
+            playbackController.undo()
+            source?.invalidate()
+        }
+    }
 }
 
 @Composable
@@ -113,6 +122,7 @@ fun QueueRoute(
         onPlay = viewModel::play,
         onRemove = viewModel::remove,
         onMove = viewModel::move,
+        onUndo = viewModel::undo,
         modifier = modifier,
     )
 }
@@ -127,19 +137,33 @@ fun QueueScreen(
     onPlay: (Long) -> Unit,
     onRemove: (Long) -> Unit,
     onMove: (Long, Long) -> Unit,
+    onUndo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var rowHeight by remember { mutableFloatStateOf(0f) }
     var dragging by remember { mutableStateOf<Long?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var centered by remember { mutableStateOf(false) }
 
-    LaunchedEffect(currentPosition, items.itemCount) {
+    val firstPosition = if (items.itemCount > 0) items.peek(0)?.position else null
+    LaunchedEffect(currentPosition, items.itemCount, firstPosition) {
         val position = currentPosition ?: return@LaunchedEffect
-        if (!centered && position.toInt() < items.itemCount) {
-            listState.scrollToItem(position.toInt())
+        val first = firstPosition ?: return@LaunchedEffect
+        val index = position - first
+        if (!centered && index >= 0 && index < items.itemCount) {
+            listState.scrollToItem(index.toInt())
             centered = true
+        }
+    }
+
+    val showUndo: (String) -> Unit = { message ->
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showSnackbar(message, actionLabel = "Undo", duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed) onUndo()
         }
     }
 
@@ -155,6 +179,7 @@ fun QueueScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         when {
             items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {
@@ -181,7 +206,10 @@ fun QueueScreen(
                                 dragging = dragging == item.position,
                                 dragOffset = if (dragging == item.position) dragOffset else 0f,
                                 onClick = { onPlay(item.position) },
-                                onRemove = { onRemove(item.position) },
+                                onRemove = {
+                                    onRemove(item.position)
+                                    showUndo("Removed from queue")
+                                },
                                 onSize = { rowHeight = it.toFloat() },
                                 onDragStart = {
                                     dragging = item.position
@@ -191,11 +219,16 @@ fun QueueScreen(
                                 onDragEnd = {
                                     val from = dragging
                                     if (from != null && rowHeight > 0f) {
-                                        val to =
-                                            (from + (dragOffset / rowHeight).roundToInt())
-                                                .coerceIn(0L, (items.itemCount - 1).toLong())
-                                        if (to != from) onMove(from, to)
+                                        val to = (from + (dragOffset / rowHeight).roundToInt()).coerceAtLeast(0)
+                                        if (to != from) {
+                                            onMove(from, to)
+                                            showUndo("Queue reordered")
+                                        }
                                     }
+                                    dragging = null
+                                    dragOffset = 0f
+                                },
+                                onDragCancel = {
                                     dragging = null
                                     dragOffset = 0f
                                 },
@@ -221,6 +254,7 @@ private fun QueueRow(
     onDragStart: () -> Unit,
     onDrag: (Float) -> Unit,
     onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
 ) {
     SongRow(
         song = item.item.song,
@@ -248,7 +282,7 @@ private fun QueueRow(
                                         onDrag(amount.y)
                                     },
                                     onDragEnd = onDragEnd,
-                                    onDragCancel = onDragEnd,
+                                    onDragCancel = onDragCancel,
                                 )
                             },
                     contentAlignment = Alignment.Center,

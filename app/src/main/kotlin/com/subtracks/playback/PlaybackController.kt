@@ -46,6 +46,11 @@ data class PlaybackState(
     val hasPrevious: Boolean = false,
 )
 
+private data class QueueUndo(
+    val entries: List<QueueEntry>,
+    val cursor: Long,
+)
+
 class PlaybackController(
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
@@ -72,6 +77,7 @@ class PlaybackController(
     private var windowStart = 0L
     private var windowEnd = -1L
     private var updating = false
+    private var lastEdit: QueueUndo? = null
 
     init {
         scope.launch {
@@ -137,6 +143,7 @@ class PlaybackController(
                     player.ensurePrepared()
                     player.seekToIndex((target - windowStart).toInt())
                     player.play()
+                    shiftWindowLocked(target)
                     refresh(target)
                 } else {
                     loadWindow(target, autoplay = true)
@@ -150,24 +157,42 @@ class PlaybackController(
             val snapshot = snapshot ?: return@withLock
             if (position !in 0 until snapshot.size) return@withLock
             val player = player ?: return@withLock
+            val undo = QueueUndo(snapshot.entries.map { it.entry }, queueRepository.cursor())
             if (snapshot.size == 1L) {
                 queueRepository.removeAt(snapshot, position)
                 stopLocked()
+                lastEdit = undo
                 return@withLock
             }
             val current = currentPosition() ?: return@withLock
             val target = (if (position < current) current - 1 else current).coerceIn(0, snapshot.size - 2)
+            val playing = player.playWhenReady
             queueRepository.removeAt(snapshot, position)
             this.snapshot = queueRepository.snapshot()
             windowJob?.cancel()
-            if (position < windowStart) {
-                windowStart--
-                windowEnd--
-            } else if (position <= windowEnd) {
-                updating = true
-                player.removeAt((position - windowStart).toInt())
-                updating = false
-                windowEnd--
+            lastEdit = undo
+            when {
+                position == current -> {
+                    loadWindow(target, autoplay = playing, startPositionMs = 0)
+                }
+
+                position < windowStart -> {
+                    windowStart--
+                    windowEnd--
+                    shiftWindowLocked(target)
+                }
+
+                position <= windowEnd -> {
+                    updating = true
+                    player.removeAt((position - windowStart).toInt())
+                    updating = false
+                    windowEnd--
+                    shiftWindowLocked(target)
+                }
+
+                else -> {
+                    shiftWindowLocked(target)
+                }
             }
             queueRepository.setCursor(target)
             refresh(target)
@@ -182,10 +207,12 @@ class PlaybackController(
         if (from !in 0 until snapshot.size || to !in 0 until snapshot.size) return@withLock
         val player = player ?: return@withLock
         val current = currentPosition() ?: return@withLock
-        val target = movedCursor(current, from, to)
-        queueRepository.move(from, to)
+        val undo = QueueUndo(snapshot.entries.map { it.entry }, queueRepository.cursor())
+        if (!queueRepository.move(from, to)) return@withLock
         this.snapshot = queueRepository.snapshot()
+        val target = movedCursor(current, from, to)
         windowJob?.cancel()
+        lastEdit = undo
         if (from in windowStart..windowEnd && to in windowStart..windowEnd) {
             updating = true
             player.move((from - windowStart).toInt(), (to - windowStart).toInt())
@@ -193,9 +220,33 @@ class PlaybackController(
         } else {
             loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
         }
+        shiftWindowLocked(target)
         queueRepository.setCursor(target)
         refresh(target)
     }
+
+    suspend fun undo() =
+        startLock.withLock {
+            val undo = lastEdit ?: return@withLock
+            val player = player ?: return@withLock
+            val playing = player.playWhenReady
+            val playingId = player.currentItem?.id
+            val positionMs = player.currentPositionMs
+            queueRepository.replace(undo.entries)
+            val restored = queueRepository.snapshot()
+            this.snapshot = restored
+            lastEdit = null
+            if (restored.size == 0L) {
+                stopLocked()
+                return@withLock
+            }
+            val target = undo.cursor.coerceIn(0, restored.size - 1)
+            windowJob?.cancel()
+            val same = queueRepository.itemAt(restored, target)?.song?.id == playingId
+            loadWindow(target, autoplay = playing, startPositionMs = if (same) positionMs else 0)
+            queueRepository.setCursor(target)
+            refresh(target)
+        }
 
     fun togglePlayPause() {
         val player = player ?: return
@@ -242,6 +293,7 @@ class PlaybackController(
         windowEnd = -1
         lastDurationMs = 0
         lastError = null
+        lastEdit = null
         queueRepository.replace(entries)
         val snapshot = queueRepository.snapshot()
         this.snapshot = snapshot
@@ -290,6 +342,7 @@ class PlaybackController(
         queueSourceId = null
         windowStart = 0
         windowEnd = -1
+        lastEdit = null
         player?.run {
             stop()
             clear()
@@ -359,39 +412,40 @@ class PlaybackController(
             }
     }
 
-    private suspend fun shiftWindow(center: Long) =
-        startLock.withLock {
-            val player = player ?: return@withLock
-            val snapshot = queueRepository.snapshot()
-            this.snapshot = snapshot
-            if (snapshot.size == 0L) return@withLock
-            val target = center.coerceIn(0, snapshot.size - 1)
-            val desiredStart = (target - QUEUE_WINDOW_RADIUS).coerceAtLeast(0)
-            val desiredEnd = (target + QUEUE_WINDOW_RADIUS).coerceAtMost(snapshot.size - 1)
-            updating = true
-            try {
-                while (windowStart > desiredStart) {
-                    val item = queueRepository.itemAt(snapshot, windowStart - 1) ?: break
-                    player.addFirst(item.toQueueItem())
-                    windowStart--
-                }
-                while (windowStart < desiredStart) {
-                    player.removeFirst()
-                    windowStart++
-                }
-                while (windowEnd < desiredEnd) {
-                    val item = queueRepository.itemAt(snapshot, windowEnd + 1) ?: break
-                    player.addLast(item.toQueueItem())
-                    windowEnd++
-                }
-                while (windowEnd > desiredEnd) {
-                    player.removeLast()
-                    windowEnd--
-                }
-            } finally {
-                updating = false
+    private suspend fun shiftWindow(center: Long) = startLock.withLock { shiftWindowLocked(center) }
+
+    private suspend fun shiftWindowLocked(center: Long) {
+        val player = player ?: return
+        val snapshot = queueRepository.snapshot()
+        this.snapshot = snapshot
+        if (snapshot.size == 0L) return
+        val target = center.coerceIn(0, snapshot.size - 1)
+        val desiredStart = (target - QUEUE_WINDOW_RADIUS).coerceAtLeast(0)
+        val desiredEnd = (target + QUEUE_WINDOW_RADIUS).coerceAtMost(snapshot.size - 1)
+        updating = true
+        try {
+            while (windowStart > desiredStart) {
+                val item = queueRepository.itemAt(snapshot, windowStart - 1) ?: break
+                player.addFirst(item.toQueueItem())
+                windowStart--
             }
+            while (windowStart < desiredStart) {
+                player.removeFirst()
+                windowStart++
+            }
+            while (windowEnd < desiredEnd) {
+                val item = queueRepository.itemAt(snapshot, windowEnd + 1) ?: break
+                player.addLast(item.toQueueItem())
+                windowEnd++
+            }
+            while (windowEnd > desiredEnd) {
+                player.removeLast()
+                windowEnd--
+            }
+        } finally {
+            updating = false
         }
+    }
 
     private fun currentPosition(): Long? {
         val player = player ?: return null

@@ -237,6 +237,7 @@ class AppScreenshotTest {
                     onPlay = {},
                     onRemove = {},
                     onMove = { _, _ -> },
+                    onUndo = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }

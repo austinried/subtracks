@@ -12,7 +12,7 @@ private const val ALBUM_SONGS_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
-        "ORDER BY songs.disc, songs.track"
+        "ORDER BY songs.disc, songs.track, songs.id"
 
 private const val SONG_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +

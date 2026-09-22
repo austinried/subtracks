@@ -15,6 +15,8 @@ import com.subtracks.data.model.Source
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -297,6 +299,17 @@ class QueueRepositoryTest {
             repository.move(from = 0, to = 3)
 
             assertEquals(listOf("s2", "s3", "s4", "s1"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun movingFromOutsideTheQueueChangesNothing() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            assertFalse(repository.move(from = 5, to = 0))
+            assertTrue(repository.move(from = 0, to = 2))
+            assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
         }
 
     private suspend fun QueueRepository.snapshotAfter(entries: List<QueueEntry>): QueueSnapshot {

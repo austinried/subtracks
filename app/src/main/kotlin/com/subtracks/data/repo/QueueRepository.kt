@@ -1,7 +1,9 @@
 package com.subtracks.data.repo
 
 import androidx.paging.PagingSource
+import androidx.room3.deferredTransaction
 import androidx.room3.immediateTransaction
+import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PlaybackCursor
@@ -61,7 +63,12 @@ class QueueRepository(
         dao.setCursor(PlaybackCursor(queuePosition = 0))
     }
 
-    suspend fun snapshot(): QueueSnapshot = QueueSnapshot(dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) })
+    suspend fun snapshot(): QueueSnapshot =
+        db.useReaderConnection { transactor ->
+            transactor.deferredTransaction {
+                QueueSnapshot(dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) })
+            }
+        }
 
     suspend fun itemAt(
         snapshot: QueueSnapshot,
@@ -104,21 +111,22 @@ class QueueRepository(
     suspend fun removeAt(
         snapshot: QueueSnapshot,
         position: Long,
-    ) = write(removeEntry(snapshot.entries, position))
+    ) = write(removeEntry(snapshot.entries, position).map { it.entry })
 
     suspend fun move(
         from: Long,
         to: Long,
-    ) {
+    ): Boolean {
         val before = snapshot()
-        val located = before.locate(from) ?: return
-        val song = itemAt(before, from) ?: return
-        write(removeEntry(before.entries, from))
-        val after = snapshot()
-        write(insertEntry(after.entries, to.coerceIn(0, after.size), songEntry(located.first.sourceId, song.song.id)))
+        val located = before.locate(from) ?: return false
+        val song = itemAt(before, from) ?: return false
+        val removed = removeEntry(before.entries, from)
+        val moved = songEntry(located.first.sourceId, song.song.id)
+        write(insertEntry(removed, to.coerceIn(0, removed.sumOf { it.length }), moved))
+        return true
     }
 
-    fun pagingSource(): PagingSource<Long, QueueWindowItem> = QueuePagingSource(this)
+    fun pagingSource(initialPosition: Long): PagingSource<Long, QueueWindowItem> = QueuePagingSource(this, initialPosition)
 
     suspend fun cursor(): Long = dao.cursor()?.queuePosition ?: 0
 
@@ -165,19 +173,23 @@ class QueueRepository(
     private fun removeEntry(
         entries: List<ResolvedQueueEntry>,
         index: Long,
-    ): List<QueueEntry> {
-        val result = mutableListOf<QueueEntry>()
+    ): List<ResolvedQueueEntry> {
+        val result = mutableListOf<ResolvedQueueEntry>()
         var start = 0L
         for (resolved in entries) {
             val end = start + resolved.length - 1
             if (index in start..end) {
                 val offset = resolved.entry.offset + (index - start)
                 val first = resolved.entry.offset
-                val last = resolved.entry.offset + resolved.length - 1
-                if (offset > first) result += resolved.entry.range(first, offset - 1)
-                if (offset < last) result += resolved.entry.range(offset + 1, last)
+                val last = first + resolved.length - 1
+                if (offset > first) {
+                    result += ResolvedQueueEntry(resolved.entry.range(first, offset - 1), offset - first)
+                }
+                if (offset < last) {
+                    result += ResolvedQueueEntry(resolved.entry.range(offset + 1, last), last - offset)
+                }
             } else {
-                result += resolved.entry
+                result += resolved
             }
             start += resolved.length
         }
@@ -202,12 +214,11 @@ class QueueRepository(
                 }
 
                 !placed && index in start..end -> {
-                    val offset = resolved.entry.offset + (index - start)
-                    val first = resolved.entry.offset
-                    val last = resolved.entry.offset + resolved.length - 1
-                    if (offset > first) result += resolved.entry.range(first, offset - 1)
+                    val cut = index - start
+                    val offset = resolved.entry.offset
+                    if (cut > 0) result += resolved.entry.range(offset, offset + cut - 1)
                     result += newEntry
-                    if (offset <= last) result += resolved.entry.range(offset, last)
+                    if (cut < resolved.length) result += resolved.entry.range(offset + cut, offset + resolved.length - 1)
                     placed = true
                 }
 

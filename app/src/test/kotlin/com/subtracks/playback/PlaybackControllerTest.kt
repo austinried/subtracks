@@ -370,7 +370,7 @@ class PlaybackControllerTest {
         }
 
         assertEquals(0L, controller.state.value.position)
-        assertTrue(handle.operations.contains("removeAt(0)"))
+        assertTrue(handle.operations.any { it.startsWith("setWindow") })
         assertFalse(controller.state.value.hasPrevious)
     }
 
@@ -435,6 +435,79 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id,
         )
+    }
+
+    @Test
+    fun undoRestoresARemovedTrack() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        runBlocking { controller.removeAt(3) }
+        await { handle.itemCount == 4 }
+
+        runBlocking { controller.undo() }
+        await { handle.itemCount == 5 }
+
+        assertEquals(listOf("s1", "s2", "s3", "s4", "s5"), handle.items.map { it.id })
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(2L, controller.state.value.position)
+    }
+
+    @Test
+    fun undoRestoresAReorderedQueue() {
+        seedAlbum(4, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.move(0, 2) }
+        await { handle.items.map { it.id } == listOf("s2", "s3", "s1", "s4") }
+
+        runBlocking { controller.undo() }
+        await { handle.items.map { it.id } == listOf("s1", "s2", "s3", "s4") }
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
+    fun startingANewQueueClearsTheUndo() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.removeAt(1) }
+        await { handle.itemCount == 2 }
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        runBlocking { controller.undo() }
+
+        assertEquals(listOf("s1", "s2", "s3"), handle.items.map { it.id })
     }
 
     private fun seedAlbum(

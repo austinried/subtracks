@@ -42,7 +42,7 @@ class QueuePagingSourceTest {
         runTest {
             seedSongs(130)
             repository.replace(listOf(repository.songsEntry(1)))
-            val source = repository.pagingSource()
+            val source = repository.pagingSource(initialPosition = 0)
 
             val first = load(source, key = null)
             assertEquals((0L until 60L).toList(), first.data.map { it.position })
@@ -61,9 +61,23 @@ class QueuePagingSourceTest {
         }
 
     @Test
+    fun theFirstPageStartsAtTheInitialPosition() =
+        runTest {
+            seedSongs(130)
+            repository.replace(listOf(repository.songsEntry(1)))
+            val source = repository.pagingSource(initialPosition = 100)
+
+            val first = load(source, key = null)
+
+            assertEquals((60L until 120L).toList(), first.data.map { it.position })
+            assertEquals(2L, first.nextKey)
+            assertEquals(0L, first.prevKey)
+        }
+
+    @Test
     fun anEmptyQueueLoadsNothing() =
         runTest {
-            val result = load(repository.pagingSource(), key = null)
+            val result = load(repository.pagingSource(0), key = null)
 
             assertEquals(emptyList<QueueWindowItem>(), result.data)
             assertEquals(null, result.nextKey)
