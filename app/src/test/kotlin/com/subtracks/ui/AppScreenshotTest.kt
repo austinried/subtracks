@@ -6,6 +6,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -32,11 +34,15 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
+import com.subtracks.playback.PlaybackState
+import com.subtracks.playback.QueueItem
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.AlbumDetailScreen
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.PlaylistDetailScreen
+import com.subtracks.ui.playback.MiniPlayer
+import com.subtracks.ui.playback.NowPlayingScreen
 import com.subtracks.ui.settings.AddSourceScreen
 import com.subtracks.ui.settings.AddSourceState
 import com.subtracks.ui.settings.SettingsScreen
@@ -112,6 +118,8 @@ class AppScreenshotTest {
                     songs = Fixtures.songs,
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
+                    onSongClick = {},
+                    playingSongId = Fixtures.songs.first().id,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -129,6 +137,7 @@ class AppScreenshotTest {
                     songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
+                    onSongClick = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -180,6 +189,46 @@ class AppScreenshotTest {
         }
         awaitText("Add server")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/add_source.png")
+    }
+
+    @Test
+    fun nowPlaying() {
+        composeRule.setContent {
+            SubtracksTheme {
+                NowPlayingScreen(
+                    state = Fixtures.playbackState(),
+                    coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    onBack = {},
+                    onPlayPause = {},
+                    onNext = {},
+                    onPrevious = {},
+                    onSeek = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Everything In Its Right Place")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/now_playing.png")
+    }
+
+    @Test
+    fun miniPlayer() {
+        composeRule.setContent {
+            SubtracksTheme {
+                Column(Modifier.fillMaxSize()) {
+                    Spacer(Modifier.weight(1f))
+                    MiniPlayer(
+                        state = Fixtures.playbackState(),
+                        coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                        onExpand = {},
+                        onPlayPause = {},
+                        onNext = {},
+                    )
+                }
+            }
+        }
+        awaitText("Everything In Its Right Place")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/mini_player.png")
     }
 
     private fun setLibraryContent(tab: LibraryTab) {
@@ -267,6 +316,23 @@ private object Fixtures {
             playlist("pl-focus", "Focus", 18),
             playlist("pl-morning", "Morning", 7),
             playlist("pl-one-song", "One Song", 1),
+        )
+
+    fun playbackState() =
+        PlaybackState(
+            item =
+                QueueItem(
+                    id = "s-eiirp",
+                    title = "Everything In Its Right Place",
+                    artist = "Radiohead",
+                    album = "Kid A",
+                    coverArtId = "art-al-kid-a",
+                ),
+            isPlaying = true,
+            positionMs = 62_000,
+            durationMs = 251_000,
+            hasNext = true,
+            hasPrevious = false,
         )
 
     private fun artist(

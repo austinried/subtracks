@@ -33,6 +33,7 @@ class SourceRepositoryTest {
 
     @After
     fun tearDown() {
+        repository.close()
         db.close()
     }
 
