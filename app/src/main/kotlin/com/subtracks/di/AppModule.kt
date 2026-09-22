@@ -14,6 +14,7 @@ import com.subtracks.ui.RootViewModel
 import com.subtracks.ui.library.AlbumDetailViewModel
 import com.subtracks.ui.library.LibraryViewModel
 import com.subtracks.ui.library.PlaylistDetailViewModel
+import com.subtracks.ui.playback.QueueViewModel
 import com.subtracks.ui.settings.AddSourceViewModel
 import com.subtracks.ui.settings.SettingsViewModel
 import okhttp3.OkHttpClient
@@ -39,4 +40,5 @@ fun appModule(
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), params.get()) }
+    viewModel { QueueViewModel(get(), get()) }
 }

@@ -14,6 +14,11 @@ private const val ALBUM_SONGS_SQL =
         "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
         "ORDER BY songs.disc, songs.track"
 
+private const val SONG_SQL =
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND songs.id = :songId"
+
 @Dao
 interface QueueDao {
     @Query("DELETE FROM queue_entries")
@@ -56,33 +61,34 @@ interface QueueDao {
         songId: String,
     ): Long
 
-    @Query("$PLAYLIST_SONGS_SQL LIMIT 1 OFFSET :offset")
-    suspend fun playlistSongAt(
+    @Query("$PLAYLIST_SONGS_SQL LIMIT :limit OFFSET :offset")
+    suspend fun playlistSongs(
         sourceId: Long,
         playlistId: String,
         offset: Long,
-    ): SongListItem?
+        limit: Int,
+    ): List<SongListItem>
 
-    @Query("$ALBUM_SONGS_SQL LIMIT 1 OFFSET :offset")
-    suspend fun albumSongAt(
+    @Query("$ALBUM_SONGS_SQL LIMIT :limit OFFSET :offset")
+    suspend fun albumSongs(
         sourceId: Long,
         albumId: String,
         offset: Long,
-    ): SongListItem?
+        limit: Int,
+    ): List<SongListItem>
 
-    @Query("$SONGS_SQL LIMIT 1 OFFSET :offset")
-    suspend fun songAt(
+    @Query("$SONGS_SQL LIMIT :limit OFFSET :offset")
+    suspend fun songs(
         sourceId: Long,
         offset: Long,
-    ): SongListItem?
+        limit: Int,
+    ): List<SongListItem>
 
-    @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
-            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND songs.id = :songId LIMIT 1",
-    )
+    @Query("$SONG_SQL LIMIT :limit OFFSET :offset")
     suspend fun song(
         sourceId: Long,
         songId: String,
-    ): SongListItem?
+        offset: Long,
+        limit: Int,
+    ): List<SongListItem>
 }

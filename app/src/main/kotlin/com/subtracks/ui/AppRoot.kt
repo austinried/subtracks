@@ -41,6 +41,7 @@ import com.subtracks.ui.library.LibraryRoute
 import com.subtracks.ui.library.PlaylistDetailRoute
 import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingRoute
+import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.SettingsRoute
 import kotlinx.coroutines.flow.SharingStarted
@@ -89,6 +90,7 @@ private fun MainNavigation() {
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingNowPlaying by rememberSaveable { mutableStateOf(false) }
+    var showingQueue by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) { playbackController.connect() }
 
     val playerVisible = playback.item != null
@@ -185,10 +187,23 @@ private fun MainNavigation() {
         ) {
             NowPlayingRoute(
                 onBack = { showingNowPlaying = false },
+                onQueue = { showingQueue = true },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = showingQueue,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(NOW_PLAYING_DURATION_MS)),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(NOW_PLAYING_DURATION_MS)),
+        ) {
+            QueueRoute(
+                onBack = { showingQueue = false },
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
 
-    BackHandler(enabled = showingNowPlaying) { showingNowPlaying = false }
+    BackHandler(enabled = showingQueue) { showingQueue = false }
+    BackHandler(enabled = showingNowPlaying && !showingQueue) { showingNowPlaying = false }
 }

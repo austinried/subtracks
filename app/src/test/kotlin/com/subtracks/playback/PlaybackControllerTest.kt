@@ -311,6 +311,132 @@ class PlaybackControllerTest {
         assertFalse(controller.state.value.hasPrevious)
     }
 
+    @Test
+    fun jumpingToAVisibleItemSeeksWithinTheWindow() {
+        seedAlbum(60, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.playAt(10)
+        await { controller.state.value.position == 10L }
+
+        assertTrue(handle.operations.contains("seekToIndex(10)"))
+        assertEquals(
+            "s11",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun jumpingOutsideTheWindowReloadsAroundTheTarget() {
+        seedAlbum(60, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.playAt(40)
+        await {
+            controller.state.value.item
+                ?.id == "s41"
+        }
+
+        assertEquals(40L, controller.state.value.position)
+        assertTrue(handle.operations.any { it.startsWith("setWindow") })
+        assertTrue(controller.state.value.hasPrevious)
+    }
+
+    @Test
+    fun removingTheCurrentTrackPlaysTheNextOne() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.removeAt(0) }
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertEquals(0L, controller.state.value.position)
+        assertTrue(handle.operations.contains("removeAt(0)"))
+        assertFalse(controller.state.value.hasPrevious)
+    }
+
+    @Test
+    fun removingALaterTrackKeepsTheCurrentOne() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.removeAt(3) }
+        await { handle.itemCount == 4 }
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(listOf("s1", "s2", "s3", "s5"), handle.items.map { it.id })
+    }
+
+    @Test
+    fun movingATrackReordersTheWindow() {
+        seedAlbum(4, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.move(0, 2) }
+        await { controller.state.value.position == 2L }
+
+        assertEquals(listOf("s2", "s3", "s1", "s4"), handle.items.map { it.id })
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun movingALaterTrackBeforeTheCurrentShiftsTheCursor() {
+        seedAlbum(4, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        runBlocking { controller.move(3, 0) }
+        await { controller.state.value.position == 3L }
+
+        assertEquals(listOf("s4", "s1", "s2", "s3"), handle.items.map { it.id })
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

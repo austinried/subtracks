@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.SkipNext
@@ -49,6 +50,7 @@ import org.koin.compose.koinInject
 @Composable
 fun NowPlayingRoute(
     onBack: () -> Unit,
+    onQueue: () -> Unit,
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
 ) {
@@ -57,6 +59,7 @@ fun NowPlayingRoute(
         state = state,
         coverArt = controller.coverArt(state.item),
         onBack = onBack,
+        onQueue = onQueue,
         onPlayPause = controller::togglePlayPause,
         onNext = controller::next,
         onPrevious = controller::previous,
@@ -71,6 +74,7 @@ fun NowPlayingScreen(
     state: PlaybackState,
     coverArt: CoverArtRef?,
     onBack: () -> Unit,
+    onQueue: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
@@ -88,6 +92,11 @@ fun NowPlayingScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onQueue) {
+                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "Queue")
                     }
                 },
             )

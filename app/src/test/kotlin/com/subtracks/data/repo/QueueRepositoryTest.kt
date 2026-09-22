@@ -228,6 +228,77 @@ class QueueRepositoryTest {
             assertEquals(listOf("s4"), resolveAll(snapshot))
         }
 
+    @Test
+    fun rangeResolvesASliceSpanningEntries() =
+        runTest {
+            seedLibrary()
+            val entries = listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4"))
+            val snapshot = repository.snapshotAfter(entries)
+
+            val range = repository.range(snapshot, first = 1, last = 3)
+
+            assertEquals(listOf(1L, 2L, 3L), range.map { it.position })
+            assertEquals(listOf("s2", "s3", "s4"), range.map { it.item.song.id })
+        }
+
+    @Test
+    fun removingInsideAnEntrySplitsItIntoTwoRanges() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            repository.removeAt(snapshot, 1)
+
+            assertEquals(listOf("s1", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun removingTheFirstOrLastTrackKeepsTheRemainingRange() =
+        runTest {
+            seedLibrary()
+            val first = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.removeAt(first, 0)
+            assertEquals(listOf("s2", "s3"), resolveAll(repository.snapshot()))
+
+            val last = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.removeAt(last, 2)
+            assertEquals(listOf("s1", "s2"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun removingASongEntryDropsIt() =
+        runTest {
+            seedLibrary()
+            val snapshot =
+                repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
+
+            repository.removeAt(snapshot, 3)
+
+            assertEquals(listOf("s1", "s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun movingWithinAnEntryReordersTheQueue() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            repository.move(from = 0, to = 2)
+
+            assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun movingAcrossEntriesKeepsTheRestInOrder() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
+
+            repository.move(from = 0, to = 3)
+
+            assertEquals(listOf("s2", "s3", "s4", "s1"), resolveAll(repository.snapshot()))
+        }
+
     private suspend fun QueueRepository.snapshotAfter(entries: List<QueueEntry>): QueueSnapshot {
         replace(entries)
         return snapshot()

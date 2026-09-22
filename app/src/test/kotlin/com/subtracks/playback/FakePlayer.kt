@@ -61,8 +61,9 @@ class FakePlayerHandle : PlayerHandle {
     override fun setWindow(
         items: List<QueueItem>,
         startIndex: Int,
+        startPositionMs: Long,
     ) {
-        operations += "setWindow(size=${items.size}, start=$startIndex)"
+        operations += "setWindow(size=${items.size}, start=$startIndex, position=$startPositionMs)"
         this.items.clear()
         this.items += items
         index = startIndex
@@ -94,6 +95,34 @@ class FakePlayerHandle : PlayerHandle {
     override fun removeLast() {
         operations += "removeLast"
         items.removeAt(items.size - 1)
+    }
+
+    override fun removeAt(index: Int) {
+        operations += "removeAt($index)"
+        items.removeAt(index)
+        this.index =
+            when {
+                index < this.index -> this.index - 1
+                index == this.index -> this.index.coerceAtMost(items.size - 1)
+                else -> this.index
+            }
+        notifyEvents()
+    }
+
+    override fun move(
+        from: Int,
+        to: Int,
+    ) {
+        operations += "move($from, $to)"
+        items.add(to, items.removeAt(from))
+        index =
+            when {
+                index == from -> to
+                from < index && to >= index -> index - 1
+                from > index && to <= index -> index + 1
+                else -> index
+            }
+        notifyEvents()
     }
 
     override fun prepare() {

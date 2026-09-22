@@ -15,6 +15,7 @@ interface PlayerHandle {
     fun setWindow(
         items: List<QueueItem>,
         startIndex: Int,
+        startPositionMs: Long = 0,
     )
 
     fun addFirst(item: QueueItem)
@@ -24,6 +25,13 @@ interface PlayerHandle {
     fun removeFirst()
 
     fun removeLast()
+
+    fun removeAt(index: Int)
+
+    fun move(
+        from: Int,
+        to: Int,
+    )
 
     fun prepare()
 

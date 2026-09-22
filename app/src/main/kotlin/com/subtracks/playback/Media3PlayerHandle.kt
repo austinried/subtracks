@@ -39,7 +39,8 @@ class Media3PlayerHandle(
     override fun setWindow(
         items: List<QueueItem>,
         startIndex: Int,
-    ) = controller.setMediaItems(items.map(::toMediaItem), startIndex, 0)
+        startPositionMs: Long,
+    ) = controller.setMediaItems(items.map(::toMediaItem), startIndex, startPositionMs)
 
     override fun addFirst(item: QueueItem) = controller.addMediaItems(0, listOf(toMediaItem(item)))
 
@@ -48,6 +49,13 @@ class Media3PlayerHandle(
     override fun removeFirst() = controller.removeMediaItem(0)
 
     override fun removeLast() = controller.removeMediaItem(controller.mediaItemCount - 1)
+
+    override fun removeAt(index: Int) = controller.removeMediaItem(index)
+
+    override fun move(
+        from: Int,
+        to: Int,
+    ) = controller.moveMediaItem(from, to)
 
     override fun prepare() = controller.prepare()
 

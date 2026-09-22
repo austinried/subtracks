@@ -78,6 +78,7 @@ fun SongRow(
     coverArtId: String? = null,
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
     isPlaying: Boolean = false,
+    trailingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     ListItem(
@@ -94,6 +95,7 @@ fun SongRow(
             } else {
                 null
             },
+        trailingContent = trailingContent,
         headlineContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

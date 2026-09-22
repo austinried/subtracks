@@ -36,6 +36,7 @@ data class QueueContext(
 data class PlaybackState(
     val item: QueueItem? = null,
     val context: QueueContext? = null,
+    val position: Long? = null,
     val error: String? = null,
     val isBuffering: Boolean = false,
     val isPlaying: Boolean = false,
@@ -122,6 +123,79 @@ class PlaybackController(
         sourceId: Long,
         startPosition: Long,
     ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
+
+    fun playAt(position: Long) {
+        scope.launch {
+            startLock.withLock {
+                val snapshot = snapshot ?: return@withLock
+                if (snapshot.size == 0L) return@withLock
+                val player = player ?: return@withLock
+                val target = position.coerceIn(0, snapshot.size - 1)
+                windowJob?.cancel()
+                queueRepository.setCursor(target)
+                if (target in windowStart..windowEnd) {
+                    player.ensurePrepared()
+                    player.seekToIndex((target - windowStart).toInt())
+                    player.play()
+                    refresh(target)
+                } else {
+                    loadWindow(target, autoplay = true)
+                }
+            }
+        }
+    }
+
+    suspend fun removeAt(position: Long) =
+        startLock.withLock {
+            val snapshot = snapshot ?: return@withLock
+            if (position !in 0 until snapshot.size) return@withLock
+            val player = player ?: return@withLock
+            if (snapshot.size == 1L) {
+                queueRepository.removeAt(snapshot, position)
+                stopLocked()
+                return@withLock
+            }
+            val current = currentPosition() ?: return@withLock
+            val target = (if (position < current) current - 1 else current).coerceIn(0, snapshot.size - 2)
+            queueRepository.removeAt(snapshot, position)
+            this.snapshot = queueRepository.snapshot()
+            windowJob?.cancel()
+            if (position < windowStart) {
+                windowStart--
+                windowEnd--
+            } else if (position <= windowEnd) {
+                updating = true
+                player.removeAt((position - windowStart).toInt())
+                updating = false
+                windowEnd--
+            }
+            queueRepository.setCursor(target)
+            refresh(target)
+        }
+
+    suspend fun move(
+        from: Long,
+        to: Long,
+    ) = startLock.withLock {
+        if (from == to) return@withLock
+        val snapshot = snapshot ?: return@withLock
+        if (from !in 0 until snapshot.size || to !in 0 until snapshot.size) return@withLock
+        val player = player ?: return@withLock
+        val current = currentPosition() ?: return@withLock
+        val target = movedCursor(current, from, to)
+        queueRepository.move(from, to)
+        this.snapshot = queueRepository.snapshot()
+        windowJob?.cancel()
+        if (from in windowStart..windowEnd && to in windowStart..windowEnd) {
+            updating = true
+            player.move((from - windowStart).toInt(), (to - windowStart).toInt())
+            updating = false
+        } else {
+            loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
+        }
+        queueRepository.setCursor(target)
+        refresh(target)
+    }
 
     fun togglePlayPause() {
         val player = player ?: return
@@ -227,6 +301,7 @@ class PlaybackController(
     private suspend fun loadWindow(
         position: Long,
         autoplay: Boolean,
+        startPositionMs: Long = 0,
     ) {
         val player = player ?: return
         val snapshot = snapshot ?: return
@@ -236,7 +311,7 @@ class PlaybackController(
         windowStart = window.first().position
         windowEnd = window.last().position
         updating = true
-        player.setWindow(window.map { it.item.toQueueItem() }, startIndex)
+        player.setWindow(window.map { it.item.toQueueItem() }, startIndex, startPositionMs)
         updating = false
         if (autoplay) {
             player.prepare()
@@ -324,6 +399,18 @@ class PlaybackController(
         return windowStart + player.currentIndex
     }
 
+    private fun movedCursor(
+        current: Long,
+        from: Long,
+        to: Long,
+    ): Long =
+        when {
+            from == current -> to
+            from < current && to >= current -> current - 1
+            from > current && to <= current -> current + 1
+            else -> current
+        }
+
     private val playerListener =
         object : PlayerHandle.Listener {
             override fun onTransition() {
@@ -372,6 +459,7 @@ class PlaybackController(
             PlaybackState(
                 item = player.currentItem,
                 context = contextAt(position),
+                position = position,
                 error = lastError,
                 isBuffering = showBuffering,
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
