@@ -10,6 +10,7 @@ import com.subtracks.data.sync.SyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,9 +35,15 @@ class SourceRepository(
         }
     }
 
+    fun close() {
+        scope.cancel()
+    }
+
     fun sources(): Flow<List<Source>> = db.sourcesDao().sources()
 
     fun activeSourceId(): Flow<Long?> = db.sourcesDao().activeSourceId()
+
+    suspend fun activeSourceIdOnce(): Long? = db.sourcesDao().activeSourceIdOnce()
 
     fun activeConfig(): Flow<SubsonicConfig?> = db.sourcesDao().activeSubsonicConfig()
 
@@ -48,6 +55,8 @@ class SourceRepository(
         val url = source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
         return CoverArtRef(url = url, cacheKey = "${source.id}:$coverArt:$thumbnail")
     }
+
+    fun streamUri(songId: String): String? = active?.streamUri(songId)?.toString()
 
     suspend fun addSource(
         name: String,

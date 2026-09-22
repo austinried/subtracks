@@ -1,6 +1,7 @@
 package com.subtracks.data.model
 
 import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
 import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
@@ -173,3 +174,45 @@ data class SearchIndex(
     val itemId: String,
     val title: String,
 )
+
+enum class QueueKind { Playlist, Album, Song }
+
+@Entity(
+    tableName = "queue_entries",
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId"), Index("position")],
+)
+data class QueueEntry(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val position: Long,
+    val sourceId: Long,
+    val kind: QueueKind,
+    val refId: String,
+    val rangeStart: Long? = null,
+    val rangeEnd: Long? = null,
+) {
+    val offset: Long get() = rangeStart ?: 0
+
+    val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
+}
+
+@Entity(tableName = "playback_cursor")
+data class PlaybackCursor(
+    @PrimaryKey val id: Long = 1,
+    val queuePosition: Long,
+)
+
+class QueueKindConverter {
+    @ColumnTypeConverter
+    fun fromQueueKind(kind: QueueKind): String = kind.name
+
+    @ColumnTypeConverter
+    fun toQueueKind(value: String): QueueKind = QueueKind.valueOf(value)
+}

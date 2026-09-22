@@ -4,8 +4,12 @@ import android.content.Context
 import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.prefs.createUserPreferences
 import com.subtracks.data.repo.LibraryRepository
+import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
+import com.subtracks.playback.MediaSessionConnection
+import com.subtracks.playback.PlaybackController
+import com.subtracks.playback.PlayerConnection
 import com.subtracks.ui.RootViewModel
 import com.subtracks.ui.library.AlbumDetailViewModel
 import com.subtracks.ui.library.LibraryViewModel
@@ -26,10 +30,13 @@ fun appModule(
     single { SourceRepository(get(), get()) }
     single { LibraryRepository(get(), get()) }
     single { SyncManager(get()) }
+    single { QueueRepository(get()) }
+    single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }
+    single { PlaybackController(get(), get(), get()) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { AddSourceViewModel(get(), get()) }
-    viewModel { params -> AlbumDetailViewModel(get(), get(), params.get()) }
-    viewModel { params -> PlaylistDetailViewModel(get(), get(), params.get()) }
+    viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }
+    viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), params.get()) }
 }

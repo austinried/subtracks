@@ -14,6 +14,13 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import kotlinx.coroutines.flow.Flow
 
+internal const val PLAYLIST_SONGS_SQL =
+    "SELECT songs.*, albums.coverArt AS coverArt FROM playlist_songs " +
+        "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+        "ORDER BY playlist_songs.position"
+
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LibraryDao {
@@ -97,13 +104,7 @@ interface LibraryDao {
     @Query("SELECT * FROM playlists WHERE sourceId = :sourceId ORDER BY name COLLATE NOCASE")
     fun playlists(sourceId: Long): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM playlist_songs " +
-            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
-            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
-            "ORDER BY playlist_songs.position",
-    )
+    @Query(PLAYLIST_SONGS_SQL)
     fun playlistSongs(
         sourceId: Long,
         playlistId: String,
