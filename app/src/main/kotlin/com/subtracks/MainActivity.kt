@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.subtracks.ui.HelloScreen
+import com.subtracks.ui.SubtracksRoot
 import com.subtracks.ui.theme.SubtracksTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SubtracksTheme {
-                HelloScreen()
+                SubtracksRoot()
             }
         }
     }
