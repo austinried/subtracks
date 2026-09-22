@@ -31,7 +31,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 ## CI
 
-- Forgejo Actions, `.forgejo/workflows/ci.yml`, with `unit`, `lint` and `integration` jobs.
+- Forgejo Actions, `.forgejo/workflows/ci.yml`, a single `ci` job that runs the lint, unit test and integration test steps (one cache restore/save and Gradle warm-up instead of three).
 - Runs on the `nix-docker` runner (the `localhost/nix-ci` image built by the separate `nix-home` repo) inside the devshell, restoring the Nix store via `cache-nix-action` and caching Gradle and the integration test music.
 - Pull requests from a fork need approval before the workflow runs.
 
