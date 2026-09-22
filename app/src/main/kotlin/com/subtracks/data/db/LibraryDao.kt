@@ -82,8 +82,12 @@ interface LibraryDao {
         ids: Collection<String>,
     )
 
-    @Query("DELETE FROM playlist_songs WHERE sourceId = :sourceId")
-    suspend fun deletePlaylistSongs(sourceId: Long)
+    @Query("DELETE FROM playlist_songs WHERE sourceId = :sourceId AND playlistId = :playlistId AND position >= :position")
+    suspend fun deletePlaylistSongsFrom(
+        sourceId: Long,
+        playlistId: String,
+        position: Long,
+    )
 
     @Query("SELECT * FROM artists WHERE sourceId = :sourceId ORDER BY name COLLATE NOCASE")
     fun artists(sourceId: Long): PagingSource<Int, Artist>

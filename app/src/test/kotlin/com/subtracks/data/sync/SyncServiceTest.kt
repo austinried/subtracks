@@ -14,6 +14,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.MusicSource
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -100,6 +101,62 @@ class SyncServiceTest {
                     .songs(1)
                     .allRows()
                     .map { it.song.id },
+            )
+        }
+
+    @Test
+    fun aSecondIdenticalSyncLeavesTheLibraryUntouched() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
+                )
+
+            SyncService(db, source).sync()
+            SyncService(db, source).sync()
+
+            assertEquals(2, db.libraryDao().artistIds(1).size)
+            assertEquals(1, db.libraryDao().albumIds(1).size)
+            assertEquals(1, db.libraryDao().songIds(1).size)
+            assertEquals(1, db.libraryDao().playlistIds(1).size)
+            assertEquals(
+                1,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+        }
+
+    @Test
+    fun albumsAreUpsertedAndPruned() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(albums = listOf(album("al1"), album("al2")))
+
+            SyncService(db, source).sync()
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("al1", "al2"), db.libraryDao().albumIds(1).sorted())
+
+            source.albums = listOf(album("al1").copy(name = "Renamed"))
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
+            assertEquals(
+                "Renamed",
+                db
+                    .libraryDao()
+                    .album(1, "al1")
+                    .first()
+                    ?.name,
             )
         }
 
