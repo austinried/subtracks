@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
@@ -28,7 +29,7 @@ class SourceRepositoryTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        repository = SourceRepository(db, OkHttpClient())
+        repository = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
     }
 
     @After

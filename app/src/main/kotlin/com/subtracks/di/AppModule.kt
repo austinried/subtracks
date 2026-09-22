@@ -27,7 +27,7 @@ fun appModule(
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single { SourceRepository(get(), get()) }
+    single { SourceRepository(get(), get(), get()) }
     single { LibraryRepository(get(), get()) }
     single { SyncManager(get()) }
     single { QueueRepository(get()) }
@@ -35,7 +35,7 @@ fun appModule(
     single { PlaybackController(get(), get(), get()) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get()) }
-    viewModel { SettingsViewModel(get()) }
+    viewModel { SettingsViewModel(get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), params.get()) }

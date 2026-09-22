@@ -33,7 +33,7 @@ Not done yet in this slice (deliberately): artist detail, cover-art tonal colour
 - (done) Media3/ExoPlayer playback service, queue and now-playing UI: a `MediaSessionService` plus a mini player and a Now Playing screen.
 - (done) Media notifications and headset/Bluetooth controls, from the media session.
 - (done) A SQL-backed queue of references (whole playlist / album / song, each with an optional ordinal range) resolved lazily, with only a bounded window in memory and in the player.
-- Streaming with `maxBitRate`/format taken from settings.
+- (done) Streaming bitrate and preferred format from settings (`maxBitRate`/`format`, so the server transcodes as configured).
 - Playing from the Songs tab, the queue view (add to queue / play next / reorder), and gapless format preferences.
 - Scrobbling and "now playing" back to the server.
 - Optional download/caching.

@@ -10,6 +10,7 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -42,7 +43,7 @@ class PlaybackControllerTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sources = SourceRepository(db, OkHttpClient())
+        sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
         queues = QueueRepository(db)
         handle = FakePlayerHandle()
         controller = PlaybackController(sources, queues, FakePlayerConnection(handle), dispatcher = dispatcher)
@@ -61,7 +62,7 @@ class PlaybackControllerTest {
         seedAlbum(60, sourceId = 1)
 
         controller.playAlbum(1, "al1", 30)
-        await { handle.items.isNotEmpty() }
+        await { handle.operations.contains("play") }
 
         assertEquals(51, handle.itemCount)
         assertEquals(25, handle.currentIndex)

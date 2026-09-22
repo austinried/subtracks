@@ -153,8 +153,12 @@ class AppScreenshotTest {
                 SettingsScreen(
                     sources = Fixtures.sources,
                     activeSourceId = 1,
+                    maxBitrate = 0,
+                    streamFormat = null,
                     onSelectSource = {},
                     onDeleteSource = {},
+                    onMaxBitrateChange = {},
+                    onStreamFormatChange = {},
                     onAddServer = {},
                     onBack = {},
                 )

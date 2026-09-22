@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -25,8 +26,24 @@ class UserPreferences(
         store.edit { prefs -> prefs[ALBUM_SORT] = sort.name }
     }
 
+    val maxBitrate: Flow<Int> = store.data.map { prefs -> prefs[MAX_BITRATE] ?: 0 }
+
+    suspend fun setMaxBitrate(kbps: Int) {
+        store.edit { prefs -> prefs[MAX_BITRATE] = kbps }
+    }
+
+    val streamFormat: Flow<String?> = store.data.map { prefs -> prefs[STREAM_FORMAT] }
+
+    suspend fun setStreamFormat(format: String?) {
+        store.edit { prefs ->
+            if (format.isNullOrEmpty()) prefs.remove(STREAM_FORMAT) else prefs[STREAM_FORMAT] = format
+        }
+    }
+
     private companion object {
         val ALBUM_SORT = stringPreferencesKey("album_sort")
+        val MAX_BITRATE = intPreferencesKey("max_bitrate")
+        val STREAM_FORMAT = stringPreferencesKey("stream_format")
     }
 }
 

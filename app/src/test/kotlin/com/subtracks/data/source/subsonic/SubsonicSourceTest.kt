@@ -8,6 +8,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -53,6 +55,31 @@ class SubsonicSourceTest {
 
             assertEquals(listOf("s1", "s2"), source.getSongs().map { it.id })
         }
+
+    @Test
+    fun streamUriRequestsTranscodingWhenABitrateIsSet() {
+        val uri = SubsonicSource(1, client(), maxBitrate = 128).streamUri("s1").toString()
+
+        assertTrue(uri, uri.contains("maxBitRate=128"))
+        assertTrue(uri, uri.contains("estimateContentLength=true"))
+    }
+
+    @Test
+    fun streamUriLeavesTheOriginalStreamAloneByDefault() {
+        val uri = SubsonicSource(1, client()).streamUri("s1").toString()
+
+        assertFalse(uri, uri.contains("maxBitRate"))
+        assertFalse(uri, uri.contains("format="))
+        assertFalse(uri, uri.contains("estimateContentLength"))
+    }
+
+    @Test
+    fun streamUriRequestsAPreferredFormat() {
+        val uri = SubsonicSource(1, client(), streamFormat = "opus").streamUri("s1").toString()
+
+        assertTrue(uri, uri.contains("format=opus"))
+        assertTrue(uri, uri.contains("estimateContentLength=true"))
+    }
 
     private fun client() =
         SubsonicClient(
