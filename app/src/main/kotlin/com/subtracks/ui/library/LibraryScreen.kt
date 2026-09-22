@@ -78,8 +78,8 @@ enum class LibraryTab(
 ) {
     Albums("Albums", Icons.Rounded.Album),
     Artists("Artists", Icons.Rounded.Person),
-    Songs("Songs", Icons.Rounded.MusicNote),
     Playlists("Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay),
+    Songs("Songs", Icons.Rounded.MusicNote),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
