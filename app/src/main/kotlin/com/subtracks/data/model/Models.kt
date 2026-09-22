@@ -1,6 +1,7 @@
 package com.subtracks.data.model
 
 import androidx.room3.ColumnInfo
+import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Fts5
@@ -36,14 +37,6 @@ data class SubsonicSource(
     val useTokenAuth: Boolean = true,
 )
 
-@Entity(tableName = "app_settings")
-data class AppSettings(
-    @PrimaryKey val id: Long = 1,
-    val maxBitrateWifi: Int = 0,
-    val maxBitrateMobile: Int = 192,
-    val streamFormat: String? = null,
-)
-
 @Entity(
     tableName = "artists",
     primaryKeys = ["sourceId", "id"],
@@ -63,6 +56,7 @@ data class Artist(
     val name: String,
     val albumCount: Long,
     val starred: Long?,
+    val coverArt: String? = null,
 )
 
 @Entity(
@@ -163,6 +157,11 @@ data class Song(
     val disc: Long?,
     val starred: Long?,
     val genre: String?,
+)
+
+data class SongListItem(
+    @Embedded val song: Song,
+    val coverArt: String?,
 )
 
 @Entity(tableName = "search_index")

@@ -5,27 +5,38 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
-import javax.xml.datatype.DatatypeConfigurationException
-import javax.xml.datatype.DatatypeFactory
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import javax.xml.datatype.DatatypeConfigurationException
+import javax.xml.datatype.DatatypeFactory
 
 object SubsonicXml {
-    fun artists(sourceId: Long, document: Document): List<Artist> =
-        document.elements("artist").map { element ->
-            Artist(
-                sourceId = sourceId,
-                id = element.attr("id"),
-                name = element.attr("name"),
-                albumCount = element.longAttr("albumCount") ?: 0L,
-                starred = element.dateAttr("starred"),
-            )
-        }.filter { it.id.isNotEmpty() }
+    fun artists(
+        sourceId: Long,
+        document: Document,
+    ): List<Artist> =
+        document
+            .elements("artist")
+            .map { element ->
+                Artist(
+                    sourceId = sourceId,
+                    id = element.attr("id"),
+                    name = element.attr("name"),
+                    albumCount = element.longAttr("albumCount") ?: 0L,
+                    starred = element.dateAttr("starred"),
+                    coverArt = element.attr("coverArt").ifEmpty { null },
+                )
+            }.filter { it.id.isNotEmpty() }
 
-    fun albums(sourceId: Long, document: Document): List<Album> =
-        document.elements("album").map { album(sourceId, it) }.filter { it.id.isNotEmpty() }
+    fun albums(
+        sourceId: Long,
+        document: Document,
+    ): List<Album> = document.elements("album").map { album(sourceId, it) }.filter { it.id.isNotEmpty() }
 
-    fun album(sourceId: Long, element: Element): Album =
+    fun album(
+        sourceId: Long,
+        element: Element,
+    ): Album =
         Album(
             sourceId = sourceId,
             id = element.attr("id"),
@@ -42,10 +53,15 @@ object SubsonicXml {
             recentRank = null,
         )
 
-    fun songs(sourceId: Long, document: Document): List<Song> =
-        document.elements("song").map { song(sourceId, it) }.filter { it.id.isNotEmpty() }
+    fun songs(
+        sourceId: Long,
+        document: Document,
+    ): List<Song> = document.elements("song").map { song(sourceId, it) }.filter { it.id.isNotEmpty() }
 
-    fun song(sourceId: Long, element: Element): Song =
+    fun song(
+        sourceId: Long,
+        element: Element,
+    ): Song =
         Song(
             sourceId = sourceId,
             id = element.attr("id"),
@@ -61,10 +77,15 @@ object SubsonicXml {
             genre = element.attr("genre").ifEmpty { null },
         )
 
-    fun playlists(sourceId: Long, document: Document): List<Playlist> =
-        document.elements("playlist").map { playlist(sourceId, it) }.filter { it.id.isNotEmpty() }
+    fun playlists(
+        sourceId: Long,
+        document: Document,
+    ): List<Playlist> = document.elements("playlist").map { playlist(sourceId, it) }.filter { it.id.isNotEmpty() }
 
-    fun playlist(sourceId: Long, element: Element): Playlist =
+    fun playlist(
+        sourceId: Long,
+        element: Element,
+    ): Playlist =
         Playlist(
             sourceId = sourceId,
             id = element.attr("id"),
@@ -75,7 +96,11 @@ object SubsonicXml {
             created = element.dateAttr("created") ?: 0L,
         )
 
-    fun playlistSongs(sourceId: Long, playlistId: String, document: Document): List<PlaylistSong> =
+    fun playlistSongs(
+        sourceId: Long,
+        playlistId: String,
+        document: Document,
+    ): List<PlaylistSong> =
         document.elements("entry").mapIndexed { index, element ->
             PlaylistSong(
                 sourceId = sourceId,
@@ -93,20 +118,19 @@ private fun Document.elements(tag: String): List<Element> {
 
 private fun Element.attr(name: String): String = getAttribute(name)
 
-private fun Element.longAttr(name: String): Long? =
-    getAttribute(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
+private fun Element.longAttr(name: String): Long? = getAttribute(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
 
-private fun Element.dateAttr(name: String): Long? =
-    getAttribute(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
+private fun Element.dateAttr(name: String): Long? = getAttribute(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
 
 internal object IsoDate {
     private val timezone = Regex("(Z|[+-]\\d{2}:?\\d{2})$", RegexOption.IGNORE_CASE)
 
-    private val factory: DatatypeFactory? = try {
-        DatatypeFactory.newInstance()
-    } catch (_: DatatypeConfigurationException) {
-        null
-    }
+    private val factory: DatatypeFactory? =
+        try {
+            DatatypeFactory.newInstance()
+        } catch (_: DatatypeConfigurationException) {
+            null
+        }
 
     fun parse(value: String): Long? {
         val factory = factory ?: return null

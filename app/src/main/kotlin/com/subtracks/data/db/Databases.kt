@@ -5,6 +5,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 
 fun createAndroidDatabase(context: Context): SubtracksDatabase =
-    Room.databaseBuilder<SubtracksDatabase>(context, "subtracks.db")
+    Room
+        .databaseBuilder<SubtracksDatabase>(context, "subtracks.db")
         .setDriver(BundledSQLiteDriver())
         .build()

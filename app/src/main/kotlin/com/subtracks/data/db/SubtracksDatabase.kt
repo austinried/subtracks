@@ -3,7 +3,6 @@ package com.subtracks.data.db
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
 import com.subtracks.data.model.Album
-import com.subtracks.data.model.AppSettings
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
@@ -16,7 +15,6 @@ import com.subtracks.data.model.SubsonicSource
     entities = [
         Source::class,
         SubsonicSource::class,
-        AppSettings::class,
         Artist::class,
         Album::class,
         Playlist::class,
@@ -24,7 +22,7 @@ import com.subtracks.data.model.SubsonicSource
         Song::class,
         SearchIndex::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class SubtracksDatabase : RoomDatabase() {

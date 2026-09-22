@@ -22,9 +22,17 @@ interface SearchDao {
         LIMIT :limit
         """,
     )
-    suspend fun searchPhrase(sourceId: String, query: String, limit: Int): List<SearchIndex>
+    suspend fun searchPhrase(
+        sourceId: String,
+        query: String,
+        limit: Int,
+    ): List<SearchIndex>
 
-    suspend fun search(sourceId: String, query: String, limit: Int): List<SearchIndex> {
+    suspend fun search(
+        sourceId: String,
+        query: String,
+        limit: Int,
+    ): List<SearchIndex> {
         val phrase = query.trim()
         if (phrase.length < MIN_QUERY_LENGTH) return emptyList()
         return searchPhrase(sourceId, phrase, limit)

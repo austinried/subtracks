@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
-    "identityHash": "c359cb54d1d99a2de8efbe1f0c8ad182",
+    "version": 2,
+    "identityHash": "67a9c26297d65d76f54edc99ac9a7930",
     "entities": [
       {
         "tableName": "sources",
@@ -107,43 +107,8 @@
         ]
       },
       {
-        "tableName": "app_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `maxBitrateWifi` INTEGER NOT NULL, `maxBitrateMobile` INTEGER NOT NULL, `streamFormat` TEXT, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "maxBitrateWifi",
-            "columnName": "maxBitrateWifi",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "maxBitrateMobile",
-            "columnName": "maxBitrateMobile",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "streamFormat",
-            "columnName": "streamFormat",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
         "tableName": "artists",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `id` TEXT NOT NULL, `name` TEXT NOT NULL, `albumCount` INTEGER NOT NULL, `starred` INTEGER, PRIMARY KEY(`sourceId`, `id`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `id` TEXT NOT NULL, `name` TEXT NOT NULL, `albumCount` INTEGER NOT NULL, `starred` INTEGER, `coverArt` TEXT, PRIMARY KEY(`sourceId`, `id`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sourceId",
@@ -173,6 +138,11 @@
             "fieldPath": "starred",
             "columnName": "starred",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "coverArt",
+            "columnName": "coverArt",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -643,7 +613,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c359cb54d1d99a2de8efbe1f0c8ad182')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '67a9c26297d65d76f54edc99ac9a7930')"
     ]
   }
 }
