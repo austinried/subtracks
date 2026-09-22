@@ -25,13 +25,14 @@ class SubsonicClientTest {
         server.shutdown()
     }
 
-    private fun client(tokenAuth: Boolean) = SubsonicClient(
-        baseUrl = server.url("/"),
-        username = "guest",
-        password = "secret",
-        useTokenAuth = tokenAuth,
-        http = OkHttpClient(),
-    )
+    private fun client(tokenAuth: Boolean) =
+        SubsonicClient(
+            baseUrl = server.url("/"),
+            username = "guest",
+            password = "secret",
+            useTokenAuth = tokenAuth,
+            http = OkHttpClient(),
+        )
 
     @Test
     fun tokenAuthSendsSaltAndHash() {

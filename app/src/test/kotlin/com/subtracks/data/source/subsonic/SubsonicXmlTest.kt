@@ -1,27 +1,30 @@
 package com.subtracks.data.source.subsonic
 
-import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.w3c.dom.Document
+import javax.xml.parsers.DocumentBuilderFactory
 
 class SubsonicXmlTest {
     private fun parse(xml: String): Document =
-        DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        DocumentBuilderFactory
+            .newInstance()
+            .newDocumentBuilder()
             .parse(xml.byteInputStream(Charsets.UTF_8))
 
     @Test
     fun mapsArtists() {
-        val document = parse(
-            """
-            <subsonic-response status="ok">
-              <artists>
-                <artist id="ar1" name="Radiohead" albumCount="9" starred="2020-01-02T03:04:05.000Z"/>
-                <artist id="ar2" name="Portishead" albumCount="3"/>
-              </artists>
-            </subsonic-response>
-            """.trimIndent(),
-        )
+        val document =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <artists>
+                    <artist id="ar1" name="Radiohead" albumCount="9" starred="2020-01-02T03:04:05.000Z"/>
+                    <artist id="ar2" name="Portishead" albumCount="3"/>
+                  </artists>
+                </subsonic-response>
+                """.trimIndent(),
+            )
 
         val artists = SubsonicXml.artists(7, document)
 
@@ -35,16 +38,17 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsAlbumList() {
-        val document = parse(
-            """
-            <subsonic-response status="ok">
-              <albumList2>
-                <album id="al1" name="OK Computer" artist="Radiohead" artistId="ar1" created="1997-05-21T00:00:00.000Z" songCount="12" coverArt="al1"/>
-                <album id="al2" name="Kid A" artist="Radiohead" artistId="ar1" created="2000-10-02T00:00:00.000Z" songCount="10" coverArt="al2"/>
-              </albumList2>
-            </subsonic-response>
-            """.trimIndent(),
-        )
+        val document =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="OK Computer" artist="Radiohead" artistId="ar1" created="1997-05-21T00:00:00.000Z" songCount="12" coverArt="al1"/>
+                    <album id="al2" name="Kid A" artist="Radiohead" artistId="ar1" created="2000-10-02T00:00:00.000Z" songCount="10" coverArt="al2"/>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
 
         val albums = SubsonicXml.albums(1, document)
 
@@ -68,18 +72,19 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsSongsAndPlaylistEntries() {
-        val document = parse(
-            """
-            <subsonic-response status="ok">
-              <searchResult3>
-                <song id="sg2" title="Idioteque" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="300" track="8" discNumber="1"/>
-              </searchResult3>
-              <playlist id="pl1" name="Favourites" songCount="1" created="2021-02-03T04:05:06.000Z">
-                <entry id="sg1" title="Everything In Its Right Place" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="251" track="1" discNumber="1"/>
-              </playlist>
-            </subsonic-response>
-            """.trimIndent(),
-        )
+        val document =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="sg2" title="Idioteque" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="300" track="8" discNumber="1"/>
+                  </searchResult3>
+                  <playlist id="pl1" name="Favourites" songCount="1" created="2021-02-03T04:05:06.000Z">
+                    <entry id="sg1" title="Everything In Its Right Place" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="251" track="1" discNumber="1"/>
+                  </playlist>
+                </subsonic-response>
+                """.trimIndent(),
+            )
 
         val songs = SubsonicXml.songs(1, document)
         val entries = SubsonicXml.playlistSongs(1, "pl1", document)

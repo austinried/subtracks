@@ -26,36 +26,47 @@ class SubsonicSourceTest {
     }
 
     @Test
-    fun getSongsFallsBackToAlbumsWhenEmptySearchUnsupported() = runBlocking {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse = when {
-                request.path?.startsWith("/rest/search3.view") == true ->
-                    MockResponse().setBody(failed(10, "Required parameter is missing"))
+    fun getSongsFallsBackToAlbumsWhenEmptySearchUnsupported() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/search3.view") == true -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
 
-                request.path?.startsWith("/rest/getAlbumList2.view") == true ->
-                    MockResponse().setBody(ALBUM_LIST)
+                            request.path?.startsWith("/rest/getAlbumList2.view") == true -> {
+                                MockResponse().setBody(ALBUM_LIST)
+                            }
 
-                request.path?.startsWith("/rest/getAlbum.view") == true ->
-                    MockResponse().setBody(ALBUM)
+                            request.path?.startsWith("/rest/getAlbum.view") == true -> {
+                                MockResponse().setBody(ALBUM)
+                            }
 
-                else -> MockResponse().setResponseCode(404)
-            }
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                }
+            val source = SubsonicSource(1, client())
+
+            assertEquals(listOf("s1", "s2"), source.getSongs().map { it.id })
         }
-        val source = SubsonicSource(1, client())
 
-        assertEquals(listOf("s1", "s2"), source.getSongs().map { it.id })
-    }
+    private fun client() =
+        SubsonicClient(
+            baseUrl = server.url("/"),
+            username = "u",
+            password = "p",
+            useTokenAuth = false,
+            http = OkHttpClient(),
+        )
 
-    private fun client() = SubsonicClient(
-        baseUrl = server.url("/"),
-        username = "u",
-        password = "p",
-        useTokenAuth = false,
-        http = OkHttpClient(),
-    )
-
-    private fun failed(code: Int, message: String) =
-        "<subsonic-response status=\"failed\"><error code=\"$code\" message=\"$message\"/></subsonic-response>"
+    private fun failed(
+        code: Int,
+        message: String,
+    ) = "<subsonic-response status=\"failed\"><error code=\"$code\" message=\"$message\"/></subsonic-response>"
 
     private companion object {
         const val ALBUM_LIST =
