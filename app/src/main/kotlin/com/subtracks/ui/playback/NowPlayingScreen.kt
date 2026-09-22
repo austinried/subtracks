@@ -1,0 +1,214 @@
+package com.subtracks.ui.playback
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.PauseCircle
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.data.model.CoverArtRef
+import com.subtracks.playback.PlaybackController
+import com.subtracks.playback.PlaybackState
+import com.subtracks.ui.components.CoverArt
+import org.koin.compose.koinInject
+
+@Composable
+fun NowPlayingRoute(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    controller: PlaybackController = koinInject(),
+) {
+    val state by controller.state.collectAsStateWithLifecycle()
+    NowPlayingScreen(
+        state = state,
+        coverArt = controller.coverArt(state.item),
+        onBack = onBack,
+        onPlayPause = controller::togglePlayPause,
+        onNext = controller::next,
+        onPrevious = controller::previous,
+        onSeek = controller::seekTo,
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NowPlayingScreen(
+    state: PlaybackState,
+    coverArt: CoverArtRef?,
+    onBack: () -> Unit,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onSeek: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val playButtonSize = 96.dp
+    val playCircleDiameter = playButtonSize * 20f / 24f
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Now playing") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier =
+                Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CoverArt(
+                    ref = coverArt,
+                    name = state.item?.title.orEmpty(),
+                    modifier =
+                        Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(2.dp)),
+                )
+            }
+            Text(
+                text = state.item?.title.orEmpty(),
+                style = MaterialTheme.typography.headlineSmall,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 28.dp).basicMarquee(),
+            )
+            Text(
+                text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 6.dp).basicMarquee(),
+            )
+            var dragging by remember { mutableStateOf(false) }
+            var dragPosition by remember { mutableFloatStateOf(0f) }
+            Slider(
+                value = if (dragging) dragPosition else state.positionMs.toFloat(),
+                onValueChange = {
+                    dragging = true
+                    dragPosition = it
+                },
+                onValueChangeFinished = {
+                    onSeek(dragPosition.toLong())
+                    dragging = false
+                },
+                valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
+                enabled = state.durationMs > 0,
+                modifier = Modifier.padding(top = 28.dp),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(formatTime(state.positionMs), style = MaterialTheme.typography.bodySmall)
+                Text(formatTime(state.durationMs), style = MaterialTheme.typography.bodySmall)
+            }
+            if (state.error != null) {
+                Text(
+                    text = state.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 32.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onPrevious, enabled = state.hasPrevious, modifier = Modifier.size(64.dp)) {
+                    Icon(
+                        imageVector = Icons.Rounded.SkipPrevious,
+                        contentDescription = "Previous",
+                        modifier = Modifier.size(48.dp),
+                    )
+                }
+                IconButton(onClick = onPlayPause, modifier = Modifier.padding(horizontal = 20.dp).size(playButtonSize)) {
+                    if (state.isBuffering && state.isPlaying) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(playCircleDiameter)
+                                    .background(MaterialTheme.colorScheme.onBackground, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.background,
+                                strokeWidth = 4.dp,
+                                modifier = Modifier.size(playCircleDiameter * 0.65f),
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = if (state.isPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
+                            contentDescription = if (state.isPlaying) "Pause" else "Play",
+                            modifier = Modifier.size(playButtonSize),
+                        )
+                    }
+                }
+                IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(64.dp)) {
+                    Icon(
+                        imageVector = Icons.Rounded.SkipNext,
+                        contentDescription = "Next",
+                        modifier = Modifier.size(48.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun formatTime(milliseconds: Long): String {
+    val totalSeconds = (milliseconds / 1000).coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}

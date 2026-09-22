@@ -1,14 +1,21 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -61,6 +68,7 @@ fun SongRow(
     song: Song,
     coverArtId: String? = null,
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
+    isPlaying: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     ListItem(
@@ -77,10 +85,33 @@ fun SongRow(
             } else {
                 null
             },
-        headlineContent = { Text(song.title) },
+        headlineContent = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (isPlaying) {
+                    Icon(
+                        imageVector = Icons.Rounded.PlayArrow,
+                        contentDescription = "Playing",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                Text(
+                    text = song.title,
+                    color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                )
+            }
+        },
         supportingContent = {
             val subtitle = listOfNotNull(song.artist, song.album).joinToString(" • ")
-            if (subtitle.isNotEmpty()) Text(subtitle)
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    text = subtitle,
+                    color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                )
+            }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )

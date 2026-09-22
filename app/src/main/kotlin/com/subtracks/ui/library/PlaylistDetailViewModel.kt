@@ -9,16 +9,20 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailViewModel(
     private val libraryRepository: LibraryRepository,
     private val sourceRepository: SourceRepository,
-    playlistId: String,
+    private val playbackController: PlaybackController,
+    private val playlistId: String,
 ) : ViewModel() {
     private val sourceId = libraryRepository.activeSourceId.filterNotNull()
 
@@ -33,4 +37,10 @@ class PlaylistDetailViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
+
+    fun play(startIndex: Int) {
+        viewModelScope.launch {
+            playbackController.playPlaylist(sourceId.first(), playlistId, startIndex.toLong())
+        }
+    }
 }

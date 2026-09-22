@@ -57,6 +57,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,6 +88,7 @@ fun LibraryRoute(
     onAlbumClick: (Album) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
+    bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
@@ -95,6 +97,7 @@ fun LibraryRoute(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
         syncing = syncing,
+        bottomInset = bottomInset,
         albums = viewModel.albums.collectAsLazyPagingItems(),
         artists = viewModel.artists.collectAsLazyPagingItems(),
         songs = viewModel.songs.collectAsLazyPagingItems(),
@@ -122,6 +125,7 @@ fun LibraryScreen(
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     syncing: Boolean = false,
+    bottomInset: Dp = 0.dp,
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -153,7 +157,6 @@ fun LibraryScreen(
     val titleFraction = scrollBehavior.state.collapsedFraction
 
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    val bottomInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
     Column(
         modifier =

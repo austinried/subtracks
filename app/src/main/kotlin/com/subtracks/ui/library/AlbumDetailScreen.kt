@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -28,8 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -38,14 +42,19 @@ fun AlbumDetailRoute(
     albumId: String,
     onBack: () -> Unit,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
+    playbackController: PlaybackController = koinInject(),
 ) {
     val album by viewModel.album.collectAsStateWithLifecycle(initialValue = null)
     val songs by viewModel.songs.collectAsStateWithLifecycle(initialValue = emptyList())
+    val playback by playbackController.state.collectAsStateWithLifecycle()
+    val context = playback.context
     AlbumDetailScreen(
         album = album,
         songs = songs,
         coverArt = viewModel::coverArt,
         onBack = onBack,
+        onSongClick = viewModel::play,
+        playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
 }
 
@@ -56,6 +65,8 @@ fun AlbumDetailScreen(
     songs: List<Song>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
+    onSongClick: (Int) -> Unit,
+    playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -81,7 +92,7 @@ fun AlbumDetailScreen(
                     CoverArt(
                         ref = coverArt(album?.coverArt, false),
                         name = album?.name.orEmpty(),
-                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(12.dp)),
+                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
                     )
                     Column {
                         Text(album?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
@@ -98,7 +109,13 @@ fun AlbumDetailScreen(
                     }
                 }
             }
-            items(songs, key = { it.id }) { song -> SongRow(song) }
+            itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                SongRow(
+                    song = song,
+                    isPlaying = song.id == playingSongId,
+                    modifier = Modifier.clickable { onSongClick(index) },
+                )
+            }
         }
     }
 }

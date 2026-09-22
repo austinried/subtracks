@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,8 +31,11 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
+import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -40,13 +44,18 @@ fun PlaylistDetailRoute(
     playlistId: String,
     onBack: () -> Unit,
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
+    playbackController: PlaybackController = koinInject(),
 ) {
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
+    val playback by playbackController.state.collectAsStateWithLifecycle()
+    val context = playback.context
     PlaylistDetailScreen(
         playlist = playlist,
         songs = viewModel.songs.collectAsLazyPagingItems(),
         coverArt = viewModel::coverArt,
         onBack = onBack,
+        onSongClick = viewModel::play,
+        playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
 }
 
@@ -57,6 +66,8 @@ fun PlaylistDetailScreen(
     songs: LazyPagingItems<SongListItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
+    onSongClick: (Int) -> Unit,
+    playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -82,7 +93,7 @@ fun PlaylistDetailScreen(
                     CoverArt(
                         ref = coverArt(playlist?.coverArt, false),
                         name = playlist?.name.orEmpty(),
-                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(12.dp)),
+                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
                     )
                     Column {
                         Text(playlist?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
@@ -97,7 +108,13 @@ fun PlaylistDetailScreen(
             items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
                 val item = songs[index]
                 if (item != null) {
-                    SongRow(song = item.song, coverArtId = item.coverArt, coverArt = coverArt)
+                    SongRow(
+                        song = item.song,
+                        coverArtId = item.coverArt,
+                        coverArt = coverArt,
+                        isPlaying = item.song.id == playingSongId,
+                        modifier = Modifier.clickable { onSongClick(index) },
+                    )
                 }
             }
         }
