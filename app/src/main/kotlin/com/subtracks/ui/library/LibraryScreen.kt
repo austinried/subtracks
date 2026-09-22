@@ -93,6 +93,7 @@ fun LibraryRoute(
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
+    val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
@@ -105,8 +106,10 @@ fun LibraryRoute(
         coverArt = viewModel::coverArt,
         onAlbumClick = onAlbumClick,
         onPlaylistClick = onPlaylistClick,
+        onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
+        playingSongId = playingSongId,
     )
 }
 
@@ -122,9 +125,11 @@ fun LibraryScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onAlbumClick: (Album) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
+    onSongClick: (Int) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     syncing: Boolean = false,
+    playingSongId: String? = null,
     bottomInset: Dp = 0.dp,
     modifier: Modifier = Modifier,
 ) {
@@ -206,7 +211,7 @@ fun LibraryScreen(
             when (LibraryTab.entries[page]) {
                 LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
                 LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset)
-                LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset)
+                LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
                 LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
             }
         }

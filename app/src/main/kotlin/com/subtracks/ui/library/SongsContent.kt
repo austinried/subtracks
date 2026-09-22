@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,8 @@ fun SongsContent(
     items: LazyPagingItems<SongListItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
+    onSongClick: (Int) -> Unit,
+    playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -55,7 +58,13 @@ fun SongsContent(
                 items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
                     val item = items[index]
                     if (item != null) {
-                        SongRow(song = item.song, coverArtId = item.coverArt, coverArt = coverArt)
+                        SongRow(
+                            song = item.song,
+                            coverArtId = item.coverArt,
+                            coverArt = coverArt,
+                            isPlaying = item.song.id == playingSongId,
+                            modifier = Modifier.clickable { onSongClick(index) },
+                        )
                     }
                 }
             }

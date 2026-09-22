@@ -118,6 +118,11 @@ class PlaybackController(
         startPosition: Long,
     ) = play(listOf(queueRepository.playlistEntry(sourceId, playlistId)), startPosition)
 
+    fun playSongs(
+        sourceId: Long,
+        startPosition: Long,
+    ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
+
     fun togglePlayPause() {
         val player = player ?: return
         if (player.isEnded) {

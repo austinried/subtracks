@@ -248,6 +248,7 @@ class AppScreenshotTest {
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
                     onPlaylistClick = {},
+                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                 )

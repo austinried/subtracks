@@ -8,12 +8,14 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
+import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,12 +24,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryViewModel(
     private val libraryRepository: LibraryRepository,
     private val sourceRepository: SourceRepository,
     private val syncManager: SyncManager,
+    private val playbackController: PlaybackController,
     userPreferences: UserPreferences,
 ) : ViewModel() {
     val albums: Flow<PagingData<Album>> =
@@ -60,10 +64,22 @@ class LibraryViewModel(
             .map { it == SyncStatus.Running }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    val playingSongId: StateFlow<String?> =
+        playbackController.state
+            .map { state -> state.item?.id?.takeIf { state.context?.kind == QueueKind.Songs } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun coverArt(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
+
+    fun playSong(position: Int) {
+        viewModelScope.launch {
+            val sourceId = sourceRepository.activeSourceIdOnce() ?: return@launch
+            playbackController.playSongs(sourceId, position.toLong())
+        }
+    }
 
     fun sync() = syncManager.requestSync()
 }

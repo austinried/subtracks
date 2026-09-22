@@ -47,6 +47,9 @@ interface QueueDao {
         albumId: String,
     ): Long
 
+    @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId")
+    suspend fun songsLength(sourceId: Long): Long
+
     @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId AND id = :songId")
     suspend fun songLength(
         sourceId: Long,
@@ -64,6 +67,12 @@ interface QueueDao {
     suspend fun albumSongAt(
         sourceId: Long,
         albumId: String,
+        offset: Long,
+    ): SongListItem?
+
+    @Query("$SONGS_SQL LIMIT 1 OFFSET :offset")
+    suspend fun songAt(
+        sourceId: Long,
         offset: Long,
     ): SongListItem?
 

@@ -21,6 +21,13 @@ internal const val PLAYLIST_SONGS_SQL =
         "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
         "ORDER BY playlist_songs.position"
 
+internal const val SONGS_SQL =
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId " +
+        "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
+        "songs.title COLLATE NOCASE, songs.id"
+
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LibraryDao {
@@ -93,12 +100,7 @@ interface LibraryDao {
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId ORDER BY created DESC, name COLLATE NOCASE")
     fun albumsByRecentlyAdded(sourceId: Long): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
-            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.artist COLLATE NOCASE",
-    )
+    @Query(SONGS_SQL)
     fun songs(sourceId: Long): PagingSource<Int, SongListItem>
 
     @Query("SELECT * FROM playlists WHERE sourceId = :sourceId ORDER BY name COLLATE NOCASE")

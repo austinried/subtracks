@@ -175,7 +175,7 @@ data class SearchIndex(
     val title: String,
 )
 
-enum class QueueKind { Playlist, Album, Song }
+enum class QueueKind { Playlist, Album, Song, Songs }
 
 @Entity(
     tableName = "queue_entries",

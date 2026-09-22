@@ -53,6 +53,8 @@ class QueueRepository(
         songId: String,
     ) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = songId)
 
+    fun songsEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Songs, refId = "")
+
     suspend fun replace(entries: List<QueueEntry>) {
         db.useWriterConnection { transactor ->
             transactor.immediateTransaction {
@@ -99,6 +101,7 @@ class QueueRepository(
             QueueKind.Playlist -> dao.playlistSongAt(entry.sourceId, entry.refId, index)
             QueueKind.Album -> dao.albumSongAt(entry.sourceId, entry.refId, index)
             QueueKind.Song -> if (offset == 0L) dao.song(entry.sourceId, entry.refId) else null
+            QueueKind.Songs -> dao.songAt(entry.sourceId, index)
         }
     }
 
@@ -108,6 +111,7 @@ class QueueRepository(
                 QueueKind.Song -> dao.songLength(sourceId, refId)
                 QueueKind.Playlist -> dao.playlistLength(sourceId, refId)
                 QueueKind.Album -> dao.albumLength(sourceId, refId)
+                QueueKind.Songs -> dao.songsLength(sourceId)
             }
         val available = (total - offset).coerceAtLeast(0)
         return count?.coerceAtMost(available) ?: available

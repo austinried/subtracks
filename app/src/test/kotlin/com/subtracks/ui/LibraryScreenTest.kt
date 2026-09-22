@@ -50,6 +50,7 @@ class LibraryScreenTest {
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onPlaylistClick = {},
+                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                 )
