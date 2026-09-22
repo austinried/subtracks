@@ -5,6 +5,11 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.ktlint)
+}
+
+ktlint {
+    version.set(libs.versions.ktlint.get())
 }
 
 android {
@@ -35,11 +40,18 @@ android {
         }
     }
 
-    sourceSets.getByName("test").kotlin.directories.add("src/integrationTest/kotlin")
+    sourceSets
+        .getByName("test")
+        .kotlin.directories
+        .add("src/integrationTest/kotlin")
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // Debug key so `installRelease` works locally; store and F-Droid builds re-sign.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
@@ -84,17 +96,27 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.sqlite.bundled)
     implementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.room3.sqlite.wrapper)
+    implementation(libs.androidx.room3.paging)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.okhttp)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.koin.androidx.compose)
     ksp(libs.androidx.room3.compiler)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -109,6 +131,7 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.sqlite.bundled.jvm)
+    testImplementation(libs.coil.test)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.kotlinx.coroutines.test)
 }
