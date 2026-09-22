@@ -18,7 +18,8 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 - Build: `gradle :app:assembleDebug`
 - Unit tests: `gradle :app:testDebugUnitTest`
-- Lint: `gradle :app:lintDebug`
+- Lint: `gradle :app:ktlintCheck :app:lintDebug`
+- Format: `gradle :app:ktlintFormat`
 - Integration tests: `./tools/integration-test.nu` (starts navidrome and gonic, then runs `:app:integrationTest`)
 - Screenshots: `gradle :app:recordRoborazziDebug` to record, `gradle :app:verifyRoborazziDebug` to check
 
@@ -36,14 +37,20 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 ## Conventions
 
 - Prefer self-explanatory code; do not add comments unless the reason cannot be inferred from the code itself (docstrings for functions and exports are fine).
+- ktlint (`org.jlleitschuh.gradle.ktlint`) enforces style and flags unused imports; run `gradle :app:ktlintFormat` before committing. `.editorconfig` exempts `@Composable` functions from the lowerCamelCase function-naming rule.
 - Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (`BundledSQLiteDriver`, SQLite 3.50+, FTS5). Do not reintroduce SQLDelight or the platform SQLite.
 - Networking uses OkHttp and DOM XML parsing; auth uses the Subsonic token scheme by default.
-- Use coroutines and `Flow`; library reads are exposed as `Flow` from Room.
+- Use coroutines and `Flow`; library reads are exposed as `Flow` from Room. Large lists page with Paging 3 over Room `PagingSource` rather than loading the whole table.
+- UI state lives in `androidx.lifecycle.ViewModel`, wired with Koin (`koinViewModel()`); screens split into a stateful `*Route` and a stateless `*Screen` for screenshot tests.
+- UI and playback preferences go in DataStore (`UserPreferences`), not Room.
 - Verify current dependency versions and their compatibility before adding or pinning anything.
 
 ## Gotchas
 
 - Robolectric runs at SDK 35 while `targetSdk` is 37; raising it means re-recording the Roborazzi goldens.
+- Room 3 does not map `PagingSource` automatically: a DAO that returns it needs `@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)`.
+- Material icons are not pulled in by `material3`; use the BOM-managed `material-icons-core`/`material-icons-extended` (frozen at 1.7.8). Extended is large in debug builds but R8 strips unused icons from release.
+- Robolectric creates a fresh `Application` per test in one JVM, so `SubtracksApp.onCreate` stops any running Koin before `startKoin`.
 - `applicationId` is `com.subtracks.next` for the beta; change it to `com.subtracks` before any store release.
 - The CI image provides `nix-ld`, `jq`, `sqlite`, `node`, `zstd` and a `runner` user that `cache-nix-action` expects. None of that is needed locally beyond the devshell.
 - Integration servers: navidrome on 4533 (`admin`/`password`), gonic on 4747 (`admin`/`admin`). The test music is cached in `.integration/music` (gitignored).

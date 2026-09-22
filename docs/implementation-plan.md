@@ -16,15 +16,17 @@ Everything needed to mirror a server library locally:
 - FTS5 trigram search index over titles.
 - Unit tests (client, XML, sync, search), native integration tests against navidrome and gonic, and CI (`unit`, `lint`, `integration`) with warm caches.
 
-## Phase 2 - UI vertical slice (next)
+## Phase 2 - UI vertical slice (done)
 
 Goal: a usable app for browsing a server, end to end.
 
-- DI wiring (Koin) and DataStore-backed settings.
-- App shell: root navigation and a Material 3 theme with cover-art tonal colour extraction.
-- Source setup: add/edit sources (URL and credentials, token auth), ping/test, trigger a sync, show progress.
-- Library browsing: artists, albums and songs with Paging 3 and Coil 3 cover art, reading from Room.
-- Roborazzi screenshot tests and goldens for the new screens.
+- Koin DI and DataStore-backed preferences (album sort); the unused `app_settings` Room table was removed in favour of DataStore.
+- App shell: a root gate that shows the add-server flow until a server exists, then the tabbed library screen matching the Flutter app (icon-only tabs for albums, artists, songs and playlists, with sync and settings actions), plus album and playlist detail screens and a monochrome theme.
+- Source setup: name/address/username/password with token-auth toggle, a connection test, save-and-sync, plus server switching and removal in settings.
+- Library browsing: albums (covers-only grid), artists, songs and playlists paged from Room (`PagingSource`) and rendered with `LazyPagingItems`, with Coil cover art served from stable media URLs.
+- Roborazzi screenshot goldens for the eight new screens.
+
+Not done yet in this slice (deliberately): artist detail, cover-art tonal colour extraction, long-press menus, editing an existing server, and per-section sort/filter controls (only album sort is wired).
 
 ## Phase 3 - Playback
 
