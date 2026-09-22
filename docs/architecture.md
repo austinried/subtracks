@@ -21,11 +21,11 @@ Subtracks is a native Android client for Subsonic-compatible servers (Navidrome,
 | Networking | OkHttp + DOM XML parsing |
 | Async | Kotlin coroutines / `Flow` |
 | Images | Coil 3 |
-| Media | AndroidX Media3 / ExoPlayer (planned) |
+| Media | AndroidX Media3 (`media3-exoplayer`, `media3-session`) |
 | Settings | DataStore Preferences (UI and playback prefs) |
 | Build | AGP 9.4.1, Gradle 9.7.1, Kotlin 2.3.10 (AGP built-in Kotlin), compileSdk/targetSdk 37 |
 
-Versions live in `gradle/libs.versions.toml`; check current releases before bumping (Koin 4.2.2, Navigation Compose 2.10.1, Paging 3.5.1, DataStore 1.2.1, Coil 3.6.3 at the time of writing).
+Versions live in `gradle/libs.versions.toml`; check current releases before bumping (Koin 4.2.2, Navigation Compose 2.10.1, Paging 3.5.1, DataStore 1.2.1, Coil 3.6.3, Media3 1.11.1 at the time of writing).
 
 ## Source layout
 
@@ -36,11 +36,15 @@ app/src/main/kotlin/com/subtracks
   MainActivity.kt, SubtracksApp.kt   Composition root: starts Koin and Coil
   di/AppModule.kt                    Koin module
   ui/
-    AppRoot.kt                       Root gate and NavHost
+    AppRoot.kt                       Root gate, NavHost and the mini player
     library/                         Tabbed LibraryScreen, album/playlist detail
+    playback/                        Mini player and Now Playing screen
     settings/                        Server list and add-server form
     components/                      Cover art and empty/loading states
     theme/                           Material 3 theme (stark black/white)
+  playback/
+    PlaybackService.kt               MediaSessionService hosting ExoPlayer
+    PlaybackController.kt            MediaController wrapper: state, queue, transport
   data/
     model/Models.kt                  Room entities, including the search_index FTS5 table
     db/                              SubtracksDatabase, DAOs, bundled-SQLite builder
@@ -66,17 +70,33 @@ Compose UI  ->  ViewModel  ->  Repository  ->  MusicSource (remote, Subsonic)
 
 ## UI shell
 
-The library is one `LibraryScreen` with a pinned top bar: the current section as the title, a custom row of icon buttons (Albums, Artists, Songs, Playlists) on the left, and Sync and Settings icon actions on the right. The selected section is drawn as a filled box in the content colour with the icon inverted, like the Flutter app — this is a hand-rolled row, not Material `TabRow` (no underline indicator). Icons use the Material rounded variants. Tabs switch the content in place; album and playlist rows push a detail screen, and Settings is pushed from the top bar. The sync action doubles as the progress indicator while a sync runs. There is no bottom navigation. (The Flutter app also had a Now Playing bar pinned to the bottom; that returns with playback in Phase 3.)
+The library is one `LibraryScreen` with a pinned top bar: the current section as the title, a custom row of icon buttons (Albums, Artists, Songs, Playlists) on the left, and Sync and Settings icon actions on the right. The selected section is drawn as a filled box in the content colour with the icon inverted, like the Flutter app — this is a hand-rolled row, not Material `TabRow` (no underline indicator). Icons use the Material rounded variants. Tabs switch the content in place; album and playlist rows push a detail screen, and Settings is pushed from the top bar. The sync action doubles as the progress indicator while a sync runs. There is no bottom navigation. A mini player sits above the navigation bar across every screen whenever a track is loaded. It is a permanent part of the app shell (the screens above it consume the navigation-bar inset so nothing is padded twice); the Now Playing screen slides up over the whole shell as an overlay rather than being a nav destination, so the mini player never re-lays out during the transition.
 
 The Albums tab is a three-column grid of covers only — a later preference will toggle captions, and sorting will hang off a FAB, so Settings only manages servers and neither shows sort nor sync controls.
 
 The theme is monochrome — black surface, white content and accent — with no colour extracted from cover art (that was a Flutter feature and is not ported yet).
+
+## Playback
+
+Audio plays through an `ExoPlayer` owned by `PlaybackService` (a `MediaSessionService`), so the system media notification, headset/Bluetooth controls and background playback come from the framework. The UI never touches the player directly: `PlaybackController` is an app-scoped singleton that connects a `MediaController` to the session, exposes a `StateFlow<PlaybackState>` (current item, playing flag, position, has-next/previous) and the transport calls. It reaches the session through a small `PlayerConnection`/`PlayerHandle` seam rather than Media3 types, so the queue and window logic is covered by JVM unit tests with a fake player. It connects lazily on first observation or play, and restores the persisted queue (paused) on launch.
+
+The queue lives in SQL, not memory. `queue_entries` is an ordered list of *references* — a whole playlist, an album, or a single song — each with an optional inclusive ordinal range (`rangeStart`/`rangeEnd`; both null means the whole referenced list). A queue can therefore be "album X tracks 1-5, song Y, then album X tracks 6-10" without copying a row per track, and inserting, moving or removing an entry is a single row. A one-row `playback_cursor` table holds the current position; both are written as playback advances.
+
+`QueueRepository` resolves a queue position to a song lazily: it walks the entries summing their lengths (a `COUNT(*)` per entry) and then fetches one row with `LIMIT 1 OFFSET`. `PlaybackController` keeps only the resolved entry lengths and the cursor in memory — never the songs — and hands the player a bounded window (currently `2 * 25 + 1` items) centred on the cursor. A player index maps back to a queue position as `windowStart + index`. The window is loaded once with `setMediaItems` and then shifted incrementally with `addMediaItems`/`removeMediaItem` as playback advances; a shift never replaces the playlist, so the current item and its prepared next source survive and transitions stay gapless. `hasNext`/`hasPrevious` come from the SQL queue size, not the player's playlist. The snapshot is re-read whenever the window shifts and on skip, so a sync that shrinks the referenced album or playlist cannot strand the window on stale lengths; if the active source changes under a loaded queue, playback stops rather than resolving the old queue's stream URLs against the new server.
+
+Because the resolver reports *which entry* a position falls in, `PlaybackState` also carries the current queue context (`kind` and `refId`). That is what scopes the playing-track indicator in the album and playlist lists: a song that appears in both only lights up in the list the queue was actually started from.
+
+Stream URLs come from `SourceRepository.streamUri`, which asks the active `SubsonicSource` for a freshly salted `stream` URL; because the URL changes every request, artwork is attached to the media item by identity (the `CoverArtRef` cache key) rather than by URL.
+
+The window is also the queue the media notification and Android Auto can browse — a deliberate trade-off, since the alternative is holding an entire large library in memory. Timed lyrics/gapless format preferences, bitrate/format preferences, scrobbling and downloads are not wired yet, and the queue view (reordering) is not built, though the schema supports it.
 
 ## Data model
 
 `sources` and `subsonic_sources` hold the configured servers. Library tables are keyed by `(sourceId, id)` and cascade from `sources`: `artists`, `albums`, `playlists`, `playlist_songs`, `songs`. `search_index` is an FTS5 table (trigram tokenizer) over titles, maintained by sync.
 
 UI and playback preferences live in DataStore (`user_prefs`), not in SQLite: they are not relational, nothing joins against them, and keeping them out of Room avoids a schema migration per preference. Room is for the library only.
+
+Every schema version step ships a hand-written `Migration` (`data/db/Migrations.kt`), and there is no destructive fallback, so an upgrade never silently wipes the local mirror. The exported schemas under `app/schemas/` are the source of truth for the migration SQL, and `MigrationsTest` runs each step against a real SQLite connection and asserts the resulting tables, columns and indices.
 
 Library screens page over Room with `PagingSource<Int, T>` queries, ordering by a sort chosen in preferences (name, artist, year, recently added). Paging is local, but it keeps memory bounded on large libraries and lets a huge song or playlist list render incrementally. Room 3 requires `@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)` on the DAO for this.
 

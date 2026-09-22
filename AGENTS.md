@@ -17,6 +17,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 ## Commands
 
 - Build: `gradle :app:assembleDebug`
+- Release build: `gradle :app:assembleRelease` only when build config, R8/ProGuard or dependencies change, and once before a merge; not part of routine verification
 - Unit tests: `gradle :app:testDebugUnitTest`
 - Lint: `gradle :app:ktlintCheck :app:lintDebug`
 - Format: `gradle :app:ktlintFormat`
@@ -41,6 +42,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (`BundledSQLiteDriver`, SQLite 3.50+, FTS5). Do not reintroduce SQLDelight or the platform SQLite.
 - Networking uses OkHttp and DOM XML parsing; auth uses the Subsonic token scheme by default.
 - Use coroutines and `Flow`; library reads are exposed as `Flow` from Room. Large lists page with Paging 3 over Room `PagingSource` rather than loading the whole table.
+- Playback is Media3: `PlaybackService` is a `MediaSessionService` owning an `ExoPlayer`, and `PlaybackController` (app-scoped Koin singleton) is the only thing the UI talks to. The queue is a `queue_entries` list of references with optional ranges plus a `playback_cursor` row; keep only a bounded window in memory (never the whole queue, and never load a whole table to build one). Stream URLs are freshly salted per request, so attach artwork by `CoverArtRef` cache key, not by URL.
 - UI state lives in `androidx.lifecycle.ViewModel`, wired with Koin (`koinViewModel()`); screens split into a stateful `*Route` and a stateless `*Screen` for screenshot tests.
 - UI and playback preferences go in DataStore (`UserPreferences`), not Room.
 - Verify current dependency versions and their compatibility before adding or pinning anything.

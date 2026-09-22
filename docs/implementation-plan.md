@@ -28,10 +28,13 @@ Goal: a usable app for browsing a server, end to end.
 
 Not done yet in this slice (deliberately): artist detail, cover-art tonal colour extraction, long-press menus, editing an existing server, and per-section sort/filter controls (only album sort is wired).
 
-## Phase 3 - Playback
+## Phase 3 - Playback (in progress)
 
-- Media3/ExoPlayer playback service, queue and now-playing UI.
-- Streaming with `maxBitRate`/format taken from settings, a gapless queue, media notifications and headset controls.
+- (done) Media3/ExoPlayer playback service, queue and now-playing UI: a `MediaSessionService` plus a mini player and a Now Playing screen.
+- (done) Media notifications and headset/Bluetooth controls, from the media session.
+- (done) A SQL-backed queue of references (whole playlist / album / song, each with an optional ordinal range) resolved lazily, with only a bounded window in memory and in the player.
+- Streaming with `maxBitRate`/format taken from settings.
+- Playing from the Songs tab, the queue view (add to queue / play next / reorder), and gapless format preferences.
 - Scrobbling and "now playing" back to the server.
 - Optional download/caching.
 
