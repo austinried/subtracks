@@ -42,7 +42,7 @@ import com.subtracks.ui.components.CoverArt
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-private val ART_HEIGHT = 320.dp
+private val ART_HEIGHT = 420.dp
 private val SCRIM_HEIGHT = 128.dp
 
 @Composable
@@ -102,14 +102,6 @@ fun ArtistDetailScreen(
                     )
                 }
             }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = "${albums.size} albums",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
-                )
-            }
             itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
                 Column(
                     modifier =
@@ -127,6 +119,7 @@ fun ArtistDetailScreen(
                     Text(
                         text = album.name,
                         style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 6.dp),
