@@ -1,5 +1,6 @@
 package com.subtracks.ui.components
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -23,7 +25,9 @@ fun CoverArt(
     ref: CoverArtRef?,
     name: String,
     modifier: Modifier = Modifier,
+    thumbnailRef: CoverArtRef? = null,
 ) {
+    val context = LocalPlatformContext.current
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
         Text(
             text = name.trim().take(1).uppercase(),
@@ -31,15 +35,17 @@ fun CoverArt(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.Center),
         )
+        if (thumbnailRef != null && thumbnailRef != ref) {
+            AsyncImage(
+                model = remember(thumbnailRef) { imageRequest(context, thumbnailRef) },
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         if (ref != null) {
             AsyncImage(
-                model =
-                    ImageRequest
-                        .Builder(LocalPlatformContext.current)
-                        .data(ref.url)
-                        .memoryCacheKey(ref.cacheKey)
-                        .diskCacheKey(ref.cacheKey)
-                        .build(),
+                model = remember(ref) { imageRequest(context, ref) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -47,6 +53,17 @@ fun CoverArt(
         }
     }
 }
+
+private fun imageRequest(
+    context: Context,
+    ref: CoverArtRef,
+): ImageRequest =
+    ImageRequest
+        .Builder(context)
+        .data(ref.url)
+        .memoryCacheKey(ref.cacheKey)
+        .diskCacheKey(ref.cacheKey)
+        .build()
 
 @Composable
 fun LoadingState(modifier: Modifier = Modifier) {

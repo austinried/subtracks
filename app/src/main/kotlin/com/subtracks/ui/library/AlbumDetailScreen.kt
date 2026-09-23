@@ -282,6 +282,7 @@ private fun AlbumHeader(
         CoverArt(
             ref = coverArt(album?.coverArt, false),
             name = album?.name.orEmpty(),
+            thumbnailRef = coverArt(album?.coverArt, true),
             modifier =
                 Modifier
                     .fillMaxWidth(0.86f)
