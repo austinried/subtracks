@@ -167,13 +167,7 @@ fun AlbumDetailScreen(
                     label = "gradientAlpha",
                 )
                 val barColor =
-                    artwork?.let {
-                        lerp(
-                            it.gradientColorAt((scrollPx + barHeightPx / 2f) / gradientHeightPx),
-                            Color.Black,
-                            heroDarken(scrollPx, with(density) { maxHeight.toPx() }),
-                        )
-                    } ?: Color.Black
+                    artwork?.gradientColorAt((scrollPx + barHeightPx / 2f) / gradientHeightPx) ?: Color.Black
 
                 HeroGradient(
                     colors = artwork,

@@ -38,6 +38,8 @@ private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
 private const val HERO_DARKEN_MAX = 0.8f
 private const val HERO_DARKEN_SCREENS = 1.5f
+private const val BASE_BOTTOM_DARKEN = 0.35f
+private const val POSITION_FADE_START = 0.35f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -249,7 +251,8 @@ fun HeroGradient(
     Canvas(modifier) {
         val period = size.height * PERIOD_SCREENS
         if (period <= 0f) return@Canvas
-        val phase = scrollPx().mod(period)
+        val scroll = scrollPx()
+        val phase = scroll.mod(period)
         drawRect(
             brush =
                 Brush.verticalGradient(
@@ -281,7 +284,20 @@ fun HeroGradient(
                 }
             }
         }
-        drawRect(color = Color.Black.copy(alpha = heroDarken(scrollPx(), size.height)))
+        drawRect(
+            brush =
+                Brush.verticalGradient(
+                    colorStops =
+                        arrayOf(
+                            0f to Color.Transparent,
+                            POSITION_FADE_START to Color.Transparent,
+                            1f to
+                                Color.Black.copy(
+                                    alpha = (BASE_BOTTOM_DARKEN + heroDarken(scroll, size.height)).coerceAtMost(HERO_DARKEN_MAX),
+                                ),
+                        ),
+                ),
+        )
     }
 }
 
