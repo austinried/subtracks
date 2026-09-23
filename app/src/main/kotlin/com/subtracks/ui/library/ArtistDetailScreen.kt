@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -111,7 +110,6 @@ fun ArtistDetailScreen(
     val nameTextStyle = MaterialTheme.typography.headlineLarge
     val imageNameStyle =
         nameTextStyle.copy(
-            fontWeight = FontWeight.SemiBold,
             shadow =
                 Shadow(
                     color = Color.Black.copy(alpha = 0.8f),
