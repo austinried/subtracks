@@ -155,11 +155,13 @@ fun LibraryScreen(
     }
 
     val density = LocalDensity.current
-    val titleHeight =
+    val titleHeight = TopAppBarDefaults.TopAppBarExpandedHeight
+    val titleLineHeight =
         with(density) {
             MaterialTheme.typography.headlineLarge.lineHeight
                 .toDp()
-        } + 12.dp
+        }
+    val titleTop = ((titleHeight - titleLineHeight) / 2).coerceAtLeast(0.dp)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     SideEffect { scrollBehavior.state.heightOffsetLimit = -with(density) { titleHeight.toPx() } }
     val titleFraction = scrollBehavior.state.collapsedFraction
@@ -195,7 +197,7 @@ fun LibraryScreen(
                         Modifier
                             .offset(y = -(titleHeight * titleFraction))
                             .wrapContentHeight(unbounded = true)
-                            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = titleTop),
                 )
             }
             LibraryTabs(
