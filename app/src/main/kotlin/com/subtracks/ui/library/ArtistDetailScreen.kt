@@ -1,8 +1,9 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,8 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -20,13 +22,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +41,9 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+private val ART_HEIGHT = 320.dp
+private val SCRIM_HEIGHT = 128.dp
 
 @Composable
 fun ArtistDetailRoute(
@@ -68,70 +76,91 @@ fun ArtistDetailScreen(
     onAlbumClick: (Album) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = artist?.name.orEmpty(),
-                        style = MaterialTheme.typography.headlineLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+    Box(modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Box(Modifier.fillMaxWidth().height(ART_HEIGHT)) {
+                    CoverArt(
+                        ref = art,
+                        name = artist?.name.orEmpty(),
+                        modifier = Modifier.fillMaxSize(),
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
-            val artHeight = maxHeight * 0.3f
-            Column(Modifier.fillMaxSize()) {
-                CoverArt(
-                    ref = art,
-                    name = artist?.name.orEmpty(),
-                    modifier = Modifier.fillMaxWidth().height(artHeight),
-                )
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(SCRIM_HEIGHT)
+                                .background(
+                                    Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)),
+                                ),
+                    )
+                }
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     text = "${albums.size} albums",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
                 )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+            }
+            itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
+                Column(
+                    modifier =
+                        Modifier
+                            .padding(
+                                start = if (index % 2 == 0) 16.dp else 0.dp,
+                                end = if (index % 2 == 1) 16.dp else 0.dp,
+                            ).clickable { onAlbumClick(album) },
                 ) {
-                    items(albums, key = { it.id }) { album ->
-                        Column(Modifier.clickable { onAlbumClick(album) }) {
-                            CoverArt(
-                                ref = coverArt(album.coverArt, false),
-                                name = album.name,
-                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                            )
-                            Text(
-                                text = album.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 6.dp),
-                            )
-                            Text(
-                                text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    CoverArt(
+                        ref = coverArt(album.coverArt, false),
+                        name = album.name,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+                    )
+                    Text(
+                        text = album.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    Text(
+                        text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
+
+        TopAppBar(
+            title = {
+                Text(
+                    text = artist?.name.orEmpty(),
+                    style = MaterialTheme.typography.headlineLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                }
+            },
+            colors =
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                ),
+            modifier = Modifier.align(Alignment.TopStart),
+        )
     }
 }
