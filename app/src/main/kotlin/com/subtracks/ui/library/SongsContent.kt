@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -112,17 +113,19 @@ fun SongRow(
                 Text(
                     text = song.title,
                     color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
             }
         },
         supportingContent = {
-            val subtitle = listOfNotNull(song.artist, song.album).joinToString(" • ")
-            if (subtitle.isNotEmpty()) {
-                Text(
-                    text = subtitle,
-                    color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                )
-            }
+            Text(
+                text = listOfNotNull(song.artist, song.album).joinToString(" • ").ifEmpty { "\u00A0" },
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
