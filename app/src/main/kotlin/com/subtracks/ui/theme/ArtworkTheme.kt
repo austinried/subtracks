@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val SEED_ART_SIZE_PX = 128
-private const val GRADIENT_FADE_START = 0.8f / 1.5f
+private const val GRADIENT_FADE_START = 1.3f / 2.0f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -84,7 +84,7 @@ fun artworkColorsFromSeed(seed: Int): ArtworkColors {
         scheme = scheme,
         gradientHigh = tone(hue, (s * 0.8f).coerceAtMost(0.60f), 0.30f),
         gradientLow = tone(hue, s * 0.25f, 0.04f),
-        accents = listOf(tone(hue, s, 0.70f), tone(hue, s * 0.85f, 0.38f)),
+        accents = listOf(tone(hue, s, 0.78f), tone(hue, s * 0.9f, 0.20f)),
     )
 }
 

@@ -32,7 +32,7 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 
 @Composable
 fun SongsContent(
@@ -53,20 +53,22 @@ fun SongsContent(
         }
 
         else -> {
-            LazyColumn(
-                modifier = modifier.fillMaxSize().stretchOverscroll(),
-                contentPadding = PaddingValues(bottom = bottomInset),
-            ) {
-                items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
-                    val item = items[index]
-                    if (item != null) {
-                        SongRow(
-                            song = item.song,
-                            coverArtId = item.coverArt,
-                            coverArt = coverArt,
-                            isPlaying = item.song.id == playingSongId,
-                            modifier = Modifier.clickable { onSongClick(index) },
-                        )
+            StretchOverscroll(modifier = modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = bottomInset),
+                ) {
+                    items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
+                        val item = items[index]
+                        if (item != null) {
+                            SongRow(
+                                song = item.song,
+                                coverArtId = item.coverArt,
+                                coverArt = coverArt,
+                                isPlaying = item.song.id == playingSongId,
+                                modifier = Modifier.clickable { onSongClick(index) },
+                            )
+                        }
                     }
                 }
             }

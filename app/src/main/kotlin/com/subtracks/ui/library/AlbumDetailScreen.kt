@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,7 +72,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
@@ -82,7 +83,7 @@ import org.koin.core.parameter.parametersOf
 import kotlin.math.roundToInt
 
 private const val DOT = "\u00B7"
-private const val GRADIENT_SCREENS = 1.5f
+private const val GRADIENT_SCREENS = 2.0f
 private const val FADE_DISTANCE_DP = 64
 
 @Composable
@@ -129,6 +130,7 @@ fun AlbumDetailScreen(
                 val density = LocalDensity.current
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
+                val statusBarDp = with(density) { statusBarTop.toDp() }
                 val barHeightPx = statusBarTop + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
                 val fadeDistancePx = with(density) { FADE_DISTANCE_DP.dp.toPx() }
 
@@ -167,36 +169,39 @@ fun AlbumDetailScreen(
                             .alpha(gradientAlpha),
                 )
 
-                LazyColumn(
-                    state = listState,
-                    contentPadding =
-                        PaddingValues(
-                            bottom = 16.dp + with(density) { navBarBottom.toDp() },
-                        ),
-                    modifier = Modifier.fillMaxSize().stretchOverscroll(),
-                ) {
-                    item {
-                        AlbumHeader(
-                            album = album,
-                            hasSongs = songs.isNotEmpty(),
-                            coverArt = coverArt,
-                            onPlay = { onSongClick(0) },
-                            onShuffle = onShuffle,
-                            onDownload = onDownload,
-                            onMore = onMore,
-                            titleModifier = Modifier.onGloballyPositioned { titleTopPx = it.positionInParent().y },
-                            modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
-                        )
-                    }
-                    itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                        SongRow(
-                            song = song,
-                            isPlaying = song.id == playingSongId,
-                            modifier =
-                                Modifier
-                                    .onSizeChanged { rowHeightPx = it.height.toFloat() }
-                                    .clickable { onSongClick(index) },
-                        )
+                StretchOverscroll(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        contentPadding =
+                            PaddingValues(
+                                bottom = 16.dp + with(density) { navBarBottom.toDp() },
+                            ),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        item {
+                            AlbumHeader(
+                                album = album,
+                                hasSongs = songs.isNotEmpty(),
+                                coverArt = coverArt,
+                                onPlay = { onSongClick(0) },
+                                onShuffle = onShuffle,
+                                onDownload = onDownload,
+                                onMore = onMore,
+                                topInset = statusBarDp,
+                                titleModifier = Modifier.onGloballyPositioned { titleTopPx = it.positionInParent().y },
+                                modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
+                            )
+                        }
+                        itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                            SongRow(
+                                song = song,
+                                isPlaying = song.id == playingSongId,
+                                modifier =
+                                    Modifier
+                                        .onSizeChanged { rowHeightPx = it.height.toFloat() }
+                                        .clickable { onSongClick(index) },
+                            )
+                        }
                     }
                 }
 
@@ -204,7 +209,7 @@ fun AlbumDetailScreen(
                     Modifier
                         .align(Alignment.TopStart)
                         .fillMaxWidth()
-                        .height(with(density) { (barHeightPx + 24.dp.toPx()).toDp() })
+                        .height(statusBarDp + 8.dp)
                         .background(
                             Brush.verticalGradient(
                                 listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent),
@@ -216,6 +221,7 @@ fun AlbumDetailScreen(
                     title = {
                         Text(
                             text = album?.name.orEmpty(),
+                            style = MaterialTheme.typography.headlineLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.alpha(barFraction),
@@ -250,6 +256,7 @@ private fun AlbumHeader(
     onShuffle: () -> Unit,
     onDownload: () -> Unit,
     onMore: () -> Unit,
+    topInset: Dp,
     titleModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
@@ -257,7 +264,7 @@ private fun AlbumHeader(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 16.dp),
+                .padding(start = 24.dp, end = 24.dp, top = topInset + 8.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(
@@ -268,7 +275,7 @@ private fun AlbumHeader(
         Spacer(Modifier.height(20.dp))
         Text(
             text = album?.name.orEmpty(),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

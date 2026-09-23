@@ -24,7 +24,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 
 @Composable
 fun PlaylistsContent(
@@ -44,38 +44,40 @@ fun PlaylistsContent(
         }
 
         else -> {
-            LazyColumn(
-                modifier = modifier.fillMaxSize().stretchOverscroll(),
-                contentPadding = PaddingValues(bottom = bottomInset),
-            ) {
-                items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
-                    val playlist = items[index]
-                    if (playlist != null) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = playlist.name,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            leadingContent = {
-                                CoverArt(
-                                    ref = coverArt(playlist.coverArt, true),
-                                    name = playlist.name,
-                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                )
-                            },
-                            modifier = Modifier.clickable { onPlaylistClick(playlist) },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        )
+            StretchOverscroll(modifier = modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = bottomInset),
+                ) {
+                    items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
+                        val playlist = items[index]
+                        if (playlist != null) {
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        text = playlist.name,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                leadingContent = {
+                                    CoverArt(
+                                        ref = coverArt(playlist.coverArt, true),
+                                        name = playlist.name,
+                                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+                                    )
+                                },
+                                modifier = Modifier.clickable { onPlaylistClick(playlist) },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            )
+                        }
                     }
                 }
             }

@@ -50,7 +50,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -123,58 +123,60 @@ fun ArtistDetailScreen(
         )
 
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        LazyVerticalGrid(
-            state = listState,
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize().stretchOverscroll(),
-        ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                    CoverArt(
-                        ref = art,
-                        name = artist?.name.orEmpty(),
-                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                    )
-                    Text(
-                        text = artist?.name.orEmpty(),
-                        style = imageNameStyle,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
-                    )
+        StretchOverscroll(modifier = Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                state = listState,
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                        CoverArt(
+                            ref = art,
+                            name = artist?.name.orEmpty(),
+                            modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                        )
+                        Text(
+                            text = artist?.name.orEmpty(),
+                            style = imageNameStyle,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
+                        )
+                    }
                 }
-            }
-            itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
-                Column(
-                    modifier =
-                        Modifier
-                            .padding(
-                                start = if (index % 2 == 0) 16.dp else 0.dp,
-                                end = if (index % 2 == 1) 16.dp else 0.dp,
-                            ).clickable { onAlbumClick(album) },
-                ) {
-                    CoverArt(
-                        ref = coverArt(album.coverArt, false),
-                        name = album.name,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                    )
-                    Text(
-                        text = album.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                    Text(
-                        text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(
+                                    start = if (index % 2 == 0) 16.dp else 0.dp,
+                                    end = if (index % 2 == 1) 16.dp else 0.dp,
+                                ).clickable { onAlbumClick(album) },
+                    ) {
+                        CoverArt(
+                            ref = coverArt(album.coverArt, false),
+                            name = album.name,
+                            modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+                        )
+                        Text(
+                            text = album.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        Text(
+                            text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

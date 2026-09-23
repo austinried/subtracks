@@ -24,7 +24,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 
 @Composable
 fun ArtistsContent(
@@ -44,38 +44,40 @@ fun ArtistsContent(
         }
 
         else -> {
-            LazyColumn(
-                modifier = modifier.fillMaxSize().stretchOverscroll(),
-                contentPadding = PaddingValues(bottom = bottomInset),
-            ) {
-                items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
-                    val artist = items[index]
-                    if (artist != null) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = artist.name,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = "${artist.albumCount} albums",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            leadingContent = {
-                                CoverArt(
-                                    ref = coverArt(artist.coverArt, true),
-                                    name = artist.name,
-                                    modifier = Modifier.size(48.dp).clip(CircleShape),
-                                )
-                            },
-                            modifier = Modifier.clickable { onArtistClick(artist) },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        )
+            StretchOverscroll(modifier = modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = bottomInset),
+                ) {
+                    items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
+                        val artist = items[index]
+                        if (artist != null) {
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        text = artist.name,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = "${artist.albumCount} albums",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                leadingContent = {
+                                    CoverArt(
+                                        ref = coverArt(artist.coverArt, true),
+                                        name = artist.name,
+                                        modifier = Modifier.size(48.dp).clip(CircleShape),
+                                    )
+                                },
+                                modifier = Modifier.clickable { onArtistClick(artist) },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            )
+                        }
                     }
                 }
             }

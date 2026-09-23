@@ -51,7 +51,7 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 import com.subtracks.ui.library.SongRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -339,55 +339,57 @@ fun QueueScreen(
             }
 
             else -> {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.padding(padding).fillMaxSize().stretchOverscroll(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                ) {
-                    items(count = rows.size, key = { rows[it].id }) { index ->
-                        val row = rows[index]
-                        ReorderableItem(
-                            state = reorderState,
-                            key = row.id,
-                            animateItemModifier =
-                                Modifier.animateItem(
-                                    fadeInSpec = tween(150),
-                                    fadeOutSpec = tween(150),
-                                    placementSpec = tween(200),
-                                ),
-                        ) { isDragging ->
-                            QueueRowItem(
-                                row = row,
-                                isPlaying = row.position == currentPosition,
-                                floating = isDragging,
-                                coverArt = coverArt,
-                                dragHandle =
-                                    Modifier.draggableHandle(
-                                        onDragStarted = {
-                                            dragId = row.id
-                                            dragFrom = row.position
-                                        },
-                                        onDragStopped = {
-                                            val id = dragId
-                                            val from = dragFrom
-                                            if (id != null && from != null) {
-                                                val index = rows.indexOfFirst { it.id == id }
-                                                val to = if (index < 0) from else dropTarget(rows, index, from)
-                                                if (to != from) {
-                                                    onMove(from, to)
-                                                    showUndo("Queue reordered")
-                                                }
-                                            }
-                                            dragId = null
-                                            dragFrom = null
-                                        },
+                StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                    ) {
+                        items(count = rows.size, key = { rows[it].id }) { index ->
+                            val row = rows[index]
+                            ReorderableItem(
+                                state = reorderState,
+                                key = row.id,
+                                animateItemModifier =
+                                    Modifier.animateItem(
+                                        fadeInSpec = tween(150),
+                                        fadeOutSpec = tween(150),
+                                        placementSpec = tween(200),
                                     ),
-                                onClick = { onPlay(row.position) },
-                                onRemove = {
-                                    onRemove(row.position)
-                                    showUndo("Removed from queue")
-                                },
-                            )
+                            ) { isDragging ->
+                                QueueRowItem(
+                                    row = row,
+                                    isPlaying = row.position == currentPosition,
+                                    floating = isDragging,
+                                    coverArt = coverArt,
+                                    dragHandle =
+                                        Modifier.draggableHandle(
+                                            onDragStarted = {
+                                                dragId = row.id
+                                                dragFrom = row.position
+                                            },
+                                            onDragStopped = {
+                                                val id = dragId
+                                                val from = dragFrom
+                                                if (id != null && from != null) {
+                                                    val index = rows.indexOfFirst { it.id == id }
+                                                    val to = if (index < 0) from else dropTarget(rows, index, from)
+                                                    if (to != from) {
+                                                        onMove(from, to)
+                                                        showUndo("Queue reordered")
+                                                    }
+                                                }
+                                                dragId = null
+                                                dragFrom = null
+                                            },
+                                        ),
+                                    onClick = { onPlay(row.position) },
+                                    onRemove = {
+                                        onRemove(row.position)
+                                        showUndo("Removed from queue")
+                                    },
+                                )
+                            }
                         }
                     }
                 }

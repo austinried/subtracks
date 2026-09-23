@@ -35,7 +35,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -84,38 +84,40 @@ fun PlaylistDetailScreen(
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize().stretchOverscroll()) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CoverArt(
-                        ref = coverArt(playlist?.coverArt, false),
-                        name = playlist?.name.orEmpty(),
-                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
-                    )
-                    Column {
-                        Text(playlist?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            text = "${playlist?.songCount ?: 0} songs",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
+            LazyColumn(Modifier.fillMaxSize()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CoverArt(
+                            ref = coverArt(playlist?.coverArt, false),
+                            name = playlist?.name.orEmpty(),
+                            modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
                         )
+                        Column {
+                            Text(playlist?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                text = "${playlist?.songCount ?: 0} songs",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
-            }
-            items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
-                val item = songs[index]
-                if (item != null) {
-                    SongRow(
-                        song = item.song,
-                        coverArtId = item.coverArt,
-                        coverArt = coverArt,
-                        isPlaying = item.song.id == playingSongId,
-                        modifier = Modifier.clickable { onSongClick(index) },
-                    )
+                items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
+                    val item = songs[index]
+                    if (item != null) {
+                        SongRow(
+                            song = item.song,
+                            coverArtId = item.coverArt,
+                            coverArt = coverArt,
+                            isPlaying = item.song.id == playingSongId,
+                            modifier = Modifier.clickable { onSongClick(index) },
+                        )
+                    }
                 }
             }
         }

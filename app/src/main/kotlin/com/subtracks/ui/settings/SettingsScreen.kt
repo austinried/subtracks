@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Source
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
@@ -102,57 +102,59 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize().stretchOverscroll()) {
-            item { SectionHeader("Servers") }
-            items(sources.size, key = { sources[it].id }) { index ->
-                val source = sources[index]
-                ListItem(
-                    headlineContent = { Text(source.name) },
-                    supportingContent = {
-                        Text(source.address, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    },
-                    leadingContent = {
-                        RadioButton(
-                            selected = source.id == activeSourceId,
-                            onClick = { onSelectSource(source.id) },
-                        )
-                    },
-                    trailingContent = {
-                        IconButton(onClick = { onDeleteSource(source.id) }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Remove ${source.name}")
+        StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
+            LazyColumn(Modifier.fillMaxSize()) {
+                item { SectionHeader("Servers") }
+                items(sources.size, key = { sources[it].id }) { index ->
+                    val source = sources[index]
+                    ListItem(
+                        headlineContent = { Text(source.name) },
+                        supportingContent = {
+                            Text(source.address, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        },
+                        leadingContent = {
+                            RadioButton(
+                                selected = source.id == activeSourceId,
+                                onClick = { onSelectSource(source.id) },
+                            )
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { onDeleteSource(source.id) }) {
+                                Icon(Icons.Rounded.Delete, contentDescription = "Remove ${source.name}")
+                            }
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Button(onClick = onAddServer) {
+                            Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add server")
                         }
-                    },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Button(onClick = onAddServer) {
-                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Add server")
                     }
                 }
-            }
-            item { SectionHeader("Network") }
-            item {
-                ListItem(
-                    headlineContent = { Text("Maximum bitrate") },
-                    supportingContent = { Text(bitrateLabel(maxBitrate)) },
-                    modifier = Modifier.clickable { dialog = SettingsDialog.Bitrate },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text("Preferred stream format") },
-                    supportingContent = { Text(streamFormat ?: "Use server default") },
-                    modifier = Modifier.clickable { dialog = SettingsDialog.Format },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
+                item { SectionHeader("Network") }
+                item {
+                    ListItem(
+                        headlineContent = { Text("Maximum bitrate") },
+                        supportingContent = { Text(bitrateLabel(maxBitrate)) },
+                        modifier = Modifier.clickable { dialog = SettingsDialog.Bitrate },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
+                item {
+                    ListItem(
+                        headlineContent = { Text("Preferred stream format") },
+                        supportingContent = { Text(streamFormat ?: "Use server default") },
+                        modifier = Modifier.clickable { dialog = SettingsDialog.Format },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
             }
         }
     }

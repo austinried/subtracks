@@ -23,7 +23,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.stretchOverscroll
+import com.subtracks.ui.components.StretchOverscroll
 
 const val ALBUM_COVER_TAG = "album-cover"
 
@@ -45,27 +45,29 @@ fun AlbumsContent(
         }
 
         else -> {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = bottomInset + 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = modifier.fillMaxSize().stretchOverscroll(),
-            ) {
-                items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
-                    val album = items[index]
-                    if (album != null) {
-                        CoverArt(
-                            ref = coverArt(album.coverArt, true),
-                            name = album.name,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .clickable { onAlbumClick(album) }
-                                    .testTag(ALBUM_COVER_TAG),
-                        )
+            StretchOverscroll(modifier = modifier.fillMaxSize()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = bottomInset + 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
+                        val album = items[index]
+                        if (album != null) {
+                            CoverArt(
+                                ref = coverArt(album.coverArt, true),
+                                name = album.name,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .clickable { onAlbumClick(album) }
+                                        .testTag(ALBUM_COVER_TAG),
+                            )
+                        }
                     }
                 }
             }
