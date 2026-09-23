@@ -78,6 +78,7 @@ import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
+import com.subtracks.ui.theme.gradientColorAt
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -130,8 +131,9 @@ fun AlbumDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
-                val gradientHeight = maxHeight * GRADIENT_SCREENS
                 val density = LocalDensity.current
+                val gradientHeight = maxHeight * GRADIENT_SCREENS
+                val gradientHeightPx = with(density) { gradientHeight.toPx() }
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
                 val statusBarDp = with(density) { statusBarTop.toDp() }
@@ -162,6 +164,9 @@ fun AlbumDetailScreen(
                     animationSpec = tween(durationMillis = 600),
                     label = "gradientAlpha",
                 )
+                val barColor =
+                    artwork?.gradientColorAt(((scrollPx + barHeightPx / 2f) / gradientHeightPx).coerceIn(0f, 1f))
+                        ?: Color.Black
 
                 HeroGradient(
                     colors = artwork,
@@ -223,24 +228,6 @@ fun AlbumDetailScreen(
                         ).alpha(1f - barFraction),
                 )
 
-                Box(
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .height(with(density) { barHeightPx.toDp() })
-                        .clipToBounds()
-                        .alpha(barFraction),
-                ) {
-                    HeroGradient(
-                        colors = artwork,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .requiredHeight(gradientHeight)
-                                .offset { IntOffset(0, -scrollPx.roundToInt()) },
-                    )
-                }
-
                 TopAppBar(
                     title = {
                         Text(
@@ -260,6 +247,7 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
+                            .background(barColor.copy(alpha = barFraction))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
 import coil3.SingletonImageLoader
@@ -92,18 +93,37 @@ fun artworkColorsFromSeeds(
 
     val secondary =
         secondarySeed?.let { seed ->
-            val color = Color(seed or 0xFF000000.toInt())
-            val (sh, ss, sl) = color.toHsl()
-            if (sl > 0.55f) Color.hsl(sh, ss, 0.30f) else color
-        } ?: tone(hue, s, 0.08f)
+            val (sh, ss, sl) = Color(seed or 0xFF000000.toInt()).toHsl()
+            Color.hsl(
+                blendHue(sh, hue, 0.5f),
+                ss.coerceAtLeast(s * 0.7f).coerceAtMost(0.9f),
+                sl.coerceIn(0.34f, 0.56f),
+            )
+        } ?: tone(hue, s, 0.40f)
 
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (s * 0.6f).coerceAtMost(0.50f), 0.22f),
-        gradientLow = tone(hue, s * 0.30f, 0.03f),
-        accents = listOf(tone(hue, s * 0.8f, 0.90f), secondary),
+        gradientHigh = tone(hue, (s * 0.85f).coerceAtMost(0.65f), 0.30f),
+        gradientLow = tone(hue, s * 0.45f, 0.04f),
+        accents = listOf(tone(hue, s, 0.72f), secondary),
         blobSeed = primarySeed,
     )
+}
+
+fun ArtworkColors.gradientColorAt(fraction: Float): Color {
+    val t = fraction.coerceIn(0f, 1f)
+    val base = lerp(gradientHigh, gradientLow, t)
+    val fade = ((t - GRADIENT_FADE_START) / (1f - GRADIENT_FADE_START)).coerceIn(0f, 1f)
+    return lerp(base, Color.Black, fade)
+}
+
+private fun blendHue(
+    from: Float,
+    to: Float,
+    fraction: Float,
+): Float {
+    val delta = ((to - from + 540f) % 360f) - 180f
+    return (from + delta * fraction + 360f) % 360f
 }
 
 @Composable
