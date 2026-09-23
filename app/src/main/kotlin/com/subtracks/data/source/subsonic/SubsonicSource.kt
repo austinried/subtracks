@@ -6,6 +6,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -98,9 +99,13 @@ class SubsonicSource(
         thumbnail: Boolean = false,
     ): String? =
         withContext(Dispatchers.IO) {
-            runCatching {
+            try {
                 SubsonicXml.artistImageUrl(client.get("getArtistInfo2", mapOf("id" to artistId)), thumbnail)
-            }.getOrNull()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
         }
 
     private fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")

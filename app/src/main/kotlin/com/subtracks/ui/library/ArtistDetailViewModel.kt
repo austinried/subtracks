@@ -8,11 +8,13 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
@@ -33,9 +35,20 @@ class ArtistDetailViewModel(
 
     init {
         viewModelScope.launch {
-            val loaded = artist.filterNotNull().first()
-            _art.value = sourceRepository.artistArt(loaded.id) ?: sourceRepository.coverArt(loaded.coverArt)
+            artist
+                .filterNotNull()
+                .distinctUntilChangedBy { it.id }
+                .collectLatest { loaded -> _art.value = resolveArt(loaded) }
         }
+    }
+
+    private suspend fun resolveArt(artist: Artist): CoverArtRef? {
+        repeat(3) { attempt ->
+            val ref = sourceRepository.artistArt(artist.id) ?: sourceRepository.coverArt(artist.coverArt)
+            if (ref != null) return ref
+            if (attempt < 2) delay(300)
+        }
+        return null
     }
 
     fun coverArt(

@@ -2,6 +2,7 @@ package com.subtracks.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -94,16 +96,30 @@ fun ArtistDetailScreen(
                 .toDp()
         }
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val navBarBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
     val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
-    val barFraction by remember {
+    val barFraction by remember(fadeStartPx, fadeEndPx) {
         derivedStateOf {
-            if (listState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                ((listState.firstVisibleItemScrollOffset - fadeStartPx) / (fadeEndPx - fadeStartPx)).coerceIn(0f, 1f)
+            when {
+                listState.layoutInfo.visibleItemsInfo.isEmpty() -> {
+                    0f
+                }
+
+                !listState.canScrollForward -> {
+                    1f
+                }
+
+                listState.firstVisibleItemIndex > 0 -> {
+                    1f
+                }
+
+                else -> {
+                    ((listState.firstVisibleItemScrollOffset - fadeStartPx) / (fadeEndPx - fadeStartPx))
+                        .coerceIn(0f, 1f)
+                }
             }
         }
     }
@@ -118,11 +134,11 @@ fun ArtistDetailScreen(
                 ),
         )
 
-    Box(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyVerticalGrid(
             state = listState,
             columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize(),
@@ -207,7 +223,14 @@ fun ArtistDetailScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            modifier = Modifier.align(Alignment.TopStart).background(Color.Black.copy(alpha = barFraction)),
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .background(Color.Black.copy(alpha = barFraction))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {},
         )
     }
 }
