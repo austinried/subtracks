@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
@@ -99,6 +100,13 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun dropTargetUsesStablePositionsAcrossDirectionChanges() {
+        assertEquals(1L, dropTarget(listOf(row(1), row(0), row(2), row(3)), index = 1, from = 0))
+        assertEquals(3L, dropTarget(listOf(row(1), row(2), row(3), row(0)), index = 3, from = 0))
+        assertEquals(1L, dropTarget(listOf(row(0), row(3), row(1), row(2)), index = 1, from = 3))
+    }
+
+    @Test
     fun reorderingMovesTheRowLocally() {
         runBlocking { seedSongs(200) }
         controller.playSongs(1, 100)
@@ -112,6 +120,30 @@ class QueueViewModelTest {
         val positions = viewModel.rows.map { it.position }
         assertEquals(listOf(101L, 102L, 100L), positions.take(3))
     }
+
+    private fun row(position: Int) =
+        QueueRow(
+            position.toLong(),
+            position.toLong(),
+            SongListItem(
+                song =
+                    Song(
+                        sourceId = 1,
+                        id = "s$position",
+                        albumId = "al1",
+                        artistId = "ar1",
+                        title = "Song $position",
+                        album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = 1,
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    ),
+                coverArt = null,
+            ),
+        )
 
     private suspend fun seedSongs(count: Int) {
         db.sourcesDao().upsertSource(

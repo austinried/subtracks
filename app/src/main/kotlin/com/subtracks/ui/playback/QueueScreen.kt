@@ -395,7 +395,7 @@ fun QueueScreen(
     }
 }
 
-private fun dropTarget(
+internal fun dropTarget(
     rows: List<QueueRow>,
     index: Int,
     from: Long,
