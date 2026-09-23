@@ -38,8 +38,8 @@ private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
 private const val HERO_DARKEN_MAX = 0.8f
 private const val HERO_DARKEN_SCREENS = 1.5f
-private const val BASE_BOTTOM_DARKEN = 0.35f
-private const val POSITION_FADE_START = 0.35f
+private const val BASE_BOTTOM_DARKEN = 0.45f
+private const val POSITION_FADE_START = 0.30f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -111,7 +111,7 @@ fun artworkColorsFromSeeds(
     return ArtworkColors(
         scheme = scheme,
         gradientHigh = tone(hue, (s * 0.85f).coerceAtMost(0.65f), 0.30f),
-        gradientLow = tone(hue, s * 0.45f, 0.04f),
+        gradientLow = tone(hue, s * 0.5f, 0.16f),
         accents =
             listOf(
                 tone(hue, s, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
