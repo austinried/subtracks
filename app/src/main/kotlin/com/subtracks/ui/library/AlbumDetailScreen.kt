@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -136,7 +137,7 @@ fun AlbumDetailScreen(
 
                 var headerHeightPx by remember { mutableFloatStateOf(0f) }
                 var rowHeightPx by remember { mutableFloatStateOf(0f) }
-                var titleTopPx by remember { mutableFloatStateOf(0f) }
+                var titleBottomPx by remember { mutableFloatStateOf(0f) }
                 val scrollPx by remember {
                     derivedStateOf {
                         val index = listState.firstVisibleItemIndex
@@ -146,10 +147,10 @@ fun AlbumDetailScreen(
                 }
                 val barFraction by remember {
                     derivedStateOf {
-                        if (titleTopPx <= 0f || fadeDistancePx <= 0f) {
+                        if (titleBottomPx <= 0f || fadeDistancePx <= 0f) {
                             0f
                         } else {
-                            ((scrollPx - (titleTopPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
+                            ((scrollPx - (titleBottomPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
                         }
                     }
                 }
@@ -164,7 +165,7 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .height(maxHeight * GRADIENT_SCREENS)
+                            .requiredHeight(maxHeight * GRADIENT_SCREENS)
                             .offset { IntOffset(0, -scrollPx.roundToInt()) }
                             .alpha(gradientAlpha),
                 )
@@ -188,7 +189,10 @@ fun AlbumDetailScreen(
                                 onDownload = onDownload,
                                 onMore = onMore,
                                 topInset = statusBarDp,
-                                titleModifier = Modifier.onGloballyPositioned { titleTopPx = it.positionInParent().y },
+                                titleModifier =
+                                    Modifier.onGloballyPositioned {
+                                        titleBottomPx = it.positionInParent().y + it.size.height
+                                    },
                                 modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
                             )
                         }
@@ -217,6 +221,18 @@ fun AlbumDetailScreen(
                         ).alpha(1f - barFraction),
                 )
 
+                Box(
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth()
+                        .height(statusBarDp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
+                            ),
+                        ).alpha(1f - barFraction),
+                )
+
                 TopAppBar(
                     title = {
                         Text(
@@ -236,7 +252,6 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .background(Color.Black.copy(alpha = barFraction))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -264,7 +279,7 @@ private fun AlbumHeader(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = topInset + 8.dp, bottom = 16.dp),
+                .padding(start = 24.dp, end = 24.dp, top = topInset + 24.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(
