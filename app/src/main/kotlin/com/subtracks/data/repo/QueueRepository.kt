@@ -1,6 +1,5 @@
 package com.subtracks.data.repo
 
-import androidx.paging.PagingSource
 import androidx.room3.deferredTransaction
 import androidx.room3.immediateTransaction
 import androidx.room3.useReaderConnection
@@ -10,6 +9,8 @@ import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
+
+const val QUEUE_CHUNK = 60
 
 data class ResolvedQueueEntry(
     val entry: QueueEntry,
@@ -125,8 +126,6 @@ class QueueRepository(
         write(insertEntry(removed, to.coerceIn(0, removed.sumOf { it.length }), moved))
         return true
     }
-
-    fun pagingSource(initialPosition: Long): PagingSource<Long, QueueWindowItem> = QueuePagingSource(this, initialPosition)
 
     suspend fun cursor(): Long = dao.cursor()?.queuePosition ?: 0
 

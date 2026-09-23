@@ -223,20 +223,18 @@ class AppScreenshotTest {
         composeRule.setContent {
             SubtracksTheme {
                 QueueScreen(
-                    items =
-                        remember {
-                            flowOf(
-                                PagingData.from(
-                                    Fixtures.songItems.mapIndexed { index, item -> QueueWindowItem(index.toLong(), item) },
-                                ),
-                            )
-                        }.collectAsLazyPagingItems(),
+                    rows =
+                        Fixtures.songItems.mapIndexed { index, item -> QueueWindowItem(index.toLong(), item) },
+                    ready = true,
                     currentPosition = 1,
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
                     onPlay = {},
                     onRemove = {},
+                    onReorder = { _, _ -> },
                     onMove = { _, _ -> },
+                    onLoadOlder = {},
+                    onLoadNewer = {},
                     onUndo = {},
                     modifier = Modifier.fillMaxSize(),
                 )
