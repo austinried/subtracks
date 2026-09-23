@@ -1,11 +1,16 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +22,7 @@ import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -34,9 +40,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
@@ -58,6 +66,7 @@ import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.library.SongRow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -127,6 +136,8 @@ fun QueueRoute(
     )
 }
 
+private enum class DropIndicator { Above, Below }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueScreen(
@@ -143,9 +154,11 @@ fun QueueScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
     var rowHeight by remember { mutableFloatStateOf(0f) }
     var dragging by remember { mutableStateOf<Long?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
+    var target by remember { mutableStateOf<Long?>(null) }
     var centered by remember { mutableStateOf(false) }
 
     val firstPosition = if (items.itemCount > 0) items.peek(0)?.position else null
@@ -156,6 +169,30 @@ fun QueueScreen(
         if (!centered && index >= 0 && index < items.itemCount) {
             listState.scrollToItem(index.toInt())
             centered = true
+        }
+    }
+
+    LaunchedEffect(dragging) {
+        if (dragging == null) return@LaunchedEffect
+        val threshold = with(density) { 72.dp.toPx() }
+        val step = with(density) { 10.dp.toPx() }
+        while (true) {
+            val from = dragging ?: break
+            val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { items.peek(it.index)?.position == from }
+            if (info != null) {
+                val edge =
+                    when {
+                        info.offset < listState.layoutInfo.viewportStartOffset + threshold -> -step
+                        info.offset + info.size > listState.layoutInfo.viewportEndOffset - threshold -> step
+                        else -> 0f
+                    }
+                if (edge != 0f) {
+                    val consumed = listState.scrollBy(edge)
+                    dragOffset += consumed
+                    target = dropTarget(items, from, dragOffset, rowHeight)
+                }
+            }
+            delay(16)
         }
     }
 
@@ -205,6 +242,7 @@ fun QueueScreen(
                                 coverArt = coverArt,
                                 dragging = dragging == item.position,
                                 dragOffset = if (dragging == item.position) dragOffset else 0f,
+                                indicator = indicatorFor(item.position, dragging, target),
                                 onClick = { onPlay(item.position) },
                                 onRemove = {
                                     onRemove(item.position)
@@ -214,23 +252,27 @@ fun QueueScreen(
                                 onDragStart = {
                                     dragging = item.position
                                     dragOffset = 0f
+                                    target = item.position
                                 },
-                                onDrag = { dragOffset += it },
+                                onDrag = { amount ->
+                                    dragOffset += amount
+                                    target = dropTarget(items, item.position, dragOffset, rowHeight)
+                                },
                                 onDragEnd = {
                                     val from = dragging
-                                    if (from != null && rowHeight > 0f) {
-                                        val to = (from + (dragOffset / rowHeight).roundToInt()).coerceAtLeast(0)
-                                        if (to != from) {
-                                            onMove(from, to)
-                                            showUndo("Queue reordered")
-                                        }
+                                    val to = target
+                                    if (from != null && to != null && to != from) {
+                                        onMove(from, to)
+                                        showUndo("Queue reordered")
                                     }
                                     dragging = null
                                     dragOffset = 0f
+                                    target = null
                                 },
                                 onDragCancel = {
                                     dragging = null
                                     dragOffset = 0f
+                                    target = null
                                 },
                             )
                         }
@@ -241,6 +283,30 @@ fun QueueScreen(
     }
 }
 
+private fun dropTarget(
+    items: LazyPagingItems<QueueWindowItem>,
+    from: Long,
+    offset: Float,
+    rowHeight: Float,
+): Long {
+    if (items.itemCount == 0 || rowHeight <= 0f) return from
+    val first = items.peek(0)?.position ?: from
+    val last = items.peek(items.itemCount - 1)?.position ?: from
+    return (from + (offset / rowHeight).roundToInt()).coerceIn(minOf(first, last), maxOf(first, last))
+}
+
+private fun indicatorFor(
+    position: Long,
+    dragging: Long?,
+    target: Long?,
+): DropIndicator? =
+    when {
+        dragging == null || target == null || position != target -> null
+        target > dragging -> DropIndicator.Below
+        target < dragging -> DropIndicator.Above
+        else -> null
+    }
+
 @Composable
 private fun QueueRow(
     item: QueueWindowItem,
@@ -248,6 +314,7 @@ private fun QueueRow(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     dragging: Boolean,
     dragOffset: Float,
+    indicator: DropIndicator?,
     onClick: () -> Unit,
     onRemove: () -> Unit,
     onSize: (Int) -> Unit,
@@ -256,46 +323,70 @@ private fun QueueRow(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
-    SongRow(
-        song = item.item.song,
-        coverArtId = item.item.coverArt,
-        coverArt = coverArt,
-        isPlaying = isPlaying,
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onRemove) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Remove from queue",
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Box(
-                    modifier =
-                        Modifier
-                            .size(40.dp)
-                            .pointerInput(item.position) {
-                                detectDragGestures(
-                                    onDragStart = { onDragStart() },
-                                    onDrag = { change, amount ->
-                                        change.consume()
-                                        onDrag(amount.y)
-                                    },
-                                    onDragEnd = onDragEnd,
-                                    onDragCancel = onDragCancel,
-                                )
-                            },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = "Reorder")
-                }
-            }
-        },
+    Column(
         modifier =
             Modifier
                 .zIndex(if (dragging) 1f else 0f)
-                .graphicsLayer { translationY = dragOffset }
-                .onSizeChanged { size -> onSize(size.height) }
-                .clickable(onClick = onClick),
+                .graphicsLayer { translationY = dragOffset },
+    ) {
+        if (indicator == DropIndicator.Above) DropIndicatorLine()
+        SongRow(
+            song = item.item.song,
+            coverArtId = item.item.coverArt,
+            coverArt = coverArt,
+            isPlaying = isPlaying,
+            trailingContent = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onRemove) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Remove from queue",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .pointerInput(item.position) {
+                                    detectDragGestures(
+                                        onDragStart = { onDragStart() },
+                                        onDrag = { change, amount ->
+                                            change.consume()
+                                            onDrag(amount.y)
+                                        },
+                                        onDragEnd = onDragEnd,
+                                        onDragCancel = onDragCancel,
+                                    )
+                                },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = "Reorder")
+                    }
+                }
+            },
+            modifier =
+                Modifier
+                    .background(
+                        if (dragging) {
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f)
+                        } else {
+                            Color.Transparent
+                        },
+                    ).onSizeChanged { size -> onSize(size.height) }
+                    .clickable(onClick = onClick),
+        )
+        if (indicator == DropIndicator.Below) DropIndicatorLine()
+    }
+}
+
+@Composable
+private fun DropIndicatorLine() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(MaterialTheme.colorScheme.primary),
     )
 }

@@ -22,6 +22,11 @@ interface PlayerHandle {
 
     fun addLast(item: QueueItem)
 
+    fun insertAt(
+        index: Int,
+        item: QueueItem,
+    )
+
     fun removeFirst()
 
     fun removeLast()

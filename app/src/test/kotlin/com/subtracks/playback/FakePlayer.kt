@@ -86,6 +86,15 @@ class FakePlayerHandle : PlayerHandle {
         items += item
     }
 
+    override fun insertAt(
+        index: Int,
+        item: QueueItem,
+    ) {
+        operations += "insertAt($index, ${item.id})"
+        items.add(index, item)
+        if (index <= this.index) this.index++
+    }
+
     override fun removeFirst() {
         operations += "removeFirst"
         items.removeAt(0)

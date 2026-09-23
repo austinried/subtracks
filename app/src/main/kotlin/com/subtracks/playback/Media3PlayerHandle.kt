@@ -46,6 +46,11 @@ class Media3PlayerHandle(
 
     override fun addLast(item: QueueItem) = controller.addMediaItems(controller.mediaItemCount, listOf(toMediaItem(item)))
 
+    override fun insertAt(
+        index: Int,
+        item: QueueItem,
+    ) = controller.addMediaItems(index, listOf(toMediaItem(item)))
+
     override fun removeFirst() = controller.removeMediaItem(0)
 
     override fun removeLast() = controller.removeMediaItem(controller.mediaItemCount - 1)

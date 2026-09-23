@@ -46,10 +46,29 @@ data class PlaybackState(
     val hasPrevious: Boolean = false,
 )
 
-private data class QueueUndo(
-    val entries: List<QueueEntry>,
-    val cursor: Long,
-)
+private sealed interface QueueUndo {
+    val entries: List<QueueEntry>
+    val cursor: Long
+}
+
+private data class RemovedUndo(
+    override val entries: List<QueueEntry>,
+    override val cursor: Long,
+    val position: Long,
+    val item: QueueItem?,
+) : QueueUndo
+
+private data class MovedUndo(
+    override val entries: List<QueueEntry>,
+    override val cursor: Long,
+    val from: Long,
+    val to: Long,
+) : QueueUndo
+
+private data class ReloadUndo(
+    override val entries: List<QueueEntry>,
+    override val cursor: Long,
+) : QueueUndo
 
 class PlaybackController(
     private val sourceRepository: SourceRepository,
@@ -157,20 +176,27 @@ class PlaybackController(
             val snapshot = snapshot ?: return@withLock
             if (position !in 0 until snapshot.size) return@withLock
             val player = player ?: return@withLock
-            val undo = QueueUndo(snapshot.entries.map { it.entry }, queueRepository.cursor())
+            val cursor = queueRepository.cursor()
+            val entries = snapshot.entries.map { it.entry }
             if (snapshot.size == 1L) {
                 queueRepository.removeAt(snapshot, position)
                 stopLocked()
-                lastEdit = undo
+                lastEdit = ReloadUndo(entries, cursor)
                 return@withLock
             }
             val current = currentPosition() ?: return@withLock
             val target = (if (position < current) current - 1 else current).coerceIn(0, snapshot.size - 2)
             val playing = player.playWhenReady
+            val removed = if (position == current) null else queueRepository.itemAt(snapshot, position)?.toQueueItem()
             queueRepository.removeAt(snapshot, position)
             this.snapshot = queueRepository.snapshot()
             windowJob?.cancel()
-            lastEdit = undo
+            lastEdit =
+                if (removed == null) {
+                    ReloadUndo(entries, cursor)
+                } else {
+                    RemovedUndo(entries, cursor, position, removed)
+                }
             when {
                 position == current -> {
                     loadWindow(target, autoplay = playing, startPositionMs = 0)
@@ -207,13 +233,20 @@ class PlaybackController(
         if (from !in 0 until snapshot.size || to !in 0 until snapshot.size) return@withLock
         val player = player ?: return@withLock
         val current = currentPosition() ?: return@withLock
-        val undo = QueueUndo(snapshot.entries.map { it.entry }, queueRepository.cursor())
+        val cursor = queueRepository.cursor()
+        val entries = snapshot.entries.map { it.entry }
         if (!queueRepository.move(from, to)) return@withLock
         this.snapshot = queueRepository.snapshot()
         val target = movedCursor(current, from, to)
         windowJob?.cancel()
-        lastEdit = undo
-        if (from in windowStart..windowEnd && to in windowStart..windowEnd) {
+        val inWindow = from in windowStart..windowEnd && to in windowStart..windowEnd
+        lastEdit =
+            if (inWindow) {
+                MovedUndo(entries, cursor, from, to)
+            } else {
+                ReloadUndo(entries, cursor)
+            }
+        if (inWindow) {
             updating = true
             player.move((from - windowStart).toInt(), (to - windowStart).toInt())
             updating = false
@@ -230,7 +263,6 @@ class PlaybackController(
             val undo = lastEdit ?: return@withLock
             val player = player ?: return@withLock
             val playing = player.playWhenReady
-            val playingId = player.currentItem?.id
             val positionMs = player.currentPositionMs
             queueRepository.replace(undo.entries)
             val restored = queueRepository.snapshot()
@@ -241,9 +273,44 @@ class PlaybackController(
                 return@withLock
             }
             val target = undo.cursor.coerceIn(0, restored.size - 1)
+            val restoredId = queueRepository.itemAt(restored, target)?.song?.id
             windowJob?.cancel()
-            val same = queueRepository.itemAt(restored, target)?.song?.id == playingId
-            loadWindow(target, autoplay = playing, startPositionMs = if (same) positionMs else 0)
+            val canMirror = player.currentItem?.id != null && player.currentItem?.id == restoredId
+            val mirrored =
+                when {
+                    !canMirror -> {
+                        false
+                    }
+
+                    undo is RemovedUndo && undo.item != null -> {
+                        if (undo.position < windowStart) {
+                            windowStart++
+                            windowEnd++
+                        } else if (undo.position <= windowEnd) {
+                            updating = true
+                            player.insertAt((undo.position - windowStart).toInt(), undo.item)
+                            updating = false
+                            windowEnd++
+                        }
+                        true
+                    }
+
+                    undo is MovedUndo && undo.from in windowStart..windowEnd && undo.to in windowStart..windowEnd -> {
+                        updating = true
+                        player.move((undo.to - windowStart).toInt(), (undo.from - windowStart).toInt())
+                        updating = false
+                        true
+                    }
+
+                    else -> {
+                        false
+                    }
+                }
+            if (mirrored) {
+                shiftWindowLocked(target)
+            } else {
+                loadWindow(target, autoplay = playing, startPositionMs = if (canMirror) positionMs else 0)
+            }
             queueRepository.setCursor(target)
             refresh(target)
         }
