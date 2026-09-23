@@ -244,19 +244,40 @@ class PlaybackController(
         this.snapshot = queueRepository.snapshot()
         val target = movedCursor(current, from, to)
         windowJob?.cancel()
-        val inWindow = from in windowStart..windowEnd && to in windowStart..windowEnd
+        val fromInWindow = from in windowStart..windowEnd
+        val toInWindow = to in windowStart..windowEnd
         lastEdit =
-            if (inWindow) {
+            if (fromInWindow == toInWindow) {
                 MovedUndo(entries, cursor, target, from, to)
             } else {
                 ReloadUndo(entries, cursor)
             }
-        if (inWindow) {
-            updating = true
-            player.move((from - windowStart).toInt(), (to - windowStart).toInt())
-            updating = false
-        } else {
-            loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
+        when {
+            fromInWindow && toInWindow -> {
+                updating = true
+                player.move((from - windowStart).toInt(), (to - windowStart).toInt())
+                updating = false
+            }
+
+            !fromInWindow && !toInWindow -> {
+                // The moved track never enters the window, so the playlist is unchanged; only
+                // the window's positions shift, and a move that spans it shifts them by one.
+                when {
+                    from < windowStart && to > windowEnd -> {
+                        windowStart--
+                        windowEnd--
+                    }
+
+                    from > windowEnd && to < windowStart -> {
+                        windowStart++
+                        windowEnd++
+                    }
+                }
+            }
+
+            else -> {
+                loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
+            }
         }
         shiftWindowLocked(target)
         queueRepository.setCursor(target)
@@ -308,6 +329,21 @@ class PlaybackController(
                         updating = true
                         player.move((undo.to - windowStart).toInt(), (undo.from - windowStart).toInt())
                         updating = false
+                        true
+                    }
+
+                    undo is MovedUndo && undo.from !in windowStart..windowEnd && undo.to !in windowStart..windowEnd -> {
+                        when {
+                            undo.from < windowStart && undo.to > windowEnd -> {
+                                windowStart++
+                                windowEnd++
+                            }
+
+                            undo.from > windowEnd && undo.to < windowStart -> {
+                                windowStart--
+                                windowEnd--
+                            }
+                        }
                         true
                     }
 

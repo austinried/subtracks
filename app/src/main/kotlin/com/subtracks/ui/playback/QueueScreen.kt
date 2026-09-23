@@ -52,15 +52,18 @@ import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.library.SongRow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val LOAD_THRESHOLD = 5
+private const val POSITION_TIMEOUT_MS = 1_000L
 
 data class QueueRow(
     val id: Long,
@@ -94,7 +97,10 @@ class QueueViewModel(
                 first = 0
                 last = -1
                 if (size > 0L) {
-                    val cursor = (playbackController.state.value.position ?: 0L).coerceIn(0, size - 1)
+                    val cursor =
+                        withTimeoutOrNull(POSITION_TIMEOUT_MS) {
+                            playbackController.state.first { it.position != null }.position
+                        }?.coerceIn(0, size - 1) ?: 0L
                     val start = (cursor - QUEUE_CHUNK / 2).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
                     rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
@@ -172,8 +178,31 @@ class QueueViewModel(
 
     fun remove(position: Long) {
         viewModelScope.launch {
+            val index = rows.indexOfFirst { it.position == position }
+            if (index >= 0) {
+                rows.removeAt(index)
+                for (i in index until rows.size) {
+                    val row = rows[i]
+                    rows[i] = row.copy(position = row.position - 1)
+                }
+            }
+            val next = (rows.lastOrNull()?.position ?: (first - 1)) + 1
             playbackController.removeAt(position)
-            mutex.withLock { removeRow(position) }
+            mutex.withLock {
+                if (rows.isEmpty()) {
+                    size = 0
+                    first = 0
+                    last = -1
+                    return@withLock
+                }
+                val snapshot = queueRepository.snapshot()
+                size = snapshot.size
+                if (next <= size - 1) {
+                    queueRepository.range(snapshot, next, next).firstOrNull()?.let { rows.add(newRow(it)) }
+                }
+                first = rows.first().position
+                last = rows.last().position
+            }
         }
     }
 
@@ -181,33 +210,6 @@ class QueueViewModel(
         viewModelScope.launch {
             playbackController.undo()
             mutex.withLock { reload() }
-        }
-    }
-
-    private suspend fun removeRow(position: Long) {
-        val index = rows.indexOfFirst { it.position == position }
-        if (index < 0) {
-            reload()
-            return
-        }
-        rows.removeAt(index)
-        for (i in index until rows.size) {
-            val row = rows[i]
-            rows[i] = row.copy(position = row.position - 1)
-        }
-        val snapshot = queueRepository.snapshot()
-        size = snapshot.size
-        if (rows.isEmpty()) {
-            first = 0
-            last = -1
-            return
-        }
-        first = rows.first().position
-        last = rows.last().position
-        val next = last + 1
-        if (next <= size - 1) {
-            queueRepository.range(snapshot, next, next).firstOrNull()?.let { rows.add(newRow(it)) }
-            last = rows.last().position
         }
     }
 
@@ -292,10 +294,10 @@ fun QueueScreen(
         if (centered || !ready || rows.isEmpty()) return@LaunchedEffect
         val position = currentPosition ?: return@LaunchedEffect
         val index = rows.indexOfFirst { it.position == position }
-        if (index >= 0) {
-            listState.scrollToItem(index)
-            centered = true
-        }
+        if (index < 0) return@LaunchedEffect
+        snapshotFlow { listState.layoutInfo.totalItemsCount }.first { it > 0 }
+        listState.scrollToItem(index)
+        centered = true
     }
 
     val reorderState =
