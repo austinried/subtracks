@@ -80,7 +80,6 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.gradientColorAt
-import com.subtracks.ui.theme.heroDarken
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel

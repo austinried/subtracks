@@ -38,8 +38,8 @@ private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
 private const val HERO_DARKEN_MAX = 0.8f
 private const val HERO_DARKEN_SCREENS = 1.5f
-private const val BASE_BOTTOM_DARKEN = 0.45f
-private const val POSITION_FADE_START = 0.30f
+private const val BASE_BOTTOM_DARKEN = 0.35f
+private const val POSITION_FADE_START = 0.66f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -284,6 +284,8 @@ fun HeroGradient(
                 }
             }
         }
+        val progress = (scroll / (size.height * HERO_DARKEN_SCREENS)).coerceIn(0f, 1f)
+        val bottomAlpha = BASE_BOTTOM_DARKEN + (HERO_DARKEN_MAX - BASE_BOTTOM_DARKEN) * progress
         drawRect(
             brush =
                 Brush.verticalGradient(
@@ -291,20 +293,12 @@ fun HeroGradient(
                         arrayOf(
                             0f to Color.Transparent,
                             POSITION_FADE_START to Color.Transparent,
-                            1f to
-                                Color.Black.copy(
-                                    alpha = (BASE_BOTTOM_DARKEN + heroDarken(scroll, size.height)).coerceAtMost(HERO_DARKEN_MAX),
-                                ),
+                            1f to Color.Black.copy(alpha = bottomAlpha),
                         ),
                 ),
         )
     }
 }
-
-fun heroDarken(
-    scrollPx: Float,
-    screenHeightPx: Float,
-): Float = (scrollPx / (screenHeightPx * HERO_DARKEN_SCREENS)).coerceIn(0f, 1f) * HERO_DARKEN_MAX
 
 private fun Color.toHsl(): Triple<Float, Float, Float> {
     val max = maxOf(red, green, blue)
