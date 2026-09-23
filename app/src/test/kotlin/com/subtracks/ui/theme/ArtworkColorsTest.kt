@@ -35,6 +35,19 @@ class ArtworkColorsTest {
         )
     }
 
+    @Test
+    fun buttonStandsOutFromGradient() {
+        for (seed in seeds) {
+            val colors = artworkColorsFromSeed(seed)
+            val primary = colors.scheme.primary
+            assertTrue("primary vs gradientHigh for $seed", contrast(primary, colors.gradientHigh) >= 2f)
+            assertTrue("primary vs gradientLow for $seed", contrast(primary, colors.gradientLow) >= 2f)
+            for (accent in colors.accents) {
+                assertTrue("accent dimmer than primary for $seed", primary.luminance() > accent.luminance())
+            }
+        }
+    }
+
     private fun contrast(
         a: Color,
         b: Color,

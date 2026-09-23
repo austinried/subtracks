@@ -35,7 +35,8 @@ private const val SEED_ART_SIZE_PX = 128
 private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
-private const val ACCENT_MAX_LUMINANCE = 0.34f
+private const val ACCENT_MAX_LUMINANCE = 0.18f
+private const val PRIMARY_MIN_LUMINANCE = 0.30f
 private const val MIN_GRADIENT_SATURATION = 0.30f
 private const val HERO_DARKEN_MAX = 1.0f
 private const val DARKEN_START_SCREENS = 0.5f
@@ -66,7 +67,7 @@ fun artworkColorsFromSeeds(
         l: Float,
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
 
-    val primary = tone(hue, s, 0.62f)
+    val primary = tone(hue, s, 0.62f).withMinLuminance(PRIMARY_MIN_LUMINANCE)
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
@@ -133,6 +134,19 @@ private fun Color.withMaxLuminance(max: Float): Color {
     var guard = 0
     while (color.luminance() > max && guard++ < 30) {
         lightness = (lightness - 0.02f).coerceAtLeast(0.05f)
+        color = Color.hsl(h, s, lightness)
+    }
+    return color
+}
+
+private fun Color.withMinLuminance(min: Float): Color {
+    if (luminance() >= min) return this
+    val (h, s, initial) = toHsl()
+    var lightness = initial
+    var color = this
+    var guard = 0
+    while (color.luminance() < min && guard++ < 40) {
+        lightness = (lightness + 0.02f).coerceAtMost(0.95f)
         color = Color.hsl(h, s, lightness)
     }
     return color

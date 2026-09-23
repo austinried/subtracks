@@ -51,6 +51,7 @@ import com.subtracks.ui.settings.AddSourceState
 import com.subtracks.ui.settings.SettingsScreen
 import com.subtracks.ui.theme.SubtracksTheme
 import com.subtracks.ui.theme.artworkColorsFromSeed
+import com.subtracks.ui.theme.artworkColorsFromSeeds
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Before
@@ -131,6 +132,26 @@ class AppScreenshotTest {
         }
         awaitText("Everything In Its Right Place")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail.png")
+    }
+
+    @Test
+    fun albumDetailCool() {
+        composeRule.setContent {
+            SubtracksTheme {
+                AlbumDetailScreen(
+                    album = Fixtures.albums.first(),
+                    songs = Fixtures.songs,
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    artwork = artworkColorsFromSeeds(Color.rgb(45, 115, 240), Color.rgb(40, 180, 140)),
+                    onBack = {},
+                    onSongClick = {},
+                    playingSongId = Fixtures.songs.first().id,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Everything In Its Right Place")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail_cool.png")
     }
 
     @Test
