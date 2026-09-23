@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -35,13 +34,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -111,18 +109,10 @@ fun ArtistDetailScreen(
     val nameTextStyle = MaterialTheme.typography.headlineLarge
     val imageNameStyle =
         nameTextStyle.copy(
+            fontWeight = FontWeight.SemiBold,
             shadow =
                 Shadow(
                     color = Color.Black.copy(alpha = 0.8f),
-                    offset = Offset(0f, 2f),
-                    blurRadius = 10f,
-                ),
-        )
-    val barNameStyle =
-        nameTextStyle.copy(
-            shadow =
-                Shadow(
-                    color = Color.Black.copy(alpha = 0.8f * barFraction),
                     offset = Offset(0f, 2f),
                     blurRadius = 10f,
                 ),
@@ -189,7 +179,7 @@ fun ArtistDetailScreen(
             title = {
                 Text(
                     text = artist?.name.orEmpty(),
-                    style = barNameStyle,
+                    style = nameTextStyle,
                     color = Color.White.copy(alpha = barFraction),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -197,22 +187,11 @@ fun ArtistDetailScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Box {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = null,
-                            tint = Color.Black.copy(alpha = 0.8f * barFraction),
-                            modifier =
-                                Modifier
-                                    .offset(x = 0.dp, y = 2.dp)
-                                    .blur(6.dp, BlurredEdgeTreatment.Unbounded),
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White.copy(alpha = barFraction),
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White.copy(alpha = barFraction),
+                    )
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
