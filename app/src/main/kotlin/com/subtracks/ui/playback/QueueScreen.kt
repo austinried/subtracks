@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,7 +53,7 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.library.SongRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -284,6 +286,7 @@ fun QueueScreen(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    val fill = rememberViewportFill(listState)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var dragId by remember { mutableStateOf<Long?>(null) }
@@ -339,59 +342,58 @@ fun QueueScreen(
             }
 
             else -> {
-                StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 16.dp),
-                    ) {
-                        items(count = rows.size, key = { rows[it].id }) { index ->
-                            val row = rows[index]
-                            ReorderableItem(
-                                state = reorderState,
-                                key = row.id,
-                                animateItemModifier =
-                                    Modifier.animateItem(
-                                        fadeInSpec = tween(150),
-                                        fadeOutSpec = tween(150),
-                                        placementSpec = tween(200),
-                                    ),
-                            ) { isDragging ->
-                                QueueRowItem(
-                                    row = row,
-                                    isPlaying = row.position == currentPosition,
-                                    floating = isDragging,
-                                    coverArt = coverArt,
-                                    dragHandle =
-                                        Modifier.draggableHandle(
-                                            onDragStarted = {
-                                                dragId = row.id
-                                                dragFrom = row.position
-                                            },
-                                            onDragStopped = {
-                                                val id = dragId
-                                                val from = dragFrom
-                                                if (id != null && from != null) {
-                                                    val index = rows.indexOfFirst { it.id == id }
-                                                    val to = if (index < 0) from else dropTarget(rows, index, from)
-                                                    if (to != from) {
-                                                        onMove(from, to)
-                                                        showUndo("Queue reordered")
-                                                    }
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                ) {
+                    items(count = rows.size, key = { rows[it].id }) { index ->
+                        val row = rows[index]
+                        ReorderableItem(
+                            state = reorderState,
+                            key = row.id,
+                            animateItemModifier =
+                                Modifier.animateItem(
+                                    fadeInSpec = tween(150),
+                                    fadeOutSpec = tween(150),
+                                    placementSpec = tween(200),
+                                ),
+                        ) { isDragging ->
+                            QueueRowItem(
+                                row = row,
+                                isPlaying = row.position == currentPosition,
+                                floating = isDragging,
+                                coverArt = coverArt,
+                                dragHandle =
+                                    Modifier.draggableHandle(
+                                        onDragStarted = {
+                                            dragId = row.id
+                                            dragFrom = row.position
+                                        },
+                                        onDragStopped = {
+                                            val id = dragId
+                                            val from = dragFrom
+                                            if (id != null && from != null) {
+                                                val index = rows.indexOfFirst { it.id == id }
+                                                val to = if (index < 0) from else dropTarget(rows, index, from)
+                                                if (to != from) {
+                                                    onMove(from, to)
+                                                    showUndo("Queue reordered")
                                                 }
-                                                dragId = null
-                                                dragFrom = null
-                                            },
-                                        ),
-                                    onClick = { onPlay(row.position) },
-                                    onRemove = {
-                                        onRemove(row.position)
-                                        showUndo("Removed from queue")
-                                    },
-                                )
-                            }
+                                            }
+                                            dragId = null
+                                            dragFrom = null
+                                        },
+                                    ),
+                                onClick = { onPlay(row.position) },
+                                onRemove = {
+                                    onRemove(row.position)
+                                    showUndo("Removed from queue")
+                                },
+                            )
                         }
                     }
+                    item { Spacer(Modifier.height(fill)) }
                 }
             }
         }

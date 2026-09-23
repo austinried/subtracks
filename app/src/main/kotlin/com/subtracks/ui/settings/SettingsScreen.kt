@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
@@ -40,7 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Source
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
@@ -88,6 +90,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
+    val listState = rememberLazyListState()
+    val fill = rememberViewportFill(listState)
 
     Scaffold(
         modifier = modifier,
@@ -102,60 +106,62 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                item { SectionHeader("Servers") }
-                items(sources.size, key = { sources[it].id }) { index ->
-                    val source = sources[index]
-                    ListItem(
-                        headlineContent = { Text(source.name) },
-                        supportingContent = {
-                            Text(source.address, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        },
-                        leadingContent = {
-                            RadioButton(
-                                selected = source.id == activeSourceId,
-                                onClick = { onSelectSource(source.id) },
-                            )
-                        },
-                        trailingContent = {
-                            IconButton(onClick = { onDeleteSource(source.id) }) {
-                                Icon(Icons.Rounded.Delete, contentDescription = "Remove ${source.name}")
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        Button(onClick = onAddServer) {
-                            Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add server")
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.padding(padding).fillMaxSize(),
+        ) {
+            item { SectionHeader("Servers") }
+            items(sources.size, key = { sources[it].id }) { index ->
+                val source = sources[index]
+                ListItem(
+                    headlineContent = { Text(source.name) },
+                    supportingContent = {
+                        Text(source.address, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    leadingContent = {
+                        RadioButton(
+                            selected = source.id == activeSourceId,
+                            onClick = { onSelectSource(source.id) },
+                        )
+                    },
+                    trailingContent = {
+                        IconButton(onClick = { onDeleteSource(source.id) }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Remove ${source.name}")
                         }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Button(onClick = onAddServer) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add server")
                     }
                 }
-                item { SectionHeader("Network") }
-                item {
-                    ListItem(
-                        headlineContent = { Text("Maximum bitrate") },
-                        supportingContent = { Text(bitrateLabel(maxBitrate)) },
-                        modifier = Modifier.clickable { dialog = SettingsDialog.Bitrate },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
-                }
-                item {
-                    ListItem(
-                        headlineContent = { Text("Preferred stream format") },
-                        supportingContent = { Text(streamFormat ?: "Use server default") },
-                        modifier = Modifier.clickable { dialog = SettingsDialog.Format },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
-                }
             }
+            item { SectionHeader("Network") }
+            item {
+                ListItem(
+                    headlineContent = { Text("Maximum bitrate") },
+                    supportingContent = { Text(bitrateLabel(maxBitrate)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.Bitrate },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text("Preferred stream format") },
+                    supportingContent = { Text(streamFormat ?: "Use server default") },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.Format },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { Spacer(Modifier.height(fill)) }
         }
     }
 

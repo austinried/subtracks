@@ -2,9 +2,12 @@ package com.subtracks.ui.library
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -24,7 +27,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 
 @Composable
 fun PlaylistsContent(
@@ -44,42 +47,44 @@ fun PlaylistsContent(
         }
 
         else -> {
-            StretchOverscroll(modifier = modifier.fillMaxSize()) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = bottomInset),
-                ) {
-                    items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
-                        val playlist = items[index]
-                        if (playlist != null) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = playlist.name,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                leadingContent = {
-                                    CoverArt(
-                                        ref = coverArt(playlist.coverArt, true),
-                                        name = playlist.name,
-                                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                    )
-                                },
-                                modifier = Modifier.clickable { onPlaylistClick(playlist) },
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            )
-                        }
+            val listState = rememberLazyListState()
+            val fill = rememberViewportFill(listState)
+            LazyColumn(
+                state = listState,
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = bottomInset),
+            ) {
+                items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
+                    val playlist = items[index]
+                    if (playlist != null) {
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = playlist.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            leadingContent = {
+                                CoverArt(
+                                    ref = coverArt(playlist.coverArt, true),
+                                    name = playlist.name,
+                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+                                )
+                            },
+                            modifier = Modifier.clickable { onPlaylistClick(playlist) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        )
                     }
                 }
+                item { Spacer(Modifier.height(fill)) }
             }
         }
     }

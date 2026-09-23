@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -37,16 +36,22 @@ data class ArtworkColors(
     val accents: List<Color>,
 )
 
-fun artworkColorsFromSeed(seed: Int): ArtworkColors {
-    val (hue, saturation, _) = Color(seed or 0xFF000000.toInt()).toHsl()
+fun artworkColorsFromSeed(seed: Int): ArtworkColors = artworkColorsFromSeeds(seed, null)
+
+fun artworkColorsFromSeeds(
+    primarySeed: Int,
+    secondarySeed: Int?,
+): ArtworkColors {
+    val (hue, saturation, _) = Color(primarySeed or 0xFF000000.toInt()).toHsl()
     val s = saturation.coerceAtMost(0.85f)
+    val secondary = secondarySeed?.let { Color(it or 0xFF000000.toInt()) }
 
     fun tone(
         h: Float,
         sat: Float,
         l: Float,
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
-    val primary = toneMaxLuminance(hue, s, 0.62f, 0.45f)
+    val primary = tone(hue, s, 0.62f)
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
@@ -84,36 +89,20 @@ fun artworkColorsFromSeed(seed: Int): ArtworkColors {
         scheme = scheme,
         gradientHigh = tone(hue, (s * 0.6f).coerceAtMost(0.50f), 0.22f),
         gradientLow = tone(hue, s * 0.30f, 0.03f),
-        accents = listOf(tone(hue, s * 0.75f, 0.95f), tone(hue, s, 0.08f)),
+        accents = listOf(tone(hue, s * 0.8f, 0.90f), secondary ?: tone(hue, s, 0.10f)),
     )
-}
-
-private fun toneMaxLuminance(
-    h: Float,
-    s: Float,
-    lightness: Float,
-    maxLuminance: Float,
-): Color {
-    var l = lightness
-    var color = Color.hsl(h % 360f, s.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
-    var guard = 0
-    while (color.luminance() > maxLuminance && guard++ < 30) {
-        l = (l - 0.02f).coerceAtLeast(0.05f)
-        color = Color.hsl(h % 360f, s.coerceIn(0f, 1f), l)
-    }
-    return color
 }
 
 @Composable
 fun rememberArtworkColors(ref: CoverArtRef?): ArtworkColors? {
-    val seed by rememberArtworkSeed(ref)
-    return remember(seed) { seed?.let(::artworkColorsFromSeed) }
+    val seeds by rememberArtworkSeed(ref)
+    return remember(seeds) { seeds?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
 }
 
 @Composable
-private fun rememberArtworkSeed(ref: CoverArtRef?): State<Int?> {
+private fun rememberArtworkSeed(ref: CoverArtRef?): State<Pair<Int, Int?>?> {
     val context = LocalPlatformContext.current
-    return produceState<Int?>(initialValue = null, ref?.cacheKey) {
+    return produceState<Pair<Int, Int?>?>(initialValue = null, ref?.cacheKey) {
         value = null
         val art = ref ?: return@produceState
         value =
@@ -129,7 +118,7 @@ private fun rememberArtworkSeed(ref: CoverArtRef?): State<Int?> {
                             .allowHardware(false)
                             .build()
                     val image = (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
-                    image?.let { seedFrom(it.toBitmap()) }
+                    image?.let { seedsFrom(it.toBitmap()) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Exception) {
@@ -139,15 +128,21 @@ private fun rememberArtworkSeed(ref: CoverArtRef?): State<Int?> {
     }
 }
 
-private fun seedFrom(bitmap: Bitmap): Int? {
+private fun seedsFrom(bitmap: Bitmap): Pair<Int, Int?>? {
     val palette = Palette.from(bitmap).generate()
-    return (
+    val primary =
         palette.vibrantSwatch
             ?: palette.lightVibrantSwatch
             ?: palette.darkVibrantSwatch
             ?: palette.mutedSwatch
             ?: palette.dominantSwatch
-    )?.rgb
+            ?: return null
+    val secondary =
+        palette.darkVibrantSwatch
+            ?: palette.mutedSwatch
+            ?: palette.darkMutedSwatch
+            ?: palette.dominantSwatch
+    return primary.rgb to secondary?.takeIf { it.rgb != primary.rgb }?.rgb
 }
 
 @Composable

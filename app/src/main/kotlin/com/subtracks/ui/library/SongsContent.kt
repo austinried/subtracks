@@ -4,9 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -20,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,7 +36,7 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 
 @Composable
 fun SongsContent(
@@ -53,24 +57,26 @@ fun SongsContent(
         }
 
         else -> {
-            StretchOverscroll(modifier = modifier.fillMaxSize()) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = bottomInset),
-                ) {
-                    items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
-                        val item = items[index]
-                        if (item != null) {
-                            SongRow(
-                                song = item.song,
-                                coverArtId = item.coverArt,
-                                coverArt = coverArt,
-                                isPlaying = item.song.id == playingSongId,
-                                modifier = Modifier.clickable { onSongClick(index) },
-                            )
-                        }
+            val listState = rememberLazyListState()
+            val fill = rememberViewportFill(listState)
+            LazyColumn(
+                state = listState,
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = bottomInset),
+            ) {
+                items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
+                    val item = items[index]
+                    if (item != null) {
+                        SongRow(
+                            song = item.song,
+                            coverArtId = item.coverArt,
+                            coverArt = coverArt,
+                            isPlaying = item.song.id == playingSongId,
+                            modifier = Modifier.clickable { onSongClick(index) },
+                        )
                     }
                 }
+                item { Spacer(Modifier.height(fill)) }
             }
         }
     }
@@ -116,6 +122,7 @@ fun SongRow(
                 Text(
                     text = song.title,
                     color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                    fontWeight = if (isPlaying) FontWeight.SemiBold else null,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),

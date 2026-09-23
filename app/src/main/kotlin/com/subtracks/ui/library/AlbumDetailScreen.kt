@@ -73,7 +73,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
@@ -128,6 +128,7 @@ fun AlbumDetailScreen(
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val listState = rememberLazyListState()
+                val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
@@ -170,43 +171,42 @@ fun AlbumDetailScreen(
                             .alpha(gradientAlpha),
                 )
 
-                StretchOverscroll(modifier = Modifier.fillMaxSize()) {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding =
-                            PaddingValues(
-                                bottom = 16.dp + with(density) { navBarBottom.toDp() },
-                            ),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        item {
-                            AlbumHeader(
-                                album = album,
-                                hasSongs = songs.isNotEmpty(),
-                                coverArt = coverArt,
-                                onPlay = { onSongClick(0) },
-                                onShuffle = onShuffle,
-                                onDownload = onDownload,
-                                onMore = onMore,
-                                topInset = statusBarDp,
-                                controlsModifier =
-                                    Modifier.onGloballyPositioned {
-                                        controlsTopPx = it.positionInParent().y
-                                    },
-                                modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
-                            )
-                        }
-                        itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                            SongRow(
-                                song = song,
-                                isPlaying = song.id == playingSongId,
-                                modifier =
-                                    Modifier
-                                        .onSizeChanged { rowHeightPx = it.height.toFloat() }
-                                        .clickable { onSongClick(index) },
-                            )
-                        }
+                LazyColumn(
+                    state = listState,
+                    contentPadding =
+                        PaddingValues(
+                            bottom = 16.dp + with(density) { navBarBottom.toDp() },
+                        ),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item {
+                        AlbumHeader(
+                            album = album,
+                            hasSongs = songs.isNotEmpty(),
+                            coverArt = coverArt,
+                            onPlay = { onSongClick(0) },
+                            onShuffle = onShuffle,
+                            onDownload = onDownload,
+                            onMore = onMore,
+                            topInset = statusBarDp,
+                            controlsModifier =
+                                Modifier.onGloballyPositioned {
+                                    controlsTopPx = it.positionInParent().y
+                                },
+                            modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
+                        )
                     }
+                    itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                        SongRow(
+                            song = song,
+                            isPlaying = song.id == playingSongId,
+                            modifier =
+                                Modifier
+                                    .onSizeChanged { rowHeightPx = it.height.toFloat() }
+                                    .clickable { onSongClick(index) },
+                        )
+                    }
+                    item { Spacer(Modifier.height(fill)) }
                 }
 
                 Box(
@@ -252,6 +252,7 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
+                            .background((artwork?.gradientHigh ?: Color.Black).copy(alpha = barFraction))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,

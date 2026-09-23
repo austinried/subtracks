@@ -4,11 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -35,7 +38,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.StretchOverscroll
+import com.subtracks.ui.components.rememberViewportFill
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -71,6 +74,8 @@ fun PlaylistDetailScreen(
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val listState = rememberLazyListState()
+    val fill = rememberViewportFill(listState)
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -84,42 +89,44 @@ fun PlaylistDetailScreen(
             )
         },
     ) { padding ->
-        StretchOverscroll(modifier = Modifier.padding(padding).fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CoverArt(
-                            ref = coverArt(playlist?.coverArt, false),
-                            name = playlist?.name.orEmpty(),
-                            modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
-                        )
-                        Column {
-                            Text(playlist?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
-                            Text(
-                                text = "${playlist?.songCount ?: 0} songs",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-                items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
-                    val item = songs[index]
-                    if (item != null) {
-                        SongRow(
-                            song = item.song,
-                            coverArtId = item.coverArt,
-                            coverArt = coverArt,
-                            isPlaying = item.song.id == playingSongId,
-                            modifier = Modifier.clickable { onSongClick(index) },
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.padding(padding).fillMaxSize(),
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CoverArt(
+                        ref = coverArt(playlist?.coverArt, false),
+                        name = playlist?.name.orEmpty(),
+                        modifier = Modifier.size(120.dp).clip(RoundedCornerShape(2.dp)),
+                    )
+                    Column {
+                        Text(playlist?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = "${playlist?.songCount ?: 0} songs",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
+            items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
+                val item = songs[index]
+                if (item != null) {
+                    SongRow(
+                        song = item.song,
+                        coverArtId = item.coverArt,
+                        coverArt = coverArt,
+                        isPlaying = item.song.id == playingSongId,
+                        modifier = Modifier.clickable { onSongClick(index) },
+                    )
+                }
+            }
+            item { Spacer(Modifier.height(fill)) }
         }
     }
 }
