@@ -36,6 +36,7 @@ private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
+private const val MIN_GRADIENT_SATURATION = 0.30f
 private const val HERO_DARKEN_MAX = 1.0f
 private const val DARKEN_START_SCREENS = 0.5f
 private const val DARKEN_END_SCREENS = 1.5f
@@ -109,16 +110,17 @@ fun artworkColorsFromSeeds(
             )
         } ?: tone(hue, s, 0.40f)
 
+    val gradientSat = if (s > 0.05f) s.coerceAtLeast(MIN_GRADIENT_SATURATION) else s
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (s * 0.85f).coerceAtMost(0.65f), 0.30f),
-        gradientLow = tone(hue, s * 0.5f, 0.16f),
+        gradientHigh = tone(hue, (gradientSat * 0.85f).coerceAtMost(0.70f), 0.26f),
+        gradientLow = tone(hue, gradientSat * 0.55f, 0.12f),
         accents =
             listOf(
-                tone(hue, s, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
+                tone(hue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
                 secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
             ),
-        darkPrimary = tone(hue, s * 0.75f, 0.07f),
+        darkPrimary = tone(hue, gradientSat * 0.75f, 0.05f),
         blobSeed = primarySeed,
     )
 }
