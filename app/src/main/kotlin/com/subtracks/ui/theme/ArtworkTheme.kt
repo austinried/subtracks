@@ -118,7 +118,7 @@ fun artworkColorsFromSeeds(
                 tone(hue, s, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
                 secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
             ),
-        darkPrimary = tone(hue, s * 0.8f, 0.10f),
+        darkPrimary = tone(hue, s * 0.7f, 0.035f),
         blobSeed = primarySeed,
     )
 }
