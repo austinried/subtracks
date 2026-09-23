@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -25,15 +26,19 @@ import com.subtracks.data.model.CoverArtRef
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
+import kotlin.random.Random
 
 private const val SEED_ART_SIZE_PX = 128
 private const val GRADIENT_FADE_START = 1.3f / 2.0f
+private const val BLOB_ZONE = 0.62f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
     val gradientHigh: Color,
     val gradientLow: Color,
     val accents: List<Color>,
+    val blobSeed: Int,
 )
 
 fun artworkColorsFromSeed(seed: Int): ArtworkColors = artworkColorsFromSeeds(seed, null)
@@ -44,13 +49,13 @@ fun artworkColorsFromSeeds(
 ): ArtworkColors {
     val (hue, saturation, _) = Color(primarySeed or 0xFF000000.toInt()).toHsl()
     val s = saturation.coerceAtMost(0.85f)
-    val secondary = secondarySeed?.let { Color(it or 0xFF000000.toInt()) }
 
     fun tone(
         h: Float,
         sat: Float,
         l: Float,
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
+
     val primary = tone(hue, s, 0.62f)
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
@@ -85,11 +90,19 @@ fun artworkColorsFromSeeds(
             outlineVariant = tone(hue, s * 0.18f, 0.28f),
         )
 
+    val secondary =
+        secondarySeed?.let { seed ->
+            val color = Color(seed or 0xFF000000.toInt())
+            val (sh, ss, sl) = color.toHsl()
+            if (sl > 0.55f) Color.hsl(sh, ss, 0.30f) else color
+        } ?: tone(hue, s, 0.08f)
+
     return ArtworkColors(
         scheme = scheme,
         gradientHigh = tone(hue, (s * 0.6f).coerceAtMost(0.50f), 0.22f),
         gradientLow = tone(hue, s * 0.30f, 0.03f),
-        accents = listOf(tone(hue, s * 0.8f, 0.90f), secondary ?: tone(hue, s, 0.10f)),
+        accents = listOf(tone(hue, s * 0.8f, 0.90f), secondary),
+        blobSeed = primarySeed,
     )
 }
 
@@ -137,12 +150,31 @@ private fun seedsFrom(bitmap: Bitmap): Pair<Int, Int?>? {
             ?: palette.mutedSwatch
             ?: palette.dominantSwatch
             ?: return null
+    val primaryColor = Color(primary.rgb or 0xFF000000.toInt())
     val secondary =
-        palette.darkVibrantSwatch
-            ?: palette.mutedSwatch
-            ?: palette.darkMutedSwatch
-            ?: palette.dominantSwatch
-    return primary.rgb to secondary?.takeIf { it.rgb != primary.rgb }?.rgb
+        listOfNotNull(
+            palette.vibrantSwatch,
+            palette.lightVibrantSwatch,
+            palette.darkVibrantSwatch,
+            palette.mutedSwatch,
+            palette.lightMutedSwatch,
+            palette.darkMutedSwatch,
+            palette.dominantSwatch,
+        ).map { it.rgb }
+            .distinct()
+            .filter { it != primary.rgb }
+            .maxByOrNull { distinctness(primaryColor, Color(it or 0xFF000000.toInt())) }
+    return primary.rgb to secondary
+}
+
+private fun distinctness(
+    a: Color,
+    b: Color,
+): Float {
+    val ha = a.toHsl().first
+    val hb = b.toHsl().first
+    val hueDistance = minOf(abs(ha - hb), 360f - abs(ha - hb)) / 180f
+    return hueDistance + abs(a.luminance() - b.luminance()) * 2f
 }
 
 @Composable
@@ -166,6 +198,7 @@ fun HeroGradient(
     val high = colors?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh
     val low = colors?.gradientLow ?: MaterialTheme.colorScheme.background
     val accents = colors?.accents.orEmpty()
+    val seed = colors?.blobSeed ?: 0
 
     Canvas(modifier) {
         drawRect(
@@ -176,44 +209,28 @@ fun HeroGradient(
                     end = Offset(size.width * 0.8f, size.height),
                 ),
         )
-        accents.getOrNull(0)?.let { accent ->
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.85f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.20f, size.height * 0.00f),
-                        radius = size.width * 0.60f,
-                    ),
-            )
+        if (accents.isNotEmpty()) {
+            val random = Random(seed)
+            val zone = size.height * BLOB_ZONE
+            repeat(4) { index ->
+                val center =
+                    Offset(
+                        size.width * (0.10f + random.nextFloat() * 0.80f),
+                        zone * random.nextFloat(),
+                    )
+                val radius = size.width * (0.45f + random.nextFloat() * 0.35f)
+                val alpha = 0.50f + random.nextFloat() * 0.32f
+                val accent = accents[index % accents.size]
+                drawRect(
+                    brush =
+                        Brush.radialGradient(
+                            colors = listOf(accent.copy(alpha = alpha), accent.copy(alpha = 0f)),
+                            center = center,
+                            radius = radius,
+                        ),
+                )
+            }
         }
-        accents.getOrNull(1)?.let { accent ->
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.80f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.90f, size.height * 0.26f),
-                        radius = size.width * 0.70f,
-                    ),
-            )
-        }
-        accents.getOrNull(0)?.let { accent ->
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.55f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.82f, size.height * 0.00f),
-                        radius = size.width * 0.45f,
-                    ),
-            )
-        }
-        drawRect(
-            brush =
-                Brush.radialGradient(
-                    colors = listOf(high.copy(alpha = 0.55f), high.copy(alpha = 0f)),
-                    center = Offset(size.width * 0.40f, size.height * 0.50f),
-                    radius = size.width * 0.80f,
-                ),
-        )
         drawRect(
             brush =
                 Brush.verticalGradient(

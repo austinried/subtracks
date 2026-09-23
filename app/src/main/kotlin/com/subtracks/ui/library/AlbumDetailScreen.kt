@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -129,6 +130,7 @@ fun AlbumDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
+                val gradientHeight = maxHeight * GRADIENT_SCREENS
                 val density = LocalDensity.current
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
@@ -166,7 +168,7 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .requiredHeight(maxHeight * GRADIENT_SCREENS)
+                            .requiredHeight(gradientHeight)
                             .offset { IntOffset(0, -scrollPx.roundToInt()) }
                             .alpha(gradientAlpha),
                 )
@@ -216,7 +218,7 @@ fun AlbumDetailScreen(
                         .height(statusBarDp + 8.dp)
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent),
+                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
                             ),
                         ).alpha(1f - barFraction),
                 )
@@ -225,19 +227,25 @@ fun AlbumDetailScreen(
                     Modifier
                         .align(Alignment.TopStart)
                         .fillMaxWidth()
-                        .height(statusBarDp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                            ),
-                        ).alpha(1f - barFraction),
-                )
+                        .height(with(density) { barHeightPx.toDp() })
+                        .clipToBounds()
+                        .alpha(barFraction),
+                ) {
+                    HeroGradient(
+                        colors = artwork,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .requiredHeight(gradientHeight)
+                                .offset { IntOffset(0, -scrollPx.roundToInt()) },
+                    )
+                }
 
                 TopAppBar(
                     title = {
                         Text(
                             text = album?.name.orEmpty(),
-                            style = MaterialTheme.typography.headlineLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.alpha(barFraction),
@@ -252,7 +260,6 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .background((artwork?.gradientHigh ?: Color.Black).copy(alpha = barFraction))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -291,7 +298,7 @@ private fun AlbumHeader(
         Spacer(Modifier.height(20.dp))
         Text(
             text = album?.name.orEmpty(),
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
