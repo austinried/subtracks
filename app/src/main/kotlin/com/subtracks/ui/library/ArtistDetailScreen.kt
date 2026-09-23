@@ -103,23 +103,10 @@ fun ArtistDetailScreen(
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
     val barFraction by remember(fadeStartPx, fadeEndPx) {
         derivedStateOf {
-            when {
-                listState.layoutInfo.visibleItemsInfo.isEmpty() -> {
-                    0f
-                }
-
-                !listState.canScrollForward -> {
-                    1f
-                }
-
-                listState.firstVisibleItemIndex > 0 -> {
-                    1f
-                }
-
-                else -> {
-                    ((listState.firstVisibleItemScrollOffset - fadeStartPx) / (fadeEndPx - fadeStartPx))
-                        .coerceIn(0f, 1f)
-                }
+            if (listState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                ((listState.firstVisibleItemScrollOffset - fadeStartPx) / (fadeEndPx - fadeStartPx)).coerceIn(0f, 1f)
             }
         }
     }
