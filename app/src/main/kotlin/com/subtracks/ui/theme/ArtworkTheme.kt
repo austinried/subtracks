@@ -158,9 +158,10 @@ private fun blendHue(
 }
 
 @Composable
-fun rememberArtworkColors(ref: CoverArtRef?): ArtworkColors? {
+fun rememberArtworkColors(ref: CoverArtRef?): ArtworkColors {
     val seeds by rememberArtworkSeed(ref)
-    return remember(seeds) { seeds?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
+    val target = remember(seeds) { seeds?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
+    return rememberAnimatedArtworkColors(target)
 }
 
 @Composable

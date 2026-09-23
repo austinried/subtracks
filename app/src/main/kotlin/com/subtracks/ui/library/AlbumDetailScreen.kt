@@ -162,11 +162,6 @@ fun AlbumDetailScreen(
                         }
                     }
                 }
-                val gradientAlpha by animateFloatAsState(
-                    targetValue = if (artwork != null) 1f else 0f,
-                    animationSpec = tween(durationMillis = 600),
-                    label = "gradientAlpha",
-                )
                 val barColor =
                     artwork?.let {
                         val mid = scrollPx + barHeightPx / 2f
@@ -180,7 +175,7 @@ fun AlbumDetailScreen(
                 HeroGradient(
                     colors = artwork,
                     scrollPx = { scrollPx },
-                    modifier = Modifier.fillMaxSize().alpha(gradientAlpha),
+                    modifier = Modifier.fillMaxSize(),
                 )
 
                 LazyColumn(

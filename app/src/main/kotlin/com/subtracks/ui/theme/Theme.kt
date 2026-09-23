@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val SubtracksColorScheme =
+internal val SubtracksColorScheme =
     darkColorScheme(
         primary = White,
         onPrimary = Black,
