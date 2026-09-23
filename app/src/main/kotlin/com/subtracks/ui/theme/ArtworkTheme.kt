@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
@@ -31,9 +32,12 @@ import kotlin.math.abs
 import kotlin.random.Random
 
 private const val SEED_ART_SIZE_PX = 128
-private const val GRADIENT_FADE_START = 1.3f / 2.0f
+private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
+private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
+private const val HERO_DARKEN_MAX = 0.8f
+private const val HERO_DARKEN_SCREENS = 1.5f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -129,10 +133,13 @@ private fun Color.withMaxLuminance(max: Float): Color {
 }
 
 fun ArtworkColors.gradientColorAt(fraction: Float): Color {
-    val t = fraction.coerceIn(0f, 1f)
-    val base = lerp(gradientHigh, gradientLow, t)
-    val fade = ((t - GRADIENT_FADE_START) / (1f - GRADIENT_FADE_START)).coerceIn(0f, 1f)
-    return lerp(base, Color.Black, fade)
+    if (fraction.isNaN()) return gradientHigh
+    val f = fraction.mod(1f)
+    return if (f < 0.5f) {
+        lerp(gradientHigh, gradientLow, f * 2f)
+    } else {
+        lerp(gradientLow, gradientHigh, (f - 0.5f) * 2f)
+    }
 }
 
 private fun blendHue(
@@ -231,6 +238,7 @@ fun ArtworkTheme(
 @Composable
 fun HeroGradient(
     colors: ArtworkColors?,
+    scrollPx: () -> Float,
     modifier: Modifier = Modifier,
 ) {
     val high = colors?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh
@@ -239,49 +247,48 @@ fun HeroGradient(
     val seed = colors?.blobSeed ?: 0
 
     Canvas(modifier) {
+        val period = size.height * PERIOD_SCREENS
+        if (period <= 0f) return@Canvas
+        val phase = scrollPx().mod(period)
         drawRect(
             brush =
-                Brush.linearGradient(
-                    colors = listOf(high, low),
-                    start = Offset(size.width * 0.2f, 0f),
-                    end = Offset(size.width * 0.8f, size.height),
+                Brush.verticalGradient(
+                    colorStops = arrayOf(0f to high, 0.5f to low, 1f to high),
+                    startY = -phase,
+                    endY = -phase + period,
+                    tileMode = TileMode.Repeated,
                 ),
         )
         if (accents.isNotEmpty()) {
             val random = Random(seed)
-            val zone = size.height * BLOB_ZONE
-            repeat(4) { index ->
-                val center =
-                    Offset(
-                        size.width * (0.10f + random.nextFloat() * 0.80f),
-                        zone * random.nextFloat(),
-                    )
+            repeat(BLOB_COUNT) { index ->
+                val centerX = size.width * (0.10f + random.nextFloat() * 0.80f)
+                val baseY = period * BLOB_ZONE * random.nextFloat()
                 val radius = size.width * (0.45f + random.nextFloat() * 0.35f)
                 val alpha = 0.50f + random.nextFloat() * 0.32f
                 val accent = accents[index % accents.size]
-                drawRect(
-                    brush =
-                        Brush.radialGradient(
-                            colors = listOf(accent.copy(alpha = alpha), accent.copy(alpha = 0f)),
-                            center = center,
-                            radius = radius,
-                        ),
-                )
+                for (shift in -1..1) {
+                    val centerY = baseY + shift * period - phase
+                    if (centerY + radius < 0f || centerY - radius > size.height) continue
+                    drawRect(
+                        brush =
+                            Brush.radialGradient(
+                                colors = listOf(accent.copy(alpha = alpha), accent.copy(alpha = 0f)),
+                                center = Offset(centerX, centerY),
+                                radius = radius,
+                            ),
+                    )
+                }
             }
         }
-        drawRect(
-            brush =
-                Brush.verticalGradient(
-                    colorStops =
-                        arrayOf(
-                            0f to Color.Transparent,
-                            GRADIENT_FADE_START to Color.Transparent,
-                            1f to Color.Black,
-                        ),
-                ),
-        )
+        drawRect(color = Color.Black.copy(alpha = heroDarken(scrollPx(), size.height)))
     }
 }
+
+fun heroDarken(
+    scrollPx: Float,
+    screenHeightPx: Float,
+): Float = (scrollPx / (screenHeightPx * HERO_DARKEN_SCREENS)).coerceIn(0f, 1f) * HERO_DARKEN_MAX
 
 private fun Color.toHsl(): Triple<Float, Float, Float> {
     val max = maxOf(red, green, blue)

@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
@@ -79,6 +80,7 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.gradientColorAt
+import com.subtracks.ui.theme.heroDarken
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -165,17 +167,18 @@ fun AlbumDetailScreen(
                     label = "gradientAlpha",
                 )
                 val barColor =
-                    artwork?.gradientColorAt(((scrollPx + barHeightPx / 2f) / gradientHeightPx).coerceIn(0f, 1f))
-                        ?: Color.Black
+                    artwork?.let {
+                        lerp(
+                            it.gradientColorAt((scrollPx + barHeightPx / 2f) / gradientHeightPx),
+                            Color.Black,
+                            heroDarken(scrollPx, with(density) { maxHeight.toPx() }),
+                        )
+                    } ?: Color.Black
 
                 HeroGradient(
                     colors = artwork,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .requiredHeight(gradientHeight)
-                            .offset { IntOffset(0, -scrollPx.roundToInt()) }
-                            .alpha(gradientAlpha),
+                    scrollPx = { scrollPx },
+                    modifier = Modifier.fillMaxSize().alpha(gradientAlpha),
                 )
 
                 LazyColumn(
