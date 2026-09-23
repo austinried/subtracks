@@ -36,10 +36,10 @@ private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
-private const val HERO_DARKEN_MAX = 0.85f
-private const val HERO_DARKEN_SCREENS = 1.5f
-private const val BASE_BOTTOM_DARKEN = 0.6f
-private const val POSITION_FADE_START = 0.55f
+private const val HERO_DARKEN_MAX = 0.8f
+private const val DARKEN_START_SCREENS = 0.5f
+private const val DARKEN_END_SCREENS = 1.5f
+private const val DARKEN_KNEE = 0.2f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -284,19 +284,36 @@ fun HeroGradient(
                 }
             }
         }
-        val progress = (scroll / (size.height * HERO_DARKEN_SCREENS)).coerceIn(0f, 1f)
-        val bottomAlpha = BASE_BOTTOM_DARKEN + (HERO_DARKEN_MAX - BASE_BOTTOM_DARKEN) * progress
+        val darkenStart = size.height * DARKEN_START_SCREENS - scroll
+        val darkenEnd = size.height * DARKEN_END_SCREENS - scroll
         drawRect(
             brush =
                 Brush.verticalGradient(
                     colorStops =
                         arrayOf(
                             0f to Color.Transparent,
-                            POSITION_FADE_START to Color.Transparent,
-                            1f to Color.Black.copy(alpha = bottomAlpha),
+                            DARKEN_KNEE to Color.Black.copy(alpha = HERO_DARKEN_MAX * 0.5f),
+                            1f to Color.Black.copy(alpha = HERO_DARKEN_MAX),
                         ),
+                    startY = darkenStart,
+                    endY = darkenEnd,
+                    tileMode = TileMode.Clamp,
                 ),
         )
+    }
+}
+
+fun heroDarkenAt(
+    contentY: Float,
+    screenHeightPx: Float,
+): Float {
+    val start = screenHeightPx * DARKEN_START_SCREENS
+    val end = screenHeightPx * DARKEN_END_SCREENS
+    val fraction = ((contentY - start) / (end - start)).coerceIn(0f, 1f)
+    return if (fraction <= DARKEN_KNEE) {
+        HERO_DARKEN_MAX * 0.5f * (fraction / DARKEN_KNEE)
+    } else {
+        HERO_DARKEN_MAX * 0.5f + HERO_DARKEN_MAX * 0.5f * ((fraction - DARKEN_KNEE) / (1f - DARKEN_KNEE))
     }
 }
 
