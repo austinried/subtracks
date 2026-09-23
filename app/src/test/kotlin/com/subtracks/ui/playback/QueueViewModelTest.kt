@@ -83,6 +83,22 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun openingAtTheEndLoadsASingleRowAndExtendsOlder() {
+        runBlocking { seedSongs(200) }
+        controller.playSongs(1, 199)
+        await { controller.state.value.position == 199L }
+
+        viewModel.open()
+        await { viewModel.ready }
+
+        assertEquals(listOf(199L), viewModel.rows.map { it.position })
+
+        viewModel.loadOlder()
+        await { viewModel.rows.firstOrNull()?.position == 139L }
+        assertEquals((139L..199L).toList(), viewModel.rows.map { it.position })
+    }
+
+    @Test
     fun reorderingMovesTheRowLocally() {
         runBlocking { seedSongs(200) }
         controller.playSongs(1, 100)

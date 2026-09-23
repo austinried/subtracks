@@ -438,6 +438,49 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun movingTracksFarFromThePlayingOneDoesNotReloadTheWindow() {
+        seedAlbum(100, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 50)
+        await {
+            controller.state.value.item
+                ?.id == "s51"
+        }
+        handle.operations.clear()
+
+        runBlocking { controller.move(80, 90) }
+
+        assertEquals(
+            "s51",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(50L, controller.state.value.position)
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
+    fun movingATrackAcrossTheWindowKeepsPlaying() {
+        seedAlbum(100, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 50)
+        await {
+            controller.state.value.item
+                ?.id == "s51"
+        }
+        handle.operations.clear()
+
+        runBlocking { controller.move(10, 90) }
+
+        assertEquals(
+            "s51",
+            controller.state.value.item
+                ?.id,
+        )
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
     fun undoRestoresARemovedTrack() {
         seedAlbum(5, sourceId = 1)
 

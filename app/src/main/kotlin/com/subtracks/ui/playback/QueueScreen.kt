@@ -104,8 +104,8 @@ class QueueViewModel(
                     val start = cursor
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
                     rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
-                    first = rows.first().position
-                    last = rows.last().position
+                    first = rows.firstOrNull()?.position ?: 0
+                    last = rows.lastOrNull()?.position ?: -1
                 }
                 ready = true
             }
@@ -178,30 +178,29 @@ class QueueViewModel(
 
     fun remove(position: Long) {
         viewModelScope.launch {
-            val index = rows.indexOfFirst { it.position == position }
-            if (index >= 0) {
-                rows.removeAt(index)
-                for (i in index until rows.size) {
-                    val row = rows[i]
-                    rows[i] = row.copy(position = row.position - 1)
-                }
-            }
-            val next = (rows.lastOrNull()?.position ?: (first - 1)) + 1
-            playbackController.removeAt(position)
             mutex.withLock {
-                if (rows.isEmpty()) {
-                    size = 0
-                    first = 0
-                    last = -1
-                    return@withLock
+                val index = rows.indexOfFirst { it.position == position }
+                if (index >= 0) {
+                    rows.removeAt(index)
+                    for (i in index until rows.size) {
+                        val row = rows[i]
+                        rows[i] = row.copy(position = row.position - 1)
+                    }
                 }
+                playbackController.removeAt(position)
                 val snapshot = queueRepository.snapshot()
                 size = snapshot.size
-                if (next <= size - 1) {
-                    queueRepository.range(snapshot, next, next).firstOrNull()?.let { rows.add(newRow(it)) }
+                if (rows.isEmpty()) {
+                    reload()
+                    return@withLock
                 }
                 first = rows.first().position
                 last = rows.last().position
+                val next = last + 1
+                if (next <= size - 1) {
+                    queueRepository.range(snapshot, next, next).firstOrNull()?.let { rows.add(newRow(it)) }
+                    last = rows.last().position
+                }
             }
         }
     }
@@ -234,8 +233,8 @@ class QueueViewModel(
             }
         rows.clear()
         rows.addAll(updated)
-        first = rows.first().position
-        last = rows.last().position
+        first = rows.firstOrNull()?.position ?: 0
+        last = rows.lastOrNull()?.position ?: -1
     }
 }
 
@@ -286,16 +285,12 @@ fun QueueScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
-    var dragTo by remember { mutableStateOf<Long?>(null) }
 
     val reorderState =
         rememberReorderableLazyListState(listState) { from, to ->
-            val fromPosition = rows.getOrNull(from.index)?.position
-            val toPosition = rows.getOrNull(to.index)?.position
             onReorder(from.index, to.index)
-            dragFrom = fromPosition
-            dragTo = toPosition
         }
 
     LaunchedEffect(listState, ready) {
@@ -368,16 +363,22 @@ fun QueueScreen(
                                 dragHandle =
                                     Modifier.draggableHandle(
                                         onDragStarted = {
+                                            dragId = row.id
                                             dragFrom = row.position
-                                            dragTo = row.position
                                         },
                                         onDragStopped = {
+                                            val id = dragId
                                             val from = dragFrom
-                                            val to = dragTo
-                                            if (from != null && to != null && from != to) {
-                                                onMove(from, to)
-                                                showUndo("Queue reordered")
+                                            if (id != null && from != null) {
+                                                val index = rows.indexOfFirst { it.id == id }
+                                                val to = if (index < 0) from else dropTarget(rows, index, from)
+                                                if (to != from) {
+                                                    onMove(from, to)
+                                                    showUndo("Queue reordered")
+                                                }
                                             }
+                                            dragId = null
+                                            dragFrom = null
                                         },
                                     ),
                                 onClick = { onPlay(row.position) },
@@ -392,6 +393,17 @@ fun QueueScreen(
             }
         }
     }
+}
+
+private fun dropTarget(
+    rows: List<QueueRow>,
+    index: Int,
+    from: Long,
+): Long {
+    val next = rows.getOrNull(index + 1)
+    if (next != null) return next.position - if (next.position > from) 1 else 0
+    val before = rows.getOrNull(index - 1)?.position ?: return from
+    return (before - if (before > from) 1 else 0) + 1
 }
 
 @Composable
