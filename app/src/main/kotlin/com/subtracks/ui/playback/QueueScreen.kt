@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -291,13 +292,13 @@ fun QueueScreen(
     var centered by remember { mutableStateOf(false) }
 
     LaunchedEffect(ready, rows.size, currentPosition) {
-        if (centered || !ready || rows.isEmpty()) return@LaunchedEffect
+        if (centered || !ready) return@LaunchedEffect
         val position = currentPosition ?: return@LaunchedEffect
         val index = rows.indexOfFirst { it.position == position }
-        if (index < 0) return@LaunchedEffect
-        snapshotFlow { listState.layoutInfo.totalItemsCount }.first { it > 0 }
-        listState.scrollToItem(index)
-        centered = true
+        if (index >= 0) {
+            listState.requestScrollToItem(index)
+            centered = true
+        }
     }
 
     val reorderState =
@@ -311,6 +312,7 @@ fun QueueScreen(
 
     LaunchedEffect(listState, centered) {
         if (!centered) return@LaunchedEffect
+        withFrameNanos { }
         snapshotFlow {
             val info = listState.layoutInfo
             val firstVisible = info.visibleItemsInfo.firstOrNull()?.index ?: -1
