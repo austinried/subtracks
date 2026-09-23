@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -26,7 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -35,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,8 +83,30 @@ fun ArtistDetailScreen(
     onAlbumClick: (Album) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val listState = rememberLazyGridState()
+    val artHeightPx = with(LocalDensity.current) { ART_HEIGHT.toPx() }
+    val barFraction by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                (listState.firstVisibleItemScrollOffset / artHeightPx).coerceIn(0f, 1f)
+            }
+        }
+    }
+    val nameStyle =
+        MaterialTheme.typography.headlineLarge.copy(
+            shadow =
+                Shadow(
+                    color = Color.Black.copy(alpha = 0.8f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 10f,
+                ),
+        )
+
     Box(modifier.fillMaxSize()) {
         LazyVerticalGrid(
+            state = listState,
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -92,6 +119,14 @@ fun ArtistDetailScreen(
                         ref = art,
                         name = artist?.name.orEmpty(),
                         modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                    )
+                    Text(
+                        text = artist?.name.orEmpty(),
+                        style = nameStyle,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
                     )
                 }
             }
@@ -130,15 +165,8 @@ fun ArtistDetailScreen(
             title = {
                 Text(
                     text = artist?.name.orEmpty(),
-                    style =
-                        MaterialTheme.typography.headlineLarge.copy(
-                            shadow =
-                                Shadow(
-                                    color = Color.Black.copy(alpha = 0.8f),
-                                    offset = Offset(0f, 2f),
-                                    blurRadius = 10f,
-                                ),
-                        ),
+                    style = nameStyle,
+                    color = Color.White.copy(alpha = barFraction),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -163,13 +191,8 @@ fun ArtistDetailScreen(
                     }
                 }
             },
-            colors =
-                TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
-                ),
-            modifier = Modifier.align(Alignment.TopStart),
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            modifier = Modifier.align(Alignment.TopStart).background(Color.Black.copy(alpha = barFraction)),
         )
     }
 }

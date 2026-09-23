@@ -204,7 +204,7 @@ fun LibraryScreen(
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier =
                             Modifier
-                                .padding(start = 12.dp, top = titleTop + (titleLineHeight - logoSize) / 2)
+                                .padding(start = 20.dp, top = titleTop + (titleLineHeight - logoSize) / 2)
                                 .size(logoSize),
                     )
                     Text(
