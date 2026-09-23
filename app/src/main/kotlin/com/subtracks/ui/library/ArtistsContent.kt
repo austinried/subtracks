@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -48,8 +49,20 @@ fun ArtistsContent(
                     val artist = items[index]
                     if (artist != null) {
                         ListItem(
-                            headlineContent = { Text(artist.name) },
-                            supportingContent = { Text("${artist.albumCount} albums") },
+                            headlineContent = {
+                                Text(
+                                    text = artist.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    text = "${artist.albumCount} albums",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
                             leadingContent = {
                                 CoverArt(
                                     ref = coverArt(artist.coverArt, true),

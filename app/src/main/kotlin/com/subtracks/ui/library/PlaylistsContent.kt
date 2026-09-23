@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -50,9 +51,19 @@ fun PlaylistsContent(
                     val playlist = items[index]
                     if (playlist != null) {
                         ListItem(
-                            headlineContent = { Text(playlist.name) },
+                            headlineContent = {
+                                Text(
+                                    text = playlist.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
                             supportingContent = {
-                                Text(playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs")
+                                Text(
+                                    text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             },
                             leadingContent = {
                                 CoverArt(
