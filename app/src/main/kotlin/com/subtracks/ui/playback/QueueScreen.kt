@@ -1,11 +1,12 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,10 +71,12 @@ import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.library.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.math.roundToInt
+import kotlin.math.floor
 
 class QueueViewModel(
     private val queueRepository: QueueRepository,
@@ -138,6 +143,13 @@ fun QueueRoute(
 
 private enum class DropIndicator { Above, Below }
 
+private data class Settle(
+    val from: Long,
+    val to: Long,
+    val songId: String,
+    val fingerY: Float,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueScreen(
@@ -157,8 +169,11 @@ fun QueueScreen(
     val density = LocalDensity.current
     var rowHeight by remember { mutableFloatStateOf(0f) }
     var dragging by remember { mutableStateOf<Long?>(null) }
-    var dragOffset by remember { mutableFloatStateOf(0f) }
+    var fingerY by remember { mutableFloatStateOf(0f) }
     var target by remember { mutableStateOf<Long?>(null) }
+    var settle by remember { mutableStateOf<Settle?>(null) }
+    var settleProgress by remember { mutableFloatStateOf(1f) }
+    var settleReady by remember { mutableStateOf(false) }
     var centered by remember { mutableStateOf(false) }
 
     val firstPosition = if (items.itemCount > 0) items.peek(0)?.position else null
@@ -175,26 +190,46 @@ fun QueueScreen(
     LaunchedEffect(dragging) {
         if (dragging == null) return@LaunchedEffect
         val threshold = with(density) { 72.dp.toPx() }
-        val step = with(density) { 10.dp.toPx() }
+        val step = with(density) { 12.dp.toPx() }
         while (true) {
-            val from = dragging ?: break
-            val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { items.peek(it.index)?.position == from }
-            if (info != null) {
-                val top = info.offset + dragOffset
-                val edge =
-                    when {
-                        top < listState.layoutInfo.viewportStartOffset + threshold -> -step
-                        top + info.size > listState.layoutInfo.viewportEndOffset - threshold -> step
-                        else -> 0f
-                    }
-                if (edge != 0f) {
-                    val consumed = listState.scrollBy(edge)
-                    dragOffset += consumed
-                    target = dropTarget(items, from, dragOffset, rowHeight)
+            val start = listState.layoutInfo.viewportStartOffset.toFloat()
+            val end = listState.layoutInfo.viewportEndOffset.toFloat()
+            val edge =
+                when {
+                    fingerY < start + threshold -> -step
+                    fingerY > end - threshold -> step
+                    else -> 0f
                 }
-            }
+            if (edge != 0f) listState.scrollBy(edge)
             delay(16)
         }
+    }
+
+    LaunchedEffect(settle) {
+        val current = settle ?: return@LaunchedEffect
+        val first = if (items.itemCount > 0) items.peek(0)?.position else null
+        if (first != null) {
+            val index = (current.to - first).toInt()
+            withTimeoutOrNull(SETTLE_TIMEOUT_MS) {
+                snapshotFlow {
+                    if (index in 0 until items.itemCount) {
+                        items
+                            .peek(index)
+                            ?.item
+                            ?.song
+                            ?.id
+                    } else {
+                        null
+                    }
+                }.first { it == current.songId }
+            }
+        }
+        settleReady = true
+        settleProgress = 0f
+        animate(0f, 1f, animationSpec = tween(SETTLE_DURATION_MS)) { value, _ -> settleProgress = value }
+        settle = null
+        settleReady = false
+        settleProgress = 1f
     }
 
     val showUndo: (String) -> Unit = { message ->
@@ -237,12 +272,30 @@ fun QueueScreen(
                     items(count = items.itemCount) { index ->
                         val item = items[index]
                         if (item != null) {
+                            val active = settle
+                            val draggedPosition =
+                                when {
+                                    active == null -> dragging
+                                    !settleReady -> active.from
+                                    else -> active.to
+                                }
                             QueueRow(
                                 item = item,
                                 isPlaying = item.position == currentPosition,
                                 coverArt = coverArt,
-                                dragging = dragging == item.position,
-                                dragOffset = if (dragging == item.position) dragOffset else 0f,
+                                floating = draggedPosition == item.position,
+                                translation =
+                                    translationFor(
+                                        item.position,
+                                        active,
+                                        dragging,
+                                        fingerY,
+                                        settleReady,
+                                        settleProgress,
+                                        rowHeight,
+                                        listState,
+                                        items,
+                                    ),
                                 indicator = indicatorFor(item.position, dragging, target),
                                 onClick = { onPlay(item.position) },
                                 onRemove = {
@@ -251,28 +304,31 @@ fun QueueScreen(
                                 },
                                 onSize = { rowHeight = it.toFloat() },
                                 onDragStart = {
-                                    dragging = item.position
-                                    dragOffset = 0f
-                                    target = item.position
+                                    if (settle == null) {
+                                        dragging = item.position
+                                        target = item.position
+                                        fingerY =
+                                            (slotOffset(listState, items, rowHeight, item.position) ?: 0f) +
+                                            rowHeight / 2f
+                                    }
                                 },
                                 onDrag = { amount ->
-                                    dragOffset += amount
-                                    target = dropTarget(items, item.position, dragOffset, rowHeight)
+                                    fingerY += amount
+                                    target = pointerTarget(listState, items, rowHeight, fingerY, item.position)
                                 },
                                 onDragEnd = {
                                     val from = dragging
                                     val to = target
                                     if (from != null && to != null && to != from) {
+                                        settle = Settle(from, to, item.item.song.id, fingerY)
                                         onMove(from, to)
                                         showUndo("Queue reordered")
                                     }
                                     dragging = null
-                                    dragOffset = 0f
                                     target = null
                                 },
                                 onDragCancel = {
                                     dragging = null
-                                    dragOffset = 0f
                                     target = null
                                 },
                             )
@@ -284,17 +340,69 @@ fun QueueScreen(
     }
 }
 
-private fun dropTarget(
+private fun slotOffset(
+    listState: LazyListState,
     items: LazyPagingItems<QueueWindowItem>,
-    from: Long,
-    offset: Float,
     rowHeight: Float,
+    position: Long,
+): Float? {
+    val first = listState.layoutInfo.visibleItemsInfo.firstOrNull() ?: return null
+    val firstPosition = items.peek(first.index)?.position ?: return null
+    return first.offset + (position - firstPosition) * rowHeight
+}
+
+private fun pointerTarget(
+    listState: LazyListState,
+    items: LazyPagingItems<QueueWindowItem>,
+    rowHeight: Float,
+    fingerY: Float,
+    from: Long,
 ): Long {
     if (items.itemCount == 0 || rowHeight <= 0f) return from
-    val first = items.peek(0)?.position ?: from
-    val last = items.peek(items.itemCount - 1)?.position ?: from
-    return (from + (offset / rowHeight).roundToInt()).coerceIn(minOf(first, last), maxOf(first, last))
+    val first = listState.layoutInfo.visibleItemsInfo.firstOrNull() ?: return from
+    val firstPosition = items.peek(first.index)?.position ?: return from
+    val index = firstPosition + floor((fingerY - first.offset) / rowHeight).toLong()
+    val firstLoaded = items.peek(0)?.position ?: firstPosition
+    val lastLoaded = items.peek(items.itemCount - 1)?.position ?: firstPosition
+    return index.coerceIn(minOf(firstLoaded, lastLoaded), maxOf(firstLoaded, lastLoaded))
 }
+
+private fun translationFor(
+    position: Long,
+    settle: Settle?,
+    dragging: Long?,
+    fingerY: Float,
+    settleReady: Boolean,
+    progress: Float,
+    rowHeight: Float,
+    listState: LazyListState,
+    items: LazyPagingItems<QueueWindowItem>,
+): Float =
+    when {
+        settle == null -> {
+            if (dragging == position) fingerY - (slotOffset(listState, items, rowHeight, position) ?: fingerY) else 0f
+        }
+
+        !settleReady -> {
+            if (position == settle.from) settle.fingerY - (slotOffset(listState, items, rowHeight, position) ?: settle.fingerY) else 0f
+        }
+
+        position == settle.to -> {
+            (settle.fingerY - (slotOffset(listState, items, rowHeight, position) ?: settle.fingerY)) * (1f - progress)
+        }
+
+        settle.to > settle.from && position in settle.from until settle.to -> {
+            rowHeight * (1f - progress)
+        }
+
+        settle.to < settle.from && position in (settle.to + 1)..settle.from -> {
+            -rowHeight * (1f - progress)
+        }
+
+        else -> {
+            0f
+        }
+    }
 
 private fun indicatorFor(
     position: Long,
@@ -313,8 +421,8 @@ private fun QueueRow(
     item: QueueWindowItem,
     isPlaying: Boolean,
     coverArt: (String?, Boolean) -> CoverArtRef?,
-    dragging: Boolean,
-    dragOffset: Float,
+    floating: Boolean,
+    translation: Float,
     indicator: DropIndicator?,
     onClick: () -> Unit,
     onRemove: () -> Unit,
@@ -324,13 +432,12 @@ private fun QueueRow(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
-    Column(
+    Box(
         modifier =
             Modifier
-                .zIndex(if (dragging) 1f else 0f)
-                .graphicsLayer { translationY = dragOffset },
+                .zIndex(if (floating) 1f else 0f)
+                .graphicsLayer { translationY = translation },
     ) {
-        if (indicator == DropIndicator.Above) DropIndicatorLine()
         SongRow(
             song = item.item.song,
             coverArtId = item.item.coverArt,
@@ -369,7 +476,7 @@ private fun QueueRow(
             modifier =
                 Modifier
                     .background(
-                        if (dragging) {
+                        if (floating) {
                             MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f)
                         } else {
                             Color.Transparent
@@ -377,17 +484,24 @@ private fun QueueRow(
                     ).onSizeChanged { size -> onSize(size.height) }
                     .clickable(onClick = onClick),
         )
-        if (indicator == DropIndicator.Below) DropIndicatorLine()
+        when (indicator) {
+            DropIndicator.Above -> DropIndicatorLine(Modifier.align(Alignment.TopStart))
+            DropIndicator.Below -> DropIndicatorLine(Modifier.align(Alignment.BottomStart))
+            null -> Unit
+        }
     }
 }
 
 @Composable
-private fun DropIndicatorLine() {
+private fun DropIndicatorLine(modifier: Modifier = Modifier) {
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .height(2.dp)
                 .background(MaterialTheme.colorScheme.primary),
     )
 }
+
+private const val SETTLE_DURATION_MS = 200
+private const val SETTLE_TIMEOUT_MS = 1_000L
