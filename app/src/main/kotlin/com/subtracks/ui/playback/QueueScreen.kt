@@ -35,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -102,7 +101,7 @@ class QueueViewModel(
                         withTimeoutOrNull(POSITION_TIMEOUT_MS) {
                             playbackController.state.first { it.position != null }.position
                         }?.coerceIn(0, size - 1) ?: 0L
-                    val start = (cursor - QUEUE_CHUNK / 2).coerceAtLeast(0)
+                    val start = cursor
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
                     rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
                     first = rows.first().position
@@ -289,17 +288,6 @@ fun QueueScreen(
     val scope = rememberCoroutineScope()
     var dragFrom by remember { mutableStateOf<Long?>(null) }
     var dragTo by remember { mutableStateOf<Long?>(null) }
-    var centered by remember { mutableStateOf(false) }
-
-    LaunchedEffect(ready, rows.size, currentPosition) {
-        if (centered || !ready) return@LaunchedEffect
-        val position = currentPosition ?: return@LaunchedEffect
-        val index = rows.indexOfFirst { it.position == position }
-        if (index >= 0) {
-            listState.requestScrollToItem(index)
-            centered = true
-        }
-    }
 
     val reorderState =
         rememberReorderableLazyListState(listState) { from, to ->
@@ -310,9 +298,8 @@ fun QueueScreen(
             dragTo = toPosition
         }
 
-    LaunchedEffect(listState, centered) {
-        if (!centered) return@LaunchedEffect
-        withFrameNanos { }
+    LaunchedEffect(listState, ready) {
+        if (!ready) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             val firstVisible = info.visibleItemsInfo.firstOrNull()?.index ?: -1

@@ -63,7 +63,7 @@ class QueueViewModelTest {
     }
 
     @Test
-    fun openingLoadsAWindowAroundTheCursorAndExtendingGrowsIt() {
+    fun openingLoadsAWindowAtTheCursorAndExtendingGrowsIt() {
         runBlocking { seedSongs(200) }
         controller.playSongs(1, 100)
         await { controller.state.value.position == 100L }
@@ -71,15 +71,15 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+        assertEquals((100L..159L).toList(), viewModel.rows.map { it.position })
 
         viewModel.loadNewer()
-        await { viewModel.rows.lastOrNull()?.position == 189L }
-        assertEquals((70L..189L).toList(), viewModel.rows.map { it.position })
+        await { viewModel.rows.lastOrNull()?.position == 199L }
+        assertEquals((100L..199L).toList(), viewModel.rows.map { it.position })
 
         viewModel.loadOlder()
-        await { viewModel.rows.firstOrNull()?.position == 10L }
-        assertEquals((10L..189L).toList(), viewModel.rows.map { it.position })
+        await { viewModel.rows.firstOrNull()?.position == 40L }
+        assertEquals((40L..199L).toList(), viewModel.rows.map { it.position })
     }
 
     @Test
@@ -94,7 +94,7 @@ class QueueViewModelTest {
         viewModel.reorder(fromIndex = 0, toIndex = 2)
 
         val positions = viewModel.rows.map { it.position }
-        assertEquals(listOf(71L, 72L, 70L), positions.take(3))
+        assertEquals(listOf(101L, 102L, 100L), positions.take(3))
     }
 
     private suspend fun seedSongs(count: Int) {
