@@ -286,7 +286,7 @@ private fun AlbumHeader(
                 Modifier
                     .fillMaxWidth(0.86f)
                     .aspectRatio(1f)
-                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(2.dp), clip = false)
+                    .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
                     .clip(RoundedCornerShape(2.dp)),
         )
         Spacer(Modifier.height(20.dp))
