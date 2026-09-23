@@ -121,7 +121,7 @@ fun SongRow(
         },
         supportingContent = {
             Text(
-                text = listOfNotNull(song.artist, song.album).joinToString(" • ").ifEmpty { "\u00A0" },
+                text = song.artist.orEmpty().ifEmpty { "\u00A0" },
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
