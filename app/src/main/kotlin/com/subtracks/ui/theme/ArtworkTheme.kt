@@ -82,9 +82,9 @@ fun artworkColorsFromSeed(seed: Int): ArtworkColors {
 
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (s * 0.7f).coerceAtMost(0.55f), 0.25f),
-        gradientLow = tone(hue, s * 0.20f, 0.04f),
-        accents = listOf(tone(hue, s, 0.55f), tone(hue, s * 0.7f, 0.42f)),
+        gradientHigh = tone(hue, (s * 0.8f).coerceAtMost(0.60f), 0.30f),
+        gradientLow = tone(hue, s * 0.25f, 0.04f),
+        accents = listOf(tone(hue, s, 0.70f), tone(hue, s * 0.85f, 0.38f)),
     )
 }
 
@@ -169,9 +169,9 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.40f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.15f, size.height * 0.06f),
-                        radius = size.width * 0.85f,
+                        colors = listOf(accent.copy(alpha = 0.55f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.18f, size.height * 0.03f),
+                        radius = size.width * 0.95f,
                     ),
             )
         }
@@ -179,9 +179,19 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.32f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.90f, size.height * 0.24f),
-                        radius = size.width * 0.80f,
+                        colors = listOf(accent.copy(alpha = 0.50f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.92f, size.height * 0.28f),
+                        radius = size.width * 0.85f,
+                    ),
+            )
+        }
+        accents.getOrNull(0)?.let { accent ->
+            drawRect(
+                brush =
+                    Brush.radialGradient(
+                        colors = listOf(accent.copy(alpha = 0.30f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.85f, size.height * 0.02f),
+                        radius = size.width * 0.70f,
                     ),
             )
         }
@@ -189,8 +199,8 @@ fun HeroGradient(
             brush =
                 Brush.radialGradient(
                     colors = listOf(high.copy(alpha = 0.45f), high.copy(alpha = 0f)),
-                    center = Offset(size.width * 0.55f, size.height * 0.45f),
-                    radius = size.width * 0.90f,
+                    center = Offset(size.width * 0.35f, size.height * 0.52f),
+                    radius = size.width * 0.95f,
                 ),
         )
         drawRect(

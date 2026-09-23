@@ -24,6 +24,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.stretchOverscroll
 
 @Composable
 fun ArtistsContent(
@@ -44,7 +45,7 @@ fun ArtistsContent(
 
         else -> {
             LazyColumn(
-                modifier = modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize().stretchOverscroll(),
                 contentPadding = PaddingValues(bottom = bottomInset),
             ) {
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->

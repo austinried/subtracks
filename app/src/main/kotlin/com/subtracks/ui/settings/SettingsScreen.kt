@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Source
+import com.subtracks.ui.components.stretchOverscroll
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
@@ -101,7 +102,7 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize()) {
+        LazyColumn(Modifier.padding(padding).fillMaxSize().stretchOverscroll()) {
             item { SectionHeader("Servers") }
             items(sources.size, key = { sources[it].id }) { index ->
                 val source = sources[index]

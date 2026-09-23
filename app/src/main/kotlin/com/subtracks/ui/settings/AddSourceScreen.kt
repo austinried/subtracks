@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.ui.components.stretchOverscroll
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -105,6 +106,7 @@ fun AddSourceScreen(
                 Modifier
                     .padding(padding)
                     .fillMaxSize()
+                    .stretchOverscroll()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -50,6 +50,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.stretchOverscroll
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -128,7 +129,7 @@ fun ArtistDetailScreen(
             contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().stretchOverscroll(),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {

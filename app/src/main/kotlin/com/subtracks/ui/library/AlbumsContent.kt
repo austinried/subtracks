@@ -23,6 +23,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.stretchOverscroll
 
 const val ALBUM_COVER_TAG = "album-cover"
 
@@ -49,7 +50,7 @@ fun AlbumsContent(
                 contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = bottomInset + 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize().stretchOverscroll(),
             ) {
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
                     val album = items[index]

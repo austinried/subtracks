@@ -51,6 +51,7 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.stretchOverscroll
 import com.subtracks.ui.library.SongRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -340,7 +341,7 @@ fun QueueScreen(
             else -> {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    modifier = Modifier.padding(padding).fillMaxSize().stretchOverscroll(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
                     items(count = rows.size, key = { rows[it].id }) { index ->

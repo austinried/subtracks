@@ -4,10 +4,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -36,7 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -51,8 +53,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,6 +71,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.stretchOverscroll
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
@@ -76,8 +83,7 @@ import kotlin.math.roundToInt
 
 private const val DOT = "\u00B7"
 private const val GRADIENT_SCREENS = 1.5f
-private const val FADE_DISTANCE_DP = 96
-private const val CONTROLS_BLOCK_DP = 64
+private const val FADE_DISTANCE_DP = 64
 
 @Composable
 fun AlbumDetailRoute(
@@ -122,12 +128,13 @@ fun AlbumDetailScreen(
                 val listState = rememberLazyListState()
                 val density = LocalDensity.current
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
+                val navBarBottom = WindowInsets.navigationBars.getBottom(density)
                 val barHeightPx = statusBarTop + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
-                val controlsBlockPx = with(density) { CONTROLS_BLOCK_DP.dp.toPx() }
                 val fadeDistancePx = with(density) { FADE_DISTANCE_DP.dp.toPx() }
 
                 var headerHeightPx by remember { mutableFloatStateOf(0f) }
                 var rowHeightPx by remember { mutableFloatStateOf(0f) }
+                var titleTopPx by remember { mutableFloatStateOf(0f) }
                 val scrollPx by remember {
                     derivedStateOf {
                         val index = listState.firstVisibleItemIndex
@@ -137,12 +144,10 @@ fun AlbumDetailScreen(
                 }
                 val barFraction by remember {
                     derivedStateOf {
-                        if (headerHeightPx == 0f) {
+                        if (titleTopPx <= 0f || fadeDistancePx <= 0f) {
                             0f
                         } else {
-                            val end = headerHeightPx - controlsBlockPx - barHeightPx
-                            val start = end - fadeDistancePx
-                            ((scrollPx - start) / (end - start)).coerceIn(0f, 1f)
+                            ((scrollPx - (titleTopPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
                         }
                     }
                 }
@@ -162,53 +167,75 @@ fun AlbumDetailScreen(
                             .alpha(gradientAlpha),
                 )
 
-                Scaffold(
-                    containerColor = Color.Transparent,
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    text = album?.name.orEmpty(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.alpha(barFraction),
-                                )
-                            },
-                            navigationIcon = {
-                                IconButton(onClick = onBack, modifier = Modifier.alpha(barFraction)) {
-                                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                            modifier = Modifier.background(Color.Black.copy(alpha = barFraction)),
+                LazyColumn(
+                    state = listState,
+                    contentPadding =
+                        PaddingValues(
+                            bottom = 16.dp + with(density) { navBarBottom.toDp() },
+                        ),
+                    modifier = Modifier.fillMaxSize().stretchOverscroll(),
+                ) {
+                    item {
+                        AlbumHeader(
+                            album = album,
+                            hasSongs = songs.isNotEmpty(),
+                            coverArt = coverArt,
+                            onPlay = { onSongClick(0) },
+                            onShuffle = onShuffle,
+                            onDownload = onDownload,
+                            onMore = onMore,
+                            titleModifier = Modifier.onGloballyPositioned { titleTopPx = it.positionInParent().y },
+                            modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
                         )
-                    },
-                ) { padding ->
-                    LazyColumn(state = listState, modifier = Modifier.padding(padding).fillMaxSize()) {
-                        item {
-                            AlbumHeader(
-                                album = album,
-                                hasSongs = songs.isNotEmpty(),
-                                coverArt = coverArt,
-                                onPlay = { onSongClick(0) },
-                                onShuffle = onShuffle,
-                                onDownload = onDownload,
-                                onMore = onMore,
-                                modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
-                            )
-                        }
-                        itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                            SongRow(
-                                song = song,
-                                isPlaying = song.id == playingSongId,
-                                modifier =
-                                    Modifier
-                                        .onSizeChanged { rowHeightPx = it.height.toFloat() }
-                                        .clickable { onSongClick(index) },
-                            )
-                        }
+                    }
+                    itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                        SongRow(
+                            song = song,
+                            isPlaying = song.id == playingSongId,
+                            modifier =
+                                Modifier
+                                    .onSizeChanged { rowHeightPx = it.height.toFloat() }
+                                    .clickable { onSongClick(index) },
+                        )
                     }
                 }
+
+                Box(
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth()
+                        .height(with(density) { (barHeightPx + 24.dp.toPx()).toDp() })
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent),
+                            ),
+                        ).alpha(1f - barFraction),
+                )
+
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = album?.name.orEmpty(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.alpha(barFraction),
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack, modifier = Modifier.alpha(barFraction)) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .background(Color.Black.copy(alpha = barFraction))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {},
+                )
             }
         }
     }
@@ -223,16 +250,20 @@ private fun AlbumHeader(
     onShuffle: () -> Unit,
     onDownload: () -> Unit,
     onMore: () -> Unit,
+    titleModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(
             ref = coverArt(album?.coverArt, false),
             name = album?.name.orEmpty(),
-            modifier = Modifier.fillMaxWidth(0.78f).aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+            modifier = Modifier.fillMaxWidth(0.86f).aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
         )
         Spacer(Modifier.height(20.dp))
         Text(
@@ -241,6 +272,7 @@ private fun AlbumHeader(
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = titleModifier,
         )
         val subtitle =
             listOfNotNull(

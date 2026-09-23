@@ -35,6 +35,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.stretchOverscroll
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -83,7 +84,7 @@ fun PlaylistDetailScreen(
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize()) {
+        LazyColumn(Modifier.padding(padding).fillMaxSize().stretchOverscroll()) {
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
