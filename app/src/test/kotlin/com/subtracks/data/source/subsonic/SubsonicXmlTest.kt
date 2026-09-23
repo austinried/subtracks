@@ -96,4 +96,29 @@ class SubsonicXmlTest {
         assertEquals("sg1", entries[0].songId)
         assertEquals(251L, SubsonicXml.song(1, document.getElementsByTagName("entry").item(0) as org.w3c.dom.Element).duration)
     }
+
+    @Test
+    fun mapsArtistImageUrls() {
+        val document =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <artistInfo2>
+                    <smallImageUrl>https://example.com/small.jpg</smallImageUrl>
+                    <largeImageUrl>https://example.com/large.jpg</largeImageUrl>
+                  </artistInfo2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("https://example.com/large.jpg", SubsonicXml.artistImageUrl(document, thumbnail = false))
+        assertEquals("https://example.com/small.jpg", SubsonicXml.artistImageUrl(document, thumbnail = true))
+    }
+
+    @Test
+    fun artistImageUrlIsNullWhenAbsent() {
+        val document = parse("""<subsonic-response status="ok"><artistInfo2/></subsonic-response>""")
+
+        assertEquals(null, SubsonicXml.artistImageUrl(document, thumbnail = false))
+    }
 }

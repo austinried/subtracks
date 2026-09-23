@@ -138,6 +138,7 @@ class AppScreenshotTest {
                 ArtistDetailScreen(
                     artist = Fixtures.artists.first(),
                     albums = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
+                    art = CoverArtRef("art-ar-radiohead", "test:art-ar-radiohead"),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
                     onAlbumClick = {},

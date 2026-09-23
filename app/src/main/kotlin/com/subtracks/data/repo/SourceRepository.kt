@@ -65,6 +65,15 @@ class SourceRepository(
 
     fun streamUri(songId: String): String? = active?.streamUri(songId)?.toString()
 
+    suspend fun artistArt(
+        artistId: String,
+        thumbnail: Boolean = false,
+    ): CoverArtRef? {
+        val source = active ?: return null
+        val url = source.artistArtUri(artistId, thumbnail) ?: return null
+        return CoverArtRef(url = url, cacheKey = "${source.id}:artist:$artistId:$thumbnail")
+    }
+
     suspend fun addSource(
         name: String,
         address: String,

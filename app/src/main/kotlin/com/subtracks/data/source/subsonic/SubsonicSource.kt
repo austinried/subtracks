@@ -93,6 +93,16 @@ class SubsonicSource(
         )
     }
 
+    suspend fun artistArtUri(
+        artistId: String,
+        thumbnail: Boolean = false,
+    ): String? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                SubsonicXml.artistImageUrl(client.get("getArtistInfo2", mapOf("id" to artistId)), thumbnail)
+            }.getOrNull()
+        }
+
     private fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
 
     private fun fetchRank(type: String): Map<String, Long> {
