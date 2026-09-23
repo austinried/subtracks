@@ -94,11 +94,6 @@ fun NowPlayingScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
-                actions = {
-                    IconButton(onClick = onQueue) {
-                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "Queue")
-                    }
-                },
             )
         },
     ) { padding ->
@@ -169,7 +164,7 @@ fun NowPlayingScreen(
                 )
             }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 32.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -208,6 +203,18 @@ fun NowPlayingScreen(
                         imageVector = Icons.Rounded.SkipNext,
                         contentDescription = "Next",
                         modifier = Modifier.size(48.dp),
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.Start,
+            ) {
+                IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                        contentDescription = "Queue",
+                        modifier = Modifier.size(30.dp),
                     )
                 }
             }
