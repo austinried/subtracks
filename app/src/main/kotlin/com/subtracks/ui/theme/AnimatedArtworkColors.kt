@@ -12,7 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 
-private const val THEME_TRANSITION_MS = 600
+const val ARTWORK_THEME_TRANSITION_MS = 600
 
 fun baseArtworkColors(): ArtworkColors =
     ArtworkColors(
@@ -25,7 +25,10 @@ fun baseArtworkColors(): ArtworkColors =
     )
 
 @Composable
-fun rememberAnimatedArtworkColors(target: ArtworkColors?): ArtworkColors {
+fun rememberAnimatedArtworkColors(
+    target: ArtworkColors?,
+    durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
+): ArtworkColors {
     val base = remember { baseArtworkColors() }
     var from by remember { mutableStateOf(target ?: base) }
     var to by remember { mutableStateOf(target ?: base) }
@@ -37,7 +40,7 @@ fun rememberAnimatedArtworkColors(target: ArtworkColors?): ArtworkColors {
             from = to
             to = next
             progress.snapTo(0f)
-            progress.animateTo(1f, tween(durationMillis = THEME_TRANSITION_MS))
+            progress.animateTo(1f, tween(durationMillis = durationMillis))
         }
     }
 

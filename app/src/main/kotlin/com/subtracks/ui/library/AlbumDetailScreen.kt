@@ -91,6 +91,7 @@ import kotlin.math.roundToInt
 private const val DOT = "\u00B7"
 private const val GRADIENT_SCREENS = 2.0f
 private const val FADE_DISTANCE_DP = 64
+private const val THEME_TRANSITION_MS = 350
 
 @Composable
 fun AlbumDetailRoute(
@@ -107,7 +108,7 @@ fun AlbumDetailRoute(
         album = album,
         songs = songs,
         coverArt = viewModel::coverArt,
-        artwork = rememberArtworkColors(viewModel.coverArt(album?.coverArt, true)),
+        artwork = rememberArtworkColors(viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
