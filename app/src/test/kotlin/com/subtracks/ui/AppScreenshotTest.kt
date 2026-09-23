@@ -38,6 +38,7 @@ import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.AlbumDetailScreen
+import com.subtracks.ui.library.ArtistDetailScreen
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.PlaylistDetailScreen
@@ -128,6 +129,24 @@ class AppScreenshotTest {
         }
         awaitText("Everything In Its Right Place")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail.png")
+    }
+
+    @Test
+    fun artistDetail() {
+        composeRule.setContent {
+            SubtracksTheme {
+                ArtistDetailScreen(
+                    artist = Fixtures.artists.first(),
+                    albums = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    onBack = {},
+                    onAlbumClick = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Kid A")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail.png")
     }
 
     @Test
@@ -276,6 +295,7 @@ class AppScreenshotTest {
                     playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
+                    onArtistClick = {},
                     onPlaylistClick = {},
                     onSongClick = {},
                     onSync = {},

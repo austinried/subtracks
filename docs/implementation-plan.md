@@ -24,9 +24,10 @@ Goal: a usable app for browsing a server, end to end.
 - App shell: a root gate that shows the add-server flow until a server exists, then the tabbed library screen matching the Flutter app (icon-only tabs for albums, artists, songs and playlists, with sync and settings actions), plus album and playlist detail screens and a monochrome theme.
 - Source setup: name/address/username/password with token-auth toggle, a connection test, save-and-sync, plus server switching and removal in settings.
 - Library browsing: albums (covers-only grid), artists, songs and playlists paged from Room (`PagingSource`) and rendered with `LazyPagingItems`, with Coil cover art served from stable media URLs.
-- Roborazzi screenshots for the eight new screens, rendered on demand for review (not committed).
+- Artist detail: tapping an artist opens their albums, newest first, and an album can be opened from there.
+- Roborazzi screenshots for the new screens, rendered on demand for review (not committed).
 
-Not done yet in this slice (deliberately): artist detail, cover-art tonal colour extraction, long-press menus, editing an existing server, and per-section sort/filter controls (only album sort is wired).
+Not done yet in this slice (deliberately): cover-art tonal colour extraction, long-press menus, editing an existing server, and per-section sort/filter controls (only album sort is wired).
 
 ## Phase 3 - Playback (in progress)
 

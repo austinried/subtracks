@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -29,6 +30,7 @@ fun ArtistsContent(
     items: LazyPagingItems<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
+    onArtistClick: (Artist) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -70,6 +72,7 @@ fun ArtistsContent(
                                     modifier = Modifier.size(48.dp).clip(CircleShape),
                                 )
                             },
+                            modifier = Modifier.clickable { onArtistClick(artist) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }

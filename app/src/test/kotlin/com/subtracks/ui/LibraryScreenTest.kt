@@ -49,6 +49,7 @@ class LibraryScreenTest {
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
+                    onArtistClick = {},
                     onPlaylistClick = {},
                     onSongClick = {},
                     onSync = {},

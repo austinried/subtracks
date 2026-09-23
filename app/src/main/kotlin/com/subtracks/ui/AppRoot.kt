@@ -37,6 +37,7 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.library.AlbumDetailRoute
+import com.subtracks.ui.library.ArtistDetailRoute
 import com.subtracks.ui.library.LibraryRoute
 import com.subtracks.ui.library.PlaylistDetailRoute
 import com.subtracks.ui.playback.MiniPlayer
@@ -68,9 +69,12 @@ private object Routes {
     const val SETTINGS = "settings"
     const val ADD_SERVER = "add-server"
     const val ALBUM_DETAIL = "album/{albumId}"
+    const val ARTIST_DETAIL = "artist/{artistId}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
 
     fun album(id: String) = "album/${Uri.encode(id)}"
+
+    fun artist(id: String) = "artist/${Uri.encode(id)}"
 
     fun playlist(id: String) = "playlist/${Uri.encode(id)}"
 }
@@ -132,6 +136,7 @@ private fun MainNavigation() {
                 composable(Routes.LIBRARY) {
                     LibraryRoute(
                         onAlbumClick = { album -> navController.navigate(Routes.album(album.id)) },
+                        onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         bottomInset = if (playerVisible) 0.dp else navBarInset,
@@ -150,6 +155,16 @@ private fun MainNavigation() {
                     AlbumDetailRoute(
                         albumId = entry.arguments?.getString("albumId").orEmpty(),
                         onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(
+                    route = Routes.ARTIST_DETAIL,
+                    arguments = listOf(navArgument("artistId") { type = NavType.StringType }),
+                ) { entry ->
+                    ArtistDetailRoute(
+                        artistId = entry.arguments?.getString("artistId").orEmpty(),
+                        onBack = { navController.popBackStack() },
+                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id)) },
                     )
                 }
                 composable(

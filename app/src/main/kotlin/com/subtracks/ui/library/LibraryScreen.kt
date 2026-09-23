@@ -86,6 +86,7 @@ enum class LibraryTab(
 @Composable
 fun LibraryRoute(
     onAlbumClick: (Album) -> Unit,
+    onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
     bottomInset: Dp,
@@ -105,6 +106,7 @@ fun LibraryRoute(
         playlists = viewModel.playlists.collectAsLazyPagingItems(),
         coverArt = viewModel::coverArt,
         onAlbumClick = onAlbumClick,
+        onArtistClick = onArtistClick,
         onPlaylistClick = onPlaylistClick,
         onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
@@ -124,6 +126,7 @@ fun LibraryScreen(
     playlists: LazyPagingItems<Playlist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onAlbumClick: (Album) -> Unit,
+    onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onSongClick: (Int) -> Unit,
     onSync: () -> Unit,
@@ -210,7 +213,7 @@ fun LibraryScreen(
         ) { page ->
             when (LibraryTab.entries[page]) {
                 LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
-                LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset)
+                LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
                 LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
                 LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
             }

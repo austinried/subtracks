@@ -122,6 +122,18 @@ interface LibraryDao {
         albumId: String,
     ): Flow<Album?>
 
+    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND id = :artistId")
+    fun artist(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<Artist?>
+
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE")
+    fun albumsForArtist(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<List<Album>>
+
     @Query("SELECT * FROM playlists WHERE sourceId = :sourceId AND id = :playlistId")
     fun playlist(
         sourceId: Long,
