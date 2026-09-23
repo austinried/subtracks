@@ -108,8 +108,9 @@ fun ArtistDetailScreen(
             }
         }
     }
+    val nameTextStyle = MaterialTheme.typography.headlineLarge
     val imageNameStyle =
-        MaterialTheme.typography.headlineLarge.copy(
+        nameTextStyle.copy(
             shadow =
                 Shadow(
                     color = Color.Black.copy(alpha = 0.8f),
@@ -118,7 +119,7 @@ fun ArtistDetailScreen(
                 ),
         )
     val barNameStyle =
-        MaterialTheme.typography.headlineLarge.copy(
+        nameTextStyle.copy(
             shadow =
                 Shadow(
                     color = Color.Black.copy(alpha = 0.8f * barFraction),
@@ -147,7 +148,7 @@ fun ArtistDetailScreen(
                         text = artist?.name.orEmpty(),
                         style = imageNameStyle,
                         color = Color.White,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
                     )
