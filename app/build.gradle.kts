@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.androidx.room3.sqlite.wrapper)
     implementation(libs.androidx.room3.paging)
     implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.palette)
     implementation(libs.reorderable)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.media3.exoplayer)

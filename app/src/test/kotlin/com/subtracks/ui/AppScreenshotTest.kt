@@ -50,6 +50,7 @@ import com.subtracks.ui.settings.AddSourceScreen
 import com.subtracks.ui.settings.AddSourceState
 import com.subtracks.ui.settings.SettingsScreen
 import com.subtracks.ui.theme.SubtracksTheme
+import com.subtracks.ui.theme.artworkColorsFromSeed
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Before
@@ -120,6 +121,7 @@ class AppScreenshotTest {
                     album = Fixtures.albums.first(),
                     songs = Fixtures.songs,
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     onBack = {},
                     onSongClick = {},
                     playingSongId = Fixtures.songs.first().id,
