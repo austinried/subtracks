@@ -49,11 +49,13 @@ data class PlaybackState(
 private sealed interface QueueUndo {
     val entries: List<QueueEntry>
     val cursor: Long
+    val current: Long?
 }
 
 private data class RemovedUndo(
     override val entries: List<QueueEntry>,
     override val cursor: Long,
+    override val current: Long,
     val position: Long,
     val item: QueueItem?,
 ) : QueueUndo
@@ -61,6 +63,7 @@ private data class RemovedUndo(
 private data class MovedUndo(
     override val entries: List<QueueEntry>,
     override val cursor: Long,
+    override val current: Long,
     val from: Long,
     val to: Long,
 ) : QueueUndo
@@ -68,7 +71,9 @@ private data class MovedUndo(
 private data class ReloadUndo(
     override val entries: List<QueueEntry>,
     override val cursor: Long,
-) : QueueUndo
+) : QueueUndo {
+    override val current: Long? = null
+}
 
 class PlaybackController(
     private val sourceRepository: SourceRepository,
@@ -195,7 +200,7 @@ class PlaybackController(
                 if (removed == null) {
                     ReloadUndo(entries, cursor)
                 } else {
-                    RemovedUndo(entries, cursor, position, removed)
+                    RemovedUndo(entries, cursor, target, position, removed)
                 }
             when {
                 position == current -> {
@@ -242,7 +247,7 @@ class PlaybackController(
         val inWindow = from in windowStart..windowEnd && to in windowStart..windowEnd
         lastEdit =
             if (inWindow) {
-                MovedUndo(entries, cursor, from, to)
+                MovedUndo(entries, cursor, target, from, to)
             } else {
                 ReloadUndo(entries, cursor)
             }
@@ -275,7 +280,11 @@ class PlaybackController(
             val target = undo.cursor.coerceIn(0, restored.size - 1)
             val restoredId = queueRepository.itemAt(restored, target)?.song?.id
             windowJob?.cancel()
-            val canMirror = player.currentItem?.id != null && player.currentItem?.id == restoredId
+            val canMirror =
+                undo.current != null &&
+                    player.currentItem?.id != null &&
+                    player.currentItem?.id == restoredId &&
+                    currentPosition() == undo.current
             val mirrored =
                 when {
                     !canMirror -> {

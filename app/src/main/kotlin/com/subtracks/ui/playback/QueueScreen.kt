@@ -180,10 +180,11 @@ fun QueueScreen(
             val from = dragging ?: break
             val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { items.peek(it.index)?.position == from }
             if (info != null) {
+                val top = info.offset + dragOffset
                 val edge =
                     when {
-                        info.offset < listState.layoutInfo.viewportStartOffset + threshold -> -step
-                        info.offset + info.size > listState.layoutInfo.viewportEndOffset - threshold -> step
+                        top < listState.layoutInfo.viewportStartOffset + threshold -> -step
+                        top + info.size > listState.layoutInfo.viewportEndOffset - threshold -> step
                         else -> 0f
                     }
                 if (edge != 0f) {

@@ -1,13 +1,16 @@
 package com.subtracks.data.repo
 
 import android.content.Context
+import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -75,6 +78,21 @@ class QueuePagingSourceTest {
         }
 
     @Test
+    fun theRefreshKeyUsesTheLoadedPositions() =
+        runTest {
+            val source = repository.pagingSource(initialPosition = 100)
+            val state =
+                PagingState(
+                    pages = listOf(PagingSource.LoadResult.Page(listOf(itemAt(60)), prevKey = 0L, nextKey = 2L)),
+                    anchorPosition = 5,
+                    config = PagingConfig(pageSize = QUEUE_PAGE_SIZE, enablePlaceholders = false),
+                    leadingPlaceholderCount = 0,
+                )
+
+            assertEquals(1L, source.getRefreshKey(state))
+        }
+
+    @Test
     fun anEmptyQueueLoadsNothing() =
         runTest {
             val result = load(repository.pagingSource(0), key = null)
@@ -83,6 +101,29 @@ class QueuePagingSourceTest {
             assertEquals(null, result.nextKey)
             assertEquals(null, result.prevKey)
         }
+
+    private fun itemAt(position: Long) =
+        QueueWindowItem(
+            position,
+            SongListItem(
+                song =
+                    Song(
+                        sourceId = 1,
+                        id = "s$position",
+                        albumId = "al1",
+                        artistId = "ar1",
+                        title = "Song $position",
+                        album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = position,
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    ),
+                coverArt = null,
+            ),
+        )
 
     private suspend fun load(
         source: PagingSource<Long, QueueWindowItem>,
