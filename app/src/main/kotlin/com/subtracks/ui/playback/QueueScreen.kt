@@ -309,7 +309,8 @@ fun QueueScreen(
             dragTo = toPosition
         }
 
-    LaunchedEffect(listState) {
+    LaunchedEffect(listState, centered) {
+        if (!centered) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             val firstVisible = info.visibleItemsInfo.firstOrNull()?.index ?: -1
