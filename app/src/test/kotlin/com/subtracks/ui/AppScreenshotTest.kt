@@ -34,7 +34,6 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
-import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.ui.library.ALBUM_COVER_TAG
@@ -44,6 +43,7 @@ import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.PlaylistDetailScreen
 import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingScreen
+import com.subtracks.ui.playback.QueueRow
 import com.subtracks.ui.playback.QueueScreen
 import com.subtracks.ui.settings.AddSourceScreen
 import com.subtracks.ui.settings.AddSourceState
@@ -224,7 +224,7 @@ class AppScreenshotTest {
             SubtracksTheme {
                 QueueScreen(
                     rows =
-                        Fixtures.songItems.mapIndexed { index, item -> QueueWindowItem(index.toLong(), item) },
+                        Fixtures.songItems.mapIndexed { index, item -> QueueRow(index.toLong(), index.toLong(), item) },
                     ready = true,
                     currentPosition = 1,
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },

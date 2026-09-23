@@ -4,7 +4,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +43,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.SongListItem
 import com.subtracks.data.repo.QUEUE_CHUNK
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueWindowItem
@@ -62,19 +62,28 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val LOAD_THRESHOLD = 5
 
+data class QueueRow(
+    val id: Long,
+    val position: Long,
+    val song: SongListItem,
+)
+
 class QueueViewModel(
     private val queueRepository: QueueRepository,
     private val playbackController: PlaybackController,
 ) : ViewModel() {
-    val rows = mutableStateListOf<QueueWindowItem>()
+    val rows = mutableStateListOf<QueueRow>()
 
     var ready by mutableStateOf(false)
         private set
 
+    private var nextId = 0L
     private val mutex = Mutex()
     private var size = 0L
     private var first = 0L
     private var last = -1L
+
+    private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item)
 
     fun open() {
         viewModelScope.launch {
@@ -88,10 +97,9 @@ class QueueViewModel(
                     val cursor = (playbackController.state.value.position ?: 0L).coerceIn(0, size - 1)
                     val start = (cursor - QUEUE_CHUNK / 2).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
-                    val loaded = queueRepository.range(snapshot, start, end)
-                    rows.addAll(loaded)
-                    first = loaded.firstOrNull()?.position ?: 0
-                    last = loaded.lastOrNull()?.position ?: -1
+                    rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
+                    first = rows.first().position
+                    last = rows.last().position
                 }
                 ready = true
             }
@@ -108,8 +116,8 @@ class QueueViewModel(
                 val from = (first - QUEUE_CHUNK).coerceAtLeast(0)
                 val loaded = queueRepository.range(snapshot, from, first - 1)
                 if (loaded.isEmpty()) return@withLock
-                rows.addAll(0, loaded)
-                first = loaded.first().position
+                rows.addAll(0, loaded.map(::newRow))
+                first = rows.first().position
             }
         }
     }
@@ -125,8 +133,8 @@ class QueueViewModel(
                 val to = (last + QUEUE_CHUNK).coerceAtMost(size - 1)
                 val loaded = queueRepository.range(snapshot, last + 1, to)
                 if (loaded.isEmpty()) return@withLock
-                rows.addAll(loaded)
-                last = loaded.last().position
+                rows.addAll(loaded.map(::newRow))
+                last = rows.last().position
             }
         }
     }
@@ -151,25 +159,59 @@ class QueueViewModel(
         if (from == to) return
         viewModelScope.launch {
             playbackController.move(from, to)
-            mutex.withLock { refresh() }
+            mutex.withLock {
+                // The loaded order already reflects the move, so only the positions need updating.
+                for (i in rows.indices) {
+                    val row = rows[i]
+                    val position = first + i
+                    if (row.position != position) rows[i] = row.copy(position = position)
+                }
+            }
         }
     }
 
     fun remove(position: Long) {
         viewModelScope.launch {
             playbackController.removeAt(position)
-            mutex.withLock { refresh() }
+            mutex.withLock { removeRow(position) }
         }
     }
 
     fun undo() {
         viewModelScope.launch {
             playbackController.undo()
-            mutex.withLock { refresh() }
+            mutex.withLock { reload() }
         }
     }
 
-    private suspend fun refresh() {
+    private suspend fun removeRow(position: Long) {
+        val index = rows.indexOfFirst { it.position == position }
+        if (index < 0) {
+            reload()
+            return
+        }
+        rows.removeAt(index)
+        for (i in index until rows.size) {
+            val row = rows[i]
+            rows[i] = row.copy(position = row.position - 1)
+        }
+        val snapshot = queueRepository.snapshot()
+        size = snapshot.size
+        if (rows.isEmpty()) {
+            first = 0
+            last = -1
+            return
+        }
+        first = rows.first().position
+        last = rows.last().position
+        val next = last + 1
+        if (next <= size - 1) {
+            queueRepository.range(snapshot, next, next).firstOrNull()?.let { rows.add(newRow(it)) }
+            last = rows.last().position
+        }
+    }
+
+    private suspend fun reload() {
         val snapshot = queueRepository.snapshot()
         size = snapshot.size
         if (size == 0L) {
@@ -178,13 +220,20 @@ class QueueViewModel(
             last = -1
             return
         }
-        val start = first.coerceIn(0, size - 1)
+        val start = (rows.firstOrNull()?.position ?: 0L).coerceIn(0, size - 1)
         val end = (start + rows.size.coerceAtLeast(QUEUE_CHUNK) - 1).coerceAtMost(size - 1)
         val loaded = queueRepository.range(snapshot, start, end)
+        val ids = rows.groupBy { it.song.song.id }.mapValues { entry -> entry.value.map { it.id }.toMutableList() }
+        val updated =
+            loaded.map { item ->
+                val reused = ids[item.item.song.id]
+                val id = if (!reused.isNullOrEmpty()) reused.removeAt(0) else nextId++
+                QueueRow(id, item.position, item.item)
+            }
         rows.clear()
-        rows.addAll(loaded)
-        first = loaded.firstOrNull()?.position ?: start
-        last = loaded.lastOrNull()?.position ?: -1
+        rows.addAll(updated)
+        first = rows.first().position
+        last = rows.last().position
     }
 }
 
@@ -218,7 +267,7 @@ fun QueueRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueScreen(
-    rows: List<QueueWindowItem>,
+    rows: List<QueueRow>,
     ready: Boolean,
     currentPosition: Long?,
     coverArt: (String?, Boolean) -> CoverArtRef?,
@@ -237,12 +286,25 @@ fun QueueScreen(
     val scope = rememberCoroutineScope()
     var dragFrom by remember { mutableStateOf<Long?>(null) }
     var dragTo by remember { mutableStateOf<Long?>(null) }
+    var centered by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ready, rows.size, currentPosition) {
+        if (centered || !ready || rows.isEmpty()) return@LaunchedEffect
+        val position = currentPosition ?: return@LaunchedEffect
+        val index = rows.indexOfFirst { it.position == position }
+        if (index >= 0) {
+            listState.scrollToItem(index)
+            centered = true
+        }
+    }
 
     val reorderState =
         rememberReorderableLazyListState(listState) { from, to ->
+            val fromPosition = rows.getOrNull(from.index)?.position
+            val toPosition = rows.getOrNull(to.index)?.position
             onReorder(from.index, to.index)
-            dragFrom = from.key as? Long
-            dragTo = to.key as? Long
+            dragFrom = fromPosition
+            dragTo = toPosition
         }
 
     LaunchedEffect(listState) {
@@ -294,20 +356,20 @@ fun QueueScreen(
                     modifier = Modifier.padding(padding).fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
-                    items(count = rows.size, key = { rows[it].position }) { index ->
+                    items(count = rows.size, key = { rows[it].id }) { index ->
                         val row = rows[index]
                         ReorderableItem(
                             state = reorderState,
-                            key = row.position,
+                            key = row.id,
                             animateItemModifier =
                                 Modifier.animateItem(
-                                    fadeInSpec = null,
-                                    fadeOutSpec = null,
+                                    fadeInSpec = tween(150),
+                                    fadeOutSpec = tween(150),
                                     placementSpec = tween(200),
                                 ),
                         ) { isDragging ->
-                            QueueRow(
-                                item = row,
+                            QueueRowItem(
+                                row = row,
                                 isPlaying = row.position == currentPosition,
                                 floating = isDragging,
                                 coverArt = coverArt,
@@ -341,8 +403,8 @@ fun QueueScreen(
 }
 
 @Composable
-private fun QueueRow(
-    item: QueueWindowItem,
+private fun QueueRowItem(
+    row: QueueRow,
     isPlaying: Boolean,
     floating: Boolean,
     coverArt: (String?, Boolean) -> CoverArtRef?,
@@ -351,8 +413,8 @@ private fun QueueRow(
     onRemove: () -> Unit,
 ) {
     SongRow(
-        song = item.item.song,
-        coverArtId = item.item.coverArt,
+        song = row.song.song,
+        coverArtId = row.song.coverArt,
         coverArt = coverArt,
         isPlaying = isPlaying,
         trailingContent = {
