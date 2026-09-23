@@ -71,10 +71,12 @@ fun ArtistDetailRoute(
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
     val art by viewModel.art.collectAsStateWithLifecycle()
+    val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     ArtistDetailScreen(
         artist = artist,
         albums = albums,
         art = art,
+        artThumbnail = artThumbnail,
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
@@ -87,6 +89,7 @@ fun ArtistDetailScreen(
     artist: Artist?,
     albums: List<Album>,
     art: CoverArtRef?,
+    artThumbnail: CoverArtRef? = null,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
@@ -140,6 +143,7 @@ fun ArtistDetailScreen(
                     CoverArt(
                         ref = art,
                         name = artist?.name.orEmpty(),
+                        thumbnailRef = artThumbnail,
                         modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                     )
                     Text(

@@ -33,22 +33,34 @@ class ArtistDetailViewModel(
     private val _art = MutableStateFlow<CoverArtRef?>(null)
     val art: StateFlow<CoverArtRef?> = _art
 
+    private val _artThumbnail = MutableStateFlow<CoverArtRef?>(null)
+    val artThumbnail: StateFlow<CoverArtRef?> = _artThumbnail
+
     init {
         viewModelScope.launch {
             artist
                 .filterNotNull()
                 .distinctUntilChangedBy { it.id }
-                .collectLatest { loaded -> _art.value = resolveArt(loaded) }
+                .collectLatest { loaded ->
+                    val (full, thumbnail) = resolveArt(loaded)
+                    _art.value = full
+                    _artThumbnail.value = thumbnail
+                }
         }
     }
 
-    private suspend fun resolveArt(artist: Artist): CoverArtRef? {
+    private suspend fun resolveArt(artist: Artist): Pair<CoverArtRef?, CoverArtRef?> {
         repeat(3) { attempt ->
-            val ref = sourceRepository.artistArt(artist.id) ?: sourceRepository.coverArt(artist.coverArt)
-            if (ref != null) return ref
+            val full = sourceRepository.artistArt(artist.id) ?: sourceRepository.coverArt(artist.coverArt)
+            if (full != null) {
+                val thumbnail =
+                    sourceRepository.artistArt(artist.id, thumbnail = true)
+                        ?: sourceRepository.coverArt(artist.coverArt, thumbnail = true)
+                return full to thumbnail
+            }
             if (attempt < 2) delay(300)
         }
-        return null
+        return null to null
     }
 
     fun coverArt(
