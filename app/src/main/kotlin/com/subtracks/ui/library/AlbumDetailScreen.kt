@@ -91,7 +91,7 @@ import kotlin.math.roundToInt
 private const val DOT = "\u00B7"
 private const val GRADIENT_SCREENS = 2.0f
 private const val FADE_DISTANCE_DP = 64
-private const val THEME_TRANSITION_MS = 350
+private const val THEME_TRANSITION_MS = 100
 
 @Composable
 fun AlbumDetailRoute(
