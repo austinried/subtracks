@@ -19,10 +19,14 @@ import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
 import coil3.toBitmap
 import com.subtracks.data.model.CoverArtRef
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+private const val SEED_ART_SIZE_PX = 128
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -97,16 +101,24 @@ private fun rememberArtworkSeed(ref: CoverArtRef?): State<Int?> {
         value = null
         val art = ref ?: return@produceState
         value =
-            withContext(Dispatchers.Default) {
-                val request =
-                    ImageRequest
-                        .Builder(context)
-                        .data(art.url)
-                        .memoryCacheKey(art.cacheKey)
-                        .diskCacheKey(art.cacheKey)
-                        .build()
-                val image = (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
-                image?.let { seedFrom(it.toBitmap()) }
+            withContext(Dispatchers.IO) {
+                try {
+                    val request =
+                        ImageRequest
+                            .Builder(context)
+                            .data(art.url)
+                            .memoryCacheKey(art.cacheKey)
+                            .diskCacheKey(art.cacheKey)
+                            .size(SEED_ART_SIZE_PX)
+                            .allowHardware(false)
+                            .build()
+                    val image = (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
+                    image?.let { seedFrom(it.toBitmap()) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    null
+                }
             }
     }
 }

@@ -74,7 +74,7 @@ fun AlbumDetailRoute(
         album = album,
         songs = songs,
         coverArt = viewModel::coverArt,
-        artwork = rememberArtworkColors(viewModel.coverArt(album?.coverArt, false)),
+        artwork = rememberArtworkColors(viewModel.coverArt(album?.coverArt, true)),
         onBack = onBack,
         onSongClick = viewModel::play,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
