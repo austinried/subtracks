@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.subtracks.data.model.CoverArtRef
 
 @Composable
@@ -37,7 +38,7 @@ fun CoverArt(
         )
         if (thumbnailRef != null && thumbnailRef != ref) {
             AsyncImage(
-                model = remember(thumbnailRef) { imageRequest(context, thumbnailRef) },
+                model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -45,7 +46,7 @@ fun CoverArt(
         }
         if (ref != null) {
             AsyncImage(
-                model = remember(ref) { imageRequest(context, ref) },
+                model = remember(ref) { imageRequest(context, ref, crossfade = thumbnailRef != null) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -57,12 +58,14 @@ fun CoverArt(
 private fun imageRequest(
     context: Context,
     ref: CoverArtRef,
+    crossfade: Boolean,
 ): ImageRequest =
     ImageRequest
         .Builder(context)
         .data(ref.url)
         .memoryCacheKey(ref.cacheKey)
         .diskCacheKey(ref.cacheKey)
+        .crossfade(crossfade)
         .build()
 
 @Composable
