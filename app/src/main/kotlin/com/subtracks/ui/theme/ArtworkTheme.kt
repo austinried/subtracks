@@ -33,6 +33,7 @@ import kotlin.random.Random
 private const val SEED_ART_SIZE_PX = 128
 private const val GRADIENT_FADE_START = 1.3f / 2.0f
 private const val BLOB_ZONE = 0.62f
+private const val ACCENT_MAX_LUMINANCE = 0.34f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -105,9 +106,26 @@ fun artworkColorsFromSeeds(
         scheme = scheme,
         gradientHigh = tone(hue, (s * 0.85f).coerceAtMost(0.65f), 0.30f),
         gradientLow = tone(hue, s * 0.45f, 0.04f),
-        accents = listOf(tone(hue, s, 0.72f), secondary),
+        accents =
+            listOf(
+                tone(hue, s, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
+                secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
+            ),
         blobSeed = primarySeed,
     )
+}
+
+private fun Color.withMaxLuminance(max: Float): Color {
+    if (luminance() <= max) return this
+    val (h, s, initial) = toHsl()
+    var lightness = initial
+    var color = this
+    var guard = 0
+    while (color.luminance() > max && guard++ < 30) {
+        lightness = (lightness - 0.02f).coerceAtLeast(0.05f)
+        color = Color.hsl(h, s, lightness)
+    }
+    return color
 }
 
 fun ArtworkColors.gradientColorAt(fraction: Float): Color {
