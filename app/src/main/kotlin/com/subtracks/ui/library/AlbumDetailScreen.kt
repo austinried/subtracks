@@ -1,19 +1,27 @@
 package com.subtracks.ui.library
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -23,6 +31,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -33,13 +42,21 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
@@ -55,9 +72,12 @@ import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToInt
 
-private val ART_SIZE = 240.dp
 private const val DOT = "\u00B7"
+private const val GRADIENT_SCREENS = 1.5f
+private const val FADE_DISTANCE_DP = 96
+private const val CONTROLS_BLOCK_DP = 64
 
 @Composable
 fun AlbumDetailRoute(
@@ -98,23 +118,73 @@ fun AlbumDetailScreen(
 ) {
     ArtworkTheme(artwork) {
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
-            Box(modifier.fillMaxSize()) {
-                HeroGradient(artwork, Modifier.fillMaxSize())
+            BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
+                val listState = rememberLazyListState()
+                val density = LocalDensity.current
+                val statusBarTop = WindowInsets.statusBars.getTop(density)
+                val barHeightPx = statusBarTop + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
+                val controlsBlockPx = with(density) { CONTROLS_BLOCK_DP.dp.toPx() }
+                val fadeDistancePx = with(density) { FADE_DISTANCE_DP.dp.toPx() }
+
+                var headerHeightPx by remember { mutableFloatStateOf(0f) }
+                var rowHeightPx by remember { mutableFloatStateOf(0f) }
+                val scrollPx by remember {
+                    derivedStateOf {
+                        val index = listState.firstVisibleItemIndex
+                        val before = if (index <= 0) 0f else headerHeightPx + rowHeightPx * (index - 1)
+                        (before + listState.firstVisibleItemScrollOffset).coerceAtLeast(0f)
+                    }
+                }
+                val barFraction by remember {
+                    derivedStateOf {
+                        if (headerHeightPx == 0f) {
+                            0f
+                        } else {
+                            val end = headerHeightPx - controlsBlockPx - barHeightPx
+                            val start = end - fadeDistancePx
+                            ((scrollPx - start) / (end - start)).coerceIn(0f, 1f)
+                        }
+                    }
+                }
+                val gradientAlpha by animateFloatAsState(
+                    targetValue = if (artwork != null) 1f else 0f,
+                    animationSpec = tween(durationMillis = 600),
+                    label = "gradientAlpha",
+                )
+
+                HeroGradient(
+                    colors = artwork,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(maxHeight * GRADIENT_SCREENS)
+                            .offset { IntOffset(0, -scrollPx.roundToInt()) }
+                            .alpha(gradientAlpha),
+                )
+
                 Scaffold(
                     containerColor = Color.Transparent,
                     topBar = {
                         TopAppBar(
-                            title = {},
+                            title = {
+                                Text(
+                                    text = album?.name.orEmpty(),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.alpha(barFraction),
+                                )
+                            },
                             navigationIcon = {
-                                IconButton(onClick = onBack) {
+                                IconButton(onClick = onBack, modifier = Modifier.alpha(barFraction)) {
                                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                                 }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                            modifier = Modifier.background(Color.Black.copy(alpha = barFraction)),
                         )
                     },
                 ) { padding ->
-                    LazyColumn(Modifier.padding(padding).fillMaxSize()) {
+                    LazyColumn(state = listState, modifier = Modifier.padding(padding).fillMaxSize()) {
                         item {
                             AlbumHeader(
                                 album = album,
@@ -124,13 +194,17 @@ fun AlbumDetailScreen(
                                 onShuffle = onShuffle,
                                 onDownload = onDownload,
                                 onMore = onMore,
+                                modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
                             )
                         }
                         itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
                             SongRow(
                                 song = song,
                                 isPlaying = song.id == playingSongId,
-                                modifier = Modifier.clickable { onSongClick(index) },
+                                modifier =
+                                    Modifier
+                                        .onSizeChanged { rowHeightPx = it.height.toFloat() }
+                                        .clickable { onSongClick(index) },
                             )
                         }
                     }
@@ -149,15 +223,16 @@ private fun AlbumHeader(
     onShuffle: () -> Unit,
     onDownload: () -> Unit,
     onMore: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(
             ref = coverArt(album?.coverArt, false),
             name = album?.name.orEmpty(),
-            modifier = Modifier.size(ART_SIZE).clip(RoundedCornerShape(8.dp)),
+            modifier = Modifier.fillMaxWidth(0.78f).aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
         )
         Spacer(Modifier.height(20.dp))
         Text(
@@ -196,7 +271,7 @@ private fun AlbumHeader(
                 Spacer(Modifier.width(8.dp))
                 Text("Play")
             }
-            IconButton(onClick = onShuffle, enabled = hasSongs) {
+            FilledIconButton(onClick = onShuffle, enabled = hasSongs) {
                 Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
             }
             IconButton(onClick = onMore) {

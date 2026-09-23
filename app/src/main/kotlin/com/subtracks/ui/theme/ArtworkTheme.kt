@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private const val SEED_ART_SIZE_PX = 128
+private const val GRADIENT_FADE_START = 0.8f / 1.5f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
@@ -37,54 +38,53 @@ data class ArtworkColors(
 
 fun artworkColorsFromSeed(seed: Int): ArtworkColors {
     val (hue, saturation, _) = Color(seed or 0xFF000000.toInt()).toHsl()
-    val chroma = saturation.coerceIn(0.30f, 0.72f)
-    val secondaryHue = (hue + 60f) % 360f
+    val s = saturation.coerceAtMost(0.85f)
 
     fun tone(
         h: Float,
-        s: Float,
+        sat: Float,
         l: Float,
-    ) = Color.hsl(h % 360f, s.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
+    ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
 
-    val primary = tone(hue, chroma, 0.80f)
-    val background = tone(hue, (saturation * 0.7f).coerceIn(0.06f, 0.22f), 0.06f)
-    val onBackground = tone(hue, 0.08f, 0.95f)
+    val primary = tone(hue, s, 0.62f)
+    val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
+    val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
     val scheme =
         darkColorScheme(
             primary = primary,
-            onPrimary = tone(hue, chroma * 0.6f, 0.14f),
-            primaryContainer = tone(hue, chroma, 0.32f),
-            onPrimaryContainer = tone(hue, chroma * 0.5f, 0.92f),
-            secondary = tone(hue, chroma * 0.5f, 0.78f),
-            onSecondary = tone(hue, chroma * 0.4f, 0.14f),
-            secondaryContainer = tone(hue, chroma * 0.45f, 0.30f),
-            onSecondaryContainer = tone(hue, chroma * 0.4f, 0.90f),
-            tertiary = tone(secondaryHue, chroma, 0.80f),
-            onTertiary = tone(secondaryHue, chroma * 0.6f, 0.14f),
-            tertiaryContainer = tone(secondaryHue, chroma, 0.30f),
-            onTertiaryContainer = tone(secondaryHue, chroma * 0.5f, 0.90f),
+            onPrimary = tone(hue, s * 0.6f, 0.12f),
+            primaryContainer = tone(hue, s, 0.28f),
+            onPrimaryContainer = tone(hue, s * 0.7f, 0.92f),
+            secondary = tone(hue, s * 0.6f, 0.66f),
+            onSecondary = tone(hue, s * 0.5f, 0.12f),
+            secondaryContainer = tone(hue, s * 0.55f, 0.26f),
+            onSecondaryContainer = tone(hue, s * 0.5f, 0.90f),
+            tertiary = tone(hue, s * 0.9f, 0.72f),
+            onTertiary = tone(hue, s * 0.6f, 0.12f),
+            tertiaryContainer = tone(hue, s * 0.8f, 0.28f),
+            onTertiaryContainer = tone(hue, s * 0.6f, 0.90f),
             background = background,
             onBackground = onBackground,
             surface = background,
             onSurface = onBackground,
             surfaceTint = primary,
-            surfaceVariant = tone(hue, 0.15f, 0.17f),
-            onSurfaceVariant = tone(hue, 0.12f, 0.78f),
-            surfaceContainerLowest = tone(hue, 0.16f, 0.04f),
-            surfaceContainerLow = tone(hue, 0.16f, 0.08f),
-            surfaceContainer = tone(hue, 0.16f, 0.10f),
-            surfaceContainerHigh = tone(hue, 0.15f, 0.14f),
-            surfaceContainerHighest = tone(hue, 0.14f, 0.18f),
-            outline = tone(hue, 0.10f, 0.55f),
-            outlineVariant = tone(hue, 0.12f, 0.28f),
+            surfaceVariant = tone(hue, s * 0.25f, 0.17f),
+            onSurfaceVariant = tone(hue, s * 0.18f, 0.78f),
+            surfaceContainerLowest = tone(hue, s * 0.25f, 0.04f),
+            surfaceContainerLow = tone(hue, s * 0.25f, 0.08f),
+            surfaceContainer = tone(hue, s * 0.25f, 0.10f),
+            surfaceContainerHigh = tone(hue, s * 0.22f, 0.14f),
+            surfaceContainerHighest = tone(hue, s * 0.20f, 0.18f),
+            outline = tone(hue, s * 0.15f, 0.55f),
+            outlineVariant = tone(hue, s * 0.18f, 0.28f),
         )
 
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (saturation * 0.9f).coerceIn(0.30f, 0.60f), 0.24f),
-        gradientLow = tone(hue, 0.12f, 0.04f),
-        accents = listOf(tone(hue, chroma, 0.60f), tone(secondaryHue, chroma, 0.55f)),
+        gradientHigh = tone(hue, (s * 0.7f).coerceAtMost(0.55f), 0.25f),
+        gradientLow = tone(hue, s * 0.20f, 0.04f),
+        accents = listOf(tone(hue, s, 0.55f), tone(hue, s * 0.7f, 0.42f)),
     )
 }
 
@@ -169,9 +169,9 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.35f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.15f, size.height * 0.08f),
-                        radius = size.width * 0.95f,
+                        colors = listOf(accent.copy(alpha = 0.40f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.15f, size.height * 0.06f),
+                        radius = size.width * 0.85f,
                     ),
             )
         }
@@ -179,9 +179,9 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.30f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.95f, size.height * 0.35f),
-                        radius = size.width * 0.9f,
+                        colors = listOf(accent.copy(alpha = 0.32f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.90f, size.height * 0.24f),
+                        radius = size.width * 0.80f,
                     ),
             )
         }
@@ -189,8 +189,19 @@ fun HeroGradient(
             brush =
                 Brush.radialGradient(
                     colors = listOf(high.copy(alpha = 0.45f), high.copy(alpha = 0f)),
-                    center = Offset(size.width * 0.55f, size.height * 0.85f),
-                    radius = size.width * 1.1f,
+                    center = Offset(size.width * 0.55f, size.height * 0.45f),
+                    radius = size.width * 0.90f,
+                ),
+        )
+        drawRect(
+            brush =
+                Brush.verticalGradient(
+                    colorStops =
+                        arrayOf(
+                            0f to Color.Transparent,
+                            GRADIENT_FADE_START to Color.Transparent,
+                            1f to Color.Black,
+                        ),
                 ),
         )
     }
