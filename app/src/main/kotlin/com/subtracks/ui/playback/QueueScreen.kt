@@ -59,6 +59,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.repo.QUEUE_PAGE_SIZE
 import com.subtracks.data.repo.QueuePagingSource
@@ -192,6 +193,7 @@ fun QueueScreen(
         val threshold = with(density) { 72.dp.toPx() }
         val step = with(density) { 12.dp.toPx() }
         while (true) {
+            val from = dragging ?: break
             val start = listState.layoutInfo.viewportStartOffset.toFloat()
             val end = listState.layoutInfo.viewportEndOffset.toFloat()
             val edge =
@@ -200,7 +202,12 @@ fun QueueScreen(
                     fingerY > end - threshold -> step
                     else -> 0f
                 }
-            if (edge != 0f) listState.scrollBy(edge)
+            if (edge != 0f) {
+                val next = slotOffset(listState, items, rowHeight, from)?.minus(edge)
+                if (next != null && next + rowHeight > start + 1f && next < end - 1f) {
+                    listState.scrollBy(edge)
+                }
+            }
             delay(16)
         }
     }
@@ -269,7 +276,7 @@ fun QueueScreen(
                     modifier = Modifier.padding(padding).fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
-                    items(count = items.itemCount) { index ->
+                    items(count = items.itemCount, key = items.itemKey { it.position }) { index ->
                         val item = items[index]
                         if (item != null) {
                             val active = settle
