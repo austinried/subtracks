@@ -36,10 +36,10 @@ private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
-private const val HERO_DARKEN_MAX = 0.8f
-private const val DARKEN_START_SCREENS = 0.5f
-private const val DARKEN_END_SCREENS = 1.5f
-private const val DARKEN_KNEE = 0.2f
+private const val HERO_DARKEN_MAX = 0.85f
+private const val DARKEN_START_SCREENS = 0.45f
+private const val DARKEN_END_SCREENS = 1.0f
+private const val DARKEN_KNEE = 0.15f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
