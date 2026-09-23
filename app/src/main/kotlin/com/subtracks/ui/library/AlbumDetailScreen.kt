@@ -171,7 +171,7 @@ fun AlbumDetailScreen(
                         val mid = scrollPx + barHeightPx / 2f
                         lerp(
                             it.gradientColorAt(mid / gradientHeightPx),
-                            Color.Black,
+                            it.darkPrimary,
                             heroDarkenAt(mid, with(density) { maxHeight.toPx() }),
                         )
                     } ?: Color.Black

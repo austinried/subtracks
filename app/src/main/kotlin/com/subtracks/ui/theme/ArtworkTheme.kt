@@ -36,16 +36,17 @@ private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.34f
-private const val HERO_DARKEN_MAX = 0.85f
-private const val DARKEN_START_SCREENS = 0.45f
-private const val DARKEN_END_SCREENS = 1.0f
-private const val DARKEN_KNEE = 0.15f
+private const val HERO_DARKEN_MAX = 1.0f
+private const val DARKEN_START_SCREENS = 0.5f
+private const val DARKEN_END_SCREENS = 1.5f
+private const val DARKEN_KNEE = 0.2f
 
 data class ArtworkColors(
     val scheme: ColorScheme,
     val gradientHigh: Color,
     val gradientLow: Color,
     val accents: List<Color>,
+    val darkPrimary: Color,
     val blobSeed: Int,
 )
 
@@ -117,6 +118,7 @@ fun artworkColorsFromSeeds(
                 tone(hue, s, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
                 secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
             ),
+        darkPrimary = tone(hue, s * 0.8f, 0.10f),
         blobSeed = primarySeed,
     )
 }
@@ -246,6 +248,7 @@ fun HeroGradient(
     val high = colors?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh
     val low = colors?.gradientLow ?: MaterialTheme.colorScheme.background
     val accents = colors?.accents.orEmpty()
+    val dark = colors?.darkPrimary ?: MaterialTheme.colorScheme.background
     val seed = colors?.blobSeed ?: 0
 
     Canvas(modifier) {
@@ -292,8 +295,8 @@ fun HeroGradient(
                     colorStops =
                         arrayOf(
                             0f to Color.Transparent,
-                            DARKEN_KNEE to Color.Black.copy(alpha = HERO_DARKEN_MAX * 0.5f),
-                            1f to Color.Black.copy(alpha = HERO_DARKEN_MAX),
+                            DARKEN_KNEE to dark.copy(alpha = HERO_DARKEN_MAX * 0.5f),
+                            1f to dark.copy(alpha = HERO_DARKEN_MAX),
                         ),
                     startY = darkenStart,
                     endY = darkenEnd,
