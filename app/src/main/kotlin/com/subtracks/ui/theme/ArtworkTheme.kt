@@ -1,6 +1,5 @@
 package com.subtracks.ui.theme
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -17,21 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
-import androidx.palette.graphics.Palette
-import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.allowHardware
-import coil3.toBitmap
 import com.subtracks.data.model.CoverArtRef
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlin.math.abs
 import kotlin.random.Random
 
-private const val SEED_ART_SIZE_PX = 128
 private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
@@ -185,65 +173,8 @@ fun rememberArtworkColors(
 private fun rememberArtworkSeed(ref: CoverArtRef?): State<Pair<Int, Int?>?> {
     val context = LocalPlatformContext.current
     return produceState<Pair<Int, Int?>?>(initialValue = null, ref?.cacheKey) {
-        value = null
-        val art = ref ?: return@produceState
-        value =
-            withContext(Dispatchers.IO) {
-                try {
-                    val request =
-                        ImageRequest
-                            .Builder(context)
-                            .data(art.url)
-                            .memoryCacheKey(art.cacheKey)
-                            .diskCacheKey(art.cacheKey)
-                            .size(SEED_ART_SIZE_PX)
-                            .allowHardware(false)
-                            .build()
-                    val image = (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
-                    image?.let { seedsFrom(it.toBitmap()) }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    null
-                }
-            }
+        value = ref?.let { ArtworkSeedCache.load(context, it).await() }
     }
-}
-
-private fun seedsFrom(bitmap: Bitmap): Pair<Int, Int?>? {
-    val palette = Palette.from(bitmap).generate()
-    val primary =
-        palette.vibrantSwatch
-            ?: palette.lightVibrantSwatch
-            ?: palette.darkVibrantSwatch
-            ?: palette.mutedSwatch
-            ?: palette.dominantSwatch
-            ?: return null
-    val primaryColor = Color(primary.rgb or 0xFF000000.toInt())
-    val secondary =
-        listOfNotNull(
-            palette.vibrantSwatch,
-            palette.lightVibrantSwatch,
-            palette.darkVibrantSwatch,
-            palette.mutedSwatch,
-            palette.lightMutedSwatch,
-            palette.darkMutedSwatch,
-            palette.dominantSwatch,
-        ).map { it.rgb }
-            .distinct()
-            .filter { it != primary.rgb }
-            .maxByOrNull { distinctness(primaryColor, Color(it or 0xFF000000.toInt())) }
-    return primary.rgb to secondary
-}
-
-private fun distinctness(
-    a: Color,
-    b: Color,
-): Float {
-    val ha = a.toHsl().first
-    val hb = b.toHsl().first
-    val hueDistance = minOf(abs(ha - hb), 360f - abs(ha - hb)) / 180f
-    return hueDistance + abs(a.luminance() - b.luminance()) * 2f
 }
 
 @Composable
@@ -340,7 +271,7 @@ fun heroDarkenAt(
     }
 }
 
-private fun Color.toHsl(): Triple<Float, Float, Float> {
+internal fun Color.toHsl(): Triple<Float, Float, Float> {
     val max = maxOf(red, green, blue)
     val min = minOf(red, green, blue)
     val lightness = (max + min) / 2f

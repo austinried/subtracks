@@ -28,6 +28,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
+import com.subtracks.ui.theme.PrefetchArtworkSeeds
 
 const val ALBUM_COVER_TAG = "album-cover"
 
@@ -62,8 +63,10 @@ fun AlbumsContent(
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
                     val album = items[index]
                     if (album != null) {
+                        val art = coverArt(album.coverArt, true)
+                        PrefetchArtworkSeeds(art)
                         CoverArt(
-                            ref = coverArt(album.coverArt, true),
+                            ref = art,
                             name = album.name,
                             modifier =
                                 Modifier

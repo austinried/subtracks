@@ -53,6 +53,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.rememberViewportFill
+import com.subtracks.ui.theme.PrefetchArtworkSeeds
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -152,6 +153,7 @@ fun ArtistDetailScreen(
                 }
             }
             itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
+                PrefetchArtworkSeeds(coverArt(album.coverArt, true))
                 Column(
                     modifier =
                         Modifier
