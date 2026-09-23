@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalDensity
@@ -51,6 +52,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 private val ART_HEIGHT = 420.dp
+private val SCRIM_HEIGHT = 180.dp
 private val TITLE_INSET = 16.dp
 private val FADE_LEAD = 24.dp
 
@@ -133,6 +135,17 @@ fun ArtistDetailScreen(
                         ref = art,
                         name = artist?.name.orEmpty(),
                         modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(SCRIM_HEIGHT)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent),
+                                    ),
+                                ),
                     )
                     Text(
                         text = artist?.name.orEmpty(),
