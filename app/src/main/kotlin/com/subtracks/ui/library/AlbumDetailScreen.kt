@@ -137,7 +137,7 @@ fun AlbumDetailScreen(
 
                 var headerHeightPx by remember { mutableFloatStateOf(0f) }
                 var rowHeightPx by remember { mutableFloatStateOf(0f) }
-                var titleBottomPx by remember { mutableFloatStateOf(0f) }
+                var controlsTopPx by remember { mutableFloatStateOf(0f) }
                 val scrollPx by remember {
                     derivedStateOf {
                         val index = listState.firstVisibleItemIndex
@@ -147,10 +147,10 @@ fun AlbumDetailScreen(
                 }
                 val barFraction by remember {
                     derivedStateOf {
-                        if (titleBottomPx <= 0f || fadeDistancePx <= 0f) {
+                        if (controlsTopPx <= 0f || fadeDistancePx <= 0f) {
                             0f
                         } else {
-                            ((scrollPx - (titleBottomPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
+                            ((scrollPx - (controlsTopPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
                         }
                     }
                 }
@@ -189,9 +189,9 @@ fun AlbumDetailScreen(
                                 onDownload = onDownload,
                                 onMore = onMore,
                                 topInset = statusBarDp,
-                                titleModifier =
+                                controlsModifier =
                                     Modifier.onGloballyPositioned {
-                                        titleBottomPx = it.positionInParent().y + it.size.height
+                                        controlsTopPx = it.positionInParent().y
                                     },
                                 modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
                             )
@@ -272,7 +272,7 @@ private fun AlbumHeader(
     onDownload: () -> Unit,
     onMore: () -> Unit,
     topInset: Dp,
-    titleModifier: Modifier = Modifier,
+    controlsModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -294,7 +294,6 @@ private fun AlbumHeader(
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = titleModifier,
         )
         val subtitle =
             listOfNotNull(
@@ -314,6 +313,7 @@ private fun AlbumHeader(
         }
         Spacer(Modifier.height(20.dp))
         Row(
+            modifier = controlsModifier,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

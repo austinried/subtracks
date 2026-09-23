@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -45,8 +46,7 @@ fun artworkColorsFromSeed(seed: Int): ArtworkColors {
         sat: Float,
         l: Float,
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
-
-    val primary = tone(hue, s, 0.62f)
+    val primary = toneMaxLuminance(hue, s, 0.62f, 0.45f)
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
@@ -82,10 +82,26 @@ fun artworkColorsFromSeed(seed: Int): ArtworkColors {
 
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (s * 0.8f).coerceAtMost(0.60f), 0.30f),
-        gradientLow = tone(hue, s * 0.25f, 0.04f),
-        accents = listOf(tone(hue, s, 0.78f), tone(hue, s * 0.9f, 0.20f)),
+        gradientHigh = tone(hue, (s * 0.6f).coerceAtMost(0.50f), 0.22f),
+        gradientLow = tone(hue, s * 0.30f, 0.03f),
+        accents = listOf(tone(hue, s * 0.75f, 0.95f), tone(hue, s, 0.08f)),
     )
+}
+
+private fun toneMaxLuminance(
+    h: Float,
+    s: Float,
+    lightness: Float,
+    maxLuminance: Float,
+): Color {
+    var l = lightness
+    var color = Color.hsl(h % 360f, s.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
+    var guard = 0
+    while (color.luminance() > maxLuminance && guard++ < 30) {
+        l = (l - 0.02f).coerceAtLeast(0.05f)
+        color = Color.hsl(h % 360f, s.coerceIn(0f, 1f), l)
+    }
+    return color
 }
 
 @Composable
@@ -169,9 +185,9 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.55f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.18f, size.height * 0.03f),
-                        radius = size.width * 0.95f,
+                        colors = listOf(accent.copy(alpha = 0.85f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.20f, size.height * 0.00f),
+                        radius = size.width * 0.60f,
                     ),
             )
         }
@@ -179,9 +195,9 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.50f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.92f, size.height * 0.28f),
-                        radius = size.width * 0.85f,
+                        colors = listOf(accent.copy(alpha = 0.80f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.90f, size.height * 0.26f),
+                        radius = size.width * 0.70f,
                     ),
             )
         }
@@ -189,18 +205,18 @@ fun HeroGradient(
             drawRect(
                 brush =
                     Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.30f), accent.copy(alpha = 0f)),
-                        center = Offset(size.width * 0.85f, size.height * 0.02f),
-                        radius = size.width * 0.70f,
+                        colors = listOf(accent.copy(alpha = 0.55f), accent.copy(alpha = 0f)),
+                        center = Offset(size.width * 0.82f, size.height * 0.00f),
+                        radius = size.width * 0.45f,
                     ),
             )
         }
         drawRect(
             brush =
                 Brush.radialGradient(
-                    colors = listOf(high.copy(alpha = 0.45f), high.copy(alpha = 0f)),
-                    center = Offset(size.width * 0.35f, size.height * 0.52f),
-                    radius = size.width * 0.95f,
+                    colors = listOf(high.copy(alpha = 0.55f), high.copy(alpha = 0f)),
+                    center = Offset(size.width * 0.40f, size.height * 0.50f),
+                    radius = size.width * 0.80f,
                 ),
         )
         drawRect(
