@@ -29,6 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -148,7 +150,10 @@ fun ArtistDetailScreen(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = null,
                             tint = Color.Black.copy(alpha = 0.8f),
-                            modifier = Modifier.offset(x = 0.dp, y = 2.dp),
+                            modifier =
+                                Modifier
+                                    .offset(x = 0.dp, y = 2.dp)
+                                    .blur(6.dp, BlurredEdgeTreatment.Unbounded),
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,

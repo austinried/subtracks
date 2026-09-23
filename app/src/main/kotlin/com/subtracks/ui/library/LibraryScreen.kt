@@ -197,11 +197,15 @@ fun LibraryScreen(
                             .wrapContentHeight(unbounded = true)
                             .fillMaxWidth(),
                 ) {
+                    val logoSize = 28.dp
                     Icon(
                         painter = painterResource(R.drawable.ic_stat_name),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(start = 4.dp, top = titleTop).size(40.dp),
+                        modifier =
+                            Modifier
+                                .padding(start = 12.dp, top = titleTop + (titleLineHeight - logoSize) / 2)
+                                .size(logoSize),
                     )
                     Text(
                         text = selectedTab.label,
