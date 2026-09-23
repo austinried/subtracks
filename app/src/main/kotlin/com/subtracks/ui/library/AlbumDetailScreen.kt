@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -285,7 +286,12 @@ private fun AlbumHeader(
         CoverArt(
             ref = coverArt(album?.coverArt, false),
             name = album?.name.orEmpty(),
-            modifier = Modifier.fillMaxWidth(0.86f).aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.86f)
+                    .aspectRatio(1f)
+                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(2.dp), clip = false)
+                    .clip(RoundedCornerShape(2.dp)),
         )
         Spacer(Modifier.height(20.dp))
         Text(
