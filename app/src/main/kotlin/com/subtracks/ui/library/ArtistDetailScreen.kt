@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -51,6 +53,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 private val ART_HEIGHT = 420.dp
+private val TITLE_INSET = 16.dp
+private val FADE_LEAD = 24.dp
 
 @Composable
 fun ArtistDetailRoute(
@@ -84,21 +88,40 @@ fun ArtistDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
-    val artHeightPx = with(LocalDensity.current) { ART_HEIGHT.toPx() }
+    val density = LocalDensity.current
+    val lineHeight =
+        with(density) {
+            MaterialTheme.typography.headlineLarge.lineHeight
+                .toDp()
+        }
+    val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
+    val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
+    val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
+    val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
     val barFraction by remember {
         derivedStateOf {
             if (listState.firstVisibleItemIndex > 0) {
                 1f
             } else {
-                (listState.firstVisibleItemScrollOffset / artHeightPx).coerceIn(0f, 1f)
+                ((listState.firstVisibleItemScrollOffset - fadeStartPx) / (fadeEndPx - fadeStartPx)).coerceIn(0f, 1f)
             }
         }
     }
-    val nameStyle =
+    val imageNameStyle =
         MaterialTheme.typography.headlineLarge.copy(
             shadow =
                 Shadow(
                     color = Color.Black.copy(alpha = 0.8f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 10f,
+                ),
+        )
+    val barNameStyle =
+        MaterialTheme.typography.headlineLarge.copy(
+            shadow =
+                Shadow(
+                    color = Color.Black.copy(alpha = 0.8f * barFraction),
                     offset = Offset(0f, 2f),
                     blurRadius = 10f,
                 ),
@@ -122,11 +145,11 @@ fun ArtistDetailScreen(
                     )
                     Text(
                         text = artist?.name.orEmpty(),
-                        style = nameStyle,
+                        style = imageNameStyle,
                         color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                        modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
                     )
                 }
             }
@@ -165,7 +188,7 @@ fun ArtistDetailScreen(
             title = {
                 Text(
                     text = artist?.name.orEmpty(),
-                    style = nameStyle,
+                    style = barNameStyle,
                     color = Color.White.copy(alpha = barFraction),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -177,7 +200,7 @@ fun ArtistDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = null,
-                            tint = Color.Black.copy(alpha = 0.8f),
+                            tint = Color.Black.copy(alpha = 0.8f * barFraction),
                             modifier =
                                 Modifier
                                     .offset(x = 0.dp, y = 2.dp)
@@ -186,7 +209,7 @@ fun ArtistDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White,
+                            tint = Color.White.copy(alpha = barFraction),
                         )
                     }
                 }
