@@ -57,12 +57,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
@@ -188,17 +190,29 @@ fun LibraryScreen(
                         .height(titleHeight * (1f - titleFraction))
                         .clipToBounds(),
             ) {
-                Text(
-                    text = selectedTab.label,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
+                Row(
                     modifier =
                         Modifier
                             .offset(y = -(titleHeight * titleFraction))
                             .wrapContentHeight(unbounded = true)
-                            .padding(start = 16.dp, end = 16.dp, top = titleTop),
-                )
+                            .fillMaxWidth(),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_stat_name),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(start = 4.dp, top = titleTop).size(40.dp),
+                    )
+                    Text(
+                        text = selectedTab.label,
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp, end = 16.dp, top = titleTop),
+                    )
+                }
             }
             LibraryTabs(
                 pagerState = pagerState,
