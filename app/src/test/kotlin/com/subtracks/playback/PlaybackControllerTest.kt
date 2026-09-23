@@ -487,6 +487,48 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun undoOfARemovalDoesNotReloadTheWindow() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        runBlocking { controller.removeAt(3) }
+        await { handle.itemCount == 4 }
+        handle.operations.clear()
+
+        runBlocking { controller.undo() }
+        await { handle.itemCount == 5 }
+
+        assertTrue(handle.operations.contains("insertAt(3, s4)"))
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
+    fun undoOfAReorderDoesNotReloadTheWindow() {
+        seedAlbum(4, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.move(0, 2) }
+        await { handle.items.map { it.id } == listOf("s2", "s3", "s1", "s4") }
+        handle.operations.clear()
+
+        runBlocking { controller.undo() }
+        await { handle.items.map { it.id } == listOf("s1", "s2", "s3", "s4") }
+
+        assertTrue(handle.operations.contains("move(2, 0)"))
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
     fun startingANewQueueClearsTheUndo() {
         seedAlbum(3, sourceId = 1)
 
