@@ -1,6 +1,5 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,8 +29,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,7 +43,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 private val ART_HEIGHT = 420.dp
-private val SCRIM_HEIGHT = 128.dp
 
 @Composable
 fun ArtistDetailRoute(
@@ -85,20 +84,11 @@ fun ArtistDetailScreen(
             modifier = Modifier.fillMaxSize(),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(Modifier.fillMaxWidth().height(ART_HEIGHT)) {
+                Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                     CoverArt(
                         ref = art,
                         name = artist?.name.orEmpty(),
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(SCRIM_HEIGHT)
-                                .background(
-                                    Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)),
-                                ),
+                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                     )
                 }
             }
@@ -137,7 +127,15 @@ fun ArtistDetailScreen(
             title = {
                 Text(
                     text = artist?.name.orEmpty(),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style =
+                        MaterialTheme.typography.headlineLarge.copy(
+                            shadow =
+                                Shadow(
+                                    color = Color.Black.copy(alpha = 0.8f),
+                                    offset = Offset(0f, 2f),
+                                    blurRadius = 10f,
+                                ),
+                        ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
