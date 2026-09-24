@@ -195,33 +195,36 @@ fun NowPlayingScreen(
                             )
                         }
                         val density = LocalDensity.current
+                        val titleHeight =
+                            with(density) {
+                                MaterialTheme.typography.headlineSmall.lineHeight
+                                    .toDp()
+                            }
+                        val subtitleHeight =
+                            with(density) {
+                                MaterialTheme.typography.bodyMedium.lineHeight
+                                    .toDp()
+                            }
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
                                     .padding(top = 28.dp)
-                                    .height(
-                                        with(density) {
-                                            MaterialTheme.typography.headlineSmall.lineHeight
-                                                .toDp() +
-                                                6.dp +
-                                                MaterialTheme.typography.bodyMedium.lineHeight
-                                                    .toDp()
-                                        },
-                                    ),
+                                    .height(titleHeight + 6.dp + subtitleHeight),
                         ) {
                             Text(
                                 text = state.item?.title.orEmpty(),
                                 style = titleStyle,
                                 maxLines = 1,
-                                modifier = Modifier.basicMarquee(),
+                                modifier = Modifier.height(titleHeight).basicMarquee(),
                             )
                             Text(
                                 text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
                                 style = subtitleStyle,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
-                                modifier = Modifier.padding(top = 6.dp).basicMarquee(),
+                                modifier = Modifier.height(subtitleHeight).basicMarquee(),
                             )
                         }
                         SeekBar(
