@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,6 +136,8 @@ private fun MainNavigation() {
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
+    var librarySearching by rememberSaveable { mutableStateOf(false) }
+    val showMiniPlayer = playerVisible && !librarySearching
     LaunchedEffect(playerVisible) {
         if (!playerVisible) {
             settleJob?.cancel()
@@ -148,7 +149,7 @@ private fun MainNavigation() {
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().imePadding()) {
+        Column(Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
                 modifier =
@@ -185,7 +186,8 @@ private fun MainNavigation() {
                         onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                        bottomInset = if (playerVisible) 0.dp else navBarInset,
+                        onSearchActiveChange = { librarySearching = it },
+                        bottomInset = if (showMiniPlayer) 0.dp else navBarInset,
                     )
                 }
                 composable(Routes.SETTINGS) {
@@ -254,7 +256,7 @@ private fun MainNavigation() {
                 }
             }
 
-            if (playerVisible) {
+            if (showMiniPlayer) {
                 val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
                 MiniPlayer(
                     state = playback,

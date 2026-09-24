@@ -50,12 +50,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -164,6 +165,7 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
+    onSearchActiveChange: (Boolean) -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
@@ -195,6 +197,7 @@ fun LibraryRoute(
         onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
+        onSearchActiveChange = onSearchActiveChange,
         playingSongId = playingSongId,
         listQuery = listQuery,
         resetKeys = resetKeys,
@@ -249,6 +252,7 @@ fun LibraryScreen(
     onClearFilters: () -> Unit = {},
     search: String = "",
     onSearchChange: (String) -> Unit = {},
+    onSearchActiveChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -259,6 +263,11 @@ fun LibraryScreen(
     var showOptions by rememberSaveable { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
+
+    DisposableEffect(searchActive) {
+        onSearchActiveChange(searchActive)
+        onDispose { onSearchActiveChange(false) }
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
@@ -524,10 +533,11 @@ private fun ListOptionsSheet(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                if (listQuery.starred != StarredFilter.Any) {
-                    IconButton(onClick = onClearFilters) {
-                        Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
-                    }
+                IconButton(
+                    onClick = onClearFilters,
+                    enabled = listQuery.starred != StarredFilter.Any,
+                ) {
+                    Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
                 }
             }
             FlowRow(
@@ -582,21 +592,24 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-    OutlinedTextField(
+    TextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        label = { Text("Search") },
+        placeholder = { Text("Search") },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = onClose) {
                 Icon(Icons.Rounded.Close, contentDescription = "Close search")
             }
         },
+        shape = RoundedCornerShape(4.dp),
         colors =
-            OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.background,
-                unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
             ),
         modifier = modifier.focusRequester(focusRequester),
     )

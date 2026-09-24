@@ -26,7 +26,7 @@ internal const val SONGS_SQL =
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId " +
         "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
-        "songs.title COLLATE NOCASE, songs.id"
+        "songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id"
 
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
@@ -350,7 +350,7 @@ interface LibraryDao {
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
-            "songs.title COLLATE NOCASE, songs.id",
+            "songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songs(
         sourceId: Long,
@@ -367,7 +367,7 @@ interface LibraryDao {
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY albums.albumArtist COLLATE NOCASE DESC, songs.album COLLATE NOCASE DESC, songs.disc DESC, " +
-            "songs.track DESC, songs.title COLLATE NOCASE DESC, songs.id DESC",
+            "songs.track DESC, songs.title COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id DESC",
     )
     fun songsByAlbumReversed(
         sourceId: Long,
@@ -383,7 +383,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByTitle(
         sourceId: Long,
@@ -399,7 +399,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.title COLLATE NOCASE DESC, songs.id",
+            "ORDER BY songs.title COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByTitleReversed(
         sourceId: Long,
@@ -447,7 +447,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.starred IS NULL, songs.starred DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.starred IS NULL, songs.starred DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByStarred(
         sourceId: Long,
@@ -463,7 +463,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.starred IS NULL, songs.starred ASC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.starred IS NULL, songs.starred ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByStarredReversed(
         sourceId: Long,
@@ -479,7 +479,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.created DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.created DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByAdded(
         sourceId: Long,
@@ -495,7 +495,7 @@ interface LibraryDao {
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
-            "ORDER BY songs.created ASC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.created ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByAddedReversed(
         sourceId: Long,
