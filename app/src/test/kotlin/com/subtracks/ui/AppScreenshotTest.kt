@@ -36,6 +36,7 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
+import com.subtracks.playback.RepeatMode
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.AlbumDetailScreen
 import com.subtracks.ui.library.ArtistDetailScreen
@@ -275,6 +276,28 @@ class AppScreenshotTest {
         }
         awaitText("Everything In Its Right Place")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/now_playing.png")
+    }
+
+    @Test
+    fun nowPlayingModes() {
+        composeRule.setContent {
+            SubtracksTheme {
+                NowPlayingScreen(
+                    state = Fixtures.playbackState().copy(shuffle = true, repeat = RepeatMode.One),
+                    coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
+                    onBack = {},
+                    onQueue = {},
+                    onPlayPause = {},
+                    onNext = {},
+                    onPrevious = {},
+                    onSeek = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Everything In Its Right Place")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/now_playing_modes.png")
     }
 
     @Test

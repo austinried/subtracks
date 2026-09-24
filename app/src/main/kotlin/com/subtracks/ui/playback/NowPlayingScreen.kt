@@ -22,8 +22,10 @@ import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.RepeatOn
+import androidx.compose.material.icons.rounded.RepeatOneOn
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.ShuffleOn
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
@@ -286,7 +288,12 @@ fun NowPlayingScreen(
                         ) {
                             IconButton(onClick = onRepeat, modifier = Modifier.size(48.dp)) {
                                 Icon(
-                                    imageVector = if (state.repeat == RepeatMode.One) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                                    imageVector =
+                                        when (state.repeat) {
+                                            RepeatMode.Off -> Icons.Rounded.Repeat
+                                            RepeatMode.All -> Icons.Rounded.RepeatOn
+                                            RepeatMode.One -> Icons.Rounded.RepeatOneOn
+                                        },
                                     contentDescription =
                                         when (state.repeat) {
                                             RepeatMode.Off -> "Repeat off"
@@ -341,7 +348,7 @@ fun NowPlayingScreen(
                             }
                             IconButton(onClick = onShuffle, modifier = Modifier.size(48.dp)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Shuffle,
+                                    imageVector = if (state.shuffle) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
                                     contentDescription = "Shuffle",
                                     tint =
                                         if (state.shuffle) {
