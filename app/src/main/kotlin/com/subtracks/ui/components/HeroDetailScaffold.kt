@@ -1,0 +1,277 @@
+package com.subtracks.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.subtracks.data.model.CoverArtRef
+import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.ArtworkTheme
+import com.subtracks.ui.theme.HeroGradient
+import com.subtracks.ui.theme.gradientColorAt
+import com.subtracks.ui.theme.heroDarkenAt
+
+private const val GRADIENT_SCREENS = 2.0f
+private const val FADE_DISTANCE_DP = 64
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HeroDetailScaffold(
+    artwork: ArtworkColors?,
+    title: String,
+    onBack: () -> Unit,
+    header: @Composable (controlsModifier: Modifier, topInset: Dp) -> Unit,
+    content: LazyListScope.(rowModifier: Modifier) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        ArtworkTheme(artwork) {
+            BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
+                val listState = rememberLazyListState()
+                val fill = rememberViewportFill(listState)
+                val density = LocalDensity.current
+                val gradientHeightPx = with(density) { (maxHeight * GRADIENT_SCREENS).toPx() }
+                val screenHeightPx = with(density) { maxHeight.toPx() }
+                val statusBarTop = WindowInsets.statusBars.getTop(density)
+                val statusBarDp = with(density) { statusBarTop.toDp() }
+                val navBarBottom = WindowInsets.navigationBars.getBottom(density)
+                val barHeightPx = statusBarTop + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
+                val fadeDistancePx = with(density) { FADE_DISTANCE_DP.dp.toPx() }
+
+                var headerHeightPx by remember { mutableFloatStateOf(0f) }
+                var rowHeightPx by remember { mutableFloatStateOf(0f) }
+                var controlsTopPx by remember { mutableFloatStateOf(0f) }
+                val scrollPx by remember {
+                    derivedStateOf {
+                        val index = listState.firstVisibleItemIndex
+                        val before = if (index <= 0) 0f else headerHeightPx + rowHeightPx * (index - 1)
+                        (before + listState.firstVisibleItemScrollOffset).coerceAtLeast(0f)
+                    }
+                }
+                val barFraction by remember {
+                    derivedStateOf {
+                        if (controlsTopPx <= 0f || fadeDistancePx <= 0f) {
+                            0f
+                        } else {
+                            ((scrollPx - (controlsTopPx - barHeightPx)) / fadeDistancePx).coerceIn(0f, 1f)
+                        }
+                    }
+                }
+                val barColor by
+                    remember(artwork, barHeightPx, gradientHeightPx, screenHeightPx) {
+                        derivedStateOf {
+                            if (artwork == null || gradientHeightPx <= 0f) {
+                                Color.Black
+                            } else {
+                                val mid = scrollPx + barHeightPx / 2f
+                                lerp(
+                                    artwork.gradientColorAt(mid / gradientHeightPx),
+                                    artwork.darkPrimary,
+                                    heroDarkenAt(mid, screenHeightPx),
+                                )
+                            }
+                        }
+                    }
+
+                HeroGradient(
+                    colors = artwork,
+                    scrollPx = { scrollPx },
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                LazyColumn(
+                    state = listState,
+                    contentPadding =
+                        PaddingValues(
+                            bottom = 16.dp + with(density) { navBarBottom.toDp() },
+                        ),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item {
+                        Box(Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() }) {
+                            header(
+                                Modifier.onGloballyPositioned { controlsTopPx = it.positionInParent().y },
+                                statusBarDp,
+                            )
+                        }
+                    }
+                    content(Modifier.onSizeChanged { rowHeightPx = it.height.toFloat() })
+                    item { Spacer(Modifier.height(fill)) }
+                }
+
+                Box(
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth()
+                        .height(statusBarDp + 8.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
+                            ),
+                        ).graphicsLayer { alpha = 1f - barFraction },
+                )
+
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.graphicsLayer { alpha = barFraction },
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .drawBehind { drawRect(barColor.copy(alpha = barFraction)) }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {},
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HeroHeader(
+    art: CoverArtRef?,
+    name: String,
+    subtitle: String,
+    hasSongs: Boolean,
+    onPlay: () -> Unit,
+    onShuffle: () -> Unit,
+    onDownload: () -> Unit,
+    onMore: () -> Unit,
+    topInset: Dp,
+    controlsModifier: Modifier = Modifier,
+    thumbnailRef: CoverArtRef? = null,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = topInset + 24.dp, bottom = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CoverArt(
+            ref = art,
+            name = name,
+            thumbnailRef = thumbnailRef,
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.86f)
+                    .aspectRatio(1f)
+                    .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
+                    .clip(RoundedCornerShape(2.dp)),
+        )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = name,
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (subtitle.isNotEmpty()) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(20.dp))
+        Row(
+            modifier = controlsModifier,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onDownload) {
+                Icon(Icons.Rounded.Download, contentDescription = "Download")
+            }
+            Button(onClick = onPlay, enabled = hasSongs) {
+                Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Play")
+            }
+            FilledIconButton(onClick = onShuffle, enabled = hasSongs) {
+                Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
+            }
+            IconButton(onClick = onMore) {
+                Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
+            }
+        }
+    }
+}
