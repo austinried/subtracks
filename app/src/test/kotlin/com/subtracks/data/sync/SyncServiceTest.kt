@@ -220,6 +220,19 @@ class SyncServiceTest {
             )
         }
 
+    @Test
+    fun syncStoresStarredAndAddedTimestamps() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(albums = listOf(album("al1").copy(created = 1234, starred = 5678)))
+
+            SyncService(db, source).sync()
+
+            val stored = db.libraryDao().album(1, "al1").first()
+            assertEquals(1234L, stored?.created)
+            assertEquals(5678L, stored?.starred)
+        }
+
     private suspend fun <T : Any> PagingSource<Int, T>.allRows(): List<T> {
         val page = load(PagingSource.LoadParams.Refresh(key = null, loadSize = 100, placeholdersEnabled = false))
         return (page as PagingSource.LoadResult.Page).data

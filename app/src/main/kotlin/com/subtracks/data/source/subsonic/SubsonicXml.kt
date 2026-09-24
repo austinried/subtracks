@@ -7,8 +7,6 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import javax.xml.datatype.DatatypeConfigurationException
-import javax.xml.datatype.DatatypeFactory
 
 object SubsonicXml {
     fun artists(
@@ -130,22 +128,46 @@ private fun Element.longAttr(name: String): Long? = getAttribute(name).takeIf { 
 private fun Element.dateAttr(name: String): Long? = getAttribute(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
 
 internal object IsoDate {
-    private val timezone = Regex("(Z|[+-]\\d{2}:?\\d{2})$", RegexOption.IGNORE_CASE)
-
-    private val factory: DatatypeFactory? =
-        try {
-            DatatypeFactory.newInstance()
-        } catch (_: DatatypeConfigurationException) {
-            null
-        }
+    private val pattern =
+        Regex(
+            "^(\\d{4})-(\\d{2})-(\\d{2})(?:[T ](\\d{2}):(\\d{2}):(\\d{2})(?:\\.\\d+)?\\s*(Z|[+-]\\d{2}:?\\d{2})?)?$",
+        )
 
     fun parse(value: String): Long? {
-        val factory = factory ?: return null
-        return try {
-            val zoned = if (timezone.containsMatchIn(value)) value else value + "Z"
-            factory.newXMLGregorianCalendar(zoned).toGregorianCalendar().timeInMillis / 1000
-        } catch (_: IllegalArgumentException) {
-            null
+        val match = pattern.matchEntire(value.trim()) ?: return null
+        val year = match.groupValues[1].toIntOrNull() ?: return null
+        val month = match.groupValues[2].toIntOrNull() ?: return null
+        val day = match.groupValues[3].toIntOrNull() ?: return null
+        val hour = match.groupValues[4].toIntOrNull() ?: 0
+        val minute = match.groupValues[5].toIntOrNull() ?: 0
+        val second = match.groupValues[6].toIntOrNull() ?: 0
+        if (month !in 1..12 || day !in 1..31 || hour !in 0..23 || minute !in 0..59 || second !in 0..59) {
+            return null
         }
+        val days = daysFromCivil(year, month, day)
+        return days * 86400L + hour * 3600L + minute * 60L + second - offsetSeconds(match.groupValues[7])
+    }
+
+    private fun offsetSeconds(zone: String): Long {
+        if (zone.isEmpty() || zone.equals("Z", ignoreCase = true)) return 0
+        val digits = zone.drop(1).replace(":", "")
+        if (digits.length != 4) return 0
+        val hours = digits.take(2).toLongOrNull() ?: return 0
+        val minutes = digits.drop(2).toLongOrNull() ?: return 0
+        val sign = if (zone[0] == '-') -1L else 1L
+        return sign * (hours * 3600 + minutes * 60)
+    }
+
+    private fun daysFromCivil(
+        year: Int,
+        month: Int,
+        day: Int,
+    ): Long {
+        val y = if (month <= 2) year - 1 else year
+        val era = (if (y >= 0) y else y - 399) / 400
+        val yearOfEra = y - era * 400
+        val dayOfYear = (153 * (if (month > 2) month - 3 else month + 9) + 2) / 5 + day - 1
+        val dayOfEra = yearOfEra * 365 + yearOfEra / 4 - yearOfEra / 100 + dayOfYear
+        return era * 146097L + dayOfEra - 719468L
     }
 }

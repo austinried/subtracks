@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -60,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -327,54 +327,56 @@ fun LibraryScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) { page ->
-                when (LibraryTab.entries[page]) {
-                    LibraryTab.Albums -> {
-                        AlbumsContent(
-                            albums,
-                            coverArt,
-                            listBottomInset,
-                            onAlbumClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
+                key(resetKey) {
+                    when (LibraryTab.entries[page]) {
+                        LibraryTab.Albums -> {
+                            AlbumsContent(
+                                albums,
+                                coverArt,
+                                listBottomInset,
+                                onAlbumClick,
+                                filtered = filtersActive,
+                                onClearFilters = onClearFilters,
+                                resetKey = resetKey,
+                            )
+                        }
 
-                    LibraryTab.Artists -> {
-                        ArtistsContent(
-                            artists,
-                            coverArt,
-                            listBottomInset,
-                            onArtistClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
+                        LibraryTab.Artists -> {
+                            ArtistsContent(
+                                artists,
+                                coverArt,
+                                listBottomInset,
+                                onArtistClick,
+                                filtered = filtersActive,
+                                onClearFilters = onClearFilters,
+                                resetKey = resetKey,
+                            )
+                        }
 
-                    LibraryTab.Songs -> {
-                        SongsContent(
-                            songs,
-                            coverArt,
-                            listBottomInset,
-                            onSongClick,
-                            playingSongId,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
+                        LibraryTab.Songs -> {
+                            SongsContent(
+                                songs,
+                                coverArt,
+                                listBottomInset,
+                                onSongClick,
+                                playingSongId,
+                                filtered = filtersActive,
+                                onClearFilters = onClearFilters,
+                                resetKey = resetKey,
+                            )
+                        }
 
-                    LibraryTab.Playlists -> {
-                        PlaylistsContent(
-                            playlists,
-                            coverArt,
-                            listBottomInset,
-                            onPlaylistClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
+                        LibraryTab.Playlists -> {
+                            PlaylistsContent(
+                                playlists,
+                                coverArt,
+                                listBottomInset,
+                                onPlaylistClick,
+                                filtered = filtersActive,
+                                onClearFilters = onClearFilters,
+                                resetKey = resetKey,
+                            )
+                        }
                     }
                 }
             }
@@ -393,7 +395,6 @@ fun LibraryScreen(
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .imePadding()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
