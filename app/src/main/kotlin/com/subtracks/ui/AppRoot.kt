@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
@@ -137,8 +138,6 @@ private fun MainNavigation() {
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
-    var librarySearching by rememberSaveable { mutableStateOf(false) }
-    val showMiniPlayer = playerVisible && !librarySearching
     LaunchedEffect(playerVisible) {
         if (!playerVisible) {
             settleJob?.cancel()
@@ -148,6 +147,8 @@ private fun MainNavigation() {
     }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val showMiniPlayer = playerVisible && !imeVisible
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
@@ -187,7 +188,6 @@ private fun MainNavigation() {
                         onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                        onSearchActiveChange = { librarySearching = it },
                         bottomInset = if (showMiniPlayer) 0.dp else navBarInset,
                     )
                 }

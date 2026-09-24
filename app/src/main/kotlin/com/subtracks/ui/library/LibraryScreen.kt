@@ -57,7 +57,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -166,7 +165,6 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
-    onSearchActiveChange: (Boolean) -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
@@ -198,7 +196,6 @@ fun LibraryRoute(
         onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
-        onSearchActiveChange = onSearchActiveChange,
         playingSongId = playingSongId,
         listQuery = listQuery,
         resetKeys = resetKeys,
@@ -253,7 +250,6 @@ fun LibraryScreen(
     onClearFilters: () -> Unit = {},
     search: String = "",
     onSearchChange: (String) -> Unit = {},
-    onSearchActiveChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -264,11 +260,6 @@ fun LibraryScreen(
     var showOptions by rememberSaveable { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
-
-    DisposableEffect(searchActive) {
-        onSearchActiveChange(searchActive)
-        onDispose { onSearchActiveChange(false) }
-    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
