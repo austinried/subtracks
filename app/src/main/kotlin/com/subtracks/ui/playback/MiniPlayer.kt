@@ -1,15 +1,19 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
@@ -34,7 +38,6 @@ import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
-import com.subtracks.ui.theme.toHsl
 
 @Composable
 fun MiniPlayer(
@@ -48,77 +51,79 @@ fun MiniPlayer(
 ) {
     val item = state.item ?: return
     ArtworkTheme(artwork) {
-        Surface(
-            color =
-                artwork?.let {
-                    val (hue, saturation, lightness) = lerp(it.scheme.surfaceContainerHigh, it.gradientHigh, 0.5f).toHsl()
-                    Color.hsl(hue, saturation * 0.8f, lightness)
-                } ?: MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier =
-                modifier.fillMaxWidth().clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onExpand,
-                ),
-        ) {
-            Row(
+        Column(modifier.fillMaxWidth()) {
+            Surface(
+                color =
+                    artwork?.let { lerp(it.scheme.surfaceContainerHigh, it.gradientHigh, 0.5f) }
+                        ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    Modifier.fillMaxWidth().clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onExpand,
+                    ),
             ) {
-                CoverArt(
-                    ref = coverArt,
-                    name = item.title,
-                    modifier = Modifier.size(56.dp).clip(RoundedCornerShape(6.dp)),
-                )
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(),
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    CoverArt(
+                        ref = coverArt,
+                        name = item.title,
+                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(6.dp)),
                     )
-                    Text(
-                        text = listOfNotNull(item.artist, item.album).joinToString(" • "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(),
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
-                        if (state.isBuffering && state.isPlaying) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        } else {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = item.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
+                        )
+                        Text(
+                            text = listOfNotNull(item.artist, item.album).joinToString(" • "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
+                            if (state.isBuffering && state.isPlaying) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier.size(28.dp),
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                    contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(42.dp),
+                                )
+                            }
+                        }
+                        IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(56.dp)) {
                             Icon(
-                                imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                imageVector = Icons.Rounded.SkipNext,
+                                contentDescription = "Next",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(42.dp),
                             )
                         }
                     }
-                    IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(56.dp)) {
-                        Icon(
-                            imageVector = Icons.Rounded.SkipNext,
-                            contentDescription = "Next",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(42.dp),
-                        )
-                    }
                 }
             }
+            Spacer(
+                Modifier.fillMaxWidth().windowInsetsBottomHeight(WindowInsets.navigationBars).background(Color.Black),
+            )
         }
     }
 }
