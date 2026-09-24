@@ -36,15 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
-
-private val EXPAND_DRAG = 240.dp
 
 @Composable
 fun MiniPlayer(
@@ -54,13 +51,11 @@ fun MiniPlayer(
     onExpand: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
-    onExpandProgress: (Float) -> Unit = {},
-    onExpandCommit: () -> Unit = {},
-    onExpandCancel: () -> Unit = {},
+    onExpandDrag: (Float) -> Unit = {},
+    onExpandRelease: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val item = state.item ?: return
-    val expandThresholdPx = with(LocalDensity.current) { EXPAND_DRAG.toPx() }
     var dragUpPx by remember { mutableFloatStateOf(0f) }
     val progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
 
@@ -79,10 +74,10 @@ fun MiniPlayer(
                         state =
                             rememberDraggableState { delta ->
                                 dragUpPx = (dragUpPx - delta).coerceAtLeast(0f)
-                                onExpandProgress((dragUpPx / expandThresholdPx).coerceIn(0f, 1f))
+                                onExpandDrag(dragUpPx)
                             },
                         onDragStopped = {
-                            if (dragUpPx >= expandThresholdPx / 2f) onExpandCommit() else onExpandCancel()
+                            onExpandRelease()
                             dragUpPx = 0f
                         },
                     ).clickable(

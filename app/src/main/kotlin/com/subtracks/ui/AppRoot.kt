@@ -3,7 +3,7 @@ package com.subtracks.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +11,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -70,6 +74,7 @@ class RootViewModel(
 
 private const val NAVIGATION_DURATION_MS = 260
 private const val NOW_PLAYING_DURATION_MS = 300
+private const val EXPAND_FADE = 0.2f
 
 private object Routes {
     const val LIBRARY = "library"
@@ -107,18 +112,25 @@ private fun MainNavigation() {
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
-    var draggingExpand by remember { mutableStateOf(false) }
-    var dragFraction by remember { mutableFloatStateOf(0f) }
-    val expandProgress = remember { Animatable(0f) }
+    var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
+    var rootHeightPx by remember { mutableFloatStateOf(0f) }
     val scope = rememberCoroutineScope()
-    val nowPlayingProgress = if (draggingExpand) dragFraction else expandProgress.value
+
+    fun settleNowPlaying(open: Boolean) {
+        val target = if (open) 1f else 0f
+        scope.launch {
+            animate(nowPlayingProgress, target, animationSpec = tween(NOW_PLAYING_DURATION_MS)) { value, _ ->
+                nowPlayingProgress = value
+            }
+        }
+    }
     LaunchedEffect(Unit) { playbackController.connect() }
 
     val playerVisible = playback.item != null
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().onSizeChanged { rootHeightPx = it.height.toFloat() }) {
         Column(Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
@@ -231,30 +243,15 @@ private fun MainNavigation() {
                     state = playback,
                     coverArt = miniArt,
                     artwork = rememberArtworkColors(miniArt),
-                    onExpand = {
-                        draggingExpand = false
-                        scope.launch { expandProgress.animateTo(1f) }
-                    },
+                    onExpand = { settleNowPlaying(true) },
                     onPlayPause = playbackController::togglePlayPause,
                     onNext = playbackController::next,
-                    onExpandProgress = {
-                        draggingExpand = true
-                        dragFraction = it
-                    },
-                    onExpandCommit = {
-                        draggingExpand = false
-                        scope.launch {
-                            expandProgress.snapTo(dragFraction)
-                            expandProgress.animateTo(1f)
+                    onExpandDrag = { dragUpPx ->
+                        if (rootHeightPx > 0f) {
+                            nowPlayingProgress = (dragUpPx / rootHeightPx).coerceIn(0f, 1f)
                         }
                     },
-                    onExpandCancel = {
-                        draggingExpand = false
-                        scope.launch {
-                            expandProgress.snapTo(dragFraction)
-                            expandProgress.animateTo(0f)
-                        }
-                    },
+                    onExpandRelease = { settleNowPlaying(nowPlayingProgress > 0.5f) },
                 )
             }
         }
@@ -264,10 +261,22 @@ private fun MainNavigation() {
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .graphicsLayer { translationY = (1f - nowPlayingProgress) * size.height },
+                        .graphicsLayer {
+                            translationY = (1f - nowPlayingProgress) * rootHeightPx
+                            alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
+                        }.draggable(
+                            orientation = Orientation.Vertical,
+                            state =
+                                rememberDraggableState { delta ->
+                                    if (rootHeightPx > 0f) {
+                                        nowPlayingProgress = (nowPlayingProgress - delta / rootHeightPx).coerceIn(0f, 1f)
+                                    }
+                                },
+                            onDragStopped = { settleNowPlaying(nowPlayingProgress > 0.5f) },
+                        ),
             ) {
                 NowPlayingRoute(
-                    onBack = { scope.launch { expandProgress.animateTo(0f) } },
+                    onBack = { settleNowPlaying(false) },
                     onQueue = { showingQueue = true },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -288,6 +297,6 @@ private fun MainNavigation() {
 
     BackHandler(enabled = showingQueue) { showingQueue = false }
     BackHandler(enabled = nowPlayingProgress > 0f && !showingQueue) {
-        scope.launch { expandProgress.animateTo(0f) }
+        settleNowPlaying(false)
     }
 }
