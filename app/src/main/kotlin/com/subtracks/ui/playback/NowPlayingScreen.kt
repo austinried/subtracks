@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Repeat
@@ -133,7 +134,7 @@ fun NowPlayingScreen(
     thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
 ) {
-    val playButtonSize = 96.dp
+    val playButtonSize = 90.dp
     val playCircleDiameter = playButtonSize * 20f / 24f
     val titleStyle =
         MaterialTheme.typography.headlineSmall.copy(
@@ -280,17 +281,35 @@ fun NowPlayingScreen(
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
-                            horizontalArrangement = Arrangement.Center,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            IconButton(onClick = onPrevious, enabled = state.hasPrevious, modifier = Modifier.size(64.dp)) {
+                            IconButton(onClick = onRepeat, modifier = Modifier.size(48.dp)) {
+                                Icon(
+                                    imageVector = if (state.repeat == RepeatMode.One) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                                    contentDescription =
+                                        when (state.repeat) {
+                                            RepeatMode.Off -> "Repeat off"
+                                            RepeatMode.All -> "Repeat all"
+                                            RepeatMode.One -> "Repeat one"
+                                        },
+                                    tint =
+                                        if (state.repeat == RepeatMode.Off) {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        } else {
+                                            MaterialTheme.colorScheme.onBackground
+                                        },
+                                    modifier = Modifier.size(30.dp),
+                                )
+                            }
+                            IconButton(onClick = onPrevious, modifier = Modifier.size(72.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.SkipPrevious,
                                     contentDescription = "Previous",
-                                    modifier = Modifier.size(48.dp),
+                                    modifier = Modifier.size(60.dp),
                                 )
                             }
-                            IconButton(onClick = onPlayPause, modifier = Modifier.padding(horizontal = 20.dp).size(playButtonSize)) {
+                            IconButton(onClick = onPlayPause, modifier = Modifier.size(playButtonSize)) {
                                 if (state.isBuffering && state.isPlaying) {
                                     Box(
                                         modifier =
@@ -313,11 +332,24 @@ fun NowPlayingScreen(
                                     )
                                 }
                             }
-                            IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(64.dp)) {
+                            IconButton(onClick = onNext, modifier = Modifier.size(72.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.SkipNext,
                                     contentDescription = "Next",
-                                    modifier = Modifier.size(48.dp),
+                                    modifier = Modifier.size(60.dp),
+                                )
+                            }
+                            IconButton(onClick = onShuffle, modifier = Modifier.size(48.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Shuffle,
+                                    contentDescription = "Shuffle",
+                                    tint =
+                                        if (state.shuffle) {
+                                            MaterialTheme.colorScheme.onBackground
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                    modifier = Modifier.size(30.dp),
                                 )
                             }
                         }
@@ -333,40 +365,12 @@ fun NowPlayingScreen(
                                     modifier = Modifier.size(30.dp),
                                 )
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = onShuffle, modifier = Modifier.size(40.dp)) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
-                                        contentDescription = "Shuffle",
-                                        tint =
-                                            if (state.shuffle) {
-                                                MaterialTheme.colorScheme.onBackground
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            },
-                                        modifier = Modifier.size(26.dp),
-                                    )
-                                }
-                                IconButton(onClick = onRepeat, modifier = Modifier.size(40.dp)) {
-                                    Icon(
-                                        imageVector = if (state.repeat == RepeatMode.One) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                                        contentDescription =
-                                            when (state.repeat) {
-                                                RepeatMode.Off -> "Repeat off"
-                                                RepeatMode.All -> "Repeat all"
-                                                RepeatMode.One -> "Repeat one"
-                                            },
-                                        tint =
-                                            if (state.repeat ==
-                                                RepeatMode.Off
-                                            ) {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            } else {
-                                                MaterialTheme.colorScheme.onBackground
-                                            },
-                                        modifier = Modifier.size(26.dp),
-                                    )
-                                }
+                            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MoreHoriz,
+                                    contentDescription = "More",
+                                    modifier = Modifier.size(30.dp),
+                                )
                             }
                         }
                     }
