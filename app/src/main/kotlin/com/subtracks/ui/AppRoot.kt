@@ -3,6 +3,7 @@ package com.subtracks.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,10 +20,14 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -49,6 +54,7 @@ import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -100,8 +106,12 @@ private fun MainNavigation() {
     val navController = rememberNavController()
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
-    var showingNowPlaying by rememberSaveable { mutableStateOf(false) }
     var showingQueue by rememberSaveable { mutableStateOf(false) }
+    var draggingExpand by remember { mutableStateOf(false) }
+    var dragFraction by remember { mutableFloatStateOf(0f) }
+    val expandProgress = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val nowPlayingProgress = if (draggingExpand) dragFraction else expandProgress.value
     LaunchedEffect(Unit) { playbackController.connect() }
 
     val playerVisible = playback.item != null
@@ -221,23 +231,47 @@ private fun MainNavigation() {
                     state = playback,
                     coverArt = miniArt,
                     artwork = rememberArtworkColors(miniArt),
-                    onExpand = { showingNowPlaying = true },
+                    onExpand = {
+                        draggingExpand = false
+                        scope.launch { expandProgress.animateTo(1f) }
+                    },
                     onPlayPause = playbackController::togglePlayPause,
                     onNext = playbackController::next,
+                    onExpandProgress = {
+                        draggingExpand = true
+                        dragFraction = it
+                    },
+                    onExpandCommit = {
+                        draggingExpand = false
+                        scope.launch {
+                            expandProgress.snapTo(dragFraction)
+                            expandProgress.animateTo(1f)
+                        }
+                    },
+                    onExpandCancel = {
+                        draggingExpand = false
+                        scope.launch {
+                            expandProgress.snapTo(dragFraction)
+                            expandProgress.animateTo(0f)
+                        }
+                    },
                 )
             }
         }
 
-        AnimatedVisibility(
-            visible = showingNowPlaying,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(NOW_PLAYING_DURATION_MS)),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(NOW_PLAYING_DURATION_MS)),
-        ) {
-            NowPlayingRoute(
-                onBack = { showingNowPlaying = false },
-                onQueue = { showingQueue = true },
-                modifier = Modifier.fillMaxSize(),
-            )
+        if (nowPlayingProgress > 0f) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { translationY = (1f - nowPlayingProgress) * size.height },
+            ) {
+                NowPlayingRoute(
+                    onBack = { scope.launch { expandProgress.animateTo(0f) } },
+                    onQueue = { showingQueue = true },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
 
         AnimatedVisibility(
@@ -253,5 +287,7 @@ private fun MainNavigation() {
     }
 
     BackHandler(enabled = showingQueue) { showingQueue = false }
-    BackHandler(enabled = showingNowPlaying && !showingQueue) { showingNowPlaying = false }
+    BackHandler(enabled = nowPlayingProgress > 0f && !showingQueue) {
+        scope.launch { expandProgress.animateTo(0f) }
+    }
 }

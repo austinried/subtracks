@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -43,7 +44,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 
-private val EXPAND_DRAG = 48.dp
+private val EXPAND_DRAG = 240.dp
 
 @Composable
 fun MiniPlayer(
@@ -53,6 +54,9 @@ fun MiniPlayer(
     onExpand: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
+    onExpandProgress: (Float) -> Unit = {},
+    onExpandCommit: () -> Unit = {},
+    onExpandCancel: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val item = state.item ?: return
@@ -75,11 +79,12 @@ fun MiniPlayer(
                         state =
                             rememberDraggableState { delta ->
                                 dragUpPx = (dragUpPx - delta).coerceAtLeast(0f)
-                                if (dragUpPx >= expandThresholdPx) {
-                                    dragUpPx = 0f
-                                    onExpand()
-                                }
+                                onExpandProgress((dragUpPx / expandThresholdPx).coerceIn(0f, 1f))
                             },
+                        onDragStopped = {
+                            if (dragUpPx >= expandThresholdPx / 2f) onExpandCommit() else onExpandCancel()
+                            dragUpPx = 0f
+                        },
                     ).clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -89,9 +94,10 @@ fun MiniPlayer(
             Column {
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                    modifier = Modifier.fillMaxWidth().height(4.dp),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
+                    strokeCap = StrokeCap.Butt,
                     gapSize = 0.dp,
                     drawStopIndicator = {},
                 )
