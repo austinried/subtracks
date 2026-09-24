@@ -26,6 +26,7 @@ private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.18f
 private const val PRIMARY_MIN_LUMINANCE = 0.30f
+private const val SECONDARY_CONTRAST = 3.0f
 private const val MIN_GRADIENT_SATURATION = 0.30f
 private const val HERO_DARKEN_MAX = 1.0f
 private const val DARKEN_START_SCREENS = 0.5f
@@ -61,6 +62,31 @@ fun artworkColorsFromSeeds(
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
+    val secondary =
+        secondarySeed?.let { seed ->
+            val (sh, ss, sl) = Color(seed or 0xFF000000.toInt()).toHsl()
+            Color.hsl(
+                blendHue(sh, hue, 0.5f),
+                ss.coerceAtLeast(s * 0.7f).coerceAtMost(0.9f),
+                sl.coerceIn(0.34f, 0.56f),
+            )
+        } ?: tone(hue, s, 0.40f)
+
+    val gradientSat = if (s > 0.05f) s.coerceAtLeast(MIN_GRADIENT_SATURATION) else s
+    val gradientHigh = tone(hue, (gradientSat * 0.85f).coerceAtMost(0.70f), 0.26f)
+    val gradientLow = tone(hue, gradientSat * 0.55f, 0.12f)
+    val accents =
+        listOf(
+            tone(hue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
+            secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
+        )
+    val darkPrimary = tone(hue, gradientSat * 0.75f, 0.10f)
+
+    val backdrop = maxOf(gradientHigh.luminance(), gradientLow.luminance(), accents.maxOf { it.luminance() })
+    val onSurfaceVariant =
+        tone(hue, s * 0.18f, 0.78f)
+            .withMinLuminance(SECONDARY_CONTRAST * (backdrop + 0.05f) - 0.05f)
+
     val scheme =
         darkColorScheme(
             primary = primary,
@@ -81,7 +107,7 @@ fun artworkColorsFromSeeds(
             onSurface = onBackground,
             surfaceTint = primary,
             surfaceVariant = tone(hue, s * 0.25f, 0.17f),
-            onSurfaceVariant = tone(hue, s * 0.18f, 0.78f),
+            onSurfaceVariant = onSurfaceVariant,
             surfaceContainerLowest = tone(hue, s * 0.25f, 0.04f),
             surfaceContainerLow = tone(hue, s * 0.25f, 0.08f),
             surfaceContainer = tone(hue, s * 0.25f, 0.10f),
@@ -91,27 +117,12 @@ fun artworkColorsFromSeeds(
             outlineVariant = tone(hue, s * 0.18f, 0.28f),
         )
 
-    val secondary =
-        secondarySeed?.let { seed ->
-            val (sh, ss, sl) = Color(seed or 0xFF000000.toInt()).toHsl()
-            Color.hsl(
-                blendHue(sh, hue, 0.5f),
-                ss.coerceAtLeast(s * 0.7f).coerceAtMost(0.9f),
-                sl.coerceIn(0.34f, 0.56f),
-            )
-        } ?: tone(hue, s, 0.40f)
-
-    val gradientSat = if (s > 0.05f) s.coerceAtLeast(MIN_GRADIENT_SATURATION) else s
     return ArtworkColors(
         scheme = scheme,
-        gradientHigh = tone(hue, (gradientSat * 0.85f).coerceAtMost(0.70f), 0.26f),
-        gradientLow = tone(hue, gradientSat * 0.55f, 0.12f),
-        accents =
-            listOf(
-                tone(hue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
-                secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
-            ),
-        darkPrimary = tone(hue, gradientSat * 0.75f, 0.10f),
+        gradientHigh = gradientHigh,
+        gradientLow = gradientLow,
+        accents = accents,
+        darkPrimary = darkPrimary,
         blobSeed = primarySeed,
     )
 }

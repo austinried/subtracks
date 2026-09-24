@@ -48,6 +48,17 @@ class ArtworkColorsTest {
         }
     }
 
+    @Test
+    fun secondaryTextReadsOnGradient() {
+        for (seed in seeds) {
+            val colors = artworkColorsFromSeed(seed)
+            val backdrop =
+                (listOf(colors.gradientHigh, colors.gradientLow) + colors.accents)
+                    .maxBy { it.luminance() }
+            assertTrue("onSurfaceVariant for $seed", contrast(colors.scheme.onSurfaceVariant, backdrop) >= 3f)
+        }
+    }
+
     private fun contrast(
         a: Color,
         b: Color,

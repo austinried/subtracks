@@ -132,7 +132,7 @@ fun SongRow(
         supportingContent = {
             Text(
                 text = song.artist.orEmpty().ifEmpty { "\u00A0" },
-                color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
