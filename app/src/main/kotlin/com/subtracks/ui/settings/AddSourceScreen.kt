@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -158,7 +159,16 @@ fun AddSourceScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = state.useTokenAuth, onCheckedChange = onTokenAuthChange)
+                Switch(
+                    checked = state.useTokenAuth,
+                    onCheckedChange = onTokenAuthChange,
+                    colors =
+                        SwitchDefaults.colors(
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                        ),
+                )
             }
             if (state.message != null) {
                 Text(
