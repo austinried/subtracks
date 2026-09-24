@@ -179,6 +179,7 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(top = statusBarTop),
         ) {
             Box(

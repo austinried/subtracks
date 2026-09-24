@@ -1,5 +1,6 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -22,7 +23,6 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
@@ -87,14 +88,9 @@ fun MiniPlayer(
                     ),
         ) {
             Column {
-                LinearProgressIndicator(
-                    progress = { progress },
+                MiniPlayerProgressBar(
+                    progress = progress,
                     modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
-                    strokeCap = StrokeCap.Butt,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {},
                 )
                 Row(
                     modifier =
@@ -154,6 +150,29 @@ fun MiniPlayer(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MiniPlayerProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+) {
+    val color = MaterialTheme.colorScheme.primary
+    val track = color.copy(alpha = 0.24f)
+    Canvas(modifier) {
+        val radius = size.height / 2f
+        drawRect(color = track)
+        val tip = size.width * progress.coerceIn(0f, 1f)
+        if (tip <= 0f) return@Canvas
+        drawRoundRect(
+            color = color,
+            size = Size(tip, size.height),
+            cornerRadius = CornerRadius(radius, radius),
+        )
+        if (tip > radius) {
+            drawRect(color = color, size = Size(tip - radius, size.height))
         }
     }
 }
