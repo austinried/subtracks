@@ -22,9 +22,9 @@ fun rememberViewportFill(state: LazyListState): Dp {
             if (realCount <= 0 || visibleReal.size < realCount) {
                 FILL_EPSILON_PX
             } else {
-                val contentBottom = visibleReal.maxOf { it.offset + it.size }
+                val contentHeight = visibleReal.maxOf { it.offset + it.size } - visibleReal.minOf { it.offset }
                 val padding = info.beforeContentPadding + info.afterContentPadding
-                (info.viewportSize.height - padding - contentBottom).coerceAtLeast(0) + FILL_EPSILON_PX
+                (info.viewportSize.height - padding - contentHeight).coerceAtLeast(0) + FILL_EPSILON_PX
             }
         }
     }
@@ -42,9 +42,9 @@ fun rememberViewportFill(state: LazyGridState): Dp {
             if (realCount <= 0 || visibleReal.size < realCount) {
                 FILL_EPSILON_PX
             } else {
-                val contentBottom = visibleReal.maxOf { it.offset.y + it.size.height }
+                val contentHeight = visibleReal.maxOf { it.offset.y + it.size.height } - visibleReal.minOf { it.offset.y }
                 val padding = info.beforeContentPadding + info.afterContentPadding
-                (info.viewportSize.height - padding - contentBottom).coerceAtLeast(0) + FILL_EPSILON_PX
+                (info.viewportSize.height - padding - contentHeight).coerceAtLeast(0) + FILL_EPSILON_PX
             }
         }
     }
