@@ -5,6 +5,7 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
+import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 data class QueueItem(
     val id: String,
@@ -438,27 +440,27 @@ class PlaybackController(
                 val snapshot = readSnapshot()
                 this@PlaybackController.snapshot = snapshot
                 if (snapshot.size == 0L) return@withLock
-                val player = player ?: return@withLock
+                player ?: return@withLock
                 val current = currentPosition() ?: return@withLock
-                val positionMs = player.currentPositionMs
-                val playing = player.playWhenReady
                 val flat = snapshot.flatPosition(current) ?: return@withLock
                 windowJob?.cancel()
-                if (shuffleEnabled) {
-                    queueRepository.setShuffle(false, null)
-                    shuffleEnabled = false
-                    queueRepository.setCursor(flat)
-                    this@PlaybackController.snapshot = readSnapshot()
-                    loadWindow(flat, autoplay = playing, startPositionMs = positionMs)
-                } else {
-                    queueRepository.setShuffle(true, shuffledOrder(snapshot.size, flat))
-                    shuffleEnabled = true
-                    queueRepository.setCursor(0)
-                    this@PlaybackController.snapshot = readSnapshot()
-                    loadWindow(0, autoplay = playing, startPositionMs = positionMs)
-                }
+                val position =
+                    if (shuffleEnabled) {
+                        queueRepository.setShuffle(false, null)
+                        shuffleEnabled = false
+                        flat
+                    } else {
+                        val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.size, flat) }
+                        queueRepository.setShuffle(true, order)
+                        shuffleEnabled = true
+                        0L
+                    }
+                queueRepository.setCursor(position)
+                val reordered = readSnapshot()
+                this@PlaybackController.snapshot = reordered
+                rebuildWindow(queueRepository.window(reordered, position, QUEUE_WINDOW_RADIUS), position)
                 endedHandled = false
-                refresh(if (shuffleEnabled) 0L else flat)
+                refresh(position)
             }
         }
     }
@@ -517,7 +519,8 @@ class PlaybackController(
         val start = startPosition.coerceIn(0, snapshot.size - 1)
         val position =
             if (shuffleEnabled) {
-                queueRepository.setShuffle(true, shuffledOrder(snapshot.size, start))
+                val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.size, start) }
+                queueRepository.setShuffle(true, order)
                 0L
             } else {
                 start
@@ -540,7 +543,8 @@ class PlaybackController(
             var snapshot = queueRepository.snapshot()
             if (shuffleEnabled && !snapshot.shuffled && snapshot.size > 0L) {
                 val start = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
-                queueRepository.setShuffle(true, shuffledOrder(snapshot.size, start))
+                val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.size, start) }
+                queueRepository.setShuffle(true, order)
                 queueRepository.setCursor(0)
                 snapshot = queueRepository.snapshot()
             } else if (!snapshot.shuffled) {
@@ -682,6 +686,26 @@ class PlaybackController(
         } finally {
             updating = false
         }
+    }
+
+    private fun rebuildWindow(
+        window: List<QueueWindowItem>,
+        position: Long,
+    ) {
+        val player = player ?: return
+        val index = window.indexOfFirst { it.position == position }
+        if (index < 0) return
+        updating = true
+        try {
+            repeat(player.currentIndex) { player.removeFirst() }
+            while (player.itemCount > 1) player.removeLast()
+            for (i in index - 1 downTo 0) player.addFirst(window[i].item.toQueueItem())
+            for (i in index + 1 until window.size) player.addLast(window[i].item.toQueueItem())
+        } finally {
+            updating = false
+        }
+        windowStart = window.first().position
+        windowEnd = window.last().position
     }
 
     private fun currentPosition(): Long? {
