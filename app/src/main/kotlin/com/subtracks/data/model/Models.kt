@@ -160,6 +160,7 @@ data class Song(
     val disc: Long?,
     val starred: Long?,
     val genre: String?,
+    @ColumnInfo(defaultValue = "0") val created: Long = 0,
 )
 
 data class SongListItem(

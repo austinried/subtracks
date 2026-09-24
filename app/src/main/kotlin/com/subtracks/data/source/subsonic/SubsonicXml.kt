@@ -77,6 +77,7 @@ object SubsonicXml {
             disc = element.longAttr("discNumber"),
             starred = element.dateAttr("starred"),
             genre = element.attr("genre").ifEmpty { null },
+            created = element.dateAttr("created") ?: 0L,
         )
 
     fun playlists(

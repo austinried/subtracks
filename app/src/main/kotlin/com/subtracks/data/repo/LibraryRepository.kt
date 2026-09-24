@@ -183,6 +183,14 @@ class LibraryRepository(
                         dao.songsByStarred(sourceId, starred.ordinal, search)
                     }
                 }
+
+                SongSort.Added -> {
+                    if (descending) {
+                        dao.songsByAddedReversed(sourceId, starred.ordinal, search)
+                    } else {
+                        dao.songsByAdded(sourceId, starred.ordinal, search)
+                    }
+                }
             }
         }
 

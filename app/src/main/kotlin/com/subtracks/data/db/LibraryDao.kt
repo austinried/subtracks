@@ -454,6 +454,38 @@ interface LibraryDao {
         search: String,
     ): PagingSource<Int, SongListItem>
 
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId " +
+            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
+            "(:starredFilter = 2 AND songs.starred IS NULL)) " +
+            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
+            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "ORDER BY songs.created DESC, songs.title COLLATE NOCASE, songs.id",
+    )
+    fun songsByAdded(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+    ): PagingSource<Int, SongListItem>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId " +
+            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
+            "(:starredFilter = 2 AND songs.starred IS NULL)) " +
+            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
+            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "ORDER BY songs.created ASC, songs.title COLLATE NOCASE, songs.id",
+    )
+    fun songsByAddedReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+    ): PagingSource<Int, SongListItem>
+
     @Query(PLAYLIST_SONGS_SQL)
     fun playlistSongs(
         sourceId: Long,

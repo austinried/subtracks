@@ -16,7 +16,7 @@ enum class ArtistSort { Name, AlbumCount, Starred }
 
 enum class PlaylistSort { Name, Added, Updated }
 
-enum class SongSort { Album, Title, Artist, Starred }
+enum class SongSort { Album, Title, Artist, Starred, Added }
 
 enum class LibraryListTab(
     val key: String,

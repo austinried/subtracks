@@ -95,7 +95,7 @@ class LibraryOptionsTest {
         composeRule.waitForIdle()
         assertEquals(StarredFilter.Starred, query.starred)
 
-        composeRule.onNodeWithText("Clear filters").performClick()
+        composeRule.onNodeWithContentDescription("Clear filters").performClick()
         composeRule.waitForIdle()
         assertEquals(StarredFilter.Any, query.starred)
     }

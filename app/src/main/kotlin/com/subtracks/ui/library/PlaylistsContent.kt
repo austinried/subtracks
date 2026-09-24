@@ -13,7 +13,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,6 +28,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.ResetScrollOnChange
 import com.subtracks.ui.components.rememberViewportFill
 
 @Composable
@@ -57,7 +57,7 @@ fun PlaylistsContent(
 
         else -> {
             val listState = rememberLazyListState()
-            LaunchedEffect(resetKey) { listState.scrollToItem(0) }
+            ResetScrollOnChange(resetKey, { items.loadState.refresh }) { listState.scrollToItem(0) }
             val fill = rememberViewportFill(listState)
             LazyColumn(
                 state = listState,

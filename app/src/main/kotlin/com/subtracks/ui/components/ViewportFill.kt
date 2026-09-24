@@ -3,13 +3,48 @@ package com.subtracks.ui.components
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.paging.LoadState
 
 private const val FILL_EPSILON_PX = 1
+
+/**
+ * Scrolls back to the top once a new filter/sort has actually loaded.
+ *
+ * Scrolling immediately after [resetKey] changes does not stick: the lazy layout keeps the
+ * previously visible item in place by key while the paged list reloads, which snaps the scroll
+ * back. Waiting for the refresh triggered by the change and resetting afterwards avoids that.
+ */
+@Composable
+fun ResetScrollOnChange(
+    resetKey: Any?,
+    refreshState: () -> LoadState,
+    onReset: suspend () -> Unit,
+) {
+    var pending by remember { mutableStateOf(false) }
+    LaunchedEffect(resetKey) { pending = true }
+    LaunchedEffect(Unit) {
+        var refreshes = 0
+        var handled = 0
+        snapshotFlow(refreshState).collect { state ->
+            if (state is LoadState.Loading) {
+                refreshes++
+            } else if (pending && refreshes > handled) {
+                onReset()
+                handled = refreshes
+                pending = false
+            }
+        }
+    }
+}
 
 @Composable
 fun rememberViewportFill(state: LazyListState): Dp {

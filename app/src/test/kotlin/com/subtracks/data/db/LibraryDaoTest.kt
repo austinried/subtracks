@@ -111,6 +111,28 @@ class LibraryDaoTest {
             assertEquals(listOf("Beta"), dao.albumsByName(sourceId, starredFilter = 2, search = "").page().map { it.name })
         }
 
+    @Test
+    fun songAddedSortOrdersByCreated() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "Zebra", starred = null, created = 100),
+                    song(sourceId, "s2", "Apple", starred = null, created = 200),
+                ),
+            )
+
+            assertEquals(
+                listOf("Apple", "Zebra"),
+                dao.songsByAdded(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
+            )
+            assertEquals(
+                listOf("Zebra", "Apple"),
+                dao.songsByAddedReversed(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
+            )
+        }
+
     private suspend fun source(): Long =
         db.sourcesDao().insertSource(Source(name = "Navidrome", address = "http://localhost", isActive = true, createdAt = 0))
 
@@ -149,6 +171,7 @@ class LibraryDaoTest {
         id: String,
         title: String,
         starred: Long?,
+        created: Long = 0,
     ) = Song(
         sourceId = sourceId,
         id = id,
@@ -162,5 +185,6 @@ class LibraryDaoTest {
         disc = 1,
         starred = starred,
         genre = null,
+        created = created,
     )
 }

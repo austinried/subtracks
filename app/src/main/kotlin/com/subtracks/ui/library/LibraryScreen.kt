@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FilterAltOff
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
@@ -46,20 +48,17 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,6 +152,7 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
                 SortOption(SongSort.Title.name, "Title"),
                 SortOption(SongSort.Artist.name, "Artist"),
                 SortOption(SongSort.Starred.name, "Starred"),
+                SortOption(SongSort.Added.name, "Added"),
             )
         }
     }
@@ -327,56 +327,54 @@ fun LibraryScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) { page ->
-                key(resetKey) {
-                    when (LibraryTab.entries[page]) {
-                        LibraryTab.Albums -> {
-                            AlbumsContent(
-                                albums,
-                                coverArt,
-                                listBottomInset,
-                                onAlbumClick,
-                                filtered = filtersActive,
-                                onClearFilters = onClearFilters,
-                                resetKey = resetKey,
-                            )
-                        }
+                when (LibraryTab.entries[page]) {
+                    LibraryTab.Albums -> {
+                        AlbumsContent(
+                            albums,
+                            coverArt,
+                            listBottomInset,
+                            onAlbumClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
+                    }
 
-                        LibraryTab.Artists -> {
-                            ArtistsContent(
-                                artists,
-                                coverArt,
-                                listBottomInset,
-                                onArtistClick,
-                                filtered = filtersActive,
-                                onClearFilters = onClearFilters,
-                                resetKey = resetKey,
-                            )
-                        }
+                    LibraryTab.Artists -> {
+                        ArtistsContent(
+                            artists,
+                            coverArt,
+                            listBottomInset,
+                            onArtistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
+                    }
 
-                        LibraryTab.Songs -> {
-                            SongsContent(
-                                songs,
-                                coverArt,
-                                listBottomInset,
-                                onSongClick,
-                                playingSongId,
-                                filtered = filtersActive,
-                                onClearFilters = onClearFilters,
-                                resetKey = resetKey,
-                            )
-                        }
+                    LibraryTab.Songs -> {
+                        SongsContent(
+                            songs,
+                            coverArt,
+                            listBottomInset,
+                            onSongClick,
+                            playingSongId,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
+                    }
 
-                        LibraryTab.Playlists -> {
-                            PlaylistsContent(
-                                playlists,
-                                coverArt,
-                                listBottomInset,
-                                onPlaylistClick,
-                                filtered = filtersActive,
-                                onClearFilters = onClearFilters,
-                                resetKey = resetKey,
-                            )
-                        }
+                    LibraryTab.Playlists -> {
+                        PlaylistsContent(
+                            playlists,
+                            coverArt,
+                            listBottomInset,
+                            onPlaylistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
                     }
                 }
             }
@@ -456,12 +454,22 @@ private fun ListOptionsSheet(
     onSearch: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-        ListItem(
-            headlineContent = { Text("Search this list") },
-            leadingContent = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            modifier = Modifier.clickable(onClick = onSearch),
-        )
+        Surface(
+            onClick = onSearch,
+            shape = RoundedCornerShape(4.dp),
+            color = Color.Transparent,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Search this list", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         HorizontalDivider()
 
         Row(
@@ -488,18 +496,30 @@ private fun ListOptionsSheet(
             sortOptions.forEach { option ->
                 FilterChip(
                     selected = listQuery.sort == option.value,
-                    onClick = { onSortChange(option.value) },
+                    onClick = {
+                        if (listQuery.sort == option.value) onToggleSortDirection() else onSortChange(option.value)
+                    },
                     label = { Text(option.label) },
                 )
             }
         }
 
         if (starredSupported) {
-            Text(
-                text = "Filters",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp),
+            ) {
+                Text(
+                    text = "Filters",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                if (listQuery.starred != StarredFilter.Any) {
+                    IconButton(onClick = onClearFilters) {
+                        Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
+                    }
+                }
+            }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -535,9 +555,6 @@ private fun ListOptionsSheet(
                             }
                         },
                 )
-                if (listQuery.starred != StarredFilter.Any) {
-                    TextButton(onClick = onClearFilters) { Text("Clear filters") }
-                }
             }
         }
     }
@@ -555,11 +572,11 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-    TextField(
+    OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        placeholder = { Text("Search") },
+        label = { Text("Search") },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = onClose) {
@@ -567,11 +584,9 @@ private fun SearchField(
             }
         },
         colors =
-            TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
+            OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
             ),
         modifier = modifier.focusRequester(focusRequester),
     )

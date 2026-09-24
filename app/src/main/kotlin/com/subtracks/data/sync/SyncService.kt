@@ -117,6 +117,7 @@ private val songColumns =
         "disc",
         "starred",
         "genre",
+        "created",
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
@@ -130,7 +131,8 @@ private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starr
 private fun Album.values() =
     listOf<Any?>(sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount, frequentRank, recentRank)
 
-private fun Song.values() = listOf<Any?>(sourceId, id, albumId, artistId, title, album, artist, duration, track, disc, starred, genre)
+private fun Song.values() =
+    listOf<Any?>(sourceId, id, albumId, artistId, title, album, artist, duration, track, disc, starred, genre, created)
 
 private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration)
 
