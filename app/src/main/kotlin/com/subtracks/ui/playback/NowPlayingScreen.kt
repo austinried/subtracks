@@ -3,8 +3,6 @@ package com.subtracks.ui.playback
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,7 +39,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,8 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -213,23 +209,37 @@ fun NowPlayingScreen(
                                     .padding(top = 28.dp)
                                     .height(titleHeight + 6.dp + subtitleHeight),
                         ) {
-                            Text(
-                                text = state.item?.title.orEmpty(),
-                                style = titleStyle,
-                                maxLines = 1,
-                                modifier = Modifier.height(titleHeight).basicMarquee(),
-                            )
-                            Text(
-                                text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
-                                style = subtitleStyle,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                modifier = Modifier.height(subtitleHeight).basicMarquee(),
-                            )
+                            Box(Modifier.height(titleHeight), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = state.item?.title.orEmpty(),
+                                    style = titleStyle,
+                                    maxLines = 1,
+                                    modifier = Modifier.basicMarquee(),
+                                )
+                            }
+                            Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
+                                    style = subtitleStyle,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    modifier = Modifier.basicMarquee(),
+                                )
+                            }
                         }
-                        SeekBar(
-                            progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f,
-                            onSeek = { fraction -> onSeek((fraction * state.durationMs).toLong()) },
+                        var dragging by remember { mutableStateOf(false) }
+                        var dragPosition by remember { mutableFloatStateOf(0f) }
+                        Slider(
+                            value = if (dragging) dragPosition else state.positionMs.toFloat(),
+                            onValueChange = {
+                                dragging = true
+                                dragPosition = it
+                            },
+                            onValueChangeFinished = {
+                                onSeek(dragPosition.toLong())
+                                dragging = false
+                            },
+                            valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
                             modifier = Modifier.padding(top = 28.dp),
                         )
                         Row(
@@ -306,50 +316,6 @@ fun NowPlayingScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SeekBar(
-    progress: Float,
-    onSeek: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var widthPx by remember { mutableIntStateOf(0) }
-    var dragging by remember { mutableStateOf(false) }
-    var dragFraction by remember { mutableFloatStateOf(0f) }
-    val active = MaterialTheme.colorScheme.primary
-    val track = active.copy(alpha = 0.24f)
-    val shown = if (dragging) dragFraction else progress
-    Box(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(32.dp)
-                .onSizeChanged { widthPx = it.width }
-                .pointerInput(widthPx) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { offset ->
-                            dragging = true
-                            dragFraction = if (widthPx > 0) (offset.x / widthPx).coerceIn(0f, 1f) else 0f
-                        },
-                        onDragEnd = {
-                            dragging = false
-                            onSeek(dragFraction)
-                        },
-                        onDragCancel = { dragging = false },
-                    ) { change, _ ->
-                        dragFraction = if (widthPx > 0) (change.position.x / widthPx).coerceIn(0f, 1f) else 0f
-                    }
-                }.pointerInput(widthPx) {
-                    detectTapGestures { offset ->
-                        if (widthPx > 0) onSeek((offset.x / widthPx).coerceIn(0f, 1f))
-                    }
-                },
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Box(Modifier.fillMaxWidth().height(4.dp).background(track))
-        Box(Modifier.fillMaxWidth(shown).height(4.dp).background(active))
     }
 }
 
