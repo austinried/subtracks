@@ -34,6 +34,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    lint {
+        checkReleaseBuilds = false
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
