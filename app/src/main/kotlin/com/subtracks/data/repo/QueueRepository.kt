@@ -109,11 +109,8 @@ class QueueRepository(
                 }
             }
         val (entries, order, shuffled) = loaded
-        if (shuffled && order == null) {
-            setShuffle(false, null)
-            return QueueSnapshot(entries, null, queueVersion)
-        }
-        return QueueSnapshot(entries, order, queueVersion)
+        val valid = if (shuffled && order == null) null else order
+        return QueueSnapshot(entries, valid, queueVersion)
     }
 
     suspend fun modes(): QueueModes {
@@ -126,13 +123,22 @@ class QueueRepository(
         order: LongArray?,
     ) {
         val seed = if (enabled && order != null) System.nanoTime() else 0L
-        dao.clearShuffleOrder()
-        if (enabled && order != null) {
-            dao.insertShuffleOrder(order.mapIndexed { index, flat -> ShuffleOrder(index.toLong(), flat) })
+        db.useWriterConnection { transactor ->
+            transactor.immediateTransaction {
+                dao.clearShuffleOrder()
+                if (enabled && order != null) {
+                    dao.insertShuffleOrder(order.mapIndexed { index, flat -> ShuffleOrder(index.toLong(), flat) })
+                }
+                dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleSeed = seed))
+            }
         }
-        dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleSeed = seed))
         cachedShuffleSeed = 0
         cachedShuffleOrder = null
+    }
+
+    fun invalidateLibraryCache() {
+        cachedFlatIds = null
+        queueVersion++
     }
 
     suspend fun setRepeat(mode: Int) = dao.setCursor(cursorRow().copy(repeatMode = mode))
@@ -271,7 +277,7 @@ class QueueRepository(
 
     private suspend fun flatIds(snapshot: QueueSnapshot): List<String> {
         val cached = cachedFlatIds
-        if (cached != null && cachedFlatVersion == snapshot.version) return cached
+        if (cached != null && cachedFlatVersion == snapshot.version && cached.size.toLong() == snapshot.size) return cached
         val ids = ArrayList<String>(snapshot.size.toInt())
         for (resolved in snapshot.entries) {
             val entry = resolved.entry

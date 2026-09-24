@@ -819,6 +819,27 @@ class PlaybackControllerTest {
         )
     }
 
+    @Test
+    fun repeatAllLoopsAfterEndingWithRepeatOff() {
+        seedAlbum(2, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.isPlaying }
+
+        handle.finish()
+        handle.emitEvents()
+        await { !controller.state.value.isPlaying }
+
+        controller.togglePlayPause()
+        await { controller.state.value.isPlaying }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        handle.finish()
+        handle.emitEvents()
+        await { controller.state.value.isPlaying }
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

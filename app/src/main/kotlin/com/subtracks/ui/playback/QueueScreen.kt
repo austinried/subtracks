@@ -250,7 +250,7 @@ fun QueueRoute(
     sourceRepository: SourceRepository = koinInject(),
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.open() }
+    LaunchedEffect(playback.shuffle) { viewModel.open() }
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,

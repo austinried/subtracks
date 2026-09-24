@@ -1,6 +1,7 @@
 package com.subtracks.data.sync
 
 import android.util.Log
+import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ sealed interface SyncStatus {
 
 class SyncManager(
     private val sourceRepository: SourceRepository,
+    private val queueRepository: QueueRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
@@ -36,7 +38,10 @@ class SyncManager(
         _status.value = SyncStatus.Running
         _status.value =
             sourceRepository.sync().fold(
-                onSuccess = { SyncStatus.Success },
+                onSuccess = {
+                    queueRepository.invalidateLibraryCache()
+                    SyncStatus.Success
+                },
                 onFailure = { error ->
                     Log.w(TAG, "Sync failed", error)
                     SyncStatus.Failed(error.message ?: "Sync failed")

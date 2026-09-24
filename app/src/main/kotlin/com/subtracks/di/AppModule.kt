@@ -34,7 +34,7 @@ fun appModule(
     single { SourceRepository(get(), get(), get()) }
     single { LibraryRepository(get(), get()) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
-    single { SyncManager(get()) }
+    single { SyncManager(get(), get()) }
     single { QueueRepository(get()) }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }
     single { PlaybackController(get(), get(), get()) }
