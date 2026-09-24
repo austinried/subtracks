@@ -46,7 +46,7 @@ fun CoverArt(
         }
         if (ref != null) {
             AsyncImage(
-                model = remember(ref) { imageRequest(context, ref, crossfade = thumbnailRef != null) },
+                model = remember(ref, thumbnailRef) { imageRequest(context, ref, crossfade = thumbnailRef != null) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

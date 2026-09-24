@@ -18,15 +18,12 @@ fun rememberViewportFill(state: LazyListState): Dp {
         derivedStateOf {
             val info = state.layoutInfo
             val realCount = info.totalItemsCount - 1
-            if (realCount <= 0) {
+            val visibleReal = info.visibleItemsInfo.filter { it.index < realCount }
+            if (realCount <= 0 || visibleReal.size < realCount) {
                 FILL_EPSILON_PX
             } else {
-                val visibleReal = info.visibleItemsInfo.filter { it.index < realCount }
-                if (visibleReal.size < realCount) {
-                    FILL_EPSILON_PX
-                } else {
-                    (info.viewportSize.height - visibleReal.sumOf { it.size }).coerceAtLeast(0) + FILL_EPSILON_PX
-                }
+                val contentBottom = visibleReal.maxOf { it.offset + it.size }
+                (info.viewportSize.height - info.afterContentPadding - contentBottom).coerceAtLeast(0) + FILL_EPSILON_PX
             }
         }
     }
@@ -40,15 +37,12 @@ fun rememberViewportFill(state: LazyGridState): Dp {
         derivedStateOf {
             val info = state.layoutInfo
             val realCount = info.totalItemsCount - 1
-            if (realCount <= 0) {
+            val visibleReal = info.visibleItemsInfo.filter { it.index < realCount }
+            if (realCount <= 0 || visibleReal.size < realCount) {
                 FILL_EPSILON_PX
             } else {
-                val visibleReal = info.visibleItemsInfo.filter { it.index < realCount }
-                if (visibleReal.size < realCount) {
-                    FILL_EPSILON_PX
-                } else {
-                    (info.viewportSize.height - visibleReal.sumOf { it.size.height }).coerceAtLeast(0) + FILL_EPSILON_PX
-                }
+                val contentBottom = visibleReal.maxOf { it.offset.y + it.size.height }
+                (info.viewportSize.height - info.afterContentPadding - contentBottom).coerceAtLeast(0) + FILL_EPSILON_PX
             }
         }
     }
