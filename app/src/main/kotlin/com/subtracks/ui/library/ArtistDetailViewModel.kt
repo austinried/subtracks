@@ -8,6 +8,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,10 +40,22 @@ class ArtistDetailViewModel(
             artist
                 .filterNotNull()
                 .collectLatest { loaded ->
-                    _art.value = sourceRepository.coverArt(loaded.coverArt)
-                    _artThumbnail.value = sourceRepository.coverArt(loaded.coverArt, thumbnail = true)
+                    val (full, thumbnail) = resolveArt(loaded)
+                    _art.value = full
+                    _artThumbnail.value = thumbnail
                 }
         }
+    }
+
+    private suspend fun resolveArt(artist: Artist): Pair<CoverArtRef?, CoverArtRef?> {
+        repeat(3) { attempt ->
+            val full = sourceRepository.coverArt(artist.coverArt)
+            if (full != null) {
+                return full to sourceRepository.coverArt(artist.coverArt, thumbnail = true)
+            }
+            if (attempt < 2) delay(300)
+        }
+        return null to null
     }
 
     fun coverArt(

@@ -73,6 +73,13 @@ import com.subtracks.ui.theme.heroDarkenAt
 private const val GRADIENT_SCREENS = 2.0f
 private const val FADE_DISTANCE_DP = 64
 
+/**
+ * A themed detail screen: endless artwork gradient, a fading top bar, and a lazy list whose first
+ * item is [header]. The header and its controls are measured so the bar fades in as they scroll off.
+ *
+ * [content] emits the rows after the header and assumes they share a uniform height, which is used
+ * to estimate the scroll offset for the bar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeroDetailScaffold(

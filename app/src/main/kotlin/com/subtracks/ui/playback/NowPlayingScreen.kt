@@ -75,10 +75,7 @@ fun NowPlayingRoute(
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
     LaunchedEffect(state.item?.id, state.hasNext) {
         if (!state.hasNext) return@LaunchedEffect
-        controller.upcomingCoverArt(thumbnail = true)?.let {
-            ArtworkSeedCache.prefetch(context, it)
-            prefetchImage(context, it)
-        }
+        controller.upcomingCoverArt(thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
         controller.upcomingCoverArt()?.let { prefetchImage(context, it) }
     }
     NowPlayingScreen(

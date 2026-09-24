@@ -103,9 +103,13 @@ private fun playlistSummary(playlist: Playlist?): String {
 }
 
 private fun formatDuration(seconds: Long): String? {
-    if (seconds <= 0) return null
+    if (seconds < 60) return null
     val totalMinutes = seconds / 60
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
-    return if (hours > 0) "$hours hr $minutes min" else "$totalMinutes min"
+    return when {
+        hours == 0L -> "$totalMinutes min"
+        minutes == 0L -> "$hours hr"
+        else -> "$hours hr $minutes min"
+    }
 }
