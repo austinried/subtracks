@@ -197,7 +197,7 @@ fun LibraryScreen(
                         Modifier
                             .offset(y = -(titleHeight * titleFraction))
                             .wrapContentHeight(unbounded = true)
-                            .padding(start = 16.dp, end = 16.dp, top = titleTop),
+                            .padding(start = 8.dp, end = 16.dp, top = titleTop),
                 )
             }
             LibraryTabs(
@@ -243,7 +243,7 @@ private fun LibraryTabs(
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+            .padding(start = 8.dp, end = 12.dp),
     ) {
         bounds[page]?.let { current ->
             val neighbour = bounds[if (fraction >= 0f) page + 1 else page - 1]
