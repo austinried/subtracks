@@ -89,6 +89,7 @@ private const val THEME_TRANSITION_MS = 100
 @Composable
 fun AlbumDetailRoute(
     albumId: String,
+    coverArtId: String?,
     onBack: () -> Unit,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
@@ -97,11 +98,12 @@ fun AlbumDetailRoute(
     val songs by viewModel.songs.collectAsStateWithLifecycle(initialValue = emptyList())
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
+    val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     AlbumDetailScreen(
         album = album,
         songs = songs,
         coverArt = viewModel::coverArt,
-        artwork = rememberArtworkColors(viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
+        artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },

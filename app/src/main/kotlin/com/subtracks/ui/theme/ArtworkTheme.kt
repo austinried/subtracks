@@ -27,7 +27,7 @@ private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.18f
 private const val PRIMARY_MIN_LUMINANCE = 0.30f
 private const val MIN_GRADIENT_SATURATION = 0.30f
-private const val HERO_DARKEN_MAX = 1.0f
+private const val HERO_DARKEN_MAX = 0.88f
 private const val DARKEN_START_SCREENS = 0.5f
 private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
@@ -166,8 +166,10 @@ fun rememberArtworkColors(
     ref: CoverArtRef?,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
 ): ArtworkColors {
+    val cached = remember(ref?.cacheKey) { ref?.cacheKey?.let(ArtworkSeedCache::cached) }
     val seeds by rememberArtworkSeed(ref)
-    val target = remember(seeds) { seeds?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
+    val effective = seeds ?: cached
+    val target = remember(effective) { effective?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
     return rememberAnimatedArtworkColors(target, durationMillis)
 }
 

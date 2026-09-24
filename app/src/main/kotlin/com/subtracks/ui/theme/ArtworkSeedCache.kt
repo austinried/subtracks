@@ -44,6 +44,8 @@ object ArtworkSeedCache {
         this.store = store
     }
 
+    fun cached(cacheKey: String): Pair<Int, Int?>? = cache.get(cacheKey)
+
     suspend fun seeds(
         context: Context,
         ref: CoverArtRef,

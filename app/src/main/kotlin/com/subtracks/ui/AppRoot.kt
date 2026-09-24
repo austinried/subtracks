@@ -68,11 +68,14 @@ private object Routes {
     const val LIBRARY = "library"
     const val SETTINGS = "settings"
     const val ADD_SERVER = "add-server"
-    const val ALBUM_DETAIL = "album/{albumId}"
+    const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
     const val ARTIST_DETAIL = "artist/{artistId}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
 
-    fun album(id: String) = "album/${Uri.encode(id)}"
+    fun album(
+        id: String,
+        coverArt: String? = null,
+    ) = "album/${Uri.encode(id)}?coverArt=${Uri.encode(coverArt.orEmpty())}"
 
     fun artist(id: String) = "artist/${Uri.encode(id)}"
 
@@ -135,7 +138,7 @@ private fun MainNavigation() {
             ) {
                 composable(Routes.LIBRARY) {
                     LibraryRoute(
-                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id)) },
+                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
                         onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -150,10 +153,22 @@ private fun MainNavigation() {
                 }
                 composable(
                     route = Routes.ALBUM_DETAIL,
-                    arguments = listOf(navArgument("albumId") { type = NavType.StringType }),
+                    arguments =
+                        listOf(
+                            navArgument("albumId") { type = NavType.StringType },
+                            navArgument("coverArt") {
+                                type = NavType.StringType
+                                defaultValue = ""
+                            },
+                        ),
                 ) { entry ->
                     AlbumDetailRoute(
                         albumId = entry.arguments?.getString("albumId").orEmpty(),
+                        coverArtId =
+                            entry.arguments
+                                ?.getString("coverArt")
+                                .orEmpty()
+                                .ifEmpty { null },
                         onBack = { navController.popBackStack() },
                     )
                 }
@@ -164,7 +179,7 @@ private fun MainNavigation() {
                     ArtistDetailRoute(
                         artistId = entry.arguments?.getString("artistId").orEmpty(),
                         onBack = { navController.popBackStack() },
-                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id)) },
+                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
                     )
                 }
                 composable(
