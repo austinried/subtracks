@@ -8,12 +8,10 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
@@ -40,27 +38,11 @@ class ArtistDetailViewModel(
         viewModelScope.launch {
             artist
                 .filterNotNull()
-                .distinctUntilChangedBy { it.id }
                 .collectLatest { loaded ->
-                    val (full, thumbnail) = resolveArt(loaded)
-                    _art.value = full
-                    _artThumbnail.value = thumbnail
+                    _art.value = sourceRepository.coverArt(loaded.coverArt)
+                    _artThumbnail.value = sourceRepository.coverArt(loaded.coverArt, thumbnail = true)
                 }
         }
-    }
-
-    private suspend fun resolveArt(artist: Artist): Pair<CoverArtRef?, CoverArtRef?> {
-        repeat(3) { attempt ->
-            val full = sourceRepository.artistArt(artist.id) ?: sourceRepository.coverArt(artist.coverArt)
-            if (full != null) {
-                val thumbnail =
-                    sourceRepository.artistArt(artist.id, thumbnail = true)
-                        ?: sourceRepository.coverArt(artist.coverArt, thumbnail = true)
-                return full to thumbnail
-            }
-            if (attempt < 2) delay(300)
-        }
-        return null to null
     }
 
     fun coverArt(

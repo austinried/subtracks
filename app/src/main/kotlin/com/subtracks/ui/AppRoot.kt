@@ -70,7 +70,7 @@ private object Routes {
     const val SETTINGS = "settings"
     const val ADD_SERVER = "add-server"
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
-    const val ARTIST_DETAIL = "artist/{artistId}"
+    const val ARTIST_DETAIL = "artist/{artistId}?coverArt={coverArt}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
 
     fun album(
@@ -78,7 +78,10 @@ private object Routes {
         coverArt: String? = null,
     ) = "album/${Uri.encode(id)}?coverArt=${Uri.encode(coverArt.orEmpty())}"
 
-    fun artist(id: String) = "artist/${Uri.encode(id)}"
+    fun artist(
+        id: String,
+        coverArt: String? = null,
+    ) = "artist/${Uri.encode(id)}?coverArt=${Uri.encode(coverArt.orEmpty())}"
 
     fun playlist(id: String) = "playlist/${Uri.encode(id)}"
 }
@@ -140,7 +143,7 @@ private fun MainNavigation() {
                 composable(Routes.LIBRARY) {
                     LibraryRoute(
                         onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                        onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id)) },
+                        onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         bottomInset = if (playerVisible) 0.dp else navBarInset,
@@ -175,10 +178,22 @@ private fun MainNavigation() {
                 }
                 composable(
                     route = Routes.ARTIST_DETAIL,
-                    arguments = listOf(navArgument("artistId") { type = NavType.StringType }),
+                    arguments =
+                        listOf(
+                            navArgument("artistId") { type = NavType.StringType },
+                            navArgument("coverArt") {
+                                type = NavType.StringType
+                                defaultValue = ""
+                            },
+                        ),
                 ) { entry ->
                     ArtistDetailRoute(
                         artistId = entry.arguments?.getString("artistId").orEmpty(),
+                        coverArtId =
+                            entry.arguments
+                                ?.getString("coverArt")
+                                .orEmpty()
+                                .ifEmpty { null },
                         onBack = { navController.popBackStack() },
                         onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
                     )

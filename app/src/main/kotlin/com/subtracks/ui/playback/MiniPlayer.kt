@@ -46,7 +46,7 @@ fun MiniPlayer(
     val item = state.item ?: return
     ArtworkTheme(artwork) {
         Surface(
-            color = artwork?.accents?.firstOrNull() ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = artwork?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
             modifier =
                 modifier.fillMaxWidth().clickable(

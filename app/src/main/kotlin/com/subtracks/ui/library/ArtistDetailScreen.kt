@@ -71,6 +71,7 @@ private const val THEME_TRANSITION_MS = 100
 @Composable
 fun ArtistDetailRoute(
     artistId: String,
+    coverArtId: String?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
@@ -79,12 +80,13 @@ fun ArtistDetailRoute(
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
+    val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     ArtistDetailScreen(
         artist = artist,
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,
-        artwork = rememberArtworkColors(artThumbnail ?: art, THEME_TRANSITION_MS),
+        artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS),
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,

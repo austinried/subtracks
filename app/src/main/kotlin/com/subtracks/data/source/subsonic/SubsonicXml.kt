@@ -110,20 +110,6 @@ object SubsonicXml {
                 position = index.toLong(),
             )
         }
-
-    fun artistImageUrl(
-        document: Document,
-        thumbnail: Boolean,
-    ): String? {
-        val tag = if (thumbnail) "smallImageUrl" else "largeImageUrl"
-        return document
-            .elements("artistInfo2")
-            .firstOrNull()
-            ?.elements(tag)
-            ?.firstOrNull()
-            ?.textContent
-            ?.takeIf { it.isNotBlank() }
-    }
 }
 
 private fun Element.elements(tag: String): List<Element> {
