@@ -208,6 +208,9 @@ data class QueueEntry(
 data class PlaybackCursor(
     @PrimaryKey val id: Long = 1,
     val queuePosition: Long,
+    @ColumnInfo(defaultValue = "0") val shuffleEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val repeatMode: Int = 0,
+    val shuffleOrder: String? = null,
 )
 
 @Entity(tableName = "artwork_seeds")

@@ -285,7 +285,7 @@ class QueueRepositoryTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
 
-            repository.move(from = 0, to = 2)
+            repository.move(repository.snapshot(), from = 0, to = 2)
 
             assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
         }
@@ -296,7 +296,7 @@ class QueueRepositoryTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
 
-            repository.move(from = 0, to = 3)
+            repository.move(repository.snapshot(), from = 0, to = 3)
 
             assertEquals(listOf("s2", "s3", "s4", "s1"), resolveAll(repository.snapshot()))
         }
@@ -307,8 +307,8 @@ class QueueRepositoryTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
 
-            assertFalse(repository.move(from = 5, to = 0))
-            assertTrue(repository.move(from = 0, to = 2))
+            assertFalse(repository.move(repository.snapshot(), from = 5, to = 0))
+            assertTrue(repository.move(repository.snapshot(), from = 0, to = 2))
             assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
         }
 

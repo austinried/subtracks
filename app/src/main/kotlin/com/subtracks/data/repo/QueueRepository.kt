@@ -19,10 +19,23 @@ data class ResolvedQueueEntry(
 
 data class QueueSnapshot(
     val entries: List<ResolvedQueueEntry>,
+    val shuffleOrder: LongArray? = null,
 ) {
     val size: Long = entries.sumOf { it.length }
 
-    fun locate(position: Long): Pair<QueueEntry, Long>? {
+    val shuffled: Boolean get() = shuffleOrder != null
+
+    fun locate(position: Long): Pair<QueueEntry, Long>? = locateFlat(flatPosition(position) ?: return null)
+
+    fun flatPosition(sequence: Long): Long? = if (shuffleOrder == null) sequence else shuffleOrder.getOrNull(sequence.toInt())
+
+    fun sequencePosition(flat: Long): Long {
+        val order = shuffleOrder ?: return flat
+        val index = order.indexOfFirst { it == flat }
+        return if (index >= 0) index.toLong() else flat
+    }
+
+    private fun locateFlat(position: Long): Pair<QueueEntry, Long>? {
         var remaining = position
         for (resolved in entries) {
             if (remaining < resolved.length) return resolved.entry to remaining
@@ -31,6 +44,11 @@ data class QueueSnapshot(
         return null
     }
 }
+
+data class QueueModes(
+    val shuffle: Boolean,
+    val repeat: Int,
+)
 
 data class QueueWindowItem(
     val position: Long,
@@ -59,17 +77,45 @@ class QueueRepository(
 
     fun songsEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Songs, refId = "")
 
-    suspend fun replace(entries: List<QueueEntry>) {
+    suspend fun replace(
+        entries: List<QueueEntry>,
+        shuffleOrder: LongArray? = null,
+    ) {
         write(entries)
-        dao.setCursor(PlaybackCursor(queuePosition = 0))
+        dao.setCursor(
+            cursorRow().copy(
+                queuePosition = 0,
+                shuffleEnabled = shuffleOrder != null,
+                shuffleOrder = shuffleOrder?.joinToString(","),
+            ),
+        )
     }
 
     suspend fun snapshot(): QueueSnapshot =
         db.useReaderConnection { transactor ->
             transactor.deferredTransaction {
-                QueueSnapshot(dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) })
+                val entries = dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) }
+                val row = dao.cursor()
+                val order =
+                    row?.shuffleOrder?.parseOrder()?.takeIf {
+                        row.shuffleEnabled &&
+                            it.size.toLong() == entries.sumOf { e -> e.length }
+                    }
+                QueueSnapshot(entries, order)
             }
         }
+
+    suspend fun modes(): QueueModes {
+        val row = dao.cursor() ?: return QueueModes(shuffle = false, repeat = 0)
+        return QueueModes(row.shuffleEnabled, row.repeatMode)
+    }
+
+    suspend fun setShuffle(
+        enabled: Boolean,
+        order: LongArray?,
+    ) = dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleOrder = order?.joinToString(",")))
+
+    suspend fun setRepeat(mode: Int) = dao.setCursor(cursorRow().copy(repeatMode = mode))
 
     suspend fun itemAt(
         snapshot: QueueSnapshot,
@@ -84,6 +130,14 @@ class QueueRepository(
         first: Long,
         last: Long,
     ): List<QueueWindowItem> {
+        if (snapshot.shuffled) {
+            val items = mutableListOf<QueueWindowItem>()
+            for (position in first..last) {
+                val (entry, offset) = snapshot.locate(position) ?: continue
+                rows(entry, entry.offset + offset, 1).firstOrNull()?.let { items += QueueWindowItem(position, it) }
+            }
+            return items
+        }
         val items = mutableListOf<QueueWindowItem>()
         var start = 0L
         for (resolved in snapshot.entries) {
@@ -112,16 +166,36 @@ class QueueRepository(
     suspend fun removeAt(
         snapshot: QueueSnapshot,
         position: Long,
-    ) = write(removeEntry(snapshot.entries, position).map { it.entry })
+    ): QueueSnapshot {
+        val order = snapshot.shuffleOrder
+        if (order == null) {
+            write(removeEntry(snapshot.entries, position).map { it.entry })
+            return snapshot()
+        }
+        val flat = order.getOrNull(position.toInt()) ?: return snapshot
+        write(removeEntry(snapshot.entries, flat).map { it.entry })
+        val reordered = order.toMutableList().apply { removeAt(position.toInt()) }
+        for (index in reordered.indices) if (reordered[index] > flat) reordered[index] -= 1
+        setShuffle(true, reordered.toLongArray())
+        return snapshot()
+    }
 
     suspend fun move(
+        snapshot: QueueSnapshot,
         from: Long,
         to: Long,
     ): Boolean {
-        val before = snapshot()
-        val located = before.locate(from) ?: return false
-        val song = itemAt(before, from) ?: return false
-        val removed = removeEntry(before.entries, from)
+        val order = snapshot.shuffleOrder
+        if (order != null) {
+            val reordered = order.toMutableList()
+            val moved = reordered.removeAt(from.toInt())
+            reordered.add(to.coerceIn(0L, reordered.size.toLong()).toInt(), moved)
+            setShuffle(true, reordered.toLongArray())
+            return true
+        }
+        val located = snapshot.locate(from) ?: return false
+        val song = itemAt(snapshot, from) ?: return false
+        val removed = removeEntry(snapshot.entries, from)
         val moved = songEntry(located.first.sourceId, song.song.id)
         write(insertEntry(removed, to.coerceIn(0, removed.sumOf { it.length }), moved))
         return true
@@ -129,7 +203,9 @@ class QueueRepository(
 
     suspend fun cursor(): Long = dao.cursor()?.queuePosition ?: 0
 
-    suspend fun setCursor(position: Long) = dao.setCursor(PlaybackCursor(queuePosition = position))
+    suspend fun setCursor(position: Long) = dao.setCursor(cursorRow().copy(queuePosition = position))
+
+    private suspend fun cursorRow(): PlaybackCursor = dao.cursor() ?: PlaybackCursor(queuePosition = 0)
 
     private suspend fun write(entries: List<QueueEntry>) {
         db.useWriterConnection { transactor ->
@@ -231,3 +307,10 @@ class QueueRepository(
         return result
     }
 }
+
+private fun String.parseOrder(): LongArray? =
+    if (isEmpty()) {
+        null
+    } else {
+        split(',').mapNotNull { it.toLongOrNull() }.toLongArray().takeIf { it.isNotEmpty() }
+    }

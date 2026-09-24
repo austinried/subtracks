@@ -18,6 +18,9 @@ class FakePlayerHandle : PlayerHandle {
     @Volatile
     var duration = 0L
 
+    @Volatile
+    var positionMs = 0L
+
     private val listeners = CopyOnWriteArrayList<PlayerHandle.Listener>()
 
     @Volatile
@@ -54,7 +57,7 @@ class FakePlayerHandle : PlayerHandle {
 
     override val durationMs: Long get() = duration
 
-    override val currentPositionMs: Long get() = 0
+    override val currentPositionMs: Long get() = positionMs
 
     override val currentItem: QueueItem? get() = items.getOrNull(index)
 
@@ -188,6 +191,10 @@ class FakePlayerHandle : PlayerHandle {
         operations += "seekTo($positionMs)"
         ended = false
         notifyEvents()
+    }
+
+    override fun setRepeatOne(enabled: Boolean) {
+        operations += "setRepeatOne($enabled)"
     }
 
     override fun addListener(listener: PlayerHandle.Listener) {

@@ -140,7 +140,7 @@ interface LibraryDao {
         playlistId: String,
     ): Flow<Playlist?>
 
-    @Query("SELECT * FROM songs WHERE sourceId = :sourceId AND albumId = :albumId ORDER BY disc, track")
+    @Query("SELECT * FROM songs WHERE sourceId = :sourceId AND albumId = :albumId ORDER BY disc, track, id")
     fun songsByAlbum(
         sourceId: Long,
         albumId: String,

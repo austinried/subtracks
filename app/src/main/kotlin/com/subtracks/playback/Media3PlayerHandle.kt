@@ -86,6 +86,10 @@ class Media3PlayerHandle(
         controller.seekTo(positionMs)
     }
 
+    override fun setRepeatOne(enabled: Boolean) {
+        controller.repeatMode = if (enabled) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
     override fun addListener(listener: PlayerHandle.Listener) {
         controller.addListener(
             object : Player.Listener {

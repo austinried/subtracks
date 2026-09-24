@@ -169,7 +169,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun theLastTrackReportsNoNext() {
+    fun theLastTrackStillEnablesNext() {
         seedAlbum(3, sourceId = 1)
 
         controller.playAlbum(1, "al1", 2)
@@ -178,7 +178,7 @@ class PlaybackControllerTest {
                 ?.id == "s3"
         }
 
-        assertFalse(controller.state.value.hasNext)
+        assertTrue(controller.state.value.hasNext)
         assertTrue(controller.state.value.hasPrevious)
     }
 
@@ -308,7 +308,7 @@ class PlaybackControllerTest {
         assertEquals(QueueContext(QueueKind.Album, "al1"), controller.state.value.context)
         assertTrue(controller.state.value.isPlaying)
         assertTrue(controller.state.value.hasNext)
-        assertFalse(controller.state.value.hasPrevious)
+        assertTrue(controller.state.value.hasPrevious)
     }
 
     @Test
@@ -371,7 +371,7 @@ class PlaybackControllerTest {
 
         assertEquals(0L, controller.state.value.position)
         assertTrue(handle.operations.any { it.startsWith("setWindow") })
-        assertFalse(controller.state.value.hasPrevious)
+        assertTrue(controller.state.value.hasPrevious)
     }
 
     @Test
@@ -593,6 +593,137 @@ class PlaybackControllerTest {
         runBlocking { controller.undo() }
 
         assertEquals(listOf("s1", "s2", "s3"), handle.items.map { it.id })
+    }
+
+    @Test
+    fun shuffleKeepsTheCurrentTrackAndRestoresTheOriginalOrder() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(0L, controller.state.value.position)
+        assertEquals("s3", handle.items.first().id)
+
+        controller.toggleShuffle()
+        await { !controller.state.value.shuffle }
+
+        assertEquals(listOf("s1", "s2", "s3", "s4", "s5"), handle.items.map { it.id })
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun nextWrapsToTheStartWhenRepeating() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+    }
+
+    @Test
+    fun nextOnTheLastTrackDoesNothingWithoutRepeat() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        controller.next()
+        Thread.sleep(100)
+
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun previousRestartsTheTrackWhenPastTheThreshold() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        handle.positionMs = 5_000L
+        controller.previous()
+
+        assertTrue(handle.operations.contains("seekTo(0)"))
+        assertEquals(
+            "s2",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun previousFromTheStartWrapsToTheLastTrack() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.previous()
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+    }
+
+    @Test
+    fun repeatAllRestartsTheQueueWhenItEnds() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        handle.finish()
+        handle.emitEvents()
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
     }
 
     private fun seedAlbum(

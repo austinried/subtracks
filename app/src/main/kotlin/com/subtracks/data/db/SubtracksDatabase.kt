@@ -30,7 +30,7 @@ import com.subtracks.data.model.SubsonicSource
         PlaybackCursor::class,
         ArtworkSeed::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)

@@ -33,6 +33,8 @@ data class QueueContext(
     val refId: String,
 )
 
+enum class RepeatMode { Off, All, One }
+
 data class PlaybackState(
     val item: QueueItem? = null,
     val context: QueueContext? = null,
@@ -44,12 +46,15 @@ data class PlaybackState(
     val durationMs: Long = 0,
     val hasNext: Boolean = false,
     val hasPrevious: Boolean = false,
+    val shuffle: Boolean = false,
+    val repeat: RepeatMode = RepeatMode.Off,
 )
 
 private sealed interface QueueUndo {
     val entries: List<QueueEntry>
     val cursor: Long
     val current: Long?
+    val shuffleOrder: LongArray?
 }
 
 private data class RemovedUndo(
@@ -58,6 +63,7 @@ private data class RemovedUndo(
     override val current: Long,
     val position: Long,
     val item: QueueItem?,
+    override val shuffleOrder: LongArray?,
 ) : QueueUndo
 
 private data class MovedUndo(
@@ -66,11 +72,13 @@ private data class MovedUndo(
     override val current: Long,
     val from: Long,
     val to: Long,
+    override val shuffleOrder: LongArray?,
 ) : QueueUndo
 
 private data class ReloadUndo(
     override val entries: List<QueueEntry>,
     override val cursor: Long,
+    override val shuffleOrder: LongArray?,
 ) : QueueUndo {
     override val current: Long? = null
 }
@@ -102,6 +110,9 @@ class PlaybackController(
     private var windowEnd = -1L
     private var updating = false
     private var lastEdit: QueueUndo? = null
+    private var shuffleEnabled = false
+    private var repeatMode = RepeatMode.Off
+    private var endedHandled = false
 
     init {
         scope.launch {
@@ -186,7 +197,7 @@ class PlaybackController(
             if (snapshot.size == 1L) {
                 queueRepository.removeAt(snapshot, position)
                 stopLocked()
-                lastEdit = ReloadUndo(entries, cursor)
+                lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleOrder)
                 return@withLock
             }
             val current = currentPosition() ?: return@withLock
@@ -198,9 +209,9 @@ class PlaybackController(
             windowJob?.cancel()
             lastEdit =
                 if (removed == null) {
-                    ReloadUndo(entries, cursor)
+                    ReloadUndo(entries, cursor, snapshot.shuffleOrder)
                 } else {
-                    RemovedUndo(entries, cursor, target, position, removed)
+                    RemovedUndo(entries, cursor, target, position, removed, snapshot.shuffleOrder)
                 }
             when {
                 position == current -> {
@@ -240,7 +251,7 @@ class PlaybackController(
         val current = currentPosition() ?: return@withLock
         val cursor = queueRepository.cursor()
         val entries = snapshot.entries.map { it.entry }
-        if (!queueRepository.move(from, to)) return@withLock
+        if (!queueRepository.move(snapshot, from, to)) return@withLock
         this.snapshot = queueRepository.snapshot()
         val target = movedCursor(current, from, to)
         windowJob?.cancel()
@@ -248,9 +259,9 @@ class PlaybackController(
         val toInWindow = to in windowStart..windowEnd
         lastEdit =
             if (fromInWindow == toInWindow) {
-                MovedUndo(entries, cursor, target, from, to)
+                MovedUndo(entries, cursor, target, from, to, snapshot.shuffleOrder)
             } else {
-                ReloadUndo(entries, cursor)
+                ReloadUndo(entries, cursor, snapshot.shuffleOrder)
             }
         when {
             fromInWindow && toInWindow -> {
@@ -290,7 +301,8 @@ class PlaybackController(
             val player = player ?: return@withLock
             val playing = player.playWhenReady
             val positionMs = player.currentPositionMs
-            queueRepository.replace(undo.entries)
+            queueRepository.replace(undo.entries, undo.shuffleOrder)
+            shuffleEnabled = undo.shuffleOrder != null
             val restored = queueRepository.snapshot()
             this.snapshot = restored
             lastEdit = null
@@ -371,9 +383,71 @@ class PlaybackController(
         if (player.playWhenReady) player.pause() else player.play()
     }
 
-    fun next() = skip(1)
+    fun next() {
+        val snapshot = snapshot ?: return
+        if (snapshot.size == 0L) return
+        val current = currentPosition() ?: return
+        when {
+            current < snapshot.size - 1 -> jumpTo(current + 1)
+            repeatMode != RepeatMode.Off -> jumpTo(0)
+        }
+    }
 
-    fun previous() = skip(-1)
+    fun previous() {
+        val player = player ?: return
+        if (player.currentPositionMs > RESTART_THRESHOLD_MS) {
+            player.seekTo(0)
+            refresh()
+            return
+        }
+        val snapshot = snapshot ?: return
+        if (snapshot.size == 0L) return
+        val current = currentPosition() ?: return
+        jumpTo(if (current > 0) current - 1 else snapshot.size - 1)
+    }
+
+    fun cycleRepeat() {
+        val next =
+            when (repeatMode) {
+                RepeatMode.Off -> RepeatMode.All
+                RepeatMode.All -> RepeatMode.One
+                RepeatMode.One -> RepeatMode.Off
+            }
+        repeatMode = next
+        player?.setRepeatOne(next == RepeatMode.One)
+        scope.launch { queueRepository.setRepeat(next.ordinal) }
+        refresh()
+    }
+
+    fun toggleShuffle() {
+        scope.launch {
+            startLock.withLock {
+                val snapshot = queueRepository.snapshot()
+                this@PlaybackController.snapshot = snapshot
+                if (snapshot.size == 0L) return@withLock
+                val player = player ?: return@withLock
+                val current = currentPosition() ?: return@withLock
+                val positionMs = player.currentPositionMs
+                val playing = player.playWhenReady
+                val flat = snapshot.flatPosition(current) ?: return@withLock
+                if (shuffleEnabled) {
+                    queueRepository.setShuffle(false, null)
+                    shuffleEnabled = false
+                    queueRepository.setCursor(flat)
+                    this@PlaybackController.snapshot = queueRepository.snapshot()
+                    loadWindow(flat, autoplay = playing, startPositionMs = positionMs)
+                } else {
+                    queueRepository.setShuffle(true, shuffledOrder(snapshot.size, flat))
+                    shuffleEnabled = true
+                    queueRepository.setCursor(0)
+                    this@PlaybackController.snapshot = queueRepository.snapshot()
+                    loadWindow(0, autoplay = playing, startPositionMs = positionMs)
+                }
+                endedHandled = false
+                refresh(if (shuffleEnabled) 0L else flat)
+            }
+        }
+    }
 
     fun seekTo(positionMs: Long) {
         player?.seekTo(positionMs)
@@ -413,6 +487,11 @@ class PlaybackController(
         lastDurationMs = 0
         lastError = null
         lastEdit = null
+        endedHandled = false
+        val modes = queueRepository.modes()
+        shuffleEnabled = modes.shuffle
+        repeatMode = modes.repeat.toRepeatMode()
+        player?.setRepeatOne(repeatMode == RepeatMode.One)
         queueRepository.replace(entries)
         val snapshot = queueRepository.snapshot()
         this.snapshot = snapshot
@@ -421,7 +500,14 @@ class PlaybackController(
             stopLocked()
             return@withLock
         }
-        val position = startPosition.coerceIn(0, snapshot.size - 1)
+        val start = startPosition.coerceIn(0, snapshot.size - 1)
+        val position =
+            if (shuffleEnabled) {
+                queueRepository.setShuffle(true, shuffledOrder(snapshot.size, start))
+                0L
+            } else {
+                start
+            }
         queueRepository.setCursor(position)
         loadWindow(position, autoplay = true)
     }
@@ -431,6 +517,11 @@ class PlaybackController(
             windowJob?.cancel()
             windowStart = 0
             windowEnd = -1
+            endedHandled = false
+            val modes = queueRepository.modes()
+            shuffleEnabled = modes.shuffle
+            repeatMode = modes.repeat.toRepeatMode()
+            player?.setRepeatOne(repeatMode == RepeatMode.One)
             val snapshot = queueRepository.snapshot()
             this.snapshot = snapshot
             val queueSourceId =
@@ -492,22 +583,24 @@ class PlaybackController(
         refresh(position)
     }
 
-    private fun skip(delta: Long) {
+    private fun jumpTo(target: Long) {
         scope.launch {
-            val current = currentPosition() ?: return@launch
             val snapshot = queueRepository.snapshot()
             this@PlaybackController.snapshot = snapshot
             if (snapshot.size == 0L) return@launch
-            val position = current.coerceIn(0, snapshot.size - 1)
-            val target = (position + delta).coerceIn(0, snapshot.size - 1)
-            if (target == position) return@launch
+            val current = currentPosition() ?: return@launch
+            val dest = target.coerceIn(0, snapshot.size - 1)
+            if (dest == current) return@launch
             windowJob?.cancel()
-            queueRepository.setCursor(target)
-            shiftWindow(target)
+            queueRepository.setCursor(dest)
+            shiftWindow(dest)
             val player = player ?: return@launch
+            val wasEnded = player.isEnded
             player.ensurePrepared()
-            player.seekToIndex((target - windowStart).toInt())
-            refresh(target)
+            player.seekToIndex((dest - windowStart).toInt())
+            if (wasEnded) player.play()
+            endedHandled = false
+            refresh(dest)
         }
     }
 
@@ -588,17 +681,37 @@ class PlaybackController(
         object : PlayerHandle.Listener {
             override fun onTransition() {
                 lastError = null
+                endedHandled = false
                 if (updating) return
                 scope.launch { onPositionChanged() }
             }
 
-            override fun onEvents() = refresh()
+            override fun onEvents() {
+                if (player?.isEnded == true) handleEnded()
+                refresh()
+            }
 
             override fun onError(message: String) {
                 lastError = message
                 refresh()
             }
         }
+
+    private fun handleEnded() {
+        if (endedHandled) return
+        endedHandled = true
+        if (repeatMode == RepeatMode.All) jumpTo(0)
+    }
+
+    private fun shuffledOrder(
+        size: Long,
+        first: Long,
+    ): LongArray {
+        val rest = (0 until size).filter { it != first }.shuffled()
+        return (listOf(first) + rest).toLongArray()
+    }
+
+    private fun Int.toRepeatMode(): RepeatMode = RepeatMode.entries.getOrElse(this) { RepeatMode.Off }
 
     private fun contextAt(position: Long?): QueueContext? {
         val entry = position?.let { snapshot?.locate(it)?.first } ?: return null
@@ -626,7 +739,6 @@ class PlaybackController(
     private fun refresh(position: Long? = currentPosition()) {
         val player = player ?: return
         updateBuffering()
-        val size = snapshot?.size ?: 0
         lastDurationMs = player.durationMs.takeIf { it > 0 } ?: lastDurationMs
         _state.value =
             PlaybackState(
@@ -638,8 +750,10 @@ class PlaybackController(
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
                 positionMs = player.currentPositionMs,
                 durationMs = lastDurationMs,
-                hasNext = position != null && position < size - 1,
-                hasPrevious = position != null && position > 0,
+                hasNext = true,
+                hasPrevious = true,
+                shuffle = shuffleEnabled,
+                repeat = repeatMode,
             )
         if (player.isPlaying) startPositionTicker() else stopPositionTicker()
     }
@@ -670,5 +784,6 @@ class PlaybackController(
         const val BUFFERING_INDICATOR_DELAY_MS = 1_000L
         const val QUEUE_WINDOW_RADIUS = 25L
         const val WINDOW_SHIFT_DELAY_MS = 400L
+        const val RESTART_THRESHOLD_MS = 3_000L
     }
 }

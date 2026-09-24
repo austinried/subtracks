@@ -20,6 +20,9 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,6 +60,7 @@ import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
+import com.subtracks.playback.RepeatMode
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkSeedCache
@@ -91,6 +95,8 @@ fun NowPlayingRoute(
         onPlayPause = controller::togglePlayPause,
         onNext = controller::next,
         onPrevious = controller::previous,
+        onShuffle = controller::toggleShuffle,
+        onRepeat = controller::cycleRepeat,
         onSeek = controller::seekTo,
         modifier = modifier,
     )
@@ -121,6 +127,8 @@ fun NowPlayingScreen(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onShuffle: () -> Unit = {},
+    onRepeat: () -> Unit = {},
     onSeek: (Long) -> Unit,
     thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
@@ -315,7 +323,8 @@ fun NowPlayingScreen(
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(bottom = 56.dp),
-                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
                                 Icon(
@@ -323,6 +332,41 @@ fun NowPlayingScreen(
                                     contentDescription = "Queue",
                                     modifier = Modifier.size(30.dp),
                                 )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = onShuffle, modifier = Modifier.size(40.dp)) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = "Shuffle",
+                                        tint =
+                                            if (state.shuffle) {
+                                                MaterialTheme.colorScheme.onBackground
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+                                IconButton(onClick = onRepeat, modifier = Modifier.size(40.dp)) {
+                                    Icon(
+                                        imageVector = if (state.repeat == RepeatMode.One) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                                        contentDescription =
+                                            when (state.repeat) {
+                                                RepeatMode.Off -> "Repeat off"
+                                                RepeatMode.All -> "Repeat all"
+                                                RepeatMode.One -> "Repeat one"
+                                            },
+                                        tint =
+                                            if (state.repeat ==
+                                                RepeatMode.Off
+                                            ) {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            } else {
+                                                MaterialTheme.colorScheme.onBackground
+                                            },
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
                             }
                         }
                     }

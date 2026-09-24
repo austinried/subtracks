@@ -52,6 +52,8 @@ interface PlayerHandle {
 
     fun seekTo(positionMs: Long)
 
+    fun setRepeatOne(enabled: Boolean)
+
     fun addListener(listener: Listener)
 
     interface Listener {
