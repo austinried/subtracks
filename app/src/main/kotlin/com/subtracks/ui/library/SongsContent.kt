@@ -2,12 +2,14 @@ package com.subtracks.ui.library
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,22 +90,32 @@ fun SongRow(
     coverArtId: String? = null,
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
     isPlaying: Boolean = false,
+    trackNumber: Long? = null,
     trailingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val leadingTrack = trackNumber?.takeIf { coverArt == null }
     ListItem(
         modifier = modifier,
         leadingContent =
-            if (coverArt != null) {
-                {
-                    CoverArt(
-                        ref = coverArt(coverArtId, true),
-                        name = song.album ?: song.title,
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)),
-                    )
+            when {
+                coverArt != null -> {
+                    {
+                        CoverArt(
+                            ref = coverArt(coverArtId, true),
+                            name = song.album ?: song.title,
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)),
+                        )
+                    }
                 }
-            } else {
-                null
+
+                leadingTrack != null -> {
+                    { TrackNumber(leadingTrack, isPlaying) }
+                }
+
+                else -> {
+                    null
+                }
             },
         trailingContent = trailingContent,
         headlineContent = {
@@ -111,7 +123,7 @@ fun SongRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (isPlaying) {
+                if (isPlaying && leadingTrack == null) {
                     Icon(
                         imageVector = Icons.Rounded.PlayArrow,
                         contentDescription = "Playing",
@@ -139,4 +151,30 @@ fun SongRow(
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
+}
+
+@Composable
+private fun TrackNumber(
+    track: Long,
+    isPlaying: Boolean,
+) {
+    Box(
+        modifier = Modifier.width(28.dp),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        if (isPlaying) {
+            Icon(
+                imageVector = Icons.Rounded.PlayArrow,
+                contentDescription = "Playing",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp),
+            )
+        } else {
+            Text(
+                text = track.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

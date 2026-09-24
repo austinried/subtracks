@@ -103,6 +103,7 @@ fun AlbumDetailScreen(
                     SongRow(
                         song = song,
                         isPlaying = song.id == playingSongId,
+                        trackNumber = song.track,
                         modifier = rowModifier.clickable { onSongClick(index) },
                     )
                 }
@@ -116,7 +117,7 @@ fun AlbumDetailScreen(
 private fun DiscHeader(disc: Long) {
     Text(
         text = "Disc $disc",
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
     )

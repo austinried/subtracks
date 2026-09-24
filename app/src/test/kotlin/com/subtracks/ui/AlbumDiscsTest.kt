@@ -33,6 +33,13 @@ class AlbumDiscsTest {
     }
 
     @Test
+    fun albumTracksShowTheirTrackNumbers() {
+        setContent(listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 1, track = 2)))
+        assertEquals(1, nodesWithText("1"))
+        assertEquals(1, nodesWithText("2"))
+    }
+
+    @Test
     fun singleDiscAlbumShowsNoDiscHeaders() {
         setContent(listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 1, track = 2)))
         assertEquals(0, nodesWithText("Disc 1"))
