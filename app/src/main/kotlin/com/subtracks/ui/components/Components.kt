@@ -9,7 +9,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -30,8 +33,10 @@ fun CoverArt(
     showPlaceholder: Boolean = true,
 ) {
     val context = LocalPlatformContext.current
+    var failed by remember(ref) { mutableStateOf(false) }
+    var thumbnailLoaded by remember(thumbnailRef) { mutableStateOf(false) }
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
-        if (showPlaceholder) {
+        if (showPlaceholder || (failed && !thumbnailLoaded)) {
             Text(
                 text = name.trim().take(1).uppercase(),
                 style = MaterialTheme.typography.headlineMedium,
@@ -44,6 +49,7 @@ fun CoverArt(
                 model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                onSuccess = { thumbnailLoaded = true },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -52,6 +58,7 @@ fun CoverArt(
                 model = remember(ref, thumbnailRef) { imageRequest(context, ref, crossfade = thumbnailRef != null) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                onError = { failed = true },
                 modifier = Modifier.fillMaxSize(),
             )
         }
