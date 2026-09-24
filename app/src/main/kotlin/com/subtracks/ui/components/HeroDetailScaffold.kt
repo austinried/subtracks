@@ -50,7 +50,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
@@ -63,10 +62,8 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
-import com.subtracks.ui.theme.gradientColorAt
-import com.subtracks.ui.theme.heroDarkenAt
+import com.subtracks.ui.theme.heroBarColor
 
-private const val GRADIENT_SCREENS = 2.0f
 private const val FADE_DISTANCE_DP = 64
 
 /**
@@ -92,7 +89,6 @@ fun HeroDetailScaffold(
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
-                val gradientHeightPx = with(density) { (maxHeight * GRADIENT_SCREENS).toPx() }
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val statusBarDp = with(density) { statusBarTop.toDp() }
@@ -120,18 +116,9 @@ fun HeroDetailScaffold(
                     }
                 }
                 val barColor by
-                    remember(artwork, barHeightPx, gradientHeightPx, screenHeightPx) {
+                    remember(artwork, barHeightPx, screenHeightPx) {
                         derivedStateOf {
-                            if (artwork == null || gradientHeightPx <= 0f) {
-                                Color.Black
-                            } else {
-                                val mid = scrollPx + barHeightPx / 2f
-                                lerp(
-                                    artwork.gradientColorAt(mid / gradientHeightPx),
-                                    artwork.darkPrimary,
-                                    heroDarkenAt(mid, screenHeightPx),
-                                )
-                            }
+                            heroBarColor(artwork, scrollPx, barHeightPx, screenHeightPx)
                         }
                     }
 

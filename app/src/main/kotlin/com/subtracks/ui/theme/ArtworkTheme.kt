@@ -210,6 +210,18 @@ val LocalPlayerArtwork = compositionLocalOf<ArtworkColors?> { null }
 
 fun playerSurfaceColor(artwork: ArtworkColors): Color = lerp(artwork.scheme.surfaceContainerHigh, artwork.gradientHigh, 0.5f)
 
+fun heroBarColor(
+    artwork: ArtworkColors?,
+    scrollPx: Float,
+    barHeightPx: Float,
+    screenHeightPx: Float,
+): Color {
+    if (artwork == null || screenHeightPx <= 0f) return Color.Black
+    val mid = scrollPx + barHeightPx / 2f
+    val gradientHeightPx = screenHeightPx * PERIOD_SCREENS
+    return lerp(artwork.gradientColorAt(mid / gradientHeightPx), artwork.darkPrimary, heroDarkenAt(mid, screenHeightPx))
+}
+
 @Composable
 fun HeroGradient(
     colors: ArtworkColors?,
