@@ -36,13 +36,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
+import com.subtracks.ui.theme.playerSurfaceColor
 
 @Composable
 fun MiniPlayer(
@@ -63,7 +63,7 @@ fun MiniPlayer(
     ArtworkTheme(artwork) {
         Surface(
             color =
-                artwork?.let { lerp(it.scheme.surfaceContainerHigh, it.gradientHigh, 0.5f) }
+                artwork?.let(::playerSurfaceColor)
                     ?: MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
             modifier =

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,6 +56,8 @@ import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.SettingsRoute
+import com.subtracks.ui.theme.LocalPlayerSurfaceColor
+import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
@@ -143,175 +146,179 @@ private fun MainNavigation() {
             nowPlayingProgress = 0f
         }
     }
+    val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
+    val miniArtwork = rememberArtworkColors(miniArt)
+    val playerSurface = playerSurfaceColor(miniArtwork)
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
-    Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
-            NavHost(
-                navController = navController,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .then(
-                            if (playerVisible) {
-                                Modifier.consumeWindowInsets(WindowInsets.navigationBars)
-                            } else {
-                                Modifier
-                            },
-                        ),
-                startDestination = Routes.LIBRARY,
-                enterTransition = {
-                    slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                        fadeIn(tween(NAVIGATION_DURATION_MS))
-                },
-                exitTransition = {
-                    slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                        fadeOut(tween(NAVIGATION_DURATION_MS))
-                },
-                popEnterTransition = {
-                    slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                        fadeIn(tween(NAVIGATION_DURATION_MS))
-                },
-                popExitTransition = {
-                    slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                        fadeOut(tween(NAVIGATION_DURATION_MS))
-                },
-            ) {
-                composable(Routes.LIBRARY) {
-                    LibraryRoute(
-                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                        onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
-                        onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
-                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                        bottomInset = if (playerVisible) 0.dp else navBarInset,
-                    )
-                }
-                composable(Routes.SETTINGS) {
-                    SettingsRoute(
-                        onAddServer = { navController.navigate(Routes.ADD_SERVER) },
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable(
-                    route = Routes.ALBUM_DETAIL,
-                    arguments =
-                        listOf(
-                            navArgument("albumId") { type = NavType.StringType },
-                            navArgument("coverArt") {
-                                type = NavType.StringType
-                                defaultValue = ""
-                            },
-                        ),
-                ) { entry ->
-                    AlbumDetailRoute(
-                        albumId = entry.arguments?.getString("albumId").orEmpty(),
-                        coverArtId =
-                            entry.arguments
-                                ?.getString("coverArt")
-                                .orEmpty()
-                                .ifEmpty { null },
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable(
-                    route = Routes.ARTIST_DETAIL,
-                    arguments =
-                        listOf(
-                            navArgument("artistId") { type = NavType.StringType },
-                            navArgument("coverArt") {
-                                type = NavType.StringType
-                                defaultValue = ""
-                            },
-                        ),
-                ) { entry ->
-                    ArtistDetailRoute(
-                        artistId = entry.arguments?.getString("artistId").orEmpty(),
-                        coverArtId =
-                            entry.arguments
-                                ?.getString("coverArt")
-                                .orEmpty()
-                                .ifEmpty { null },
-                        onBack = { navController.popBackStack() },
-                        onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                    )
-                }
-                composable(
-                    route = Routes.PLAYLIST_DETAIL,
-                    arguments = listOf(navArgument("playlistId") { type = NavType.StringType }),
-                ) { entry ->
-                    PlaylistDetailRoute(
-                        playlistId = entry.arguments?.getString("playlistId").orEmpty(),
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable(Routes.ADD_SERVER) {
-                    AddSourceRoute(
-                        onSaved = { navController.popBackStack() },
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-            }
-
-            if (playerVisible) {
-                val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
-                MiniPlayer(
-                    state = playback,
-                    coverArt = miniArt,
-                    artwork = rememberArtworkColors(miniArt),
-                    onExpand = { settleNowPlaying(true) },
-                    onPlayPause = playbackController::togglePlayPause,
-                    onNext = playbackController::next,
-                    onExpandDrag = { dragUpPx ->
-                        nowPlayingOpen = true
-                        settleJob?.cancel()
-                        if (miniPlayerTopPx > 0f) {
-                            nowPlayingProgress = (dragUpPx / miniPlayerTopPx).coerceIn(0f, 1f)
-                        }
-                    },
-                    onExpandRelease = { velocity -> settleNowPlaying(nowPlayingProgress > 0.05f || velocity < -FLING_VELOCITY) },
-                    modifier = Modifier.onGloballyPositioned { miniPlayerTopPx = it.positionInRoot().y },
-                )
-            }
-        }
-
-        if (nowPlayingOpen) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            translationY = (1f - nowPlayingProgress) * miniPlayerTopPx
-                            alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
-                        }.draggable(
-                            orientation = Orientation.Vertical,
-                            state =
-                                rememberDraggableState { delta ->
-                                    settleJob?.cancel()
-                                    if (miniPlayerTopPx > 0f) {
-                                        nowPlayingProgress = (nowPlayingProgress - delta / miniPlayerTopPx).coerceIn(0f, 1f)
-                                    }
+    CompositionLocalProvider(LocalPlayerSurfaceColor provides playerSurface) {
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
+                NavHost(
+                    navController = navController,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .then(
+                                if (playerVisible) {
+                                    Modifier.consumeWindowInsets(WindowInsets.navigationBars)
+                                } else {
+                                    Modifier
                                 },
-                            onDragStopped = { velocity -> settleNowPlaying(nowPlayingProgress > 0.9f && velocity < FLING_VELOCITY) },
-                        ),
+                            ),
+                    startDestination = Routes.LIBRARY,
+                    enterTransition = {
+                        slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeIn(tween(NAVIGATION_DURATION_MS))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeOut(tween(NAVIGATION_DURATION_MS))
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeIn(tween(NAVIGATION_DURATION_MS))
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeOut(tween(NAVIGATION_DURATION_MS))
+                    },
+                ) {
+                    composable(Routes.LIBRARY) {
+                        LibraryRoute(
+                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
+                            onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
+                            onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            bottomInset = if (playerVisible) 0.dp else navBarInset,
+                        )
+                    }
+                    composable(Routes.SETTINGS) {
+                        SettingsRoute(
+                            onAddServer = { navController.navigate(Routes.ADD_SERVER) },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.ALBUM_DETAIL,
+                        arguments =
+                            listOf(
+                                navArgument("albumId") { type = NavType.StringType },
+                                navArgument("coverArt") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                },
+                            ),
+                    ) { entry ->
+                        AlbumDetailRoute(
+                            albumId = entry.arguments?.getString("albumId").orEmpty(),
+                            coverArtId =
+                                entry.arguments
+                                    ?.getString("coverArt")
+                                    .orEmpty()
+                                    .ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.ARTIST_DETAIL,
+                        arguments =
+                            listOf(
+                                navArgument("artistId") { type = NavType.StringType },
+                                navArgument("coverArt") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                },
+                            ),
+                    ) { entry ->
+                        ArtistDetailRoute(
+                            artistId = entry.arguments?.getString("artistId").orEmpty(),
+                            coverArtId =
+                                entry.arguments
+                                    ?.getString("coverArt")
+                                    .orEmpty()
+                                    .ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
+                        )
+                    }
+                    composable(
+                        route = Routes.PLAYLIST_DETAIL,
+                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType }),
+                    ) { entry ->
+                        PlaylistDetailRoute(
+                            playlistId = entry.arguments?.getString("playlistId").orEmpty(),
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(Routes.ADD_SERVER) {
+                        AddSourceRoute(
+                            onSaved = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                }
+
+                if (playerVisible) {
+                    MiniPlayer(
+                        state = playback,
+                        coverArt = miniArt,
+                        artwork = miniArtwork,
+                        onExpand = { settleNowPlaying(true) },
+                        onPlayPause = playbackController::togglePlayPause,
+                        onNext = playbackController::next,
+                        onExpandDrag = { dragUpPx ->
+                            nowPlayingOpen = true
+                            settleJob?.cancel()
+                            if (miniPlayerTopPx > 0f) {
+                                nowPlayingProgress = (dragUpPx / miniPlayerTopPx).coerceIn(0f, 1f)
+                            }
+                        },
+                        onExpandRelease = { velocity -> settleNowPlaying(nowPlayingProgress > 0.05f || velocity < -FLING_VELOCITY) },
+                        modifier = Modifier.onGloballyPositioned { miniPlayerTopPx = it.positionInRoot().y },
+                    )
+                }
+            }
+
+            if (nowPlayingOpen) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationY = (1f - nowPlayingProgress) * miniPlayerTopPx
+                                alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
+                            }.draggable(
+                                orientation = Orientation.Vertical,
+                                state =
+                                    rememberDraggableState { delta ->
+                                        settleJob?.cancel()
+                                        if (miniPlayerTopPx > 0f) {
+                                            nowPlayingProgress = (nowPlayingProgress - delta / miniPlayerTopPx).coerceIn(0f, 1f)
+                                        }
+                                    },
+                                onDragStopped = { velocity -> settleNowPlaying(nowPlayingProgress > 0.9f && velocity < FLING_VELOCITY) },
+                            ),
+                ) {
+                    NowPlayingRoute(
+                        onBack = { settleNowPlaying(false) },
+                        onQueue = { showingQueue = true },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = showingQueue,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(OVERLAY_DURATION_MS)),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(OVERLAY_DURATION_MS)),
             ) {
-                NowPlayingRoute(
-                    onBack = { settleNowPlaying(false) },
-                    onQueue = { showingQueue = true },
+                QueueRoute(
+                    onBack = { showingQueue = false },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
-        }
-
-        AnimatedVisibility(
-            visible = showingQueue,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(OVERLAY_DURATION_MS)),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(OVERLAY_DURATION_MS)),
-        ) {
-            QueueRoute(
-                onBack = { showingQueue = false },
-                modifier = Modifier.fillMaxSize(),
-            )
         }
     }
 
