@@ -320,6 +320,20 @@ class QueueRepositoryTest {
     private suspend fun resolveAll(snapshot: QueueSnapshot): List<String> =
         (0 until snapshot.size).mapNotNull { repository.itemAt(snapshot, it)?.song?.id }
 
+    @Test
+    fun aStaleShuffleOrderIsDroppedWhenTheQueueLengthChanges() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(true, longArrayOf(2, 0, 1))
+            assertTrue(repository.snapshot().shuffled)
+
+            db.libraryDao().upsertSongs(listOf(song("s6", "al1", track = 4, album = "First Album")))
+
+            assertFalse(repository.snapshot().shuffled)
+            assertFalse(repository.modes().shuffle)
+        }
+
     private suspend fun seedLibrary() {
         db.sourcesDao().upsertSource(
             Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),

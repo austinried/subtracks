@@ -21,6 +21,7 @@ data class ResolvedQueueEntry(
 data class QueueSnapshot(
     val entries: List<ResolvedQueueEntry>,
     val shuffleOrder: LongArray? = null,
+    val version: Long = 0,
 ) {
     val size: Long = entries.sumOf { it.length }
 
@@ -96,20 +97,24 @@ class QueueRepository(
         dao.setCursor(cursorRow().copy(queuePosition = 0))
     }
 
-    suspend fun snapshot(): QueueSnapshot =
-        db.useReaderConnection { transactor ->
-            transactor.deferredTransaction {
-                val entries = dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) }
-                val row = dao.cursor()
-                val order =
-                    if (row?.shuffleEnabled == true) {
-                        loadShuffleOrder(row.shuffleSeed, entries.sumOf { it.length })
-                    } else {
-                        null
-                    }
-                QueueSnapshot(entries, order)
+    suspend fun snapshot(): QueueSnapshot {
+        val loaded =
+            db.useReaderConnection { transactor ->
+                transactor.deferredTransaction {
+                    val entries = dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) }
+                    val row = dao.cursor()
+                    val shuffled = row?.shuffleEnabled == true
+                    val order = if (shuffled) loadShuffleOrder(row.shuffleSeed, entries.sumOf { it.length }) else null
+                    Triple(entries, order, shuffled)
+                }
             }
+        val (entries, order, shuffled) = loaded
+        if (shuffled && order == null) {
+            setShuffle(false, null)
+            return QueueSnapshot(entries, null, queueVersion)
         }
+        return QueueSnapshot(entries, order, queueVersion)
+    }
 
     suspend fun modes(): QueueModes {
         val row = dao.cursor() ?: return QueueModes(shuffle = false, repeat = 0)
@@ -266,7 +271,7 @@ class QueueRepository(
 
     private suspend fun flatIds(snapshot: QueueSnapshot): List<String> {
         val cached = cachedFlatIds
-        if (cached != null && cachedFlatVersion == queueVersion) return cached
+        if (cached != null && cachedFlatVersion == snapshot.version) return cached
         val ids = ArrayList<String>(snapshot.size.toInt())
         for (resolved in snapshot.entries) {
             val entry = resolved.entry
@@ -282,7 +287,7 @@ class QueueRepository(
             ids.addAll(entryIds.subList(from, to))
         }
         cachedFlatIds = ids
-        cachedFlatVersion = queueVersion
+        cachedFlatVersion = snapshot.version
         return ids
     }
 

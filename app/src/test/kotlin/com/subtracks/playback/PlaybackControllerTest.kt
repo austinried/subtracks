@@ -795,6 +795,30 @@ class PlaybackControllerTest {
         )
     }
 
+    @Test
+    fun repeatAllLoopsASingleTrackQueue() {
+        seedAlbum(1, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1" && controller.state.value.isPlaying
+        }
+
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        handle.finish()
+        handle.emitEvents()
+        await { controller.state.value.isPlaying }
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,
