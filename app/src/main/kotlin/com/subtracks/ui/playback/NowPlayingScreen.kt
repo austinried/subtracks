@@ -271,7 +271,7 @@ fun NowPlayingScreen(
                             )
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -314,7 +314,7 @@ fun NowPlayingScreen(
                             }
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 44.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 56.dp),
                             horizontalArrangement = Arrangement.Start,
                         ) {
                             IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
