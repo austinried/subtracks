@@ -9,12 +9,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 
 const val ARTWORK_THEME_TRANSITION_MS = 600
 
-fun baseArtworkColors(): ArtworkColors =
+private val baseArtworkColors =
     ArtworkColors(
         scheme = SubtracksColorScheme,
         gradientHigh = SubtracksColorScheme.surfaceContainerHigh,
@@ -29,15 +28,14 @@ fun rememberAnimatedArtworkColors(
     target: ArtworkColors?,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
 ): ArtworkColors {
-    val base = remember { baseArtworkColors() }
-    var from by remember { mutableStateOf(target ?: base) }
-    var to by remember { mutableStateOf(target ?: base) }
+    var from by remember { mutableStateOf(target ?: baseArtworkColors) }
+    var to by remember { mutableStateOf(target ?: baseArtworkColors) }
     val progress = remember { Animatable(1f) }
 
-    LaunchedEffect(target) {
-        val next = target ?: base
+    LaunchedEffect(target, durationMillis) {
+        val next = target ?: baseArtworkColors
         if (next !== to) {
-            from = to
+            from = lerpArtworkColors(from, to, progress.value)
             to = next
             progress.snapTo(0f)
             progress.animateTo(1f, tween(durationMillis = durationMillis))

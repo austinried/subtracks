@@ -2,6 +2,8 @@ package com.subtracks.ui.theme
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.annotation.VisibleForTesting
+import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
@@ -21,27 +23,43 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 private const val SEED_ART_SIZE_PX = 128
 private const val PREFETCH_SETTLE_MS = 250L
+private const val MAX_CACHED_SEEDS = 256
 
 object ArtworkSeedCache {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Deferred<Pair<Int, Int?>?>>()
+    private val cache = LruCache<String, Pair<Int, Int?>>(MAX_CACHED_SEEDS)
 
-    fun load(
+    suspend fun seeds(
         context: Context,
         ref: CoverArtRef,
-    ): Deferred<Pair<Int, Int?>?> =
-        jobs.getOrPut(ref.cacheKey) {
-            scope.async {
-                val seeds = extract(context, ref)
-                if (seeds == null) jobs.remove(ref.cacheKey)
-                seeds
-            }
-        }
+    ): Pair<Int, Int?>? {
+        cache.get(ref.cacheKey)?.let { return it }
+        val job = jobs.computeIfAbsent(ref.cacheKey) { scope.async { extract(context, ref) } }
+        val seeds = job.await()
+        jobs.remove(ref.cacheKey, job)
+        if (seeds != null) cache.put(ref.cacheKey, seeds)
+        return seeds
+    }
+
+    fun prefetch(
+        context: Context,
+        ref: CoverArtRef,
+    ) {
+        scope.launch { seeds(context, ref) }
+    }
+
+    @VisibleForTesting
+    fun clear() {
+        jobs.clear()
+        cache.evictAll()
+    }
 
     private suspend fun extract(
         context: Context,
@@ -108,6 +126,6 @@ fun PrefetchArtworkSeeds(ref: CoverArtRef?) {
     LaunchedEffect(ref?.cacheKey) {
         if (ref == null) return@LaunchedEffect
         delay(PREFETCH_SETTLE_MS)
-        ArtworkSeedCache.load(context, ref)
+        ArtworkSeedCache.prefetch(context, ref)
     }
 }

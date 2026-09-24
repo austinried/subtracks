@@ -37,6 +37,7 @@ class ArtworkExtractionTest {
 
     @Before
     fun installImageLoader() {
+        ArtworkSeedCache.clear()
         SingletonImageLoader.reset()
         SingletonImageLoader.setUnsafe(
             ImageLoader
@@ -48,6 +49,7 @@ class ArtworkExtractionTest {
 
     @After
     fun resetImageLoader() {
+        ArtworkSeedCache.clear()
         SingletonImageLoader.reset()
     }
 

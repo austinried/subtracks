@@ -141,7 +141,7 @@ private fun Color.withMinLuminance(min: Float): Color {
 }
 
 fun ArtworkColors.gradientColorAt(fraction: Float): Color {
-    if (fraction.isNaN()) return gradientHigh
+    if (!fraction.isFinite()) return gradientHigh
     val f = fraction.mod(1f)
     return if (f < 0.5f) {
         lerp(gradientHigh, gradientLow, f * 2f)
@@ -173,7 +173,7 @@ fun rememberArtworkColors(
 private fun rememberArtworkSeed(ref: CoverArtRef?): State<Pair<Int, Int?>?> {
     val context = LocalPlatformContext.current
     return produceState<Pair<Int, Int?>?>(initialValue = null, ref?.cacheKey) {
-        value = ref?.let { ArtworkSeedCache.load(context, it).await() }
+        value = ref?.let { ArtworkSeedCache.seeds(context, it) }
     }
 }
 
