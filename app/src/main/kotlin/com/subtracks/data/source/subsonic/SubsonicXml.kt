@@ -136,7 +136,7 @@ internal object IsoDate {
     private val timezone = Regex("(Z|[+-]\\d{2}:?\\d{2})$", RegexOption.IGNORE_CASE)
 
     fun parse(value: String): Long? {
-        val text = value.trim()
+        val text = value.trim().let { if (it.endsWith("z")) it.dropLast(1) + "Z" else it }
         return try {
             val zoned = if (timezone.containsMatchIn(text)) text else text + "Z"
             OffsetDateTime.parse(zoned).toEpochSecond()

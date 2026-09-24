@@ -173,6 +173,12 @@ fun LibraryRoute(
     val listTab = selectedTab.listTab()
     val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
     val search by viewModel.search(listTab).collectAsStateWithLifecycle()
+    val resetKeys =
+        LibraryTab.entries.associateWith { tab ->
+            val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
+            val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
+            "${query.sort}|${query.descending}|${query.starred}|$term"
+        }
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
@@ -191,6 +197,7 @@ fun LibraryRoute(
         onOpenSettings = onOpenSettings,
         playingSongId = playingSongId,
         listQuery = listQuery,
+        resetKeys = resetKeys,
         sortOptions = sortOptionsFor(selectedTab),
         starredSupported = listTab.supportsStarred,
         onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
@@ -226,13 +233,14 @@ fun LibraryScreen(
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
-    onSongClick: (Int) -> Unit,
+    onSongClick: (String) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     syncing: Boolean = false,
     playingSongId: String? = null,
     bottomInset: Dp = 0.dp,
     listQuery: ListQuery = ListQuery(""),
+    resetKeys: Map<LibraryTab, Any?> = emptyMap(),
     sortOptions: List<SortOption> = emptyList(),
     starredSupported: Boolean = false,
     onSortChange: (String) -> Unit = {},
@@ -262,6 +270,7 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
+        searchActive = false
     }
 
     val density = LocalDensity.current
@@ -279,7 +288,6 @@ fun LibraryScreen(
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
     val listBottomInset = bottomInset + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
-    val resetKey = listOf(listQuery.sort, listQuery.descending, listQuery.starred, search)
 
     Box(modifier.fillMaxSize()) {
         Column(
@@ -327,7 +335,9 @@ fun LibraryScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) { page ->
-                when (LibraryTab.entries[page]) {
+                val pageTab = LibraryTab.entries[page]
+                val resetKey = resetKeys[pageTab]
+                when (pageTab) {
                     LibraryTab.Albums -> {
                         AlbumsContent(
                             albums,

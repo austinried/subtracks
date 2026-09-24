@@ -47,7 +47,7 @@ fun SongsContent(
     items: LazyPagingItems<SongListItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
-    onSongClick: (Int) -> Unit,
+    onSongClick: (String) -> Unit,
     playingSongId: String? = null,
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
@@ -84,7 +84,7 @@ fun SongsContent(
                             coverArtId = item.coverArt,
                             coverArt = coverArt,
                             isPlaying = item.song.id == playingSongId,
-                            modifier = Modifier.clickable { onSongClick(index) },
+                            modifier = Modifier.clickable { onSongClick(item.song.id) },
                         )
                     }
                 }

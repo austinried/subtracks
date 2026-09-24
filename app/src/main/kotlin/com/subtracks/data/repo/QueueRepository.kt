@@ -92,6 +92,16 @@ class QueueRepository(
 
     fun songsEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Songs, refId = "")
 
+    suspend fun songsIndexOf(
+        sourceId: Long,
+        songId: String,
+    ): Long? =
+        dao
+            .songIds(sourceId)
+            .indexOf(songId)
+            .takeIf { it >= 0 }
+            ?.toLong()
+
     suspend fun replace(
         entries: List<QueueEntry>,
         shuffleOrder: LongArray? = null,

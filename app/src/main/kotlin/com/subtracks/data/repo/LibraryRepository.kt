@@ -157,7 +157,11 @@ class LibraryRepository(
             val dao = db.libraryDao()
             when (sort) {
                 SongSort.Album -> {
-                    dao.songs(sourceId, starred.ordinal, search)
+                    if (descending) {
+                        dao.songsByAlbumReversed(sourceId, starred.ordinal, search)
+                    } else {
+                        dao.songs(sourceId, starred.ordinal, search)
+                    }
                 }
 
                 SongSort.Title -> {

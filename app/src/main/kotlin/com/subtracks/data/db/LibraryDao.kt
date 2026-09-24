@@ -92,8 +92,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE, id",
     )
     fun albumsByName(
         sourceId: Long,
@@ -104,8 +104,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE DESC",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE DESC, id",
     )
     fun albumsByNameReversed(
         sourceId: Long,
@@ -116,8 +116,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY albumArtist COLLATE NOCASE, year, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY albumArtist COLLATE NOCASE, year, name COLLATE NOCASE, id",
     )
     fun albumsByArtist(
         sourceId: Long,
@@ -128,8 +128,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY albumArtist COLLATE NOCASE DESC, year DESC, name COLLATE NOCASE DESC",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY albumArtist COLLATE NOCASE DESC, year DESC, name COLLATE NOCASE DESC, id",
     )
     fun albumsByArtistReversed(
         sourceId: Long,
@@ -140,8 +140,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY year DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY year DESC, name COLLATE NOCASE, id",
     )
     fun albumsByYear(
         sourceId: Long,
@@ -152,8 +152,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY year ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY year ASC, name COLLATE NOCASE, id",
     )
     fun albumsByYearReversed(
         sourceId: Long,
@@ -164,8 +164,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY created DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY created DESC, name COLLATE NOCASE, id",
     )
     fun albumsByRecentlyAdded(
         sourceId: Long,
@@ -176,8 +176,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY created ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY created ASC, name COLLATE NOCASE, id",
     )
     fun albumsByRecentlyAddedReversed(
         sourceId: Long,
@@ -188,8 +188,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE, id",
     )
     fun albumsByStarred(
         sourceId: Long,
@@ -200,8 +200,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%' OR albumArtist LIKE '%' || :search || '%') " +
-            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
+            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE, id",
     )
     fun albumsByStarredReversed(
         sourceId: Long,
@@ -212,8 +212,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE, id",
     )
     fun artistsByName(
         sourceId: Long,
@@ -224,8 +224,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE DESC",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE DESC, id",
     )
     fun artistsByNameReversed(
         sourceId: Long,
@@ -236,8 +236,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY albumCount DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY albumCount DESC, name COLLATE NOCASE, id",
     )
     fun artistsByAlbumCount(
         sourceId: Long,
@@ -248,8 +248,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY albumCount ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY albumCount ASC, name COLLATE NOCASE, id",
     )
     fun artistsByAlbumCountReversed(
         sourceId: Long,
@@ -260,8 +260,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE, id",
     )
     fun artistsByStarred(
         sourceId: Long,
@@ -272,8 +272,8 @@ interface LibraryDao {
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE, id",
     )
     fun artistsByStarredReversed(
         sourceId: Long,
@@ -283,8 +283,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE, id",
     )
     fun playlistsByName(
         sourceId: Long,
@@ -293,8 +293,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY name COLLATE NOCASE DESC",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY name COLLATE NOCASE DESC, id",
     )
     fun playlistsByNameReversed(
         sourceId: Long,
@@ -303,8 +303,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY created DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY created DESC, name COLLATE NOCASE, id",
     )
     fun playlistsByAdded(
         sourceId: Long,
@@ -313,8 +313,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY created ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY created ASC, name COLLATE NOCASE, id",
     )
     fun playlistsByAddedReversed(
         sourceId: Long,
@@ -323,8 +323,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY changed DESC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY changed DESC, name COLLATE NOCASE, id",
     )
     fun playlistsByUpdated(
         sourceId: Long,
@@ -333,8 +333,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR name LIKE '%' || :search || '%') " +
-            "ORDER BY changed ASC, name COLLATE NOCASE",
+            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
+            "ORDER BY changed ASC, name COLLATE NOCASE, id",
     )
     fun playlistsByUpdatedReversed(
         sourceId: Long,
@@ -347,8 +347,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
             "songs.title COLLATE NOCASE, songs.id",
     )
@@ -364,8 +364,25 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
+            "ORDER BY albums.albumArtist COLLATE NOCASE DESC, songs.album COLLATE NOCASE DESC, songs.disc DESC, " +
+            "songs.track DESC, songs.title COLLATE NOCASE DESC, songs.id DESC",
+    )
+    fun songsByAlbumReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+    ): PagingSource<Int, SongListItem>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId " +
+            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
+            "(:starredFilter = 2 AND songs.starred IS NULL)) " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByTitle(
@@ -380,8 +397,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.title COLLATE NOCASE DESC, songs.id",
     )
     fun songsByTitleReversed(
@@ -396,8 +413,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.artist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByArtist(
@@ -412,8 +429,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.artist COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
     )
     fun songsByArtistReversed(
@@ -428,8 +445,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.starred IS NULL, songs.starred DESC, songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByStarred(
@@ -444,8 +461,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.starred IS NULL, songs.starred ASC, songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByStarredReversed(
@@ -460,8 +477,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.created DESC, songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByAdded(
@@ -476,8 +493,8 @@ interface LibraryDao {
             "WHERE songs.sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
             "(:starredFilter = 2 AND songs.starred IS NULL)) " +
-            "AND (:search = '' OR songs.title LIKE '%' || :search || '%' " +
-            "OR songs.artist LIKE '%' || :search || '%' OR songs.album LIKE '%' || :search || '%') " +
+            "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
+            "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY songs.created ASC, songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByAddedReversed(
@@ -504,7 +521,7 @@ interface LibraryDao {
         artistId: String,
     ): Flow<Artist?>
 
-    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE")
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE, id")
     fun albumsForArtist(
         sourceId: Long,
         artistId: String,

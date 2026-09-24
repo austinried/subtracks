@@ -129,10 +129,10 @@ class LibraryViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    fun playSong(position: Int) {
+    fun playSong(songId: String) {
         viewModelScope.launch {
             val sourceId = sourceRepository.activeSourceIdOnce() ?: return@launch
-            playbackController.playSongs(sourceId, position.toLong())
+            playbackController.playSong(sourceId, songId)
         }
     }
 

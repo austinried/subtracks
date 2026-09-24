@@ -192,6 +192,16 @@ class PlaybackController(
         startPosition: Long,
     ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
 
+    fun playSong(
+        sourceId: Long,
+        songId: String,
+    ) {
+        scope.launch {
+            val index = queueRepository.songsIndexOf(sourceId, songId) ?: return@launch
+            play(listOf(queueRepository.songsEntry(sourceId)), index)
+        }
+    }
+
     fun shuffleAlbum(
         sourceId: Long,
         albumId: String,
