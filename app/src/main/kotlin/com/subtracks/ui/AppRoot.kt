@@ -76,6 +76,7 @@ class RootViewModel(
 private const val NAVIGATION_DURATION_MS = 260
 private const val NOW_PLAYING_DURATION_MS = 300
 private const val EXPAND_FADE = 0.1f
+private const val SETTLE_DURATION_MS = 200
 
 private object Routes {
     const val LIBRARY = "library"
@@ -120,7 +121,7 @@ private fun MainNavigation() {
     fun settleNowPlaying(open: Boolean) {
         val target = if (open) 1f else 0f
         scope.launch {
-            animate(nowPlayingProgress, target, animationSpec = tween(NOW_PLAYING_DURATION_MS)) { value, _ ->
+            animate(nowPlayingProgress, target, animationSpec = tween(SETTLE_DURATION_MS)) { value, _ ->
                 nowPlayingProgress = value
             }
         }
