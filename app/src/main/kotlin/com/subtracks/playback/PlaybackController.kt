@@ -123,6 +123,7 @@ class PlaybackController(
     private var shuffleEnabled = false
     private var repeatMode = RepeatMode.Off
     private var endedHandled = false
+    private var lastSavedPositionMs = 0L
 
     init {
         scope.launch {
@@ -463,7 +464,12 @@ class PlaybackController(
             return
         }
         player.ensurePrepared()
-        if (player.playWhenReady) player.pause() else player.play()
+        if (player.playWhenReady) {
+            player.pause()
+            savePosition()
+        } else {
+            player.play()
+        }
     }
 
     fun next() {
@@ -550,6 +556,8 @@ class PlaybackController(
 
     fun seekTo(positionMs: Long) {
         player?.seekTo(positionMs)
+        lastSavedPositionMs = positionMs
+        scope.launch { queueRepository.setPosition(positionMs) }
     }
 
     fun coverArt(
@@ -648,7 +656,8 @@ class PlaybackController(
             }
             this.queueSourceId = queueSourceId
             val position = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
-            loadWindow(position, autoplay = false)
+            lastSavedPositionMs = queueRepository.cursorPositionMs().coerceAtLeast(0)
+            loadWindow(position, autoplay = false, startPositionMs = lastSavedPositionMs)
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }
@@ -723,6 +732,7 @@ class PlaybackController(
         val snapshot = snapshot ?: return
         if (snapshot.size == 0L) return
         val position = (windowStart + player.currentIndex).coerceIn(0, snapshot.size - 1)
+        lastSavedPositionMs = 0
         queueRepository.setCursor(position)
         refresh(position)
         scheduleWindowShift(position)
@@ -919,9 +929,21 @@ class PlaybackController(
                 while (true) {
                     delay(POSITION_TICK_MS)
                     val player = player ?: break
-                    _state.value = _state.value.copy(positionMs = player.currentPositionMs)
+                    val positionMs = player.currentPositionMs
+                    _state.value = _state.value.copy(positionMs = positionMs)
+                    if (positionMs - lastSavedPositionMs >= POSITION_SAVE_INTERVAL_MS || positionMs < lastSavedPositionMs) {
+                        lastSavedPositionMs = positionMs
+                        queueRepository.setPosition(positionMs)
+                    }
                 }
             }
+    }
+
+    private fun savePosition() {
+        val player = player ?: return
+        val positionMs = player.currentPositionMs
+        lastSavedPositionMs = positionMs
+        scope.launch { queueRepository.setPosition(positionMs) }
     }
 
     private fun stopPositionTicker() {
@@ -935,6 +957,7 @@ class PlaybackController(
 
     private companion object {
         const val POSITION_TICK_MS = 500L
+        const val POSITION_SAVE_INTERVAL_MS = 15_000L
         const val BUFFERING_INDICATOR_DELAY_MS = 1_000L
         const val QUEUE_WINDOW_RADIUS = 25L
         const val WINDOW_SHIFT_DELAY_MS = 400L

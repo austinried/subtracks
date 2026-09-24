@@ -270,6 +270,10 @@ class QueueRepository(
 
     suspend fun cursor(): Long = dao.cursor()?.queuePosition ?: 0
 
+    suspend fun cursorPositionMs(): Long = dao.cursor()?.positionMs ?: 0
+
+    suspend fun setPosition(positionMs: Long) = dao.setCursor(cursorRow().copy(positionMs = positionMs.coerceAtLeast(0)))
+
     suspend fun setCursor(position: Long) = dao.setCursor(cursorRow().copy(queuePosition = position))
 
     private suspend fun cursorRow(): PlaybackCursor = dao.cursor() ?: PlaybackCursor(queuePosition = 0)

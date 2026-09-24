@@ -70,6 +70,7 @@ class FakePlayerHandle : PlayerHandle {
         this.items.clear()
         this.items += items
         index = startIndex
+        positionMs = startPositionMs
         idle = true
         ended = false
         buffering = false

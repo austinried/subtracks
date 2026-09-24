@@ -905,6 +905,33 @@ class PlaybackControllerTest {
         assertTrue(controller.state.value.shuffle)
     }
 
+    @Test
+    fun restoringResumesFromTheSavedPosition() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { queues.setPosition(12_000L) }
+
+        val restoredHandle = FakePlayerHandle()
+        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), dispatcher = dispatcher)
+        restored.connect()
+        await {
+            restored.state.value.item
+                ?.id == "s1"
+        }
+
+        assertEquals(12_000L, restored.state.value.positionMs)
+        assertEquals(
+            "setWindow(size=3, start=0, position=12000)",
+            restoredHandle.operations.first { it.startsWith("setWindow") },
+        )
+        restored.close()
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

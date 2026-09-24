@@ -211,6 +211,7 @@ data class PlaybackCursor(
     @ColumnInfo(defaultValue = "0") val shuffleEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "0") val repeatMode: Int = 0,
     @ColumnInfo(defaultValue = "0") val shuffleSeed: Long = 0,
+    @ColumnInfo(defaultValue = "0") val positionMs: Long = 0,
 )
 
 @Entity(tableName = "shuffle_order")
