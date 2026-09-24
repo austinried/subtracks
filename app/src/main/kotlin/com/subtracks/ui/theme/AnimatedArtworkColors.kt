@@ -10,8 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.lerp
+import kotlin.math.roundToInt
 
 const val ARTWORK_THEME_TRANSITION_MS = 600
+
+private const val TRANSITION_STEPS = 24
 
 private val baseArtworkColors =
     ArtworkColors(
@@ -42,7 +45,8 @@ fun rememberAnimatedArtworkColors(
         }
     }
 
-    val fraction = progress.value
+    if (from === to) return to
+    val fraction = (progress.value * TRANSITION_STEPS).roundToInt() / TRANSITION_STEPS.toFloat()
     return remember(from, to, fraction) { lerpArtworkColors(from, to, fraction) }
 }
 
@@ -79,4 +83,39 @@ private fun lerpScheme(
         onTertiary = lerp(a.onTertiary, b.onTertiary, t),
         tertiaryContainer = lerp(a.tertiaryContainer, b.tertiaryContainer, t),
         onTertiaryContainer = lerp(a.onTertiaryContainer, b.onTertiaryContainer, t),
+        background = lerp(a.background, b.background, t),
+        onBackground = lerp(a.onBackground, b.onBackground, t),
+        surface = lerp(a.surface, b.surface, t),
+        onSurface = lerp(a.onSurface, b.onSurface, t),
+        surfaceVariant = lerp(a.surfaceVariant, b.surfaceVariant, t),
+        onSurfaceVariant = lerp(a.onSurfaceVariant, b.onSurfaceVariant, t),
+        surfaceTint = lerp(a.surfaceTint, b.surfaceTint, t),
+        inverseSurface = lerp(a.inverseSurface, b.inverseSurface, t),
+        inverseOnSurface = lerp(a.inverseOnSurface, b.inverseOnSurface, t),
+        error = lerp(a.error, b.error, t),
+        onError = lerp(a.onError, b.onError, t),
+        errorContainer = lerp(a.errorContainer, b.errorContainer, t),
+        onErrorContainer = lerp(a.onErrorContainer, b.onErrorContainer, t),
+        outline = lerp(a.outline, b.outline, t),
+        outlineVariant = lerp(a.outlineVariant, b.outlineVariant, t),
+        scrim = lerp(a.scrim, b.scrim, t),
+        surfaceBright = lerp(a.surfaceBright, b.surfaceBright, t),
+        surfaceDim = lerp(a.surfaceDim, b.surfaceDim, t),
+        surfaceContainer = lerp(a.surfaceContainer, b.surfaceContainer, t),
+        surfaceContainerHigh = lerp(a.surfaceContainerHigh, b.surfaceContainerHigh, t),
+        surfaceContainerHighest = lerp(a.surfaceContainerHighest, b.surfaceContainerHighest, t),
+        surfaceContainerLow = lerp(a.surfaceContainerLow, b.surfaceContainerLow, t),
+        surfaceContainerLowest = lerp(a.surfaceContainerLowest, b.surfaceContainerLowest, t),
+        primaryFixed = lerp(a.primaryFixed, b.primaryFixed, t),
+        primaryFixedDim = lerp(a.primaryFixedDim, b.primaryFixedDim, t),
+        onPrimaryFixed = lerp(a.onPrimaryFixed, b.onPrimaryFixed, t),
+        onPrimaryFixedVariant = lerp(a.onPrimaryFixedVariant, b.onPrimaryFixedVariant, t),
+        secondaryFixed = lerp(a.secondaryFixed, b.secondaryFixed, t),
+        secondaryFixedDim = lerp(a.secondaryFixedDim, b.secondaryFixedDim, t),
+        onSecondaryFixed = lerp(a.onSecondaryFixed, b.onSecondaryFixed, t),
+        onSecondaryFixedVariant = lerp(a.onSecondaryFixedVariant, b.onSecondaryFixedVariant, t),
+        tertiaryFixed = lerp(a.tertiaryFixed, b.tertiaryFixed, t),
+        tertiaryFixedDim = lerp(a.tertiaryFixedDim, b.tertiaryFixedDim, t),
+        onTertiaryFixed = lerp(a.onTertiaryFixed, b.onTertiaryFixed, t),
+        onTertiaryFixedVariant = lerp(a.onTertiaryFixedVariant, b.onTertiaryFixedVariant, t),
     )

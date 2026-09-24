@@ -5,6 +5,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -31,6 +32,7 @@ private const val DARKEN_START_SCREENS = 0.5f
 private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
 
+@Immutable
 data class ArtworkColors(
     val scheme: ColorScheme,
     val gradientHigh: Color,

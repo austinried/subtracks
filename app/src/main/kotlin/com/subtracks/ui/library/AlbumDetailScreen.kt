@@ -48,11 +48,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -122,14 +123,15 @@ fun AlbumDetailScreen(
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
-    ArtworkTheme(artwork) {
-        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        ArtworkTheme(artwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
                 val gradientHeight = maxHeight * GRADIENT_SCREENS
                 val gradientHeightPx = with(density) { gradientHeight.toPx() }
+                val screenHeightPx = with(density) { maxHeight.toPx() }
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
                 val statusBarDp = with(density) { statusBarTop.toDp() }
@@ -155,16 +157,20 @@ fun AlbumDetailScreen(
                         }
                     }
                 }
-                val barColor =
-                    if (artwork == null || gradientHeightPx <= 0f) {
-                        Color.Black
-                    } else {
-                        val mid = scrollPx + barHeightPx / 2f
-                        lerp(
-                            artwork.gradientColorAt(mid / gradientHeightPx),
-                            artwork.darkPrimary,
-                            heroDarkenAt(mid, with(density) { maxHeight.toPx() }),
-                        )
+                val barColor by
+                    remember(artwork, barHeightPx, gradientHeightPx, screenHeightPx) {
+                        derivedStateOf {
+                            if (artwork == null || gradientHeightPx <= 0f) {
+                                Color.Black
+                            } else {
+                                val mid = scrollPx + barHeightPx / 2f
+                                lerp(
+                                    artwork.gradientColorAt(mid / gradientHeightPx),
+                                    artwork.darkPrimary,
+                                    heroDarkenAt(mid, screenHeightPx),
+                                )
+                            }
+                        }
                     }
 
                 HeroGradient(
@@ -220,7 +226,7 @@ fun AlbumDetailScreen(
                             Brush.verticalGradient(
                                 listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
                             ),
-                        ).alpha(1f - barFraction),
+                        ).graphicsLayer { alpha = 1f - barFraction },
                 )
 
                 TopAppBar(
@@ -230,7 +236,7 @@ fun AlbumDetailScreen(
                             style = MaterialTheme.typography.headlineMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.alpha(barFraction),
+                            modifier = Modifier.graphicsLayer { alpha = barFraction },
                         )
                     },
                     navigationIcon = {
@@ -242,7 +248,7 @@ fun AlbumDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .background(barColor.copy(alpha = barFraction))
+                            .drawBehind { drawRect(barColor.copy(alpha = barFraction)) }
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
