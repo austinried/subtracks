@@ -39,6 +39,12 @@ class AlbumDetailViewModel(
         }
     }
 
+    fun playAll() {
+        viewModelScope.launch {
+            playbackController.playAlbumInOrder(sourceId.first(), albumId)
+        }
+    }
+
     fun shuffle() {
         viewModelScope.launch {
             playbackController.shuffleAlbum(sourceId.first(), albumId)

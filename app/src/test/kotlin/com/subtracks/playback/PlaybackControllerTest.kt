@@ -874,6 +874,37 @@ class PlaybackControllerTest {
         )
     }
 
+    @Test
+    fun playInOrderTurnsOffShuffle() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.shuffleAlbum(1, "al1")
+        await { controller.state.value.shuffle }
+
+        controller.playAlbumInOrder(1, "al1")
+        await { !controller.state.value.shuffle }
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
+    fun shufflePlayOnASingleTrackAlbumPlaysIt() {
+        seedAlbum(1, sourceId = 1)
+
+        controller.shuffleAlbum(1, "al1")
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        assertTrue(controller.state.value.shuffle)
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

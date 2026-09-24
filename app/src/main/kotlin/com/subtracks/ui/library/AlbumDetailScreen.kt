@@ -44,6 +44,7 @@ fun AlbumDetailRoute(
         onBack = onBack,
         onSongClick = viewModel::play,
         onShuffle = viewModel::shuffle,
+        onPlay = viewModel::playAll,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
 }
@@ -56,8 +57,9 @@ fun AlbumDetailScreen(
     artwork: ArtworkColors?,
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
-    onDownload: () -> Unit = {},
     onShuffle: () -> Unit = {},
+    onPlay: () -> Unit = { onSongClick(0) },
+    onDownload: () -> Unit = {},
     onMore: () -> Unit = {},
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
@@ -77,7 +79,7 @@ fun AlbumDetailScreen(
                         album?.year?.takeIf { it > 0 }?.toString(),
                     ).joinToString(" $DOT "),
                 hasSongs = songs.isNotEmpty(),
-                onPlay = { onSongClick(0) },
+                onPlay = onPlay,
                 onShuffle = onShuffle,
                 onDownload = onDownload,
                 onMore = onMore,

@@ -44,6 +44,12 @@ class PlaylistDetailViewModel(
         }
     }
 
+    fun playAll() {
+        viewModelScope.launch {
+            playbackController.playPlaylistInOrder(sourceId.first(), playlistId)
+        }
+    }
+
     fun shuffle() {
         viewModelScope.launch {
             playbackController.shufflePlaylist(sourceId.first(), playlistId)

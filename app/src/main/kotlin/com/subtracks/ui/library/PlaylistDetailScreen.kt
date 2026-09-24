@@ -42,6 +42,7 @@ fun PlaylistDetailRoute(
         onBack = onBack,
         onSongClick = viewModel::play,
         onShuffle = viewModel::shuffle,
+        onPlay = viewModel::playAll,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
 }
@@ -55,6 +56,7 @@ fun PlaylistDetailScreen(
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
     onShuffle: () -> Unit = {},
+    onPlay: () -> Unit = { onSongClick(0) },
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -70,7 +72,7 @@ fun PlaylistDetailScreen(
                 subtitle = playlistSummary(playlist),
                 comment = playlist?.comment,
                 hasSongs = songs.itemCount > 0,
-                onPlay = { onSongClick(0) },
+                onPlay = onPlay,
                 onShuffle = onShuffle,
                 onDownload = {},
                 onMore = {},
