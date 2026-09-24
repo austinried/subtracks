@@ -16,10 +16,12 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
@@ -111,6 +113,7 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MainNavigation() {
     val navController = rememberNavController()
@@ -147,8 +150,8 @@ private fun MainNavigation() {
     }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
-    val imeVisible = WindowInsets.ime.getBottom(density) > 0
-    val showMiniPlayer = playerVisible && !imeVisible
+    val imeLeaving = WindowInsets.imeAnimationTarget.getBottom(density) == 0
+    val showMiniPlayer = playerVisible && imeLeaving
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
