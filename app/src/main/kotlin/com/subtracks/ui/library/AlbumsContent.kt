@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -38,6 +39,7 @@ fun AlbumsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onAlbumClick: (Album) -> Unit,
+    resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -51,6 +53,7 @@ fun AlbumsContent(
 
         else -> {
             val gridState = rememberLazyGridState()
+            LaunchedEffect(resetKey) { gridState.scrollToItem(0) }
             val fill = rememberViewportFill(gridState)
             LazyVerticalGrid(
                 state = gridState,

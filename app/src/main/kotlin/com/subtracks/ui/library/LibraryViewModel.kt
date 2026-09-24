@@ -24,8 +24,10 @@ import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -47,12 +49,17 @@ class LibraryViewModel(
                 .stateIn(viewModelScope, SharingStarted.Eagerly, ListQuery(tab.defaultSort))
         }
 
+    private val searches: Map<LibraryListTab, MutableStateFlow<String>> =
+        LibraryListTab.entries.associateWith { MutableStateFlow("") }
+
     val albums: Flow<PagingData<Album>> =
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                listQueries.getValue(LibraryListTab.Albums).flatMapLatest { query ->
-                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starredOnly)
+                combine(listQueries.getValue(LibraryListTab.Albums), searches.getValue(LibraryListTab.Albums)) { query, search ->
+                    query to search
+                }.flatMapLatest { (query, search) ->
+                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starredOnly, search)
                 }
             }.cachedIn(viewModelScope)
 
@@ -60,8 +67,10 @@ class LibraryViewModel(
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                listQueries.getValue(LibraryListTab.Artists).flatMapLatest { query ->
-                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starredOnly)
+                combine(listQueries.getValue(LibraryListTab.Artists), searches.getValue(LibraryListTab.Artists)) { query, search ->
+                    query to search
+                }.flatMapLatest { (query, search) ->
+                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starredOnly, search)
                 }
             }.cachedIn(viewModelScope)
 
@@ -69,8 +78,10 @@ class LibraryViewModel(
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                listQueries.getValue(LibraryListTab.Playlists).flatMapLatest { query ->
-                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending)
+                combine(listQueries.getValue(LibraryListTab.Playlists), searches.getValue(LibraryListTab.Playlists)) { query, search ->
+                    query to search
+                }.flatMapLatest { (query, search) ->
+                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending, search)
                 }
             }.cachedIn(viewModelScope)
 
@@ -78,8 +89,10 @@ class LibraryViewModel(
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                listQueries.getValue(LibraryListTab.Songs).flatMapLatest { query ->
-                    libraryRepository.songs(sourceId, query.songSort(), query.descending, query.starredOnly)
+                combine(listQueries.getValue(LibraryListTab.Songs), searches.getValue(LibraryListTab.Songs)) { query, search ->
+                    query to search
+                }.flatMapLatest { (query, search) ->
+                    libraryRepository.songs(sourceId, query.songSort(), query.descending, query.starredOnly, search)
                 }
             }.cachedIn(viewModelScope)
 
@@ -100,6 +113,15 @@ class LibraryViewModel(
         query: ListQuery,
     ) {
         viewModelScope.launch { userPreferences.setListQuery(tab, query) }
+    }
+
+    fun search(tab: LibraryListTab): StateFlow<String> = searches.getValue(tab)
+
+    fun setSearch(
+        tab: LibraryListTab,
+        value: String,
+    ) {
+        searches.getValue(tab).value = value
     }
 
     fun coverArt(

@@ -60,7 +60,7 @@ class SyncServiceTest {
                 2,
                 db
                     .libraryDao()
-                    .artistsByName(1, false)
+                    .artistsByName(1, false, "")
                     .allRows()
                     .size,
             )
@@ -68,7 +68,7 @@ class SyncServiceTest {
                 2,
                 db
                     .libraryDao()
-                    .songs(1, false)
+                    .songs(1, false, "")
                     .allRows()
                     .size,
             )
@@ -90,7 +90,7 @@ class SyncServiceTest {
                 listOf("a1"),
                 db
                     .libraryDao()
-                    .artistsByName(1, false)
+                    .artistsByName(1, false, "")
                     .allRows()
                     .map { it.id },
             )
@@ -98,7 +98,7 @@ class SyncServiceTest {
                 listOf("s1"),
                 db
                     .libraryDao()
-                    .songs(1, false)
+                    .songs(1, false, "")
                     .allRows()
                     .map { it.song.id },
             )
@@ -200,7 +200,7 @@ class SyncServiceTest {
                 "Old",
                 db
                     .libraryDao()
-                    .artistsByName(1, false)
+                    .artistsByName(1, false, "")
                     .allRows()
                     .single()
                     .name,
@@ -213,7 +213,7 @@ class SyncServiceTest {
                 "New",
                 db
                     .libraryDao()
-                    .artistsByName(1, false)
+                    .artistsByName(1, false, "")
                     .allRows()
                     .single()
                     .name,

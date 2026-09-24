@@ -13,6 +13,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -36,6 +37,7 @@ fun ArtistsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onArtistClick: (Artist) -> Unit,
+    resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -49,6 +51,7 @@ fun ArtistsContent(
 
         else -> {
             val listState = rememberLazyListState()
+            LaunchedEffect(resetKey) { listState.scrollToItem(0) }
             val fill = rememberViewportFill(listState)
             LazyColumn(
                 state = listState,

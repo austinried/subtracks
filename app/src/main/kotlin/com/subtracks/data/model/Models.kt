@@ -110,6 +110,7 @@ data class Playlist(
     val coverArt: String?,
     val songCount: Long,
     val created: Long,
+    @ColumnInfo(defaultValue = "0") val changed: Long = 0,
     @ColumnInfo(defaultValue = "0") val duration: Long = 0,
 )
 

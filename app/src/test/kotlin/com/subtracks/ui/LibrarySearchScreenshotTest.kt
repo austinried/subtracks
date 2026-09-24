@@ -2,7 +2,6 @@ package com.subtracks.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -19,11 +18,9 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.ListQuery
-import com.subtracks.data.repo.SearchHit
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
-import com.subtracks.ui.library.SearchScreen
 import com.subtracks.ui.library.sortOptionsFor
 import com.subtracks.ui.theme.SubtracksTheme
 import kotlinx.coroutines.flow.flowOf
@@ -36,12 +33,12 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.PixelXL)
-class LibraryListsScreenshotTest {
+class LibrarySearchScreenshotTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun libraryOptions() {
+    fun librarySearch() {
         composeRule.setContent {
             SubtracksTheme {
                 LibraryScreen(
@@ -70,35 +67,10 @@ class LibraryListsScreenshotTest {
         composeRule.onNodeWithContentDescription("List options").performClick()
         composeRule.mainClock.advanceTimeBy(1_000)
         composeRule.waitForIdle()
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_options.png")
-    }
-
-    @Test
-    fun search() {
-        composeRule.setContent {
-            SubtracksTheme {
-                SearchScreen(
-                    query = "radio",
-                    results =
-                        listOf(
-                            SearchHit("song", "s-eiirp", "Everything In Its Right Place"),
-                            SearchHit("album", "al-kid-a", "Kid A"),
-                            SearchHit("artist", "ar-radiohead", "Radiohead"),
-                            SearchHit("playlist", "pl-late-night", "Late Night"),
-                        ),
-                    onQueryChange = {},
-                    onBack = {},
-                    onAlbumClick = {},
-                    onArtistClick = {},
-                    onPlaylistClick = {},
-                    onSongClick = {},
-                )
-            }
-        }
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Radiohead").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/search.png")
+        composeRule.onAllNodesWithText("Search this list")[0].performClick()
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_search.png")
     }
 
     private fun albums() =

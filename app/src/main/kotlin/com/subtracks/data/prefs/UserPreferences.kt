@@ -10,13 +10,13 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-enum class AlbumSort { Name, Artist, Year, RecentlyAdded }
+enum class AlbumSort { Name, Artist, Year, Added, Starred }
 
-enum class ArtistSort { Name, AlbumCount }
+enum class ArtistSort { Name, AlbumCount, Starred }
 
-enum class PlaylistSort { Name, RecentlyAdded }
+enum class PlaylistSort { Name, Added, Updated }
 
-enum class SongSort { Album, Title, Artist }
+enum class SongSort { Album, Title, Artist, Starred }
 
 enum class LibraryListTab(
     val key: String,

@@ -21,6 +21,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +48,7 @@ fun SongsContent(
     bottomInset: Dp,
     onSongClick: (Int) -> Unit,
     playingSongId: String? = null,
+    resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -60,6 +62,7 @@ fun SongsContent(
 
         else -> {
             val listState = rememberLazyListState()
+            LaunchedEffect(resetKey) { listState.scrollToItem(0) }
             val fill = rememberViewportFill(listState)
             LazyColumn(
                 state = listState,

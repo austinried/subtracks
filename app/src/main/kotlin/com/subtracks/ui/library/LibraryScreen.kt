@@ -26,13 +26,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Sort
-import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +49,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +66,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -115,7 +121,8 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
                 SortOption(AlbumSort.Name.name, "Name"),
                 SortOption(AlbumSort.Artist.name, "Artist"),
                 SortOption(AlbumSort.Year.name, "Year"),
-                SortOption(AlbumSort.RecentlyAdded.name, "Recently added"),
+                SortOption(AlbumSort.Added.name, "Added"),
+                SortOption(AlbumSort.Starred.name, "Starred"),
             )
         }
 
@@ -123,13 +130,15 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
             listOf(
                 SortOption(ArtistSort.Name.name, "Name"),
                 SortOption(ArtistSort.AlbumCount.name, "Albums"),
+                SortOption(ArtistSort.Starred.name, "Starred"),
             )
         }
 
         LibraryTab.Playlists -> {
             listOf(
                 SortOption(PlaylistSort.Name.name, "Name"),
-                SortOption(PlaylistSort.RecentlyAdded.name, "Recently added"),
+                SortOption(PlaylistSort.Added.name, "Added"),
+                SortOption(PlaylistSort.Updated.name, "Updated"),
             )
         }
 
@@ -138,6 +147,7 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
                 SortOption(SongSort.Album.name, "Album"),
                 SortOption(SongSort.Title.name, "Title"),
                 SortOption(SongSort.Artist.name, "Artist"),
+                SortOption(SongSort.Starred.name, "Starred"),
             )
         }
     }
@@ -149,15 +159,15 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
-    onSearch: () -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
-    val listQuery by viewModel.listQuery(selectedTab.listTab()).collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
+    val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
+    val search by viewModel.search(listTab).collectAsStateWithLifecycle()
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
@@ -182,7 +192,8 @@ fun LibraryRoute(
         onToggleSortDirection = { viewModel.setListQuery(listTab, listQuery.copy(descending = !listQuery.descending)) },
         onToggleStarred = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = !listQuery.starredOnly)) },
         onClearFilters = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = false)) },
-        onSearch = onSearch,
+        search = search,
+        onSearchChange = { viewModel.setSearch(listTab, it) },
     )
 }
 
@@ -212,7 +223,8 @@ fun LibraryScreen(
     onToggleSortDirection: () -> Unit = {},
     onToggleStarred: () -> Unit = {},
     onClearFilters: () -> Unit = {},
-    onSearch: () -> Unit = {},
+    search: String = "",
+    onSearchChange: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -221,6 +233,8 @@ fun LibraryScreen(
             pageCount = { LibraryTab.entries.size },
         )
     var showOptions by rememberSaveable { mutableStateOf(false) }
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+    val searchFocus = remember { FocusRequester() }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
@@ -247,7 +261,8 @@ fun LibraryScreen(
     val titleFraction = scrollBehavior.state.collapsedFraction
 
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    val listBottomInset = bottomInset + FAB_CLEARANCE
+    val listBottomInset = bottomInset + if (searchActive) 0.dp else FAB_CLEARANCE
+    val resetKey = listOf(listQuery.sort, listQuery.descending, listQuery.starredOnly, search)
 
     Box(modifier.fillMaxSize()) {
         Column(
@@ -296,30 +311,65 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) { page ->
                 when (LibraryTab.entries[page]) {
-                    LibraryTab.Albums -> AlbumsContent(albums, coverArt, listBottomInset, onAlbumClick)
-                    LibraryTab.Artists -> ArtistsContent(artists, coverArt, listBottomInset, onArtistClick)
-                    LibraryTab.Songs -> SongsContent(songs, coverArt, listBottomInset, onSongClick, playingSongId)
-                    LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, listBottomInset, onPlaylistClick)
+                    LibraryTab.Albums -> {
+                        AlbumsContent(albums, coverArt, listBottomInset, onAlbumClick, resetKey = resetKey)
+                    }
+
+                    LibraryTab.Artists -> {
+                        ArtistsContent(artists, coverArt, listBottomInset, onArtistClick, resetKey = resetKey)
+                    }
+
+                    LibraryTab.Songs -> {
+                        SongsContent(
+                            songs,
+                            coverArt,
+                            listBottomInset,
+                            onSongClick,
+                            playingSongId,
+                            resetKey = resetKey,
+                        )
+                    }
+
+                    LibraryTab.Playlists -> {
+                        PlaylistsContent(playlists, coverArt, listBottomInset, onPlaylistClick, resetKey = resetKey)
+                    }
                 }
+            }
+
+            if (searchActive) {
+                SearchField(
+                    value = search,
+                    onValueChange = onSearchChange,
+                    onClose = {
+                        searchActive = false
+                        onSearchChange("")
+                    },
+                    focusRequester = searchFocus,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                )
             }
         }
 
-        FloatingActionButton(
-            onClick = { showOptions = true },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-        ) {
-            Box {
-                Icon(Icons.Rounded.Sort, contentDescription = "List options")
-                if (listQuery.starredOnly) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = 4.dp, y = (-4).dp)
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                    )
+        if (!searchActive) {
+            FloatingActionButton(
+                onClick = { showOptions = true },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            ) {
+                Box {
+                    Icon(Icons.Filled.Sort, contentDescription = "List options")
+                    if (listQuery.starredOnly) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 4.dp, y = (-4).dp)
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary),
+                        )
+                    }
                 }
             }
         }
@@ -337,7 +387,7 @@ fun LibraryScreen(
                 onClearFilters = onClearFilters,
                 onSearch = {
                     showOptions = false
-                    onSearch()
+                    searchActive = true
                 },
             )
         }
@@ -358,7 +408,7 @@ private fun ListOptionsSheet(
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         ListItem(
-            headlineContent = { Text("Search your library") },
+            headlineContent = { Text("Search this list") },
             leadingContent = { Icon(Icons.Rounded.Search, contentDescription = null) },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             modifier = Modifier.clickable(onClick = onSearch),
@@ -375,7 +425,10 @@ private fun ListOptionsSheet(
                 modifier = Modifier.weight(1f),
             )
             IconButton(onClick = onToggleSortDirection) {
-                Icon(Icons.Rounded.SwapVert, contentDescription = "Reverse sort order")
+                Icon(
+                    imageVector = if (listQuery.descending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
+                    contentDescription = if (listQuery.descending) "Sort descending" else "Sort ascending",
+                )
             }
         }
         FlowRow(
@@ -405,7 +458,7 @@ private fun ListOptionsSheet(
                 FilterChip(
                     selected = listQuery.starredOnly,
                     onClick = onToggleStarred,
-                    label = { Text("Starred only") },
+                    label = { Text("Starred") },
                 )
                 if (listQuery.starredOnly) {
                     TextButton(onClick = onClearFilters) { Text("Clear") }
@@ -416,6 +469,37 @@ private fun ListOptionsSheet(
 }
 
 private val FAB_CLEARANCE = 80.dp
+
+@Composable
+private fun SearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onClose: () -> Unit,
+    focusRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        placeholder = { Text("Search") },
+        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+        trailingIcon = {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Rounded.Close, contentDescription = "Close search")
+            }
+        },
+        colors =
+            TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+            ),
+        modifier = modifier.focusRequester(focusRequester),
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

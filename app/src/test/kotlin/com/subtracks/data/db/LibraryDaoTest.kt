@@ -48,10 +48,19 @@ class LibraryDaoTest {
                 ),
             )
 
-            assertEquals(listOf("Alpha", "Beta", "Gamma"), dao.albumsByName(sourceId, starredOnly = false).page().map { it.name })
-            assertEquals(listOf("Gamma", "Beta", "Alpha"), dao.albumsByNameReversed(sourceId, starredOnly = false).page().map { it.name })
-            assertEquals(listOf("Alpha", "Beta", "Gamma"), dao.albumsByYear(sourceId, starredOnly = false).page().map { it.name })
-            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, starredOnly = true).page().map { it.name })
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma"),
+                dao.albumsByName(sourceId, starredOnly = false, search = "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Gamma", "Beta", "Alpha"),
+                dao.albumsByNameReversed(sourceId, starredOnly = false, search = "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma"),
+                dao.albumsByYear(sourceId, starredOnly = false, search = "").page().map { it.name },
+            )
+            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, starredOnly = true, search = "").page().map { it.name })
         }
 
     @Test
@@ -66,9 +75,39 @@ class LibraryDaoTest {
                 ),
             )
 
-            assertEquals(listOf("Apple", "Zebra"), dao.songsByTitle(sourceId, starredOnly = false).page().map { it.song.title })
-            assertEquals(listOf("Zebra", "Apple"), dao.songsByTitleReversed(sourceId, starredOnly = false).page().map { it.song.title })
-            assertEquals(listOf("Apple"), dao.songsByTitle(sourceId, starredOnly = true).page().map { it.song.title })
+            assertEquals(
+                listOf("Apple", "Zebra"),
+                dao.songsByTitle(sourceId, starredOnly = false, search = "").page().map { it.song.title },
+            )
+            assertEquals(
+                listOf("Zebra", "Apple"),
+                dao.songsByTitleReversed(sourceId, starredOnly = false, search = "").page().map { it.song.title },
+            )
+            assertEquals(listOf("Apple"), dao.songsByTitle(sourceId, starredOnly = true, search = "").page().map { it.song.title })
+        }
+
+    @Test
+    fun albumAddedAndStarredSortsAndSearch() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a", "Beta", year = 2000, starred = null, created = 300),
+                    album(sourceId, "b", "Alpha", year = 2010, starred = 200, created = 100),
+                    album(sourceId, "c", "Gamma", year = 1990, starred = 100, created = 200),
+                ),
+            )
+
+            assertEquals(
+                listOf("Beta", "Gamma", "Alpha"),
+                dao.albumsByRecentlyAdded(sourceId, starredOnly = false, search = "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Gamma", "Beta"),
+                dao.albumsByStarred(sourceId, starredOnly = false, search = "").page().map { it.name },
+            )
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, starredOnly = false, search = "gam").page().map { it.name })
         }
 
     private suspend fun source(): Long =
@@ -87,13 +126,14 @@ class LibraryDaoTest {
         name: String,
         year: Long?,
         starred: Long?,
+        created: Long = 0,
     ) = Album(
         sourceId = sourceId,
         id = id,
         artistId = "ar-1",
         name = name,
         albumArtist = "Artist",
-        created = 0,
+        created = created,
         coverArt = null,
         genre = null,
         year = year,

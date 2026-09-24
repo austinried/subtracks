@@ -50,7 +50,6 @@ import com.subtracks.ui.library.AlbumDetailRoute
 import com.subtracks.ui.library.ArtistDetailRoute
 import com.subtracks.ui.library.LibraryRoute
 import com.subtracks.ui.library.PlaylistDetailRoute
-import com.subtracks.ui.library.SearchRoute
 import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
@@ -82,7 +81,6 @@ private const val FLING_VELOCITY = 1000f
 
 private object Routes {
     const val LIBRARY = "library"
-    const val SEARCH = "search"
     const val SETTINGS = "settings"
     const val ADD_SERVER = "add-server"
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
@@ -186,16 +184,7 @@ private fun MainNavigation() {
                         onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                         onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                        onSearch = { navController.navigate(Routes.SEARCH) },
                         bottomInset = if (playerVisible) 0.dp else navBarInset,
-                    )
-                }
-                composable(Routes.SEARCH) {
-                    SearchRoute(
-                        onBack = { navController.popBackStack() },
-                        onAlbumClick = { navController.navigate(Routes.album(it)) },
-                        onArtistClick = { navController.navigate(Routes.artist(it)) },
-                        onPlaylistClick = { navController.navigate(Routes.playlist(it)) },
                     )
                 }
                 composable(Routes.SETTINGS) {

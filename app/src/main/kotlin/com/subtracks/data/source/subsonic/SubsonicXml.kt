@@ -94,6 +94,7 @@ object SubsonicXml {
             coverArt = element.attr("coverArt").ifEmpty { null },
             songCount = element.longAttr("songCount") ?: 0L,
             created = element.dateAttr("created") ?: 0L,
+            changed = element.dateAttr("changed") ?: 0L,
             duration = element.longAttr("duration") ?: 0L,
         )
 
