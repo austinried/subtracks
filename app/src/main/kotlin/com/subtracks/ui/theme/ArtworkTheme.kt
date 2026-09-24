@@ -7,7 +7,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -205,8 +204,6 @@ fun ArtworkTheme(
         MaterialTheme(colorScheme = scheme, typography = SubtracksTypography, content = content)
     }
 }
-
-val LocalPlayerArtwork = compositionLocalOf<ArtworkColors?> { null }
 
 fun playerSurfaceColor(artwork: ArtworkColors): Color = lerp(artwork.scheme.surfaceContainerHigh, artwork.gradientHigh, 0.5f)
 

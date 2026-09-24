@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,9 +39,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,16 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -78,9 +68,6 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
-import com.subtracks.ui.theme.HeroGradient
-import com.subtracks.ui.theme.LocalPlayerArtwork
-import com.subtracks.ui.theme.heroBarColor
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -179,107 +166,58 @@ fun LibraryScreen(
     SideEffect { scrollBehavior.state.heightOffsetLimit = -with(density) { titleHeight.toPx() } }
     val titleFraction = scrollBehavior.state.collapsedFraction
 
-    var scrollPx by remember { mutableFloatStateOf(0f) }
-    val scrollTracker =
-        remember {
-            object : NestedScrollConnection {
-                override fun onPostScroll(
-                    consumed: Offset,
-                    available: Offset,
-                    source: NestedScrollSource,
-                ): Offset {
-                    scrollPx = (scrollPx - consumed.y).coerceAtLeast(0f)
-                    return Offset.Zero
-                }
-            }
-        }
+    val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
-    val artwork = LocalPlayerArtwork.current
-    val statusBarTopPx = WindowInsets.statusBars.getTop(density)
-    val statusBarTop = with(density) { statusBarTopPx.toDp() }
-
-    BoxWithConstraints(
+    Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .nestedScroll(scrollTracker)
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) {
-        val screenHeightPx = with(density) { maxHeight.toPx() }
-        val barHeightPx = statusBarTopPx + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
-        val selectedColor = heroBarColor(artwork, 0f, barHeightPx, screenHeightPx)
-        val barColor by
-            remember(artwork, barHeightPx, screenHeightPx) {
-                derivedStateOf { heroBarColor(artwork, scrollPx, barHeightPx, screenHeightPx) }
-            }
-
-        HeroGradient(
-            colors = artwork,
-            scrollPx = { scrollPx },
-            modifier = Modifier.fillMaxSize(),
-        )
-
-        Box(
+        Column(
             modifier =
                 Modifier
-                    .align(Alignment.TopStart)
                     .fillMaxWidth()
-                    .height(statusBarTop + 8.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                        ),
-                    ).graphicsLayer { alpha = 1f - titleFraction },
-        )
-
-        Column(Modifier.fillMaxSize()) {
-            Column(
+                    .padding(top = statusBarTop),
+        ) {
+            Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .drawBehind { drawRect(barColor.copy(alpha = titleFraction)) }
-                        .padding(top = statusBarTop),
+                        .height(titleHeight * (1f - titleFraction))
+                        .clipToBounds(),
             ) {
-                Box(
+                Text(
+                    text = selectedTab.label,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .height(titleHeight * (1f - titleFraction))
-                            .clipToBounds(),
-                ) {
-                    Text(
-                        text = selectedTab.label,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        modifier =
-                            Modifier
-                                .offset(y = -(titleHeight * titleFraction))
-                                .wrapContentHeight(unbounded = true)
-                                .padding(start = 8.dp, end = 16.dp, top = titleTop),
-                    )
-                }
-                LibraryTabs(
-                    pagerState = pagerState,
-                    onTabSelected = onTabSelected,
-                    syncing = syncing,
-                    onSync = onSync,
-                    onOpenSettings = onOpenSettings,
-                    selectedColor = selectedColor,
+                            .offset(y = -(titleHeight * titleFraction))
+                            .wrapContentHeight(unbounded = true)
+                            .padding(start = 8.dp, end = 16.dp, top = titleTop),
                 )
             }
+            LibraryTabs(
+                pagerState = pagerState,
+                onTabSelected = onTabSelected,
+                syncing = syncing,
+                onSync = onSync,
+                onOpenSettings = onOpenSettings,
+            )
+        }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth().weight(1f),
-            ) { page ->
-                when (LibraryTab.entries[page]) {
-                    LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
-                    LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
-                    LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
-                    LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
-                }
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+        ) { page ->
+            when (LibraryTab.entries[page]) {
+                LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
+                LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
+                LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
+                LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
             }
         }
     }
@@ -293,7 +231,6 @@ private fun LibraryTabs(
     syncing: Boolean,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
-    selectedColor: Color,
 ) {
     val iconFadeThreshold = 0.65f
     val indicatorStretch = 18.dp
@@ -337,7 +274,6 @@ private fun LibraryTabs(
                         ((iconFadeThreshold - abs(position - index)) / iconFadeThreshold)
                             .coerceIn(0f, 1f),
                     onClick = { onTabSelected(tab) },
-                    selectedColor = selectedColor,
                     modifier =
                         Modifier.onGloballyPositioned { coordinates ->
                             bounds[index] = coordinates.boundsInParent()
@@ -375,10 +311,9 @@ private fun TabButton(
     tab: LibraryTab,
     progress: Float,
     onClick: () -> Unit,
-    selectedColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedColor, progress)
+    val content = lerp(MaterialTheme.colorScheme.onBackground, MaterialTheme.colorScheme.background, progress)
     Box(
         modifier =
             modifier
