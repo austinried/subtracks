@@ -27,7 +27,7 @@ private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.18f
 private const val PRIMARY_MIN_LUMINANCE = 0.30f
 private const val MIN_GRADIENT_SATURATION = 0.30f
-private const val HERO_DARKEN_MAX = 0.88f
+private const val HERO_DARKEN_MAX = 1.0f
 private const val DARKEN_START_SCREENS = 0.5f
 private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
@@ -111,7 +111,7 @@ fun artworkColorsFromSeeds(
                 tone(hue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
                 secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
             ),
-        darkPrimary = tone(hue, gradientSat * 0.75f, 0.05f),
+        darkPrimary = tone(hue, gradientSat * 0.75f, 0.10f),
         blobSeed = primarySeed,
     )
 }
