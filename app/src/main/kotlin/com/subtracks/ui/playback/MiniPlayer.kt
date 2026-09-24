@@ -81,7 +81,7 @@ fun MiniPlayer(
                         modifier = Modifier.basicMarquee(),
                     )
                     Text(
-                        text = item.artist.orEmpty(),
+                        text = item.artist ?: item.album.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

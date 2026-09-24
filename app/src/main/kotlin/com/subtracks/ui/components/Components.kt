@@ -33,8 +33,8 @@ fun CoverArt(
     showPlaceholder: Boolean = true,
 ) {
     val context = LocalPlatformContext.current
-    var failed by remember(ref) { mutableStateOf(false) }
-    var thumbnailLoaded by remember(thumbnailRef) { mutableStateOf(false) }
+    var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
+    var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
         if (showPlaceholder || (failed && !thumbnailLoaded)) {
             Text(

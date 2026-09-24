@@ -48,6 +48,7 @@ class ArtistDetailViewModel(
     }
 
     private suspend fun resolveArt(artist: Artist): Pair<CoverArtRef?, CoverArtRef?> {
+        if (artist.coverArt == null) return null to null
         repeat(3) { attempt ->
             val full = sourceRepository.coverArt(artist.coverArt)
             if (full != null) {
