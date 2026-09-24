@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -234,10 +233,10 @@ fun HeroHeader(
             ref = art,
             name = name,
             thumbnailRef = thumbnailRef,
+            square = false,
             modifier =
                 Modifier
                     .fillMaxWidth(0.86f)
-                    .aspectRatio(1f)
                     .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
                     .clip(RoundedCornerShape(2.dp)),
         )

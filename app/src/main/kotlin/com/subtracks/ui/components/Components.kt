@@ -1,8 +1,10 @@
 package com.subtracks.ui.components
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,7 +21,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
+import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.subtracks.data.model.CoverArtRef
@@ -31,11 +35,21 @@ fun CoverArt(
     modifier: Modifier = Modifier,
     thumbnailRef: CoverArtRef? = null,
     showPlaceholder: Boolean = true,
+    square: Boolean = true,
 ) {
     val context = LocalPlatformContext.current
-    var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
-    Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
+    val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
+    val painter = rememberAsyncImagePainter(model)
+    val failed = painter.state is AsyncImagePainter.State.Error
+    val intrinsic = painter.intrinsicSize
+    val ratio =
+        if (!square && intrinsic.width > 0f && intrinsic.height > 0f && intrinsic.width.isFinite() && intrinsic.height.isFinite()) {
+            intrinsic.width / intrinsic.height
+        } else {
+            1f
+        }
+    Box(modifier = modifier.aspectRatio(ratio).background(MaterialTheme.colorScheme.surfaceVariant)) {
         if (showPlaceholder || (failed && !thumbnailLoaded)) {
             Text(
                 text = name.trim().take(1).uppercase(),
@@ -48,17 +62,16 @@ fun CoverArt(
             AsyncImage(
                 model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = if (square) ContentScale.Crop else ContentScale.Fit,
                 onSuccess = { thumbnailLoaded = true },
                 modifier = Modifier.fillMaxSize(),
             )
         }
         if (ref != null) {
-            AsyncImage(
-                model = remember(ref, thumbnailRef) { imageRequest(context, ref, crossfade = thumbnailRef != null) },
+            Image(
+                painter = painter,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                onError = { failed = true },
+                contentScale = if (square) ContentScale.Crop else ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
         }

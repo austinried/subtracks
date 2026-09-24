@@ -30,6 +30,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -125,6 +127,14 @@ fun NowPlayingScreen(
 ) {
     val playButtonSize = 96.dp
     val playCircleDiameter = playButtonSize * 20f / 24f
+    val titleStyle =
+        MaterialTheme.typography.headlineSmall.copy(
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+        )
+    val subtitleStyle =
+        MaterialTheme.typography.bodyMedium.copy(
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+        )
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
@@ -172,23 +182,23 @@ fun NowPlayingScreen(
                                 ref = coverArt,
                                 name = state.item?.title.orEmpty(),
                                 thumbnailRef = thumbnailRef,
+                                square = false,
                                 modifier =
                                     Modifier
                                         .fillMaxHeight()
-                                        .aspectRatio(1f)
                                         .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
                                         .clip(RoundedCornerShape(2.dp)),
                             )
                         }
                         Text(
                             text = state.item?.title.orEmpty(),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = titleStyle,
                             maxLines = 1,
                             modifier = Modifier.padding(top = 28.dp).basicMarquee(),
                         )
                         Text(
                             text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = subtitleStyle,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             modifier = Modifier.padding(top = 6.dp).basicMarquee(),
@@ -206,7 +216,13 @@ fun NowPlayingScreen(
                                 dragging = false
                             },
                             valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
-                            enabled = state.durationMs > 0,
+                            track = { sliderState ->
+                                SliderDefaults.Track(
+                                    sliderState = sliderState,
+                                    thumbTrackGapSize = 0.dp,
+                                    drawStopIndicator = {},
+                                )
+                            },
                             modifier = Modifier.padding(top = 28.dp),
                         )
                         Row(
