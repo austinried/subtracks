@@ -63,7 +63,7 @@ fun MiniPlayer(
                     Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+                        .padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
