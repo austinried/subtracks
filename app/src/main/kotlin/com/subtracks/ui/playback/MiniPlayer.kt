@@ -52,7 +52,7 @@ fun MiniPlayer(
             color =
                 artwork?.let {
                     val (hue, saturation, lightness) = lerp(it.scheme.surfaceContainerHigh, it.gradientHigh, 0.5f).toHsl()
-                    Color.hsl(hue, saturation * 0.65f, lightness)
+                    Color.hsl(hue, saturation * 0.8f, lightness)
                 } ?: MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
             modifier =

@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -175,6 +176,7 @@ fun NowPlayingScreen(
                                     Modifier
                                         .fillMaxHeight()
                                         .aspectRatio(1f)
+                                        .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
                                         .clip(RoundedCornerShape(2.dp)),
                             )
                         }
