@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -49,6 +50,7 @@ import com.subtracks.ui.playback.QueueScreen
 import com.subtracks.ui.settings.AddSourceScreen
 import com.subtracks.ui.settings.AddSourceState
 import com.subtracks.ui.settings.SettingsScreen
+import com.subtracks.ui.theme.LocalPlayerArtwork
 import com.subtracks.ui.theme.SubtracksTheme
 import com.subtracks.ui.theme.artworkColorsFromSeed
 import com.subtracks.ui.theme.artworkColorsFromSeeds
@@ -327,21 +329,23 @@ class AppScreenshotTest {
     private fun setLibraryContent(tab: LibraryTab) {
         composeRule.setContent {
             SubtracksTheme {
-                LibraryScreen(
-                    selectedTab = tab,
-                    onTabSelected = {},
-                    albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
-                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
-                    onAlbumClick = {},
-                    onArtistClick = {},
-                    onPlaylistClick = {},
-                    onSongClick = {},
-                    onSync = {},
-                    onOpenSettings = {},
-                )
+                CompositionLocalProvider(LocalPlayerArtwork provides artworkColorsFromSeed(Color.rgb(120, 80, 200))) {
+                    LibraryScreen(
+                        selectedTab = tab,
+                        onTabSelected = {},
+                        albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
+                        artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
+                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
+                        playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
+                        coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                        onAlbumClick = {},
+                        onArtistClick = {},
+                        onPlaylistClick = {},
+                        onSongClick = {},
+                        onSync = {},
+                        onOpenSettings = {},
+                    )
+                }
             }
         }
     }

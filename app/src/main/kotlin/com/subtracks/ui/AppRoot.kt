@@ -56,8 +56,7 @@ import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.SettingsRoute
-import com.subtracks.ui.theme.LocalPlayerSurfaceColor
-import com.subtracks.ui.theme.playerSurfaceColor
+import com.subtracks.ui.theme.LocalPlayerArtwork
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
@@ -148,11 +147,11 @@ private fun MainNavigation() {
     }
     val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
     val miniArtwork = rememberArtworkColors(miniArt)
-    val playerSurface = playerSurfaceColor(miniArtwork)
+    val libraryArtwork = miniArtwork.takeIf { miniArt != null }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
-    CompositionLocalProvider(LocalPlayerSurfaceColor provides playerSurface) {
+    CompositionLocalProvider(LocalPlayerArtwork provides libraryArtwork) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
                 NavHost(

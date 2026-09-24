@@ -51,7 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -69,7 +69,9 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
-import com.subtracks.ui.theme.LocalPlayerSurfaceColor
+import com.subtracks.ui.theme.HeroGradient
+import com.subtracks.ui.theme.LocalPlayerArtwork
+import com.subtracks.ui.theme.playerSurfaceColor
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -169,10 +171,8 @@ fun LibraryScreen(
     val titleFraction = scrollBehavior.state.collapsedFraction
 
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    val headerColor =
-        LocalPlayerSurfaceColor.current.let {
-            if (it.isSpecified) it else MaterialTheme.colorScheme.surfaceContainerHigh
-        }
+    val artwork = LocalPlayerArtwork.current
+    val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.surfaceContainerHigh
 
     Column(
         modifier =
@@ -213,18 +213,28 @@ fun LibraryScreen(
                 syncing = syncing,
                 onSync = onSync,
                 onOpenSettings = onOpenSettings,
+                selectedColor = headerColor,
             )
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth().weight(1f),
-        ) { page ->
-            when (LibraryTab.entries[page]) {
-                LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
-                LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
-                LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
-                LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            if (artwork != null) {
+                HeroGradient(
+                    colors = artwork,
+                    scrollPx = { 0f },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                when (LibraryTab.entries[page]) {
+                    LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
+                    LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
+                    LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
+                    LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
+                }
             }
         }
     }
@@ -238,6 +248,7 @@ private fun LibraryTabs(
     syncing: Boolean,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    selectedColor: Color,
 ) {
     val iconFadeThreshold = 0.65f
     val indicatorStretch = 18.dp
@@ -281,6 +292,7 @@ private fun LibraryTabs(
                         ((iconFadeThreshold - abs(position - index)) / iconFadeThreshold)
                             .coerceIn(0f, 1f),
                     onClick = { onTabSelected(tab) },
+                    selectedColor = selectedColor,
                     modifier =
                         Modifier.onGloballyPositioned { coordinates ->
                             bounds[index] = coordinates.boundsInParent()
@@ -318,9 +330,10 @@ private fun TabButton(
     tab: LibraryTab,
     progress: Float,
     onClick: () -> Unit,
+    selectedColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val content = lerp(MaterialTheme.colorScheme.onBackground, MaterialTheme.colorScheme.background, progress)
+    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedColor, progress)
     Box(
         modifier =
             modifier

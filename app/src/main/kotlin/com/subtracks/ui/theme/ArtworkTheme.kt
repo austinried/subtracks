@@ -206,7 +206,7 @@ fun ArtworkTheme(
     }
 }
 
-val LocalPlayerSurfaceColor = compositionLocalOf { Color.Unspecified }
+val LocalPlayerArtwork = compositionLocalOf<ArtworkColors?> { null }
 
 fun playerSurfaceColor(artwork: ArtworkColors): Color = lerp(artwork.scheme.surfaceContainerHigh, artwork.gradientHigh, 0.5f)
 
