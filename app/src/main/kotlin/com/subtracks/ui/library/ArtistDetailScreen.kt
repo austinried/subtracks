@@ -27,11 +27,13 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,13 +55,18 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.rememberViewportFill
+import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.ArtworkTheme
+import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
+import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
 private val FADE_LEAD = 24.dp
+private const val THEME_TRANSITION_MS = 100
 
 @Composable
 fun ArtistDetailRoute(
@@ -77,6 +84,7 @@ fun ArtistDetailRoute(
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,
+        artwork = rememberArtworkColors(artThumbnail ?: art, THEME_TRANSITION_MS),
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
@@ -90,6 +98,7 @@ fun ArtistDetailScreen(
     albums: List<Album>,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
+    artwork: ArtworkColors? = null,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
@@ -129,108 +138,118 @@ fun ArtistDetailScreen(
                 ),
         )
 
-    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        LazyVerticalGrid(
-            state = listState,
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                    CoverArt(
-                        ref = art,
-                        name = artist?.name.orEmpty(),
-                        thumbnailRef = artThumbnail,
-                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                    )
-                    Text(
-                        text = artist?.name.orEmpty(),
-                        style = imageNameStyle,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
-                    )
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        ArtworkTheme(artwork) {
+            Box(modifier.fillMaxSize().background(Color.Black)) {
+                HeroGradient(
+                    colors = artwork,
+                    scrollPx = { 0f },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                LazyVerticalGrid(
+                    state = listState,
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                            CoverArt(
+                                ref = art,
+                                name = artist?.name.orEmpty(),
+                                thumbnailRef = artThumbnail,
+                                showPlaceholder = false,
+                                modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                            )
+                            Text(
+                                text = artist?.name.orEmpty(),
+                                style = imageNameStyle,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
+                            )
+                        }
+                    }
+                    itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
+                        PrefetchArtworkSeeds(coverArt(album.coverArt, true))
+                        Column(
+                            modifier =
+                                Modifier
+                                    .padding(
+                                        start = if (index % 2 == 0) 16.dp else 0.dp,
+                                        end = if (index % 2 == 1) 16.dp else 0.dp,
+                                    ).clickable { onAlbumClick(album) },
+                        ) {
+                            CoverArt(
+                                ref = coverArt(album.coverArt, false),
+                                name = album.name,
+                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+                            )
+                            Text(
+                                text = album.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 6.dp),
+                            )
+                            Text(
+                                text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Spacer(Modifier.height(fill))
+                    }
                 }
-            }
-            itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
-                PrefetchArtworkSeeds(coverArt(album.coverArt, true))
-                Column(
+
+                Box(
                     modifier =
                         Modifier
-                            .padding(
-                                start = if (index % 2 == 0) 16.dp else 0.dp,
-                                end = if (index % 2 == 1) 16.dp else 0.dp,
-                            ).clickable { onAlbumClick(album) },
-                ) {
-                    CoverArt(
-                        ref = coverArt(album.coverArt, false),
-                        name = album.name,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                    )
-                    Text(
-                        text = album.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                    Text(
-                        text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Spacer(Modifier.height(fill))
+                            .align(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .height(barHeight + 24.dp)
+                            .alpha(1f - barFraction)
+                            .background(
+                                Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent)),
+                            ),
+                )
+
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = artist?.name.orEmpty(),
+                            style = nameTextStyle,
+                            color = Color.White.copy(alpha = barFraction),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White,
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .background(Color.Black.copy(alpha = barFraction))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {},
+                )
             }
         }
-
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .height(barHeight + 24.dp)
-                    .alpha(1f - barFraction)
-                    .background(
-                        Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent)),
-                    ),
-        )
-
-        TopAppBar(
-            title = {
-                Text(
-                    text = artist?.name.orEmpty(),
-                    style = nameTextStyle,
-                    color = Color.White.copy(alpha = barFraction),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White,
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .background(Color.Black.copy(alpha = barFraction))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {},
-        )
     }
 }

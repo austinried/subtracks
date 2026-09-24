@@ -45,6 +45,7 @@ import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.SettingsRoute
+import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -200,9 +201,11 @@ private fun MainNavigation() {
             }
 
             if (playerVisible) {
+                val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
                 MiniPlayer(
                     state = playback,
-                    coverArt = playbackController.coverArt(playback.item, thumbnail = true),
+                    coverArt = miniArt,
+                    artwork = rememberArtworkColors(miniArt),
                     onExpand = { showingNowPlaying = true },
                     onPlayPause = playbackController::togglePlayPause,
                     onNext = playbackController::next,

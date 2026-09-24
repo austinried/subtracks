@@ -25,12 +25,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,12 +42,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.ArtworkTheme
+import com.subtracks.ui.theme.HeroGradient
+import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 
 @Composable
@@ -55,9 +63,11 @@ fun NowPlayingRoute(
     controller: PlaybackController = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
+    val art = controller.coverArt(state.item)
     NowPlayingScreen(
         state = state,
-        coverArt = controller.coverArt(state.item),
+        coverArt = art,
+        artwork = rememberArtworkColors(art),
         onBack = onBack,
         onQueue = onQueue,
         onPlayPause = controller::togglePlayPause,
@@ -73,6 +83,7 @@ fun NowPlayingRoute(
 fun NowPlayingScreen(
     state: PlaybackState,
     coverArt: CoverArtRef?,
+    artwork: ArtworkColors?,
     onBack: () -> Unit,
     onQueue: () -> Unit,
     onPlayPause: () -> Unit,
@@ -84,138 +95,151 @@ fun NowPlayingScreen(
     val playButtonSize = 96.dp
     val playCircleDiameter = playButtonSize * 20f / 24f
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text("Now playing") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier =
-                Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Box(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CoverArt(
-                    ref = coverArt,
-                    name = state.item?.title.orEmpty(),
-                    modifier =
-                        Modifier
-                            .fillMaxHeight()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(2.dp)),
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        ArtworkTheme(artwork) {
+            Box(modifier.fillMaxSize().background(Color.Black)) {
+                HeroGradient(
+                    colors = artwork,
+                    scrollPx = { 0f },
+                    modifier = Modifier.fillMaxSize(),
                 )
-            }
-            Text(
-                text = state.item?.title.orEmpty(),
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                modifier = Modifier.padding(top = 28.dp).basicMarquee(),
-            )
-            Text(
-                text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                modifier = Modifier.padding(top = 6.dp).basicMarquee(),
-            )
-            var dragging by remember { mutableStateOf(false) }
-            var dragPosition by remember { mutableFloatStateOf(0f) }
-            Slider(
-                value = if (dragging) dragPosition else state.positionMs.toFloat(),
-                onValueChange = {
-                    dragging = true
-                    dragPosition = it
-                },
-                onValueChangeFinished = {
-                    onSeek(dragPosition.toLong())
-                    dragging = false
-                },
-                valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
-                enabled = state.durationMs > 0,
-                modifier = Modifier.padding(top = 28.dp),
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(formatTime(state.positionMs), style = MaterialTheme.typography.bodySmall)
-                Text(formatTime(state.durationMs), style = MaterialTheme.typography.bodySmall)
-            }
-            if (state.error != null) {
-                Text(
-                    text = state.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onPrevious, enabled = state.hasPrevious, modifier = Modifier.size(64.dp)) {
-                    Icon(
-                        imageVector = Icons.Rounded.SkipPrevious,
-                        contentDescription = "Previous",
-                        modifier = Modifier.size(48.dp),
-                    )
-                }
-                IconButton(onClick = onPlayPause, modifier = Modifier.padding(horizontal = 20.dp).size(playButtonSize)) {
-                    if (state.isBuffering && state.isPlaying) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Transparent,
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Now playing") },
+                            navigationIcon = {
+                                IconButton(onClick = onBack) {
+                                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                        )
+                    },
+                ) { padding ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(padding)
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Box(
-                            modifier =
-                                Modifier
-                                    .size(playCircleDiameter)
-                                    .background(MaterialTheme.colorScheme.onBackground, CircleShape),
+                            modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.background,
-                                strokeWidth = 4.dp,
-                                modifier = Modifier.size(playCircleDiameter * 0.65f),
+                            CoverArt(
+                                ref = coverArt,
+                                name = state.item?.title.orEmpty(),
+                                modifier =
+                                    Modifier
+                                        .fillMaxHeight()
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(2.dp)),
                             )
                         }
-                    } else {
-                        Icon(
-                            imageVector = if (state.isPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
-                            contentDescription = if (state.isPlaying) "Pause" else "Play",
-                            modifier = Modifier.size(playButtonSize),
+                        Text(
+                            text = state.item?.title.orEmpty(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 28.dp).basicMarquee(),
                         )
+                        Text(
+                            text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 6.dp).basicMarquee(),
+                        )
+                        var dragging by remember { mutableStateOf(false) }
+                        var dragPosition by remember { mutableFloatStateOf(0f) }
+                        Slider(
+                            value = if (dragging) dragPosition else state.positionMs.toFloat(),
+                            onValueChange = {
+                                dragging = true
+                                dragPosition = it
+                            },
+                            onValueChangeFinished = {
+                                onSeek(dragPosition.toLong())
+                                dragging = false
+                            },
+                            valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
+                            enabled = state.durationMs > 0,
+                            modifier = Modifier.padding(top = 28.dp),
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(formatTime(state.positionMs), style = MaterialTheme.typography.bodySmall)
+                            Text(formatTime(state.durationMs), style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (state.error != null) {
+                            Text(
+                                text = state.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            IconButton(onClick = onPrevious, enabled = state.hasPrevious, modifier = Modifier.size(64.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.SkipPrevious,
+                                    contentDescription = "Previous",
+                                    modifier = Modifier.size(48.dp),
+                                )
+                            }
+                            IconButton(onClick = onPlayPause, modifier = Modifier.padding(horizontal = 20.dp).size(playButtonSize)) {
+                                if (state.isBuffering && state.isPlaying) {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .size(playCircleDiameter)
+                                                .background(MaterialTheme.colorScheme.onBackground, CircleShape),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = MaterialTheme.colorScheme.background,
+                                            strokeWidth = 4.dp,
+                                            modifier = Modifier.size(playCircleDiameter * 0.65f),
+                                        )
+                                    }
+                                } else {
+                                    Icon(
+                                        imageVector = if (state.isPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
+                                        contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                        modifier = Modifier.size(playButtonSize),
+                                    )
+                                }
+                            }
+                            IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(64.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.SkipNext,
+                                    contentDescription = "Next",
+                                    modifier = Modifier.size(48.dp),
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                            horizontalArrangement = Arrangement.Start,
+                        ) {
+                            IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                                    contentDescription = "Queue",
+                                    modifier = Modifier.size(30.dp),
+                                )
+                            }
+                        }
                     }
-                }
-                IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(64.dp)) {
-                    Icon(
-                        imageVector = Icons.Rounded.SkipNext,
-                        contentDescription = "Next",
-                        modifier = Modifier.size(48.dp),
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.Start,
-            ) {
-                IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                        contentDescription = "Queue",
-                        modifier = Modifier.size(30.dp),
-                    )
                 }
             }
         }

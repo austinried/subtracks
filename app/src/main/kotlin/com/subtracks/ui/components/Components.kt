@@ -27,15 +27,18 @@ fun CoverArt(
     name: String,
     modifier: Modifier = Modifier,
     thumbnailRef: CoverArtRef? = null,
+    showPlaceholder: Boolean = true,
 ) {
     val context = LocalPlatformContext.current
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
-        Text(
-            text = name.trim().take(1).uppercase(),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.Center),
-        )
+        if (showPlaceholder) {
+            Text(
+                text = name.trim().take(1).uppercase(),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
         if (thumbnailRef != null && thumbnailRef != ref) {
             AsyncImage(
                 model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },

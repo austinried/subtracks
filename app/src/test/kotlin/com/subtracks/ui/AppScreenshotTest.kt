@@ -162,6 +162,7 @@ class AppScreenshotTest {
                     artist = Fixtures.artists.first(),
                     albums = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
                     art = CoverArtRef("art-ar-radiohead", "test:art-ar-radiohead"),
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
                     onAlbumClick = {},
@@ -181,6 +182,7 @@ class AppScreenshotTest {
                     playlist = Fixtures.playlists.first(),
                     songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    artwork = artworkColorsFromSeed(Color.rgb(60, 150, 90)),
                     onBack = {},
                     onSongClick = {},
                     modifier = Modifier.fillMaxSize(),
@@ -247,6 +249,7 @@ class AppScreenshotTest {
                 NowPlayingScreen(
                     state = Fixtures.playbackState(),
                     coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     onBack = {},
                     onQueue = {},
                     onPlayPause = {},
@@ -296,6 +299,7 @@ class AppScreenshotTest {
                     MiniPlayer(
                         state = Fixtures.playbackState(),
                         coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                        artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                         onExpand = {},
                         onPlayPause = {},
                         onNext = {},
@@ -388,7 +392,7 @@ private object Fixtures {
 
     val playlists =
         listOf(
-            playlist("pl-late-night", "Late Night", 42),
+            playlist("pl-late-night", "Late Night", 42, "Smooth late-night picks"),
             playlist("pl-road-trip", "Road Trip", 63),
             playlist("pl-rainy-day", "Rainy Day", 25),
             playlist("pl-focus", "Focus", 18),
@@ -477,14 +481,16 @@ private object Fixtures {
         id: String,
         name: String,
         songCount: Long,
+        comment: String? = null,
     ) = Playlist(
         sourceId = 1,
         id = id,
         name = name,
-        comment = null,
+        comment = comment,
         coverArt = "art-$id",
         songCount = songCount,
         created = 0,
+        duration = songCount * 210,
     )
 
     fun artEngine(): FakeImageLoaderEngine {
