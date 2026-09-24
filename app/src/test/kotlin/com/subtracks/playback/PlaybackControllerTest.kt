@@ -689,7 +689,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun previousFromTheStartWrapsToTheLastTrack() {
+    fun previousFromTheStartRestartsWithoutRepeat() {
         seedAlbum(3, sourceId = 1)
 
         controller.playAlbum(1, "al1", 0)
@@ -698,6 +698,27 @@ class PlaybackControllerTest {
                 ?.id == "s1"
         }
 
+        controller.previous()
+
+        assertTrue(handle.operations.contains("seekTo(0)"))
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun previousFromTheStartWrapsWithRepeatAll() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.cycleRepeat()
         controller.previous()
         await {
             controller.state.value.item

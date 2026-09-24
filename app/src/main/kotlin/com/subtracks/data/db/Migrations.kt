@@ -57,7 +57,11 @@ val MIGRATION_5_6 =
         override suspend fun migrate(connection: SQLiteConnection) {
             connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `shuffleEnabled` INTEGER NOT NULL DEFAULT 0")
             connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `repeatMode` INTEGER NOT NULL DEFAULT 0")
-            connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `shuffleOrder` TEXT")
+            connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `shuffleSeed` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `shuffle_order` (`sequence` INTEGER NOT NULL, " +
+                    "`flatPosition` INTEGER NOT NULL, PRIMARY KEY(`sequence`))",
+            )
         }
     }
 

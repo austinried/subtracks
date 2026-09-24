@@ -210,7 +210,13 @@ data class PlaybackCursor(
     val queuePosition: Long,
     @ColumnInfo(defaultValue = "0") val shuffleEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "0") val repeatMode: Int = 0,
-    val shuffleOrder: String? = null,
+    @ColumnInfo(defaultValue = "0") val shuffleSeed: Long = 0,
+)
+
+@Entity(tableName = "shuffle_order")
+data class ShuffleOrder(
+    @PrimaryKey val sequence: Long,
+    val flatPosition: Long,
 )
 
 @Entity(tableName = "artwork_seeds")

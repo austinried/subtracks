@@ -12,6 +12,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKindConverter
 import com.subtracks.data.model.SearchIndex
+import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
@@ -28,6 +29,7 @@ import com.subtracks.data.model.SubsonicSource
         SearchIndex::class,
         QueueEntry::class,
         PlaybackCursor::class,
+        ShuffleOrder::class,
         ArtworkSeed::class,
     ],
     version = 6,

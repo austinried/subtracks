@@ -403,7 +403,20 @@ class PlaybackController(
         val snapshot = snapshot ?: return
         if (snapshot.size == 0L) return
         val current = currentPosition() ?: return
-        jumpTo(if (current > 0) current - 1 else snapshot.size - 1)
+        when {
+            current > 0 -> {
+                jumpTo(current - 1)
+            }
+
+            repeatMode == RepeatMode.All -> {
+                jumpTo(snapshot.size - 1)
+            }
+
+            else -> {
+                player.seekTo(0)
+                refresh()
+            }
+        }
     }
 
     fun cycleRepeat() {

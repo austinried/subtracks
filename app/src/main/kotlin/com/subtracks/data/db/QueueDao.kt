@@ -6,6 +6,7 @@ import androidx.room3.Query
 import androidx.room3.Upsert
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
+import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
 
 private const val ALBUM_SONGS_SQL =
@@ -29,6 +30,15 @@ interface QueueDao {
 
     @Query("SELECT * FROM queue_entries ORDER BY position, id")
     suspend fun entries(): List<QueueEntry>
+
+    @Query("SELECT * FROM shuffle_order ORDER BY sequence")
+    suspend fun shuffleOrder(): List<ShuffleOrder>
+
+    @Query("DELETE FROM shuffle_order")
+    suspend fun clearShuffleOrder()
+
+    @Insert
+    suspend fun insertShuffleOrder(entries: List<ShuffleOrder>)
 
     @Query("SELECT * FROM playback_cursor WHERE id = 1")
     suspend fun cursor(): PlaybackCursor?

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "1fd6e47da427e7d9faceae1bf0774007",
+    "identityHash": "409a9b0fb3a36dbda79d86b64c9656c3",
     "entities": [
       {
         "tableName": "sources",
@@ -704,7 +704,7 @@
       },
       {
         "tableName": "playback_cursor",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `queuePosition` INTEGER NOT NULL, `shuffleEnabled` INTEGER NOT NULL DEFAULT 0, `repeatMode` INTEGER NOT NULL DEFAULT 0, `shuffleOrder` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `queuePosition` INTEGER NOT NULL, `shuffleEnabled` INTEGER NOT NULL DEFAULT 0, `repeatMode` INTEGER NOT NULL DEFAULT 0, `shuffleSeed` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -733,15 +733,41 @@
             "defaultValue": "0"
           },
           {
-            "fieldPath": "shuffleOrder",
-            "columnName": "shuffleOrder",
-            "affinity": "TEXT"
+            "fieldPath": "shuffleSeed",
+            "columnName": "shuffleSeed",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
             "id"
+          ]
+        }
+      },
+      {
+        "tableName": "shuffle_order",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sequence` INTEGER NOT NULL, `flatPosition` INTEGER NOT NULL, PRIMARY KEY(`sequence`))",
+        "fields": [
+          {
+            "fieldPath": "sequence",
+            "columnName": "sequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flatPosition",
+            "columnName": "flatPosition",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sequence"
           ]
         }
       },
@@ -777,7 +803,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1fd6e47da427e7d9faceae1bf0774007')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '409a9b0fb3a36dbda79d86b64c9656c3')"
     ]
   }
 }
