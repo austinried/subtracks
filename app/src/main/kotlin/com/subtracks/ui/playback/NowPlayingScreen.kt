@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
@@ -46,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -203,7 +199,7 @@ fun NowPlayingScreen(
                                 thumbnailRef = thumbnailRef,
                                 square = false,
                                 elevation = 3.dp,
-                                modifier = Modifier.fillMaxHeight(),
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
                         val density = LocalDensity.current
@@ -256,6 +252,7 @@ fun NowPlayingScreen(
                                 dragging = false
                             },
                             valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
+                            enabled = state.durationMs > 0,
                             modifier = Modifier.padding(top = 28.dp),
                         )
                         Row(
