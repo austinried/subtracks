@@ -157,7 +157,7 @@ def main [] {
         setup-data $"http://127.0.0.1:($GONIC_PORT)/" "admin" "admin"
 
         print "running integration tests"
-        ^gradle :app:integrationTest --rerun --console=plain
+        ^gradle :app:integrationTest --rerun --no-configuration-cache --console=plain
         $env.LAST_EXIT_CODE
     } catch {|e|
         print $"error: ($e.msg)"
