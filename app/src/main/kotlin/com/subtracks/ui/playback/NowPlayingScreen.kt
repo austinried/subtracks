@@ -218,7 +218,7 @@ fun NowPlayingScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
-                                    .padding(top = 28.dp)
+                                    .padding(top = 20.dp)
                                     .height(titleHeight + 6.dp + subtitleHeight),
                         ) {
                             Box(Modifier.height(titleHeight), contentAlignment = Alignment.Center) {
@@ -253,7 +253,7 @@ fun NowPlayingScreen(
                             },
                             valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
                             enabled = state.durationMs > 0,
-                            modifier = Modifier.padding(top = 28.dp),
+                            modifier = Modifier.padding(top = 20.dp),
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
@@ -271,7 +271,7 @@ fun NowPlayingScreen(
                             )
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -314,7 +314,7 @@ fun NowPlayingScreen(
                             }
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
                             horizontalArrangement = Arrangement.Start,
                         ) {
                             IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
