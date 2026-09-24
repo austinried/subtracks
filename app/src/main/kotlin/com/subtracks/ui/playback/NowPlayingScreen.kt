@@ -1,5 +1,6 @@
 package com.subtracks.ui.playback
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,11 +47,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.SingletonImageLoader
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
@@ -63,11 +69,22 @@ fun NowPlayingRoute(
     controller: PlaybackController = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
+    val context = LocalPlatformContext.current
     val art = controller.coverArt(state.item)
+    val thumbnail = controller.coverArt(state.item, thumbnail = true)
+    LaunchedEffect(state.item?.id, state.hasNext) {
+        if (!state.hasNext) return@LaunchedEffect
+        controller.upcomingCoverArt(thumbnail = true)?.let {
+            ArtworkSeedCache.prefetch(context, it)
+            prefetchImage(context, it)
+        }
+        controller.upcomingCoverArt()?.let { prefetchImage(context, it) }
+    }
     NowPlayingScreen(
         state = state,
         coverArt = art,
-        artwork = rememberArtworkColors(art),
+        thumbnailRef = thumbnail,
+        artwork = rememberArtworkColors(thumbnail ?: art),
         onBack = onBack,
         onQueue = onQueue,
         onPlayPause = controller::togglePlayPause,
@@ -75,6 +92,20 @@ fun NowPlayingRoute(
         onPrevious = controller::previous,
         onSeek = controller::seekTo,
         modifier = modifier,
+    )
+}
+
+private fun prefetchImage(
+    context: Context,
+    ref: CoverArtRef,
+) {
+    SingletonImageLoader.get(context).enqueue(
+        ImageRequest
+            .Builder(context)
+            .data(ref.url)
+            .memoryCacheKey(ref.cacheKey)
+            .diskCacheKey(ref.cacheKey)
+            .build(),
     )
 }
 
@@ -90,6 +121,7 @@ fun NowPlayingScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     onSeek: (Long) -> Unit,
+    thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
 ) {
     val playButtonSize = 96.dp
@@ -133,6 +165,7 @@ fun NowPlayingScreen(
                             CoverArt(
                                 ref = coverArt,
                                 name = state.item?.title.orEmpty(),
+                                thumbnailRef = thumbnailRef,
                                 modifier =
                                     Modifier
                                         .fillMaxHeight()

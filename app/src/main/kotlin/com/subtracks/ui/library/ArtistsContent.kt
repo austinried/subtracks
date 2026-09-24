@@ -28,6 +28,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
+import com.subtracks.ui.theme.PrefetchArtworkSeeds
 
 @Composable
 fun ArtistsContent(
@@ -57,6 +58,7 @@ fun ArtistsContent(
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
                     val artist = items[index]
                     if (artist != null) {
+                        PrefetchArtworkSeeds(coverArt(artist.coverArt, true))
                         ListItem(
                             headlineContent = {
                                 Text(

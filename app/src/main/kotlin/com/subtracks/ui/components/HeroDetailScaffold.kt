@@ -213,6 +213,7 @@ fun HeroHeader(
     topInset: Dp,
     controlsModifier: Modifier = Modifier,
     thumbnailRef: CoverArtRef? = null,
+    comment: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -245,6 +246,17 @@ fun HeroHeader(
             Spacer(Modifier.height(4.dp))
             Text(
                 text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (!comment.isNullOrBlank()) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = comment,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

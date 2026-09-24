@@ -65,7 +65,8 @@ fun PlaylistDetailScreen(
                 art = coverArt(playlist?.coverArt, false),
                 thumbnailRef = coverArt(playlist?.coverArt, true),
                 name = playlist?.name.orEmpty(),
-                subtitle = playlistSubtitle(playlist),
+                subtitle = playlistSummary(playlist),
+                comment = playlist?.comment,
                 hasSongs = songs.itemCount > 0,
                 onPlay = { onSongClick(0) },
                 onShuffle = {},
@@ -93,12 +94,11 @@ fun PlaylistDetailScreen(
     )
 }
 
-private fun playlistSubtitle(playlist: Playlist?): String {
+private fun playlistSummary(playlist: Playlist?): String {
     playlist ?: return ""
     return listOfNotNull(
         "${playlist.songCount} ${if (playlist.songCount == 1L) "song" else "songs"}",
         formatDuration(playlist.duration),
-        playlist.comment?.takeIf { it.isNotBlank() },
     ).joinToString(" $DOT ")
 }
 

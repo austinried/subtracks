@@ -160,7 +160,7 @@ fun ArtistDetailScreen(
                                 ref = art,
                                 name = artist?.name.orEmpty(),
                                 thumbnailRef = artThumbnail,
-                                showPlaceholder = false,
+                                showPlaceholder = art == null,
                                 modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                             )
                             Text(
