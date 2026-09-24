@@ -197,7 +197,7 @@ fun LibraryScreen(
                         Modifier
                             .offset(y = -(titleHeight * titleFraction))
                             .wrapContentHeight(unbounded = true)
-                            .padding(start = 8.dp, end = 16.dp, top = titleTop),
+                            .padding(start = 16.dp, end = 16.dp, top = titleTop),
                 )
             }
             LibraryTabs(
