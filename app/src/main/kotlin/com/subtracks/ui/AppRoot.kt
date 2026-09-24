@@ -136,13 +136,6 @@ private fun MainNavigation() {
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
-    LaunchedEffect(playerVisible) {
-        if (!playerVisible) {
-            settleJob?.cancel()
-            nowPlayingOpen = false
-            nowPlayingProgress = 0f
-        }
-    }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
