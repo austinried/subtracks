@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -115,6 +114,7 @@ enum class LibraryTab(
 data class SortOption(
     val value: String,
     val label: String,
+    val descendingByDefault: Boolean = false,
 )
 
 fun LibraryTab.listTab(): LibraryListTab = LibraryListTab.valueOf(name)
@@ -125,25 +125,25 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
             listOf(
                 SortOption(AlbumSort.Name.name, "Name"),
                 SortOption(AlbumSort.Artist.name, "Artist"),
-                SortOption(AlbumSort.Year.name, "Year"),
-                SortOption(AlbumSort.Added.name, "Added"),
-                SortOption(AlbumSort.Starred.name, "Starred"),
+                SortOption(AlbumSort.Year.name, "Year", descendingByDefault = true),
+                SortOption(AlbumSort.Added.name, "Added", descendingByDefault = true),
+                SortOption(AlbumSort.Starred.name, "Starred", descendingByDefault = true),
             )
         }
 
         LibraryTab.Artists -> {
             listOf(
                 SortOption(ArtistSort.Name.name, "Name"),
-                SortOption(ArtistSort.AlbumCount.name, "Albums"),
-                SortOption(ArtistSort.Starred.name, "Starred"),
+                SortOption(ArtistSort.AlbumCount.name, "Albums", descendingByDefault = true),
+                SortOption(ArtistSort.Starred.name, "Starred", descendingByDefault = true),
             )
         }
 
         LibraryTab.Playlists -> {
             listOf(
                 SortOption(PlaylistSort.Name.name, "Name"),
-                SortOption(PlaylistSort.Added.name, "Added"),
-                SortOption(PlaylistSort.Updated.name, "Updated"),
+                SortOption(PlaylistSort.Added.name, "Added", descendingByDefault = true),
+                SortOption(PlaylistSort.Updated.name, "Updated", descendingByDefault = true),
             )
         }
 
@@ -152,8 +152,8 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
                 SortOption(SongSort.Album.name, "Album"),
                 SortOption(SongSort.Title.name, "Title"),
                 SortOption(SongSort.Artist.name, "Artist"),
-                SortOption(SongSort.Starred.name, "Starred"),
-                SortOption(SongSort.Added.name, "Added"),
+                SortOption(SongSort.Starred.name, "Starred", descendingByDefault = true),
+                SortOption(SongSort.Added.name, "Added", descendingByDefault = true),
             )
         }
     }
@@ -271,7 +271,7 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
-        searchActive = false
+        searchActive = search.isNotEmpty()
     }
 
     val density = LocalDensity.current
@@ -418,7 +418,7 @@ fun LibraryScreen(
             ) {
                 Box {
                     Icon(Icons.Filled.Sort, contentDescription = "List options")
-                    if (listQuery.starred != StarredFilter.Any) {
+                    if (filtersActive) {
                         Box(
                             modifier =
                                 Modifier
@@ -440,6 +440,7 @@ fun LibraryScreen(
                 listQuery = listQuery,
                 sortOptions = sortOptions,
                 starredSupported = starredSupported,
+                canClearFilters = filtersActive,
                 onSortChange = onSortChange,
                 onToggleSortDirection = onToggleSortDirection,
                 onCycleStarred = onCycleStarred,
@@ -459,6 +460,7 @@ private fun ListOptionsSheet(
     listQuery: ListQuery,
     sortOptions: List<SortOption>,
     starredSupported: Boolean,
+    canClearFilters: Boolean,
     onSortChange: (String) -> Unit,
     onToggleSortDirection: () -> Unit,
     onCycleStarred: () -> Unit,
@@ -466,6 +468,8 @@ private fun ListOptionsSheet(
     onSearch: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+        val naturalDescending = sortOptions.firstOrNull { it.value == listQuery.sort }?.descendingByDefault == true
+        val descending = if (naturalDescending) !listQuery.descending else listQuery.descending
         Surface(
             onClick = onSearch,
             shape = RoundedCornerShape(4.dp),
@@ -495,8 +499,8 @@ private fun ListOptionsSheet(
             )
             IconButton(onClick = onToggleSortDirection) {
                 Icon(
-                    imageVector = if (listQuery.descending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
-                    contentDescription = if (listQuery.descending) "Sort descending" else "Sort ascending",
+                    imageVector = if (descending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
+                    contentDescription = if (descending) "Sort descending" else "Sort ascending",
                 )
             }
         }
@@ -528,7 +532,7 @@ private fun ListOptionsSheet(
                 )
                 IconButton(
                     onClick = onClearFilters,
-                    enabled = listQuery.starred != StarredFilter.Any,
+                    enabled = canClearFilters,
                 ) {
                     Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
                 }

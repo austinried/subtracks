@@ -134,15 +134,20 @@ private fun Element.dateAttr(name: String): Long? = getAttribute(name).takeIf { 
 
 internal object IsoDate {
     private val timezone = Regex("(Z|[+-]\\d{2}:?\\d{2})$", RegexOption.IGNORE_CASE)
+    private val longFraction = Regex("\\.(\\d{9})\\d+")
 
     fun parse(value: String): Long? {
-        val text = value.trim().let { if (it.endsWith("z")) it.dropLast(1) + "Z" else it }
+        val text =
+            value
+                .trim()
+                .let { if (it.endsWith("z")) it.dropLast(1) + "Z" else it }
+                .replace(longFraction) { ".${it.groupValues[1]}" }
         return try {
             val zoned = if (timezone.containsMatchIn(text)) text else text + "Z"
             OffsetDateTime.parse(zoned).toEpochSecond()
         } catch (_: DateTimeParseException) {
             try {
-                LocalDate.parse(text).atStartOfDay(ZoneOffset.UTC).toEpochSecond()
+                LocalDate.parse(text.removeSuffix("Z")).atStartOfDay(ZoneOffset.UTC).toEpochSecond()
             } catch (_: DateTimeParseException) {
                 null
             }

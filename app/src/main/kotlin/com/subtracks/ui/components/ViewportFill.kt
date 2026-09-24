@@ -30,7 +30,10 @@ fun ResetScrollOnChange(
     onReset: suspend () -> Unit,
 ) {
     var pending by remember { mutableStateOf(false) }
-    LaunchedEffect(resetKey) { pending = true }
+    var primed by remember { mutableStateOf(false) }
+    LaunchedEffect(resetKey) {
+        if (primed) pending = true else primed = true
+    }
     LaunchedEffect(Unit) {
         var refreshes = 0
         var handled = 0
