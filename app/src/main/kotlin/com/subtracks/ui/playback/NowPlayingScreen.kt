@@ -190,7 +190,7 @@ fun NowPlayingScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Box(
-                            modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             CoverArt(
@@ -218,7 +218,7 @@ fun NowPlayingScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
-                                    .padding(top = 20.dp)
+                                    .padding(top = 12.dp)
                                     .height(titleHeight + 6.dp + subtitleHeight),
                         ) {
                             Box(Modifier.height(titleHeight), contentAlignment = Alignment.Center) {
@@ -271,7 +271,7 @@ fun NowPlayingScreen(
                             )
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -314,7 +314,7 @@ fun NowPlayingScreen(
                             }
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 44.dp),
                             horizontalArrangement = Arrangement.Start,
                         ) {
                             IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
