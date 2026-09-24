@@ -38,6 +38,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
+import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
 
@@ -48,6 +49,8 @@ fun SongsContent(
     bottomInset: Dp,
     onSongClick: (Int) -> Unit,
     playingSongId: String? = null,
+    filtered: Boolean = false,
+    onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -57,7 +60,11 @@ fun SongsContent(
         }
 
         items.itemCount == 0 -> {
-            EmptyState("No songs yet.", modifier)
+            if (filtered) {
+                FilteredEmptyState(onClearFilters, modifier)
+            } else {
+                EmptyState("No songs yet.", modifier)
+            }
         }
 
         else -> {

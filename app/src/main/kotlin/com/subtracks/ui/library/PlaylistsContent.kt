@@ -27,6 +27,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
+import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
 
@@ -36,6 +37,8 @@ fun PlaylistsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onPlaylistClick: (Playlist) -> Unit,
+    filtered: Boolean = false,
+    onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +48,11 @@ fun PlaylistsContent(
         }
 
         items.itemCount == 0 -> {
-            EmptyState("No playlists yet.", modifier)
+            if (filtered) {
+                FilteredEmptyState(onClearFilters, modifier)
+            } else {
+                EmptyState("No playlists yet.", modifier)
+            }
         }
 
         else -> {

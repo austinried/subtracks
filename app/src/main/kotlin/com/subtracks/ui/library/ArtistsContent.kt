@@ -27,6 +27,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
+import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
@@ -37,6 +38,8 @@ fun ArtistsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onArtistClick: (Artist) -> Unit,
+    filtered: Boolean = false,
+    onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -46,7 +49,11 @@ fun ArtistsContent(
         }
 
         items.itemCount == 0 -> {
-            EmptyState("No artists yet.", modifier)
+            if (filtered) {
+                FilteredEmptyState(onClearFilters, modifier)
+            } else {
+                EmptyState("No artists yet.", modifier)
+            }
         }
 
         else -> {

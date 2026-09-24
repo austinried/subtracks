@@ -27,6 +27,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
+import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
@@ -39,6 +40,8 @@ fun AlbumsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onAlbumClick: (Album) -> Unit,
+    filtered: Boolean = false,
+    onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -48,7 +51,11 @@ fun AlbumsContent(
         }
 
         items.itemCount == 0 -> {
-            EmptyState("No albums yet.\nSync with your server to fill your library.", modifier)
+            if (filtered) {
+                FilteredEmptyState(onClearFilters, modifier)
+            } else {
+                EmptyState("No albums yet.\nSync with your server to fill your library.", modifier)
+            }
         }
 
         else -> {

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -27,18 +28,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -93,6 +97,7 @@ import com.subtracks.data.prefs.LibraryListTab
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
+import com.subtracks.data.prefs.StarredFilter
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -190,8 +195,19 @@ fun LibraryRoute(
         starredSupported = listTab.supportsStarred,
         onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
         onToggleSortDirection = { viewModel.setListQuery(listTab, listQuery.copy(descending = !listQuery.descending)) },
-        onToggleStarred = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = !listQuery.starredOnly)) },
-        onClearFilters = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = false)) },
+        onCycleStarred = {
+            val next =
+                when (listQuery.starred) {
+                    StarredFilter.Any -> StarredFilter.Starred
+                    StarredFilter.Starred -> StarredFilter.NotStarred
+                    StarredFilter.NotStarred -> StarredFilter.Any
+                }
+            viewModel.setListQuery(listTab, listQuery.copy(starred = next))
+        },
+        onClearFilters = {
+            viewModel.setListQuery(listTab, listQuery.copy(starred = StarredFilter.Any))
+            viewModel.setSearch(listTab, "")
+        },
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
     )
@@ -221,7 +237,7 @@ fun LibraryScreen(
     starredSupported: Boolean = false,
     onSortChange: (String) -> Unit = {},
     onToggleSortDirection: () -> Unit = {},
-    onToggleStarred: () -> Unit = {},
+    onCycleStarred: () -> Unit = {},
     onClearFilters: () -> Unit = {},
     search: String = "",
     onSearchChange: (String) -> Unit = {},
@@ -261,8 +277,9 @@ fun LibraryScreen(
     val titleFraction = scrollBehavior.state.collapsedFraction
 
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    val listBottomInset = bottomInset + if (searchActive) 0.dp else FAB_CLEARANCE
-    val resetKey = listOf(listQuery.sort, listQuery.descending, listQuery.starredOnly, search)
+    val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
+    val listBottomInset = bottomInset + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
+    val resetKey = listOf(listQuery.sort, listQuery.descending, listQuery.starred, search)
 
     Box(modifier.fillMaxSize()) {
         Column(
@@ -312,11 +329,27 @@ fun LibraryScreen(
             ) { page ->
                 when (LibraryTab.entries[page]) {
                     LibraryTab.Albums -> {
-                        AlbumsContent(albums, coverArt, listBottomInset, onAlbumClick, resetKey = resetKey)
+                        AlbumsContent(
+                            albums,
+                            coverArt,
+                            listBottomInset,
+                            onAlbumClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
                     }
 
                     LibraryTab.Artists -> {
-                        ArtistsContent(artists, coverArt, listBottomInset, onArtistClick, resetKey = resetKey)
+                        ArtistsContent(
+                            artists,
+                            coverArt,
+                            listBottomInset,
+                            onArtistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
                     }
 
                     LibraryTab.Songs -> {
@@ -326,28 +359,43 @@ fun LibraryScreen(
                             listBottomInset,
                             onSongClick,
                             playingSongId,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
                             resetKey = resetKey,
                         )
                     }
 
                     LibraryTab.Playlists -> {
-                        PlaylistsContent(playlists, coverArt, listBottomInset, onPlaylistClick, resetKey = resetKey)
+                        PlaylistsContent(
+                            playlists,
+                            coverArt,
+                            listBottomInset,
+                            onPlaylistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                        )
                     }
                 }
             }
+        }
 
-            if (searchActive) {
-                SearchField(
-                    value = search,
-                    onValueChange = onSearchChange,
-                    onClose = {
-                        searchActive = false
-                        onSearchChange("")
-                    },
-                    focusRequester = searchFocus,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                )
-            }
+        if (searchActive) {
+            SearchField(
+                value = search,
+                onValueChange = onSearchChange,
+                onClose = {
+                    searchActive = false
+                    onSearchChange("")
+                },
+                focusRequester = searchFocus,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .imePadding()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
         }
 
         if (!searchActive) {
@@ -359,7 +407,7 @@ fun LibraryScreen(
             ) {
                 Box {
                     Icon(Icons.Filled.Sort, contentDescription = "List options")
-                    if (listQuery.starredOnly) {
+                    if (listQuery.starred != StarredFilter.Any) {
                         Box(
                             modifier =
                                 Modifier
@@ -383,7 +431,7 @@ fun LibraryScreen(
                 starredSupported = starredSupported,
                 onSortChange = onSortChange,
                 onToggleSortDirection = onToggleSortDirection,
-                onToggleStarred = onToggleStarred,
+                onCycleStarred = onCycleStarred,
                 onClearFilters = onClearFilters,
                 onSearch = {
                     showOptions = false
@@ -402,7 +450,7 @@ private fun ListOptionsSheet(
     starredSupported: Boolean,
     onSortChange: (String) -> Unit,
     onToggleSortDirection: () -> Unit,
-    onToggleStarred: () -> Unit,
+    onCycleStarred: () -> Unit,
     onClearFilters: () -> Unit,
     onSearch: () -> Unit,
 ) {
@@ -456,12 +504,38 @@ private fun ListOptionsSheet(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             ) {
                 FilterChip(
-                    selected = listQuery.starredOnly,
-                    onClick = onToggleStarred,
+                    selected = listQuery.starred != StarredFilter.Any,
+                    onClick = onCycleStarred,
                     label = { Text("Starred") },
+                    leadingIcon =
+                        when (listQuery.starred) {
+                            StarredFilter.Any -> {
+                                null
+                            }
+
+                            StarredFilter.Starred -> {
+                                {
+                                    Icon(
+                                        Icons.Rounded.Add,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            }
+
+                            StarredFilter.NotStarred -> {
+                                {
+                                    Icon(
+                                        Icons.Rounded.Remove,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            }
+                        },
                 )
-                if (listQuery.starredOnly) {
-                    TextButton(onClick = onClearFilters) { Text("Clear") }
+                if (listQuery.starred != StarredFilter.Any) {
+                    TextButton(onClick = onClearFilters) { Text("Clear filters") }
                 }
             }
         }
@@ -469,6 +543,7 @@ private fun ListOptionsSheet(
 }
 
 private val FAB_CLEARANCE = 80.dp
+private val SEARCH_BAR_CLEARANCE = 80.dp
 
 @Composable
 private fun SearchField(

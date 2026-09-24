@@ -23,9 +23,12 @@ class UserPreferencesTest {
             assertEquals(ListQuery("Name"), prefs.listQuery(LibraryListTab.Albums).first())
             assertEquals(ListQuery("Album"), prefs.listQuery(LibraryListTab.Songs).first())
 
-            prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, starredOnly = true))
+            prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, starred = StarredFilter.Starred))
 
-            assertEquals(ListQuery("Added", descending = true, starredOnly = true), prefs.listQuery(LibraryListTab.Albums).first())
+            assertEquals(
+                ListQuery("Added", descending = true, starred = StarredFilter.Starred),
+                prefs.listQuery(LibraryListTab.Albums).first(),
+            )
             assertEquals(ListQuery("Album"), prefs.listQuery(LibraryListTab.Songs).first())
 
             file.delete()

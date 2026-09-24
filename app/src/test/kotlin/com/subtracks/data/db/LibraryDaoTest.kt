@@ -50,17 +50,17 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsByName(sourceId, starredOnly = false, search = "").page().map { it.name },
+                dao.albumsByName(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
             assertEquals(
                 listOf("Gamma", "Beta", "Alpha"),
-                dao.albumsByNameReversed(sourceId, starredOnly = false, search = "").page().map { it.name },
+                dao.albumsByNameReversed(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsByYear(sourceId, starredOnly = false, search = "").page().map { it.name },
+                dao.albumsByYear(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
-            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, starredOnly = true, search = "").page().map { it.name })
+            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, starredFilter = 1, search = "").page().map { it.name })
         }
 
     @Test
@@ -77,13 +77,13 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Apple", "Zebra"),
-                dao.songsByTitle(sourceId, starredOnly = false, search = "").page().map { it.song.title },
+                dao.songsByTitle(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
             )
             assertEquals(
                 listOf("Zebra", "Apple"),
-                dao.songsByTitleReversed(sourceId, starredOnly = false, search = "").page().map { it.song.title },
+                dao.songsByTitleReversed(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
             )
-            assertEquals(listOf("Apple"), dao.songsByTitle(sourceId, starredOnly = true, search = "").page().map { it.song.title })
+            assertEquals(listOf("Apple"), dao.songsByTitle(sourceId, starredFilter = 1, search = "").page().map { it.song.title })
         }
 
     @Test
@@ -101,13 +101,14 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Beta", "Gamma", "Alpha"),
-                dao.albumsByRecentlyAdded(sourceId, starredOnly = false, search = "").page().map { it.name },
+                dao.albumsByRecentlyAdded(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Gamma", "Beta"),
-                dao.albumsByStarred(sourceId, starredOnly = false, search = "").page().map { it.name },
+                dao.albumsByStarred(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, starredOnly = false, search = "gam").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, starredFilter = 0, search = "gam").page().map { it.name })
+            assertEquals(listOf("Beta"), dao.albumsByName(sourceId, starredFilter = 2, search = "").page().map { it.name })
         }
 
     private suspend fun source(): Long =

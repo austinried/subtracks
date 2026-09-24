@@ -29,10 +29,12 @@ enum class LibraryListTab(
     Songs("songs", SongSort.Album.name, true),
 }
 
+enum class StarredFilter { Any, Starred, NotStarred }
+
 data class ListQuery(
     val sort: String,
     val descending: Boolean = false,
-    val starredOnly: Boolean = false,
+    val starred: StarredFilter = StarredFilter.Any,
 )
 
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
@@ -65,7 +67,7 @@ class UserPreferences(
 
     private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
 
-    private fun encode(query: ListQuery) = "${query.sort}|${if (query.descending) 1 else 0}|${if (query.starredOnly) 1 else 0}"
+    private fun encode(query: ListQuery) = "${query.sort}|${if (query.descending) 1 else 0}|${query.starred.ordinal}"
 
     private fun decode(
         stored: String?,
@@ -76,7 +78,7 @@ class UserPreferences(
         return ListQuery(
             sort = parts[0].ifEmpty { defaultSort },
             descending = parts[1] == "1",
-            starredOnly = parts[2] == "1",
+            starred = StarredFilter.entries.getOrElse(parts[2].toIntOrNull() ?: 0) { StarredFilter.Any },
         )
     }
 
