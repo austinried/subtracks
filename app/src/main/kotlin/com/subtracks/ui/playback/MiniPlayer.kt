@@ -52,7 +52,7 @@ fun MiniPlayer(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onExpandDrag: (Float) -> Unit = {},
-    onExpandRelease: () -> Unit = {},
+    onExpandRelease: (Float) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val item = state.item ?: return
@@ -76,8 +76,8 @@ fun MiniPlayer(
                                 dragUpPx = (dragUpPx - delta).coerceAtLeast(0f)
                                 onExpandDrag(dragUpPx)
                             },
-                        onDragStopped = {
-                            onExpandRelease()
+                        onDragStopped = { velocity ->
+                            onExpandRelease(velocity)
                             dragUpPx = 0f
                         },
                     ).clickable(

@@ -56,6 +56,7 @@ import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.SettingsRoute
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -76,6 +77,7 @@ class RootViewModel(
 private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
 private const val EXPAND_FADE = 0.1f
+private const val FLING_VELOCITY = 1000f
 
 private object Routes {
     const val LIBRARY = "library"
@@ -113,21 +115,34 @@ private fun MainNavigation() {
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
+    var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
     var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
+    var settleJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
 
     fun settleNowPlaying(open: Boolean) {
-        val target = if (open) 1f else 0f
-        scope.launch {
-            animate(nowPlayingProgress, target, animationSpec = tween(OVERLAY_DURATION_MS)) { value, _ ->
-                nowPlayingProgress = value
+        if (open) nowPlayingOpen = true
+        settleJob?.cancel()
+        settleJob =
+            scope.launch {
+                animate(nowPlayingProgress, if (open) 1f else 0f, animationSpec = tween(OVERLAY_DURATION_MS)) { value, _ ->
+                    nowPlayingProgress = value
+                }
+                if (!open) nowPlayingOpen = false
             }
-        }
     }
     LaunchedEffect(Unit) { playbackController.connect() }
+    LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
+    LaunchedEffect(playerVisible) {
+        if (!playerVisible) {
+            settleJob?.cancel()
+            nowPlayingOpen = false
+            nowPlayingProgress = 0f
+        }
+    }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
@@ -248,17 +263,19 @@ private fun MainNavigation() {
                     onPlayPause = playbackController::togglePlayPause,
                     onNext = playbackController::next,
                     onExpandDrag = { dragUpPx ->
+                        nowPlayingOpen = true
+                        settleJob?.cancel()
                         if (miniPlayerTopPx > 0f) {
                             nowPlayingProgress = (dragUpPx / miniPlayerTopPx).coerceIn(0f, 1f)
                         }
                     },
-                    onExpandRelease = { settleNowPlaying(nowPlayingProgress > 0.05f) },
+                    onExpandRelease = { velocity -> settleNowPlaying(nowPlayingProgress > 0.05f || velocity < -FLING_VELOCITY) },
                     modifier = Modifier.onGloballyPositioned { miniPlayerTopPx = it.positionInRoot().y },
                 )
             }
         }
 
-        if (nowPlayingProgress > 0f) {
+        if (nowPlayingOpen) {
             Box(
                 modifier =
                     Modifier
@@ -270,11 +287,12 @@ private fun MainNavigation() {
                             orientation = Orientation.Vertical,
                             state =
                                 rememberDraggableState { delta ->
+                                    settleJob?.cancel()
                                     if (miniPlayerTopPx > 0f) {
                                         nowPlayingProgress = (nowPlayingProgress - delta / miniPlayerTopPx).coerceIn(0f, 1f)
                                     }
                                 },
-                            onDragStopped = { settleNowPlaying(nowPlayingProgress > 0.9f) },
+                            onDragStopped = { velocity -> settleNowPlaying(nowPlayingProgress > 0.9f && velocity < FLING_VELOCITY) },
                         ),
             ) {
                 NowPlayingRoute(
@@ -298,7 +316,7 @@ private fun MainNavigation() {
     }
 
     BackHandler(enabled = showingQueue) { showingQueue = false }
-    BackHandler(enabled = nowPlayingProgress > 0f && !showingQueue) {
+    BackHandler(enabled = nowPlayingOpen && !showingQueue) {
         settleNowPlaying(false)
     }
 }
