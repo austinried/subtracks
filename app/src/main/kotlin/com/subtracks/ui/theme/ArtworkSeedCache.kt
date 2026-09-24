@@ -50,9 +50,8 @@ object ArtworkSeedCache {
     ): Pair<Int, Int?>? {
         cache.get(ref.cacheKey)?.let { return it }
         val job = jobs.computeIfAbsent(ref.cacheKey) { scope.async { resolve(context, ref) } }
-        val seeds = job.await()
-        jobs.remove(ref.cacheKey, job)
-        return seeds
+        job.invokeOnCompletion { jobs.remove(ref.cacheKey, job) }
+        return job.await()
     }
 
     fun prefetch(
