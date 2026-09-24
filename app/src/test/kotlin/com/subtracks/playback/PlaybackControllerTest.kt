@@ -747,6 +747,29 @@ class PlaybackControllerTest {
         }
     }
 
+    @Test
+    fun tappingASongWhileShuffledPlaysThatSong() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        assertEquals(0L, controller.state.value.position)
+        assertEquals("s4", handle.items.first().id)
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

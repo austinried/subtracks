@@ -522,6 +522,7 @@ class PlaybackController(
                 start
             }
         queueRepository.setCursor(position)
+        this.snapshot = queueRepository.snapshot()
         loadWindow(position, autoplay = true)
     }
 
