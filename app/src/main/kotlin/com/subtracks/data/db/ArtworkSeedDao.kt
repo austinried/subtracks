@@ -12,7 +12,4 @@ interface ArtworkSeedDao {
 
     @Upsert
     suspend fun upsert(seed: ArtworkSeed)
-
-    @Query("DELETE FROM artwork_seeds WHERE updatedAt < :cutoff")
-    suspend fun pruneExpired(cutoff: Long)
 }

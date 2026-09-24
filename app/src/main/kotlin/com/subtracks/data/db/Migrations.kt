@@ -39,10 +39,9 @@ val MIGRATION_3_4 =
         override suspend fun migrate(connection: SQLiteConnection) {
             connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `artwork_seeds` (`cacheKey` TEXT NOT NULL, " +
-                    "`primary` INTEGER NOT NULL, `secondary` INTEGER, `updatedAt` INTEGER NOT NULL, " +
+                    "`primary` INTEGER NOT NULL, `secondary` INTEGER, " +
                     "PRIMARY KEY(`cacheKey`))",
             )
-            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_artwork_seeds_updatedAt` ON `artwork_seeds` (`updatedAt`)")
         }
     }
 

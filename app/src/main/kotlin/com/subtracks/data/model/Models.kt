@@ -209,12 +209,11 @@ data class PlaybackCursor(
     val queuePosition: Long,
 )
 
-@Entity(tableName = "artwork_seeds", indices = [Index("updatedAt")])
+@Entity(tableName = "artwork_seeds")
 data class ArtworkSeed(
     @PrimaryKey val cacheKey: String,
     val primary: Int,
     val secondary: Int?,
-    val updatedAt: Long,
 )
 
 class QueueKindConverter {

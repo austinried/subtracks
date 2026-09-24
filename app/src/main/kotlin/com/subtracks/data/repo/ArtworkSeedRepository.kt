@@ -24,13 +24,6 @@ class ArtworkSeedRepository(
         cacheKey: String,
         seeds: Pair<Int, Int?>,
     ) {
-        val dao = db.artworkSeedDao()
-        val now = System.currentTimeMillis()
-        dao.upsert(ArtworkSeed(cacheKey, seeds.first, seeds.second, now))
-        dao.pruneExpired(now - MAX_AGE_MS)
-    }
-
-    private companion object {
-        const val MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
+        db.artworkSeedDao().upsert(ArtworkSeed(cacheKey, seeds.first, seeds.second))
     }
 }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "9ee801b55a0e0e6a8b240d867c3a4e58",
+    "identityHash": "5c2180369cf0981302f79ec4e77187fd",
     "entities": [
       {
         "tableName": "sources",
@@ -721,7 +721,7 @@
       },
       {
         "tableName": "artwork_seeds",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cacheKey` TEXT NOT NULL, `primary` INTEGER NOT NULL, `secondary` INTEGER, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`cacheKey`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cacheKey` TEXT NOT NULL, `primary` INTEGER NOT NULL, `secondary` INTEGER, PRIMARY KEY(`cacheKey`))",
         "fields": [
           {
             "fieldPath": "cacheKey",
@@ -739,12 +739,6 @@
             "fieldPath": "secondary",
             "columnName": "secondary",
             "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "updatedAt",
-            "columnName": "updatedAt",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -752,23 +746,12 @@
           "columnNames": [
             "cacheKey"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_artwork_seeds_updatedAt",
-            "unique": false,
-            "columnNames": [
-              "updatedAt"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_artwork_seeds_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
-          }
-        ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9ee801b55a0e0e6a8b240d867c3a4e58')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5c2180369cf0981302f79ec4e77187fd')"
     ]
   }
 }
