@@ -770,6 +770,31 @@ class PlaybackControllerTest {
         assertEquals("s4", handle.items.first().id)
     }
 
+    @Test
+    fun jumpingInTheQueueWhileShuffledKeepsTheOrder() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+        val order = handle.items.map { it.id }
+
+        controller.playAt(2)
+        await { controller.state.value.position == 2L }
+
+        assertEquals(order, handle.items.map { it.id })
+        assertEquals(
+            order[2],
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,
