@@ -5,6 +5,7 @@ import androidx.room3.Database
 import androidx.room3.RoomDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
@@ -27,8 +28,9 @@ import com.subtracks.data.model.SubsonicSource
         SearchIndex::class,
         QueueEntry::class,
         PlaybackCursor::class,
+        ArtworkSeed::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)
@@ -40,4 +42,6 @@ abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun searchDao(): SearchDao
 
     abstract fun queueDao(): QueueDao
+
+    abstract fun artworkSeedDao(): ArtworkSeedDao
 }

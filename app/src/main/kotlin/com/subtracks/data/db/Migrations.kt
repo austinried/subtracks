@@ -34,4 +34,16 @@ val MIGRATION_2_3 =
         }
     }
 
-val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+val MIGRATION_3_4 =
+    object : Migration(3, 4) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `artwork_seeds` (`cacheKey` TEXT NOT NULL, " +
+                    "`primary` INTEGER NOT NULL, `secondary` INTEGER, `updatedAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`cacheKey`))",
+            )
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_artwork_seeds_updatedAt` ON `artwork_seeds` (`updatedAt`)")
+        }
+    }
+
+val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)

@@ -3,6 +3,8 @@ package com.subtracks.di
 import android.content.Context
 import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.prefs.createUserPreferences
+import com.subtracks.data.repo.ArtworkSeedRepository
+import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
@@ -31,6 +33,7 @@ fun appModule(
     single { createUserPreferences(context) }
     single { SourceRepository(get(), get(), get()) }
     single { LibraryRepository(get(), get()) }
+    single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get()) }
     single { QueueRepository(get()) }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }

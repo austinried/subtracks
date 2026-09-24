@@ -16,6 +16,7 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.repo.ArtworkSeedStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -36,15 +37,21 @@ object ArtworkSeedCache {
     private val jobs = ConcurrentHashMap<String, Deferred<Pair<Int, Int?>?>>()
     private val cache = LruCache<String, Pair<Int, Int?>>(MAX_CACHED_SEEDS)
 
+    @Volatile
+    private var store: ArtworkSeedStore? = null
+
+    fun install(store: ArtworkSeedStore) {
+        this.store = store
+    }
+
     suspend fun seeds(
         context: Context,
         ref: CoverArtRef,
     ): Pair<Int, Int?>? {
         cache.get(ref.cacheKey)?.let { return it }
-        val job = jobs.computeIfAbsent(ref.cacheKey) { scope.async { extract(context, ref) } }
+        val job = jobs.computeIfAbsent(ref.cacheKey) { scope.async { resolve(context, ref) } }
         val seeds = job.await()
         jobs.remove(ref.cacheKey, job)
-        if (seeds != null) cache.put(ref.cacheKey, seeds)
         return seeds
     }
 
@@ -60,6 +67,29 @@ object ArtworkSeedCache {
         jobs.clear()
         cache.evictAll()
     }
+
+    private suspend fun resolve(
+        context: Context,
+        ref: CoverArtRef,
+    ): Pair<Int, Int?>? {
+        ignoreFailure { store?.seed(ref.cacheKey) }?.let {
+            cache.put(ref.cacheKey, it)
+            return it
+        }
+        val seeds = extract(context, ref) ?: return null
+        cache.put(ref.cacheKey, seeds)
+        ignoreFailure { store?.save(ref.cacheKey, seeds) }
+        return seeds
+    }
+
+    private suspend fun <T> ignoreFailure(block: suspend () -> T): T? =
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
 
     private suspend fun extract(
         context: Context,

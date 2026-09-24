@@ -55,9 +55,10 @@ class ArtworkExtractionTest {
 
     @Test
     fun resolvesColorsFromCoverArt() {
+        val ref = CoverArtRef(url = "art", cacheKey = "art-${System.nanoTime()}")
         var colors: ArtworkColors? = null
         composeRule.setContent {
-            colors = rememberArtworkColors(CoverArtRef(url = "art", cacheKey = "art"))
+            colors = rememberArtworkColors(ref)
         }
         composeRule.waitUntil(timeoutMillis = 5_000) { colors != null }
         assertNotNull(colors)

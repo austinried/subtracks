@@ -209,6 +209,14 @@ data class PlaybackCursor(
     val queuePosition: Long,
 )
 
+@Entity(tableName = "artwork_seeds", indices = [Index("updatedAt")])
+data class ArtworkSeed(
+    @PrimaryKey val cacheKey: String,
+    val primary: Int,
+    val secondary: Int?,
+    val updatedAt: Long,
+)
+
 class QueueKindConverter {
     @ColumnTypeConverter
     fun fromQueueKind(kind: QueueKind): String = kind.name
