@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 data class QueueItem(
     val id: String,
@@ -98,6 +99,7 @@ class PlaybackController(
     private var player: PlayerHandle? = null
     private var connecting = false
     private var pendingPlay: Pair<List<QueueEntry>, Long>? = null
+    private var pendingShuffle: QueueEntry? = null
     private var positionJob: Job? = null
     private var windowJob: Job? = null
     private var bufferingJob: Job? = null
@@ -139,7 +141,13 @@ class PlaybackController(
                 scope.launch {
                     val pending = pendingPlay
                     pendingPlay = null
-                    if (pending != null) start(pending.first, pending.second) else restore()
+                    val shuffle = pendingShuffle
+                    pendingShuffle = null
+                    when {
+                        pending != null -> start(pending.first, pending.second)
+                        shuffle != null -> startShuffled(shuffle)
+                        else -> restore()
+                    }
                 }
             },
             onDisconnected = {
@@ -166,6 +174,63 @@ class PlaybackController(
         sourceId: Long,
         startPosition: Long,
     ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
+
+    fun shuffleAlbum(
+        sourceId: Long,
+        albumId: String,
+    ) = shufflePlay(queueRepository.albumEntry(sourceId, albumId))
+
+    fun shufflePlaylist(
+        sourceId: Long,
+        playlistId: String,
+    ) = shufflePlay(queueRepository.playlistEntry(sourceId, playlistId))
+
+    private fun shufflePlay(entry: QueueEntry) {
+        if (player == null) {
+            pendingShuffle = entry
+            connect()
+            return
+        }
+        scope.launch { startShuffled(entry) }
+    }
+
+    private suspend fun startShuffled(entry: QueueEntry) =
+        startLock.withLock {
+            windowJob?.cancel()
+            windowStart = 0
+            windowEnd = -1
+            lastDurationMs = 0
+            lastError = null
+            lastEdit = null
+            endedHandled = false
+            val previous = snapshot
+            val previousEntry = previous?.entries?.firstOrNull()?.entry
+            val same = previousEntry != null && previousEntry.kind == entry.kind && previousEntry.refId == entry.refId
+            val avoid = if (same) currentPosition()?.let { previous.flatPosition(it) } else null
+            queueRepository.replace(listOf(entry))
+            var snap = queueRepository.snapshot()
+            if (snap.size == 0L) {
+                stopLocked()
+                return@withLock
+            }
+            val start = randomIndex(snap.size, avoid)
+            val order = withContext(Dispatchers.Default) { shuffledOrder(snap.size, start) }
+            queueRepository.setShuffle(true, order)
+            shuffleEnabled = true
+            queueRepository.setCursor(0)
+            snap = queueRepository.snapshot()
+            this@PlaybackController.snapshot = snap
+            loadWindow(0, autoplay = true)
+        }
+
+    private fun randomIndex(
+        size: Long,
+        avoid: Long?,
+    ): Long {
+        if (size <= 1L) return 0L
+        val index = Random.nextLong(size)
+        return if (avoid != null && index == avoid) (index + 1L) % size else index
+    }
 
     fun playAt(position: Long) {
         scope.launch {

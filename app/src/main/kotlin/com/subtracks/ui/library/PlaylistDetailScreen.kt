@@ -41,6 +41,7 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
+        onShuffle = viewModel::shuffle,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
 }
@@ -53,6 +54,7 @@ fun PlaylistDetailScreen(
     artwork: ArtworkColors?,
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
+    onShuffle: () -> Unit = {},
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +71,7 @@ fun PlaylistDetailScreen(
                 comment = playlist?.comment,
                 hasSongs = songs.itemCount > 0,
                 onPlay = { onSongClick(0) },
-                onShuffle = {},
+                onShuffle = onShuffle,
                 onDownload = {},
                 onMore = {},
                 topInset = topInset,

@@ -43,6 +43,7 @@ fun AlbumDetailRoute(
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
+        onShuffle = viewModel::shuffle,
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
 }

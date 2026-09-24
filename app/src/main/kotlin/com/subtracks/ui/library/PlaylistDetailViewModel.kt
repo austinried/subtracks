@@ -43,4 +43,10 @@ class PlaylistDetailViewModel(
             playbackController.playPlaylist(sourceId.first(), playlistId, startIndex.toLong())
         }
     }
+
+    fun shuffle() {
+        viewModelScope.launch {
+            playbackController.shufflePlaylist(sourceId.first(), playlistId)
+        }
+    }
 }

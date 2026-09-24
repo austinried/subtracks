@@ -38,4 +38,10 @@ class AlbumDetailViewModel(
             playbackController.playAlbum(sourceId.first(), albumId, startIndex.toLong())
         }
     }
+
+    fun shuffle() {
+        viewModelScope.launch {
+            playbackController.shuffleAlbum(sourceId.first(), albumId)
+        }
+    }
 }

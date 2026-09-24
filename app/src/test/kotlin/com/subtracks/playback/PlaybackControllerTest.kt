@@ -840,6 +840,40 @@ class PlaybackControllerTest {
         await { controller.state.value.isPlaying }
     }
 
+    @Test
+    fun shufflePlayStartsShuffledOnARandomTrack() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.shuffleAlbum(1, "al1")
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertTrue(controller.state.value.shuffle)
+        assertEquals(0L, controller.state.value.position)
+        assertTrue(handle.items.first().id in listOf("s1", "s2", "s3", "s4", "s5"))
+    }
+
+    @Test
+    fun shufflingTheSameAlbumAgainPicksADifferentTrack() {
+        seedAlbum(5, sourceId = 1)
+
+        controller.shuffleAlbum(1, "al1")
+        await { controller.state.value.item != null }
+        val first =
+            controller.state.value.item
+                ?.id
+
+        controller.shuffleAlbum(1, "al1")
+        await {
+            controller.state.value.item
+                ?.id != first
+        }
+
+        assertTrue(
+            controller.state.value.item
+                ?.id != first,
+        )
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,
