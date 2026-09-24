@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,8 +18,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
@@ -36,6 +39,7 @@ fun CoverArt(
     thumbnailRef: CoverArtRef? = null,
     showPlaceholder: Boolean = true,
     square: Boolean = true,
+    elevation: Dp = 0.dp,
 ) {
     val context = LocalPlatformContext.current
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
@@ -49,7 +53,13 @@ fun CoverArt(
         } else {
             1f
         }
-    Box(modifier = modifier.aspectRatio(ratio).background(MaterialTheme.colorScheme.surfaceVariant)) {
+    Box(
+        modifier =
+            modifier
+                .aspectRatio(ratio)
+                .shadow(elevation, RoundedCornerShape(2.dp), clip = elevation > 0.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
         if (showPlaceholder || (failed && !thumbnailLoaded)) {
             Text(
                 text = name.trim().take(1).uppercase(),

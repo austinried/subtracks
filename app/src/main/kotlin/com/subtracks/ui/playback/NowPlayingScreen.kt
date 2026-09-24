@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -45,8 +46,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -183,26 +184,40 @@ fun NowPlayingScreen(
                                 name = state.item?.title.orEmpty(),
                                 thumbnailRef = thumbnailRef,
                                 square = false,
-                                modifier =
-                                    Modifier
-                                        .fillMaxHeight()
-                                        .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
-                                        .clip(RoundedCornerShape(2.dp)),
+                                elevation = 3.dp,
+                                modifier = Modifier.fillMaxHeight(),
                             )
                         }
-                        Text(
-                            text = state.item?.title.orEmpty(),
-                            style = titleStyle,
-                            maxLines = 1,
-                            modifier = Modifier.padding(top = 28.dp).basicMarquee(),
-                        )
-                        Text(
-                            text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
-                            style = subtitleStyle,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            modifier = Modifier.padding(top = 6.dp).basicMarquee(),
-                        )
+                        val density = LocalDensity.current
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier =
+                                Modifier
+                                    .padding(top = 28.dp)
+                                    .height(
+                                        with(density) {
+                                            MaterialTheme.typography.headlineSmall.lineHeight
+                                                .toDp() +
+                                                6.dp +
+                                                MaterialTheme.typography.bodyMedium.lineHeight
+                                                    .toDp()
+                                        },
+                                    ),
+                        ) {
+                            Text(
+                                text = state.item?.title.orEmpty(),
+                                style = titleStyle,
+                                maxLines = 1,
+                                modifier = Modifier.basicMarquee(),
+                            )
+                            Text(
+                                text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
+                                style = subtitleStyle,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                modifier = Modifier.padding(top = 6.dp).basicMarquee(),
+                            )
+                        }
                         var dragging by remember { mutableStateOf(false) }
                         var dragPosition by remember { mutableFloatStateOf(0f) }
                         Slider(

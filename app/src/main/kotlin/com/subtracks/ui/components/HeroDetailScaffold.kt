@@ -234,11 +234,8 @@ fun HeroHeader(
             name = name,
             thumbnailRef = thumbnailRef,
             square = false,
-            modifier =
-                Modifier
-                    .fillMaxWidth(0.86f)
-                    .shadow(elevation = 3.dp, shape = RoundedCornerShape(2.dp), clip = false)
-                    .clip(RoundedCornerShape(2.dp)),
+            elevation = 3.dp,
+            modifier = Modifier.fillMaxWidth(0.86f),
         )
         Spacer(Modifier.height(20.dp))
         Text(
