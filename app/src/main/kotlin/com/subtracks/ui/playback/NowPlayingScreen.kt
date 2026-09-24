@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
@@ -140,7 +141,14 @@ fun NowPlayingScreen(
                     containerColor = Color.Transparent,
                     topBar = {
                         TopAppBar(
-                            title = { Text("Now playing") },
+                            title = {
+                                Text(
+                                    text = "Now playing",
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
                             navigationIcon = {
                                 IconButton(onClick = onBack) {
                                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")

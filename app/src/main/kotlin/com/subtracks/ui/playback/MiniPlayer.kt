@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
@@ -46,7 +47,9 @@ fun MiniPlayer(
     val item = state.item ?: return
     ArtworkTheme(artwork) {
         Surface(
-            color = artwork?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+            color =
+                artwork?.let { lerp(it.scheme.surfaceContainerHigh, it.gradientHigh, 0.5f) }
+                    ?: MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
             modifier =
                 modifier.fillMaxWidth().clickable(

@@ -188,6 +188,7 @@ fun ArtistDetailScreen(
                             CoverArt(
                                 ref = coverArt(album.coverArt, false),
                                 name = album.name,
+                                thumbnailRef = coverArt(album.coverArt, true),
                                 modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
                             )
                             Text(
