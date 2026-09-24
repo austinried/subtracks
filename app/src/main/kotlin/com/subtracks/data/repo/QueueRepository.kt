@@ -61,6 +61,15 @@ class QueueRepository(
     @Volatile
     private var cachedShuffleOrder: LongArray? = null
 
+    @Volatile
+    private var queueVersion = 0L
+
+    @Volatile
+    private var cachedFlatIds: List<String>? = null
+
+    @Volatile
+    private var cachedFlatVersion = -1L
+
     fun playlistEntry(
         sourceId: Long,
         playlistId: String,
@@ -139,6 +148,16 @@ class QueueRepository(
         snapshot: QueueSnapshot,
         position: Long,
     ): SongListItem? {
+        if (snapshot.shuffled) {
+            val sourceId =
+                snapshot.entries
+                    .firstOrNull()
+                    ?.entry
+                    ?.sourceId ?: return null
+            val flat = snapshot.flatPosition(position) ?: return null
+            val id = flatIds(snapshot).getOrNull(flat.toInt()) ?: return null
+            return dao.songsByIds(sourceId, listOf(id)).firstOrNull()
+        }
         val (entry, offset) = snapshot.locate(position) ?: return null
         return rows(entry, entry.offset + offset, 1).firstOrNull()
     }
@@ -149,12 +168,21 @@ class QueueRepository(
         last: Long,
     ): List<QueueWindowItem> {
         if (snapshot.shuffled) {
-            val items = mutableListOf<QueueWindowItem>()
+            val sourceId =
+                snapshot.entries
+                    .firstOrNull()
+                    ?.entry
+                    ?.sourceId ?: return emptyList()
+            val ids = flatIds(snapshot)
+            val requested = mutableListOf<Pair<Long, String>>()
             for (position in first..last) {
-                val (entry, offset) = snapshot.locate(position) ?: continue
-                rows(entry, entry.offset + offset, 1).firstOrNull()?.let { items += QueueWindowItem(position, it) }
+                val flat = snapshot.flatPosition(position) ?: continue
+                val id = ids.getOrNull(flat.toInt()) ?: continue
+                requested += position to id
             }
-            return items
+            if (requested.isEmpty()) return emptyList()
+            val byId = dao.songsByIds(sourceId, requested.map { it.second }.distinct()).associateBy { it.song.id }
+            return requested.mapNotNull { (position, id) -> byId[id]?.let { QueueWindowItem(position, it) } }
         }
         val items = mutableListOf<QueueWindowItem>()
         var start = 0L
@@ -232,6 +260,30 @@ class QueueRepository(
                 dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
             }
         }
+        queueVersion++
+        cachedFlatIds = null
+    }
+
+    private suspend fun flatIds(snapshot: QueueSnapshot): List<String> {
+        val cached = cachedFlatIds
+        if (cached != null && cachedFlatVersion == queueVersion) return cached
+        val ids = ArrayList<String>(snapshot.size.toInt())
+        for (resolved in snapshot.entries) {
+            val entry = resolved.entry
+            val entryIds =
+                when (entry.kind) {
+                    QueueKind.Song -> listOf(entry.refId)
+                    QueueKind.Album -> dao.albumSongIds(entry.sourceId, entry.refId)
+                    QueueKind.Songs -> dao.songIds(entry.sourceId)
+                    QueueKind.Playlist -> dao.playlistSongIds(entry.sourceId, entry.refId)
+                }
+            val from = entry.offset.toInt().coerceIn(0, entryIds.size)
+            val to = (entry.offset + resolved.length).toInt().coerceIn(from, entryIds.size)
+            ids.addAll(entryIds.subList(from, to))
+        }
+        cachedFlatIds = ids
+        cachedFlatVersion = queueVersion
+        return ids
     }
 
     private suspend fun rows(

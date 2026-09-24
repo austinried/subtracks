@@ -101,4 +101,43 @@ interface QueueDao {
         offset: Long,
         limit: Int,
     ): List<SongListItem>
+
+    @Query(
+        "SELECT songs.id FROM songs WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
+            "ORDER BY songs.disc, songs.track, songs.id",
+    )
+    suspend fun albumSongIds(
+        sourceId: Long,
+        albumId: String,
+    ): List<String>
+
+    @Query(
+        "SELECT songs.id FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId " +
+            "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
+            "songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun songIds(sourceId: Long): List<String>
+
+    @Query(
+        "SELECT songs.id FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+            "ORDER BY playlist_songs.position",
+    )
+    suspend fun playlistSongIds(
+        sourceId: Long,
+        playlistId: String,
+    ): List<String>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.id IN (:ids)",
+    )
+    suspend fun songsByIds(
+        sourceId: Long,
+        ids: List<String>,
+    ): List<SongListItem>
 }
