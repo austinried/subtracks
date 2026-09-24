@@ -680,7 +680,7 @@ class PlaybackControllerTest {
         handle.positionMs = 5_000L
         controller.previous()
 
-        assertTrue(handle.operations.contains("seekTo(0)"))
+        await { handle.operations.contains("seekTo(0)") }
         assertEquals(
             "s2",
             controller.state.value.item

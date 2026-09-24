@@ -398,8 +398,10 @@ class PlaybackController(
     fun previous() {
         val player = player ?: return
         if (player.currentPositionMs > RESTART_THRESHOLD_MS) {
-            player.seekTo(0)
-            refresh()
+            scope.launch {
+                startLock.withLock { player.seekTo(0) }
+                refresh()
+            }
             return
         }
         val snapshot = snapshot ?: return
@@ -657,9 +659,20 @@ class PlaybackController(
 
     private suspend fun shiftWindowLocked(center: Long) {
         val player = player ?: return
+        val previous = snapshot
         val snapshot = readSnapshot()
         this.snapshot = snapshot
         if (snapshot.size == 0L) return
+        if (previous != null && previous.shuffled != snapshot.shuffled) {
+            val currentId = player.currentItem?.id
+            val position =
+                (currentId?.let { queueRepository.flatIndexOf(snapshot, it) } ?: center)
+                    .coerceIn(0, snapshot.size - 1)
+            queueRepository.setCursor(position)
+            rebuildWindow(queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS), position)
+            refresh(position)
+            return
+        }
         val target = center.coerceIn(0, snapshot.size - 1)
         val desiredStart = (target - QUEUE_WINDOW_RADIUS).coerceAtLeast(0)
         val desiredEnd = (target + QUEUE_WINDOW_RADIUS).coerceAtMost(snapshot.size - 1)

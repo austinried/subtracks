@@ -10,6 +10,7 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
+import java.util.concurrent.atomic.AtomicLong
 
 const val QUEUE_CHUNK = 60
 
@@ -62,8 +63,7 @@ class QueueRepository(
     @Volatile
     private var cachedShuffleOrder: LongArray? = null
 
-    @Volatile
-    private var queueVersion = 0L
+    private val queueVersion = AtomicLong()
 
     @Volatile
     private var cachedFlatIds: List<String>? = null
@@ -98,6 +98,7 @@ class QueueRepository(
     }
 
     suspend fun snapshot(): QueueSnapshot {
+        val version = queueVersion.get()
         val loaded =
             db.useReaderConnection { transactor ->
                 transactor.deferredTransaction {
@@ -110,7 +111,7 @@ class QueueRepository(
             }
         val (entries, order, shuffled) = loaded
         val valid = if (shuffled && order == null) null else order
-        return QueueSnapshot(entries, valid, queueVersion)
+        return QueueSnapshot(entries, valid, version)
     }
 
     suspend fun modes(): QueueModes {
@@ -138,7 +139,7 @@ class QueueRepository(
 
     fun invalidateLibraryCache() {
         cachedFlatIds = null
-        queueVersion++
+        queueVersion.incrementAndGet()
     }
 
     suspend fun setRepeat(mode: Int) = dao.setCursor(cursorRow().copy(repeatMode = mode))
@@ -171,6 +172,15 @@ class QueueRepository(
         }
         val (entry, offset) = snapshot.locate(position) ?: return null
         return rows(entry, entry.offset + offset, 1).firstOrNull()
+    }
+
+    suspend fun flatIndexOf(
+        snapshot: QueueSnapshot,
+        songId: String,
+    ): Long? {
+        if (!snapshot.shuffled) return null
+        val index = flatIds(snapshot).indexOf(songId)
+        return if (index >= 0) index.toLong() else null
     }
 
     suspend fun range(
@@ -271,7 +281,7 @@ class QueueRepository(
                 dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
             }
         }
-        queueVersion++
+        queueVersion.incrementAndGet()
         cachedFlatIds = null
     }
 
