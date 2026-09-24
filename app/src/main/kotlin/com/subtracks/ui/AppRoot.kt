@@ -5,8 +5,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -33,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -82,7 +85,7 @@ private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
 private const val EXPAND_FADE = 0.1f
 private const val FLING_VELOCITY = 1000f
-private val MINI_PLAYER_REVEAL = 64.dp
+private const val MINI_PLAYER_ANIM_MS = 250
 
 private object Routes {
     const val LIBRARY = "library"
@@ -151,10 +154,8 @@ private fun MainNavigation() {
     }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
-    val imeBottom = WindowInsets.ime.getBottom(density)
-    val imeTarget = WindowInsets.imeAnimationTarget.getBottom(density)
-    val revealBelowPx = with(density) { MINI_PLAYER_REVEAL.toPx() }
-    val showMiniPlayer = playerVisible && imeTarget <= imeBottom && imeBottom <= revealBelowPx
+    val keyboardUp = WindowInsets.imeAnimationTarget.getBottom(density) > 0
+    val showMiniPlayer = playerVisible && !keyboardUp
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
@@ -263,7 +264,11 @@ private fun MainNavigation() {
                 }
             }
 
-            if (showMiniPlayer) {
+            AnimatedVisibility(
+                visible = showMiniPlayer,
+                enter = expandVertically(tween(MINI_PLAYER_ANIM_MS), expandFrom = Alignment.Bottom),
+                exit = shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom),
+            ) {
                 val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
                 MiniPlayer(
                     state = playback,
