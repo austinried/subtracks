@@ -308,7 +308,7 @@ class AppScreenshotTest {
                     rows =
                         Fixtures.songItems.mapIndexed { index, item -> QueueRow(index.toLong(), index.toLong(), item) },
                     ready = true,
-                    currentPosition = 1,
+                    currentSongId = Fixtures.songItems[1].song.id,
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
                     onPlay = {},

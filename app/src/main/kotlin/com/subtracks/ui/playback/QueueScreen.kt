@@ -254,7 +254,7 @@ fun QueueRoute(
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,
-        currentPosition = playback.position,
+        currentSongId = playback.item?.id,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
         onPlay = viewModel::play,
@@ -273,7 +273,7 @@ fun QueueRoute(
 fun QueueScreen(
     rows: List<QueueRow>,
     ready: Boolean,
-    currentPosition: Long?,
+    currentSongId: String?,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onPlay: (Long) -> Unit,
@@ -361,7 +361,7 @@ fun QueueScreen(
                         ) { isDragging ->
                             QueueRowItem(
                                 row = row,
-                                isPlaying = row.position == currentPosition,
+                                isPlaying = row.song.song.id == currentSongId,
                                 floating = isDragging,
                                 coverArt = coverArt,
                                 dragHandle =
