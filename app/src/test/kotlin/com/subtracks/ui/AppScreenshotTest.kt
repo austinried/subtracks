@@ -217,6 +217,18 @@ class AppScreenshotTest {
 
     @Test
     fun addSource() {
+        captureAddSource(useTokenAuth = true, file = "src/test/screenshots/add_source.png")
+    }
+
+    @Test
+    fun addSourceTokenAuthOff() {
+        captureAddSource(useTokenAuth = false, file = "src/test/screenshots/add_source_off.png")
+    }
+
+    private fun captureAddSource(
+        useTokenAuth: Boolean,
+        file: String,
+    ) {
         composeRule.setContent {
             SubtracksTheme {
                 AddSourceScreen(
@@ -226,6 +238,7 @@ class AppScreenshotTest {
                             address = "https://music.example.com",
                             username = "austin",
                             password = "hunter2",
+                            useTokenAuth = useTokenAuth,
                         ),
                     onNameChange = {},
                     onAddressChange = {},
@@ -239,7 +252,7 @@ class AppScreenshotTest {
             }
         }
         awaitText("Add server")
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/add_source.png")
+        composeRule.onRoot().captureRoboImage(file)
     }
 
     @Test

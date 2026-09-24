@@ -73,7 +73,7 @@ fun AddSourceScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Add server") },
+                title = { Text("Add server", style = MaterialTheme.typography.headlineMedium) },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
