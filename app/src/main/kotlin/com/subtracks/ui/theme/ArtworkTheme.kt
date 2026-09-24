@@ -210,7 +210,6 @@ fun HeroGradient(
     colors: ArtworkColors?,
     scrollPx: () -> Float,
     modifier: Modifier = Modifier,
-    compact: Boolean = false,
 ) {
     val high = colors?.gradientHigh ?: MaterialTheme.colorScheme.surfaceContainerHigh
     val low = colors?.gradientLow ?: MaterialTheme.colorScheme.background
@@ -219,7 +218,7 @@ fun HeroGradient(
     val seed = colors?.blobSeed ?: 0
 
     Canvas(modifier) {
-        val period = size.height * if (compact) 1f else PERIOD_SCREENS
+        val period = size.height * PERIOD_SCREENS
         if (period <= 0f) return@Canvas
         val scroll = scrollPx()
         val phase = scroll.mod(period)
@@ -234,15 +233,10 @@ fun HeroGradient(
         )
         if (accents.isNotEmpty()) {
             val random = Random(seed)
-            repeat(if (compact) 3 else BLOB_COUNT) { index ->
+            repeat(BLOB_COUNT) { index ->
                 val centerX = size.width * (0.10f + random.nextFloat() * 0.80f)
                 val baseY = period * BLOB_ZONE * random.nextFloat()
-                val radius =
-                    if (compact) {
-                        size.height * (0.70f + random.nextFloat() * 0.70f)
-                    } else {
-                        size.width * (0.45f + random.nextFloat() * 0.35f)
-                    }
+                val radius = size.width * (0.45f + random.nextFloat() * 0.35f)
                 val alpha = 0.50f + random.nextFloat() * 0.32f
                 val accent = accents[index % accents.size]
                 for (shift in -1..1) {
@@ -259,7 +253,6 @@ fun HeroGradient(
                 }
             }
         }
-        if (compact) return@Canvas
         val darkenStart = size.height * DARKEN_START_SCREENS - scroll
         val darkenEnd = size.height * DARKEN_END_SCREENS - scroll
         drawRect(
