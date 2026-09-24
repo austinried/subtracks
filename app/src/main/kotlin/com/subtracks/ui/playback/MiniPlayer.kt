@@ -63,14 +63,14 @@ fun MiniPlayer(
                     Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+                        .padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 CoverArt(
                     ref = coverArt,
                     name = item.title,
-                    modifier = Modifier.size(56.dp).clip(RoundedCornerShape(6.dp)),
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)),
                 )
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -81,7 +81,7 @@ fun MiniPlayer(
                         modifier = Modifier.basicMarquee(),
                     )
                     Text(
-                        text = listOfNotNull(item.artist, item.album).joinToString(" • "),
+                        text = item.artist.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -89,28 +89,28 @@ fun MiniPlayer(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
+                    IconButton(onClick = onPlayPause, modifier = Modifier.size(48.dp)) {
                         if (state.isBuffering && state.isPlaying) {
                             CircularProgressIndicator(
                                 color = MaterialTheme.colorScheme.onSurface,
                                 strokeWidth = 3.dp,
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.size(24.dp),
                             )
                         } else {
                             Icon(
                                 imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                 contentDescription = if (state.isPlaying) "Pause" else "Play",
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(42.dp),
+                                modifier = Modifier.size(36.dp),
                             )
                         }
                     }
-                    IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(56.dp)) {
+                    IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(48.dp)) {
                         Icon(
                             imageVector = Icons.Rounded.SkipNext,
                             contentDescription = "Next",
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(42.dp),
+                            modifier = Modifier.size(36.dp),
                         )
                     }
                 }
