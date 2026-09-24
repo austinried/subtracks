@@ -85,7 +85,7 @@ private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
 private const val EXPAND_FADE = 0.1f
 private const val FLING_VELOCITY = 1000f
-private const val MINI_PLAYER_ANIM_MS = 250
+private const val MINI_PLAYER_ANIM_MS = 200
 
 private object Routes {
     const val LIBRARY = "library"
