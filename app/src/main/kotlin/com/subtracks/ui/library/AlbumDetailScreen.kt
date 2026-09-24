@@ -1,11 +1,14 @@
 package com.subtracks.ui.library
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
@@ -64,6 +67,7 @@ fun AlbumDetailScreen(
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val multiDisc = songs.map { it.disc ?: 1L }.distinct().size > 1
     HeroDetailScaffold(
         artwork = artwork,
         title = album?.name.orEmpty(),
@@ -88,14 +92,32 @@ fun AlbumDetailScreen(
             )
         },
         content = { rowModifier ->
-            itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
-                SongRow(
-                    song = song,
-                    isPlaying = song.id == playingSongId,
-                    modifier = rowModifier.clickable { onSongClick(index) },
-                )
+            var lastDisc: Long? = null
+            songs.forEachIndexed { index, song ->
+                val disc = song.disc ?: 1L
+                if (multiDisc && disc != lastDisc) {
+                    item(key = "disc:$disc") { DiscHeader(disc) }
+                }
+                lastDisc = disc
+                item(key = song.id) {
+                    SongRow(
+                        song = song,
+                        isPlaying = song.id == playingSongId,
+                        modifier = rowModifier.clickable { onSongClick(index) },
+                    )
+                }
             }
         },
         modifier = modifier,
+    )
+}
+
+@Composable
+private fun DiscHeader(disc: Long) {
+    Text(
+        text = "Disc $disc",
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
     )
 }

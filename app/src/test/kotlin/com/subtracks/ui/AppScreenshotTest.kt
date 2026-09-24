@@ -15,6 +15,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.core.app.ApplicationProvider
@@ -153,6 +155,36 @@ class AppScreenshotTest {
         }
         awaitText("Everything In Its Right Place")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail_cool.png")
+    }
+
+    @Test
+    fun albumDetailMultiDisc() {
+        val songs =
+            listOf(
+                Fixtures.song("s-eiirp", "al-kid-a", "ar-radiohead", "Everything In Its Right Place", "Kid A", "Radiohead", 1, 251),
+                Fixtures.song("s-kid-a", "al-kid-a", "ar-radiohead", "Kid A", "Kid A", "Radiohead", 2, 274),
+                Fixtures.song("s-anthem", "al-kid-a", "ar-radiohead", "The National Anthem", "Kid A", "Radiohead", 1, 351, disc = 2),
+                Fixtures.song("s-htdc", "al-kid-a", "ar-radiohead", "How to Disappear Completely", "Kid A", "Radiohead", 2, 356, disc = 2),
+            )
+        composeRule.setContent {
+            SubtracksTheme {
+                AlbumDetailScreen(
+                    album = Fixtures.albums.first(),
+                    songs = songs,
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
+                    onBack = {},
+                    onSongClick = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Everything In Its Right Place")
+        composeRule.onRoot().performTouchInput { swipeUp(startY = centerY + 600f, endY = centerY - 600f, durationMillis = 400) }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Disc 2").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail_multidisc.png")
     }
 
     @Test
@@ -489,7 +521,7 @@ private object Fixtures {
         recentRank = null,
     )
 
-    private fun song(
+    fun song(
         id: String,
         albumId: String,
         artistId: String,
@@ -498,6 +530,7 @@ private object Fixtures {
         artist: String,
         track: Long,
         duration: Long,
+        disc: Long? = 1,
     ) = Song(
         sourceId = 1,
         id = id,
@@ -508,7 +541,7 @@ private object Fixtures {
         artist = artist,
         duration = duration,
         track = track,
-        disc = 1,
+        disc = disc,
         starred = null,
         genre = null,
     )
