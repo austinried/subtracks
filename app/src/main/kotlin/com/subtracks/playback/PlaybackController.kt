@@ -376,10 +376,7 @@ class PlaybackController(
     fun previous() = skip(-1)
 
     fun seekTo(positionMs: Long) {
-        val player = player ?: return
-        player.ensurePrepared()
-        player.seekTo(positionMs)
-        player.play()
+        player?.seekTo(positionMs)
     }
 
     fun coverArt(
