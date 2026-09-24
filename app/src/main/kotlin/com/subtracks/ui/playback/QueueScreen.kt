@@ -66,6 +66,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val LOAD_THRESHOLD = 5
+private const val OLDER_LOAD = 30
 private const val POSITION_TIMEOUT_MS = 1_000L
 
 data class QueueRow(
@@ -81,6 +82,9 @@ class QueueViewModel(
     val rows = mutableStateListOf<QueueRow>()
 
     var ready by mutableStateOf(false)
+        private set
+
+    var initialIndex by mutableStateOf(0)
         private set
 
     private var nextId = 0L
@@ -104,11 +108,12 @@ class QueueViewModel(
                         withTimeoutOrNull(POSITION_TIMEOUT_MS) {
                             playbackController.state.first { it.position != null }.position
                         }?.coerceIn(0, size - 1) ?: 0L
-                    val start = cursor
+                    val start = (cursor - OLDER_LOAD).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
                     rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
                     first = rows.firstOrNull()?.position ?: 0
                     last = rows.lastOrNull()?.position ?: -1
+                    initialIndex = (cursor - first).toInt().coerceAtLeast(0)
                 }
                 ready = true
             }
@@ -254,6 +259,7 @@ fun QueueRoute(
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,
+        initialIndex = viewModel.initialIndex,
         currentSongId = playback.item?.id,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
@@ -284,6 +290,7 @@ fun QueueScreen(
     onLoadNewer: () -> Unit,
     onUndo: () -> Unit,
     modifier: Modifier = Modifier,
+    initialIndex: Int = 0,
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -299,6 +306,7 @@ fun QueueScreen(
 
     LaunchedEffect(listState, ready) {
         if (!ready) return@LaunchedEffect
+        if (initialIndex > 0) listState.scrollToItem(initialIndex)
         snapshotFlow {
             val info = listState.layoutInfo
             val firstVisible = info.visibleItemsInfo.firstOrNull()?.index ?: -1

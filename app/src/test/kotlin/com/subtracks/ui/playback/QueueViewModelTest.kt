@@ -72,19 +72,20 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        assertEquals((100L..159L).toList(), viewModel.rows.map { it.position })
+        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+        assertEquals(30, viewModel.initialIndex)
 
         viewModel.loadNewer()
-        await { viewModel.rows.lastOrNull()?.position == 199L }
-        assertEquals((100L..199L).toList(), viewModel.rows.map { it.position })
+        await { viewModel.rows.lastOrNull()?.position == 189L }
+        assertEquals((70L..189L).toList(), viewModel.rows.map { it.position })
 
         viewModel.loadOlder()
-        await { viewModel.rows.firstOrNull()?.position == 40L }
-        assertEquals((40L..199L).toList(), viewModel.rows.map { it.position })
+        await { viewModel.rows.firstOrNull()?.position == 10L }
+        assertEquals((10L..189L).toList(), viewModel.rows.map { it.position })
     }
 
     @Test
-    fun openingAtTheEndLoadsASingleRowAndExtendsOlder() {
+    fun openingAtTheEndLoadsAWindowAndExtendsOlder() {
         runBlocking { seedSongs(200) }
         controller.playSongs(1, 199)
         await { controller.state.value.position == 199L }
@@ -92,11 +93,12 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        assertEquals(listOf(199L), viewModel.rows.map { it.position })
+        assertEquals((169L..199L).toList(), viewModel.rows.map { it.position })
+        assertEquals(30, viewModel.initialIndex)
 
         viewModel.loadOlder()
-        await { viewModel.rows.firstOrNull()?.position == 139L }
-        assertEquals((139L..199L).toList(), viewModel.rows.map { it.position })
+        await { viewModel.rows.firstOrNull()?.position == 109L }
+        assertEquals((109L..199L).toList(), viewModel.rows.map { it.position })
     }
 
     @Test
@@ -118,7 +120,7 @@ class QueueViewModelTest {
         viewModel.reorder(fromIndex = 0, toIndex = 2)
 
         val positions = viewModel.rows.map { it.position }
-        assertEquals(listOf(101L, 102L, 100L), positions.take(3))
+        assertEquals(listOf(71L, 72L, 70L), positions.take(3))
     }
 
     private fun row(position: Int) =
