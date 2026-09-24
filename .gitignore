@@ -16,5 +16,7 @@ captures/
 .preview/
 .integration/
 app/src/test/screenshots/
+__pycache__/
+*.pyc
 
 .DS_Store

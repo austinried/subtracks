@@ -1,7 +1,5 @@
 package com.subtracks.ui.library
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -54,9 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -67,7 +61,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
@@ -86,7 +79,6 @@ import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.math.roundToInt
 
 private const val DOT = "\u00B7"
 private const val GRADIENT_SCREENS = 2.0f
@@ -164,14 +156,16 @@ fun AlbumDetailScreen(
                     }
                 }
                 val barColor =
-                    artwork?.let {
+                    if (artwork == null || gradientHeightPx <= 0f) {
+                        Color.Black
+                    } else {
                         val mid = scrollPx + barHeightPx / 2f
                         lerp(
-                            it.gradientColorAt(mid / gradientHeightPx),
-                            it.darkPrimary,
+                            artwork.gradientColorAt(mid / gradientHeightPx),
+                            artwork.darkPrimary,
                             heroDarkenAt(mid, with(density) { maxHeight.toPx() }),
                         )
-                    } ?: Color.Black
+                    }
 
                 HeroGradient(
                     colors = artwork,
@@ -240,7 +234,7 @@ fun AlbumDetailScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack, modifier = Modifier.alpha(barFraction)) {
+                        IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                     },
