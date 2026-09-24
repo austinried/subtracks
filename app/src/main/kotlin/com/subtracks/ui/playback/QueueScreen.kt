@@ -87,6 +87,9 @@ class QueueViewModel(
     var initialIndex by mutableStateOf(0)
         private set
 
+    var generation by mutableStateOf(0)
+        private set
+
     private var nextId = 0L
     private val mutex = Mutex()
     private var size = 0L
@@ -116,6 +119,7 @@ class QueueViewModel(
                     initialIndex = (cursor - first).toInt().coerceAtLeast(0)
                 }
                 ready = true
+                generation++
             }
         }
     }
@@ -260,6 +264,7 @@ fun QueueRoute(
         rows = viewModel.rows,
         ready = viewModel.ready,
         initialIndex = viewModel.initialIndex,
+        generation = viewModel.generation,
         currentSongId = playback.item?.id,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
@@ -291,6 +296,7 @@ fun QueueScreen(
     onUndo: () -> Unit,
     modifier: Modifier = Modifier,
     initialIndex: Int = 0,
+    generation: Int = 0,
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -304,7 +310,7 @@ fun QueueScreen(
             onReorder(from.index, to.index)
         }
 
-    LaunchedEffect(listState, ready) {
+    LaunchedEffect(listState, ready, generation) {
         if (!ready) return@LaunchedEffect
         if (initialIndex > 0) listState.scrollToItem(initialIndex)
         snapshotFlow {
