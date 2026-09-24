@@ -31,7 +31,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -74,7 +75,7 @@ class RootViewModel(
 
 private const val NAVIGATION_DURATION_MS = 260
 private const val NOW_PLAYING_DURATION_MS = 300
-private const val EXPAND_FADE = 0.2f
+private const val EXPAND_FADE = 0.1f
 
 private object Routes {
     const val LIBRARY = "library"
@@ -113,7 +114,7 @@ private fun MainNavigation() {
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
-    var rootHeightPx by remember { mutableFloatStateOf(0f) }
+    var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
     val scope = rememberCoroutineScope()
 
     fun settleNowPlaying(open: Boolean) {
@@ -130,7 +131,7 @@ private fun MainNavigation() {
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
-    Box(Modifier.fillMaxSize().onSizeChanged { rootHeightPx = it.height.toFloat() }) {
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
@@ -247,11 +248,12 @@ private fun MainNavigation() {
                     onPlayPause = playbackController::togglePlayPause,
                     onNext = playbackController::next,
                     onExpandDrag = { dragUpPx ->
-                        if (rootHeightPx > 0f) {
-                            nowPlayingProgress = (dragUpPx / rootHeightPx).coerceIn(0f, 1f)
+                        if (miniPlayerTopPx > 0f) {
+                            nowPlayingProgress = (dragUpPx / miniPlayerTopPx).coerceIn(0f, 1f)
                         }
                     },
-                    onExpandRelease = { settleNowPlaying(nowPlayingProgress > 0.5f) },
+                    onExpandRelease = { settleNowPlaying(nowPlayingProgress > 0.05f) },
+                    modifier = Modifier.onGloballyPositioned { miniPlayerTopPx = it.positionInRoot().y },
                 )
             }
         }
@@ -262,17 +264,17 @@ private fun MainNavigation() {
                     Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            translationY = (1f - nowPlayingProgress) * rootHeightPx
+                            translationY = (1f - nowPlayingProgress) * miniPlayerTopPx
                             alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
                         }.draggable(
                             orientation = Orientation.Vertical,
                             state =
                                 rememberDraggableState { delta ->
-                                    if (rootHeightPx > 0f) {
-                                        nowPlayingProgress = (nowPlayingProgress - delta / rootHeightPx).coerceIn(0f, 1f)
+                                    if (miniPlayerTopPx > 0f) {
+                                        nowPlayingProgress = (nowPlayingProgress - delta / miniPlayerTopPx).coerceIn(0f, 1f)
                                     }
                                 },
-                            onDragStopped = { settleNowPlaying(nowPlayingProgress > 0.5f) },
+                            onDragStopped = { settleNowPlaying(nowPlayingProgress > 0.9f) },
                         ),
             ) {
                 NowPlayingRoute(
