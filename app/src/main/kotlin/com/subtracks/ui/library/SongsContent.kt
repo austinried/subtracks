@@ -160,7 +160,7 @@ private fun TrackNumber(
 ) {
     Box(
         modifier = Modifier.width(24.dp),
-        contentAlignment = Alignment.CenterStart,
+        contentAlignment = Alignment.Center,
     ) {
         if (isPlaying) {
             Icon(
