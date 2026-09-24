@@ -234,6 +234,7 @@ class PlaybackController(
             val order = withContext(Dispatchers.Default) { shuffledOrder(snap.size, start) }
             queueRepository.setShuffle(true, order)
             shuffleEnabled = true
+            queueSourceId = entry.sourceId
             queueRepository.setCursor(0)
             snap = queueRepository.snapshot()
             this@PlaybackController.snapshot = snap

@@ -10,6 +10,8 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicLong
 
 const val QUEUE_CHUNK = 60
@@ -71,6 +73,8 @@ class QueueRepository(
     @Volatile
     private var cachedFlatVersion = -1L
 
+    private val cursorMutex = Mutex()
+
     fun playlistEntry(
         sourceId: Long,
         playlistId: String,
@@ -94,7 +98,7 @@ class QueueRepository(
     ) {
         write(entries)
         setShuffle(shuffleOrder != null, shuffleOrder)
-        dao.setCursor(cursorRow().copy(queuePosition = 0))
+        cursorMutex.withLock { dao.setCursor(cursorRow().copy(queuePosition = 0, positionMs = 0)) }
     }
 
     suspend fun snapshot(): QueueSnapshot {
@@ -124,13 +128,15 @@ class QueueRepository(
         order: LongArray?,
     ) {
         val seed = if (enabled && order != null) System.nanoTime() else 0L
-        db.useWriterConnection { transactor ->
-            transactor.immediateTransaction {
-                dao.clearShuffleOrder()
-                if (enabled && order != null) {
-                    dao.insertShuffleOrder(order.mapIndexed { index, flat -> ShuffleOrder(index.toLong(), flat) })
+        cursorMutex.withLock {
+            db.useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    dao.clearShuffleOrder()
+                    if (enabled && order != null) {
+                        dao.insertShuffleOrder(order.mapIndexed { index, flat -> ShuffleOrder(index.toLong(), flat) })
+                    }
+                    dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleSeed = seed))
                 }
-                dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleSeed = seed))
             }
         }
         cachedShuffleSeed = 0
@@ -142,7 +148,7 @@ class QueueRepository(
         queueVersion.incrementAndGet()
     }
 
-    suspend fun setRepeat(mode: Int) = dao.setCursor(cursorRow().copy(repeatMode = mode))
+    suspend fun setRepeat(mode: Int) = cursorMutex.withLock { dao.setCursor(cursorRow().copy(repeatMode = mode)) }
 
     private suspend fun loadShuffleOrder(
         seed: Long,
@@ -272,9 +278,16 @@ class QueueRepository(
 
     suspend fun cursorPositionMs(): Long = dao.cursor()?.positionMs ?: 0
 
-    suspend fun setPosition(positionMs: Long) = dao.setCursor(cursorRow().copy(positionMs = positionMs.coerceAtLeast(0)))
+    suspend fun setPosition(positionMs: Long) =
+        cursorMutex.withLock {
+            dao.setCursor(cursorRow().copy(positionMs = positionMs.coerceAtLeast(0)))
+        }
 
-    suspend fun setCursor(position: Long) = dao.setCursor(cursorRow().copy(queuePosition = position))
+    suspend fun setCursor(position: Long) =
+        cursorMutex.withLock {
+            val row = cursorRow()
+            dao.setCursor(row.copy(queuePosition = position, positionMs = if (row.queuePosition == position) row.positionMs else 0))
+        }
 
     private suspend fun cursorRow(): PlaybackCursor = dao.cursor() ?: PlaybackCursor(queuePosition = 0)
 

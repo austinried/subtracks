@@ -116,7 +116,7 @@ class QueueViewModel(
                     rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
                     first = rows.firstOrNull()?.position ?: 0
                     last = rows.lastOrNull()?.position ?: -1
-                    initialIndex = (cursor - first).toInt().coerceAtLeast(0)
+                    initialIndex = rows.indexOfFirst { it.position == cursor }.coerceAtLeast(0)
                 }
                 ready = true
                 generation++

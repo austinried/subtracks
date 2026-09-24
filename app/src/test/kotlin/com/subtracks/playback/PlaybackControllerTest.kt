@@ -932,6 +932,26 @@ class PlaybackControllerTest {
         restored.close()
     }
 
+    @Test
+    fun changingTrackResetsTheSavedPosition() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { queues.setPosition(60_000L) }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertEquals(0L, runBlocking { queues.cursorPositionMs() })
+    }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,
