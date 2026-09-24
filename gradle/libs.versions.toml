@@ -18,6 +18,7 @@ coil = "3.6.3"
 koin = "4.2.2"
 media3 = "1.11.1"
 okhttp = "5.5.0"
+desugarJdkLibs = "2.1.5"
 ktlint = "1.8.0"
 ktlintGradle = "14.2.0"
 roborazzi = "1.74.0"
@@ -63,6 +64,7 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
