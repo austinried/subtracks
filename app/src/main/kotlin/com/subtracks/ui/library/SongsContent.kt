@@ -159,7 +159,7 @@ private fun TrackNumber(
     isPlaying: Boolean,
 ) {
     Box(
-        modifier = Modifier.width(24.dp),
+        modifier = Modifier.width(18.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (isPlaying) {
@@ -172,7 +172,7 @@ private fun TrackNumber(
         } else {
             Text(
                 text = track.toString(),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
