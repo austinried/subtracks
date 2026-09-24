@@ -144,7 +144,7 @@ fun NowPlayingScreen(
                             title = {
                                 Text(
                                     text = "Now playing",
-                                    style = MaterialTheme.typography.headlineLarge,
+                                    style = MaterialTheme.typography.headlineMedium,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
