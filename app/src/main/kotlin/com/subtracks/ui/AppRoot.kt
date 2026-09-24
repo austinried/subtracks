@@ -82,6 +82,7 @@ private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
 private const val EXPAND_FADE = 0.1f
 private const val FLING_VELOCITY = 1000f
+private val MINI_PLAYER_REVEAL = 64.dp
 
 private object Routes {
     const val LIBRARY = "library"
@@ -150,8 +151,10 @@ private fun MainNavigation() {
     }
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
-    val imeLeaving = WindowInsets.imeAnimationTarget.getBottom(density) == 0
-    val showMiniPlayer = playerVisible && imeLeaving
+    val imeBottom = WindowInsets.ime.getBottom(density)
+    val imeTarget = WindowInsets.imeAnimationTarget.getBottom(density)
+    val revealBelowPx = with(density) { MINI_PLAYER_REVEAL.toPx() }
+    val showMiniPlayer = playerVisible && imeTarget <= imeBottom && imeBottom <= revealBelowPx
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
