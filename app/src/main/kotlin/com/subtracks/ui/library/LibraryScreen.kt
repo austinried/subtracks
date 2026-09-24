@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,20 +22,31 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -68,6 +81,12 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.ArtistSort
+import com.subtracks.data.prefs.LibraryListTab
+import com.subtracks.data.prefs.ListQuery
+import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.SongSort
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -82,6 +101,47 @@ enum class LibraryTab(
     Songs("Songs", Icons.Rounded.MusicNote),
 }
 
+data class SortOption(
+    val value: String,
+    val label: String,
+)
+
+fun LibraryTab.listTab(): LibraryListTab = LibraryListTab.valueOf(name)
+
+fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
+    when (tab) {
+        LibraryTab.Albums -> {
+            listOf(
+                SortOption(AlbumSort.Name.name, "Name"),
+                SortOption(AlbumSort.Artist.name, "Artist"),
+                SortOption(AlbumSort.Year.name, "Year"),
+                SortOption(AlbumSort.RecentlyAdded.name, "Recently added"),
+            )
+        }
+
+        LibraryTab.Artists -> {
+            listOf(
+                SortOption(ArtistSort.Name.name, "Name"),
+                SortOption(ArtistSort.AlbumCount.name, "Albums"),
+            )
+        }
+
+        LibraryTab.Playlists -> {
+            listOf(
+                SortOption(PlaylistSort.Name.name, "Name"),
+                SortOption(PlaylistSort.RecentlyAdded.name, "Recently added"),
+            )
+        }
+
+        LibraryTab.Songs -> {
+            listOf(
+                SortOption(SongSort.Album.name, "Album"),
+                SortOption(SongSort.Title.name, "Title"),
+                SortOption(SongSort.Artist.name, "Artist"),
+            )
+        }
+    }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryRoute(
@@ -89,12 +149,15 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
+    onSearch: () -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
+    val listQuery by viewModel.listQuery(selectedTab.listTab()).collectAsStateWithLifecycle()
+    val listTab = selectedTab.listTab()
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
@@ -112,6 +175,14 @@ fun LibraryRoute(
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
         playingSongId = playingSongId,
+        listQuery = listQuery,
+        sortOptions = sortOptionsFor(selectedTab),
+        starredSupported = listTab.supportsStarred,
+        onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
+        onToggleSortDirection = { viewModel.setListQuery(listTab, listQuery.copy(descending = !listQuery.descending)) },
+        onToggleStarred = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = !listQuery.starredOnly)) },
+        onClearFilters = { viewModel.setListQuery(listTab, listQuery.copy(starredOnly = false)) },
+        onSearch = onSearch,
     )
 }
 
@@ -134,6 +205,14 @@ fun LibraryScreen(
     syncing: Boolean = false,
     playingSongId: String? = null,
     bottomInset: Dp = 0.dp,
+    listQuery: ListQuery = ListQuery(""),
+    sortOptions: List<SortOption> = emptyList(),
+    starredSupported: Boolean = false,
+    onSortChange: (String) -> Unit = {},
+    onToggleSortDirection: () -> Unit = {},
+    onToggleStarred: () -> Unit = {},
+    onClearFilters: () -> Unit = {},
+    onSearch: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -141,6 +220,7 @@ fun LibraryScreen(
             initialPage = selectedTab.ordinal,
             pageCount = { LibraryTab.entries.size },
         )
+    var showOptions by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
@@ -167,61 +247,175 @@ fun LibraryScreen(
     val titleFraction = scrollBehavior.state.collapsedFraction
 
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val listBottomInset = bottomInset + FAB_CLEARANCE
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
-    ) {
+    Box(modifier.fillMaxSize()) {
         Column(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(top = statusBarTop),
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection),
         ) {
-            Box(
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(titleHeight * (1f - titleFraction))
-                        .clipToBounds(),
+                        .padding(top = statusBarTop),
             ) {
-                Text(
-                    text = selectedTab.label,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
+                Box(
                     modifier =
                         Modifier
-                            .offset(y = -(titleHeight * titleFraction))
-                            .wrapContentHeight(unbounded = true)
-                            .padding(start = 12.dp, end = 16.dp, top = titleTop),
+                            .fillMaxWidth()
+                            .height(titleHeight * (1f - titleFraction))
+                            .clipToBounds(),
+                ) {
+                    Text(
+                        text = selectedTab.label,
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        modifier =
+                            Modifier
+                                .offset(y = -(titleHeight * titleFraction))
+                                .wrapContentHeight(unbounded = true)
+                                .padding(start = 12.dp, end = 16.dp, top = titleTop),
+                    )
+                }
+                LibraryTabs(
+                    pagerState = pagerState,
+                    onTabSelected = onTabSelected,
+                    syncing = syncing,
+                    onSync = onSync,
+                    onOpenSettings = onOpenSettings,
                 )
             }
-            LibraryTabs(
-                pagerState = pagerState,
-                onTabSelected = onTabSelected,
-                syncing = syncing,
-                onSync = onSync,
-                onOpenSettings = onOpenSettings,
-            )
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+            ) { page ->
+                when (LibraryTab.entries[page]) {
+                    LibraryTab.Albums -> AlbumsContent(albums, coverArt, listBottomInset, onAlbumClick)
+                    LibraryTab.Artists -> ArtistsContent(artists, coverArt, listBottomInset, onArtistClick)
+                    LibraryTab.Songs -> SongsContent(songs, coverArt, listBottomInset, onSongClick, playingSongId)
+                    LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, listBottomInset, onPlaylistClick)
+                }
+            }
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth().weight(1f),
-        ) { page ->
-            when (LibraryTab.entries[page]) {
-                LibraryTab.Albums -> AlbumsContent(albums, coverArt, bottomInset, onAlbumClick)
-                LibraryTab.Artists -> ArtistsContent(artists, coverArt, bottomInset, onArtistClick)
-                LibraryTab.Songs -> SongsContent(songs, coverArt, bottomInset, onSongClick, playingSongId)
-                LibraryTab.Playlists -> PlaylistsContent(playlists, coverArt, bottomInset, onPlaylistClick)
+        FloatingActionButton(
+            onClick = { showOptions = true },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        ) {
+            Box {
+                Icon(Icons.Rounded.Sort, contentDescription = "List options")
+                if (listQuery.starredOnly) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 4.dp, y = (-4).dp)
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
+        }
+    }
+
+    if (showOptions) {
+        ModalBottomSheet(onDismissRequest = { showOptions = false }) {
+            ListOptionsSheet(
+                listQuery = listQuery,
+                sortOptions = sortOptions,
+                starredSupported = starredSupported,
+                onSortChange = onSortChange,
+                onToggleSortDirection = onToggleSortDirection,
+                onToggleStarred = onToggleStarred,
+                onClearFilters = onClearFilters,
+                onSearch = {
+                    showOptions = false
+                    onSearch()
+                },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ListOptionsSheet(
+    listQuery: ListQuery,
+    sortOptions: List<SortOption>,
+    starredSupported: Boolean,
+    onSortChange: (String) -> Unit,
+    onToggleSortDirection: () -> Unit,
+    onToggleStarred: () -> Unit,
+    onClearFilters: () -> Unit,
+    onSearch: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+        ListItem(
+            headlineContent = { Text("Search your library") },
+            leadingContent = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier.clickable(onClick = onSearch),
+        )
+        HorizontalDivider()
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp),
+        ) {
+            Text(
+                text = "Sort by",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onToggleSortDirection) {
+                Icon(Icons.Rounded.SwapVert, contentDescription = "Reverse sort order")
+            }
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        ) {
+            sortOptions.forEach { option ->
+                FilterChip(
+                    selected = listQuery.sort == option.value,
+                    onClick = { onSortChange(option.value) },
+                    label = { Text(option.label) },
+                )
+            }
+        }
+
+        if (starredSupported) {
+            Text(
+                text = "Filters",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            ) {
+                FilterChip(
+                    selected = listQuery.starredOnly,
+                    onClick = onToggleStarred,
+                    label = { Text("Starred only") },
+                )
+                if (listQuery.starredOnly) {
+                    TextButton(onClick = onClearFilters) { Text("Clear") }
+                }
             }
         }
     }
 }
+
+private val FAB_CLEARANCE = 80.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

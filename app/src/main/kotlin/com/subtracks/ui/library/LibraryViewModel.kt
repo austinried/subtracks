@@ -10,6 +10,12 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.ArtistSort
+import com.subtracks.data.prefs.LibraryListTab
+import com.subtracks.data.prefs.ListQuery
+import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
@@ -32,32 +38,50 @@ class LibraryViewModel(
     private val sourceRepository: SourceRepository,
     private val syncManager: SyncManager,
     private val playbackController: PlaybackController,
-    userPreferences: UserPreferences,
+    private val userPreferences: UserPreferences,
 ) : ViewModel() {
+    private val listQueries: Map<LibraryListTab, StateFlow<ListQuery>> =
+        LibraryListTab.entries.associateWith { tab ->
+            userPreferences
+                .listQuery(tab)
+                .stateIn(viewModelScope, SharingStarted.Eagerly, ListQuery(tab.defaultSort))
+        }
+
     val albums: Flow<PagingData<Album>> =
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                userPreferences.albumSort.flatMapLatest { sort -> libraryRepository.albums(sourceId, sort) }
+                listQueries.getValue(LibraryListTab.Albums).flatMapLatest { query ->
+                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starredOnly)
+                }
             }.cachedIn(viewModelScope)
 
     val artists: Flow<PagingData<Artist>> =
         libraryRepository.activeSourceId
             .filterNotNull()
-            .flatMapLatest { libraryRepository.artists(it) }
-            .cachedIn(viewModelScope)
-
-    val songs: Flow<PagingData<SongListItem>> =
-        libraryRepository.activeSourceId
-            .filterNotNull()
-            .flatMapLatest { libraryRepository.songs(it) }
-            .cachedIn(viewModelScope)
+            .flatMapLatest { sourceId ->
+                listQueries.getValue(LibraryListTab.Artists).flatMapLatest { query ->
+                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starredOnly)
+                }
+            }.cachedIn(viewModelScope)
 
     val playlists: Flow<PagingData<Playlist>> =
         libraryRepository.activeSourceId
             .filterNotNull()
-            .flatMapLatest { libraryRepository.playlists(it) }
-            .cachedIn(viewModelScope)
+            .flatMapLatest { sourceId ->
+                listQueries.getValue(LibraryListTab.Playlists).flatMapLatest { query ->
+                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending)
+                }
+            }.cachedIn(viewModelScope)
+
+    val songs: Flow<PagingData<SongListItem>> =
+        libraryRepository.activeSourceId
+            .filterNotNull()
+            .flatMapLatest { sourceId ->
+                listQueries.getValue(LibraryListTab.Songs).flatMapLatest { query ->
+                    libraryRepository.songs(sourceId, query.songSort(), query.descending, query.starredOnly)
+                }
+            }.cachedIn(viewModelScope)
 
     val syncing: StateFlow<Boolean> =
         syncManager.status
@@ -68,6 +92,15 @@ class LibraryViewModel(
         playbackController.state
             .map { state -> state.item?.id?.takeIf { state.context?.kind == QueueKind.Songs } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun listQuery(tab: LibraryListTab): StateFlow<ListQuery> = listQueries.getValue(tab)
+
+    fun setListQuery(
+        tab: LibraryListTab,
+        query: ListQuery,
+    ) {
+        viewModelScope.launch { userPreferences.setListQuery(tab, query) }
+    }
 
     fun coverArt(
         coverArt: String?,
@@ -83,3 +116,11 @@ class LibraryViewModel(
 
     fun sync() = syncManager.requestSync()
 }
+
+private fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { it.name == sort } ?: AlbumSort.Name
+
+private fun ListQuery.artistSort(): ArtistSort = ArtistSort.entries.firstOrNull { it.name == sort } ?: ArtistSort.Name
+
+private fun ListQuery.playlistSort(): PlaylistSort = PlaylistSort.entries.firstOrNull { it.name == sort } ?: PlaylistSort.Name
+
+private fun ListQuery.songSort(): SongSort = SongSort.entries.firstOrNull { it.name == sort } ?: SongSort.Album

@@ -192,6 +192,11 @@ class PlaybackController(
         startPosition: Long,
     ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
 
+    fun playSong(
+        sourceId: Long,
+        songId: String,
+    ) = play(listOf(queueRepository.songEntry(sourceId, songId)), 0)
+
     fun shuffleAlbum(
         sourceId: Long,
         albumId: String,

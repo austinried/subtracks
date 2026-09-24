@@ -12,18 +12,41 @@ import kotlinx.coroutines.flow.map
 
 enum class AlbumSort { Name, Artist, Year, RecentlyAdded }
 
+enum class ArtistSort { Name, AlbumCount }
+
+enum class PlaylistSort { Name, RecentlyAdded }
+
+enum class SongSort { Album, Title, Artist }
+
+enum class LibraryListTab(
+    val key: String,
+    val defaultSort: String,
+    val supportsStarred: Boolean,
+) {
+    Albums("albums", AlbumSort.Name.name, true),
+    Artists("artists", ArtistSort.Name.name, true),
+    Playlists("playlists", PlaylistSort.Name.name, false),
+    Songs("songs", SongSort.Album.name, true),
+}
+
+data class ListQuery(
+    val sort: String,
+    val descending: Boolean = false,
+    val starredOnly: Boolean = false,
+)
+
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
 
 class UserPreferences(
     private val store: DataStore<Preferences>,
 ) {
-    val albumSort: Flow<AlbumSort> =
-        store.data.map { prefs ->
-            prefs[ALBUM_SORT]?.let { stored -> AlbumSort.entries.firstOrNull { it.name == stored } } ?: AlbumSort.Name
-        }
+    fun listQuery(tab: LibraryListTab): Flow<ListQuery> = store.data.map { prefs -> decode(prefs[listQueryKey(tab)], tab.defaultSort) }
 
-    suspend fun setAlbumSort(sort: AlbumSort) {
-        store.edit { prefs -> prefs[ALBUM_SORT] = sort.name }
+    suspend fun setListQuery(
+        tab: LibraryListTab,
+        query: ListQuery,
+    ) {
+        store.edit { prefs -> prefs[listQueryKey(tab)] = encode(query) }
     }
 
     val maxBitrate: Flow<Int> = store.data.map { prefs -> prefs[MAX_BITRATE] ?: 0 }
@@ -40,8 +63,24 @@ class UserPreferences(
         }
     }
 
+    private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
+
+    private fun encode(query: ListQuery) = "${query.sort}|${if (query.descending) 1 else 0}|${if (query.starredOnly) 1 else 0}"
+
+    private fun decode(
+        stored: String?,
+        defaultSort: String,
+    ): ListQuery {
+        val parts = stored?.split("|")
+        if (parts == null || parts.size != 3) return ListQuery(defaultSort)
+        return ListQuery(
+            sort = parts[0].ifEmpty { defaultSort },
+            descending = parts[1] == "1",
+            starredOnly = parts[2] == "1",
+        )
+    }
+
     private companion object {
-        val ALBUM_SORT = stringPreferencesKey("album_sort")
         val MAX_BITRATE = intPreferencesKey("max_bitrate")
         val STREAM_FORMAT = stringPreferencesKey("stream_format")
     }

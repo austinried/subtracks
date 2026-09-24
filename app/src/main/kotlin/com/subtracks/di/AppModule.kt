@@ -17,6 +17,7 @@ import com.subtracks.ui.library.AlbumDetailViewModel
 import com.subtracks.ui.library.ArtistDetailViewModel
 import com.subtracks.ui.library.LibraryViewModel
 import com.subtracks.ui.library.PlaylistDetailViewModel
+import com.subtracks.ui.library.SearchViewModel
 import com.subtracks.ui.playback.QueueViewModel
 import com.subtracks.ui.settings.AddSourceViewModel
 import com.subtracks.ui.settings.SettingsViewModel
@@ -40,6 +41,7 @@ fun appModule(
     single { PlaybackController(get(), get(), get()) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SearchViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }
