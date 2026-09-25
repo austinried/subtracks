@@ -100,6 +100,7 @@ import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
+import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -319,6 +320,7 @@ fun LibraryScreen(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .background(artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
                         .padding(top = statusBarTop),
             ) {
                 Box(
