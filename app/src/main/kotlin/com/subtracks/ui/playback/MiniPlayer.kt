@@ -90,14 +90,19 @@ fun MiniPlayer(
             Column {
                 MiniPlayerProgressBar(
                     progress = progress,
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
                 )
                 Row(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(10.dp),
+                            .padding(start = 8.dp, top = 10.dp, end = 10.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
