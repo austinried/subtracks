@@ -269,7 +269,7 @@ fun LibraryScreen(
     val searchFocus = remember { FocusRequester() }
 
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }.collect { page ->
+        snapshotFlow { pagerState.settledPage }.collect { page ->
             onTabSelected(LibraryTab.entries[page])
         }
     }
@@ -278,7 +278,7 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
-        searchActive = false
+        searchActive = search.isNotEmpty()
     }
 
     val density = LocalDensity.current

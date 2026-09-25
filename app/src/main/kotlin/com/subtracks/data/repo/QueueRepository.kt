@@ -4,6 +4,7 @@ import androidx.room3.deferredTransaction
 import androidx.room3.immediateTransaction
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
+import com.subtracks.data.db.LibraryDao
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
@@ -173,6 +174,56 @@ class QueueRepository(
         }
     }
 
+    private suspend fun LibraryDao.songsPage(
+        sourceId: Long,
+        query: QueueSongQuery,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem> {
+        val starred = query.starred.ordinal
+        return when (query.sort) {
+            SongSort.Album -> {
+                if (query.descending) {
+                    songsPageByAlbumReversed(sourceId, starred, limit, offset)
+                } else {
+                    songsPageByAlbum(sourceId, starred, limit, offset)
+                }
+            }
+
+            SongSort.Title -> {
+                if (query.descending) {
+                    songsPageByTitleReversed(sourceId, starred, limit, offset)
+                } else {
+                    songsPageByTitle(sourceId, starred, limit, offset)
+                }
+            }
+
+            SongSort.Artist -> {
+                if (query.descending) {
+                    songsPageByArtistReversed(sourceId, starred, limit, offset)
+                } else {
+                    songsPageByArtist(sourceId, starred, limit, offset)
+                }
+            }
+
+            SongSort.Starred -> {
+                if (query.descending) {
+                    songsPageByStarredReversed(sourceId, starred, limit, offset)
+                } else {
+                    songsPageByStarred(sourceId, starred, limit, offset)
+                }
+            }
+
+            SongSort.Added -> {
+                if (query.descending) {
+                    songsPageByAddedReversed(sourceId, starred, limit, offset)
+                } else {
+                    songsPageByAdded(sourceId, starred, limit, offset)
+                }
+            }
+        }
+    }
+
     suspend fun replace(
         entries: List<QueueEntry>,
         shuffleOrder: LongArray? = null,
@@ -247,23 +298,29 @@ class QueueRepository(
         snapshot: QueueSnapshot,
         position: Long,
     ): SongListItem? {
-        val flat = snapshot.flatPosition(position) ?: return null
-        val id = flatIds(snapshot).getOrNull(flat.toInt()) ?: return null
-        val sourceId =
-            snapshot.entries
-                .firstOrNull()
-                ?.entry
-                ?.sourceId ?: return null
-        return dao.songsByIds(sourceId, listOf(id)).firstOrNull()
+        if (snapshot.shuffled) {
+            val sourceId =
+                snapshot.entries
+                    .firstOrNull()
+                    ?.entry
+                    ?.sourceId ?: return null
+            val flat = snapshot.flatPosition(position) ?: return null
+            val id = flatIds(snapshot).getOrNull(flat.toInt()) ?: return null
+            return dao.songsByIds(sourceId, listOf(id)).firstOrNull()
+        }
+        val (entry, offset) = snapshot.locate(position) ?: return null
+        return rows(entry, entry.offset + offset, 1).firstOrNull()
     }
 
     suspend fun flatIndexOf(
         snapshot: QueueSnapshot,
         songId: String,
     ): Long? {
-        if (!snapshot.shuffled) return null
-        val index = flatIds(snapshot).indexOf(songId)
-        return if (index >= 0) index.toLong() else null
+        val order = snapshot.shuffleOrder ?: return null
+        val flat = flatIds(snapshot).indexOf(songId)
+        if (flat < 0) return null
+        val position = order.indexOf(flat.toLong())
+        return if (position >= 0) position.toLong() else null
     }
 
     suspend fun range(
@@ -271,22 +328,37 @@ class QueueRepository(
         first: Long,
         last: Long,
     ): List<QueueWindowItem> {
-        if (snapshot.size == 0L) return emptyList()
-        val ids = flatIds(snapshot)
-        val requested = mutableListOf<Pair<Long, String>>()
-        for (position in first..last) {
-            val flat = snapshot.flatPosition(position) ?: continue
-            val id = ids.getOrNull(flat.toInt()) ?: continue
-            requested += position to id
+        if (snapshot.shuffled) {
+            val sourceId =
+                snapshot.entries
+                    .firstOrNull()
+                    ?.entry
+                    ?.sourceId ?: return emptyList()
+            val ids = flatIds(snapshot)
+            val requested = mutableListOf<Pair<Long, String>>()
+            for (position in first..last) {
+                val flat = snapshot.flatPosition(position) ?: continue
+                val id = ids.getOrNull(flat.toInt()) ?: continue
+                requested += position to id
+            }
+            if (requested.isEmpty()) return emptyList()
+            val byId = dao.songsByIds(sourceId, requested.map { it.second }.distinct()).associateBy { it.song.id }
+            return requested.mapNotNull { (position, id) -> byId[id]?.let { QueueWindowItem(position, it) } }
         }
-        if (requested.isEmpty()) return emptyList()
-        val sourceId =
-            snapshot.entries
-                .firstOrNull()
-                ?.entry
-                ?.sourceId ?: return emptyList()
-        val byId = dao.songsByIds(sourceId, requested.map { it.second }.distinct()).associateBy { it.song.id }
-        return requested.mapNotNull { (position, id) -> byId[id]?.let { QueueWindowItem(position, it) } }
+        val items = mutableListOf<QueueWindowItem>()
+        var start = 0L
+        for (resolved in snapshot.entries) {
+            val end = start + resolved.length - 1
+            val entryStart = start
+            start += resolved.length
+            if (resolved.length == 0L || end < first || entryStart > last) continue
+            val from = maxOf(first, entryStart)
+            val to = minOf(last, end)
+            val offset = resolved.entry.offset + (from - entryStart)
+            rows(resolved.entry, offset, (to - from + 1).toInt())
+                .forEachIndexed { index, item -> items += QueueWindowItem(from + index, item) }
+        }
+        return items
     }
 
     suspend fun window(
@@ -385,6 +457,31 @@ class QueueRepository(
         cachedFlatVersion = snapshot.version
         return ids
     }
+
+    private suspend fun rows(
+        entry: QueueEntry,
+        offset: Long,
+        limit: Int,
+    ): List<SongListItem> =
+        when (entry.kind) {
+            QueueKind.Playlist -> {
+                dao.playlistSongs(entry.sourceId, entry.refId, offset, limit)
+            }
+
+            QueueKind.Album -> {
+                dao.albumSongs(entry.sourceId, entry.refId, offset, limit)
+            }
+
+            QueueKind.Songs -> {
+                songsQuery(entry.refId)?.let { query ->
+                    db.libraryDao().songsPage(entry.sourceId, query, limit, offset)
+                } ?: dao.songs(entry.sourceId, offset, limit)
+            }
+
+            QueueKind.Song -> {
+                dao.song(entry.sourceId, entry.refId, offset, limit)
+            }
+        }
 
     private suspend fun QueueEntry.resolvedLength(): Long {
         val total =

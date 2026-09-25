@@ -35,6 +35,13 @@ internal const val SONGS_IDS_SELECT =
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
         "(:starredFilter = 2 AND songs.starred IS NULL)) "
 
+internal const val SONGS_LIST_SELECT =
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId " +
+        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
+        "(:starredFilter = 2 AND songs.starred IS NULL)) "
+
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LibraryDao {
@@ -357,7 +364,7 @@ interface LibraryDao {
             "AND (:search = '' OR instr(lower(songs.title), lower(:search)) > 0 " +
             "OR instr(lower(songs.artist), lower(:search)) > 0 OR instr(lower(songs.album), lower(:search)) > 0) " +
             "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
-            "songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
+            "songs.title COLLATE NOCASE, songs.id",
     )
     fun songs(
         sourceId: Long,
@@ -622,4 +629,104 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
     ): List<String>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByAlbum(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY albums.albumArtist COLLATE NOCASE DESC, songs.album COLLATE NOCASE DESC, songs.disc DESC, songs.track DESC, songs.title COLLATE NOCASE DESC, songs.id DESC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByAlbumReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByTitle(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.title COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByTitleReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.artist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByArtist(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.artist COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByArtistReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.starred IS NULL, songs.starred DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByStarred(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.starred IS NULL, songs.starred ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByStarredReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.created DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByAdded(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
+
+    @Query(
+        "${SONGS_LIST_SELECT}ORDER BY songs.created ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun songsPageByAddedReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        limit: Int,
+        offset: Long,
+    ): List<SongListItem>
 }
