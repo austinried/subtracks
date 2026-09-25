@@ -1,10 +1,5 @@
 package com.subtracks.ui.library
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -60,10 +54,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -91,9 +84,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -102,7 +93,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -437,7 +427,7 @@ fun LibraryScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .imePadding()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = tabBarHeight + 8.dp),
             )
         }
 
@@ -612,6 +602,8 @@ private fun ListOptionsSheet(
 
 private val FAB_CLEARANCE = 80.dp
 private val SEARCH_BAR_CLEARANCE = 80.dp
+private val TAB_ICON_SIZE = 24.dp
+private val TAB_VERTICAL_PADDING = 6.dp
 
 @Composable
 private fun SearchField(
@@ -686,6 +678,7 @@ private fun LibraryTabs(
 
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
     val indicatorColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
+    val tabContentHeightPx = with(density) { (TAB_ICON_SIZE + TAB_VERTICAL_PADDING * 2).toPx() }
 
     Box(Modifier.fillMaxWidth()) {
         Box(
@@ -693,16 +686,17 @@ private fun LibraryTabs(
                 Modifier
                     .fillMaxWidth()
                     .background(headerColor)
-                    .padding(8.dp),
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
         ) {
             Box(
                 modifier =
                     Modifier.drawBehind {
-                        if (current != null && indicatorLeft != null && indicatorRight != null) {
+                        if (current != null && indicatorLeft != null && indicatorRight != null && indicatorRight > indicatorLeft) {
+                            val height = tabContentHeightPx.coerceAtMost(current.height)
                             drawRoundRect(
                                 color = indicatorColor,
-                                topLeft = Offset(indicatorLeft, current.top),
-                                size = Size(indicatorRight - indicatorLeft, current.height),
+                                topLeft = Offset(indicatorLeft, current.top + (current.height - height) / 2f),
+                                size = Size(indicatorRight - indicatorLeft, height),
                                 cornerRadius = CornerRadius(8.dp.toPx()),
                             )
                         }
@@ -739,19 +733,18 @@ private fun LibraryTabs(
                             strokeWidth = 2.dp,
                         )
                     }
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .clickable(onClick = onOpenSettings),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    IconButton(onClick = onSync) {
+                        Icon(
+                            imageVector = Icons.Rounded.Sync,
+                            contentDescription = "Sync",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
+                    IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Settings",
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
@@ -781,7 +774,8 @@ private fun TabButton(
             modifier
                 .onGloballyPositioned { tabLeft = it.boundsInParent().left }
                 .clickable(onClick = onClick)
-                .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                .minimumInteractiveComponentSize()
+                .padding(start = 8.dp, end = 12.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
     ) {
         if (clipStart != null && clipEnd != null) {
             Box(
@@ -827,12 +821,13 @@ private fun TabContent(
             imageVector = tab.icon,
             contentDescription = tab.label,
             tint = color,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(TAB_ICON_SIZE),
         )
         Box(
             modifier =
                 Modifier
                     .clipToBounds()
+                    .clearAndSetSemantics {}
                     .layout { measurable, _ ->
                         val placeable = measurable.measure(Constraints())
                         val width = (placeable.width * progress).roundToInt()

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -156,6 +157,11 @@ private fun MainNavigation() {
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val keyboardUp = WindowInsets.imeAnimationTarget.getBottom(density) > 0
     val showMiniPlayer = playerVisible && !keyboardUp
+    val bottomInset by animateDpAsState(
+        targetValue = if (showMiniPlayer) 0.dp else navBarInset,
+        animationSpec = tween(MINI_PLAYER_ANIM_MS),
+        label = "libraryBottomInset",
+    )
 
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
     ArtworkTheme(artwork) {
@@ -197,7 +203,7 @@ private fun MainNavigation() {
                             onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                             onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                            bottomInset = if (showMiniPlayer) 0.dp else navBarInset,
+                            bottomInset = bottomInset,
                         )
                     }
                     composable(Routes.SETTINGS) {
