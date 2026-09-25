@@ -42,17 +42,7 @@ private val Context.preferences: DataStore<Preferences> by preferencesDataStore(
 class UserPreferences(
     private val store: DataStore<Preferences>,
 ) {
-    fun listQuery(tab: LibraryListTab): Flow<ListQuery> =
-        store.data.map { prefs -> decode(prefs[listQueryKey(tab)] ?: legacyQuery(prefs, tab), tab.defaultSort) }
-
-    private fun legacyQuery(
-        prefs: Preferences,
-        tab: LibraryListTab,
-    ): String? {
-        if (tab != LibraryListTab.Albums) return null
-        val sort = prefs[ALBUM_SORT]?.let { if (it == "RecentlyAdded") "Added" else it } ?: return null
-        return "$sort|0|0"
-    }
+    fun listQuery(tab: LibraryListTab): Flow<ListQuery> = store.data.map { prefs -> decode(prefs[listQueryKey(tab)], tab.defaultSort) }
 
     suspend fun setListQuery(
         tab: LibraryListTab,
@@ -93,7 +83,6 @@ class UserPreferences(
     }
 
     private companion object {
-        val ALBUM_SORT = stringPreferencesKey("album_sort")
         val MAX_BITRATE = intPreferencesKey("max_bitrate")
         val STREAM_FORMAT = stringPreferencesKey("stream_format")
     }
