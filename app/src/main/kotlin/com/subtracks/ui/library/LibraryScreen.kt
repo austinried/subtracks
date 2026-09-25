@@ -316,10 +316,10 @@ fun LibraryScreen(
     val density = LocalDensity.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
-    val listBottomInset = bottomInset + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
-
-    var headerHeightPx by remember { mutableFloatStateOf(0f) }
-    val listTopInset = with(density) { headerHeightPx.toDp() }
+    var tabBarHeightPx by remember { mutableFloatStateOf(0f) }
+    val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
+    val listTopInset = statusBarTop
+    val listBottomInset = bottomInset + tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
 
     Box(
         modifier =
@@ -406,9 +406,8 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .onSizeChanged { headerHeightPx = it.height.toFloat() }
-                    .padding(top = statusBarTop + 2.dp, bottom = 2.dp),
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { tabBarHeightPx = it.height.toFloat() },
         ) {
             LibraryTabs(
                 pagerState = pagerState,
@@ -443,7 +442,7 @@ fun LibraryScreen(
                 onClick = { showOptions = true },
                 containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
                 Box {
                     Icon(Icons.Filled.Sort, contentDescription = "List options")
@@ -687,6 +686,7 @@ private fun LibraryTabs(
         Box(
             modifier =
                 Modifier
+                    .fillMaxWidth()
                     .background(headerColor)
                     .padding(8.dp),
         ) {
@@ -704,6 +704,7 @@ private fun LibraryTabs(
                     },
             ) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -726,12 +727,7 @@ private fun LibraryTabs(
                                 },
                         )
                     }
-                    Box(
-                        Modifier
-                            .width(1.dp)
-                            .height(24.dp)
-                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
-                    )
+                    Spacer(Modifier.weight(1f))
                     if (syncing) {
                         CircularProgressIndicator(
                             modifier = Modifier.padding(end = 4.dp).size(20.dp),
