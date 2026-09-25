@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -781,12 +780,11 @@ private fun TabButton(
             modifier
                 .onGloballyPositioned { tabLeft = it.boundsInParent().left }
                 .clickable(onClick = onClick)
-                .widthIn(min = TOUCH_TARGET)
                 .height(TOUCH_TARGET),
-        contentAlignment = Alignment.CenterStart,
+        contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier.padding(start = 8.dp, end = 12.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
+            modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
         ) {
             if (clipStart != null && clipEnd != null) {
                 Box(
