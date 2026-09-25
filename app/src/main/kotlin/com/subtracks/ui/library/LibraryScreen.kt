@@ -319,7 +319,8 @@ fun LibraryScreen(
     var tabBarHeightPx by remember { mutableFloatStateOf(0f) }
     val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
     val listTopInset = statusBarTop
-    val listBottomInset = bottomInset + tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
+    val listBottomInset = tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
+    val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
 
     Box(
         modifier =
@@ -407,8 +408,9 @@ fun LibraryScreen(
                 Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = bottomInset)
-                    .onSizeChanged { tabBarHeightPx = it.height.toFloat() },
+                    .background(headerColor)
+                    .onSizeChanged { tabBarHeightPx = it.height.toFloat() }
+                    .padding(bottom = bottomInset),
         ) {
             LibraryTabs(
                 pagerState = pagerState,
