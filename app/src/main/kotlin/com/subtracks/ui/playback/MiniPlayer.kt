@@ -52,6 +52,7 @@ private const val PROGRESS_INSET_MS = 260
 @Composable
 fun MiniPlayer(
     state: PlaybackState,
+    positionMs: Long,
     coverArt: CoverArtRef?,
     artwork: ArtworkColors?,
     onExpand: () -> Unit,
@@ -64,7 +65,7 @@ fun MiniPlayer(
 ) {
     val item = state.item ?: return
     var dragUpPx by remember { mutableFloatStateOf(0f) }
-    val progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+    val progress = if (state.durationMs > 0) (positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
     val progressInsetDp by animateDpAsState(
         targetValue = if (progressInset) PROGRESS_INSET else 0.dp,
         animationSpec = tween(PROGRESS_INSET_MS),

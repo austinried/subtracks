@@ -15,7 +15,6 @@ import androidx.compose.ui.test.swipeDown
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.subtracks.data.model.Album
@@ -27,13 +26,17 @@ import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.LibraryTabs
 import com.subtracks.ui.theme.SubtracksTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -51,10 +54,10 @@ class LibraryScreenTest {
                 LibraryScreen(
                     selectedTab = LibraryTab.Albums,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.from(albums())) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.from(albums())) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
@@ -86,10 +89,10 @@ class LibraryScreenTest {
                 LibraryScreen(
                     selectedTab = LibraryTab.Albums,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.empty<Album>(settledLoadStates)) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.empty<Album>(settledLoadStates)) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
@@ -107,6 +110,55 @@ class LibraryScreenTest {
         composeRule.onNodeWithText("Sync").performClick()
 
         assertTrue("an empty library should offer a sync", synced)
+    }
+
+    @Test
+    fun onlyTheVisibleTabCollectsItsPagingFlow() {
+        val collected = CopyOnWriteArrayList<String>()
+        val albums =
+            flow<PagingData<Album>> {
+                collected += "albums"
+                emit(PagingData.from(albums()))
+            }
+        val artists =
+            flow<PagingData<Artist>> {
+                collected += "artists"
+                emit(PagingData.empty())
+            }
+        val songs =
+            flow<PagingData<SongListItem>> {
+                collected += "songs"
+                emit(PagingData.empty())
+            }
+        val playlists =
+            flow<PagingData<Playlist>> {
+                collected += "playlists"
+                emit(PagingData.empty())
+            }
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = albums,
+                    artists = artists,
+                    songs = songs,
+                    playlists = playlists,
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSongClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                )
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { collected.isNotEmpty() }
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("albums"), collected.toList())
     }
 
     @Test

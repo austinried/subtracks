@@ -80,6 +80,7 @@ fun NowPlayingRoute(
     controller: PlaybackController = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
+    val positionMs by controller.positionMs.collectAsStateWithLifecycle()
     val context = LocalPlatformContext.current
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
@@ -102,6 +103,7 @@ fun NowPlayingRoute(
     }
     NowPlayingScreen(
         state = state,
+        positionMs = positionMs,
         title = sourceTitle.value,
         coverArt = art,
         thumbnailRef = thumbnail,
@@ -136,6 +138,7 @@ private fun prefetchImage(
 @Composable
 fun NowPlayingScreen(
     state: PlaybackState,
+    positionMs: Long,
     title: String,
     coverArt: CoverArtRef?,
     artwork: ArtworkColors?,
@@ -263,7 +266,7 @@ fun NowPlayingScreen(
                         var dragging by remember { mutableStateOf(false) }
                         var dragPosition by remember { mutableFloatStateOf(0f) }
                         Slider(
-                            value = if (dragging) dragPosition else state.positionMs.toFloat(),
+                            value = if (dragging) dragPosition else positionMs.toFloat(),
                             onValueChange = {
                                 dragging = true
                                 dragPosition = it
@@ -280,7 +283,7 @@ fun NowPlayingScreen(
                             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(formatTime(state.positionMs), style = MaterialTheme.typography.bodySmall)
+                            Text(formatTime(positionMs), style = MaterialTheme.typography.bodySmall)
                             Text(formatTime(state.durationMs), style = MaterialTheme.typography.bodySmall)
                         }
                         if (state.error != null) {

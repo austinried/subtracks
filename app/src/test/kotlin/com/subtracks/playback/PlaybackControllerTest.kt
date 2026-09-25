@@ -13,7 +13,10 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -23,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
 @RunWith(AndroidJUnit4::class)
@@ -924,7 +928,7 @@ class PlaybackControllerTest {
                 ?.id == "s1"
         }
 
-        assertEquals(12_000L, restored.state.value.positionMs)
+        assertEquals(12_000L, restored.positionMs.value)
         assertEquals(100_000L, restored.state.value.durationMs)
         assertEquals(
             "setWindow(size=3, start=0, position=12000)",
@@ -952,6 +956,26 @@ class PlaybackControllerTest {
 
         assertEquals(0L, runBlocking { queues.cursorPositionMs() })
     }
+
+    @Test
+    fun positionTickerAdvancesPositionWithoutEmittingPlaybackState() =
+        runBlocking {
+            seedAlbum(3, sourceId = 1)
+            controller.playAlbum(1, "al1", 0)
+            await { controller.state.value.isPlaying }
+
+            val emissions = CopyOnWriteArrayList<PlaybackState>()
+            val collector = launch(Dispatchers.Default) { controller.state.collect { emissions += it } }
+            await { emissions.isNotEmpty() }
+            val baseline = emissions.size
+
+            handle.positionMs = 7_000L
+            delay(1_200L)
+
+            assertEquals(7_000L, controller.positionMs.value)
+            assertEquals(baseline, emissions.size)
+            collector.cancel()
+        }
 
     private fun seedAlbum(
         count: Int,

@@ -290,9 +290,11 @@ private fun MainNavigation() {
                     enter = expandVertically(tween(MINI_PLAYER_ANIM_MS), expandFrom = Alignment.Bottom),
                     exit = shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom),
                 ) {
+                    val positionMs by playbackController.positionMs.collectAsStateWithLifecycle()
                     val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
                     MiniPlayer(
                         state = playback,
+                        positionMs = positionMs,
                         coverArt = miniArt,
                         artwork = artwork,
                         onExpand = { settleNowPlaying(true) },

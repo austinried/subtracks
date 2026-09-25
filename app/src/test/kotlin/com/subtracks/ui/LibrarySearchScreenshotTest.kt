@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -44,10 +43,10 @@ class LibrarySearchScreenshotTest {
                 LibraryScreen(
                     selectedTab = LibraryTab.Albums,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.from(albums())) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.from(albums())) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},

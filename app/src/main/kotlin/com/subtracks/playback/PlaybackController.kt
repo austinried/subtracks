@@ -47,7 +47,6 @@ data class PlaybackState(
     val error: String? = null,
     val isBuffering: Boolean = false,
     val isPlaying: Boolean = false,
-    val positionMs: Long = 0,
     val durationMs: Long = 0,
     val hasNext: Boolean = false,
     val hasPrevious: Boolean = false,
@@ -103,6 +102,9 @@ class PlaybackController(
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
+
+    private val _positionMs = MutableStateFlow(0L)
+    val positionMs: StateFlow<Long> = _positionMs
 
     private var player: PlayerHandle? = null
     private var connecting = false
@@ -690,6 +692,7 @@ class PlaybackController(
             clear()
         }
         _state.value = PlaybackState()
+        _positionMs.value = 0L
         stopPositionTicker()
     }
 
@@ -920,6 +923,7 @@ class PlaybackController(
             player.durationMs.takeIf { it > 0 }
                 ?: player.currentItem?.durationMs?.takeIf { it > 0 }
                 ?: 0L
+        _positionMs.value = player.currentPositionMs
         _state.value =
             PlaybackState(
                 item = player.currentItem,
@@ -928,7 +932,6 @@ class PlaybackController(
                 error = lastError,
                 isBuffering = showBuffering,
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
-                positionMs = player.currentPositionMs,
                 durationMs = durationMs,
                 hasNext = true,
                 hasPrevious = true,
@@ -946,7 +949,7 @@ class PlaybackController(
                     delay(POSITION_TICK_MS)
                     val player = player ?: break
                     val positionMs = player.currentPositionMs
-                    _state.value = _state.value.copy(positionMs = positionMs)
+                    _positionMs.value = positionMs
                     if (positionMs - lastSavedPositionMs >= POSITION_SAVE_INTERVAL_MS || positionMs < lastSavedPositionMs) {
                         lastSavedPositionMs = positionMs
                         queueRepository.setPosition(positionMs)

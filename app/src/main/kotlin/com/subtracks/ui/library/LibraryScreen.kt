@@ -99,7 +99,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
@@ -119,6 +119,7 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.flow.Flow
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
@@ -219,10 +220,10 @@ fun LibraryRoute(
         syncing = syncing,
         bottomInset = bottomInset,
         artwork = artwork,
-        albums = viewModel.albums.collectAsLazyPagingItems(),
-        artists = viewModel.artists.collectAsLazyPagingItems(),
-        songs = viewModel.songs.collectAsLazyPagingItems(),
-        playlists = viewModel.playlists.collectAsLazyPagingItems(),
+        albums = viewModel.albums,
+        artists = viewModel.artists,
+        songs = viewModel.songs,
+        playlists = viewModel.playlists,
         coverArt = viewModel::coverArt,
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
@@ -260,10 +261,10 @@ fun LibraryRoute(
 fun LibraryScreen(
     selectedTab: LibraryTab,
     onTabSelected: (LibraryTab) -> Unit,
-    albums: LazyPagingItems<Album>,
-    artists: LazyPagingItems<Artist>,
-    songs: LazyPagingItems<SongListItem>,
-    playlists: LazyPagingItems<Playlist>,
+    albums: Flow<PagingData<Album>>,
+    artists: Flow<PagingData<Artist>>,
+    songs: Flow<PagingData<SongListItem>>,
+    playlists: Flow<PagingData<Playlist>>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
@@ -356,7 +357,7 @@ fun LibraryScreen(
                 when (pageTab) {
                     LibraryTab.Albums -> {
                         AlbumsContent(
-                            albums,
+                            albums.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
                             {
@@ -373,7 +374,7 @@ fun LibraryScreen(
 
                     LibraryTab.Artists -> {
                         ArtistsContent(
-                            artists,
+                            artists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
                             {
@@ -390,7 +391,7 @@ fun LibraryScreen(
 
                     LibraryTab.Songs -> {
                         SongsContent(
-                            songs,
+                            songs.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
                             {
@@ -408,7 +409,7 @@ fun LibraryScreen(
 
                     LibraryTab.Playlists -> {
                         PlaylistsContent(
-                            playlists,
+                            playlists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
                             {

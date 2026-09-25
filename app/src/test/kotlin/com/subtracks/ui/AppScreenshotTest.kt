@@ -105,10 +105,10 @@ class AppScreenshotTest {
                 LibraryScreen(
                     selectedTab = LibraryTab.Albums,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.from(albums)) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.from(albums)) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
                     onArtistClick = {},
@@ -164,10 +164,10 @@ class AppScreenshotTest {
                     LibraryScreen(
                         selectedTab = LibraryTab.Albums,
                         onTabSelected = {},
-                        albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
-                        artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
-                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
-                        playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
+                        albums = remember { flowOf(PagingData.from(Fixtures.albums)) },
+                        artists = remember { flowOf(PagingData.from(Fixtures.artists)) },
+                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) },
+                        playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) },
                         coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                         onAlbumClick = {},
                         onArtistClick = {},
@@ -180,6 +180,7 @@ class AppScreenshotTest {
                     )
                     MiniPlayer(
                         state = Fixtures.playbackState(),
+                        positionMs = 62_000,
                         coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                         artwork = artwork,
                         onExpand = {},
@@ -374,6 +375,7 @@ class AppScreenshotTest {
             SubtracksTheme {
                 NowPlayingScreen(
                     state = Fixtures.playbackState(),
+                    positionMs = 62_000,
                     title = "Kid A",
                     coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
@@ -397,6 +399,7 @@ class AppScreenshotTest {
             SubtracksTheme {
                 NowPlayingScreen(
                     state = Fixtures.playbackState().copy(shuffle = true, repeat = RepeatMode.One),
+                    positionMs = 62_000,
                     title = "Kid A",
                     coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
@@ -448,6 +451,7 @@ class AppScreenshotTest {
                     Spacer(Modifier.weight(1f))
                     MiniPlayer(
                         state = Fixtures.playbackState(),
+                        positionMs = 62_000,
                         coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                         artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                         onExpand = {},
@@ -467,10 +471,10 @@ class AppScreenshotTest {
                 LibraryScreen(
                     selectedTab = tab,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
-                    artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
-                    songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
-                    playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.from(Fixtures.albums)) },
+                    artists = remember { flowOf(PagingData.from(Fixtures.artists)) },
+                    songs = remember { flowOf(PagingData.from(Fixtures.songItems)) },
+                    playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) },
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
                     onArtistClick = {},
@@ -562,7 +566,6 @@ private object Fixtures {
                     coverArtId = "art-al-kid-a",
                 ),
             isPlaying = true,
-            positionMs = 62_000,
             durationMs = 251_000,
             hasNext = true,
             hasPrevious = false,
