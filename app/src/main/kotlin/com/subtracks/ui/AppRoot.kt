@@ -1,7 +1,8 @@
 package com.subtracks.ui
 
 import android.net.Uri
-import androidx.activity.compose.BackHandler
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +74,7 @@ import com.subtracks.ui.settings.SettingsRoute
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -156,6 +159,30 @@ private fun MainNavigation() {
                 }
                 if (!open) nowPlayingOpen = false
             }
+    }
+    // The NavHost registers its back callback from a LaunchedEffect, so a BackHandler composed
+    // before it can lose the back to the NavHost (which would pop the route under the overlay).
+    // Register ours from a LaunchedEffect after the NavHost so it lands later and wins.
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val overlayBack =
+        remember {
+            object : OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    when {
+                        showingQueue -> showingQueue = false
+                        nowPlayingOpen -> settleNowPlaying(false)
+                    }
+                }
+            }
+        }
+    SideEffect { overlayBack.isEnabled = showingQueue || nowPlayingOpen }
+    LaunchedEffect(backDispatcher, overlayBack) {
+        backDispatcher?.addCallback(overlayBack)
+        try {
+            awaitCancellation()
+        } finally {
+            overlayBack.remove()
+        }
     }
     LaunchedEffect(Unit) { playbackController.connect() }
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
@@ -369,10 +396,5 @@ private fun MainNavigation() {
                 )
             }
         }
-    }
-
-    BackHandler(enabled = showingQueue) { showingQueue = false }
-    BackHandler(enabled = nowPlayingOpen && !showingQueue) {
-        settleNowPlaying(false)
     }
 }

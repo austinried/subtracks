@@ -128,7 +128,7 @@ fun AlbumDetailScreen(
                 val disc = song.disc ?: 1L
                 val discLabel = discLabels[disc]
                 if (disc != lastDisc && (multiDisc || discLabel != null)) {
-                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc") }
+                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc", first = lastDisc == null) }
                 }
                 lastDisc = disc
                 item(key = song.id) {
@@ -146,10 +146,13 @@ fun AlbumDetailScreen(
 }
 
 @Composable
-private fun DiscHeader(text: String) {
+private fun DiscHeader(
+    text: String,
+    first: Boolean,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (first) 0.dp else 40.dp, bottom = 4.dp),
     ) {
         Icon(
             imageVector = Icons.Outlined.FiberSmartRecord,

@@ -653,7 +653,7 @@ private val TAB_BAR_CONTENT_HEIGHT = 52.dp
 private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 private val TOUCH_TARGET = 48.dp
-private const val LIST_OPTIONS_WEIGHT = 0.15f
+private const val LIST_OPTIONS_WEIGHT = 0.11f
 private val LIST_OPTIONS_BAR_WIDTHS = listOf(1f, 0.62f, 0.34f)
 
 @Composable
