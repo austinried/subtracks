@@ -93,6 +93,18 @@ val MIGRATION_9_10 =
         }
     }
 
+val MIGRATION_10_11 =
+    object : Migration(10, 11) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `discs` (`sourceId` INTEGER NOT NULL, `albumId` TEXT NOT NULL, " +
+                    "`disc` INTEGER NOT NULL, `title` TEXT NOT NULL, PRIMARY KEY(`sourceId`, `albumId`, `disc`), " +
+                    "FOREIGN KEY(`sourceId`, `albumId`) REFERENCES `albums`(`sourceId`, `id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_discs_sourceId_albumId` ON `discs` (`sourceId`, `albumId`)")
+        }
+    }
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -104,4 +116,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_7_8,
         MIGRATION_8_9,
         MIGRATION_9_10,
+        MIGRATION_10_11,
     )

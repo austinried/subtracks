@@ -8,6 +8,8 @@ import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Disc
+import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
@@ -66,6 +68,9 @@ interface LibraryDao {
     @Query("SELECT id FROM albums WHERE sourceId = :sourceId")
     suspend fun albumIds(sourceId: Long): List<String>
 
+    @Query("SELECT albumId, disc FROM discs WHERE sourceId = :sourceId")
+    suspend fun discKeys(sourceId: Long): List<DiscKey>
+
     @Query("SELECT id FROM playlists WHERE sourceId = :sourceId")
     suspend fun playlistIds(sourceId: Long): List<String>
 
@@ -82,6 +87,13 @@ interface LibraryDao {
     suspend fun deleteAlbums(
         sourceId: Long,
         ids: Collection<String>,
+    )
+
+    @Query("DELETE FROM discs WHERE sourceId = :sourceId AND albumId = :albumId AND disc = :disc")
+    suspend fun deleteDisc(
+        sourceId: Long,
+        albumId: String,
+        disc: Long,
     )
 
     @Query("DELETE FROM playlists WHERE sourceId = :sourceId AND id IN (:ids)")
@@ -540,6 +552,12 @@ interface LibraryDao {
         sourceId: Long,
         artistId: String,
     ): Flow<List<Album>>
+
+    @Query("SELECT * FROM discs WHERE sourceId = :sourceId AND albumId = :albumId ORDER BY disc")
+    fun discs(
+        sourceId: Long,
+        albumId: String,
+    ): Flow<List<Disc>>
 
     @Query("SELECT * FROM playlists WHERE sourceId = :sourceId AND id = :playlistId")
     fun playlist(

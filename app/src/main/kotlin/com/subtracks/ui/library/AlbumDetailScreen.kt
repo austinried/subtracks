@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Disc
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
@@ -36,12 +37,14 @@ fun AlbumDetailRoute(
 ) {
     val album by viewModel.album.collectAsStateWithLifecycle(initialValue = null)
     val songs by viewModel.songs.collectAsStateWithLifecycle(initialValue = emptyList())
+    val discs by viewModel.discs.collectAsStateWithLifecycle(initialValue = emptyList())
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     AlbumDetailScreen(
         album = album,
         songs = songs,
+        discs = discs,
         coverArt = viewModel::coverArt,
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
@@ -56,6 +59,7 @@ fun AlbumDetailRoute(
 fun AlbumDetailScreen(
     album: Album?,
     songs: List<Song>,
+    discs: List<Disc> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
     onBack: () -> Unit,
@@ -68,6 +72,7 @@ fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val multiDisc = songs.map { it.disc ?: 1L }.distinct().size > 1
+    val discTitles = remember(discs) { discs.associate { it.disc to it.title } }
     HeroDetailScaffold(
         artwork = artwork,
         title = album?.name.orEmpty(),
@@ -95,8 +100,9 @@ fun AlbumDetailScreen(
             var lastDisc: Long? = null
             songs.forEachIndexed { index, song ->
                 val disc = song.disc ?: 1L
-                if (multiDisc && disc != lastDisc) {
-                    item(key = "disc:$disc") { DiscHeader(disc) }
+                val discTitle = discTitles[disc]
+                if (disc != lastDisc && (multiDisc || !discTitle.isNullOrBlank())) {
+                    item(key = "disc:$disc") { DiscHeader(disc, discTitle) }
                 }
                 lastDisc = disc
                 item(key = song.id) {
@@ -114,9 +120,12 @@ fun AlbumDetailScreen(
 }
 
 @Composable
-private fun DiscHeader(disc: Long) {
+private fun DiscHeader(
+    disc: Long,
+    title: String?,
+) {
     Text(
-        text = "Disc $disc",
+        text = title?.takeIf { it.isNotBlank() } ?: "Disc $disc",
         style = MaterialTheme.typography.titleLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),

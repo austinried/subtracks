@@ -6,6 +6,7 @@ import androidx.room3.RoomDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtworkSeed
+import com.subtracks.data.model.Disc
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
@@ -22,6 +23,7 @@ import com.subtracks.data.model.SubsonicSource
         SubsonicSource::class,
         Artist::class,
         Album::class,
+        Disc::class,
         Playlist::class,
         PlaylistSong::class,
         Song::class,
@@ -30,7 +32,7 @@ import com.subtracks.data.model.SubsonicSource
         ShuffleOrder::class,
         ArtworkSeed::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)

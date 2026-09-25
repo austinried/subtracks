@@ -61,6 +61,28 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsAlbumDiscTitles() {
+        val document =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="The Wall" artist="Pink Floyd" artistId="ar1" songCount="26">
+                      <discTitles disc="1" title="The Calm"/>
+                      <discTitles disc="2" title="The Storm"/>
+                      <discTitles disc="3" title=""/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        val albums = SubsonicXml.albums(1, document)
+
+        assertEquals(mapOf(1L to "The Calm", 2L to "The Storm"), albums.single().discTitles)
+    }
+
+    @Test
     fun parsesTimestampsWithFractionsAndOffsets() {
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370827413Z"))
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370Z"))

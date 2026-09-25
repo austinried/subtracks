@@ -5,6 +5,7 @@ import androidx.room3.ColumnTypeConverter
 import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
+import androidx.room3.Ignore
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
@@ -85,6 +86,27 @@ data class Album(
     val songCount: Long,
     val frequentRank: Long?,
     val recentRank: Long?,
+    @Ignore val discTitles: Map<Long, String> = emptyMap(),
+)
+
+@Entity(
+    tableName = "discs",
+    primaryKeys = ["sourceId", "albumId", "disc"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Album::class,
+            parentColumns = ["sourceId", "id"],
+            childColumns = ["sourceId", "albumId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId", "albumId")],
+)
+data class Disc(
+    val sourceId: Long,
+    val albumId: String,
+    val disc: Long,
+    val title: String,
 )
 
 @Entity(
@@ -164,6 +186,11 @@ data class Song(
 data class SongListItem(
     @Embedded val song: Song,
     val coverArt: String?,
+)
+
+data class DiscKey(
+    val albumId: String,
+    val disc: Long,
 )
 
 enum class QueueKind { Playlist, Album, Song, Songs }

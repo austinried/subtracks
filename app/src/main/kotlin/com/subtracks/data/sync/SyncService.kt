@@ -7,6 +7,8 @@ import androidx.sqlite.SQLiteStatement
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Disc
+import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
@@ -25,6 +27,10 @@ class SyncService(
             val artists = source.getArtists()
             val albums = source.getAlbums()
             val songs = source.getSongs()
+            val discs =
+                albums.flatMap { album ->
+                    album.discTitles.map { (disc, title) -> Disc(album.sourceId, album.id, disc, title) }
+                }
             val playlists = source.getPlaylists()
             val playlistSongs = source.getPlaylistSongs(playlists)
 
@@ -32,6 +38,7 @@ class SyncService(
                 transactor.immediateTransaction {
                     upsertChanged("artists", artistColumns, primaryKey, artists) { it.values() }
                     upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
+                    upsertChanged("discs", discColumns, discKey, discs) { it.values() }
                     upsertChanged("songs", songColumns, primaryKey, songs) { it.values() }
                     upsertChanged("playlists", playlistColumns, primaryKey, playlists) { it.values() }
                     upsertChanged("playlist_songs", playlistSongColumns, playlistSongKey, playlistSongs) { it.values() }
@@ -41,11 +48,15 @@ class SyncService(
                     val existingAlbumIds = library.albumIds(source.id)
                     val existingSongIds = library.songIds(source.id)
                     val existingPlaylistIds = library.playlistIds(source.id)
+                    val existingDiscKeys = library.discKeys(source.id)
 
                     prune(existingArtistIds, artists.map { it.id }) { library.deleteArtists(source.id, it) }
                     prune(existingAlbumIds, albums.map { it.id }) { library.deleteAlbums(source.id, it) }
                     prune(existingSongIds, songs.map { it.id }) { library.deleteSongs(source.id, it) }
                     prune(existingPlaylistIds, playlists.map { it.id }) { library.deletePlaylists(source.id, it) }
+
+                    val currentDiscKeys = discs.mapTo(HashSet()) { DiscKey(it.albumId, it.disc) }
+                    existingDiscKeys.filterNot { it in currentDiscKeys }.forEach { library.deleteDisc(source.id, it.albumId, it.disc) }
 
                     val playlistSongCounts = playlistSongs.groupingBy { it.playlistId }.eachCount()
                     playlists.forEach { playlist ->
@@ -90,6 +101,10 @@ private val albumColumns =
         "recentRank",
     )
 
+private val discKey = listOf("sourceId", "albumId", "disc")
+
+private val discColumns = listOf("sourceId", "albumId", "disc", "title")
+
 private val songColumns =
     listOf(
         "sourceId",
@@ -117,6 +132,8 @@ private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starr
 
 private fun Album.values() =
     listOf<Any?>(sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount, frequentRank, recentRank)
+
+private fun Disc.values() = listOf<Any?>(sourceId, albumId, disc, title)
 
 private fun Song.values() =
     listOf<Any?>(sourceId, id, albumId, artistId, title, album, artist, duration, track, disc, starred, genre, created)

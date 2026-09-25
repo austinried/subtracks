@@ -53,6 +53,7 @@ object SubsonicXml {
             songCount = element.longAttr("songCount") ?: 0L,
             frequentRank = null,
             recentRank = null,
+            discTitles = element.discTitles(),
         )
 
     fun songs(
@@ -114,6 +115,20 @@ object SubsonicXml {
                 position = index.toLong(),
             )
         }
+}
+
+private fun Element.discTitles(): Map<Long, String> =
+    childElements("discTitles")
+        .mapNotNull { title ->
+            val disc = title.longAttr("disc") ?: return@mapNotNull null
+            title.attr("title").takeIf { it.isNotBlank() }?.let { disc to it }
+        }.toMap()
+
+private fun Element.childElements(tag: String): List<Element> {
+    val children = childNodes
+    return (0 until children.length).mapNotNull { index ->
+        (children.item(index) as? Element)?.takeIf { it.tagName == tag }
+    }
 }
 
 private fun Element.elements(tag: String): List<Element> {

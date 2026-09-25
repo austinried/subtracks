@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Song
 import com.subtracks.ui.library.AlbumDetailScreen
 import com.subtracks.ui.theme.SubtracksTheme
@@ -33,6 +34,34 @@ class AlbumDiscsTest {
     }
 
     @Test
+    fun discHeadersUseTheDiscTitleWhenPresent() {
+        setContent(
+            listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 2, track = 1)),
+            discs = listOf(disc(1, "The Calm"), disc(2, "The Storm")),
+        )
+        assertEquals(1, nodesWithText("The Calm"))
+        assertEquals(1, nodesWithText("The Storm"))
+        assertEquals(0, nodesWithText("Disc 1"))
+    }
+
+    @Test
+    fun discHeadersFallBackToTheDiscNumber() {
+        setContent(listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 2, track = 1)))
+        assertEquals(1, nodesWithText("Disc 1"))
+        assertEquals(1, nodesWithText("Disc 2"))
+    }
+
+    @Test
+    fun singleDiscAlbumShowsItsTitleWhenPresent() {
+        setContent(
+            listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 1, track = 2)),
+            discs = listOf(disc(1, "The Calm")),
+        )
+        assertEquals(1, nodesWithText("The Calm"))
+        assertEquals(0, nodesWithText("Disc 1"))
+    }
+
+    @Test
     fun albumTracksShowTheirTrackNumbers() {
         setContent(listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 1, track = 2)))
         assertEquals(1, nodesWithText("1"))
@@ -51,12 +80,16 @@ class AlbumDiscsTest {
         assertEquals(0, nodesWithText("Disc 1"))
     }
 
-    private fun setContent(songs: List<Song>) {
+    private fun setContent(
+        songs: List<Song>,
+        discs: List<Disc> = emptyList(),
+    ) {
         composeRule.setContent {
             SubtracksTheme {
                 AlbumDetailScreen(
                     album = album(),
                     songs = songs,
+                    discs = discs,
                     coverArt = { _, _ -> null },
                     artwork = null,
                     onBack = {},
@@ -88,6 +121,11 @@ class AlbumDiscsTest {
         starred = null,
         genre = null,
     )
+
+    private fun disc(
+        disc: Long,
+        title: String,
+    ) = Disc(sourceId = 1, albumId = "al-1", disc = disc, title = title)
 
     private fun album() =
         Album(

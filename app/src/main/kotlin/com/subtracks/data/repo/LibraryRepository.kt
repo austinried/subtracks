@@ -7,6 +7,7 @@ import androidx.paging.PagingSource
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
@@ -212,6 +213,11 @@ class LibraryRepository(
         sourceId: Long,
         artistId: String,
     ): Flow<List<Album>> = db.libraryDao().albumsForArtist(sourceId, artistId)
+
+    fun albumDiscs(
+        sourceId: Long,
+        albumId: String,
+    ): Flow<List<Disc>> = db.libraryDao().discs(sourceId, albumId)
 
     fun albumSongs(
         sourceId: Long,

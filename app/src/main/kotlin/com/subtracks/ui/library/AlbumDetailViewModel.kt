@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
@@ -27,6 +28,8 @@ class AlbumDetailViewModel(
     val album: Flow<Album?> = sourceId.flatMapLatest { libraryRepository.album(it, albumId) }
 
     val songs: Flow<List<Song>> = sourceId.flatMapLatest { libraryRepository.albumSongs(it, albumId) }
+
+    val discs: Flow<List<Disc>> = sourceId.flatMapLatest { libraryRepository.albumDiscs(it, albumId) }
 
     fun coverArt(
         coverArt: String?,

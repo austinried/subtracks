@@ -204,6 +204,102 @@ class SyncServiceTest {
             assertEquals(5678L, stored?.starred)
         }
 
+    @Test
+    fun syncStoresAlbumDiscTitles() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1").copy(discTitles = mapOf(1L to "The Calm", 2L to "The Storm"))),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(mapOf(1L to "The Calm", 2L to "The Storm"), storedDiscs("al1"))
+        }
+
+    @Test
+    fun syncClearsDiscTitlesWhenTheServerStopsSendingThem() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1").copy(discTitles = mapOf(1L to "The Calm"))),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(mapOf(1L to "The Calm"), storedDiscs("al1"))
+
+            source.albums = listOf(album("al1"))
+
+            SyncService(db, source).sync()
+            assertEquals(emptyMap<Long, String>(), storedDiscs("al1"))
+        }
+
+    @Test
+    fun discTitlesAreKeptPerAlbum() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums =
+                        listOf(
+                            album("al1").copy(discTitles = mapOf(1L to "First Album Disc")),
+                            album("al2"),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(mapOf(1L to "First Album Disc"), storedDiscs("al1"))
+            assertEquals(emptyMap<Long, String>(), storedDiscs("al2"))
+        }
+
+    @Test
+    fun removingAnAlbumRemovesItsDiscTitles() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums =
+                        listOf(
+                            album("al1").copy(discTitles = mapOf(1L to "The Calm")),
+                            album("al2").copy(discTitles = mapOf(1L to "The Storm")),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al2").copy(discTitles = mapOf(1L to "The Storm")))
+
+            SyncService(db, source).sync()
+
+            assertEquals(emptyMap<Long, String>(), storedDiscs("al1"))
+            assertEquals(mapOf(1L to "The Storm"), storedDiscs("al2"))
+        }
+
+    @Test
+    fun syncUpdatesADiscTitle() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(albums = listOf(album("al1").copy(discTitles = mapOf(1L to "Old"))))
+
+            SyncService(db, source).sync()
+            assertEquals(mapOf(1L to "Old"), storedDiscs("al1"))
+
+            source.albums = listOf(album("al1").copy(discTitles = mapOf(1L to "New")))
+
+            SyncService(db, source).sync()
+            assertEquals(mapOf(1L to "New"), storedDiscs("al1"))
+        }
+
+    private suspend fun storedDiscs(albumId: String): Map<Long, String> =
+        db
+            .libraryDao()
+            .discs(1, albumId)
+            .first()
+            .associate { it.disc to it.title }
+
     private suspend fun <T : Any> PagingSource<Int, T>.allRows(): List<T> {
         val page = load(PagingSource.LoadParams.Refresh(key = null, loadSize = 100, placeholdersEnabled = false))
         return (page as PagingSource.LoadResult.Page).data
