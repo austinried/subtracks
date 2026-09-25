@@ -5,19 +5,20 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import kotlinx.coroutines.flow.Flow
 
 interface MusicSource {
     val id: Long
 
     suspend fun ping()
 
-    suspend fun getArtists(): List<Artist>
+    fun artists(): Flow<List<Artist>>
 
-    suspend fun getAlbums(): List<Album>
+    fun albums(): Flow<List<Album>>
 
-    suspend fun getSongs(): List<Song>
+    fun songs(): Flow<List<Song>>
 
-    suspend fun getPlaylists(): List<Playlist>
+    fun playlists(): Flow<List<Playlist>>
 
-    suspend fun getPlaylistSongs(playlists: List<Playlist>): List<PlaylistSong>
+    fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>>
 }

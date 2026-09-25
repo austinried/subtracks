@@ -5,147 +5,305 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
-import org.w3c.dom.Document
-import org.w3c.dom.Element
+import org.xml.sax.Attributes
+import org.xml.sax.SAXException
+import org.xml.sax.helpers.DefaultHandler
+import java.io.InputStream
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeParseException
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
 
 object SubsonicXml {
-    fun artists(
+    fun artist(
         sourceId: Long,
-        document: Document,
-    ): List<Artist> =
-        document
-            .elements("artist")
-            .map { element ->
-                Artist(
-                    sourceId = sourceId,
-                    id = element.attr("id"),
-                    name = element.attr("name"),
-                    albumCount = element.longAttr("albumCount") ?: 0L,
-                    starred = element.dateAttr("starred"),
-                    coverArt = element.attr("coverArt").ifEmpty { null },
-                )
-            }.filter { it.id.isNotEmpty() }
-
-    fun albums(
-        sourceId: Long,
-        document: Document,
-    ): List<Album> = document.elements("album").map { album(sourceId, it) }.filter { it.id.isNotEmpty() }
-
-    fun album(
-        sourceId: Long,
-        element: Element,
-    ): Album =
-        Album(
+        attrs: Attributes,
+    ): Artist =
+        Artist(
             sourceId = sourceId,
-            id = element.attr("id"),
-            artistId = element.attr("artistId").ifEmpty { null },
-            name = element.attr("name"),
-            albumArtist = element.attr("artist").ifEmpty { null },
-            created = element.dateAttr("created") ?: 0L,
-            coverArt = element.attr("coverArt").ifEmpty { null },
-            genre = element.attr("genre").ifEmpty { null },
-            year = element.longAttr("year"),
-            starred = element.dateAttr("starred"),
-            songCount = element.longAttr("songCount") ?: 0L,
-            frequentRank = null,
-            recentRank = null,
-            discTitles = element.discTitles(),
+            id = attrs.attr("id"),
+            name = attrs.attr("name"),
+            albumCount = attrs.longAttr("albumCount") ?: 0L,
+            starred = attrs.dateAttr("starred"),
+            coverArt = attrs.attr("coverArt").ifEmpty { null },
         )
 
-    fun songs(
+    internal fun albumDraft(
         sourceId: Long,
-        document: Document,
-    ): List<Song> = document.elements("song").map { song(sourceId, it) }.filter { it.id.isNotEmpty() }
+        attrs: Attributes,
+    ): AlbumDraft =
+        AlbumDraft(
+            sourceId = sourceId,
+            id = attrs.attr("id"),
+            artistId = attrs.attr("artistId").ifEmpty { null },
+            name = attrs.attr("name"),
+            albumArtist = attrs.attr("artist").ifEmpty { null },
+            created = attrs.dateAttr("created") ?: 0L,
+            coverArt = attrs.attr("coverArt").ifEmpty { null },
+            genre = attrs.attr("genre").ifEmpty { null },
+            year = attrs.longAttr("year"),
+            starred = attrs.dateAttr("starred"),
+            songCount = attrs.longAttr("songCount") ?: 0L,
+        )
 
     fun song(
         sourceId: Long,
-        element: Element,
+        attrs: Attributes,
     ): Song =
         Song(
             sourceId = sourceId,
-            id = element.attr("id"),
-            albumId = element.attr("albumId").ifEmpty { null },
-            artistId = element.attr("artistId").ifEmpty { null },
-            title = element.attr("title"),
-            album = element.attr("album").ifEmpty { null },
-            artist = element.attr("artist").ifEmpty { null },
-            duration = element.longAttr("duration"),
-            track = element.longAttr("track"),
-            disc = element.longAttr("discNumber"),
-            starred = element.dateAttr("starred"),
-            genre = element.attr("genre").ifEmpty { null },
-            created = element.dateAttr("created") ?: 0L,
+            id = attrs.attr("id"),
+            albumId = attrs.attr("albumId").ifEmpty { null },
+            artistId = attrs.attr("artistId").ifEmpty { null },
+            title = attrs.attr("title"),
+            album = attrs.attr("album").ifEmpty { null },
+            artist = attrs.attr("artist").ifEmpty { null },
+            duration = attrs.longAttr("duration"),
+            track = attrs.longAttr("track"),
+            disc = attrs.longAttr("discNumber"),
+            starred = attrs.dateAttr("starred"),
+            genre = attrs.attr("genre").ifEmpty { null },
+            created = attrs.dateAttr("created") ?: 0L,
         )
-
-    fun playlists(
-        sourceId: Long,
-        document: Document,
-    ): List<Playlist> = document.elements("playlist").map { playlist(sourceId, it) }.filter { it.id.isNotEmpty() }
 
     fun playlist(
         sourceId: Long,
-        element: Element,
+        attrs: Attributes,
     ): Playlist =
         Playlist(
             sourceId = sourceId,
-            id = element.attr("id"),
-            name = element.attr("name"),
-            comment = element.attr("comment").ifEmpty { null },
-            coverArt = element.attr("coverArt").ifEmpty { null },
-            songCount = element.longAttr("songCount") ?: 0L,
-            created = element.dateAttr("created") ?: 0L,
-            changed = element.dateAttr("changed") ?: 0L,
-            duration = element.longAttr("duration") ?: 0L,
+            id = attrs.attr("id"),
+            name = attrs.attr("name"),
+            comment = attrs.attr("comment").ifEmpty { null },
+            coverArt = attrs.attr("coverArt").ifEmpty { null },
+            songCount = attrs.longAttr("songCount") ?: 0L,
+            created = attrs.dateAttr("created") ?: 0L,
+            changed = attrs.dateAttr("changed") ?: 0L,
+            duration = attrs.longAttr("duration") ?: 0L,
         )
 
-    fun playlistSongs(
+    fun playlistSong(
         sourceId: Long,
         playlistId: String,
-        document: Document,
-    ): List<PlaylistSong> =
-        document.elements("entry").mapIndexed { index, element ->
-            PlaylistSong(
-                sourceId = sourceId,
-                playlistId = playlistId,
-                songId = element.attr("id"),
-                position = index.toLong(),
-            )
-        }
-}
+        position: Long,
+        attrs: Attributes,
+    ): PlaylistSong =
+        PlaylistSong(
+            sourceId = sourceId,
+            playlistId = playlistId,
+            songId = attrs.attr("id"),
+            position = position,
+        )
 
-private fun Element.discTitles(): Map<Long, String> =
-    childElements("discTitles")
-        .mapNotNull { title ->
-            val disc = title.longAttr("disc") ?: return@mapNotNull null
-            title.attr("title").takeIf { it.isNotBlank() }?.let { disc to it }
-        }.toMap()
+    internal fun readStatus(input: InputStream) {
+        parse(input, StatusHandler())
+    }
 
-private fun Element.childElements(tag: String): List<Element> {
-    val children = childNodes
-    return (0 until children.length).mapNotNull { index ->
-        (children.item(index) as? Element)?.takeIf { it.tagName == tag }
+    internal fun <T> readEntities(
+        input: InputStream,
+        entityTag: String,
+        create: (Attributes) -> T,
+        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+        onEnd: (T) -> Unit,
+    ) {
+        parse(input, EntityHandler(entityTag, create, onChild, onEnd, stopAfterFirst = false))
+    }
+
+    internal fun containsEntity(
+        input: InputStream,
+        entityTag: String,
+    ): Boolean {
+        val handler = EntityHandler(entityTag, { Unit }, { _, _, _ -> }, { }, stopAfterFirst = true)
+        parse(input, handler)
+        return handler.found
     }
 }
 
-private fun Element.elements(tag: String): List<Element> {
-    val nodes = getElementsByTagName(tag)
-    return (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
+internal class AlbumDraft(
+    val sourceId: Long,
+    var id: String = "",
+    var artistId: String? = null,
+    var name: String = "",
+    var albumArtist: String? = null,
+    var created: Long = 0L,
+    var coverArt: String? = null,
+    var genre: String? = null,
+    var year: Long? = null,
+    var starred: Long? = null,
+    var songCount: Long = 0L,
+    val discTitles: MutableMap<Long, String> = mutableMapOf(),
+) {
+    fun addDiscTitle(attrs: Attributes) {
+        val disc = attrs.longAttr("disc") ?: return
+        val title = attrs.attr("title").takeIf { it.isNotBlank() } ?: return
+        discTitles[disc] = title
+    }
+
+    fun toAlbum(): Album =
+        Album(
+            sourceId = sourceId,
+            id = id,
+            artistId = artistId,
+            name = name,
+            albumArtist = albumArtist,
+            created = created,
+            coverArt = coverArt,
+            genre = genre,
+            year = year,
+            starred = starred,
+            songCount = songCount,
+            frequentRank = null,
+            recentRank = null,
+            discTitles = discTitles.toMap(),
+        )
 }
 
-private fun Document.elements(tag: String): List<Element> {
-    val nodes = getElementsByTagName(tag)
-    return (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
+internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
+
+internal fun Attributes.longAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
+
+internal fun Attributes.dateAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
+
+private const val ROOT_TAG = "subsonic-response"
+
+private class XmlFailure(
+    val code: Int,
+    message: String,
+) : RuntimeException(message)
+
+private class StopReading : RuntimeException()
+
+private abstract class SubsonicResponseHandler : DefaultHandler() {
+    private var depth = 0
+    private var sawRoot = false
+    private var statusFailed = false
+
+    override fun startElement(
+        uri: String?,
+        localName: String?,
+        qName: String,
+        attributes: Attributes,
+    ) {
+        depth++
+        if (!sawRoot) {
+            sawRoot = true
+            if (qName != ROOT_TAG) throw XmlFailure(-1, "Unexpected response from the server")
+            if (attributes.getValue("status") != "ok") statusFailed = true
+        }
+        if (qName == "error") {
+            throw XmlFailure(
+                attributes.getValue("code")?.toIntOrNull() ?: -1,
+                attributes.getValue("message") ?: "Unknown error",
+            )
+        }
+        onElementStart(qName, attributes, depth)
+    }
+
+    override fun endElement(
+        uri: String?,
+        localName: String?,
+        qName: String,
+    ) {
+        onElementEnd(qName, depth)
+        depth--
+    }
+
+    override fun endDocument() {
+        if (statusFailed) throw XmlFailure(-1, "Unknown error")
+    }
+
+    protected open fun onElementStart(
+        name: String,
+        attributes: Attributes,
+        depth: Int,
+    ) = Unit
+
+    protected open fun onElementEnd(
+        name: String,
+        depth: Int,
+    ) = Unit
 }
 
-private fun Element.attr(name: String): String = getAttribute(name)
+private class StatusHandler : SubsonicResponseHandler()
 
-private fun Element.longAttr(name: String): Long? = getAttribute(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
+private class EntityHandler<T>(
+    private val entityTag: String,
+    private val create: (Attributes) -> T,
+    private val onChild: (T, String, Attributes) -> Unit,
+    private val onEnd: (T) -> Unit,
+    private val stopAfterFirst: Boolean,
+) : SubsonicResponseHandler() {
+    private var current: T? = null
+    private var entityDepth = -1
 
-private fun Element.dateAttr(name: String): Long? = getAttribute(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
+    var found = false
+        private set
+
+    override fun onElementStart(
+        name: String,
+        attributes: Attributes,
+        depth: Int,
+    ) {
+        val active = current
+        if (active == null) {
+            if (name == entityTag) {
+                current = create(attributes)
+                entityDepth = depth
+            }
+        } else if (depth == entityDepth + 1) {
+            onChild(active, name, attributes)
+        }
+    }
+
+    override fun onElementEnd(
+        name: String,
+        depth: Int,
+    ) {
+        val active = current ?: return
+        if (name == entityTag && depth == entityDepth) {
+            onEnd(active)
+            found = true
+            current = null
+            entityDepth = -1
+            if (stopAfterFirst) throw StopReading()
+        }
+    }
+}
+
+private fun parse(
+    input: InputStream,
+    handler: DefaultHandler,
+) {
+    try {
+        secureParserFactory().newSAXParser().parse(input, handler)
+    } catch (failure: XmlFailure) {
+        throw SubsonicException(failure.code, failure.message ?: "Unknown error")
+    } catch (_: StopReading) {
+    }
+}
+
+private fun secureParserFactory(): SAXParserFactory =
+    SAXParserFactory.newInstance().apply {
+        isNamespaceAware = false
+        isValidating = false
+        setFeatureQuietly("http://apache.org/xml/features/disallow-doctype-decl", true)
+        setFeatureQuietly("http://xml.org/sax/features/external-general-entities", false)
+        setFeatureQuietly("http://xml.org/sax/features/external-parameter-entities", false)
+        setFeatureQuietly("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+    }
+
+private fun SAXParserFactory.setFeatureQuietly(
+    name: String,
+    enabled: Boolean,
+) {
+    try {
+        setFeature(name, enabled)
+    } catch (_: ParserConfigurationException) {
+    } catch (_: SAXException) {
+    }
+}
 
 internal object IsoDate {
     private val timezone = Regex("(Z|[+-]\\d{2}:?\\d{2})$", RegexOption.IGNORE_CASE)

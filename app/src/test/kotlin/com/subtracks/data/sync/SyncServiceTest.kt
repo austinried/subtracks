@@ -14,7 +14,9 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.MusicSource
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -293,6 +295,103 @@ class SyncServiceTest {
             assertEquals(mapOf(1L to "New"), storedDiscs("al1"))
         }
 
+    @Test
+    fun syncCommitsMultipleBatchesAndPrunes() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = (1..5).map { artist("a$it") },
+                    songs = (1..5).map { song("s$it") },
+                    batchSize = 2,
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals((1..5).map { "a$it" }, db.libraryDao().artistIds(1).sorted())
+            assertEquals((1..5).map { "s$it" }, db.libraryDao().songIds(1).sorted())
+
+            source.artists = (1..3).map { artist("a$it") }
+            source.songs = (1..3).map { song("s$it") }
+
+            SyncService(db, source).sync()
+
+            assertEquals((1..3).map { "a$it" }, db.libraryDao().artistIds(1).sorted())
+            assertEquals((1..3).map { "s$it" }, db.libraryDao().songIds(1).sorted())
+        }
+
+    @Test
+    fun playlistSongsSplitAcrossBatchesKeepTheirTail() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    songs = (1..5).map { song("s$it") },
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = (1..5).map { PlaylistSong(1, "p1", "s$it", (it - 1).toLong()) },
+                    batchSize = 2,
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(
+                5,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+
+            source.playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0), PlaylistSong(1, "p1", "s2", 1))
+
+            SyncService(db, source).sync()
+            assertEquals(
+                2,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+        }
+
+    @Test
+    fun removingAPlaylistRemovesItsSongs() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    songs = listOf(song("s1")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(
+                1,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+
+            source.playlists = emptyList()
+            source.playlistSongs = emptyList()
+
+            SyncService(db, source).sync()
+
+            assertEquals(0, db.libraryDao().playlistIds(1).size)
+            assertEquals(
+                0,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+        }
+
     private suspend fun storedDiscs(albumId: String): Map<Long, String> =
         db
             .libraryDao()
@@ -359,18 +458,24 @@ private class FakeMusicSource(
     var songs: List<Song> = emptyList(),
     var playlists: List<Playlist> = emptyList(),
     var playlistSongs: List<PlaylistSong> = emptyList(),
+    private val batchSize: Int = 1000,
 ) : MusicSource {
     override val id: Long = 1
 
     override suspend fun ping() = Unit
 
-    override suspend fun getArtists(): List<Artist> = artists
+    override fun artists(): Flow<List<Artist>> = batches(artists)
 
-    override suspend fun getAlbums(): List<Album> = albums
+    override fun albums(): Flow<List<Album>> = batches(albums)
 
-    override suspend fun getSongs(): List<Song> = songs
+    override fun songs(): Flow<List<Song>> = batches(songs)
 
-    override suspend fun getPlaylists(): List<Playlist> = playlists
+    override fun playlists(): Flow<List<Playlist>> = batches(playlists)
 
-    override suspend fun getPlaylistSongs(playlists: List<Playlist>): List<PlaylistSong> = playlistSongs
+    override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> = batches(playlistSongs)
+
+    private fun <T> batches(items: List<T>): Flow<List<T>> =
+        flow {
+            items.chunked(batchSize).forEach { emit(it) }
+        }
 }

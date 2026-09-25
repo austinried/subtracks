@@ -38,7 +38,7 @@ class SubsonicClientTest {
     fun tokenAuthSendsSaltAndHash() {
         server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))
 
-        client(tokenAuth = true).get("ping")
+        client(tokenAuth = true).check("ping")
 
         val url = server.takeRequest().requestUrl!!
         assertEquals("/rest/ping.view", url.encodedPath)
@@ -53,7 +53,7 @@ class SubsonicClientTest {
     fun plaintextAuthSendsPassword() {
         server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))
 
-        client(tokenAuth = false).get("ping")
+        client(tokenAuth = false).check("ping")
 
         val url = server.takeRequest().requestUrl!!
         assertEquals("secret", url.queryParameter("p"))
@@ -64,7 +64,7 @@ class SubsonicClientTest {
     fun paramsAreForwarded() {
         server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))
 
-        client(tokenAuth = true).get("getCoverArt", mapOf("id" to "cov", "size" to "256"))
+        client(tokenAuth = true).check("getCoverArt", mapOf("id" to "cov", "size" to "256"))
 
         val url = server.takeRequest().requestUrl!!
         assertEquals("cov", url.queryParameter("id"))
@@ -79,7 +79,7 @@ class SubsonicClientTest {
             ),
         )
 
-        val error = assertThrows(SubsonicException::class.java) { client(tokenAuth = true).get("ping") }
+        val error = assertThrows(SubsonicException::class.java) { client(tokenAuth = true).check("ping") }
         assertEquals(40, error.code)
         assertEquals("Wrong username", error.message)
     }
@@ -88,6 +88,6 @@ class SubsonicClientTest {
     fun nonSubsonicResponseThrows() {
         server.enqueue(MockResponse().setBody("<html><body>Sign in</body></html>"))
 
-        assertThrows(SubsonicException::class.java) { client(tokenAuth = true).get("ping") }
+        assertThrows(SubsonicException::class.java) { client(tokenAuth = true).check("ping") }
     }
 }

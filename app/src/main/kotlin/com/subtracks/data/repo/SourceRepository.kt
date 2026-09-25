@@ -112,7 +112,7 @@ class SourceRepository(
         useTokenAuth: Boolean,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
-            runCatching { client(address, username, password, useTokenAuth).get("ping") }.map { }
+            runCatching { client(address, username, password, useTokenAuth).check("ping") }
         }
 
     suspend fun sync(): Result<Unit> =

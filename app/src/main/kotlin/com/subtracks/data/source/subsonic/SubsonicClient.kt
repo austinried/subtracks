@@ -3,11 +3,8 @@ package com.subtracks.data.source.subsonic
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.w3c.dom.Document
-import org.w3c.dom.Element
+import java.io.InputStream
 import java.security.MessageDigest
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.parsers.ParserConfigurationException
 
 class SubsonicException(
     val code: Int,
@@ -41,10 +38,18 @@ class SubsonicClient(
         return builder.build()
     }
 
-    fun get(
+    fun check(
         method: String,
         params: Map<String, String> = emptyMap(),
-    ): Document {
+    ) {
+        stream(method, params) { SubsonicXml.readStatus(it) }
+    }
+
+    fun <T> stream(
+        method: String,
+        params: Map<String, String> = emptyMap(),
+        body: (InputStream) -> T,
+    ): T {
         val request =
             Request
                 .Builder()
@@ -55,47 +60,13 @@ class SubsonicClient(
             if (!response.isSuccessful) {
                 throw SubsonicException(-1, "HTTP ${response.code}")
             }
-            val stream = response.body.byteStream()
-            val document = secureDocumentBuilderFactory().newDocumentBuilder().parse(stream)
-            val root = document.documentElement
-            if (root == null || root.tagName != "subsonic-response") {
-                throw SubsonicException(-1, "Unexpected response from the server")
-            }
-            if (root.getAttribute("status") == "failed") {
-                val error = root.getElementsByTagName("error").item(0) as? Element
-                throw SubsonicException(
-                    error?.getAttribute("code")?.toIntOrNull() ?: -1,
-                    error?.getAttribute("message") ?: "Unknown error",
-                )
-            }
-            return document
+            return body(response.body.byteStream())
         }
     }
 
     companion object {
         const val API_VERSION = "1.13.0"
         const val CLIENT = "subtracks"
-
-        private fun secureDocumentBuilderFactory(): DocumentBuilderFactory =
-            DocumentBuilderFactory.newInstance().apply {
-                isNamespaceAware = false
-                isExpandEntityReferences = false
-                setFeatureQuietly("http://apache.org/xml/features/disallow-doctype-decl", true)
-                setFeatureQuietly("http://xml.org/sax/features/external-general-entities", false)
-                setFeatureQuietly("http://xml.org/sax/features/external-parameter-entities", false)
-                setFeatureQuietly("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-            }
-
-        private fun DocumentBuilderFactory.setFeatureQuietly(
-            name: String,
-            enabled: Boolean,
-        ) {
-            try {
-                setFeature(name, enabled)
-            } catch (_: ParserConfigurationException) {
-                // Android's parser does not implement every hardening flag; the root-tag check in get() is the backstop.
-            }
-        }
 
         private fun randomSalt(): String = (1..4).map { ('a'..'z').random() }.joinToString("")
 

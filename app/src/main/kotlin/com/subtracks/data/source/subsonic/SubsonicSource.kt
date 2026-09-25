@@ -6,9 +6,20 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import org.xml.sax.Attributes
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SubsonicSource(
     override val id: Long,
     private val client: SubsonicClient,
@@ -18,53 +29,77 @@ class SubsonicSource(
     private var emptyQuerySearchSupported: Boolean? = null
 
     override suspend fun ping() {
-        withContext(Dispatchers.IO) { client.get("ping") }
+        withContext(Dispatchers.IO) { client.check("ping") }
     }
 
-    override suspend fun getArtists(): List<Artist> =
-        withContext(Dispatchers.IO) {
-            SubsonicXml.artists(id, client.get("getArtists"))
-        }
+    override fun artists(): Flow<List<Artist>> =
+        entityBatches(
+            method = "getArtists",
+            tag = "artist",
+            create = { SubsonicXml.artist(id, it) },
+            accept = { it.id.isNotEmpty() },
+        )
 
-    override suspend fun getAlbums(): List<Album> =
-        withContext(Dispatchers.IO) {
+    override fun albums(): Flow<List<Album>> =
+        flow {
             val (frequent, recent) = fetchRanks()
-            val albums = mutableListOf<Album>()
             var offset = 0
             var pages = 0
             while (pages < MAX_PAGES) {
-                val document = client.get("getAlbumList2", page("newest", offset))
-                val batch = SubsonicXml.albums(id, document)
-                albums +=
-                    batch.map {
-                        it.copy(frequentRank = frequent[it.id], recentRank = recent[it.id])
-                    }
-                if (batch.size < PAGE_SIZE) break
+                var count = 0
+                entityBatches(
+                    method = "getAlbumList2",
+                    params = page("newest", offset),
+                    tag = "album",
+                    create = { SubsonicXml.albumDraft(id, it) },
+                    onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
+                    accept = { it.id.isNotEmpty() },
+                ).collect { batch ->
+                    count += batch.size
+                    emit(
+                        batch.map {
+                            it.toAlbum().copy(
+                                frequentRank = frequent[it.id],
+                                recentRank = recent[it.id],
+                            )
+                        },
+                    )
+                }
+                if (count < PAGE_SIZE) break
                 offset += PAGE_SIZE
                 pages++
             }
-            albums
-        }
+        }.flowOn(Dispatchers.IO)
 
-    override suspend fun getSongs(): List<Song> =
-        withContext(Dispatchers.IO) {
-            if (supportsEmptyQuerySearch()) searchSongs() else albumSongs()
-        }
-
-    override suspend fun getPlaylists(): List<Playlist> =
-        withContext(Dispatchers.IO) {
-            SubsonicXml.playlists(id, client.get("getPlaylists"))
-        }
-
-    override suspend fun getPlaylistSongs(playlists: List<Playlist>): List<PlaylistSong> =
-        withContext(Dispatchers.IO) {
-            val result = mutableListOf<PlaylistSong>()
-            for (playlist in playlists) {
-                val document = client.get("getPlaylist", mapOf("id" to playlist.id))
-                result += SubsonicXml.playlistSongs(id, playlist.id, document)
+    override fun songs(): Flow<List<Song>> =
+        flow {
+            if (supportsEmptyQuerySearch()) {
+                emitAll(searchSongs())
+            } else {
+                emitAll(albumSongs())
             }
-            result
-        }
+        }.flowOn(Dispatchers.IO)
+
+    override fun playlists(): Flow<List<Playlist>> =
+        entityBatches(
+            method = "getPlaylists",
+            tag = "playlist",
+            create = { SubsonicXml.playlist(id, it) },
+            accept = { it.id.isNotEmpty() },
+        )
+
+    override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> =
+        flow {
+            for (playlistId in playlistIds) {
+                var position = 0L
+                entityBatches(
+                    method = "getPlaylist",
+                    params = mapOf("id" to playlistId),
+                    tag = "entry",
+                    create = { attrs -> SubsonicXml.playlistSong(id, playlistId, position++, attrs) },
+                ).collect { emit(it) }
+            }
+        }.flowOn(Dispatchers.IO)
 
     fun streamUri(songId: String) =
         client.uri(
@@ -93,16 +128,84 @@ class SubsonicSource(
         )
     }
 
-    private fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
+    private fun searchSongs(): Flow<List<Song>> =
+        flow {
+            var offset = 0
+            var pages = 0
+            while (pages < MAX_PAGES) {
+                var count = 0
+                entityBatches(
+                    method = "search3",
+                    params =
+                        mapOf(
+                            "query" to "\"\"",
+                            "songCount" to PAGE_SIZE.toString(),
+                            "songOffset" to offset.toString(),
+                            "artistCount" to "0",
+                            "albumCount" to "0",
+                        ),
+                    tag = "song",
+                    create = { SubsonicXml.song(id, it) },
+                    accept = { it.id.isNotEmpty() },
+                ).collect { batch ->
+                    count += batch.size
+                    emit(batch)
+                }
+                if (count < PAGE_SIZE) break
+                offset += PAGE_SIZE
+                pages++
+            }
+        }
 
-    private fun fetchRank(type: String): Map<String, Long> {
-        val ranks = mutableMapOf<String, Long>()
+    private fun albumSongs(): Flow<List<Song>> =
+        flow {
+            var offset = 0
+            var pages = 0
+            while (pages < MAX_PAGES) {
+                val albums = ArrayList<String>(PAGE_SIZE)
+                entityBatches(
+                    method = "getAlbumList2",
+                    params = page("alphabeticalByName", offset),
+                    tag = "album",
+                    create = { it.attr("id") },
+                    accept = { it.isNotEmpty() },
+                ).collect { albums += it }
+                for (albumId in albums) {
+                    entityBatches(
+                        method = "getAlbum",
+                        params = mapOf("id" to albumId),
+                        tag = "song",
+                        create = { SubsonicXml.song(id, it) },
+                        accept = { it.id.isNotEmpty() },
+                    ).collect { emit(it) }
+                }
+                if (albums.size < PAGE_SIZE) break
+                offset += PAGE_SIZE
+                pages++
+            }
+        }
+
+    private suspend fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
+
+    private suspend fun fetchRank(type: String): Map<String, Long> {
+        val ranks = HashMap<String, Long>()
         var offset = 0
         var pages = 0
         while (pages < MAX_PAGES) {
-            val batch = SubsonicXml.albums(id, client.get("getAlbumList2", page(type, offset)))
-            batch.forEachIndexed { index, album -> ranks[album.id] = (offset + index).toLong() }
-            if (batch.size < PAGE_SIZE) break
+            var index = 0
+            entityBatches(
+                method = "getAlbumList2",
+                params = page(type, offset),
+                tag = "album",
+                create = { it.attr("id") },
+                accept = { it.isNotEmpty() },
+            ).collect { batch ->
+                batch.forEach { albumId ->
+                    ranks[albumId] = (offset + index).toLong()
+                    index++
+                }
+            }
+            if (index < PAGE_SIZE) break
             offset += PAGE_SIZE
             pages++
         }
@@ -113,12 +216,10 @@ class SubsonicSource(
         emptyQuerySearchSupported?.let { return it }
         val supported =
             try {
-                val document =
-                    client.get(
-                        "search3",
-                        mapOf("query" to "\"\"", "songCount" to "1", "artistCount" to "0", "albumCount" to "0"),
-                    )
-                document.getElementsByTagName("song").length > 0
+                client.stream(
+                    "search3",
+                    mapOf("query" to "\"\"", "songCount" to "1", "artistCount" to "0", "albumCount" to "0"),
+                ) { input -> SubsonicXml.containsEntity(input, "song") }
             } catch (_: SubsonicException) {
                 false
             }
@@ -126,48 +227,41 @@ class SubsonicSource(
         return supported
     }
 
-    private fun searchSongs(): List<Song> {
-        val songs = mutableListOf<Song>()
-        var offset = 0
-        var pages = 0
-        while (pages < MAX_PAGES) {
-            val document =
-                client.get(
-                    "search3",
-                    mapOf(
-                        "query" to "\"\"",
-                        "songCount" to PAGE_SIZE.toString(),
-                        "songOffset" to offset.toString(),
-                        "artistCount" to "0",
-                        "albumCount" to "0",
-                    ),
-                )
-            val batch = SubsonicXml.songs(id, document)
-            songs += batch
-            if (batch.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
-            pages++
-        }
-        return songs
-    }
+    private fun <T> entityBatches(
+        method: String,
+        params: Map<String, String> = emptyMap(),
+        tag: String,
+        create: (Attributes) -> T,
+        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+        accept: (T) -> Boolean = { true },
+    ): Flow<List<T>> =
+        channelFlow {
+            val buffer = ArrayList<T>(PAGE_SIZE)
 
-    private fun albumSongs(): List<Song> {
-        val songs = mutableListOf<Song>()
-        var offset = 0
-        var pages = 0
-        while (pages < MAX_PAGES) {
-            val document = client.get("getAlbumList2", page("alphabeticalByName", offset))
-            val albums = SubsonicXml.albums(id, document)
-            for (album in albums) {
-                val albumDocument = client.get("getAlbum", mapOf("id" to album.id))
-                songs += SubsonicXml.songs(id, albumDocument)
+            fun flush() {
+                if (buffer.isEmpty()) return
+                if (trySendBlocking(buffer.toList()).isFailure) {
+                    throw CancellationException("Library sync cancelled")
+                }
+                buffer.clear()
             }
-            if (albums.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
-            pages++
-        }
-        return songs
-    }
+
+            client.stream(method, params) { input ->
+                SubsonicXml.readEntities(
+                    input = input,
+                    entityTag = tag,
+                    create = create,
+                    onChild = onChild,
+                    onEnd = { entity ->
+                        if (accept(entity)) {
+                            buffer += entity
+                            if (buffer.size >= PAGE_SIZE) flush()
+                        }
+                    },
+                )
+            }
+            flush()
+        }.flowOn(Dispatchers.IO).buffer(1)
 
     private fun page(
         type: String,

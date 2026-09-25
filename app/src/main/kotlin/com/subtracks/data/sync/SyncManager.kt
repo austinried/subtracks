@@ -36,12 +36,11 @@ class SyncManager(
 
     private suspend fun runSync() {
         _status.value = SyncStatus.Running
+        val result = sourceRepository.sync()
+        queueRepository.invalidateLibraryCache()
         _status.value =
-            sourceRepository.sync().fold(
-                onSuccess = {
-                    queueRepository.invalidateLibraryCache()
-                    SyncStatus.Success
-                },
+            result.fold(
+                onSuccess = { SyncStatus.Success },
                 onFailure = { error ->
                     Log.w(TAG, "Sync failed", error)
                     SyncStatus.Failed(error.message ?: "Sync failed")

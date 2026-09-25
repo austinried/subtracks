@@ -1,5 +1,7 @@
 package com.subtracks.data.source.subsonic
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -40,7 +42,7 @@ class SubsonicSourceIntegrationTest(
     @Test
     fun artists() =
         runBlocking {
-            val artists = source.getArtists()
+            val artists = source.artists().collectAll()
 
             assertEquals(2, artists.size)
             assertNotNull(artists.first { it.name == "Ugress" }.starred)
@@ -50,7 +52,7 @@ class SubsonicSourceIntegrationTest(
     @Test
     fun albums() =
         runBlocking {
-            val albums = source.getAlbums()
+            val albums = source.albums().collectAll()
 
             assertEquals(3, albums.size)
 
@@ -72,23 +74,23 @@ class SubsonicSourceIntegrationTest(
     @Test
     fun songs() =
         runBlocking {
-            assertEquals(20, source.getSongs().size)
+            assertEquals(20, source.songs().collectAll().size)
         }
 
     @Test
     fun playlists() =
         runBlocking {
-            val playlists = source.getPlaylists()
+            val playlists = source.playlists().collectAll()
 
             assertEquals(1, playlists.size)
-            assertEquals(7, source.getPlaylistSongs(playlists).size)
+            assertEquals(7, source.playlistSongs(playlists.map { it.id }).collectAll().size)
         }
 
     @Test
     fun albumArtistRelation() =
         runBlocking {
-            val artists = source.getArtists()
-            val albums = source.getAlbums()
+            val artists = source.artists().collectAll()
+            val albums = source.albums().collectAll()
 
             val ugressAlbums =
                 albums
@@ -103,6 +105,8 @@ class SubsonicSourceIntegrationTest(
                     .map { it.name }
             assertEquals(listOf("I Don't Know What I'm Doing"), bradAlbums)
         }
+
+    private suspend fun <T> Flow<List<T>>.collectAll(): List<T> = toList().flatten()
 
     data class Server(
         val name: String,

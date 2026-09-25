@@ -116,6 +116,12 @@ interface LibraryDao {
     )
 
     @Query(
+        "DELETE FROM playlist_songs WHERE sourceId = :sourceId " +
+            "AND playlistId NOT IN (SELECT id FROM playlists WHERE sourceId = :sourceId)",
+    )
+    suspend fun deleteOrphanPlaylistSongs(sourceId: Long)
+
+    @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
             "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
             "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +

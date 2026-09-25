@@ -24,61 +24,131 @@ class SyncService(
 
     suspend fun sync() =
         lock.withLock {
-            val artists = source.getArtists()
-            val albums = source.getAlbums()
-            val songs = source.getSongs()
+            syncArtists()
+            syncAlbums()
+            syncSongs()
+            syncPlaylists()
+            syncPlaylistSongs()
+        }
+
+    private suspend fun syncArtists() {
+        val library = db.libraryDao()
+        val stale = library.artistIds(source.id).toHashSet()
+        source.artists().collect { batch ->
+            if (batch.isEmpty()) return@collect
+            write("artists", artistColumns, primaryKey, batch) { it.values() }
+            stale -= batch.mapTo(HashSet()) { it.id }
+        }
+        deleteStale(stale) { library.deleteArtists(source.id, it) }
+    }
+
+    private suspend fun syncAlbums() {
+        val library = db.libraryDao()
+        val staleAlbums = library.albumIds(source.id).toHashSet()
+        val staleDiscs = library.discKeys(source.id).toHashSet()
+        source.albums().collect { batch ->
+            if (batch.isEmpty()) return@collect
             val discs =
-                albums.flatMap { album ->
+                batch.flatMap { album ->
                     album.discTitles.map { (disc, title) -> Disc(album.sourceId, album.id, disc, title) }
                 }
-            val playlists = source.getPlaylists()
-            val playlistSongs = source.getPlaylistSongs(playlists)
+            writeAlbumsAndDiscs(batch, discs)
+            staleAlbums -= batch.mapTo(HashSet()) { it.id }
+            staleDiscs -= discs.mapTo(HashSet()) { DiscKey(it.albumId, it.disc) }
+        }
+        deleteStale(staleAlbums) { library.deleteAlbums(source.id, it) }
+        deleteStaleDiscs(staleDiscs)
+    }
 
-            db.useWriterConnection { transactor ->
-                transactor.immediateTransaction {
-                    upsertChanged("artists", artistColumns, primaryKey, artists) { it.values() }
-                    upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
-                    upsertChanged("discs", discColumns, discKey, discs) { it.values() }
-                    upsertChanged("songs", songColumns, primaryKey, songs) { it.values() }
-                    upsertChanged("playlists", playlistColumns, primaryKey, playlists) { it.values() }
-                    upsertChanged("playlist_songs", playlistSongColumns, playlistSongKey, playlistSongs) { it.values() }
+    private suspend fun syncSongs() {
+        val library = db.libraryDao()
+        val stale = library.songIds(source.id).toHashSet()
+        source.songs().collect { batch ->
+            if (batch.isEmpty()) return@collect
+            write("songs", songColumns, primaryKey, batch) { it.values() }
+            stale -= batch.mapTo(HashSet()) { it.id }
+        }
+        deleteStale(stale) { library.deleteSongs(source.id, it) }
+    }
 
-                    val library = db.libraryDao()
-                    val existingArtistIds = library.artistIds(source.id)
-                    val existingAlbumIds = library.albumIds(source.id)
-                    val existingSongIds = library.songIds(source.id)
-                    val existingPlaylistIds = library.playlistIds(source.id)
-                    val existingDiscKeys = library.discKeys(source.id)
+    private suspend fun syncPlaylists() {
+        val library = db.libraryDao()
+        val stale = library.playlistIds(source.id).toHashSet()
+        source.playlists().collect { batch ->
+            if (batch.isEmpty()) return@collect
+            write("playlists", playlistColumns, primaryKey, batch) { it.values() }
+            stale -= batch.mapTo(HashSet()) { it.id }
+        }
+        deleteStale(stale) { library.deletePlaylists(source.id, it) }
+    }
 
-                    prune(existingArtistIds, artists.map { it.id }) { library.deleteArtists(source.id, it) }
-                    prune(existingAlbumIds, albums.map { it.id }) { library.deleteAlbums(source.id, it) }
-                    prune(existingSongIds, songs.map { it.id }) { library.deleteSongs(source.id, it) }
-                    prune(existingPlaylistIds, playlists.map { it.id }) { library.deletePlaylists(source.id, it) }
+    private suspend fun syncPlaylistSongs() {
+        val library = db.libraryDao()
+        val playlistIds = library.playlistIds(source.id)
+        val counts = HashMap<String, Long>()
+        source.playlistSongs(playlistIds).collect { batch ->
+            if (batch.isEmpty()) return@collect
+            write("playlist_songs", playlistSongColumns, playlistSongKey, batch) { it.values() }
+            batch.forEach { counts[it.playlistId] = (counts[it.playlistId] ?: 0L) + 1L }
+        }
+        playlistIds.forEach { library.deletePlaylistSongsFrom(source.id, it, counts[it] ?: 0L) }
+        library.deleteOrphanPlaylistSongs(source.id)
+    }
 
-                    val currentDiscKeys = discs.mapTo(HashSet()) { DiscKey(it.albumId, it.disc) }
-                    existingDiscKeys.filterNot { it in currentDiscKeys }.forEach { library.deleteDisc(source.id, it.albumId, it.disc) }
+    private suspend fun <T> write(
+        table: String,
+        columns: List<String>,
+        key: List<String>,
+        rows: List<T>,
+        values: (T) -> List<Any?>,
+    ) {
+        if (rows.isEmpty()) return
+        db.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                connection.upsertChanged(table, columns, key, rows, values)
+            }
+        }
+    }
 
-                    val playlistSongCounts = playlistSongs.groupingBy { it.playlistId }.eachCount()
-                    playlists.forEach { playlist ->
-                        library.deletePlaylistSongsFrom(source.id, playlist.id, (playlistSongCounts[playlist.id] ?: 0).toLong())
+    private suspend fun writeAlbumsAndDiscs(
+        albums: List<Album>,
+        discs: List<Disc>,
+    ) {
+        db.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                connection.upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
+                connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
+            }
+        }
+    }
+
+    private suspend fun deleteStaleDiscs(stale: Set<DiscKey>) {
+        if (stale.isEmpty()) return
+        db.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                connection.usePrepared("DELETE FROM discs WHERE sourceId = ? AND albumId = ? AND disc = ?") { statement ->
+                    stale.forEach { key ->
+                        statement.bind(1, source.id)
+                        statement.bind(2, key.albumId)
+                        statement.bind(3, key.disc)
+                        statement.step()
+                        statement.reset()
+                        statement.clearBindings()
                     }
-                    (existingPlaylistIds - playlists.map { it.id }).forEach { library.deletePlaylistSongsFrom(source.id, it, 0) }
                 }
             }
         }
+    }
 
-    private suspend fun prune(
-        existing: List<String>,
-        current: List<String>,
+    private suspend fun deleteStale(
+        stale: Set<String>,
         delete: suspend (Collection<String>) -> Unit,
     ) {
-        val currentIds = current.toHashSet()
-        existing
-            .filterNot { it in currentIds }
-            .chunked(500)
-            .forEach { delete(it) }
+        stale.chunked(DELETE_CHUNK).forEach { delete(it) }
     }
 }
+
+private const val DELETE_CHUNK = 500
 
 private val primaryKey = listOf("sourceId", "id")
 

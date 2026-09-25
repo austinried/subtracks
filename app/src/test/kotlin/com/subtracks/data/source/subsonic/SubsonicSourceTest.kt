@@ -1,5 +1,6 @@
 package com.subtracks.data.source.subsonic
 
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
@@ -53,7 +54,33 @@ class SubsonicSourceTest {
                 }
             val source = SubsonicSource(1, client())
 
-            assertEquals(listOf("s1", "s2"), source.getSongs().map { it.id })
+            assertEquals(
+                listOf("s1", "s2"),
+                source
+                    .songs()
+                    .toList()
+                    .flatten()
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun artistsAreEmittedInBoundedBatches() =
+        runBlocking {
+            val count = 1200
+            val body =
+                buildString {
+                    append("<subsonic-response status=\"ok\"><artists>")
+                    repeat(count) { index ->
+                        append("<artist id=\"ar$index\" name=\"Artist $index\" albumCount=\"1\"/>")
+                    }
+                    append("</artists></subsonic-response>")
+                }
+            server.enqueue(MockResponse().setBody(body))
+
+            val sizes = SubsonicSource(1, client()).artists().toList().map { it.size }
+
+            assertEquals(listOf(500, 500, 200), sizes)
         }
 
     @Test

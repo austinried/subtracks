@@ -2,19 +2,37 @@ package com.subtracks.data.source.subsonic
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.w3c.dom.Document
-import javax.xml.parsers.DocumentBuilderFactory
+import org.xml.sax.Attributes
 
 class SubsonicXmlTest {
-    private fun parse(xml: String): Document =
-        DocumentBuilderFactory
-            .newInstance()
-            .newDocumentBuilder()
-            .parse(xml.byteInputStream(Charsets.UTF_8))
+    private fun <T> parse(
+        xml: String,
+        tag: String,
+        create: (Attributes) -> T,
+        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+    ): List<T> {
+        val result = mutableListOf<T>()
+        SubsonicXml.readEntities(
+            input = xml.byteInputStream(Charsets.UTF_8),
+            entityTag = tag,
+            create = create,
+            onChild = onChild,
+            onEnd = { result += it },
+        )
+        return result
+    }
+
+    private fun albums(xml: String) =
+        parse(
+            xml,
+            tag = "album",
+            create = { SubsonicXml.albumDraft(1, it) },
+            onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
+        ).map { it.toAlbum() }
 
     @Test
     fun mapsArtists() {
-        val document =
+        val artists =
             parse(
                 """
                 <subsonic-response status="ok">
@@ -24,9 +42,9 @@ class SubsonicXmlTest {
                   </artists>
                 </subsonic-response>
                 """.trimIndent(),
+                tag = "artist",
+                create = { SubsonicXml.artist(7, it) },
             )
-
-        val artists = SubsonicXml.artists(7, document)
 
         assertEquals(2, artists.size)
         assertEquals("Radiohead", artists[0].name)
@@ -38,8 +56,8 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsAlbumList() {
-        val document =
-            parse(
+        val albums =
+            albums(
                 """
                 <subsonic-response status="ok">
                   <albumList2>
@@ -49,8 +67,6 @@ class SubsonicXmlTest {
                 </subsonic-response>
                 """.trimIndent(),
             )
-
-        val albums = SubsonicXml.albums(1, document)
 
         assertEquals(2, albums.size)
         assertEquals("OK Computer", albums[0].name)
@@ -62,8 +78,8 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsAlbumDiscTitles() {
-        val document =
-            parse(
+        val albums =
+            albums(
                 """
                 <subsonic-response status="ok">
                   <albumList2>
@@ -76,8 +92,6 @@ class SubsonicXmlTest {
                 </subsonic-response>
                 """.trimIndent(),
             )
-
-        val albums = SubsonicXml.albums(1, document)
 
         assertEquals(mapOf(1L to "The Calm", 2L to "The Storm"), albums.single().discTitles)
     }
@@ -94,28 +108,52 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsSongsAndPlaylistEntries() {
-        val document =
-            parse(
-                """
-                <subsonic-response status="ok">
-                  <searchResult3>
-                    <song id="sg2" title="Idioteque" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="300" track="8" discNumber="1"/>
-                  </searchResult3>
-                  <playlist id="pl1" name="Favourites" songCount="1" created="2021-02-03T04:05:06.000Z">
-                    <entry id="sg1" title="Everything In Its Right Place" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="251" track="1" discNumber="1"/>
-                  </playlist>
-                </subsonic-response>
-                """.trimIndent(),
-            )
+        val xml =
+            """
+            <subsonic-response status="ok">
+              <searchResult3>
+                <song id="sg2" title="Idioteque" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="300" track="8" discNumber="1"/>
+              </searchResult3>
+              <playlist id="pl1" name="Favourites" songCount="1" created="2021-02-03T04:05:06.000Z">
+                <entry id="sg1" title="Everything In Its Right Place" artist="Radiohead" album="Kid A" albumId="al2" artistId="ar1" duration="251" track="1" discNumber="1"/>
+              </playlist>
+            </subsonic-response>
+            """.trimIndent()
 
-        val songs = SubsonicXml.songs(1, document)
-        val entries = SubsonicXml.playlistSongs(1, "pl1", document)
+        val songs = parse(xml, tag = "song", create = { SubsonicXml.song(1, it) })
+        var position = 0L
+        val entries = parse(xml, tag = "entry", create = { SubsonicXml.playlistSong(1, "pl1", position++, it) })
 
         assertEquals(1, songs.size)
         assertEquals("Idioteque", songs[0].title)
         assertEquals(300L, songs[0].duration)
         assertEquals(0L, entries[0].position)
         assertEquals("sg1", entries[0].songId)
-        assertEquals(251L, SubsonicXml.song(1, document.getElementsByTagName("entry").item(0) as org.w3c.dom.Element).duration)
+    }
+
+    @Test
+    fun statusOnlyReadRejectsAnHtmlLoginPage() {
+        val failure =
+            runCatching {
+                SubsonicXml.readStatus("<html><body>Sign in</body></html>".byteInputStream(Charsets.UTF_8))
+            }
+
+        assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+    }
+
+    @Test
+    fun containsEntityStopsAtTheFirstMatch() {
+        val xml =
+            """
+            <subsonic-response status="ok">
+              <searchResult3>
+                <song id="s1" title="One"/>
+                <song id="s2" title="Two"/>
+              </searchResult3>
+            </subsonic-response>
+            """.trimIndent()
+
+        assertEquals(true, SubsonicXml.containsEntity(xml.byteInputStream(Charsets.UTF_8), "song"))
+        assertEquals(false, SubsonicXml.containsEntity(xml.byteInputStream(Charsets.UTF_8), "artist"))
     }
 }
