@@ -1,5 +1,10 @@
 package com.subtracks.ui.library
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -293,17 +298,6 @@ fun LibraryScreen(
     }
 
     val density = LocalDensity.current
-    val titleLineHeight =
-        with(density) {
-            MaterialTheme.typography.headlineLarge.lineHeight
-                .toDp()
-        }
-    val titleTop = ((TopAppBarDefaults.TopAppBarExpandedHeight - titleLineHeight) / 2).coerceAtLeast(0.dp)
-    val titleHeight = titleTop + titleLineHeight + 4.dp
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    SideEffect { scrollBehavior.state.heightOffsetLimit = -with(density) { titleHeight.toPx() } }
-    val titleFraction = scrollBehavior.state.collapsedFraction
-
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
     val listBottomInset = bottomInset + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
@@ -313,35 +307,15 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(artwork?.let(::librarySurfaceColor) ?: MaterialTheme.colorScheme.background)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                    .background(artwork?.let(::librarySurfaceColor) ?: MaterialTheme.colorScheme.background),
         ) {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .background(artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
-                        .padding(top = statusBarTop),
+                        .padding(top = statusBarTop + 8.dp, bottom = 8.dp),
             ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(titleHeight * (1f - titleFraction))
-                            .clipToBounds(),
-                ) {
-                    Text(
-                        text = selectedTab.label,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        modifier =
-                            Modifier
-                                .offset(y = -(titleHeight * titleFraction))
-                                .wrapContentHeight(unbounded = true)
-                                .padding(start = 12.dp, end = 16.dp, top = titleTop),
-                    )
-                }
                 LibraryTabs(
                     pagerState = pagerState,
                     onTabSelected = onTabSelected,
@@ -642,77 +616,40 @@ private fun LibraryTabs(
     onOpenSettings: () -> Unit,
     artwork: ArtworkColors?,
 ) {
-    val iconFadeStart = 0.25f
-    val iconFadeEnd = 0.65f
-    val indicatorStretch = 18.dp
-    val density = LocalDensity.current
-    val bounds = remember { mutableStateMapOf<Int, Rect>() }
+    val labelHoldStart = 0.25f
+    val labelFadeEnd = 0.65f
     val page = pagerState.currentPage
     val fraction = pagerState.currentPageOffsetFraction
     val position = page + fraction
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 8.dp, end = 12.dp),
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        bounds[page]?.let { current ->
-            val neighbour = bounds[if (fraction >= 0f) page + 1 else page - 1]
-            val step = if (neighbour != null) abs(fraction) else 0f
-            val left = current.left + ((neighbour?.left ?: current.left) - current.left) * step
-            val right = current.right + ((neighbour?.right ?: current.right) - current.right) * step
-            val stretch = with(density) { indicatorStretch.toPx() } * abs(fraction) / 2f
-            Box(
-                modifier =
-                    Modifier
-                        .offset { IntOffset((left - stretch).roundToInt(), current.top.roundToInt()) }
-                        .width(with(density) { (right - left + stretch * 2f).toDp() })
-                        .height(with(density) { current.height.toDp() })
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
+        LibraryTab.entries.forEachIndexed { index, tab ->
+            TabButton(
+                tab = tab,
+                artwork = artwork,
+                progress =
+                    ((labelFadeEnd - abs(position - index)) / (labelFadeEnd - labelHoldStart))
+                        .coerceIn(0f, 1f),
+                onClick = { onTabSelected(tab) },
             )
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            LibraryTab.entries.forEachIndexed { index, tab ->
-                TabButton(
-                    tab = tab,
-                    artwork = artwork,
-                    progress =
-                        ((iconFadeEnd - abs(position - index)) / (iconFadeEnd - iconFadeStart))
-                            .coerceIn(0f, 1f),
-                    onClick = { onTabSelected(tab) },
-                    modifier =
-                        Modifier.onGloballyPositioned { coordinates ->
-                            bounds[index] = coordinates.boundsInParent()
-                        },
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            if (syncing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.padding(end = 4.dp).size(20.dp),
-                    strokeWidth = 2.dp,
-                )
-            }
-            IconButton(onClick = onSync) {
-                Icon(
-                    imageVector = Icons.Rounded.Sync,
-                    contentDescription = "Sync",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-            IconButton(onClick = onOpenSettings) {
-                Icon(
-                    imageVector = Icons.Rounded.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
+        Spacer(Modifier.weight(1f))
+        if (syncing) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(end = 4.dp).size(20.dp),
+                strokeWidth = 2.dp,
+            )
+        }
+        IconButton(onClick = onOpenSettings) {
+            Icon(
+                imageVector = Icons.Rounded.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
         }
     }
 }
@@ -726,14 +663,17 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selected = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
-    val content = lerp(MaterialTheme.colorScheme.onBackground, selected, progress)
-    Box(
+    val container = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
+    val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
+    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedContent, progress)
+    Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .background(container.copy(alpha = progress))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = tab.icon,
@@ -741,5 +681,21 @@ private fun TabButton(
             tint = content,
             modifier = Modifier.size(24.dp),
         )
+        AnimatedVisibility(
+            visible = progress > 0.5f,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = tab.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = content,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+            }
+        }
     }
 }
