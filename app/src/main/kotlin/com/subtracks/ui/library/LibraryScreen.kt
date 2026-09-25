@@ -687,7 +687,6 @@ private fun LibraryTabs(
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
                     .background(headerColor)
                     .padding(8.dp),
         ) {
@@ -705,7 +704,6 @@ private fun LibraryTabs(
                     },
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
