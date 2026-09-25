@@ -266,6 +266,12 @@ fun HeroHeader(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val dividerColor =
+                    if (hasSongs) {
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    }
                 Box(contentAlignment = Alignment.Center) {
                     Row {
                         FilledIconButton(
@@ -289,7 +295,7 @@ fun HeroHeader(
                         Modifier
                             .width(1.dp)
                             .height(20.dp)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f)),
+                            .background(dividerColor),
                     )
                 }
             }

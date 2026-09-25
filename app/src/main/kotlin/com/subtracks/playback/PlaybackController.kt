@@ -114,7 +114,6 @@ class PlaybackController(
     private val startLock = Mutex()
 
     private var snapshot: QueueSnapshot? = null
-    private var lastDurationMs = 0L
     private var lastError: String? = null
     private var queueSourceId: Long? = null
     private var windowStart = 0L
@@ -229,7 +228,6 @@ class PlaybackController(
             windowJob?.cancel()
             windowStart = 0
             windowEnd = -1
-            lastDurationMs = 0
             lastError = null
             lastEdit = null
             endedHandled = false
@@ -607,7 +605,6 @@ class PlaybackController(
         windowJob?.cancel()
         windowStart = 0
         windowEnd = -1
-        lastDurationMs = 0
         lastError = null
         lastEdit = null
         endedHandled = false
@@ -682,7 +679,6 @@ class PlaybackController(
         bufferingJob = null
         showBuffering = false
         snapshot = null
-        lastDurationMs = 0
         lastError = null
         queueSourceId = null
         windowStart = 0
@@ -917,10 +913,10 @@ class PlaybackController(
     private fun refresh(position: Long? = currentPosition()) {
         val player = player ?: return
         updateBuffering()
-        lastDurationMs =
+        val durationMs =
             player.durationMs.takeIf { it > 0 }
                 ?: player.currentItem?.durationMs?.takeIf { it > 0 }
-                ?: lastDurationMs
+                ?: 0L
         _state.value =
             PlaybackState(
                 item = player.currentItem,
@@ -930,7 +926,7 @@ class PlaybackController(
                 isBuffering = showBuffering,
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
                 positionMs = player.currentPositionMs,
-                durationMs = lastDurationMs,
+                durationMs = durationMs,
                 hasNext = true,
                 hasPrevious = true,
                 shuffle = shuffleEnabled,
