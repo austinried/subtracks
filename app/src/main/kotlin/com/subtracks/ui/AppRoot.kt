@@ -183,114 +183,108 @@ private fun MainNavigation() {
     ArtworkTheme(artwork) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().imePadding()) {
-                Box(Modifier.weight(1f)) {
-                    // The now playing overlay covers this, and while it is up we drop the NavHost so
-                    // it cannot steal the back from the overlay's BackHandler.
-                    if (!nowPlayingOpen) {
-                        NavHost(
-                            navController = navController,
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .then(
-                                        if (playerVisible) {
-                                            Modifier.consumeWindowInsets(WindowInsets.navigationBars)
-                                        } else {
-                                            Modifier
-                                        },
-                                    ),
-                            startDestination = Routes.LIBRARY,
-                            enterTransition = {
-                                slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                                    fadeIn(tween(NAVIGATION_DURATION_MS))
-                            },
-                            exitTransition = {
-                                slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                                    fadeOut(tween(NAVIGATION_DURATION_MS))
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                                    fadeIn(tween(NAVIGATION_DURATION_MS))
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
-                                    fadeOut(tween(NAVIGATION_DURATION_MS))
-                            },
-                        ) {
-                            composable(Routes.LIBRARY) {
-                                LibraryRoute(
-                                    onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                                    onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
-                                    onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
-                                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                                    bottomInset = bottomInset,
-                                )
-                            }
-                            composable(Routes.SETTINGS) {
-                                SettingsRoute(
-                                    onAddServer = { navController.navigate(Routes.ADD_SERVER) },
-                                    onBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(
-                                route = Routes.ALBUM_DETAIL,
-                                arguments =
-                                    listOf(
-                                        navArgument("albumId") { type = NavType.StringType },
-                                        navArgument("coverArt") {
-                                            type = NavType.StringType
-                                            defaultValue = ""
-                                        },
-                                    ),
-                            ) { entry ->
-                                AlbumDetailRoute(
-                                    albumId = entry.arguments?.getString("albumId").orEmpty(),
-                                    coverArtId =
-                                        entry.arguments
-                                            ?.getString("coverArt")
-                                            .orEmpty()
-                                            .ifEmpty { null },
-                                    onBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(
-                                route = Routes.ARTIST_DETAIL,
-                                arguments =
-                                    listOf(
-                                        navArgument("artistId") { type = NavType.StringType },
-                                        navArgument("coverArt") {
-                                            type = NavType.StringType
-                                            defaultValue = ""
-                                        },
-                                    ),
-                            ) { entry ->
-                                ArtistDetailRoute(
-                                    artistId = entry.arguments?.getString("artistId").orEmpty(),
-                                    coverArtId =
-                                        entry.arguments
-                                            ?.getString("coverArt")
-                                            .orEmpty()
-                                            .ifEmpty { null },
-                                    onBack = { navController.popBackStack() },
-                                    onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                                )
-                            }
-                            composable(
-                                route = Routes.PLAYLIST_DETAIL,
-                                arguments = listOf(navArgument("playlistId") { type = NavType.StringType }),
-                            ) { entry ->
-                                PlaylistDetailRoute(
-                                    playlistId = entry.arguments?.getString("playlistId").orEmpty(),
-                                    onBack = { navController.popBackStack() },
-                                )
-                            }
-                            composable(Routes.ADD_SERVER) {
-                                AddSourceRoute(
-                                    onSaved = { navController.popBackStack() },
-                                    onBack = { navController.popBackStack() },
-                                )
-                            }
-                        }
+                NavHost(
+                    navController = navController,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .then(
+                                if (playerVisible) {
+                                    Modifier.consumeWindowInsets(WindowInsets.navigationBars)
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    startDestination = Routes.LIBRARY,
+                    enterTransition = {
+                        slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeIn(tween(NAVIGATION_DURATION_MS))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeOut(tween(NAVIGATION_DURATION_MS))
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeIn(tween(NAVIGATION_DURATION_MS))
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(NAVIGATION_DURATION_MS)) +
+                            fadeOut(tween(NAVIGATION_DURATION_MS))
+                    },
+                ) {
+                    composable(Routes.LIBRARY) {
+                        LibraryRoute(
+                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
+                            onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
+                            onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
+                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            bottomInset = bottomInset,
+                        )
+                    }
+                    composable(Routes.SETTINGS) {
+                        SettingsRoute(
+                            onAddServer = { navController.navigate(Routes.ADD_SERVER) },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.ALBUM_DETAIL,
+                        arguments =
+                            listOf(
+                                navArgument("albumId") { type = NavType.StringType },
+                                navArgument("coverArt") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                },
+                            ),
+                    ) { entry ->
+                        AlbumDetailRoute(
+                            albumId = entry.arguments?.getString("albumId").orEmpty(),
+                            coverArtId =
+                                entry.arguments
+                                    ?.getString("coverArt")
+                                    .orEmpty()
+                                    .ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.ARTIST_DETAIL,
+                        arguments =
+                            listOf(
+                                navArgument("artistId") { type = NavType.StringType },
+                                navArgument("coverArt") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                },
+                            ),
+                    ) { entry ->
+                        ArtistDetailRoute(
+                            artistId = entry.arguments?.getString("artistId").orEmpty(),
+                            coverArtId =
+                                entry.arguments
+                                    ?.getString("coverArt")
+                                    .orEmpty()
+                                    .ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
+                        )
+                    }
+                    composable(
+                        route = Routes.PLAYLIST_DETAIL,
+                        arguments = listOf(navArgument("playlistId") { type = NavType.StringType }),
+                    ) { entry ->
+                        PlaylistDetailRoute(
+                            playlistId = entry.arguments?.getString("playlistId").orEmpty(),
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(Routes.ADD_SERVER) {
+                        AddSourceRoute(
+                            onSaved = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() },
+                        )
                     }
                 }
 
@@ -377,8 +371,15 @@ private fun MainNavigation() {
         }
     }
 
-    BackHandler(enabled = showingQueue) { showingQueue = false }
-    BackHandler(enabled = nowPlayingOpen && !showingQueue) {
-        settleNowPlaying(false)
+    // The NavHost registers its own back callback, and OnBackPressedDispatcher hands the back to
+    // the last-registered enabled callback, so it can win over the overlay's BackHandler and pop
+    // the route underneath. Disable the controller's back and drive navigation ourselves.
+    LaunchedEffect(navController) { navController.enableOnBackPressed(false) }
+    BackHandler(enabled = showingQueue || nowPlayingOpen || navController.previousBackStackEntry != null) {
+        when {
+            showingQueue -> showingQueue = false
+            nowPlayingOpen -> settleNowPlaying(false)
+            else -> navController.popBackStack()
+        }
     }
 }
