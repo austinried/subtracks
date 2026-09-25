@@ -1,5 +1,7 @@
 package com.subtracks.ui.library
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -71,6 +73,7 @@ private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
 private val FADE_LEAD = 24.dp
 private const val THEME_TRANSITION_MS = 100
+private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 
 @Composable
@@ -145,6 +148,7 @@ fun ArtistDetailScreen(
                 ),
         )
     val nameBusy = rememberOverlaidNameBusy(art ?: artThumbnail)
+    val nameScrimAlpha by animateFloatAsState(if (nameBusy) 1f else 0f, tween(SCRIM_FADE_MS), label = "artistNameScrim")
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
@@ -181,13 +185,14 @@ fun ArtistDetailScreen(
                                 showPlaceholder = art == null,
                                 modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                             )
-                            if (nameBusy) {
+                            if (nameScrimAlpha > 0f) {
                                 Box(
                                     modifier =
                                         Modifier
                                             .align(Alignment.BottomStart)
                                             .fillMaxWidth()
                                             .height(ART_HEIGHT * 0.4f)
+                                            .graphicsLayer { alpha = nameScrimAlpha }
                                             .background(
                                                 Brush.verticalGradient(
                                                     listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
