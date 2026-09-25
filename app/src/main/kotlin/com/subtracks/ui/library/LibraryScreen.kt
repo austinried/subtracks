@@ -637,12 +637,16 @@ private fun LibraryTabs(
             val step = if (neighbour != null) abs(fraction) else 0f
             val left = current.left + ((neighbour?.left ?: current.left) - current.left) * step
             val right = current.right + ((neighbour?.right ?: current.right) - current.right) * step
-            val stretch = with(density) { indicatorStretch.toPx() } * abs(fraction) / 2f
+            val stretch = with(density) { indicatorStretch.toPx() } * step
+            val leading = stretch * 2f
+            val trailing = stretch * 0.25f
+            val leftExtra = if (fraction >= 0f) trailing else leading
+            val rightExtra = if (fraction >= 0f) leading else trailing
             Box(
                 modifier =
                     Modifier
-                        .offset { IntOffset((left - stretch).roundToInt(), current.top.roundToInt()) }
-                        .width(with(density) { (right - left + stretch * 2f).toDp() })
+                        .offset { IntOffset((left - leftExtra).roundToInt(), current.top.roundToInt()) }
+                        .width(with(density) { (right - left + leftExtra + rightExtra).toDp() })
                         .height(with(density) { current.height.toDp() })
                         .clip(RoundedCornerShape(8.dp))
                         .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
