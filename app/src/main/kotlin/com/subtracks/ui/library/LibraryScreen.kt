@@ -314,7 +314,7 @@ fun LibraryScreen(
                     Modifier
                         .fillMaxWidth()
                         .background(artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
-                        .padding(top = statusBarTop + 8.dp, bottom = 8.dp),
+                        .padding(top = statusBarTop + 4.dp, bottom = 4.dp),
             ) {
                 LibraryTabs(
                     pagerState = pagerState,
@@ -669,10 +669,10 @@ private fun TabButton(
     Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(container.copy(alpha = progress))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -683,8 +683,8 @@ private fun TabButton(
         )
         AnimatedVisibility(
             visible = progress > 0.5f,
-            enter = expandHorizontally() + fadeIn(),
-            exit = shrinkHorizontally() + fadeOut(),
+            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(8.dp))
