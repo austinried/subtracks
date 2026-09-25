@@ -64,6 +64,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -625,6 +626,16 @@ private fun LibraryTabs(
     val fraction = pagerState.currentPageOffsetFraction
     val raw = abs(fraction).coerceIn(0f, 1f)
     val transition = raw * raw * (3f - 2f * raw)
+    var travel by remember { mutableIntStateOf(1) }
+    LaunchedEffect(Unit) {
+        var previous = pagerState.currentPage + pagerState.currentPageOffsetFraction
+        snapshotFlow { pagerState.currentPage + pagerState.currentPageOffsetFraction }.collect { current ->
+            if (current != previous) {
+                travel = if (current > previous) 1 else -1
+                previous = current
+            }
+        }
+    }
 
     Box(
         Modifier
@@ -639,8 +650,8 @@ private fun LibraryTabs(
             val stretch = with(density) { indicatorStretch.toPx() } * step
             val leading = stretch * 2f
             val trailing = stretch * 0.25f
-            val leftExtra = if (fraction >= 0f) trailing else leading
-            val rightExtra = if (fraction >= 0f) leading else trailing
+            val leftExtra = if (travel > 0) trailing else leading
+            val rightExtra = if (travel > 0) leading else trailing
             Box(
                 modifier =
                     Modifier
@@ -707,7 +718,7 @@ private fun TabButton(
         modifier =
             modifier
                 .clickable(onClick = onClick)
-                .padding(start = 8.dp, end = 11.dp, top = 6.dp, bottom = 6.dp),
+                .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
