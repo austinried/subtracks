@@ -59,6 +59,14 @@ class ArtworkColorsTest {
         }
     }
 
+    @Test
+    fun warmArtworkLiftsPlayerSurfaceToTheBrightGradientTone() {
+        val warm = artworkColorsFromSeed(0xFFE6C822.toInt())
+        val cool = artworkColorsFromSeed(0xFF3A7BD5.toInt())
+        assertEquals(warm.gradientHigh, playerSurfaceColor(warm))
+        assertTrue(playerSurfaceColor(cool) != cool.gradientHigh)
+    }
+
     private fun contrast(
         a: Color,
         b: Color,
