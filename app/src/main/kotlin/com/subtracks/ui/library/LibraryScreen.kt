@@ -97,6 +97,11 @@ import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.librarySurfaceColor
+import com.subtracks.ui.theme.rememberArtworkColors
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -167,6 +172,7 @@ fun LibraryRoute(
     onOpenSettings: () -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
+    playbackController: PlaybackController = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
@@ -187,11 +193,14 @@ fun LibraryRoute(
             val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
             "${query.sort}|${query.descending}|${query.starred}|$term"
         }
+    val playback by playbackController.state.collectAsStateWithLifecycle()
+    val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
         syncing = syncing,
         bottomInset = bottomInset,
+        artwork = artwork,
         albums = viewModel.albums.collectAsLazyPagingItems(),
         artists = viewModel.artists.collectAsLazyPagingItems(),
         songs = viewModel.songs.collectAsLazyPagingItems(),
@@ -257,6 +266,7 @@ fun LibraryScreen(
     onClearFilters: () -> Unit = {},
     search: String = "",
     onSearchChange: (String) -> Unit = {},
+    artwork: ArtworkColors? = null,
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -302,7 +312,7 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(artwork?.let(::librarySurfaceColor) ?: MaterialTheme.colorScheme.background)
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
         ) {
             Column(
@@ -419,8 +429,8 @@ fun LibraryScreen(
         if (!searchActive) {
             FloatingActionButton(
                 onClick = { showOptions = true },
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onBackground,
+                containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             ) {
                 Box {
@@ -433,7 +443,7 @@ fun LibraryScreen(
                                     .offset(x = 4.dp, y = (-4).dp)
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
+                                    .background(artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.primary),
                         )
                     }
                 }

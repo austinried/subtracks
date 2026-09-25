@@ -118,6 +118,44 @@ class AppScreenshotTest {
     }
 
     @Test
+    fun libraryWithMiniPlayer() {
+        composeRule.setContent {
+            SubtracksTheme {
+                val artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200))
+                Column(Modifier.fillMaxSize()) {
+                    LibraryScreen(
+                        selectedTab = LibraryTab.Albums,
+                        onTabSelected = {},
+                        albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
+                        artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
+                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
+                        playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
+                        coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                        onAlbumClick = {},
+                        onArtistClick = {},
+                        onPlaylistClick = {},
+                        onSongClick = {},
+                        onSync = {},
+                        onOpenSettings = {},
+                        artwork = artwork,
+                        modifier = Modifier.weight(1f),
+                    )
+                    MiniPlayer(
+                        state = Fixtures.playbackState(),
+                        coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                        artwork = artwork,
+                        onExpand = {},
+                        onPlayPause = {},
+                        onNext = {},
+                    )
+                }
+            }
+        }
+        awaitTag(ALBUM_COVER_TAG)
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_with_mini_player.png")
+    }
+
+    @Test
     fun albumDetail() {
         composeRule.setContent {
             SubtracksTheme {
@@ -396,6 +434,7 @@ class AppScreenshotTest {
                     onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                 )
             }
         }
