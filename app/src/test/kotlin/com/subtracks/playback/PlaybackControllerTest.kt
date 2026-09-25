@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.model.Album
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
@@ -72,6 +73,39 @@ class PlaybackControllerTest {
         assertEquals(25, handle.currentIndex)
         assertEquals("s31", handle.currentItem?.id)
         assertEquals(listOf("prepare", "play"), handle.operations.takeLast(2))
+    }
+
+    @Test
+    fun upcomingItemIsTheNextQueueItemWithItsCoverArt() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking {
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    Album(
+                        sourceId = 1,
+                        id = "al1",
+                        artistId = "ar1",
+                        name = "Album",
+                        albumArtist = "Artist",
+                        created = 0,
+                        coverArt = "cover-al1",
+                        genre = null,
+                        year = null,
+                        starred = null,
+                        songCount = 3,
+                        frequentRank = null,
+                        recentRank = null,
+                    ),
+                ),
+            )
+        }
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        assertEquals("cover-al1", runBlocking { controller.upcomingItem()?.coverArtId })
     }
 
     @Test

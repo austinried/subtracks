@@ -98,8 +98,10 @@ fun NowPlayingRoute(
     }
     LaunchedEffect(state.item?.id, state.hasNext) {
         if (!state.hasNext) return@LaunchedEffect
-        controller.upcomingCoverArt(thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
-        controller.upcomingCoverArt()?.let { prefetchImage(context, it) }
+        controller.upcomingItem()?.let { next ->
+            controller.coverArt(next, thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
+            controller.coverArt(next)?.let { prefetchImage(context, it) }
+        }
     }
     NowPlayingScreen(
         state = state,
@@ -120,18 +122,26 @@ fun NowPlayingRoute(
     )
 }
 
-private fun prefetchImage(
+internal fun prefetchImage(
     context: Context,
     ref: CoverArtRef,
 ) {
-    SingletonImageLoader.get(context).enqueue(
-        ImageRequest
-            .Builder(context)
-            .data(ref.url)
-            .memoryCacheKey(ref.cacheKey)
-            .diskCacheKey(ref.cacheKey)
-            .build(),
-    )
+    SingletonImageLoader.get(context).enqueue(prefetchImageRequest(context, ref))
+}
+
+internal fun prefetchImageRequest(
+    context: Context,
+    ref: CoverArtRef,
+): ImageRequest {
+    val metrics = context.resources.displayMetrics
+    val maxDimension = maxOf(metrics.widthPixels, metrics.heightPixels)
+    return ImageRequest
+        .Builder(context)
+        .data(ref.url)
+        .memoryCacheKey(ref.cacheKey)
+        .diskCacheKey(ref.cacheKey)
+        .size(maxDimension)
+        .build()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -237,12 +237,25 @@ data class ShuffleOrder(
     val flatPosition: Long,
 )
 
-@Entity(tableName = "artwork_seeds")
+@Entity(
+    tableName = "artwork_seeds",
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId")],
+)
 data class ArtworkSeed(
     @PrimaryKey val cacheKey: String,
     val primary: Int,
     val secondary: Int?,
     val nameBusy: Boolean? = null,
+    val sourceId: Long = 0,
+    @ColumnInfo(defaultValue = "0") val lastUsed: Long = 0,
 )
 
 class QueueKindConverter {

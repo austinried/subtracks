@@ -12,4 +12,16 @@ interface ArtworkSeedDao {
 
     @Upsert
     suspend fun upsert(seed: ArtworkSeed)
+
+    @Query("UPDATE artwork_seeds SET lastUsed = :lastUsed WHERE cacheKey = :cacheKey")
+    suspend fun touch(
+        cacheKey: String,
+        lastUsed: Long,
+    )
+
+    @Query(
+        "DELETE FROM artwork_seeds WHERE cacheKey NOT IN " +
+            "(SELECT cacheKey FROM artwork_seeds ORDER BY lastUsed DESC LIMIT :keep)",
+    )
+    suspend fun prune(keep: Int)
 }

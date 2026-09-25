@@ -112,6 +112,21 @@ val MIGRATION_11_12 =
         }
     }
 
+val MIGRATION_12_13 =
+    object : Migration(12, 13) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("DROP TABLE IF EXISTS `artwork_seeds`")
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `artwork_seeds` (`cacheKey` TEXT NOT NULL, " +
+                    "`primary` INTEGER NOT NULL, `secondary` INTEGER, `nameBusy` INTEGER, " +
+                    "`sourceId` INTEGER NOT NULL, `lastUsed` INTEGER NOT NULL DEFAULT 0, " +
+                    "PRIMARY KEY(`cacheKey`), " +
+                    "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_artwork_seeds_sourceId` ON `artwork_seeds` (`sourceId`)")
+        }
+    }
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -125,4 +140,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_9_10,
         MIGRATION_10_11,
         MIGRATION_11_12,
+        MIGRATION_12_13,
     )
