@@ -689,7 +689,7 @@ private fun LibraryTabs(
                 Modifier
                     .fillMaxWidth()
                     .background(headerColor)
-                    .padding(6.dp),
+                    .padding(8.dp),
         ) {
             Box(
                 modifier =
@@ -728,18 +728,31 @@ private fun LibraryTabs(
                                 },
                         )
                     }
-                    Spacer(Modifier.weight(1f))
+                    Box(
+                        Modifier
+                            .width(1.dp)
+                            .height(24.dp)
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
+                    )
                     if (syncing) {
                         CircularProgressIndicator(
                             modifier = Modifier.padding(end = 4.dp).size(20.dp),
                             strokeWidth = 2.dp,
                         )
                     }
-                    IconButton(onClick = onOpenSettings) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .clickable(onClick = onOpenSettings),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Settings",
                             tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
