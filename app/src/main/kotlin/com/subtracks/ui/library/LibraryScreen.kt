@@ -50,6 +50,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -445,6 +446,7 @@ fun LibraryScreen(
                 onClick = { showOptions = true },
                 containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
                 Box {
