@@ -1,6 +1,7 @@
 package com.subtracks.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -24,6 +25,7 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
+import com.subtracks.ui.library.LibraryTabs
 import com.subtracks.ui.theme.SubtracksTheme
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertTrue
@@ -105,6 +107,37 @@ class LibraryScreenTest {
         composeRule.onNodeWithText("Sync").performClick()
 
         assertTrue("an empty library should offer a sync", synced)
+    }
+
+    @Test
+    fun theTabRowReflowsInOneDirectionDuringASwitch() {
+        val pagerState = PagerState(currentPage = 1, pageCount = { LibraryTab.entries.size })
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryTabs(
+                    pagerState = pagerState,
+                    onTabSelected = {},
+                    onOpenSettings = {},
+                    artwork = null,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        val samples =
+            (0..10).map { step ->
+                composeRule.runOnIdle { pagerState.requestScrollToPage(1, step * 0.05f) }
+                composeRule.waitForIdle()
+                composeRule
+                    .onNodeWithContentDescription(LibraryTab.Songs.label)
+                    .fetchSemanticsNode()
+                    .boundsInRoot.left
+            }
+
+        val monotonic =
+            samples.zipWithNext().all { (a, b) -> b >= a } ||
+                samples.zipWithNext().all { (a, b) -> b <= a }
+        assertTrue("the tab row should reflow in one direction, but the icons moved $samples", monotonic)
     }
 
     private val settledLoadStates =

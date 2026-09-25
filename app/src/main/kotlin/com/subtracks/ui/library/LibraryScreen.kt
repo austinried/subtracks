@@ -660,7 +660,7 @@ private fun SearchField(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryTabs(
+internal fun LibraryTabs(
     pagerState: PagerState,
     onTabSelected: (LibraryTab) -> Unit,
     onOpenSettings: () -> Unit,
