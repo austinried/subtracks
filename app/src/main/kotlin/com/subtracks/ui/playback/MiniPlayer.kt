@@ -94,15 +94,15 @@ fun MiniPlayer(
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp)
-                            .height(2.dp)
-                            .clip(RoundedCornerShape(1.dp)),
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(1.5.dp)),
                 )
                 Row(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(start = 8.dp, top = 10.dp, end = 10.dp, bottom = 10.dp),
+                            .padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
