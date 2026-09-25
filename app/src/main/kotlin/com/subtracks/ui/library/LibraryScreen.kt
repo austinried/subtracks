@@ -321,7 +321,7 @@ fun LibraryScreen(
                     Modifier
                         .fillMaxWidth()
                         .background(artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
-                        .padding(top = statusBarTop + 4.dp, bottom = 4.dp),
+                        .padding(top = statusBarTop + 2.dp, bottom = 2.dp),
             ) {
                 LibraryTabs(
                     pagerState = pagerState,
