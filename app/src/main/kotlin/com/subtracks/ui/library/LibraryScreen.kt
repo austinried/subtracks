@@ -54,6 +54,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -309,7 +311,7 @@ fun LibraryScreen(
     var tabBarHeightPx by remember { mutableFloatStateOf(0f) }
     val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
     val listTopInset = statusBarTop
-    val listBottomInset = if (searchActive) SEARCH_BAR_CLEARANCE else tabBarHeight + FAB_CLEARANCE
+    val listBottomInset = tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
 
     Box(
@@ -324,9 +326,20 @@ fun LibraryScreen(
         ) { page ->
             val pageTab = LibraryTab.entries[page]
             val resetKey = resetKeys[pageTab]
+            val pullToRefreshState = rememberPullToRefreshState()
             PullToRefreshBox(
                 isRefreshing = syncing,
                 onRefresh = onSync,
+                state = pullToRefreshState,
+                indicator = {
+                    PullToRefreshDefaults.Indicator(
+                        state = pullToRefreshState,
+                        isRefreshing = syncing,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        containerColor = headerColor,
+                        color = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.primary,
+                    )
+                },
                 modifier = Modifier.fillMaxSize(),
             ) {
                 when (pageTab) {
