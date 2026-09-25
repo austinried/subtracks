@@ -40,6 +40,7 @@ import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.playback.RepeatMode
 import com.subtracks.ui.library.ALBUM_COVER_TAG
+import com.subtracks.ui.library.ARTIST_NAME_SCRIM_TAG
 import com.subtracks.ui.library.AlbumDetailScreen
 import com.subtracks.ui.library.ArtistDetailScreen
 import com.subtracks.ui.library.LibraryScreen
@@ -280,6 +281,9 @@ class AppScreenshotTest {
             }
         }
         awaitText("Kid A")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ARTIST_NAME_SCRIM_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail.png")
     }
 

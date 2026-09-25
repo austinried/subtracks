@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,7 +61,9 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
+import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
+import com.subtracks.ui.theme.rememberOverlaidNameBusy
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -67,6 +71,7 @@ private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
 private val FADE_LEAD = 24.dp
 private const val THEME_TRANSITION_MS = 100
+internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 
 @Composable
 fun ArtistDetailRoute(
@@ -139,10 +144,21 @@ fun ArtistDetailScreen(
                     blurRadius = 10f,
                 ),
         )
+    val nameBusy = rememberOverlaidNameBusy(art ?: artThumbnail)
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
-            Box(modifier.fillMaxSize().background(Color.Black)) {
+            BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
+                val screenHeightPx = with(density) { maxHeight.toPx() }
+                val barHeightPx = with(density) { barHeight.toPx() }
+                val scrollPx by remember {
+                    derivedStateOf {
+                        val index = listState.firstVisibleItemIndex
+                        val before = if (index <= 0) 0f else with(density) { ART_HEIGHT.toPx() } * index
+                        before + listState.firstVisibleItemScrollOffset
+                    }
+                }
+                val barColor = heroBarColor(artwork, scrollPx, barHeightPx, screenHeightPx)
                 HeroGradient(
                     colors = artwork,
                     scrollPx = { 0f },
@@ -165,6 +181,20 @@ fun ArtistDetailScreen(
                                 showPlaceholder = art == null,
                                 modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                             )
+                            if (nameBusy) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .align(Alignment.BottomStart)
+                                            .fillMaxWidth()
+                                            .height(ART_HEIGHT * 0.4f)
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                                                ),
+                                            ).testTag(ARTIST_NAME_SCRIM_TAG),
+                                )
+                            }
                             Text(
                                 text = artist?.name.orEmpty(),
                                 style = imageNameStyle,
@@ -227,26 +257,21 @@ fun ArtistDetailScreen(
                     title = {
                         Text(
                             text = artist?.name.orEmpty(),
-                            style = nameTextStyle,
-                            color = Color.White.copy(alpha = barFraction),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.graphicsLayer { alpha = barFraction },
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White,
-                            )
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .background(Color.Black.copy(alpha = barFraction))
+                            .background(barColor.copy(alpha = barFraction))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
