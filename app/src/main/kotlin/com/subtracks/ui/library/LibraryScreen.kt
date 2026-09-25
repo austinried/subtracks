@@ -707,7 +707,7 @@ private fun TabButton(
         modifier =
             modifier
                 .clickable(onClick = onClick)
-                .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                .padding(start = 8.dp, end = 11.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
