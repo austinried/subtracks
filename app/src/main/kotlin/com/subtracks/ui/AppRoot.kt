@@ -1,11 +1,11 @@
 package com.subtracks.ui
 
 import android.net.Uri
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,7 +73,6 @@ import com.subtracks.ui.settings.SettingsRoute
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -94,10 +92,8 @@ class RootViewModel(
 
 private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
-private const val EXPAND_FADE = 0.1f
 private const val FLING_VELOCITY = 1000f
 private const val MINI_PLAYER_ANIM_MS = 200
-private const val SCRIM_FADE_START = 0.85f
 
 private object Routes {
     const val LIBRARY = "library"
@@ -106,6 +102,7 @@ private object Routes {
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
     const val ARTIST_DETAIL = "artist/{artistId}?coverArt={coverArt}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
+    const val NOW_PLAYING = "now-playing"
 
     fun album(
         id: String,
@@ -143,63 +140,16 @@ private fun MainNavigation() {
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
-    var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
-    var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
-    var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
-    var settleJob by remember { mutableStateOf<Job?>(null) }
-    val scope = rememberCoroutineScope()
-
-    fun settleNowPlaying(open: Boolean) {
-        if (open) nowPlayingOpen = true
-        settleJob?.cancel()
-        settleJob =
-            scope.launch {
-                animate(nowPlayingProgress, if (open) 1f else 0f, animationSpec = tween(OVERLAY_DURATION_MS)) { value, _ ->
-                    nowPlayingProgress = value
-                }
-                if (!open) nowPlayingOpen = false
-            }
-    }
-    // The NavHost registers its back callback from a LaunchedEffect, so a BackHandler composed
-    // before it can lose the back to the NavHost (which would pop the route under the overlay).
-    // Register ours from a LaunchedEffect after the NavHost so it lands later and wins.
-    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-    val overlayBack =
-        remember {
-            object : OnBackPressedCallback(false) {
-                override fun handleOnBackPressed() {
-                    when {
-                        showingQueue -> showingQueue = false
-                        nowPlayingOpen -> settleNowPlaying(false)
-                    }
-                }
-            }
-        }
-    SideEffect { overlayBack.isEnabled = showingQueue || nowPlayingOpen }
-    LaunchedEffect(backDispatcher, overlayBack) {
-        backDispatcher?.addCallback(overlayBack)
-        try {
-            awaitCancellation()
-        } finally {
-            overlayBack.remove()
-        }
-    }
     LaunchedEffect(Unit) { playbackController.connect() }
-    LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
-    LaunchedEffect(playerVisible) {
-        if (!playerVisible) {
-            settleJob?.cancel()
-            nowPlayingOpen = false
-            nowPlayingProgress = 0f
-        }
-    }
+    val onNowPlaying = currentRoute == Routes.NOW_PLAYING
+    val scrimAlpha by animateFloatAsState(if (onNowPlaying) 1f else 0f, tween(NAVIGATION_DURATION_MS), label = "scrim")
     val density = LocalDensity.current
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val statusBarInset = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val keyboardUp = WindowInsets.imeAnimationTarget.getBottom(density) > 0
-    val showMiniPlayer = playerVisible && !keyboardUp
+    val showMiniPlayer = playerVisible && !keyboardUp && !onNowPlaying
     val bottomInset by animateDpAsState(
         targetValue = if (showMiniPlayer) 0.dp else navBarInset,
         animationSpec = tween(MINI_PLAYER_ANIM_MS),
@@ -313,6 +263,38 @@ private fun MainNavigation() {
                             onBack = { navController.popBackStack() },
                         )
                     }
+                    composable(
+                        route = Routes.NOW_PLAYING,
+                        enterTransition = {
+                            slideInVertically(initialOffsetY = { it }, animationSpec = tween(NAVIGATION_DURATION_MS))
+                        },
+                        exitTransition = {
+                            slideOutVertically(targetOffsetY = { it }, animationSpec = tween(NAVIGATION_DURATION_MS))
+                        },
+                        popEnterTransition = {
+                            slideInVertically(initialOffsetY = { it }, animationSpec = tween(NAVIGATION_DURATION_MS))
+                        },
+                        popExitTransition = {
+                            slideOutVertically(targetOffsetY = { it }, animationSpec = tween(NAVIGATION_DURATION_MS))
+                        },
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .draggable(
+                                        orientation = Orientation.Vertical,
+                                        state = rememberDraggableState { },
+                                        onDragStopped = { velocity -> if (velocity > FLING_VELOCITY) navController.popBackStack() },
+                                    ),
+                        ) {
+                            NowPlayingRoute(
+                                onBack = { navController.popBackStack() },
+                                onQueue = { showingQueue = true },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
                 }
 
                 AnimatedVisibility(
@@ -325,65 +307,28 @@ private fun MainNavigation() {
                         state = playback,
                         coverArt = miniArt,
                         artwork = artwork,
-                        onExpand = { settleNowPlaying(true) },
+                        onExpand = { navController.navigate(Routes.NOW_PLAYING) },
                         onPlayPause = playbackController::togglePlayPause,
                         onNext = playbackController::next,
                         progressInset = tabBarVisible,
-                        onExpandDrag = { dragUpPx ->
-                            nowPlayingOpen = true
-                            settleJob?.cancel()
-                            if (miniPlayerTopPx > 0f) {
-                                nowPlayingProgress = (dragUpPx / miniPlayerTopPx).coerceIn(0f, 1f)
-                            }
-                        },
-                        onExpandRelease = { velocity -> settleNowPlaying(nowPlayingProgress > 0.05f || velocity < -FLING_VELOCITY) },
-                        modifier = Modifier.onGloballyPositioned { miniPlayerTopPx = it.positionInRoot().y },
+                        onExpandRelease = { velocity -> if (velocity < -FLING_VELOCITY) navController.navigate(Routes.NOW_PLAYING) },
                     )
                 }
             }
 
-            if (nowPlayingOpen) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                translationY = (1f - nowPlayingProgress) * miniPlayerTopPx
-                                alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
-                            }.draggable(
-                                orientation = Orientation.Vertical,
-                                state =
-                                    rememberDraggableState { delta ->
-                                        settleJob?.cancel()
-                                        if (miniPlayerTopPx > 0f) {
-                                            nowPlayingProgress = (nowPlayingProgress - delta / miniPlayerTopPx).coerceIn(0f, 1f)
-                                        }
-                                    },
-                                onDragStopped = { velocity -> settleNowPlaying(nowPlayingProgress > 0.9f && velocity < FLING_VELOCITY) },
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(statusBarInset + 8.dp)
+                        .graphicsLayer { alpha = scrimAlpha }
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
                             ),
-                ) {
-                    NowPlayingRoute(
-                        onBack = { settleNowPlaying(false) },
-                        onQueue = { showingQueue = true },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .height(statusBarInset + 8.dp)
-                            .graphicsLayer {
-                                alpha = ((nowPlayingProgress - SCRIM_FADE_START) / (1f - SCRIM_FADE_START)).coerceIn(0f, 1f)
-                            }.background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                                ),
-                            ),
-                )
-            }
+                        ),
+            )
 
             AnimatedVisibility(
                 visible = showingQueue,
@@ -397,4 +342,6 @@ private fun MainNavigation() {
             }
         }
     }
+
+    BackHandler(enabled = showingQueue) { showingQueue = false }
 }

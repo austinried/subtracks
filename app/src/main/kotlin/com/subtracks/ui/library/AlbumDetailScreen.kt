@@ -128,7 +128,8 @@ fun AlbumDetailScreen(
                 val disc = song.disc ?: 1L
                 val discLabel = discLabels[disc]
                 if (disc != lastDisc && (multiDisc || discLabel != null)) {
-                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc", first = lastDisc == null) }
+                    val isFirst = lastDisc == null
+                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc", first = isFirst) }
                 }
                 lastDisc = disc
                 item(key = song.id) {

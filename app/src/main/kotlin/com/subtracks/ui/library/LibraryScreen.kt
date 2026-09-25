@@ -486,7 +486,7 @@ fun LibraryScreen(
                     ListOptionsGlyph(
                         modifier =
                             Modifier
-                                .size(26.dp)
+                                .size(24.dp)
                                 .semantics { contentDescription = "List options" },
                     )
                     if (filtersActive) {
