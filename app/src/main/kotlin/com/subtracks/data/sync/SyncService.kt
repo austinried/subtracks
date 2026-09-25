@@ -13,23 +13,18 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class SyncService(
     private val db: SubtracksDatabase,
     private val source: MusicSource,
 ) {
-    private val lock = Mutex()
-
-    suspend fun sync() =
-        lock.withLock {
-            syncArtists()
-            syncAlbums()
-            syncSongs()
-            syncPlaylists()
-            syncPlaylistSongs()
-        }
+    suspend fun sync() {
+        syncArtists()
+        syncAlbums()
+        syncSongs()
+        syncPlaylists()
+        syncPlaylistSongs()
+    }
 
     private suspend fun syncArtists() {
         val library = db.libraryDao()
@@ -102,7 +97,6 @@ class SyncService(
         rows: List<T>,
         values: (T) -> List<Any?>,
     ) {
-        if (rows.isEmpty()) return
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
                 connection.upsertChanged(table, columns, key, rows, values)

@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -27,6 +29,7 @@ class SourceRepository(
     private val prefs: UserPreferences,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val syncLock = Mutex()
 
     @Volatile
     private var active: SubsonicMusicSource? = null
@@ -116,9 +119,11 @@ class SourceRepository(
         }
 
     suspend fun sync(): Result<Unit> =
-        runCatching {
-            val config = db.sourcesDao().activeSubsonicConfigOnce() ?: error("No server configured")
-            SyncService(db, config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())).sync()
+        syncLock.withLock {
+            runCatching {
+                val config = db.sourcesDao().activeSubsonicConfigOnce() ?: error("No server configured")
+                SyncService(db, config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())).sync()
+            }
         }
 
     private fun SubsonicConfig.toMusicSource(

@@ -1,7 +1,9 @@
 package com.subtracks.data.source.subsonic
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -13,6 +15,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 class SubsonicSourceTest {
     private lateinit var server: MockWebServer
@@ -84,6 +88,98 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun albumsPaginateUntilAShortPage() =
+        runBlocking {
+            val requestedOffsets = CopyOnWriteArrayList<Int>()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
+                        if (url.queryParameter("type") != "newest") {
+                            return MockResponse().setBody(emptyAlbumList())
+                        }
+                        val offset = url.queryParameter("offset")!!.toInt()
+                        requestedOffsets += offset
+                        val count = if (offset < 1000) 500 else 3
+                        return MockResponse().setBody(albumPage(offset, count))
+                    }
+                }
+
+            val albums = SubsonicSource(1, client()).albums().toList().flatten()
+
+            assertEquals(1003, albums.size)
+            assertEquals(listOf(0, 500, 1000), requestedOffsets.toList())
+            assertEquals("al-0", albums.first().id)
+            assertEquals("al-1002", albums.last().id)
+        }
+
+    @Test
+    fun songsUseEmptySearchAndPaginate() =
+        runBlocking {
+            val probeCount = AtomicInteger()
+            val requestedOffsets = CopyOnWriteArrayList<Int>()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/search3.view") return MockResponse().setResponseCode(404)
+                        if (url.queryParameter("songCount") == "1") {
+                            probeCount.incrementAndGet()
+                            return MockResponse().setBody(songPage("probe", 0, 1))
+                        }
+                        val offset = url.queryParameter("songOffset")!!.toInt()
+                        requestedOffsets += offset
+                        val count = if (offset < 1000) 500 else 3
+                        return MockResponse().setBody(songPage("s", offset, count))
+                    }
+                }
+            val source = SubsonicSource(1, client())
+
+            val first = source.songs().toList().flatten()
+            val firstOffsets = requestedOffsets.toList()
+            val second = source.songs().toList().flatten()
+
+            assertEquals(1003, first.size)
+            assertEquals(1003, second.size)
+            assertEquals(1, probeCount.get())
+            assertEquals(listOf(0, 500, 1000), firstOffsets)
+        }
+
+    @Test
+    fun entitiesWithEmptyIdsAreDropped() =
+        runBlocking {
+            server.enqueue(
+                MockResponse().setBody(
+                    "<subsonic-response status=\"ok\"><artists>" +
+                        "<artist id=\"\" name=\"No id\"/>" +
+                        "<artist id=\"ar1\" name=\"Real\"/>" +
+                        "</artists></subsonic-response>",
+                ),
+            )
+
+            val artists = SubsonicSource(1, client()).artists().toList().flatten()
+
+            assertEquals(listOf("ar1"), artists.map { it.id })
+        }
+
+    @Test
+    fun cancellingAfterTheFirstBatchDoesNotHang() =
+        runBlocking {
+            val body =
+                buildString {
+                    append("<subsonic-response status=\"ok\"><artists>")
+                    repeat(100_000) { append("<artist id=\"ar$it\" name=\"A$it\" albumCount=\"1\"/>") }
+                    append("</artists></subsonic-response>")
+                }
+            server.enqueue(MockResponse().setBody(body))
+
+            val firstBatch = withTimeout(15_000) { SubsonicSource(1, client()).artists().first() }
+
+            assertEquals(500, firstBatch.size)
+        }
+
+    @Test
     fun streamUriRequestsTranscodingWhenABitrateIsSet() {
         val uri = SubsonicSource(1, client(), maxBitrate = 128).streamUri("s1").toString()
 
@@ -121,6 +217,27 @@ class SubsonicSourceTest {
         code: Int,
         message: String,
     ) = "<subsonic-response status=\"failed\"><error code=\"$code\" message=\"$message\"/></subsonic-response>"
+
+    private fun emptyAlbumList() = "<subsonic-response status=\"ok\"><albumList2></albumList2></subsonic-response>"
+
+    private fun albumPage(
+        offset: Int,
+        count: Int,
+    ) = "<subsonic-response status=\"ok\"><albumList2>" +
+        (offset until offset + count).joinToString("") {
+            "<album id=\"al-$it\" name=\"Album $it\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>"
+        } +
+        "</albumList2></subsonic-response>"
+
+    private fun songPage(
+        prefix: String,
+        offset: Int,
+        count: Int,
+    ) = "<subsonic-response status=\"ok\"><searchResult3>" +
+        (offset until offset + count).joinToString("") {
+            "<song id=\"$prefix$it\" title=\"Song $it\"/>"
+        } +
+        "</searchResult3></subsonic-response>"
 
     private companion object {
         const val ALBUM_LIST =

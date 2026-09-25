@@ -3,6 +3,7 @@ package com.subtracks.data.sync
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.room3.Room
+import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -392,6 +393,167 @@ class SyncServiceTest {
             )
         }
 
+    @Test
+    fun playlistSongsAreFetchedOnlyForSurvivingPlaylists() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    songs = listOf(song("s1"), song("s2")),
+                    playlists = listOf(playlist("p1"), playlist("p2")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0), PlaylistSong(1, "p2", "s2", 0)),
+                )
+
+            SyncService(db, source).sync()
+
+            source.playlists = listOf(playlist("p1"))
+            source.playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0))
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("p1"), source.requestedPlaylistIds.last())
+        }
+
+    @Test
+    fun playlistEmptiedToZeroRemovesAllSongs() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    songs = listOf(song("s1"), song("s2")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0), PlaylistSong(1, "p1", "s2", 1)),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(
+                2,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+
+            source.playlistSongs = emptyList()
+
+            SyncService(db, source).sync()
+
+            assertEquals(1, db.libraryDao().playlistIds(1).size)
+            assertEquals(
+                0,
+                db
+                    .libraryDao()
+                    .playlistSongs(1, "p1")
+                    .allRows()
+                    .size,
+            )
+        }
+
+    @Test
+    fun discTitleSetShrinksForARetainedAlbum() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(albums = listOf(album("al1").copy(discTitles = mapOf(1L to "A", 2L to "B"))))
+
+            SyncService(db, source).sync()
+            assertEquals(mapOf(1L to "A", 2L to "B"), storedDiscs("al1"))
+
+            source.albums = listOf(album("al1").copy(discTitles = mapOf(1L to "A")))
+
+            SyncService(db, source).sync()
+
+            assertEquals(mapOf(1L to "A"), storedDiscs("al1"))
+        }
+
+    @Test
+    fun syncingOneSourceDoesNotTouchAnother() =
+        runTest {
+            insertSource()
+            insertSource(id = 2, name = "other")
+            val sourceOne =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    songs = listOf(song("s1")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
+                )
+            val sourceTwo =
+                FakeMusicSource(
+                    id = 2,
+                    artists = listOf(artist("b1").copy(sourceId = 2)),
+                    songs = listOf(song("s2").copy(sourceId = 2)),
+                    playlists = listOf(playlist("p2").copy(sourceId = 2)),
+                    playlistSongs = listOf(PlaylistSong(2, "p2", "s2", 0)),
+                )
+            SyncService(db, sourceOne).sync()
+            SyncService(db, sourceTwo).sync()
+
+            sourceOne.artists = listOf(artist("a1"))
+            sourceOne.songs = emptyList()
+            sourceOne.playlists = emptyList()
+            sourceOne.playlistSongs = emptyList()
+
+            SyncService(db, sourceOne).sync()
+
+            assertEquals(listOf("b1"), db.libraryDao().artistIds(2))
+            assertEquals(listOf("s2"), db.libraryDao().songIds(2))
+            assertEquals(listOf("p2"), db.libraryDao().playlistIds(2))
+            assertEquals(
+                1,
+                db
+                    .libraryDao()
+                    .playlistSongs(2, "p2")
+                    .allRows()
+                    .size,
+            )
+        }
+
+    @Test
+    fun prunesMoreThanOneDeleteChunk() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(artists = (1..1100).map { artist("a$it") })
+
+            SyncService(db, source).sync()
+            assertEquals(1100, db.libraryDao().artistIds(1).size)
+
+            source.artists = emptyList()
+
+            SyncService(db, source).sync()
+
+            assertEquals(0, db.libraryDao().artistIds(1).size)
+        }
+
+    @Test
+    fun anIdenticalSyncDoesNotRewriteRows() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
+                )
+
+            SyncService(db, source).sync()
+            val before = totalChanges()
+
+            SyncService(db, source).sync()
+
+            assertEquals(before, totalChanges())
+        }
+
+    private suspend fun totalChanges(): Long =
+        db.useWriterConnection { connection ->
+            connection.usePrepared("SELECT total_changes()") { statement ->
+                statement.step()
+                statement.getLong(0)
+            }
+        }
+
     private suspend fun storedDiscs(albumId: String): Map<Long, String> =
         db
             .libraryDao()
@@ -404,9 +566,12 @@ class SyncServiceTest {
         return (page as PagingSource.LoadResult.Page).data
     }
 
-    private suspend fun insertSource() {
+    private suspend fun insertSource(
+        id: Long = 1,
+        name: String = "test",
+    ) {
         db.sourcesDao().upsertSource(
-            Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+            Source(id = id, name = name, address = "http://localhost/$id", isActive = id == 1L, createdAt = 0),
         )
     }
 
@@ -453,6 +618,7 @@ class SyncServiceTest {
 }
 
 private class FakeMusicSource(
+    override val id: Long = 1,
     var artists: List<Artist> = emptyList(),
     var albums: List<Album> = emptyList(),
     var songs: List<Song> = emptyList(),
@@ -460,7 +626,7 @@ private class FakeMusicSource(
     var playlistSongs: List<PlaylistSong> = emptyList(),
     private val batchSize: Int = 1000,
 ) : MusicSource {
-    override val id: Long = 1
+    val requestedPlaylistIds = mutableListOf<List<String>>()
 
     override suspend fun ping() = Unit
 
@@ -472,7 +638,10 @@ private class FakeMusicSource(
 
     override fun playlists(): Flow<List<Playlist>> = batches(playlists)
 
-    override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> = batches(playlistSongs)
+    override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> {
+        requestedPlaylistIds += playlistIds
+        return batches(playlistSongs)
+    }
 
     private fun <T> batches(items: List<T>): Flow<List<T>> =
         flow {

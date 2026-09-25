@@ -8,6 +8,7 @@ import com.subtracks.data.model.Song
 import org.xml.sax.Attributes
 import org.xml.sax.SAXException
 import org.xml.sax.helpers.DefaultHandler
+import java.io.IOException
 import java.io.InputStream
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -17,7 +18,7 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 object SubsonicXml {
-    fun artist(
+    internal fun artist(
         sourceId: Long,
         attrs: Attributes,
     ): Artist =
@@ -48,7 +49,7 @@ object SubsonicXml {
             songCount = attrs.longAttr("songCount") ?: 0L,
         )
 
-    fun song(
+    internal fun song(
         sourceId: Long,
         attrs: Attributes,
     ): Song =
@@ -68,7 +69,7 @@ object SubsonicXml {
             created = attrs.dateAttr("created") ?: 0L,
         )
 
-    fun playlist(
+    internal fun playlist(
         sourceId: Long,
         attrs: Attributes,
     ): Playlist =
@@ -84,7 +85,7 @@ object SubsonicXml {
             duration = attrs.longAttr("duration") ?: 0L,
         )
 
-    fun playlistSong(
+    internal fun playlistSong(
         sourceId: Long,
         playlistId: String,
         position: Long,
@@ -98,7 +99,7 @@ object SubsonicXml {
         )
 
     internal fun readStatus(input: InputStream) {
-        parse(input, StatusHandler())
+        parse(input, SubsonicResponseHandler())
     }
 
     internal fun <T> readEntities(
@@ -175,9 +176,8 @@ private class XmlFailure(
 
 private class StopReading : RuntimeException()
 
-private abstract class SubsonicResponseHandler : DefaultHandler() {
+private open class SubsonicResponseHandler : DefaultHandler() {
     private var depth = 0
-    private var sawRoot = false
     private var statusFailed = false
 
     override fun startElement(
@@ -187,10 +187,9 @@ private abstract class SubsonicResponseHandler : DefaultHandler() {
         attributes: Attributes,
     ) {
         depth++
-        if (!sawRoot) {
-            sawRoot = true
+        if (depth == 1) {
             if (qName != ROOT_TAG) throw XmlFailure(-1, "Unexpected response from the server")
-            if (attributes.getValue("status") != "ok") statusFailed = true
+            if (attributes.getValue("status") == "failed") statusFailed = true
         }
         if (qName == "error") {
             throw XmlFailure(
@@ -225,8 +224,6 @@ private abstract class SubsonicResponseHandler : DefaultHandler() {
         depth: Int,
     ) = Unit
 }
-
-private class StatusHandler : SubsonicResponseHandler()
 
 private class EntityHandler<T>(
     private val entityTag: String,
@@ -281,6 +278,10 @@ private fun parse(
     } catch (failure: XmlFailure) {
         throw SubsonicException(failure.code, failure.message ?: "Unknown error")
     } catch (_: StopReading) {
+    } catch (failure: SAXException) {
+        throw SubsonicException(-1, failure.message ?: "Malformed response from the server")
+    } catch (failure: IOException) {
+        throw SubsonicException(-1, failure.message ?: "Truncated response from the server")
     }
 }
 

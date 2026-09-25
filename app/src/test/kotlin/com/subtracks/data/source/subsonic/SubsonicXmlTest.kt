@@ -1,8 +1,11 @@
 package com.subtracks.data.source.subsonic
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.xml.sax.Attributes
+import java.io.FilterInputStream
+import java.io.InputStream
 
 class SubsonicXmlTest {
     private fun <T> parse(
@@ -155,5 +158,147 @@ class SubsonicXmlTest {
 
         assertEquals(true, SubsonicXml.containsEntity(xml.byteInputStream(Charsets.UTF_8), "song"))
         assertEquals(false, SubsonicXml.containsEntity(xml.byteInputStream(Charsets.UTF_8), "artist"))
+    }
+
+    @Test
+    fun containsEntityStopsReadingAtTheFirstMatch() {
+        val xml =
+            buildString {
+                append("<subsonic-response status=\"ok\"><searchResult3>")
+                repeat(5_000) { append("<song id=\"s$it\" title=\"Song $it\"/>") }
+                append("</searchResult3></subsonic-response>")
+            }
+        val counting = CountingInputStream(xml.byteInputStream(Charsets.UTF_8))
+
+        assertEquals(true, SubsonicXml.containsEntity(counting, "song"))
+
+        assertTrue("read ${counting.bytesRead} of ${xml.length}", counting.bytesRead < 32_000)
+    }
+
+    @Test
+    fun rejectsATruncatedResponse() {
+        val failure =
+            runCatching {
+                SubsonicXml.readStatus("<subsonic-response status=\"ok\"><artists>".byteInputStream(Charsets.UTF_8))
+            }
+
+        assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+    }
+
+    @Test
+    fun failedStatusWithoutAnErrorStillThrows() {
+        val failure =
+            runCatching {
+                SubsonicXml.readStatus(
+                    "<subsonic-response status=\"failed\"></subsonic-response>".byteInputStream(Charsets.UTF_8),
+                )
+            }
+
+        assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+    }
+
+    @Test
+    fun errorElementWithoutStatusThrowsWithItsCode() {
+        val error =
+            runCatching {
+                SubsonicXml.readStatus(
+                    "<subsonic-response><error code=\"40\" message=\"Wrong username\"/></subsonic-response>"
+                        .byteInputStream(Charsets.UTF_8),
+                )
+            }.exceptionOrNull() as? SubsonicException
+
+        assertEquals(40, error?.code)
+        assertEquals("Wrong username", error?.message)
+    }
+
+    @Test
+    fun nestedSameNameElementsEmitOnce() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Outer">
+                      <album id="al2" name="Inner"/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(listOf("al1"), albums.map { it.id })
+    }
+
+    @Test
+    fun ignoresDiscTitlesThatAreNotDirectChildren() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="The Wall">
+                      <wrapper><discTitles disc="1" title="The Calm"/></wrapper>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(emptyMap<Long, String>(), albums.single().discTitles)
+    }
+
+    @Test
+    fun discTitleWithoutADiscNumberIsIgnored() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="The Wall">
+                      <discTitles title="No number"/>
+                      <discTitles disc="2" title="The Storm"/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(mapOf(2L to "The Storm"), albums.single().discTitles)
+    }
+
+    @Test
+    fun rejectsExternalEntities() {
+        val xml =
+            """
+            <!DOCTYPE subsonic-response [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+            <subsonic-response status="ok"><artists><artist id="&xxe;" name="x"/></artists></subsonic-response>
+            """.trimIndent()
+        val failure =
+            runCatching {
+                SubsonicXml.readStatus(xml.byteInputStream(Charsets.UTF_8))
+            }
+
+        assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+    }
+
+    private class CountingInputStream(
+        input: InputStream,
+    ) : FilterInputStream(input) {
+        var bytesRead = 0
+            private set
+
+        override fun read(): Int =
+            super.read().also {
+                if (it >= 0) bytesRead++
+            }
+
+        override fun read(
+            b: ByteArray,
+            off: Int,
+            len: Int,
+        ): Int =
+            super.read(b, off, len).also {
+                if (it > 0) bytesRead += it
+            }
     }
 }
