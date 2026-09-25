@@ -169,9 +169,16 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = koinViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
+    var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
+    LaunchedEffect(selectedTab) {
+        if (previousTab != selectedTab) {
+            viewModel.setSearch(previousTab.listTab(), "")
+            previousTab = selectedTab
+        }
+    }
     val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
     val search by viewModel.search(listTab).collectAsStateWithLifecycle()
     val resetKeys =
@@ -271,7 +278,7 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
-        searchActive = search.isNotEmpty()
+        searchActive = false
     }
 
     val density = LocalDensity.current

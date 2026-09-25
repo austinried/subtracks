@@ -18,6 +18,7 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
+import com.subtracks.data.repo.QueueSongQuery
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
@@ -132,7 +133,8 @@ class LibraryViewModel(
     fun playSong(songId: String) {
         viewModelScope.launch {
             val sourceId = sourceRepository.activeSourceIdOnce() ?: return@launch
-            playbackController.playSong(sourceId, songId)
+            val query = listQueries.getValue(LibraryListTab.Songs).value
+            playbackController.playSong(sourceId, songId, QueueSongQuery(query.songSort(), query.descending, query.starred))
         }
     }
 

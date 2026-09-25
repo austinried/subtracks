@@ -5,6 +5,7 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
+import com.subtracks.data.repo.QueueSongQuery
 import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -195,10 +196,12 @@ class PlaybackController(
     fun playSong(
         sourceId: Long,
         songId: String,
+        query: QueueSongQuery,
     ) {
         scope.launch {
-            val index = queueRepository.songsIndexOf(sourceId, songId) ?: return@launch
-            play(listOf(queueRepository.songsEntry(sourceId)), index)
+            val entry = queueRepository.songsEntry(sourceId, query)
+            val index = queueRepository.songsIndexOf(entry, songId) ?: return@launch
+            play(listOf(entry), index)
         }
     }
 

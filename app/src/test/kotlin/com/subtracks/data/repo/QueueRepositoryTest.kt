@@ -12,6 +12,8 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.SongSort
+import com.subtracks.data.prefs.StarredFilter
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -312,6 +314,39 @@ class QueueRepositoryTest {
             assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
         }
 
+    @Test
+    fun theSongsEntryFollowsItsSortAndStarredFilter() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    song("s1", "al1", track = 1, album = "First Album", title = "Charlie", starred = 5),
+                    song("s2", "al1", track = 2, album = "First Album", title = "Alpha"),
+                    song("s3", "al1", track = 3, album = "First Album", title = "Bravo", starred = 7),
+                    song("s4", "al2", track = 1, album = "Second Album", title = "Echo"),
+                    song("s5", "al2", track = 2, album = "Second Album", title = "Delta", starred = 3),
+                ),
+            )
+
+            val byTitle =
+                repository.snapshotAfter(
+                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Title, descending = false, StarredFilter.Any))),
+                )
+            assertEquals(listOf("s2", "s3", "s1", "s5", "s4"), resolveAll(byTitle))
+
+            val starredOnly =
+                repository.snapshotAfter(
+                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Starred, descending = false, StarredFilter.Starred))),
+                )
+            assertEquals(listOf("s3", "s1", "s5"), resolveAll(starredOnly))
+
+            val unstarred =
+                repository.snapshotAfter(
+                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Album, descending = false, StarredFilter.NotStarred))),
+                )
+            assertEquals(listOf("s2", "s4"), resolveAll(unstarred))
+        }
+
     private suspend fun QueueRepository.snapshotAfter(entries: List<QueueEntry>): QueueSnapshot {
         replace(entries)
         return snapshot()
@@ -379,18 +414,22 @@ class QueueRepositoryTest {
         albumId: String,
         track: Long,
         album: String = "Album",
+        title: String = "Song $id",
+        starred: Long? = null,
+        created: Long = 0,
     ) = Song(
         sourceId = 1,
         id = id,
         albumId = albumId,
         artistId = "ar1",
-        title = "Song $id",
+        title = title,
         album = album,
         artist = "Artist",
         duration = 100,
         track = track,
         disc = 1,
-        starred = null,
+        starred = starred,
         genre = null,
+        created = created,
     )
 }

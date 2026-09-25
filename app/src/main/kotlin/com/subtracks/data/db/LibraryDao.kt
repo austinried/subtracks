@@ -26,7 +26,14 @@ internal const val SONGS_SQL =
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId " +
         "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
-        "songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id"
+        "songs.title COLLATE NOCASE, songs.id"
+
+internal const val SONGS_IDS_SELECT =
+    "SELECT songs.id FROM songs " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId " +
+        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR " +
+        "(:starredFilter = 2 AND songs.starred IS NULL)) "
 
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
@@ -538,4 +545,81 @@ interface LibraryDao {
         sourceId: Long,
         albumId: String,
     ): Flow<List<Song>>
+
+    @Query(
+        "SELECT COUNT(*) FROM songs WHERE songs.sourceId = :sourceId AND (:starredFilter = 0 OR (:starredFilter = 1 AND songs.starred IS NOT NULL) OR (:starredFilter = 2 AND songs.starred IS NULL))",
+    )
+    suspend fun songCountForFilter(
+        sourceId: Long,
+        starredFilter: Int,
+    ): Long
+
+    @Query(
+        "${SONGS_IDS_SELECT}ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun songIdsByAlbum(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query(
+        "${SONGS_IDS_SELECT}ORDER BY albums.albumArtist COLLATE NOCASE DESC, songs.album COLLATE NOCASE DESC, " +
+            "songs.disc DESC, songs.track DESC, songs.title COLLATE NOCASE DESC, songs.id DESC",
+    )
+    suspend fun songIdsByAlbumReversed(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.title COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByTitle(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.title COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByTitleReversed(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.artist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByArtist(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.artist COLLATE NOCASE DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByArtistReversed(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query(
+        "${SONGS_IDS_SELECT}ORDER BY songs.starred IS NULL, songs.starred DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
+    )
+    suspend fun songIdsByStarred(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query(
+        "${SONGS_IDS_SELECT}ORDER BY songs.starred IS NULL, songs.starred ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id",
+    )
+    suspend fun songIdsByStarredReversed(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.created DESC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByAdded(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
+
+    @Query("${SONGS_IDS_SELECT}ORDER BY songs.created ASC, songs.album COLLATE NOCASE, songs.disc, songs.track, songs.id")
+    suspend fun songIdsByAddedReversed(
+        sourceId: Long,
+        starredFilter: Int,
+    ): List<String>
 }
