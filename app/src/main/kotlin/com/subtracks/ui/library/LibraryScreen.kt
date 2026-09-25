@@ -684,7 +684,11 @@ private fun LibraryTabs(
                     Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(headerColor)
-                        .drawBehind {
+                        .padding(6.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier.drawBehind {
                             if (current != null && indicatorLeft != null && indicatorRight != null) {
                                 drawRoundRect(
                                     color = indicatorColor,
@@ -694,29 +698,30 @@ private fun LibraryTabs(
                                 )
                             }
                         },
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    LibraryTab.entries.forEachIndexed { index, tab ->
-                        TabButton(
-                            tab = tab,
-                            artwork = artwork,
-                            progress =
-                                when (index) {
-                                    page -> 1f - transition
-                                    page + (if (fraction >= 0f) 1 else -1) -> transition
-                                    else -> 0f
-                                },
-                            indicatorLeft = indicatorLeft,
-                            indicatorRight = indicatorRight,
-                            onClick = { onTabSelected(tab) },
-                            modifier =
-                                Modifier.onGloballyPositioned { coordinates ->
-                                    bounds[index] = coordinates.boundsInParent()
-                                },
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        LibraryTab.entries.forEachIndexed { index, tab ->
+                            TabButton(
+                                tab = tab,
+                                artwork = artwork,
+                                progress =
+                                    when (index) {
+                                        page -> 1f - transition
+                                        page + (if (fraction >= 0f) 1 else -1) -> transition
+                                        else -> 0f
+                                    },
+                                indicatorLeft = indicatorLeft,
+                                indicatorRight = indicatorRight,
+                                onClick = { onTabSelected(tab) },
+                                modifier =
+                                    Modifier.onGloballyPositioned { coordinates ->
+                                        bounds[index] = coordinates.boundsInParent()
+                                    },
+                            )
+                        }
                     }
                 }
             }
