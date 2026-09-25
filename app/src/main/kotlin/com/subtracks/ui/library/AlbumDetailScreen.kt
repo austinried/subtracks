@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
@@ -72,7 +73,23 @@ fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val multiDisc = songs.map { it.disc ?: 1L }.distinct().size > 1
-    val discTitles = remember(discs) { discs.associate { it.disc to it.title } }
+    val discLabels =
+        remember(discs) {
+            val repeated =
+                discs
+                    .map { it.title }
+                    .filter { it.isNotBlank() }
+                    .groupingBy { it }
+                    .eachCount()
+                    .filterValues { it > 1 }
+                    .keys
+            discs.associate { disc ->
+                disc.disc to
+                    disc.title.takeIf { it.isNotBlank() }?.let { title ->
+                        if (title in repeated) "$title: Disc ${disc.disc}" else title
+                    }
+            }
+        }
     HeroDetailScaffold(
         artwork = artwork,
         title = album?.name.orEmpty(),
@@ -100,9 +117,9 @@ fun AlbumDetailScreen(
             var lastDisc: Long? = null
             songs.forEachIndexed { index, song ->
                 val disc = song.disc ?: 1L
-                val discTitle = discTitles[disc]
-                if (disc != lastDisc && (multiDisc || !discTitle.isNullOrBlank())) {
-                    item(key = "disc:$disc") { DiscHeader(disc, discTitle) }
+                val discLabel = discLabels[disc]
+                if (disc != lastDisc && (multiDisc || discLabel != null)) {
+                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc") }
                 }
                 lastDisc = disc
                 item(key = song.id) {
@@ -120,13 +137,11 @@ fun AlbumDetailScreen(
 }
 
 @Composable
-private fun DiscHeader(
-    disc: Long,
-    title: String?,
-) {
+private fun DiscHeader(text: String) {
     Text(
-        text = title?.takeIf { it.isNotBlank() } ?: "Disc $disc",
-        style = MaterialTheme.typography.titleLarge,
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
     )

@@ -45,6 +45,16 @@ class AlbumDiscsTest {
     }
 
     @Test
+    fun repeatedDiscTitlesGetTheDiscNumber() {
+        setContent(
+            listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 2, track = 1)),
+            discs = listOf(disc(1, "Live"), disc(2, "Live")),
+        )
+        assertEquals(1, nodesWithText("Live: Disc 1"))
+        assertEquals(1, nodesWithText("Live: Disc 2"))
+    }
+
+    @Test
     fun discHeadersFallBackToTheDiscNumber() {
         setContent(listOf(song("s-a", disc = 1, track = 1), song("s-b", disc = 2, track = 1)))
         assertEquals(1, nodesWithText("Disc 1"))
