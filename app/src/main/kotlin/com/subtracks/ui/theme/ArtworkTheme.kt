@@ -205,7 +205,7 @@ fun ArtworkTheme(
     }
 }
 
-fun playerSurfaceColor(artwork: ArtworkColors): Color = artwork.gradientHigh
+fun playerSurfaceColor(artwork: ArtworkColors): Color = artwork.scheme.surfaceContainerHigh
 
 fun heroBarColor(
     artwork: ArtworkColors?,
