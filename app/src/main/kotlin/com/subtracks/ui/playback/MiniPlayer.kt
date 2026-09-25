@@ -93,8 +93,7 @@ fun MiniPlayer(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(1.5.dp)),
+                            .height(3.dp),
                 )
                 Row(
                     modifier =
