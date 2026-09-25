@@ -271,17 +271,17 @@ fun HeroHeader(
                             onClick = onPlay,
                             enabled = hasSongs,
                             shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
-                            modifier = Modifier.width(56.dp).height(48.dp),
+                            modifier = Modifier.width(64.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(24.dp))
                         }
                         FilledIconButton(
                             onClick = onShuffle,
                             enabled = hasSongs,
                             shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
-                            modifier = Modifier.width(56.dp).height(48.dp),
+                            modifier = Modifier.width(64.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
+                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(24.dp))
                         }
                     }
                     Box(
