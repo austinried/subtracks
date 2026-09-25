@@ -80,7 +80,10 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -725,6 +728,8 @@ private fun TabButton(
     val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
     val paddingStart = with(LocalDensity.current) { 8.dp.toPx() }
     var tabLeft by remember { mutableFloatStateOf(0f) }
+    val clipStart = indicatorLeft?.minus(tabLeft + paddingStart)
+    val clipEnd = indicatorRight?.minus(tabLeft + paddingStart)
     Box(
         modifier =
             modifier
@@ -732,25 +737,35 @@ private fun TabButton(
                 .clickable(onClick = onClick)
                 .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
     ) {
-        TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
-        if (indicatorLeft != null && indicatorRight != null) {
+        if (clipStart != null && clipEnd != null) {
+            Box(
+                modifier =
+                    Modifier.drawWithContent {
+                        val hole =
+                            Path().apply {
+                                addRect(Rect(clipStart, 0f, clipEnd, size.height))
+                            }
+                        clipPath(hole, clipOp = ClipOp.Difference) {
+                            this@drawWithContent.drawContent()
+                        }
+                    },
+            ) {
+                TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
+            }
             Box(
                 modifier =
                     Modifier
                         .clearAndSetSemantics {}
                         .drawWithContent {
-                            clipRect(
-                                left = indicatorLeft - tabLeft - paddingStart,
-                                top = 0f,
-                                right = indicatorRight - tabLeft - paddingStart,
-                                bottom = size.height,
-                            ) {
+                            clipRect(clipStart, 0f, clipEnd, size.height) {
                                 this@drawWithContent.drawContent()
                             }
                         },
             ) {
                 TabContent(tab, progress, selectedContent)
             }
+        } else {
+            TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
         }
     }
 }
