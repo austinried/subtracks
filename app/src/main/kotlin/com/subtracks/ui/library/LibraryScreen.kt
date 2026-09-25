@@ -64,6 +64,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,10 +76,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -86,6 +89,7 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -637,26 +641,28 @@ private fun LibraryTabs(
         }
     }
 
+    val current = bounds[page]
+    val neighbour = current?.let { bounds[if (fraction >= 0f) page + 1 else page - 1] }
+    val step = if (neighbour != null) transition else 0f
+    val stretch = with(density) { indicatorStretch.toPx() } * step
+    val leading = stretch * 2f
+    val trailing = stretch * 0.25f
+    val leftExtra = if (travel > 0) trailing else leading
+    val rightExtra = if (travel > 0) leading else trailing
+    val indicatorLeft = current?.let { it.left + ((neighbour?.left ?: it.left) - it.left) * step - leftExtra }
+    val indicatorRight = current?.let { it.right + ((neighbour?.right ?: it.right) - it.right) * step + rightExtra }
+
     Box(
         Modifier
             .fillMaxWidth()
             .padding(start = 8.dp, end = 12.dp),
     ) {
-        bounds[page]?.let { current ->
-            val neighbour = bounds[if (fraction >= 0f) page + 1 else page - 1]
-            val step = if (neighbour != null) transition else 0f
-            val left = current.left + ((neighbour?.left ?: current.left) - current.left) * step
-            val right = current.right + ((neighbour?.right ?: current.right) - current.right) * step
-            val stretch = with(density) { indicatorStretch.toPx() } * step
-            val leading = stretch * 2f
-            val trailing = stretch * 0.25f
-            val leftExtra = if (travel > 0) trailing else leading
-            val rightExtra = if (travel > 0) leading else trailing
+        if (current != null && indicatorLeft != null && indicatorRight != null) {
             Box(
                 modifier =
                     Modifier
-                        .offset { IntOffset((left - leftExtra).roundToInt(), current.top.roundToInt()) }
-                        .width(with(density) { (right - left + leftExtra + rightExtra).toDp() })
+                        .offset { IntOffset(indicatorLeft.roundToInt(), current.top.roundToInt()) }
+                        .width(with(density) { (indicatorRight - indicatorLeft).toDp() })
                         .height(with(density) { current.height.toDp() })
                         .clip(RoundedCornerShape(8.dp))
                         .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
@@ -678,6 +684,8 @@ private fun LibraryTabs(
                             page + (if (fraction >= 0f) 1 else -1) -> transition
                             else -> 0f
                         },
+                    indicatorLeft = indicatorLeft,
+                    indicatorRight = indicatorRight,
                     onClick = { onTabSelected(tab) },
                     modifier =
                         Modifier.onGloballyPositioned { coordinates ->
@@ -709,23 +717,55 @@ private fun TabButton(
     tab: LibraryTab,
     artwork: ArtworkColors?,
     progress: Float,
+    indicatorLeft: Float?,
+    indicatorRight: Float?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
-    val tintProgress = ((progress - 0.25f) / 0.6f).coerceIn(0f, 1f)
-    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedContent, tintProgress)
-    Row(
+    val paddingStart = with(LocalDensity.current) { 8.dp.toPx() }
+    var tabLeft by remember { mutableFloatStateOf(0f) }
+    Box(
         modifier =
             modifier
+                .onGloballyPositioned { tabLeft = it.boundsInParent().left }
                 .clickable(onClick = onClick)
                 .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
+        TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
+        if (indicatorLeft != null && indicatorRight != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .clearAndSetSemantics {}
+                        .drawWithContent {
+                            clipRect(
+                                left = indicatorLeft - tabLeft - paddingStart,
+                                top = 0f,
+                                right = indicatorRight - tabLeft - paddingStart,
+                                bottom = size.height,
+                            ) {
+                                this@drawWithContent.drawContent()
+                            }
+                        },
+            ) {
+                TabContent(tab, progress, selectedContent)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabContent(
+    tab: LibraryTab,
+    progress: Float,
+    color: Color,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = tab.icon,
             contentDescription = tab.label,
-            tint = content,
+            tint = color,
             modifier = Modifier.size(24.dp),
         )
         Box(
@@ -745,7 +785,7 @@ private fun TabButton(
                 Text(
                     text = tab.label,
                     style = MaterialTheme.typography.titleSmall,
-                    color = content,
+                    color = color,
                     maxLines = 1,
                     softWrap = false,
                 )
