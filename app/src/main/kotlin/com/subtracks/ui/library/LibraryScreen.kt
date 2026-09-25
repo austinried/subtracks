@@ -618,14 +618,13 @@ private fun LibraryTabs(
     onOpenSettings: () -> Unit,
     artwork: ArtworkColors?,
 ) {
-    val iconHoldStart = 0.25f
-    val iconFadeEnd = 0.65f
     val indicatorStretch = 18.dp
     val density = LocalDensity.current
     val bounds = remember { mutableStateMapOf<Int, Rect>() }
     val page = pagerState.currentPage
     val fraction = pagerState.currentPageOffsetFraction
-    val position = page + fraction
+    val raw = abs(fraction).coerceIn(0f, 1f)
+    val transition = raw * raw * (3f - 2f * raw)
 
     Box(
         Modifier
@@ -634,7 +633,7 @@ private fun LibraryTabs(
     ) {
         bounds[page]?.let { current ->
             val neighbour = bounds[if (fraction >= 0f) page + 1 else page - 1]
-            val step = if (neighbour != null) abs(fraction) else 0f
+            val step = if (neighbour != null) transition else 0f
             val left = current.left + ((neighbour?.left ?: current.left) - current.left) * step
             val right = current.right + ((neighbour?.right ?: current.right) - current.right) * step
             val stretch = with(density) { indicatorStretch.toPx() } * step
@@ -663,8 +662,11 @@ private fun LibraryTabs(
                     tab = tab,
                     artwork = artwork,
                     progress =
-                        ((iconFadeEnd - abs(position - index)) / (iconFadeEnd - iconHoldStart))
-                            .coerceIn(0f, 1f),
+                        when (index) {
+                            page -> 1f - transition
+                            page + (if (fraction >= 0f) 1 else -1) -> transition
+                            else -> 0f
+                        },
                     onClick = { onTabSelected(tab) },
                     modifier =
                         Modifier.onGloballyPositioned { coordinates ->
