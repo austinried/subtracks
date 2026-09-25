@@ -1,7 +1,8 @@
 package com.subtracks.ui
 
 import android.net.Uri
-import androidx.activity.compose.BackHandler
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
@@ -31,7 +32,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -371,15 +374,27 @@ private fun MainNavigation() {
         }
     }
 
-    // The NavHost registers its own back callback, and OnBackPressedDispatcher hands the back to
-    // the last-registered enabled callback, so it can win over the overlay's BackHandler and pop
-    // the route underneath. Disable the controller's back and drive navigation ourselves.
-    LaunchedEffect(navController) { navController.enableOnBackPressed(false) }
-    BackHandler(enabled = showingQueue || nowPlayingOpen || navController.previousBackStackEntry != null) {
-        when {
-            showingQueue -> showingQueue = false
-            nowPlayingOpen -> settleNowPlaying(false)
-            else -> navController.popBackStack()
+    // The NavHost registers its back callback after ours, so on a pushed route it wins and pops the
+    // route under the now playing overlay. Re-register ours on every navigation so it is the most
+    // recent callback in the dispatcher and gets the back first.
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val backCallback =
+        remember {
+            object : OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    when {
+                        showingQueue -> showingQueue = false
+                        nowPlayingOpen -> settleNowPlaying(false)
+                        else -> navController.popBackStack()
+                    }
+                }
+            }
         }
+    SideEffect {
+        backCallback.isEnabled = showingQueue || nowPlayingOpen || navController.previousBackStackEntry != null
+    }
+    DisposableEffect(backDispatcher, currentRoute) {
+        backDispatcher?.addCallback(backCallback)
+        onDispose { backCallback.remove() }
     }
 }
