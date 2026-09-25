@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Download
@@ -261,22 +262,34 @@ fun HeroHeader(
             }
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                FilledIconButton(
-                    onClick = onPlay,
-                    enabled = hasSongs,
-                    modifier = Modifier.width(76.dp).height(48.dp),
-                ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
-                }
-                FilledIconButton(
-                    onClick = onShuffle,
-                    enabled = hasSongs,
-                    modifier = Modifier.width(76.dp).height(48.dp),
-                ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Row {
+                        FilledIconButton(
+                            onClick = onPlay,
+                            enabled = hasSongs,
+                            shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
+                            modifier = Modifier.width(56.dp).height(48.dp),
+                        ) {
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
+                        }
+                        FilledIconButton(
+                            onClick = onShuffle,
+                            enabled = hasSongs,
+                            shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                            modifier = Modifier.width(56.dp).height(48.dp),
+                        ) {
+                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
+                        }
+                    }
+                    Box(
+                        Modifier
+                            .width(1.dp)
+                            .height(20.dp)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f)),
+                    )
                 }
             }
             IconButton(onClick = onMore, modifier = Modifier.padding(horizontal = 8.dp)) {
