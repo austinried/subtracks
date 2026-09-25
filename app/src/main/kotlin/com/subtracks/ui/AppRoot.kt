@@ -289,7 +289,7 @@ private fun MainNavigation() {
                     MiniPlayer(
                         state = playback,
                         coverArt = miniArt,
-                        artwork = rememberArtworkColors(miniArt),
+                        artwork = artwork,
                         onExpand = { settleNowPlaying(true) },
                         onPlayPause = playbackController::togglePlayPause,
                         onNext = playbackController::next,

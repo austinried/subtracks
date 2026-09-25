@@ -53,6 +53,7 @@ fun SongsContent(
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     topInset: Dp = 0.dp,
+    onSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -64,7 +65,7 @@ fun SongsContent(
             if (filtered) {
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
-                EmptyState("No songs yet.", modifier)
+                EmptyState("No songs yet.", modifier, actionLabel = "Sync", onAction = onSync)
             }
         }
 

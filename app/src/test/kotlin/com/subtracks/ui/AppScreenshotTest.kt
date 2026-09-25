@@ -147,49 +147,18 @@ class AppScreenshotTest {
     }
 
     @Test
-    fun libraryWithMiniPlayer() {
-        composeRule.setContent {
-            SubtracksTheme {
-                val artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200))
-                Column(Modifier.fillMaxSize()) {
-                    LibraryScreen(
-                        selectedTab = LibraryTab.Albums,
-                        onTabSelected = {},
-                        albums = remember { flowOf(PagingData.from(Fixtures.albums)) }.collectAsLazyPagingItems(),
-                        artists = remember { flowOf(PagingData.from(Fixtures.artists)) }.collectAsLazyPagingItems(),
-                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) }.collectAsLazyPagingItems(),
-                        playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) }.collectAsLazyPagingItems(),
-                        coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
-                        onAlbumClick = {},
-                        onArtistClick = {},
-                        onPlaylistClick = {},
-                        onSongClick = {},
-                        onSync = {},
-                        onOpenSettings = {},
-                        artwork = artwork,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MiniPlayer(
-                        state = Fixtures.playbackState(),
-                        coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
-                        artwork = artwork,
-                        onExpand = {},
-                        onPlayPause = {},
-                        onNext = {},
-                        progressInset = true,
-                    )
-                }
-            }
-        }
-        awaitTag(ALBUM_COVER_TAG)
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_with_mini_player.png")
-    }
+    fun libraryWithMiniPlayer() = libraryWithMiniPlayerShot(Color.rgb(120, 80, 200), "library_with_mini_player.png")
 
     @Test
-    fun libraryWithMiniPlayerWarm() {
+    fun libraryWithMiniPlayerWarm() = libraryWithMiniPlayerShot(Color.rgb(222, 150, 30), "library_with_mini_player_warm.png")
+
+    private fun libraryWithMiniPlayerShot(
+        seed: Int,
+        file: String,
+    ) {
         composeRule.setContent {
             SubtracksTheme {
-                val artwork = artworkColorsFromSeed(Color.rgb(222, 150, 30))
+                val artwork = artworkColorsFromSeed(seed)
                 Column(Modifier.fillMaxSize()) {
                     LibraryScreen(
                         selectedTab = LibraryTab.Albums,
@@ -221,7 +190,7 @@ class AppScreenshotTest {
             }
         }
         awaitTag(ALBUM_COVER_TAG)
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_with_mini_player_warm.png")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/$file")
     }
 
     @Test

@@ -41,6 +41,7 @@ fun PlaylistsContent(
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     topInset: Dp = 0.dp,
+    onSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -52,7 +53,7 @@ fun PlaylistsContent(
             if (filtered) {
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
-                EmptyState("No playlists yet.", modifier)
+                EmptyState("No playlists yet.", modifier, actionLabel = "Sync", onAction = onSync)
             }
         }
 

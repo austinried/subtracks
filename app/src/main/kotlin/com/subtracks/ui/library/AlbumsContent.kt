@@ -44,6 +44,7 @@ fun AlbumsContent(
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     topInset: Dp = 0.dp,
+    onSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -55,7 +56,12 @@ fun AlbumsContent(
             if (filtered) {
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
-                EmptyState("No albums yet.\nSync with your server to fill your library.", modifier)
+                EmptyState(
+                    text = "No albums yet.\nSync with your server to fill your library.",
+                    modifier = modifier,
+                    actionLabel = "Sync",
+                    onAction = onSync,
+                )
             }
         }
 

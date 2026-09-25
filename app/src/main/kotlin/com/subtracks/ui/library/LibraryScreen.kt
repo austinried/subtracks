@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -90,6 +90,7 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
@@ -302,16 +303,16 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
-        searchActive = search.isNotEmpty()
+        if (search.isNotEmpty()) searchActive = true
     }
 
     val density = LocalDensity.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
-    var tabBarHeightPx by remember { mutableFloatStateOf(0f) }
+    var tabBarHeightPx by remember { mutableFloatStateOf(with(density) { (TAB_BAR_CONTENT_HEIGHT + bottomInset).toPx() }) }
     val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
     val listTopInset = statusBarTop
-    val listBottomInset = tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
+    val listBottomInset = tabBarHeight + BOTTOM_CLEARANCE
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
 
     Box(
@@ -335,7 +336,7 @@ fun LibraryScreen(
                     PullToRefreshDefaults.Indicator(
                         state = pullToRefreshState,
                         isRefreshing = syncing,
-                        modifier = Modifier.align(Alignment.TopCenter),
+                        modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding(),
                         containerColor = headerColor,
                         color = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.primary,
                     )
@@ -353,6 +354,7 @@ fun LibraryScreen(
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
                             topInset = listTopInset,
+                            onSync = onSync,
                         )
                     }
 
@@ -366,6 +368,7 @@ fun LibraryScreen(
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
                             topInset = listTopInset,
+                            onSync = onSync,
                         )
                     }
 
@@ -380,6 +383,7 @@ fun LibraryScreen(
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
                             topInset = listTopInset,
+                            onSync = onSync,
                         )
                     }
 
@@ -393,6 +397,7 @@ fun LibraryScreen(
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
                             topInset = listTopInset,
+                            onSync = onSync,
                         )
                     }
                 }
@@ -444,7 +449,6 @@ fun LibraryScreen(
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .imePadding()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
@@ -618,8 +622,8 @@ private fun ListOptionsSheet(
     }
 }
 
-private val FAB_CLEARANCE = 80.dp
-private val SEARCH_BAR_CLEARANCE = 80.dp
+private val BOTTOM_CLEARANCE = 80.dp
+private val TAB_BAR_CONTENT_HEIGHT = 52.dp
 private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 
@@ -768,47 +772,53 @@ private fun TabButton(
     modifier: Modifier = Modifier,
 ) {
     val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
-    val paddingStart = with(LocalDensity.current) { 8.dp.toPx() }
     var tabLeft by remember { mutableFloatStateOf(0f) }
-    val clipStart = indicatorLeft?.minus(tabLeft + paddingStart)
-    val clipEnd = indicatorRight?.minus(tabLeft + paddingStart)
+    var tabRootX by remember { mutableFloatStateOf(0f) }
+    var contentRootX by remember { mutableFloatStateOf(0f) }
+    val contentLeft = tabLeft + (contentRootX - tabRootX)
+    val clipStart = indicatorLeft?.minus(contentLeft)
+    val clipEnd = indicatorRight?.minus(contentLeft)
     Box(
         modifier =
             modifier
-                .onGloballyPositioned { tabLeft = it.boundsInParent().left }
-                .clickable(onClick = onClick)
+                .onGloballyPositioned {
+                    tabLeft = it.boundsInParent().left
+                    tabRootX = it.positionInRoot().x
+                }.clickable(onClick = onClick)
                 .minimumInteractiveComponentSize()
                 .padding(start = 8.dp, end = 12.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
     ) {
-        if (clipStart != null && clipEnd != null) {
-            Box(
-                modifier =
-                    Modifier.drawWithContent {
-                        val hole =
-                            Path().apply {
-                                addRect(Rect(clipStart, 0f, clipEnd, size.height))
-                            }
-                        clipPath(hole, clipOp = ClipOp.Difference) {
-                            this@drawWithContent.drawContent()
-                        }
-                    },
-            ) {
-                TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
-            }
-            Box(
-                modifier =
-                    Modifier
-                        .clearAndSetSemantics {}
-                        .drawWithContent {
-                            clipRect(clipStart, 0f, clipEnd, size.height) {
+        Box(Modifier.onGloballyPositioned { contentRootX = it.positionInRoot().x }) {
+            if (clipStart != null && clipEnd != null) {
+                Box(
+                    modifier =
+                        Modifier.drawWithContent {
+                            val hole =
+                                Path().apply {
+                                    addRect(Rect(clipStart, 0f, clipEnd, size.height))
+                                }
+                            clipPath(hole, clipOp = ClipOp.Difference) {
                                 this@drawWithContent.drawContent()
                             }
                         },
-            ) {
-                TabContent(tab, progress, selectedContent)
+                ) {
+                    TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
+                }
+                Box(
+                    modifier =
+                        Modifier
+                            .clearAndSetSemantics {}
+                            .drawWithContent {
+                                clipRect(clipStart, 0f, clipEnd, size.height) {
+                                    this@drawWithContent.drawContent()
+                                }
+                            },
+                ) {
+                    TabContent(tab, progress, selectedContent)
+                }
+            } else {
+                TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
             }
-        } else {
-            TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
         }
     }
 }

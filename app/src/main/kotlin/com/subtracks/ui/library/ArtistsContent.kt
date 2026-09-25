@@ -42,6 +42,7 @@ fun ArtistsContent(
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
     topInset: Dp = 0.dp,
+    onSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -53,7 +54,7 @@ fun ArtistsContent(
             if (filtered) {
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
-                EmptyState("No artists yet.", modifier)
+                EmptyState("No artists yet.", modifier, actionLabel = "Sync", onAction = onSync)
             }
         }
 

@@ -182,12 +182,13 @@ private fun blendHue(
 fun rememberArtworkColors(
     ref: CoverArtRef?,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
-): ArtworkColors {
+): ArtworkColors? {
     val cached = remember(ref?.cacheKey) { ref?.cacheKey?.let(ArtworkSeedCache::cached) }
     val seeds by rememberArtworkSeed(ref)
     val effective = seeds ?: cached
     val target = remember(effective) { effective?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
-    return rememberAnimatedArtworkColors(target, durationMillis)
+    val colors = rememberAnimatedArtworkColors(target, durationMillis)
+    return if (target == null) null else colors
 }
 
 @Composable

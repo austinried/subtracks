@@ -4,11 +4,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -71,6 +75,44 @@ class LibraryScreenTest {
         assertTrue("pulling down should trigger a sync", synced)
         assertTrue("the settings control should open settings", settingsOpened)
     }
+
+    @Test
+    fun anEmptyTabOffersSync() {
+        var synced = false
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.empty<Album>(settledLoadStates)) }.collectAsLazyPagingItems(),
+                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSongClick = {},
+                    onSync = { synced = true },
+                    onOpenSettings = {},
+                )
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Sync").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Sync").performClick()
+
+        assertTrue("an empty library should offer a sync", synced)
+    }
+
+    private val settledLoadStates =
+        LoadStates(
+            refresh = LoadState.NotLoading(endOfPaginationReached = true),
+            prepend = LoadState.NotLoading(endOfPaginationReached = true),
+            append = LoadState.NotLoading(endOfPaginationReached = true),
+        )
 
     private fun albums() =
         (1..60).map { index ->
