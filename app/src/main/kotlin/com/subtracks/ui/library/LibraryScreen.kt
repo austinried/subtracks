@@ -82,8 +82,10 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -672,7 +674,7 @@ private fun TabButton(
                 .clip(RoundedCornerShape(8.dp))
                 .background(container.copy(alpha = progress))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -681,10 +683,17 @@ private fun TabButton(
             tint = content,
             modifier = Modifier.size(24.dp),
         )
-        AnimatedVisibility(
-            visible = progress > 0.5f,
-            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
+        Box(
+            modifier =
+                Modifier
+                    .clipToBounds()
+                    .layout { measurable, _ ->
+                        val placeable = measurable.measure(Constraints())
+                        val width = (placeable.width * progress).roundToInt()
+                        layout(width, placeable.height) {
+                            placeable.place(0, 0)
+                        }
+                    },
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(8.dp))
