@@ -149,7 +149,7 @@ fun AlbumDetailScreen(
 private fun DiscHeader(text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = 28.dp, bottom = 4.dp),
     ) {
         Icon(
             imageVector = Icons.Outlined.FiberSmartRecord,
