@@ -642,7 +642,8 @@ private fun LibraryTabs(
     onOpenSettings: () -> Unit,
     artwork: ArtworkColors?,
 ) {
-    val iconFadeThreshold = 0.65f
+    val iconFadeStart = 0.25f
+    val iconFadeEnd = 0.65f
     val indicatorStretch = 18.dp
     val density = LocalDensity.current
     val bounds = remember { mutableStateMapOf<Int, Rect>() }
@@ -682,7 +683,7 @@ private fun LibraryTabs(
                     tab = tab,
                     artwork = artwork,
                     progress =
-                        ((iconFadeThreshold - abs(position - index)) / iconFadeThreshold)
+                        ((iconFadeEnd - abs(position - index)) / (iconFadeEnd - iconFadeStart))
                             .coerceIn(0f, 1f),
                     onClick = { onTabSelected(tab) },
                     modifier =
