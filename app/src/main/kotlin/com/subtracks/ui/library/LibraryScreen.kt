@@ -713,7 +713,8 @@ private fun TabButton(
     modifier: Modifier = Modifier,
 ) {
     val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
-    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedContent, progress)
+    val tintProgress = ((progress - 0.25f) / 0.6f).coerceIn(0f, 1f)
+    val content = lerp(MaterialTheme.colorScheme.onBackground, selectedContent, tintProgress)
     Row(
         modifier =
             modifier
