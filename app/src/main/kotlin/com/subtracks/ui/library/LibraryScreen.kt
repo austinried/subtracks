@@ -669,11 +669,7 @@ private fun LibraryTabs(
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
     val indicatorColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 8.dp, end = 12.dp),
-    ) {
+    Box(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -682,7 +678,7 @@ private fun LibraryTabs(
             Box(
                 modifier =
                     Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
                         .background(headerColor)
                         .padding(6.dp),
             ) {
@@ -735,7 +731,7 @@ private fun LibraryTabs(
             Box(
                 modifier =
                     Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
                         .background(headerColor),
             ) {
                 IconButton(onClick = onOpenSettings) {
