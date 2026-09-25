@@ -18,7 +18,7 @@ Subtracks is a native Android client for Subsonic-compatible servers (Navidrome,
 | DI | Koin, constructor injection |
 | Persistence | Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (SQLite 3.50+) |
 | Lists | Paging 3 over Room `PagingSource` (local mirror, not remote paging) |
-| Networking | OkHttp + DOM XML parsing |
+| Networking | OkHttp + streaming SAX XML parsing |
 | Async | Kotlin coroutines / `Flow` |
 | Images | Coil 3 |
 | Media | AndroidX Media3 (`media3-exoplayer`, `media3-session`) |
@@ -52,7 +52,7 @@ app/src/main/kotlin/com/subtracks
     repo/                            SourceRepository, LibraryRepository
     source/                          MusicSource abstraction
       subsonic/                      SubsonicClient, SubsonicXml, SubsonicSource
-    sync/                            SyncService (fetch + transaction), SyncManager (status)
+    sync/                            SyncService (stream + per-batch writes + prune), SyncManager (status)
 ```
 
 ## Layers
@@ -106,7 +106,13 @@ Images: grids and lists request a 256 px `getCoverArt` thumbnail; the 120 dp det
 
 ## Sync
 
-`SyncService.sync()` is serialized with a mutex. It fetches the whole library first (artists, albums, songs, playlists and their entries), then writes in a single `immediateTransaction`: upserts, deletes rows no longer present on the server (diffed against the DB), and rebuilds `playlist_songs`. Because fetching happens outside the transaction, a network failure never leaves a half-applied state.
+`SyncService.sync()` is serialized by a mutex in `SourceRepository`, so overlapping sync requests cannot interleave. It walks five entities in sequence — artists, albums, songs, playlists and playlist songs — and each one is a cold `Flow` from `MusicSource` that the service collects: it remembers the IDs already in the local mirror, upserts every batch as it arrives (one `immediateTransaction` per ~500-row batch), crosses those IDs off, and after that entity's stream ends deletes whatever is left, i.e. the rows the server no longer lists. The parser reads the HTTP response stream directly, so neither the raw XML nor the whole library ever sits in memory at once.
+
+Songs have a primary and a fallback fetch. The primary probes `search3` with an empty query once (memoized per source); if the server supports it, the library is paged through `search3` 500 songs at a time. Otherwise the fallback pages `getAlbumList2` and then issues one `getAlbum` per album — it works everywhere but costs a request per album instead of per 500 songs. Every paged loop stops on a short page and is capped at 1000 pages. Playlists are fetched whole, and their songs are stored by position so a playlist that got shorter (or was emptied) is trimmed at the end.
+
+Cleanup is the "everything I had, minus everything the server just sent" step described above: artists, albums, songs and playlists delete the leftover IDs in 500-row chunks, disc titles are deleted per `(album, disc)` for albums that still exist, and playlist entries beyond the new count are removed along with entries for playlists that disappeared.
+
+Sync is not atomic. Each batch commits on its own, so a failure leaves the batches already written in place and skips that entity's prune; stale rows can linger until the next successful sync, which also invalidates the queue's cached library. The one hazard is a scan that stops early — a server returning a short page by mistake, or a library larger than the page cap — because the prune trusts that the stream actually reached the end.
 
 ## Search
 
@@ -114,7 +120,7 @@ Search is a case-insensitive substring filter on the library queries (`instr(low
 
 ## Networking and auth
 
-`SubsonicClient` speaks the Subsonic REST API over OkHttp. Auth is the token scheme (`t = md5(password + salt)`), salted freshly on every request including media URLs; plaintext `p=` is supported as a fallback for old servers. Responses are parsed with a `DocumentBuilderFactory` hardened best-effort (Android's parser rejects some flags, so unsupported ones are ignored), and the client rejects any document that is not a `<subsonic-response>`, so a captive portal or login page can never be mistaken for an empty library and wipe the local mirror.
+`SubsonicClient` speaks the Subsonic REST API over OkHttp. Auth is the token scheme (`t = md5(password + salt)`), salted freshly on every request including media URLs; plaintext `p=` is supported as a fallback for old servers. Responses are parsed as a stream with SAX (`SAXParserFactory`, hardened best-effort — Android's parser rejects some flags, so unsupported ones are ignored), so entities are mapped as elements close rather than through a DOM. The client rejects any document that is not a `<subsonic-response>` and classifies malformed or truncated bodies as a `SubsonicException`, so a captive portal or login page can never be mistaken for an empty library and wipe the local mirror.
 
 ## Security and privacy
 
