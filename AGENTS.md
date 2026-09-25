@@ -28,6 +28,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 - `app/src/test` - JVM unit tests (JUnit4, Robolectric, Roborazzi, MockWebServer). Run by `:app:testDebugUnitTest`.
 - `app/src/integrationTest` - tests that need real servers. Compiled with the unit test sources but run by the dedicated `:app:integrationTest` task, and excluded from every `*UnitTest` task. The nushell harness starts the servers for you.
+- A test is only worth having if it passes for the right reason *and* fails when the behaviour breaks. There is no such thing as a documentation test: one that passes now but would not fail if the thing stopped working is actively harmful, because it hides the gap it pretends to cover. Before keeping a new test, break the behaviour (or run it against the pre-fix code) and confirm it fails, then confirm it passes again with the fix.
 
 ## CI
 
