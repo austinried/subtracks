@@ -53,6 +53,7 @@ fun artworkColorsFromSeeds(
 ): ArtworkColors {
     val (hue, saturation, _) = Color(primarySeed or 0xFF000000.toInt()).toHsl()
     val s = saturation.coerceAtMost(0.85f)
+    val darkHue = harmonizeDarkHue(hue)
 
     fun tone(
         h: Float,
@@ -61,7 +62,7 @@ fun artworkColorsFromSeeds(
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
 
     val primary = tone(hue, s, 0.62f).withMinLuminance(PRIMARY_MIN_LUMINANCE)
-    val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
+    val background = tone(darkHue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
     val secondary =
@@ -75,14 +76,14 @@ fun artworkColorsFromSeeds(
         } ?: tone(hue, s, 0.40f)
 
     val gradientSat = if (s > 0.05f) s.coerceAtLeast(MIN_GRADIENT_SATURATION) else s
-    val gradientHigh = tone(hue, (gradientSat * 0.85f).coerceAtMost(0.70f), 0.26f)
-    val gradientLow = tone(hue, gradientSat * 0.55f, 0.12f)
+    val gradientHigh = tone(darkHue, (gradientSat * 0.85f).coerceAtMost(0.70f), 0.26f)
+    val gradientLow = tone(darkHue, gradientSat * 0.55f, 0.12f)
     val accents =
         listOf(
-            tone(hue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
+            tone(darkHue, gradientSat, 0.72f).withMaxLuminance(ACCENT_MAX_LUMINANCE),
             secondary.withMaxLuminance(ACCENT_MAX_LUMINANCE),
         )
-    val darkPrimary = tone(hue, gradientSat * 0.75f, 0.10f)
+    val darkPrimary = tone(darkHue, gradientSat * 0.75f, 0.10f)
 
     val backdrop = maxOf(gradientHigh.luminance(), gradientLow.luminance(), accents.maxOf { it.luminance() })
     val onSurfaceVariant =
@@ -108,15 +109,15 @@ fun artworkColorsFromSeeds(
             surface = background,
             onSurface = onBackground,
             surfaceTint = primary,
-            surfaceVariant = tone(hue, s * 0.25f, 0.17f),
+            surfaceVariant = tone(darkHue, s * 0.25f, 0.17f),
             onSurfaceVariant = onSurfaceVariant,
-            surfaceContainerLowest = tone(hue, s * 0.25f, 0.04f),
-            surfaceContainerLow = tone(hue, s * 0.25f, 0.08f),
-            surfaceContainer = tone(hue, s * 0.25f, 0.10f),
-            surfaceContainerHigh = tone(hue, s * 0.22f, 0.14f),
-            surfaceContainerHighest = tone(hue, s * 0.20f, 0.18f),
+            surfaceContainerLowest = tone(darkHue, s * 0.25f, 0.04f),
+            surfaceContainerLow = tone(darkHue, s * 0.25f, 0.08f),
+            surfaceContainer = tone(darkHue, s * 0.25f, 0.10f),
+            surfaceContainerHigh = tone(darkHue, s * 0.22f, 0.14f),
+            surfaceContainerHighest = tone(darkHue, s * 0.20f, 0.18f),
             outline = tone(hue, s * 0.15f, 0.55f),
-            outlineVariant = tone(hue, s * 0.18f, 0.28f),
+            outlineVariant = tone(darkHue, s * 0.18f, 0.28f),
         )
 
     return ArtworkColors(
@@ -172,6 +173,11 @@ private fun blendHue(
 ): Float {
     val delta = ((to - from + 540f) % 360f) - 180f
     return (from + delta * fraction + 360f) % 360f
+}
+
+private fun harmonizeDarkHue(hue: Float): Float {
+    if (hue !in 0f..120f) return hue
+    return 358f - hue * (40f / 120f)
 }
 
 @Composable

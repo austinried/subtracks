@@ -59,6 +59,19 @@ class ArtworkColorsTest {
         }
     }
 
+    @Test
+    fun warmHuesKeepDarkSurfacesOutOfBrown() {
+        val warmSeeds = listOf(0xFFE6C822.toInt(), 0xFFE68A22.toInt(), 0xFFD53A3A.toInt())
+        for (seed in warmSeeds) {
+            val colors = artworkColorsFromSeed(seed)
+            assertTrue("gradientHigh for $seed", colors.gradientHigh.blue >= colors.gradientHigh.green)
+            assertTrue(
+                "surfaceContainerHigh for $seed",
+                colors.scheme.surfaceContainerHigh.blue >= colors.scheme.surfaceContainerHigh.green,
+            )
+        }
+    }
+
     private fun contrast(
         a: Color,
         b: Color,
