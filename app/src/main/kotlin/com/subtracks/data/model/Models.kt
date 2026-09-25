@@ -242,6 +242,7 @@ data class ArtworkSeed(
     @PrimaryKey val cacheKey: String,
     val primary: Int,
     val secondary: Int?,
+    val nameBusy: Boolean? = null,
 )
 
 class QueueKindConverter {

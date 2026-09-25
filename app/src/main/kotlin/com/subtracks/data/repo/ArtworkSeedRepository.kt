@@ -4,26 +4,17 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.ArtworkSeed
 
 interface ArtworkSeedStore {
-    suspend fun seed(cacheKey: String): Pair<Int, Int?>?
+    suspend fun seed(cacheKey: String): ArtworkSeed?
 
-    suspend fun save(
-        cacheKey: String,
-        seeds: Pair<Int, Int?>,
-    )
+    suspend fun save(seed: ArtworkSeed)
 }
 
 class ArtworkSeedRepository(
     private val db: SubtracksDatabase,
 ) : ArtworkSeedStore {
-    override suspend fun seed(cacheKey: String): Pair<Int, Int?>? {
-        val row = db.artworkSeedDao().seed(cacheKey) ?: return null
-        return row.primary to row.secondary
-    }
+    override suspend fun seed(cacheKey: String): ArtworkSeed? = db.artworkSeedDao().seed(cacheKey)
 
-    override suspend fun save(
-        cacheKey: String,
-        seeds: Pair<Int, Int?>,
-    ) {
-        db.artworkSeedDao().upsert(ArtworkSeed(cacheKey, seeds.first, seeds.second))
+    override suspend fun save(seed: ArtworkSeed) {
+        db.artworkSeedDao().upsert(seed)
     }
 }

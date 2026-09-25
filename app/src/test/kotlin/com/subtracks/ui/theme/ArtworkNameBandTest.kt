@@ -27,6 +27,11 @@ class ArtworkNameBandTest {
     }
 
     @Test
+    fun smoothDarkGradientNeedsNoScrim() {
+        assertFalse(ArtworkSeedCache.bottomBandBusy(bitmap { x, _ -> Color.rgb(x * 2, x * 2, x * 2) }))
+    }
+
+    @Test
     fun brightBandNeedsAScrim() {
         assertTrue(ArtworkSeedCache.bottomBandBusy(bitmap { _, _ -> Color.rgb(235, 230, 220) }))
     }
@@ -34,5 +39,14 @@ class ArtworkNameBandTest {
     @Test
     fun noisyBandNeedsAScrim() {
         assertTrue(ArtworkSeedCache.bottomBandBusy(bitmap { x, y -> if ((x + y) % 2 == 0) Color.WHITE else Color.BLACK }))
+    }
+
+    @Test
+    fun darkBandWithBrightStrokesNeedsAScrim() {
+        assertTrue(
+            ArtworkSeedCache.bottomBandBusy(
+                bitmap { x, y -> if (x % 9 == 0 || y % 9 == 0) Color.rgb(210, 40, 40) else Color.BLACK },
+            ),
+        )
     }
 }
