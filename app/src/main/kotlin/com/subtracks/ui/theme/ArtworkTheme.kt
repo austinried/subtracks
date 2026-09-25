@@ -25,7 +25,7 @@ private const val PERIOD_SCREENS = 2f
 private const val BLOB_ZONE = 0.62f
 private const val BLOB_COUNT = 4
 private const val ACCENT_MAX_LUMINANCE = 0.18f
-private const val PRIMARY_MIN_LUMINANCE = 0.30f
+private const val PRIMARY_MIN_LUMINANCE = 0.22f
 private const val SECONDARY_CONTRAST = 3.0f
 private const val MIN_GRADIENT_SATURATION = 0.30f
 private const val HERO_DARKEN_MAX = 1.0f
@@ -63,7 +63,7 @@ fun artworkColorsFromSeeds(
         l: Float,
     ) = Color.hsl(h % 360f, sat.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
 
-    val primary = tone(hue, s, 0.62f).withMinLuminance(PRIMARY_MIN_LUMINANCE)
+    val primary = tone(hue, (s * 1.3f).coerceAtMost(0.92f), 0.68f).withMinLuminance(PRIMARY_MIN_LUMINANCE)
     val background = tone(hue, (s * 0.35f).coerceAtMost(0.20f), 0.06f)
     val onBackground = tone(hue, (s * 0.10f).coerceAtMost(0.08f), 0.95f)
 
