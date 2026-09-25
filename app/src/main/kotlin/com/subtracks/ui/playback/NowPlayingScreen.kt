@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -45,11 +43,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
@@ -61,6 +59,7 @@ import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.QueueKind
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.RepeatMode
@@ -83,6 +82,11 @@ fun NowPlayingRoute(
     val context = LocalPlatformContext.current
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
+    val queueContext = state.context
+    val fallbackTitle = if (queueContext?.kind == QueueKind.Album) state.item?.album.orEmpty() else "Library"
+    val sourceTitle by produceState<String>(initialValue = fallbackTitle, queueContext) {
+        value = controller.sourceTitle(queueContext) ?: fallbackTitle
+    }
     LaunchedEffect(state.item?.id, state.hasNext) {
         if (!state.hasNext) return@LaunchedEffect
         controller.upcomingCoverArt(thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
@@ -90,6 +94,7 @@ fun NowPlayingRoute(
     }
     NowPlayingScreen(
         state = state,
+        title = sourceTitle,
         coverArt = art,
         thumbnailRef = thumbnail,
         artwork = rememberArtworkColors(thumbnail ?: art),
@@ -123,6 +128,7 @@ private fun prefetchImage(
 @Composable
 fun NowPlayingScreen(
     state: PlaybackState,
+    title: String,
     coverArt: CoverArtRef?,
     artwork: ArtworkColors?,
     onBack: () -> Unit,
@@ -157,19 +163,6 @@ fun NowPlayingScreen(
                     scrollPx = { 0f },
                     modifier = Modifier.fillMaxSize(),
                 )
-                val statusBarDp = with(LocalDensity.current) { WindowInsets.statusBars.getTop(this).toDp() }
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .fillMaxWidth()
-                            .height(statusBarDp + 8.dp)
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                                ),
-                            ),
-                )
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent,
@@ -177,8 +170,7 @@ fun NowPlayingScreen(
                         TopAppBar(
                             title = {
                                 Text(
-                                    text = "Now playing",
-                                    style = MaterialTheme.typography.headlineMedium,
+                                    text = title,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )

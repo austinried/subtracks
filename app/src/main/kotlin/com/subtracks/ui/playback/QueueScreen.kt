@@ -336,7 +336,7 @@ fun QueueScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Queue", style = MaterialTheme.typography.headlineMedium) },
+                title = { Text("Queue") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")

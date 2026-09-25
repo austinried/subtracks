@@ -25,8 +25,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -304,6 +304,13 @@ fun LibraryScreen(
         if (search.isNotEmpty()) searchActive = true
     }
 
+    fun dismissSearch() {
+        if (searchActive) {
+            searchActive = false
+            onSearchChange("")
+        }
+    }
+
     val density = LocalDensity.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
@@ -347,7 +354,10 @@ fun LibraryScreen(
                             albums,
                             coverArt,
                             listBottomInset,
-                            onAlbumClick,
+                            {
+                                dismissSearch()
+                                onAlbumClick(it)
+                            },
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
@@ -361,7 +371,10 @@ fun LibraryScreen(
                             artists,
                             coverArt,
                             listBottomInset,
-                            onArtistClick,
+                            {
+                                dismissSearch()
+                                onArtistClick(it)
+                            },
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
@@ -375,7 +388,10 @@ fun LibraryScreen(
                             songs,
                             coverArt,
                             listBottomInset,
-                            onSongClick,
+                            {
+                                dismissSearch()
+                                onSongClick(it)
+                            },
                             playingSongId,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -390,7 +406,10 @@ fun LibraryScreen(
                             playlists,
                             coverArt,
                             listBottomInset,
-                            onPlaylistClick,
+                            {
+                                dismissSearch()
+                                onPlaylistClick(it)
+                            },
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
@@ -460,7 +479,11 @@ fun LibraryScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
                 Box {
-                    Icon(Icons.Filled.Sort, contentDescription = "List options")
+                    Icon(
+                        Icons.AutoMirrored.Filled.Sort,
+                        contentDescription = "List options",
+                        modifier = Modifier.size(28.dp),
+                    )
                     if (filtersActive) {
                         Box(
                             modifier =

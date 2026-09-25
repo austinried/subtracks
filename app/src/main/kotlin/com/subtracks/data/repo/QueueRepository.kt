@@ -13,6 +13,7 @@ import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicLong
@@ -117,6 +118,19 @@ class QueueRepository(
     ): Long? {
         val index = songIdsFor(entry).indexOf(songId)
         return if (index >= 0) index.toLong() else null
+    }
+
+    suspend fun sourceName(
+        kind: QueueKind,
+        sourceId: Long,
+        refId: String,
+    ): String? {
+        val library = db.libraryDao()
+        return when (kind) {
+            QueueKind.Album -> library.album(sourceId, refId).first()?.name
+            QueueKind.Playlist -> library.playlist(sourceId, refId).first()?.name
+            QueueKind.Songs, QueueKind.Song -> null
+        }
     }
 
     private fun songsQuery(refId: String): QueueSongQuery? {

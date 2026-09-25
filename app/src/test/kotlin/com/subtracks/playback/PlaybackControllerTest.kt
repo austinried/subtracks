@@ -78,7 +78,7 @@ class PlaybackControllerTest {
         await { handle.operations.contains("play") }
 
         assertEquals(51, handle.itemCount)
-        assertEquals(QueueContext(QueueKind.Songs, ""), controller.state.value.context)
+        assertEquals(QueueContext(QueueKind.Songs, 1, ""), controller.state.value.context)
         assertTrue(controller.state.value.hasNext)
         assertTrue(controller.state.value.hasPrevious)
     }
@@ -305,7 +305,7 @@ class PlaybackControllerTest {
         controller.playAlbum(1, "al1", 0)
         await { controller.state.value.item != null }
 
-        assertEquals(QueueContext(QueueKind.Album, "al1"), controller.state.value.context)
+        assertEquals(QueueContext(QueueKind.Album, 1, "al1"), controller.state.value.context)
         assertTrue(controller.state.value.isPlaying)
         assertTrue(controller.state.value.hasNext)
         assertTrue(controller.state.value.hasPrevious)

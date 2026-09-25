@@ -370,6 +370,7 @@ class AppScreenshotTest {
             SubtracksTheme {
                 NowPlayingScreen(
                     state = Fixtures.playbackState(),
+                    title = "Kid A",
                     coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     onBack = {},
@@ -392,6 +393,7 @@ class AppScreenshotTest {
             SubtracksTheme {
                 NowPlayingScreen(
                     state = Fixtures.playbackState().copy(shuffle = true, repeat = RepeatMode.One),
+                    title = "Kid A",
                     coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     onBack = {},

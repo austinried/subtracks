@@ -34,6 +34,7 @@ data class QueueItem(
 
 data class QueueContext(
     val kind: QueueKind,
+    val sourceId: Long,
     val refId: String,
 )
 
@@ -889,8 +890,10 @@ class PlaybackController(
 
     private fun contextAt(position: Long?): QueueContext? {
         val entry = position?.let { snapshot?.locate(it)?.first } ?: return null
-        return QueueContext(entry.kind, entry.refId)
+        return QueueContext(entry.kind, entry.sourceId, entry.refId)
     }
+
+    suspend fun sourceTitle(context: QueueContext?): String? = context?.let { queueRepository.sourceName(it.kind, it.sourceId, it.refId) }
 
     private fun updateBuffering() {
         if (player?.isBuffering != true) {

@@ -85,8 +85,16 @@ fun CoverArt(
                 onError = { failed = true },
                 contentScale = ContentScale.Fit,
             )
+        val thumbnailPainter =
+            rememberAsyncImagePainter(
+                model = remember(thumbnailRef) { thumbnailRef?.let { imageRequest(context, it, crossfade = false) } },
+                contentScale = ContentScale.Fit,
+            )
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val ratio = painter.intrinsicSize.ratioOrOne()
+            val ratio =
+                painter.intrinsicSize.ratioOrNull()
+                    ?: thumbnailPainter.intrinsicSize.ratioOrNull()
+                    ?: 1f
             val width = if (ratio > maxWidth.value / maxHeight.value) maxWidth else maxHeight * ratio
             Box(Modifier.size(width, width / ratio).then(frameModifier)) {
                 CoverArtContent(
@@ -146,7 +154,7 @@ private fun BoxScope.CoverArtContent(
     main()
 }
 
-private fun Size.ratioOrOne(): Float = if (width > 0f && height > 0f && width.isFinite() && height.isFinite()) width / height else 1f
+private fun Size.ratioOrNull(): Float? = if (width > 0f && height > 0f && width.isFinite() && height.isFinite()) width / height else null
 
 private fun imageRequest(
     context: Context,

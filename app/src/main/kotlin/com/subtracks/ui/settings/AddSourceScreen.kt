@@ -2,9 +2,11 @@ package com.subtracks.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -56,7 +58,7 @@ fun AddSourceRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddSourceScreen(
     state: AddSourceState,
@@ -74,7 +76,7 @@ fun AddSourceScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Add server", style = MaterialTheme.typography.headlineMedium) },
+                title = { Text("Add server") },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
@@ -86,7 +88,12 @@ fun AddSourceScreen(
         },
         bottomBar = {
             Row(
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .imePadding()
+                        .navigationBarsPadding()
+                        .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

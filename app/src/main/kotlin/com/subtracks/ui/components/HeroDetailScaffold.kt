@@ -166,7 +166,6 @@ fun HeroDetailScaffold(
                     title = {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.headlineMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.graphicsLayer { alpha = barFraction },
