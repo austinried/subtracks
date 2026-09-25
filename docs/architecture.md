@@ -112,7 +112,7 @@ Songs have a primary and a fallback fetch. The primary probes `search3` with an 
 
 Cleanup is the "everything I had, minus everything the server just sent" step described above: artists, albums, songs and playlists delete the leftover IDs in 500-row chunks, disc titles are deleted per `(album, disc)` for albums that still exist, and playlist entries beyond the new count are removed along with entries for playlists that disappeared.
 
-Sync is not atomic. Each batch commits on its own, so a failure leaves the batches already written in place and skips that entity's prune; stale rows can linger until the next successful sync, which also invalidates the queue's cached library. The one hazard is a scan that stops early — a server returning a short page by mistake, or a library larger than the page cap — because the prune trusts that the stream actually reached the end.
+Sync is not atomic. Each batch commits on its own, so a failure leaves the batches already written in place and skips that entity's prune; stale rows can linger until the next successful sync, which also invalidates the queue's cached library. The one hazard is a scan that stops early — a server returning a short page by mistake, or a library larger than the page cap — because the prune trusts that the stream actually reached the end. Each batch commit also makes Room notify paged observers once per batch (a few per second, bounded by the network round-trips), which is cheap but can make an on-screen list churn during a sync; gate UI observation on `SyncStatus.Running` if that is ever noticeable.
 
 ## Search
 

@@ -46,7 +46,7 @@ class SubsonicSource(
             val (frequent, recent) = fetchRanks()
             var offset = 0
             var pages = 0
-            while (pages < maxPages) {
+            while (true) {
                 var count = 0
                 entityBatches(
                     method = "getAlbumList2",
@@ -67,10 +67,10 @@ class SubsonicSource(
                     )
                 }
                 if (count < PAGE_SIZE) break
-                offset += PAGE_SIZE
                 pages++
+                if (pages > maxPages) throw pageCapExceeded()
+                offset += PAGE_SIZE
             }
-            checkPageCap(pages)
         }.flowOn(Dispatchers.IO).buffer(1)
 
     override fun songs(): Flow<List<Song>> =
@@ -138,7 +138,7 @@ class SubsonicSource(
         flow {
             var offset = 0
             var pages = 0
-            while (pages < maxPages) {
+            while (true) {
                 var count = 0
                 entityBatches(
                     method = "search3",
@@ -158,17 +158,17 @@ class SubsonicSource(
                     emit(batch)
                 }
                 if (count < PAGE_SIZE) break
-                offset += PAGE_SIZE
                 pages++
+                if (pages > maxPages) throw pageCapExceeded()
+                offset += PAGE_SIZE
             }
-            checkPageCap(pages)
         }
 
     private fun albumSongs(): Flow<List<Song>> =
         flow {
             var offset = 0
             var pages = 0
-            while (pages < maxPages) {
+            while (true) {
                 val albums = ArrayList<String>(PAGE_SIZE)
                 entityBatches(
                     method = "getAlbumList2",
@@ -187,10 +187,10 @@ class SubsonicSource(
                     ).collect { emit(it) }
                 }
                 if (albums.size < PAGE_SIZE) break
-                offset += PAGE_SIZE
                 pages++
+                if (pages > maxPages) throw pageCapExceeded()
+                offset += PAGE_SIZE
             }
-            checkPageCap(pages)
         }
 
     private suspend fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
@@ -200,7 +200,7 @@ class SubsonicSource(
             val ranks = HashMap<String, Long>()
             var offset = 0
             var pages = 0
-            while (pages < maxPages) {
+            while (true) {
                 var index = 0
                 entityBatches(
                     method = "getAlbumList2",
@@ -215,10 +215,10 @@ class SubsonicSource(
                     }
                 }
                 if (index < PAGE_SIZE) break
-                offset += PAGE_SIZE
                 pages++
+                if (pages > maxPages) throw pageCapExceeded()
+                offset += PAGE_SIZE
             }
-            checkPageCap(pages)
             ranks
         } catch (_: SubsonicException) {
             emptyMap()
@@ -239,9 +239,7 @@ class SubsonicSource(
         return supported
     }
 
-    private fun checkPageCap(pages: Int) {
-        if (pages >= maxPages) throw SubsonicException(-1, "Library exceeds the $maxPages page cap")
-    }
+    private fun pageCapExceeded() = SubsonicException(-1, "Library exceeds the ${maxPages * PAGE_SIZE}-row page cap")
 
     private fun <T> entityBatches(
         method: String,

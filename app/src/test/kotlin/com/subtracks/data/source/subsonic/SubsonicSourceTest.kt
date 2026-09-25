@@ -204,6 +204,27 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun albumsAtThePageCapSucceedWhenTheNextPageIsEmpty() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
+                        if (url.queryParameter("type") != "newest") return MockResponse().setBody(emptyAlbumList())
+                        return when (url.queryParameter("offset")) {
+                            "0", "500" -> MockResponse().setBody(albumPage(url.queryParameter("offset")!!.toInt(), 500))
+                            else -> MockResponse().setBody(emptyAlbumList())
+                        }
+                    }
+                }
+
+            val albums = SubsonicSource(1, client(), maxPages = 2).albums().toList().flatten()
+
+            assertEquals(1000, albums.size)
+        }
+
+    @Test
     fun playlistEntriesWithoutIdsAreSkipped() =
         runBlocking {
             server.enqueue(

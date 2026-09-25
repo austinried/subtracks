@@ -90,6 +90,8 @@ class SyncService(
         library.deleteOrphanPlaylistSongs(source.id)
     }
 
+    // ponytail: one commit per batch means Room notifies paged observers once per batch; gate
+    // UI observation on SyncStatus.Running if that churn is ever noticeable.
     private suspend fun <T> write(
         table: String,
         columns: List<String>,
