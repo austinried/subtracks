@@ -90,7 +90,7 @@ fun MiniPlayer(
             Column {
                 MiniPlayerProgressBar(
                     progress = progress,
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                    modifier = Modifier.fillMaxWidth().height(3.dp),
                 )
                 Row(
                     modifier =
