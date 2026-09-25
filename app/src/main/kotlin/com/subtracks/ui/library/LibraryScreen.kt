@@ -76,10 +76,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -390,10 +394,7 @@ fun LibraryScreen(
                     .fillMaxWidth()
                     .align(Alignment.TopStart)
                     .onSizeChanged { headerHeightPx = it.height.toFloat() }
-                    .background(
-                        (artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
-                            .copy(alpha = HEADER_ALPHA),
-                    ).padding(top = statusBarTop + 2.dp, bottom = 2.dp),
+                    .padding(top = statusBarTop + 2.dp, bottom = 2.dp),
         ) {
             LibraryTabs(
                 pagerState = pagerState,
@@ -592,7 +593,6 @@ private fun ListOptionsSheet(
 }
 
 private val FAB_CLEARANCE = 80.dp
-private const val HEADER_ALPHA = 0.72f
 private val SEARCH_BAR_CLEARANCE = 80.dp
 
 @Composable
@@ -666,46 +666,59 @@ private fun LibraryTabs(
     val indicatorLeft = current?.let { it.left + ((neighbour?.left ?: it.left) - it.left) * step - leftExtra }
     val indicatorRight = current?.let { it.right + ((neighbour?.right ?: it.right) - it.right) * step + rightExtra }
 
+    val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
+    val indicatorColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
+
     Box(
         Modifier
             .fillMaxWidth()
             .padding(start = 8.dp, end = 12.dp),
     ) {
-        if (current != null && indicatorLeft != null && indicatorRight != null) {
-            Box(
-                modifier =
-                    Modifier
-                        .offset { IntOffset(indicatorLeft.roundToInt(), current.top.roundToInt()) }
-                        .width(with(density) { (indicatorRight - indicatorLeft).toDp() })
-                        .height(with(density) { current.height.toDp() })
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
-            )
-        }
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            LibraryTab.entries.forEachIndexed { index, tab ->
-                TabButton(
-                    tab = tab,
-                    artwork = artwork,
-                    progress =
-                        when (index) {
-                            page -> 1f - transition
-                            page + (if (fraction >= 0f) 1 else -1) -> transition
-                            else -> 0f
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(headerColor)
+                        .drawBehind {
+                            if (current != null && indicatorLeft != null && indicatorRight != null) {
+                                drawRoundRect(
+                                    color = indicatorColor,
+                                    topLeft = Offset(indicatorLeft, current.top),
+                                    size = Size(indicatorRight - indicatorLeft, current.height),
+                                    cornerRadius = CornerRadius(8.dp.toPx()),
+                                )
+                            }
                         },
-                    indicatorLeft = indicatorLeft,
-                    indicatorRight = indicatorRight,
-                    onClick = { onTabSelected(tab) },
-                    modifier =
-                        Modifier.onGloballyPositioned { coordinates ->
-                            bounds[index] = coordinates.boundsInParent()
-                        },
-                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    LibraryTab.entries.forEachIndexed { index, tab ->
+                        TabButton(
+                            tab = tab,
+                            artwork = artwork,
+                            progress =
+                                when (index) {
+                                    page -> 1f - transition
+                                    page + (if (fraction >= 0f) 1 else -1) -> transition
+                                    else -> 0f
+                                },
+                            indicatorLeft = indicatorLeft,
+                            indicatorRight = indicatorRight,
+                            onClick = { onTabSelected(tab) },
+                            modifier =
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    bounds[index] = coordinates.boundsInParent()
+                                },
+                        )
+                    }
+                }
             }
             Spacer(Modifier.weight(1f))
             if (syncing) {
@@ -714,12 +727,19 @@ private fun LibraryTabs(
                     strokeWidth = 2.dp,
                 )
             }
-            IconButton(onClick = onOpenSettings) {
-                Icon(
-                    imageVector = Icons.Rounded.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(headerColor),
+            ) {
+                IconButton(onClick = onOpenSettings) {
+                    Icon(
+                        imageVector = Icons.Rounded.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
             }
         }
     }
