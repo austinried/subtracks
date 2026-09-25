@@ -6,7 +6,10 @@ import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
@@ -39,28 +42,33 @@ private const val BUSY_BRIGHT_FRACTION = 0.05f
 private const val BUSY_EDGE_LUMINANCE = 0.2f
 private const val BUSY_EDGE_FRACTION = 0.1f
 
+private data class Seed(
+    val primary: Int,
+    val secondary: Int?,
+    val busy: Boolean?,
+)
+
 object ArtworkSeedCache {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Deferred<Pair<Int, Int?>?>>()
-    private val cache = LruCache<String, Pair<Int, Int?>>(MAX_CACHED_SEEDS)
-    private val busy = LruCache<String, Boolean>(MAX_CACHED_SEEDS)
+    private val cache = LruCache<String, Seed>(MAX_CACHED_SEEDS)
 
     @Volatile
     private var store: ArtworkSeedStore? = null
 
-    fun install(store: ArtworkSeedStore) {
+    fun install(store: ArtworkSeedStore?) {
         this.store = store
     }
 
-    fun cached(cacheKey: String): Pair<Int, Int?>? = cache.get(cacheKey)
+    fun cached(cacheKey: String): Pair<Int, Int?>? = cache.get(cacheKey)?.let { it.primary to it.secondary }
 
-    fun cachedBusy(cacheKey: String): Boolean? = busy.get(cacheKey)
+    fun cachedBusy(cacheKey: String): Boolean? = cache.get(cacheKey)?.busy
 
     suspend fun seeds(
         context: Context,
         ref: CoverArtRef,
     ): Pair<Int, Int?>? {
-        cache.get(ref.cacheKey)?.let { return it }
+        cache.get(ref.cacheKey)?.let { return it.primary to it.secondary }
         val job = jobs.computeIfAbsent(ref.cacheKey) { scope.async { resolve(context, ref) } }
         job.invokeOnCompletion { jobs.remove(ref.cacheKey, job) }
         return job.await()
@@ -77,32 +85,31 @@ object ArtworkSeedCache {
         context: Context,
         ref: CoverArtRef,
     ): Boolean {
-        busy.get(ref.cacheKey)?.let { return it }
+        cache.get(ref.cacheKey)?.busy?.let { return it }
         seeds(context, ref)
-        return busy.get(ref.cacheKey) ?: false
+        return cache.get(ref.cacheKey)?.busy ?: false
     }
 
     @VisibleForTesting
     fun clear() {
         jobs.clear()
         cache.evictAll()
-        busy.evictAll()
     }
 
     private suspend fun resolve(
         context: Context,
         ref: CoverArtRef,
     ): Pair<Int, Int?>? {
-        ignoreFailure { store?.seed(ref.cacheKey) }?.let { stored ->
-            cache.put(ref.cacheKey, stored.primary to stored.secondary)
-            stored.nameBusy?.let { busy.put(ref.cacheKey, it) }
-            if (stored.nameBusy != null) return stored.primary to stored.secondary
+        val stored = ignoreFailure { store?.seed(ref.cacheKey) }
+        val storedSeeds = stored?.let { it.primary to it.secondary }
+        if (stored != null) {
+            cache.put(ref.cacheKey, Seed(stored.primary, stored.secondary, stored.nameBusy))
+            if (stored.nameBusy != null) return storedSeeds
         }
-        val bitmap = decode(context, ref) ?: return null
-        val seeds = seedsFrom(bitmap) ?: return null
+        val bitmap = decode(context, ref) ?: return storedSeeds
+        val seeds = seedsFrom(bitmap) ?: return storedSeeds
         val nameBusy = bottomBandBusy(bitmap)
-        cache.put(ref.cacheKey, seeds)
-        busy.put(ref.cacheKey, nameBusy)
+        cache.put(ref.cacheKey, Seed(seeds.first, seeds.second, nameBusy))
         ignoreFailure { store?.save(ArtworkSeed(ref.cacheKey, seeds.first, seeds.second, nameBusy)) }
         return seeds
     }
@@ -139,6 +146,7 @@ object ArtworkSeedCache {
 
     @VisibleForTesting
     internal fun bottomBandBusy(bitmap: Bitmap): Boolean {
+        if (bitmap.width == 0 || bitmap.height == 0) return false
         val firstRow = (bitmap.height * BUSY_BAND_TOP).toInt().coerceIn(0, bitmap.height - 1)
         val width = bitmap.width
         var previousRow: FloatArray? = null
@@ -220,7 +228,9 @@ fun PrefetchArtworkSeeds(ref: CoverArtRef?) {
 fun rememberOverlaidNameBusy(ref: CoverArtRef?): Boolean {
     val context = LocalPlatformContext.current
     val key = ref?.cacheKey
-    return produceState(key?.let(ArtworkSeedCache::cachedBusy) ?: false, key) {
-        value = ref?.let { ArtworkSeedCache.overlaidNameBusy(context, it) } ?: false
-    }.value
+    var busy by remember(key) { mutableStateOf(key?.let(ArtworkSeedCache::cachedBusy) ?: false) }
+    LaunchedEffect(key) {
+        busy = ref?.let { ArtworkSeedCache.overlaidNameBusy(context, it) } ?: false
+    }
+    return busy
 }

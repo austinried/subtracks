@@ -17,7 +17,10 @@ import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.asImage
 import coil3.test.FakeImageLoaderEngine
+import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.repo.ArtworkSeedStore
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -55,6 +58,7 @@ class ArtworkExtractionTest {
     @After
     fun resetImageLoader() {
         ArtworkSeedCache.clear()
+        ArtworkSeedCache.install(null)
         SingletonImageLoader.reset()
     }
 
@@ -86,5 +90,21 @@ class ArtworkExtractionTest {
         composeRule.runOnIdle { artwork.value = artworkColorsFromSeed(0xFF3A7BD5.toInt()) }
         composeRule.waitForIdle()
         assertEquals(42, state.value)
+    }
+
+    @Test
+    fun keepsTheStoredSeedWhenTheArtCannotBeDecoded() {
+        val key = "missing-${System.nanoTime()}"
+        val stored = ArtworkSeed(key, 0xFF3A7BD5.toInt(), 0xFFD53A3A.toInt(), null)
+        ArtworkSeedCache.install(
+            object : ArtworkSeedStore {
+                override suspend fun seed(cacheKey: String): ArtworkSeed? = stored.takeIf { it.cacheKey == cacheKey }
+
+                override suspend fun save(seed: ArtworkSeed) = Unit
+            },
+        )
+        val ref = CoverArtRef(url = key, cacheKey = key)
+        val seeds = runBlocking { ArtworkSeedCache.seeds(ApplicationProvider.getApplicationContext(), ref) }
+        assertEquals(stored.primary, seeds?.first)
     }
 }

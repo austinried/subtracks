@@ -151,14 +151,7 @@ fun ArtistDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
-                val scrollPx by remember {
-                    derivedStateOf {
-                        val index = listState.firstVisibleItemIndex
-                        val before = if (index <= 0) 0f else with(density) { ART_HEIGHT.toPx() } * index
-                        before + listState.firstVisibleItemScrollOffset
-                    }
-                }
-                val barColor = heroBarColor(artwork, scrollPx, barHeightPx, screenHeightPx)
+                val barColor = heroBarColor(artwork, 0f, barHeightPx, screenHeightPx)
                 HeroGradient(
                     colors = artwork,
                     scrollPx = { 0f },

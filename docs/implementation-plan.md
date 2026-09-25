@@ -52,6 +52,20 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 - Signing, versioning and Fastlane metadata.
 - F-Droid submission. Their buildserver must have Gradle >= 9.6 and SDK 37, which this project targets; do not rely on the Gradle wrapper there (fdroidserver deletes `gradlew` and uses its own Gradle).
 
+## Scale hardening backlog
+
+Follow-up work for very large libraries, playlists and long sessions, grouped so each block can be one PR.
+
+- **Library read path.** Index the normalized sort keys (a denormalized `albumArtist` on `songs` plus `NOCASE` indices on `albums`/`artists`/`playlists`) and replace `LIMIT 1 OFFSET` with keyset/cursor seeks in `QueueRepository`/`QueueDao`; compute the tapped-song ordinal with a SQL rank instead of materializing the whole sorted id list. Shared dependency for the read-side fixes; can split into "indices" then "keyset" if too large for one review.
+- **Shuffle.** Drop `shuffle_order` and the retained whole-order/whole-id arrays; derive the permutation from `(seed, size)` and resolve positions through the same positional lookup. Recommended after the read-path PR, since it shares `QueueRepository`.
+- **Sync pipeline.** Prune with a memory-bounded id set, remove `fetchRanks` and the write-only rank columns, fetch playlists/albums with bounded concurrency and skip unchanged ones, and raise/make configurable the page cap with a clear "library too large" failure. Independent of the read path.
+- **Queue view and edits.** Bound the queue view's loaded rows (or page over the queue ordinal) and scope its ViewModel to the overlay; compact adjacent same-ref ranges after an edit and cache resolved entry lengths. The view half is independent; the edit half shares `QueueRepository` with the read-path PR.
+- **Artwork.** Give `artwork_seeds` a `sourceId` with `ON DELETE CASCADE` and an LRU/TTL (or drop the table and rely on Coil's disk cache); prefetch the thumbnail, not the original, on now-playing transitions. Independent.
+- **FTS5 search.** Deferred; the revival requirements are recorded in `architecture.md` (per-entity trigram tables indexing every scanned field, incremental maintenance, three-character floor).
+- **UI/flow overhead.** Subscribe only the active tab's paging flow; move the position ticker off the shared `PlaybackState`. Independent.
+
+A `syncGen` column was considered for the sync prune and rejected: it is part of the upsert's update set, so its always-changing value defeats `upsertChanged`'s changed-only `WHERE` predicate and rewrites every row on every full sync. The prune should instead keep the two-phase diff with a memory-bounded id set (primitive long hashes) or diff a staging `seen` table in SQL.
+
 ## Deferred decisions
 
 - Whether to drop the plaintext-auth fallback or keep it behind an "insecure server" toggle.
