@@ -25,8 +25,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.Segment
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -480,7 +480,7 @@ fun LibraryScreen(
             ) {
                 Box {
                     Icon(
-                        Icons.AutoMirrored.Filled.Sort,
+                        Icons.AutoMirrored.Rounded.Segment,
                         contentDescription = "List options",
                         modifier = Modifier.size(28.dp),
                     )

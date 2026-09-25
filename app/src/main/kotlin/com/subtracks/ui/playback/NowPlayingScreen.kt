@@ -51,9 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -175,11 +177,21 @@ fun NowPlayingScreen(
                     topBar = {
                         TopAppBar(
                             title = {
-                                Text(
-                                    text = title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Column {
+                                    Text(
+                                        text = "Now playing: ${state.context?.kind?.label() ?: "library"}".uppercase(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 1.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
+                                    Text(
+                                        text = title,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             },
                             navigationIcon = {
                                 IconButton(onClick = onBack) {
@@ -384,6 +396,14 @@ fun NowPlayingScreen(
         }
     }
 }
+
+private fun QueueKind.label(): String =
+    when (this) {
+        QueueKind.Album -> "album"
+        QueueKind.Playlist -> "playlist"
+        QueueKind.Song -> "song"
+        QueueKind.Songs -> "library"
+    }
 
 private fun formatTime(milliseconds: Long): String {
     val totalSeconds = (milliseconds / 1000).coerceAtLeast(0)

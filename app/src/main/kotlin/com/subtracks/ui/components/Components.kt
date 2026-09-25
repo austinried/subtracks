@@ -1,6 +1,7 @@
 package com.subtracks.ui.components
 
 import android.content.Context
+import androidx.collection.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +37,21 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.subtracks.data.model.CoverArtRef
 
+private const val MAX_CACHED_RATIOS = 256
+
+private object ArtworkRatioCache {
+    private val ratios = LruCache<String, Float>(MAX_CACHED_RATIOS)
+
+    fun get(cacheKey: String): Float? = ratios.get(cacheKey)
+
+    fun put(
+        cacheKey: String,
+        ratio: Float,
+    ) {
+        if (ratio > 0f && ratio.isFinite()) ratios.put(cacheKey, ratio)
+    }
+}
+
 @Composable
 fun CoverArt(
     ref: CoverArtRef?,
@@ -49,7 +65,7 @@ fun CoverArt(
     val context = LocalPlatformContext.current
     var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
-    var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf<Float?>(null) }
+    var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf(thumbnailRef?.cacheKey?.let(ArtworkRatioCache::get)) }
     val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
     val frameModifier =
         Modifier
@@ -74,6 +90,11 @@ fun CoverArt(
                         model = model,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        onSuccess = { success ->
+                            success.painter.intrinsicSize
+                                .ratioOrNull()
+                                ?.let { ArtworkRatioCache.put(ref.cacheKey, it) }
+                        },
                         onError = { failed = true },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -150,7 +171,10 @@ private fun BoxScope.CoverArtContent(
                 onThumbnailLoaded()
                 success.painter.intrinsicSize
                     .ratioOrNull()
-                    ?.let(onThumbnailRatio)
+                    ?.let {
+                        onThumbnailRatio(it)
+                        ArtworkRatioCache.put(thumbnailRef.cacheKey, it)
+                    }
             },
             modifier = Modifier.fillMaxSize(),
         )
