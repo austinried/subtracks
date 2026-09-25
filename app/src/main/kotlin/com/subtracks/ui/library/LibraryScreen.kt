@@ -618,40 +618,70 @@ private fun LibraryTabs(
     onOpenSettings: () -> Unit,
     artwork: ArtworkColors?,
 ) {
-    val labelHoldStart = 0.25f
-    val labelFadeEnd = 0.65f
+    val iconHoldStart = 0.25f
+    val iconFadeEnd = 0.65f
+    val indicatorStretch = 18.dp
+    val density = LocalDensity.current
+    val bounds = remember { mutableStateMapOf<Int, Rect>() }
     val page = pagerState.currentPage
     val fraction = pagerState.currentPageOffsetFraction
     val position = page + fraction
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 8.dp, end = 12.dp),
     ) {
-        LibraryTab.entries.forEachIndexed { index, tab ->
-            TabButton(
-                tab = tab,
-                artwork = artwork,
-                progress =
-                    ((labelFadeEnd - abs(position - index)) / (labelFadeEnd - labelHoldStart))
-                        .coerceIn(0f, 1f),
-                onClick = { onTabSelected(tab) },
+        bounds[page]?.let { current ->
+            val neighbour = bounds[if (fraction >= 0f) page + 1 else page - 1]
+            val step = if (neighbour != null) abs(fraction) else 0f
+            val left = current.left + ((neighbour?.left ?: current.left) - current.left) * step
+            val right = current.right + ((neighbour?.right ?: current.right) - current.right) * step
+            val stretch = with(density) { indicatorStretch.toPx() } * abs(fraction) / 2f
+            Box(
+                modifier =
+                    Modifier
+                        .offset { IntOffset((left - stretch).roundToInt(), current.top.roundToInt()) }
+                        .width(with(density) { (right - left + stretch * 2f).toDp() })
+                        .height(with(density) { current.height.toDp() })
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
             )
         }
-        Spacer(Modifier.weight(1f))
-        if (syncing) {
-            CircularProgressIndicator(
-                modifier = Modifier.padding(end = 4.dp).size(20.dp),
-                strokeWidth = 2.dp,
-            )
-        }
-        IconButton(onClick = onOpenSettings) {
-            Icon(
-                imageVector = Icons.Rounded.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            LibraryTab.entries.forEachIndexed { index, tab ->
+                TabButton(
+                    tab = tab,
+                    artwork = artwork,
+                    progress =
+                        ((iconFadeEnd - abs(position - index)) / (iconFadeEnd - iconHoldStart))
+                            .coerceIn(0f, 1f),
+                    onClick = { onTabSelected(tab) },
+                    modifier =
+                        Modifier.onGloballyPositioned { coordinates ->
+                            bounds[index] = coordinates.boundsInParent()
+                        },
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            if (syncing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(end = 4.dp).size(20.dp),
+                    strokeWidth = 2.dp,
+                )
+            }
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Rounded.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
     }
 }
@@ -665,14 +695,11 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val container = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
     val selectedContent = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
     val content = lerp(MaterialTheme.colorScheme.onBackground, selectedContent, progress)
     Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(container.copy(alpha = progress))
                 .clickable(onClick = onClick)
                 .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
