@@ -1,6 +1,7 @@
 package com.subtracks.ui.library
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
-import androidx.compose.material.icons.automirrored.rounded.Segment
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -46,6 +46,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -82,6 +83,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,6 +93,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -479,10 +483,11 @@ fun LibraryScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
                 Box {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.Segment,
-                        contentDescription = "List options",
-                        modifier = Modifier.size(28.dp),
+                    ListOptionsGlyph(
+                        modifier =
+                            Modifier
+                                .size(26.dp)
+                                .semantics { contentDescription = "List options" },
                     )
                     if (filtersActive) {
                         Box(
@@ -648,6 +653,8 @@ private val TAB_BAR_CONTENT_HEIGHT = 52.dp
 private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 private val TOUCH_TARGET = 48.dp
+private const val LIST_OPTIONS_WEIGHT = 0.15f
+private val LIST_OPTIONS_BAR_WIDTHS = listOf(1f, 0.62f, 0.34f)
 
 @Composable
 private fun SearchField(
@@ -679,6 +686,25 @@ private fun SearchField(
             ),
         modifier = modifier.focusRequester(focusRequester),
     )
+}
+
+@Composable
+private fun ListOptionsGlyph(modifier: Modifier = Modifier) {
+    val color = LocalContentColor.current
+    Canvas(modifier) {
+        val thickness = size.height * LIST_OPTIONS_WEIGHT
+        val gap = size.height / (LIST_OPTIONS_BAR_WIDTHS.size + 1)
+        LIST_OPTIONS_BAR_WIDTHS.forEachIndexed { index, widthFraction ->
+            val y = gap * (index + 1)
+            drawLine(
+                color = color,
+                start = Offset(0f, y),
+                end = Offset(size.width * widthFraction, y),
+                strokeWidth = thickness,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
