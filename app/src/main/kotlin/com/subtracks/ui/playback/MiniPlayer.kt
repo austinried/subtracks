@@ -93,7 +93,6 @@ fun MiniPlayer(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
                             .height(3.dp)
                             .clip(RoundedCornerShape(1.5.dp)),
                 )
