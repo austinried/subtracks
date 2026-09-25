@@ -79,7 +79,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -115,6 +114,7 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
@@ -430,13 +430,7 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .height(statusBarTop + 8.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                        ),
-                    ),
+                    .statusBarScrim(),
         )
 
         if (!searchActive) {

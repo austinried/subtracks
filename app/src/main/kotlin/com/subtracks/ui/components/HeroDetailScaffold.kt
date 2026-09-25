@@ -49,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -153,13 +152,8 @@ fun HeroDetailScaffold(
                 Box(
                     Modifier
                         .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .height(statusBarDp + 8.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
-                            ),
-                        ).graphicsLayer { alpha = 1f - barFraction },
+                        .statusBarScrim()
+                        .graphicsLayer { alpha = 1f - barFraction },
                 )
 
                 TopAppBar(

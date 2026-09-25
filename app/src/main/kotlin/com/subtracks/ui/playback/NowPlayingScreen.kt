@@ -43,7 +43,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -91,9 +90,10 @@ fun NowPlayingRoute(
         } else {
             state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
         }
-    val sourceTitle by produceState<String>(initialValue = fallbackTitle, queueContext) {
-        value = fallbackTitle
-        value = controller.sourceTitle(queueContext) ?: fallbackTitle
+    val sourceTitle = remember(queueContext, fallbackTitle) { mutableStateOf(fallbackTitle) }
+    LaunchedEffect(queueContext, fallbackTitle) {
+        sourceTitle.value = fallbackTitle
+        sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
     }
     LaunchedEffect(state.item?.id, state.hasNext) {
         if (!state.hasNext) return@LaunchedEffect
@@ -102,7 +102,7 @@ fun NowPlayingRoute(
     }
     NowPlayingScreen(
         state = state,
-        title = sourceTitle,
+        title = sourceTitle.value,
         coverArt = art,
         thumbnailRef = thumbnail,
         artwork = rememberArtworkColors(thumbnail ?: art),

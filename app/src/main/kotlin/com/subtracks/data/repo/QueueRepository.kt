@@ -127,9 +127,25 @@ class QueueRepository(
     ): String? {
         val library = db.libraryDao()
         return when (kind) {
-            QueueKind.Album -> library.album(sourceId, refId).first()?.name
-            QueueKind.Playlist -> library.playlist(sourceId, refId).first()?.name
-            QueueKind.Songs, QueueKind.Song -> null
+            QueueKind.Album -> {
+                library
+                    .album(sourceId, refId)
+                    .first()
+                    ?.name
+                    ?.takeIf { it.isNotBlank() }
+            }
+
+            QueueKind.Playlist -> {
+                library
+                    .playlist(sourceId, refId)
+                    .first()
+                    ?.name
+                    ?.takeIf { it.isNotBlank() }
+            }
+
+            QueueKind.Songs, QueueKind.Song -> {
+                null
+            }
         }
     }
 
