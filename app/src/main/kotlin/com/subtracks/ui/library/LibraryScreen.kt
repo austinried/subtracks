@@ -84,6 +84,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -388,6 +389,19 @@ fun LibraryScreen(
             }
         }
 
+        Spacer(
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .fillMaxWidth()
+                    .height(statusBarTop + 8.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
+                        ),
+                    ),
+        )
+
         Column(
             modifier =
                 Modifier
@@ -670,76 +684,64 @@ private fun LibraryTabs(
     val indicatorColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
 
     Box(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(headerColor)
+                    .padding(6.dp),
         ) {
             Box(
                 modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                        .background(headerColor)
-                        .padding(6.dp),
-            ) {
-                Box(
-                    modifier =
-                        Modifier.drawBehind {
-                            if (current != null && indicatorLeft != null && indicatorRight != null) {
-                                drawRoundRect(
-                                    color = indicatorColor,
-                                    topLeft = Offset(indicatorLeft, current.top),
-                                    size = Size(indicatorRight - indicatorLeft, current.height),
-                                    cornerRadius = CornerRadius(8.dp.toPx()),
-                                )
-                            }
-                        },
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        LibraryTab.entries.forEachIndexed { index, tab ->
-                            TabButton(
-                                tab = tab,
-                                artwork = artwork,
-                                progress =
-                                    when (index) {
-                                        page -> 1f - transition
-                                        page + (if (fraction >= 0f) 1 else -1) -> transition
-                                        else -> 0f
-                                    },
-                                indicatorLeft = indicatorLeft,
-                                indicatorRight = indicatorRight,
-                                onClick = { onTabSelected(tab) },
-                                modifier =
-                                    Modifier.onGloballyPositioned { coordinates ->
-                                        bounds[index] = coordinates.boundsInParent()
-                                    },
+                    Modifier.drawBehind {
+                        if (current != null && indicatorLeft != null && indicatorRight != null) {
+                            drawRoundRect(
+                                color = indicatorColor,
+                                topLeft = Offset(indicatorLeft, current.top),
+                                size = Size(indicatorRight - indicatorLeft, current.height),
+                                cornerRadius = CornerRadius(8.dp.toPx()),
                             )
                         }
-                    }
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            if (syncing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.padding(end = 4.dp).size(20.dp),
-                    strokeWidth = 2.dp,
-                )
-            }
-            Box(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
-                        .background(headerColor),
+                    },
             ) {
-                IconButton(onClick = onOpenSettings) {
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    LibraryTab.entries.forEachIndexed { index, tab ->
+                        TabButton(
+                            tab = tab,
+                            artwork = artwork,
+                            progress =
+                                when (index) {
+                                    page -> 1f - transition
+                                    page + (if (fraction >= 0f) 1 else -1) -> transition
+                                    else -> 0f
+                                },
+                            indicatorLeft = indicatorLeft,
+                            indicatorRight = indicatorRight,
+                            onClick = { onTabSelected(tab) },
+                            modifier =
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    bounds[index] = coordinates.boundsInParent()
+                                },
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    if (syncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 4.dp).size(20.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
                 }
             }
         }
