@@ -52,6 +52,7 @@ fun SongsContent(
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
+    topInset: Dp = 0.dp,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -74,7 +75,7 @@ fun SongsContent(
             LazyColumn(
                 state = listState,
                 modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = bottomInset),
+                contentPadding = PaddingValues(top = topInset, bottom = bottomInset),
             ) {
                 items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
                     val item = items[index]

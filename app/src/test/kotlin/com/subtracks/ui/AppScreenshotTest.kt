@@ -97,6 +97,35 @@ class AppScreenshotTest {
     }
 
     @Test
+    fun libraryScrolledUnderHeader() {
+        val albums = (1..60).map { Fixtures.albums.first().copy(id = "scrolled-$it", name = "Album $it") }
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.from(albums)) }.collectAsLazyPagingItems(),
+                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
+                    songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSongClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
+                )
+            }
+        }
+        awaitTag(ALBUM_COVER_TAG)
+        composeRule.onRoot().performTouchInput { swipeUp(startY = centerY + 600f, endY = centerY - 600f, durationMillis = 400) }
+        composeRule.waitForIdle()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_scrolled_under_header.png")
+    }
+
+    @Test
     fun libraryArtists() {
         setLibraryContent(LibraryTab.Artists)
         awaitText("Radiohead")

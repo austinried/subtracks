@@ -43,6 +43,7 @@ fun AlbumsContent(
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
+    topInset: Dp = 0.dp,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -65,7 +66,7 @@ fun AlbumsContent(
             LazyVerticalGrid(
                 state = gridState,
                 columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = bottomInset + 8.dp),
+                contentPadding = PaddingValues(start = 8.dp, top = topInset + 8.dp, end = 8.dp, bottom = bottomInset + 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = modifier.fillMaxSize(),

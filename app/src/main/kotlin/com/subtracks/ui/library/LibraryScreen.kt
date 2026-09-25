@@ -91,6 +91,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
@@ -312,87 +313,96 @@ fun LibraryScreen(
     val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
     val listBottomInset = bottomInset + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
 
-    Box(modifier.fillMaxSize()) {
+    var headerHeightPx by remember { mutableFloatStateOf(0f) }
+    val listTopInset = with(density) { headerHeightPx.toDp() }
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(artwork?.let(::librarySurfaceColor) ?: MaterialTheme.colorScheme.background),
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+        ) { page ->
+            val pageTab = LibraryTab.entries[page]
+            val resetKey = resetKeys[pageTab]
+            when (pageTab) {
+                LibraryTab.Albums -> {
+                    AlbumsContent(
+                        albums,
+                        coverArt,
+                        listBottomInset,
+                        onAlbumClick,
+                        filtered = filtersActive,
+                        onClearFilters = onClearFilters,
+                        resetKey = resetKey,
+                        topInset = listTopInset,
+                    )
+                }
+
+                LibraryTab.Artists -> {
+                    ArtistsContent(
+                        artists,
+                        coverArt,
+                        listBottomInset,
+                        onArtistClick,
+                        filtered = filtersActive,
+                        onClearFilters = onClearFilters,
+                        resetKey = resetKey,
+                        topInset = listTopInset,
+                    )
+                }
+
+                LibraryTab.Songs -> {
+                    SongsContent(
+                        songs,
+                        coverArt,
+                        listBottomInset,
+                        onSongClick,
+                        playingSongId,
+                        filtered = filtersActive,
+                        onClearFilters = onClearFilters,
+                        resetKey = resetKey,
+                        topInset = listTopInset,
+                    )
+                }
+
+                LibraryTab.Playlists -> {
+                    PlaylistsContent(
+                        playlists,
+                        coverArt,
+                        listBottomInset,
+                        onPlaylistClick,
+                        filtered = filtersActive,
+                        onClearFilters = onClearFilters,
+                        resetKey = resetKey,
+                        topInset = listTopInset,
+                    )
+                }
+            }
+        }
+
         Column(
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .background(artwork?.let(::librarySurfaceColor) ?: MaterialTheme.colorScheme.background),
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .onSizeChanged { headerHeightPx = it.height.toFloat() }
+                    .background(
+                        (artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
+                            .copy(alpha = HEADER_ALPHA),
+                    ).padding(top = statusBarTop + 2.dp, bottom = 2.dp),
         ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background)
-                        .padding(top = statusBarTop + 2.dp, bottom = 2.dp),
-            ) {
-                LibraryTabs(
-                    pagerState = pagerState,
-                    onTabSelected = onTabSelected,
-                    syncing = syncing,
-                    onSync = onSync,
-                    onOpenSettings = onOpenSettings,
-                    artwork = artwork,
-                )
-            }
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth().weight(1f),
-            ) { page ->
-                val pageTab = LibraryTab.entries[page]
-                val resetKey = resetKeys[pageTab]
-                when (pageTab) {
-                    LibraryTab.Albums -> {
-                        AlbumsContent(
-                            albums,
-                            coverArt,
-                            listBottomInset,
-                            onAlbumClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
-
-                    LibraryTab.Artists -> {
-                        ArtistsContent(
-                            artists,
-                            coverArt,
-                            listBottomInset,
-                            onArtistClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
-
-                    LibraryTab.Songs -> {
-                        SongsContent(
-                            songs,
-                            coverArt,
-                            listBottomInset,
-                            onSongClick,
-                            playingSongId,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
-
-                    LibraryTab.Playlists -> {
-                        PlaylistsContent(
-                            playlists,
-                            coverArt,
-                            listBottomInset,
-                            onPlaylistClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                        )
-                    }
-                }
-            }
+            LibraryTabs(
+                pagerState = pagerState,
+                onTabSelected = onTabSelected,
+                syncing = syncing,
+                onSync = onSync,
+                onOpenSettings = onOpenSettings,
+                artwork = artwork,
+            )
         }
 
         if (searchActive) {
@@ -582,6 +592,7 @@ private fun ListOptionsSheet(
 }
 
 private val FAB_CLEARANCE = 80.dp
+private const val HEADER_ALPHA = 0.72f
 private val SEARCH_BAR_CLEARANCE = 80.dp
 
 @Composable
