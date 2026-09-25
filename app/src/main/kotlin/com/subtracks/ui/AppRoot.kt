@@ -393,7 +393,7 @@ private fun MainNavigation() {
     SideEffect {
         backCallback.isEnabled = showingQueue || nowPlayingOpen || navController.previousBackStackEntry != null
     }
-    DisposableEffect(backDispatcher, currentRoute) {
+    DisposableEffect(backDispatcher, currentRoute, showingQueue, nowPlayingOpen) {
         backDispatcher?.addCallback(backCallback)
         onDispose { backCallback.remove() }
     }
