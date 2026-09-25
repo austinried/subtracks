@@ -48,6 +48,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.subtracks.data.repo.SourceRepository
@@ -122,6 +123,13 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
 @Composable
 private fun MainNavigation() {
     val navController = rememberNavController()
+    val currentRoute =
+        navController
+            .currentBackStackEntryAsState()
+            .value
+            ?.destination
+            ?.route
+    val tabBarVisible = currentRoute == Routes.LIBRARY
     val playbackController = koinInject<PlaybackController>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
@@ -285,6 +293,7 @@ private fun MainNavigation() {
                         onExpand = { settleNowPlaying(true) },
                         onPlayPause = playbackController::togglePlayPause,
                         onNext = playbackController::next,
+                        progressInset = tabBarVisible,
                         onExpandDrag = { dragUpPx ->
                             nowPlayingOpen = true
                             settleJob?.cancel()

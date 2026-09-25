@@ -37,6 +37,7 @@ private const val LIBRARY_SURFACE_LIGHTNESS = 0.10f
 private const val WARM_SURFACE_SATURATION_DAMPING = 0.4f
 private const val WARM_HUE_FULL = 90f
 private const val WARM_HUE_NONE = 150f
+private const val WARM_HUE_WRAP_START = 330f
 
 @Immutable
 data class ArtworkColors(
@@ -221,8 +222,15 @@ fun librarySurfaceColor(artwork: ArtworkColors): Color {
     return Color.hsl(hue, (saturation * surfaceSaturationFactor(hue)).coerceIn(0f, 1f), LIBRARY_SURFACE_LIGHTNESS)
 }
 
-private fun surfaceSaturationFactor(hue: Float): Float {
-    val warm = ((WARM_HUE_NONE - hue) / (WARM_HUE_NONE - WARM_HUE_FULL)).coerceIn(0f, 1f)
+internal fun surfaceSaturationFactor(hue: Float): Float {
+    val h = hue.mod(360f)
+    val warm =
+        when {
+            h <= WARM_HUE_FULL -> 1f
+            h < WARM_HUE_NONE -> (WARM_HUE_NONE - h) / (WARM_HUE_NONE - WARM_HUE_FULL)
+            h >= WARM_HUE_WRAP_START -> (h - WARM_HUE_WRAP_START) / (360f - WARM_HUE_WRAP_START)
+            else -> 0f
+        }
     return 1f + (WARM_SURFACE_SATURATION_DAMPING - 1f) * warm
 }
 

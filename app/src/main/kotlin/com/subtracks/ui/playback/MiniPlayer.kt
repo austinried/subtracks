@@ -1,5 +1,7 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -44,6 +46,9 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.playerSurfaceColor
 
+private val PROGRESS_INSET = 8.dp
+private const val PROGRESS_INSET_MS = 260
+
 @Composable
 fun MiniPlayer(
     state: PlaybackState,
@@ -52,6 +57,7 @@ fun MiniPlayer(
     onExpand: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
+    progressInset: Boolean = false,
     onExpandDrag: (Float) -> Unit = {},
     onExpandRelease: (Float) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -59,6 +65,16 @@ fun MiniPlayer(
     val item = state.item ?: return
     var dragUpPx by remember { mutableFloatStateOf(0f) }
     val progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+    val progressInsetDp by animateDpAsState(
+        targetValue = if (progressInset) PROGRESS_INSET else 0.dp,
+        animationSpec = tween(PROGRESS_INSET_MS),
+        label = "progressInset",
+    )
+    val progressCornerDp by animateDpAsState(
+        targetValue = if (progressInset) PROGRESS_INSET / 2 else 0.dp,
+        animationSpec = tween(PROGRESS_INSET_MS),
+        label = "progressCorner",
+    )
 
     ArtworkTheme(artwork) {
         Surface(
@@ -93,7 +109,9 @@ fun MiniPlayer(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .height(3.dp),
+                            .padding(horizontal = progressInsetDp)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(progressCornerDp)),
                 )
                 Row(
                     modifier =

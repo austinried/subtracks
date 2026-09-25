@@ -38,8 +38,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Sync
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -55,6 +53,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -310,7 +309,7 @@ fun LibraryScreen(
     var tabBarHeightPx by remember { mutableFloatStateOf(0f) }
     val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
     val listTopInset = statusBarTop
-    val listBottomInset = tabBarHeight + if (searchActive) SEARCH_BAR_CLEARANCE else FAB_CLEARANCE
+    val listBottomInset = if (searchActive) SEARCH_BAR_CLEARANCE else tabBarHeight + FAB_CLEARANCE
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
 
     Box(
@@ -325,58 +324,64 @@ fun LibraryScreen(
         ) { page ->
             val pageTab = LibraryTab.entries[page]
             val resetKey = resetKeys[pageTab]
-            when (pageTab) {
-                LibraryTab.Albums -> {
-                    AlbumsContent(
-                        albums,
-                        coverArt,
-                        listBottomInset,
-                        onAlbumClick,
-                        filtered = filtersActive,
-                        onClearFilters = onClearFilters,
-                        resetKey = resetKey,
-                        topInset = listTopInset,
-                    )
-                }
+            PullToRefreshBox(
+                isRefreshing = syncing,
+                onRefresh = onSync,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                when (pageTab) {
+                    LibraryTab.Albums -> {
+                        AlbumsContent(
+                            albums,
+                            coverArt,
+                            listBottomInset,
+                            onAlbumClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                            topInset = listTopInset,
+                        )
+                    }
 
-                LibraryTab.Artists -> {
-                    ArtistsContent(
-                        artists,
-                        coverArt,
-                        listBottomInset,
-                        onArtistClick,
-                        filtered = filtersActive,
-                        onClearFilters = onClearFilters,
-                        resetKey = resetKey,
-                        topInset = listTopInset,
-                    )
-                }
+                    LibraryTab.Artists -> {
+                        ArtistsContent(
+                            artists,
+                            coverArt,
+                            listBottomInset,
+                            onArtistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                            topInset = listTopInset,
+                        )
+                    }
 
-                LibraryTab.Songs -> {
-                    SongsContent(
-                        songs,
-                        coverArt,
-                        listBottomInset,
-                        onSongClick,
-                        playingSongId,
-                        filtered = filtersActive,
-                        onClearFilters = onClearFilters,
-                        resetKey = resetKey,
-                        topInset = listTopInset,
-                    )
-                }
+                    LibraryTab.Songs -> {
+                        SongsContent(
+                            songs,
+                            coverArt,
+                            listBottomInset,
+                            onSongClick,
+                            playingSongId,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                            topInset = listTopInset,
+                        )
+                    }
 
-                LibraryTab.Playlists -> {
-                    PlaylistsContent(
-                        playlists,
-                        coverArt,
-                        listBottomInset,
-                        onPlaylistClick,
-                        filtered = filtersActive,
-                        onClearFilters = onClearFilters,
-                        resetKey = resetKey,
-                        topInset = listTopInset,
-                    )
+                    LibraryTab.Playlists -> {
+                        PlaylistsContent(
+                            playlists,
+                            coverArt,
+                            listBottomInset,
+                            onPlaylistClick,
+                            filtered = filtersActive,
+                            onClearFilters = onClearFilters,
+                            resetKey = resetKey,
+                            topInset = listTopInset,
+                        )
+                    }
                 }
             }
         }
@@ -394,23 +399,23 @@ fun LibraryScreen(
                     ),
         )
 
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(headerColor)
-                    .onSizeChanged { tabBarHeightPx = it.height.toFloat() }
-                    .padding(bottom = bottomInset),
-        ) {
-            LibraryTabs(
-                pagerState = pagerState,
-                onTabSelected = onTabSelected,
-                syncing = syncing,
-                onSync = onSync,
-                onOpenSettings = onOpenSettings,
-                artwork = artwork,
-            )
+        if (!searchActive) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .background(headerColor)
+                        .onSizeChanged { tabBarHeightPx = it.height.toFloat() }
+                        .padding(bottom = bottomInset),
+            ) {
+                LibraryTabs(
+                    pagerState = pagerState,
+                    onTabSelected = onTabSelected,
+                    onOpenSettings = onOpenSettings,
+                    artwork = artwork,
+                )
+            }
         }
 
         if (searchActive) {
@@ -427,7 +432,7 @@ fun LibraryScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .imePadding()
-                        .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = tabBarHeight + 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
 
@@ -642,8 +647,6 @@ private fun SearchField(
 private fun LibraryTabs(
     pagerState: PagerState,
     onTabSelected: (LibraryTab) -> Unit,
-    syncing: Boolean,
-    onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     artwork: ArtworkColors?,
 ) {
@@ -727,19 +730,6 @@ private fun LibraryTabs(
                         )
                     }
                     Spacer(Modifier.weight(1f))
-                    if (syncing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 4.dp).size(20.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
-                    IconButton(onClick = onSync) {
-                        Icon(
-                            imageVector = Icons.Rounded.Sync,
-                            contentDescription = "Sync",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,

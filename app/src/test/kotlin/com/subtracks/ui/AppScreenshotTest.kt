@@ -176,6 +176,7 @@ class AppScreenshotTest {
                         onExpand = {},
                         onPlayPause = {},
                         onNext = {},
+                        progressInset = true,
                     )
                 }
             }
@@ -214,6 +215,7 @@ class AppScreenshotTest {
                         onExpand = {},
                         onPlayPause = {},
                         onNext = {},
+                        progressInset = true,
                     )
                 }
             }

@@ -3,8 +3,12 @@ package com.subtracks.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -13,6 +17,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
+import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.theme.SubtracksTheme
@@ -32,7 +37,7 @@ class LibraryScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun theSyncAndSettingsControlsAreReachable() {
+    fun pullingDownRefreshesAndSettingsOpens() {
         var synced = false
         var settingsOpened = false
         composeRule.setContent {
@@ -40,7 +45,7 @@ class LibraryScreenTest {
                 LibraryScreen(
                     selectedTab = LibraryTab.Albums,
                     onTabSelected = {},
-                    albums = remember { flowOf(PagingData.empty<Album>()) }.collectAsLazyPagingItems(),
+                    albums = remember { flowOf(PagingData.from(albums())) }.collectAsLazyPagingItems(),
                     artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
                     songs = remember { flowOf(PagingData.empty<SongListItem>()) }.collectAsLazyPagingItems(),
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
@@ -55,10 +60,34 @@ class LibraryScreenTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Sync").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ALBUM_COVER_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().performTouchInput { swipeDown(durationMillis = 600) }
+        composeRule.waitForIdle()
+
         composeRule.onNodeWithContentDescription("Settings").performClick()
 
-        assertTrue("the sync control should trigger a sync", synced)
+        assertTrue("pulling down should trigger a sync", synced)
         assertTrue("the settings control should open settings", settingsOpened)
     }
+
+    private fun albums() =
+        (1..60).map { index ->
+            Album(
+                sourceId = 1,
+                id = "al-$index",
+                artistId = "ar-1",
+                name = "Album $index",
+                albumArtist = "Artist",
+                created = 0,
+                coverArt = null,
+                genre = null,
+                year = null,
+                starred = null,
+                songCount = 1,
+                frequentRank = null,
+                recentRank = null,
+            )
+        }
 }

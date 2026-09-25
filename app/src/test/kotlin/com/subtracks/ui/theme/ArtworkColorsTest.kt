@@ -65,6 +65,13 @@ class ArtworkColorsTest {
         assertTrue(playerSurfaceColor(warm).luminance() < 0.1f)
     }
 
+    @Test
+    fun warmSaturationDampingIsContinuousAroundTheHueCircle() {
+        assertEquals(surfaceSaturationFactor(0f), surfaceSaturationFactor(359.9f), 0.01f)
+        assertTrue(surfaceSaturationFactor(60f) < surfaceSaturationFactor(240f))
+        assertTrue(surfaceSaturationFactor(359f) < surfaceSaturationFactor(330f))
+    }
+
     private fun contrast(
         a: Color,
         b: Color,
