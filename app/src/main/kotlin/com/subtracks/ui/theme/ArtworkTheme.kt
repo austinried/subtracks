@@ -34,6 +34,7 @@ private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
 private const val PLAYER_SURFACE_SATURATION_FACTOR = 1.6f
 private const val LIBRARY_SURFACE_LIGHTNESS = 0.10f
+private const val WARM_SURFACE_SATURATION_DAMPING = 0.2f
 
 @Immutable
 data class ArtworkColors(
@@ -209,13 +210,17 @@ fun ArtworkTheme(
 
 fun playerSurfaceColor(artwork: ArtworkColors): Color {
     val (hue, saturation, lightness) = artwork.scheme.surfaceContainerHigh.toHsl()
-    return Color.hsl(hue, (saturation * PLAYER_SURFACE_SATURATION_FACTOR).coerceIn(0f, 1f), lightness)
+    val damping = if (isWarmHue(hue)) WARM_SURFACE_SATURATION_DAMPING else 1f
+    return Color.hsl(hue, (saturation * PLAYER_SURFACE_SATURATION_FACTOR * damping).coerceIn(0f, 1f), lightness)
 }
 
 fun librarySurfaceColor(artwork: ArtworkColors): Color {
     val (hue, saturation, _) = artwork.scheme.surfaceContainerHigh.toHsl()
-    return Color.hsl(hue, saturation, LIBRARY_SURFACE_LIGHTNESS)
+    val damping = if (isWarmHue(hue)) WARM_SURFACE_SATURATION_DAMPING else 1f
+    return Color.hsl(hue, (saturation * damping).coerceIn(0f, 1f), LIBRARY_SURFACE_LIGHTNESS)
 }
+
+private fun isWarmHue(hue: Float): Boolean = hue in 0f..120f
 
 fun heroBarColor(
     artwork: ArtworkColors?,
