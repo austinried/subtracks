@@ -49,6 +49,7 @@ fun CoverArt(
     val context = LocalPlatformContext.current
     var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
+    var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf<Float?>(null) }
     val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
     val frameModifier =
         Modifier
@@ -65,6 +66,7 @@ fun CoverArt(
                 failed = failed,
                 thumbnailLoaded = thumbnailLoaded,
                 onThumbnailLoaded = { thumbnailLoaded = true },
+                onThumbnailRatio = { thumbnailRatio = it },
                 contentScale = ContentScale.Crop,
             ) {
                 if (ref != null) {
@@ -85,15 +87,10 @@ fun CoverArt(
                 onError = { failed = true },
                 contentScale = ContentScale.Fit,
             )
-        val thumbnailPainter =
-            rememberAsyncImagePainter(
-                model = remember(thumbnailRef) { thumbnailRef?.let { imageRequest(context, it, crossfade = false) } },
-                contentScale = ContentScale.Fit,
-            )
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
             val ratio =
                 painter.intrinsicSize.ratioOrNull()
-                    ?: thumbnailPainter.intrinsicSize.ratioOrNull()
+                    ?: thumbnailRatio
                     ?: 1f
             val width = if (ratio > maxWidth.value / maxHeight.value) maxWidth else maxHeight * ratio
             Box(Modifier.size(width, width / ratio).then(frameModifier)) {
@@ -105,6 +102,7 @@ fun CoverArt(
                     failed = failed,
                     thumbnailLoaded = thumbnailLoaded,
                     onThumbnailLoaded = { thumbnailLoaded = true },
+                    onThumbnailRatio = { thumbnailRatio = it },
                     contentScale = ContentScale.Fit,
                 ) {
                     if (ref != null) {
@@ -130,6 +128,7 @@ private fun BoxScope.CoverArtContent(
     failed: Boolean,
     thumbnailLoaded: Boolean,
     onThumbnailLoaded: () -> Unit,
+    onThumbnailRatio: (Float) -> Unit,
     contentScale: ContentScale,
     main: @Composable () -> Unit,
 ) {
@@ -147,7 +146,12 @@ private fun BoxScope.CoverArtContent(
             model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
             contentDescription = null,
             contentScale = contentScale,
-            onSuccess = { onThumbnailLoaded() },
+            onSuccess = { success ->
+                onThumbnailLoaded()
+                success.painter.intrinsicSize
+                    .ratioOrNull()
+                    ?.let(onThumbnailRatio)
+            },
             modifier = Modifier.fillMaxSize(),
         )
     }

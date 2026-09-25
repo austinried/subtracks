@@ -83,8 +83,14 @@ fun NowPlayingRoute(
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
     val queueContext = state.context
-    val fallbackTitle = if (queueContext?.kind == QueueKind.Album) state.item?.album.orEmpty() else "Library"
+    val fallbackTitle =
+        if (queueContext?.kind == QueueKind.Songs) {
+            "Library"
+        } else {
+            state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
+        }
     val sourceTitle by produceState<String>(initialValue = fallbackTitle, queueContext) {
+        value = fallbackTitle
         value = controller.sourceTitle(queueContext) ?: fallbackTitle
     }
     LaunchedEffect(state.item?.id, state.hasNext) {
