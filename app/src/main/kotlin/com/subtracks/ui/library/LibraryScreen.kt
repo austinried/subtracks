@@ -86,6 +86,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
@@ -880,7 +881,14 @@ private fun TabContent(
             imageVector = tab.icon,
             contentDescription = tab.label,
             tint = color,
-            modifier = Modifier.size(TAB_ICON_SIZE),
+            modifier =
+                Modifier.size(TAB_ICON_SIZE).graphicsLayer {
+                    if (tab == LibraryTab.Playlists) {
+                        scaleX = 1.12f
+                        scaleY = 1.12f
+                        translationX = 1.5.dp.toPx()
+                    }
+                },
         )
         Box(
             modifier =
