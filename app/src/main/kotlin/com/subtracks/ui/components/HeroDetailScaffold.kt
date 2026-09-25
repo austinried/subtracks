@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -258,7 +259,7 @@ fun HeroHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onDownload, modifier = Modifier.padding(horizontal = 8.dp)) {
-                Icon(Icons.Rounded.Download, contentDescription = "Download")
+                Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.offset(y = 1.5.dp))
             }
             Row(
                 modifier = Modifier.weight(1f),
@@ -273,7 +274,7 @@ fun HeroHeader(
                             shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
                             modifier = Modifier.width(64.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(24.dp))
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
                         }
                         FilledIconButton(
                             onClick = onShuffle,
@@ -281,7 +282,7 @@ fun HeroHeader(
                             shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
                             modifier = Modifier.width(64.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(24.dp))
+                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
                         }
                     }
                     Box(
