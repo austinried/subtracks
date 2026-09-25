@@ -11,10 +11,9 @@ Nix devshell (JDK, Gradle, Android SDK, nushell, navidrome, gonic), Gradle Kotli
 Everything needed to mirror a server library locally:
 
 - `MusicSource` abstraction with `SubsonicClient`, `SubsonicXml` and `SubsonicSource`.
-- Room 3 schema on bundled SQLite, so the SQLite version and FTS5 are identical on every device.
+- Room 3 schema on bundled SQLite, so the SQLite version is identical on every device.
 - `SyncService`: fetch first, then a single transaction of upserts with diff-based pruning.
-- FTS5 trigram search index over titles.
-- Unit tests (client, XML, sync, search), native integration tests against navidrome and gonic, and CI (`unit`, `lint`, `integration`) with warm caches.
+- Unit tests (client, XML, sync), native integration tests against navidrome and gonic, and CI (`unit`, `lint`, `integration`) with warm caches.
 
 ## Phase 2 - UI vertical slice (done)
 
@@ -43,7 +42,7 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 
 ## Phase 4 - Search, playlists, offline
 
-- Search UI over the FTS5 index (substring, ranked).
+- (done) Search: a substring filter on the library queries, scoped to the active tab, with a docked search field and per-tab sort/filter controls.
 - Playlist browsing and editing (create/add/remove), syncing changes back to the server.
 - Offline mode and downloads.
 

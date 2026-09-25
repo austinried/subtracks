@@ -7,7 +7,7 @@ Subtracks is a native Android client for Subsonic-compatible servers (Navidrome,
 - Talk to any Subsonic-compatible server over its REST API.
 - Behave well on a poor connection: a local Room mirror, paging, and (later) offline playback.
 - F-Droid friendly: free/libre dependencies only, no telemetry, buildable from source without proprietary services.
-- `minSdk 24`. The app bundles its own SQLite so behaviour is identical across devices and FTS5 is always available.
+- `minSdk 24`. The app bundles its own SQLite so behaviour is identical across devices and does not depend on the platform version.
 
 ## Stack
 
@@ -16,7 +16,7 @@ Subtracks is a native Android client for Subsonic-compatible servers (Navidrome,
 | UI | Jetpack Compose, Material 3 |
 | Navigation | Navigation Compose |
 | DI | Koin, constructor injection |
-| Persistence | Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (SQLite 3.50+, FTS5) |
+| Persistence | Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (SQLite 3.50+) |
 | Lists | Paging 3 over Room `PagingSource` (local mirror, not remote paging) |
 | Networking | OkHttp + DOM XML parsing |
 | Async | Kotlin coroutines / `Flow` |
@@ -46,7 +46,7 @@ app/src/main/kotlin/com/subtracks
     PlaybackService.kt               MediaSessionService hosting ExoPlayer
     PlaybackController.kt            MediaController wrapper: state, queue, transport
   data/
-    model/Models.kt                  Room entities, including the search_index FTS5 table
+    model/Models.kt                  Room entities
     db/                              SubtracksDatabase, DAOs, bundled-SQLite builder
     prefs/UserPreferences.kt         DataStore-backed UI prefs
     repo/                            SourceRepository, LibraryRepository
@@ -92,7 +92,7 @@ The window is also the queue the media notification and Android Auto can browse 
 
 ## Data model
 
-`sources` and `subsonic_sources` hold the configured servers. Library tables are keyed by `(sourceId, id)` and cascade from `sources`: `artists`, `albums`, `playlists`, `playlist_songs`, `songs`. `search_index` is an FTS5 table (trigram tokenizer) over titles, maintained by sync.
+`sources` and `subsonic_sources` hold the configured servers. Library tables are keyed by `(sourceId, id)` and cascade from `sources`: `artists`, `albums`, `playlists`, `playlist_songs`, `songs`.
 
 UI and playback preferences live in DataStore (`user_prefs`), not in SQLite: they are not relational, nothing joins against them, and keeping them out of Room avoids a schema migration per preference. Room is for the library only.
 
@@ -106,11 +106,11 @@ Images: grids and lists request a 256 px `getCoverArt` thumbnail; the 120 dp det
 
 ## Sync
 
-`SyncService.sync()` is serialized with a mutex. It fetches the whole library first (artists, albums, songs, playlists and their entries), then writes in a single `immediateTransaction`: upserts, deletes rows no longer present on the server (diffed against the DB), rebuilds `playlist_songs`, and rebuilds the FTS index for that source. Because fetching happens outside the transaction, a network failure never leaves a half-applied state.
+`SyncService.sync()` is serialized with a mutex. It fetches the whole library first (artists, albums, songs, playlists and their entries), then writes in a single `immediateTransaction`: upserts, deletes rows no longer present on the server (diffed against the DB), and rebuilds `playlist_songs`. Because fetching happens outside the transaction, a network failure never leaves a half-applied state.
 
 ## Search
 
-`search_index` is FTS5 with the trigram tokenizer, so `MATCH` supports substring queries. Queries shorter than three characters are rejected by `SearchDao` (below the trigram minimum). Rows are keyed by `(sourceId, type, itemId)`; the DAO scopes results to a source and orders by rank.
+Search is a case-insensitive substring filter on the library queries (`instr(lower(column), lower(:search)) > 0` in `LibraryDao`), scoped to the active tab and with the matching rows ordered by the tab's sort. There is no separate search index; the filter runs directly against the library tables.
 
 ## Networking and auth
 
@@ -122,7 +122,7 @@ No analytics or third-party telemetry. Credentials are stored locally in app dat
 
 ## Testing
 
-- Unit tests use Robolectric, Roborazzi (screenshots) and MockWebServer (client), plus an in-memory Room database on the bundled SQLite JVM driver (Robolectric's SQLite has no FTS5).
+- Unit tests use Robolectric, Roborazzi (screenshots) and MockWebServer (client), plus an in-memory Room database on the bundled SQLite JVM driver (Robolectric's SQLite differs from the bundled one).
 - Roborazzi screenshots exercise the stateless `*Screen` composables with fake data; paging screens are fed `PagingData.from(...)`. They are rendered on demand with `gradle :app:recordRoborazziDebug` (into the gitignored `app/src/test/screenshots/`) for local review; no images are committed and nothing verifies them in CI.
 - Cover art in the screenshots is generated deterministically in the test and served through Coil's `FakeImageLoaderEngine` (synchronous, and no third-party images are committed); a real `ImageLoader` is installed for the run and reset afterwards. Each image is two or three flat colours in a pattern that identifies its type — stripes for albums, dots for playlists, rings for artists.
 - Integration tests run `SubsonicSourceIntegrationTest` against real navidrome and gonic instances, driven by `tools/integration-test.nu`.
