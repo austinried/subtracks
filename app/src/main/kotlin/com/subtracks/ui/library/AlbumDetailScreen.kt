@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DiscFull
+import androidx.compose.material.icons.rounded.FiberSmartRecord
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -127,7 +127,7 @@ fun AlbumDetailScreen(
                 val disc = song.disc ?: 1L
                 val discLabel = discLabels[disc]
                 if (disc != lastDisc && (multiDisc || discLabel != null)) {
-                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc", showIcon = discLabel != null) }
+                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc") }
                 }
                 lastDisc = disc
                 item(key = song.id) {
@@ -145,23 +145,18 @@ fun AlbumDetailScreen(
 }
 
 @Composable
-private fun DiscHeader(
-    text: String,
-    showIcon: Boolean,
-) {
+private fun DiscHeader(text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
     ) {
-        if (showIcon) {
-            Icon(
-                imageVector = Icons.Rounded.DiscFull,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-        }
+        Icon(
+            imageVector = Icons.Rounded.FiberSmartRecord,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(8.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
