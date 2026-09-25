@@ -34,7 +34,7 @@ private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
 private const val PLAYER_SURFACE_SATURATION_FACTOR = 1.6f
 private const val LIBRARY_SURFACE_LIGHTNESS = 0.10f
-private const val WARM_SURFACE_SATURATION_DAMPING = 0.2f
+private const val WARM_SURFACE_SATURATION_DAMPING = 0.4f
 private const val WARM_HUE_FULL = 90f
 private const val WARM_HUE_NONE = 150f
 

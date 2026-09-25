@@ -348,6 +348,7 @@ fun LibraryScreen(
                     syncing = syncing,
                     onSync = onSync,
                     onOpenSettings = onOpenSettings,
+                    artwork = artwork,
                 )
             }
 
@@ -639,6 +640,7 @@ private fun LibraryTabs(
     syncing: Boolean,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    artwork: ArtworkColors?,
 ) {
     val iconFadeThreshold = 0.65f
     val indicatorStretch = 18.dp
@@ -666,7 +668,7 @@ private fun LibraryTabs(
                         .width(with(density) { (right - left + stretch * 2f).toDp() })
                         .height(with(density) { current.height.toDp() })
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.onBackground),
+                        .background(artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground),
             )
         }
 
@@ -678,6 +680,7 @@ private fun LibraryTabs(
             LibraryTab.entries.forEachIndexed { index, tab ->
                 TabButton(
                     tab = tab,
+                    artwork = artwork,
                     progress =
                         ((iconFadeThreshold - abs(position - index)) / iconFadeThreshold)
                             .coerceIn(0f, 1f),
@@ -717,11 +720,13 @@ private fun LibraryTabs(
 @Composable
 private fun TabButton(
     tab: LibraryTab,
+    artwork: ArtworkColors?,
     progress: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val content = lerp(MaterialTheme.colorScheme.onBackground, MaterialTheme.colorScheme.background, progress)
+    val selected = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.background
+    val content = lerp(MaterialTheme.colorScheme.onBackground, selected, progress)
     Box(
         modifier =
             modifier
