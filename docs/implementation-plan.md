@@ -12,7 +12,7 @@ Everything needed to mirror a server library locally:
 
 - `MusicSource` abstraction with `SubsonicClient`, `SubsonicXml` and `SubsonicSource`.
 - Room 3 schema on bundled SQLite, so the SQLite version is identical on every device.
-- `SyncService`: fetch first, then a single transaction of upserts with diff-based pruning.
+- `SyncService`: stream each entity in batches, upserting per batch and pruning the IDs the server no longer lists; the sync is not atomic.
 - Unit tests (client, XML, sync), native integration tests against navidrome and gonic, and CI (`unit`, `lint`, `integration`) with warm caches.
 
 ## Phase 2 - UI vertical slice (done)

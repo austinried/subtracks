@@ -117,17 +117,18 @@ class SyncService(
     }
 
     private suspend fun deleteStaleDiscs(stale: Set<DiscKey>) {
-        if (stale.isEmpty()) return
-        db.useWriterConnection { connection ->
-            connection.immediateTransaction {
-                connection.usePrepared("DELETE FROM discs WHERE sourceId = ? AND albumId = ? AND disc = ?") { statement ->
-                    stale.forEach { key ->
-                        statement.bind(1, source.id)
-                        statement.bind(2, key.albumId)
-                        statement.bind(3, key.disc)
-                        statement.step()
-                        statement.reset()
-                        statement.clearBindings()
+        stale.chunked(DELETE_CHUNK).forEach { chunk ->
+            db.useWriterConnection { connection ->
+                connection.immediateTransaction {
+                    connection.usePrepared("DELETE FROM discs WHERE sourceId = ? AND albumId = ? AND disc = ?") { statement ->
+                        chunk.forEach { key ->
+                            statement.bind(1, source.id)
+                            statement.bind(2, key.albumId)
+                            statement.bind(3, key.disc)
+                            statement.step()
+                            statement.reset()
+                            statement.clearBindings()
+                        }
                     }
                 }
             }

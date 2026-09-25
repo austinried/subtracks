@@ -6,8 +6,8 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicConfig
 import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.prefs.UserPreferences
+import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.subsonic.SubsonicClient
-import com.subtracks.data.sync.SyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -29,7 +27,6 @@ class SourceRepository(
     private val prefs: UserPreferences,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val syncLock = Mutex()
 
     @Volatile
     private var active: SubsonicMusicSource? = null
@@ -118,13 +115,10 @@ class SourceRepository(
             runCatching { client(address, username, password, useTokenAuth).check("ping") }
         }
 
-    suspend fun sync(): Result<Unit> =
-        syncLock.withLock {
-            runCatching {
-                val config = db.sourcesDao().activeSubsonicConfigOnce() ?: error("No server configured")
-                SyncService(db, config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())).sync()
-            }
-        }
+    suspend fun activeMusicSource(): MusicSource? {
+        val config = db.sourcesDao().activeSubsonicConfigOnce() ?: return null
+        return config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())
+    }
 
     private fun SubsonicConfig.toMusicSource(
         maxBitrate: Int,

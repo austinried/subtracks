@@ -37,7 +37,7 @@ class SyncManagerTest {
                 .build()
         sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
         queueRepository = QueueRepository(db)
-        manager = SyncManager(sourceRepository, queueRepository)
+        manager = SyncManager(db, sourceRepository, queueRepository)
     }
 
     @After

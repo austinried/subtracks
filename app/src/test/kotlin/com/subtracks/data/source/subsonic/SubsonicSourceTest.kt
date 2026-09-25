@@ -180,6 +180,49 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun albumsAbortWhenThePageCapIsHit() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
+                        return if (url.queryParameter("type") == "newest") {
+                            MockResponse().setBody(albumPage(0, 500))
+                        } else {
+                            MockResponse().setBody(emptyAlbumList())
+                        }
+                    }
+                }
+
+            val failure =
+                runCatching {
+                    SubsonicSource(1, client(), maxPages = 2).albums().toList()
+                }
+
+            assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+        }
+
+    @Test
+    fun playlistEntriesWithoutIdsAreSkipped() =
+        runBlocking {
+            server.enqueue(
+                MockResponse().setBody(
+                    "<subsonic-response status=\"ok\"><playlist id=\"p1\">" +
+                        "<entry id=\"s1\" title=\"One\"/>" +
+                        "<entry title=\"No id\"/>" +
+                        "<entry id=\"s2\" title=\"Two\"/>" +
+                        "</playlist></subsonic-response>",
+                ),
+            )
+
+            val entries = SubsonicSource(1, client()).playlistSongs(listOf("p1")).toList().flatten()
+
+            assertEquals(listOf("s1", "s2"), entries.map { it.songId })
+            assertEquals(listOf(0L, 1L), entries.map { it.position })
+        }
+
+    @Test
     fun streamUriRequestsTranscodingWhenABitrateIsSet() {
         val uri = SubsonicSource(1, client(), maxBitrate = 128).streamUri("s1").toString()
 

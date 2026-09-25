@@ -25,6 +25,7 @@ class SubsonicSource(
     private val client: SubsonicClient,
     private val maxBitrate: Int = 0,
     private val streamFormat: String? = null,
+    private val maxPages: Int = MAX_PAGES,
 ) : MusicSource {
     private var emptyQuerySearchSupported: Boolean? = null
 
@@ -45,7 +46,7 @@ class SubsonicSource(
             val (frequent, recent) = fetchRanks()
             var offset = 0
             var pages = 0
-            while (pages < MAX_PAGES) {
+            while (pages < maxPages) {
                 var count = 0
                 entityBatches(
                     method = "getAlbumList2",
@@ -69,7 +70,8 @@ class SubsonicSource(
                 offset += PAGE_SIZE
                 pages++
             }
-        }.flowOn(Dispatchers.IO)
+            checkPageCap(pages)
+        }.flowOn(Dispatchers.IO).buffer(1)
 
     override fun songs(): Flow<List<Song>> =
         flow {
@@ -78,7 +80,7 @@ class SubsonicSource(
             } else {
                 emitAll(albumSongs())
             }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(Dispatchers.IO).buffer(1)
 
     override fun playlists(): Flow<List<Playlist>> =
         entityBatches(
@@ -96,10 +98,14 @@ class SubsonicSource(
                     method = "getPlaylist",
                     params = mapOf("id" to playlistId),
                     tag = "entry",
-                    create = { attrs -> SubsonicXml.playlistSong(id, playlistId, position++, attrs) },
+                    create = { attrs ->
+                        val entryId = attrs.attr("id")
+                        SubsonicXml.playlistSong(id, playlistId, if (entryId.isEmpty()) -1L else position++, attrs)
+                    },
+                    accept = { it.songId.isNotEmpty() },
                 ).collect { emit(it) }
             }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(Dispatchers.IO).buffer(1)
 
     fun streamUri(songId: String) =
         client.uri(
@@ -132,7 +138,7 @@ class SubsonicSource(
         flow {
             var offset = 0
             var pages = 0
-            while (pages < MAX_PAGES) {
+            while (pages < maxPages) {
                 var count = 0
                 entityBatches(
                     method = "search3",
@@ -155,13 +161,14 @@ class SubsonicSource(
                 offset += PAGE_SIZE
                 pages++
             }
+            checkPageCap(pages)
         }
 
     private fun albumSongs(): Flow<List<Song>> =
         flow {
             var offset = 0
             var pages = 0
-            while (pages < MAX_PAGES) {
+            while (pages < maxPages) {
                 val albums = ArrayList<String>(PAGE_SIZE)
                 entityBatches(
                     method = "getAlbumList2",
@@ -183,34 +190,39 @@ class SubsonicSource(
                 offset += PAGE_SIZE
                 pages++
             }
+            checkPageCap(pages)
         }
 
     private suspend fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
 
-    private suspend fun fetchRank(type: String): Map<String, Long> {
-        val ranks = HashMap<String, Long>()
-        var offset = 0
-        var pages = 0
-        while (pages < MAX_PAGES) {
-            var index = 0
-            entityBatches(
-                method = "getAlbumList2",
-                params = page(type, offset),
-                tag = "album",
-                create = { it.attr("id") },
-                accept = { it.isNotEmpty() },
-            ).collect { batch ->
-                batch.forEach { albumId ->
-                    ranks[albumId] = (offset + index).toLong()
-                    index++
+    private suspend fun fetchRank(type: String): Map<String, Long> =
+        try {
+            val ranks = HashMap<String, Long>()
+            var offset = 0
+            var pages = 0
+            while (pages < maxPages) {
+                var index = 0
+                entityBatches(
+                    method = "getAlbumList2",
+                    params = page(type, offset),
+                    tag = "album",
+                    create = { it.attr("id") },
+                    accept = { it.isNotEmpty() },
+                ).collect { batch ->
+                    batch.forEach { albumId ->
+                        ranks[albumId] = (offset + index).toLong()
+                        index++
+                    }
                 }
+                if (index < PAGE_SIZE) break
+                offset += PAGE_SIZE
+                pages++
             }
-            if (index < PAGE_SIZE) break
-            offset += PAGE_SIZE
-            pages++
+            checkPageCap(pages)
+            ranks
+        } catch (_: SubsonicException) {
+            emptyMap()
         }
-        return ranks
-    }
 
     private fun supportsEmptyQuerySearch(): Boolean {
         emptyQuerySearchSupported?.let { return it }
@@ -225,6 +237,10 @@ class SubsonicSource(
             }
         emptyQuerySearchSupported = supported
         return supported
+    }
+
+    private fun checkPageCap(pages: Int) {
+        if (pages >= maxPages) throw SubsonicException(-1, "Library exceeds the $maxPages page cap")
     }
 
     private fun <T> entityBatches(
