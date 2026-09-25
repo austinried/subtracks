@@ -407,6 +407,7 @@ fun LibraryScreen(
                 Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
+                    .padding(bottom = bottomInset)
                     .onSizeChanged { tabBarHeightPx = it.height.toFloat() },
         ) {
             LibraryTabs(
