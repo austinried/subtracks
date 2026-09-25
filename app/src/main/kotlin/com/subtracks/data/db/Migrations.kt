@@ -127,6 +127,14 @@ val MIGRATION_12_13 =
         }
     }
 
+val MIGRATION_13_14 =
+    object : Migration(13, 14) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `albums` DROP COLUMN `frequentRank`")
+            connection.execSQL("ALTER TABLE `albums` DROP COLUMN `recentRank`")
+        }
+    }
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -141,4 +149,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_10_11,
         MIGRATION_11_12,
         MIGRATION_12_13,
+        MIGRATION_13_14,
     )

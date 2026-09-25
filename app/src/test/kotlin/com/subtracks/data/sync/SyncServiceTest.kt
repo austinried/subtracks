@@ -526,6 +526,23 @@ class SyncServiceTest {
         }
 
     @Test
+    fun partialPruneAcrossManyPagesKeepsTheSurvivors() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(artists = (1..1100).map { artist("a$it") })
+
+            SyncService(db, source).sync()
+            assertEquals(1100, db.libraryDao().artistIds(1).size)
+
+            val survivors = (1..1100).filter { it % 2 == 0 }.map { "a$it" }
+            source.artists = survivors.map { artist(it) }
+
+            SyncService(db, source).sync()
+
+            assertEquals(survivors.sorted(), db.libraryDao().artistIds(1).sorted())
+        }
+
+    @Test
     fun anIdenticalSyncDoesNotRewriteRows() =
         runTest {
             insertSource()
@@ -593,8 +610,6 @@ class SyncServiceTest {
             year = null,
             starred = null,
             songCount = 1,
-            frequentRank = null,
-            recentRank = null,
         )
 
     private fun song(id: String) =

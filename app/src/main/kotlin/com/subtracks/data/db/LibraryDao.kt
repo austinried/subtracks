@@ -65,17 +65,57 @@ interface LibraryDao {
     @Query("SELECT id FROM artists WHERE sourceId = :sourceId")
     suspend fun artistIds(sourceId: Long): List<String>
 
+    @Query("SELECT id FROM artists WHERE sourceId = :sourceId AND id > :afterId ORDER BY id LIMIT :limit")
+    suspend fun artistIdsAfter(
+        sourceId: Long,
+        afterId: String,
+        limit: Int,
+    ): List<String>
+
     @Query("SELECT id FROM albums WHERE sourceId = :sourceId")
     suspend fun albumIds(sourceId: Long): List<String>
+
+    @Query("SELECT id FROM albums WHERE sourceId = :sourceId AND id > :afterId ORDER BY id LIMIT :limit")
+    suspend fun albumIdsAfter(
+        sourceId: Long,
+        afterId: String,
+        limit: Int,
+    ): List<String>
 
     @Query("SELECT albumId, disc FROM discs WHERE sourceId = :sourceId")
     suspend fun discKeys(sourceId: Long): List<DiscKey>
 
+    @Query(
+        "SELECT albumId, disc FROM discs WHERE sourceId = :sourceId " +
+            "AND (albumId > :afterAlbumId OR (albumId = :afterAlbumId AND disc > :afterDisc)) " +
+            "ORDER BY albumId, disc LIMIT :limit",
+    )
+    suspend fun discKeysAfter(
+        sourceId: Long,
+        afterAlbumId: String,
+        afterDisc: Long,
+        limit: Int,
+    ): List<DiscKey>
+
     @Query("SELECT id FROM playlists WHERE sourceId = :sourceId")
     suspend fun playlistIds(sourceId: Long): List<String>
 
+    @Query("SELECT id FROM playlists WHERE sourceId = :sourceId AND id > :afterId ORDER BY id LIMIT :limit")
+    suspend fun playlistIdsAfter(
+        sourceId: Long,
+        afterId: String,
+        limit: Int,
+    ): List<String>
+
     @Query("SELECT id FROM songs WHERE sourceId = :sourceId")
     suspend fun songIds(sourceId: Long): List<String>
+
+    @Query("SELECT id FROM songs WHERE sourceId = :sourceId AND id > :afterId ORDER BY id LIMIT :limit")
+    suspend fun songIdsAfter(
+        sourceId: Long,
+        afterId: String,
+        limit: Int,
+    ): List<String>
 
     @Query("DELETE FROM artists WHERE sourceId = :sourceId AND id IN (:ids)")
     suspend fun deleteArtists(

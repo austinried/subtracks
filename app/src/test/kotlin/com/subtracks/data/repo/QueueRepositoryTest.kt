@@ -405,8 +405,6 @@ class QueueRepositoryTest {
         year = null,
         starred = null,
         songCount = 1,
-        frequentRank = null,
-        recentRank = null,
     )
 
     private fun song(

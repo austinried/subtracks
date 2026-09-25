@@ -162,8 +162,6 @@ class LibraryDaoTest {
         year = year,
         starred = starred,
         songCount = 1,
-        frequentRank = null,
-        recentRank = null,
     )
 
     private fun song(

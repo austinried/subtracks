@@ -155,8 +155,6 @@ internal class AlbumDraft(
             year = year,
             starred = starred,
             songCount = songCount,
-            frequentRank = null,
-            recentRank = null,
             discTitles = discTitles.toMap(),
         )
 }

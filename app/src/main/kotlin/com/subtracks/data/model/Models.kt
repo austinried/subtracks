@@ -84,8 +84,6 @@ data class Album(
     val year: Long?,
     val starred: Long?,
     val songCount: Long,
-    val frequentRank: Long?,
-    val recentRank: Long?,
     @Ignore val discTitles: Map<Long, String> = emptyMap(),
 )
 

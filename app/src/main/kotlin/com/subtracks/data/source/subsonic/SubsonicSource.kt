@@ -9,7 +9,10 @@ import com.subtracks.data.source.MusicSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
@@ -17,6 +20,9 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.xml.sax.Attributes
 
@@ -43,7 +49,6 @@ class SubsonicSource(
 
     override fun albums(): Flow<List<Album>> =
         flow {
-            val (frequent, recent) = fetchRanks()
             var offset = 0
             var pages = 0
             while (true) {
@@ -57,16 +62,7 @@ class SubsonicSource(
                 ).collect { batch ->
                     raw += batch.size
                     val accepted = batch.filter { it.id.isNotEmpty() }
-                    if (accepted.isNotEmpty()) {
-                        emit(
-                            accepted.map {
-                                it.toAlbum().copy(
-                                    frequentRank = frequent[it.id],
-                                    recentRank = recent[it.id],
-                                )
-                            },
-                        )
-                    }
+                    if (accepted.isNotEmpty()) emit(accepted.map { it.toAlbum() })
                 }
                 if (raw < PAGE_SIZE) {
                     if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
@@ -95,20 +91,25 @@ class SubsonicSource(
         ).map { batch -> batch.filter { it.id.isNotEmpty() } }
 
     override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> =
-        flow {
-            for (playlistId in playlistIds) {
-                var position = 0L
-                entityBatches(
-                    method = "getPlaylist",
-                    params = mapOf("id" to playlistId),
-                    tag = "entry",
-                    create = { attrs ->
-                        val entryId = attrs.attr("id")
-                        SubsonicXml.playlistSong(id, playlistId, if (entryId.isEmpty()) -1L else position++, attrs)
-                    },
-                ).collect { batch ->
-                    val accepted = batch.filter { it.songId.isNotEmpty() }
-                    if (accepted.isNotEmpty()) emit(accepted)
+        channelFlow {
+            val permits = Semaphore(MAX_CONCURRENT_FETCHES)
+            playlistIds.forEach { playlistId ->
+                launch {
+                    permits.withPermit {
+                        var position = 0L
+                        entityBatches(
+                            method = "getPlaylist",
+                            params = mapOf("id" to playlistId),
+                            tag = "entry",
+                            create = { attrs ->
+                                val entryId = attrs.attr("id")
+                                SubsonicXml.playlistSong(id, playlistId, if (entryId.isEmpty()) -1L else position++, attrs)
+                            },
+                        ).collect { batch ->
+                            val accepted = batch.filter { it.songId.isNotEmpty() }
+                            if (accepted.isNotEmpty()) send(accepted)
+                        }
+                    }
                 }
             }
         }.flowOn(Dispatchers.IO).buffer(1)
@@ -174,7 +175,8 @@ class SubsonicSource(
         }
 
     private fun albumSongs(): Flow<List<Song>> =
-        flow {
+        channelFlow {
+            val permits = Semaphore(MAX_CONCURRENT_FETCHES)
             var offset = 0
             var pages = 0
             while (true) {
@@ -189,16 +191,23 @@ class SubsonicSource(
                     raw += batch.size
                     batch.forEach { if (it.isNotEmpty()) albums += it }
                 }
-                for (albumId in albums) {
-                    entityBatches(
-                        method = "getAlbum",
-                        params = mapOf("id" to albumId),
-                        tag = "song",
-                        create = { SubsonicXml.song(id, it) },
-                    ).collect { batch ->
-                        val accepted = batch.filter { it.id.isNotEmpty() }
-                        if (accepted.isNotEmpty()) emit(accepted)
-                    }
+                coroutineScope {
+                    albums
+                        .map { albumId ->
+                            async {
+                                permits.withPermit {
+                                    entityBatches(
+                                        method = "getAlbum",
+                                        params = mapOf("id" to albumId),
+                                        tag = "song",
+                                        create = { SubsonicXml.song(id, it) },
+                                    ).collect { batch ->
+                                        val accepted = batch.filter { it.id.isNotEmpty() }
+                                        if (accepted.isNotEmpty()) send(accepted)
+                                    }
+                                }
+                            }
+                        }.awaitAll()
                 }
                 if (raw < PAGE_SIZE) {
                     if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
@@ -208,44 +217,6 @@ class SubsonicSource(
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
             }
-        }
-
-    private suspend fun fetchRanks(): Pair<Map<String, Long>, Map<String, Long>> = fetchRank("frequent") to fetchRank("recent")
-
-    private suspend fun fetchRank(type: String): Map<String, Long> =
-        try {
-            val ranks = HashMap<String, Long>()
-            var offset = 0
-            var pages = 0
-            while (true) {
-                var raw = 0
-                var index = 0
-                entityBatches(
-                    method = "getAlbumList2",
-                    params = page(type, offset),
-                    tag = "album",
-                    create = { it.attr("id") },
-                ).collect { batch ->
-                    raw += batch.size
-                    batch.forEach { albumId ->
-                        if (albumId.isNotEmpty()) {
-                            ranks[albumId] = (offset + index).toLong()
-                            index++
-                        }
-                    }
-                }
-                if (raw < PAGE_SIZE) {
-                    if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
-                    break
-                }
-                pages++
-                if (pages > maxPages) throw pageCapExceeded()
-                offset += PAGE_SIZE
-            }
-            ranks
-        } catch (failure: SubsonicException) {
-            if (failure is PageCapExceeded) throw failure
-            emptyMap()
         }
 
     private fun supportsEmptyQuerySearch(): Boolean {
@@ -263,7 +234,7 @@ class SubsonicSource(
         return supported
     }
 
-    private fun pageCapExceeded() = PageCapExceeded("Library exceeds the ${maxPages * PAGE_SIZE}-row page cap")
+    private fun pageCapExceeded() = PageCapExceeded("Library is too large to sync: it exceeds ${maxPages.toLong() * PAGE_SIZE} rows")
 
     private fun <T> entityBatches(
         method: String,
@@ -310,7 +281,8 @@ class SubsonicSource(
 
     private companion object {
         const val PAGE_SIZE = 500
-        const val MAX_PAGES = 1000
+        const val MAX_PAGES = 20_000
+        const val MAX_CONCURRENT_FETCHES = 4
         const val THUMBNAIL_SIZE = 256
     }
 }

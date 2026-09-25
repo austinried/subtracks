@@ -82,8 +82,6 @@ class LibraryOptionsScreenshotTest {
                 year = null,
                 starred = null,
                 songCount = 1,
-                frequentRank = null,
-                recentRank = null,
             )
         }
 }

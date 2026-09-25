@@ -150,7 +150,5 @@ class AlbumDiscsTest {
             year = null,
             starred = null,
             songCount = 3,
-            frequentRank = null,
-            recentRank = null,
         )
 }

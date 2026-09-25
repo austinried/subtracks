@@ -603,8 +603,6 @@ private object Fixtures {
         year = year,
         starred = null,
         songCount = songCount,
-        frequentRank = null,
-        recentRank = null,
     )
 
     fun song(

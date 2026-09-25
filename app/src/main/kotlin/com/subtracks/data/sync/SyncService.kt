@@ -13,6 +13,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
+import java.util.Arrays
 
 class SyncService(
     private val db: SubtracksDatabase,
@@ -28,19 +29,19 @@ class SyncService(
 
     private suspend fun syncArtists() {
         val library = db.libraryDao()
-        val stale = library.artistIds(source.id).toHashSet()
+        val seen = HashedIds()
         source.artists().collect { batch ->
             if (batch.isEmpty()) return@collect
             write("artists", artistColumns, primaryKey, batch) { it.values() }
-            stale -= batch.mapTo(HashSet()) { it.id }
+            batch.forEach { seen.add(idHash(it.id)) }
         }
-        deleteStale(stale) { library.deleteArtists(source.id, it) }
+        pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteArtists(source.id, it) })
     }
 
     private suspend fun syncAlbums() {
         val library = db.libraryDao()
-        val staleAlbums = library.albumIds(source.id).toHashSet()
-        val staleDiscs = library.discKeys(source.id).toHashSet()
+        val seenAlbums = HashedIds()
+        val seenDiscs = HashedIds()
         source.albums().collect { batch ->
             if (batch.isEmpty()) return@collect
             val discs =
@@ -48,33 +49,35 @@ class SyncService(
                     album.discTitles.map { (disc, title) -> Disc(album.sourceId, album.id, disc, title) }
                 }
             writeAlbumsAndDiscs(batch, discs)
-            staleAlbums -= batch.mapTo(HashSet()) { it.id }
-            staleDiscs -= discs.mapTo(HashSet()) { DiscKey(it.albumId, it.disc) }
+            batch.forEach { seenAlbums.add(idHash(it.id)) }
+            discs.forEach { seenDiscs.add(discHash(it.albumId, it.disc)) }
         }
-        deleteStale(staleAlbums) { library.deleteAlbums(source.id, it) }
-        deleteStaleDiscs(staleDiscs)
+        pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
+        pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
+            deleteStaleDiscs(it)
+        }
     }
 
     private suspend fun syncSongs() {
         val library = db.libraryDao()
-        val stale = library.songIds(source.id).toHashSet()
+        val seen = HashedIds()
         source.songs().collect { batch ->
             if (batch.isEmpty()) return@collect
             write("songs", songColumns, primaryKey, batch) { it.values() }
-            stale -= batch.mapTo(HashSet()) { it.id }
+            batch.forEach { seen.add(idHash(it.id)) }
         }
-        deleteStale(stale) { library.deleteSongs(source.id, it) }
+        pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
     }
 
     private suspend fun syncPlaylists() {
         val library = db.libraryDao()
-        val stale = library.playlistIds(source.id).toHashSet()
+        val seen = HashedIds()
         source.playlists().collect { batch ->
             if (batch.isEmpty()) return@collect
             write("playlists", playlistColumns, primaryKey, batch) { it.values() }
-            stale -= batch.mapTo(HashSet()) { it.id }
+            batch.forEach { seen.add(idHash(it.id)) }
         }
-        deleteStale(stale) { library.deletePlaylists(source.id, it) }
+        pruneStaleIds(seen, { library.playlistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deletePlaylists(source.id, it) })
     }
 
     private suspend fun syncPlaylistSongs() {
@@ -118,7 +121,7 @@ class SyncService(
         }
     }
 
-    private suspend fun deleteStaleDiscs(stale: Set<DiscKey>) {
+    private suspend fun deleteStaleDiscs(stale: Collection<DiscKey>) {
         stale.chunked(DELETE_CHUNK).forEach { chunk ->
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
@@ -137,15 +140,77 @@ class SyncService(
         }
     }
 
-    private suspend fun deleteStale(
-        stale: Set<String>,
+    private suspend fun pruneStaleIds(
+        seen: HashedIds,
+        pageOf: suspend (afterId: String) -> List<String>,
         delete: suspend (Collection<String>) -> Unit,
     ) {
-        stale.chunked(DELETE_CHUNK).forEach { delete(it) }
+        seen.freeze()
+        var afterId = ""
+        while (true) {
+            val ids = pageOf(afterId)
+            if (ids.isEmpty()) return
+            val stale = ids.filterNot { seen.contains(idHash(it)) }
+            stale.chunked(DELETE_CHUNK).forEach { delete(it) }
+            if (ids.size < PRUNE_PAGE) return
+            afterId = ids.last()
+        }
+    }
+
+    private suspend fun pruneStaleDiscs(
+        seen: HashedIds,
+        pageOf: suspend (afterAlbumId: String, afterDisc: Long) -> List<DiscKey>,
+        delete: suspend (Collection<DiscKey>) -> Unit,
+    ) {
+        seen.freeze()
+        var afterAlbumId = ""
+        var afterDisc = 0L
+        while (true) {
+            val keys = pageOf(afterAlbumId, afterDisc)
+            if (keys.isEmpty()) return
+            val stale = keys.filterNot { seen.contains(discHash(it.albumId, it.disc)) }
+            stale.chunked(DELETE_CHUNK).forEach { delete(it) }
+            if (keys.size < PRUNE_PAGE) return
+            afterAlbumId = keys.last().albumId
+            afterDisc = keys.last().disc
+        }
     }
 }
 
 private const val DELETE_CHUNK = 500
+private const val PRUNE_PAGE = 500
+private const val INITIAL_HASH_CAPACITY = 256
+private const val FNV_OFFSET = -3750763034362895579L
+private const val FNV_PRIME = 1099511628211L
+
+private class HashedIds {
+    private var values = LongArray(0)
+    private var count = 0
+
+    fun add(value: Long) {
+        if (count == values.size) {
+            values = values.copyOf(if (values.isEmpty()) INITIAL_HASH_CAPACITY else values.size * 2)
+        }
+        values[count++] = value
+    }
+
+    fun freeze() {
+        Arrays.sort(values, 0, count)
+    }
+
+    operator fun contains(value: Long): Boolean = Arrays.binarySearch(values, 0, count, value) >= 0
+}
+
+private fun idHash(id: String): Long {
+    var hash = FNV_OFFSET
+    id.forEach { hash = (hash xor it.code.toLong()) * FNV_PRIME }
+    return hash
+}
+
+private fun discHash(
+    albumId: String,
+    disc: Long,
+): Long = idHash(albumId) * 31 + disc
 
 private val primaryKey = listOf("sourceId", "id")
 
@@ -164,8 +229,6 @@ private val albumColumns =
         "year",
         "starred",
         "songCount",
-        "frequentRank",
-        "recentRank",
     )
 
 private val discKey = listOf("sourceId", "albumId", "disc")
@@ -197,8 +260,7 @@ private val playlistSongKey = listOf("sourceId", "playlistId", "position")
 
 private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt)
 
-private fun Album.values() =
-    listOf<Any?>(sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount, frequentRank, recentRank)
+private fun Album.values() = listOf<Any?>(sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount)
 
 private fun Disc.values() = listOf<Any?>(sourceId, albumId, disc, title)
 

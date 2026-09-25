@@ -65,7 +65,6 @@ class SubsonicSourceIntegrationTest(
             assertNotNull(kosmo.coverArt)
             assertNotNull(kosmo.starred)
             assertTrue(kosmo.created <= System.currentTimeMillis() / 1000)
-            assertTrue(kosmo.frequentRank != null || kosmo.recentRank != null)
 
             assertNull(albums.first { it.name == "Retroconnaissance EP" }.starred)
             assertNull(albums.first { it.name == "I Don't Know What I'm Doing" }.starred)

@@ -16,6 +16,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class SubsonicSourceTest {
@@ -91,12 +93,15 @@ class SubsonicSourceTest {
     fun albumsPaginateUntilAShortPage() =
         runBlocking {
             val requestedOffsets = CopyOnWriteArrayList<Int>()
+            val requestedTypes = CopyOnWriteArrayList<String>()
             server.dispatcher =
                 object : Dispatcher() {
                     override fun dispatch(request: RecordedRequest): MockResponse {
                         val url = request.requestUrl!!
                         if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
-                        if (url.queryParameter("type") != "newest") {
+                        val type = url.queryParameter("type")!!
+                        requestedTypes += type
+                        if (type != "newest") {
                             return MockResponse().setBody(emptyAlbumList())
                         }
                         val offset = url.queryParameter("offset")!!.toInt()
@@ -110,6 +115,7 @@ class SubsonicSourceTest {
 
             assertEquals(1003, albums.size)
             assertEquals(listOf(0, 500, 1000), requestedOffsets.toList())
+            assertEquals(listOf("newest"), requestedTypes.distinct())
             assertEquals("al-0", albums.first().id)
             assertEquals("al-1002", albums.last().id)
         }
@@ -200,7 +206,10 @@ class SubsonicSourceTest {
                     SubsonicSource(1, client(), maxPages = 2).albums().toList()
                 }
 
-            assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+            val thrown = failure.exceptionOrNull()
+            assertEquals(true, thrown is SubsonicException)
+            assertTrue(thrown?.message.orEmpty(), thrown?.message.orEmpty().contains("too large"))
+            assertTrue(thrown?.message.orEmpty(), thrown?.message.orEmpty().contains("1000 rows"))
         }
 
     @Test
@@ -268,6 +277,119 @@ class SubsonicSourceTest {
 
             assertEquals(502, albums.size)
             assertEquals("al-502", albums.last().id)
+        }
+
+    @Test
+    fun playlistSongsFetchesPlaylistsConcurrently() =
+        runBlocking {
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
+            val secondStarted = CountDownLatch(1)
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                        val current = inFlight.incrementAndGet()
+                        maxInFlight.updateAndGet { maxOf(it, current) }
+                        if (current >= 2) secondStarted.countDown()
+                        secondStarted.await(2, TimeUnit.SECONDS)
+                        inFlight.decrementAndGet()
+                        val playlistId = url.queryParameter("id")!!
+                        return MockResponse().setBody(
+                            "<subsonic-response status=\"ok\"><playlist id=\"$playlistId\">" +
+                                (1..3).joinToString("") { "<entry id=\"$playlistId-s$it\" title=\"Title $it\"/>" } +
+                                "</playlist></subsonic-response>",
+                        )
+                    }
+                }
+
+            val entries = SubsonicSource(1, client()).playlistSongs(listOf("p1", "p2", "p3", "p4")).toList().flatten()
+
+            assertEquals(12, entries.size)
+            assertEquals(4, entries.map { it.playlistId }.distinct().size)
+            entries.groupBy { it.playlistId }.forEach { (playlistId, batch) ->
+                assertEquals(listOf(0L, 1L, 2L), batch.sortedBy { it.position }.map { it.position })
+                assertEquals((1..3).map { "$playlistId-s$it" }, batch.sortedBy { it.position }.map { it.songId })
+            }
+            assertTrue(maxInFlight.get() >= 2)
+        }
+
+    @Test
+    fun playlistSongsPropagatesFailuresFromAnyPlaylist() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                        return if (url.queryParameter("id") == "p2") {
+                            MockResponse().setBody(failed(70, "Playlist not found"))
+                        } else {
+                            MockResponse().setBody(
+                                "<subsonic-response status=\"ok\"><playlist id=\"p1\">" +
+                                    "<entry id=\"s1\" title=\"One\"/>" +
+                                    "</playlist></subsonic-response>",
+                            )
+                        }
+                    }
+                }
+
+            val failure = runCatching { SubsonicSource(1, client()).playlistSongs(listOf("p1", "p2", "p3")).toList() }
+
+            assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+        }
+
+    @Test
+    fun albumSongsFetchesAlbumsConcurrentlyWhenSearchIsUnsupported() =
+        runBlocking {
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
+            val secondStarted = CountDownLatch(1)
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        return when {
+                            url.encodedPath == "/rest/search3.view" -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            url.encodedPath == "/rest/getAlbumList2.view" -> {
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><albumList2>" +
+                                        (0 until 4).joinToString("") {
+                                            "<album id=\"al$it\" name=\"Album $it\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>"
+                                        } +
+                                        "</albumList2></subsonic-response>",
+                                )
+                            }
+
+                            url.encodedPath == "/rest/getAlbum.view" -> {
+                                val current = inFlight.incrementAndGet()
+                                maxInFlight.updateAndGet { maxOf(it, current) }
+                                if (current >= 2) secondStarted.countDown()
+                                secondStarted.await(2, TimeUnit.SECONDS)
+                                inFlight.decrementAndGet()
+                                val albumId = url.queryParameter("id")!!
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><album id=\"$albumId\">" +
+                                        "<song id=\"$albumId-s1\" title=\"One\"/>" +
+                                        "</album></subsonic-response>",
+                                )
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                    }
+                }
+
+            val songs = SubsonicSource(1, client()).songs().toList().flatten()
+
+            assertEquals(4, songs.size)
+            assertTrue(maxInFlight.get() >= 2)
         }
 
     @Test
