@@ -776,7 +776,7 @@ private fun TabButton(
             modifier
                 .onGloballyPositioned { tabLeft = it.boundsInParent().left }
                 .clickable(onClick = onClick)
-                .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                .padding(start = 8.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
     ) {
         if (clipStart != null && clipEnd != null) {
             Box(
