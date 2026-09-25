@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -253,20 +252,31 @@ fun HeroHeader(
         }
         Spacer(Modifier.height(20.dp))
         Row(
-            modifier = controlsModifier,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onDownload) {
                 Icon(Icons.Rounded.Download, contentDescription = "Download")
             }
-            Button(onClick = onPlay, enabled = hasSongs) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Play")
-            }
-            FilledIconButton(onClick = onShuffle, enabled = hasSongs) {
-                Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FilledIconButton(
+                    onClick = onPlay,
+                    enabled = hasSongs,
+                    modifier = Modifier.width(64.dp).height(48.dp),
+                ) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play")
+                }
+                FilledIconButton(
+                    onClick = onShuffle,
+                    enabled = hasSongs,
+                    modifier = Modifier.width(64.dp).height(48.dp),
+                ) {
+                    Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
+                }
             }
             IconButton(onClick = onMore) {
                 Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")

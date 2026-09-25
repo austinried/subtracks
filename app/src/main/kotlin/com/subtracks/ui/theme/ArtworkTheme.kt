@@ -205,7 +205,7 @@ fun ArtworkTheme(
     }
 }
 
-fun playerSurfaceColor(artwork: ArtworkColors): Color = lerp(artwork.scheme.surfaceContainerHigh, artwork.gradientHigh, 0.5f)
+fun playerSurfaceColor(artwork: ArtworkColors): Color = artwork.gradientHigh
 
 fun heroBarColor(
     artwork: ArtworkColors?,

@@ -917,7 +917,10 @@ class PlaybackController(
     private fun refresh(position: Long? = currentPosition()) {
         val player = player ?: return
         updateBuffering()
-        lastDurationMs = player.durationMs.takeIf { it > 0 } ?: lastDurationMs
+        lastDurationMs =
+            player.durationMs.takeIf { it > 0 }
+                ?: player.currentItem?.durationMs?.takeIf { it > 0 }
+                ?: lastDurationMs
         _state.value =
             PlaybackState(
                 item = player.currentItem,

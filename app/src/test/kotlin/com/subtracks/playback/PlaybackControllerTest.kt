@@ -145,7 +145,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun theDurationDoesNotDropToZeroWhenTheNextTrackIsStillLoading() {
+    fun theDurationUsesTheNextTracksMetadataWhileItLoads() {
         seedAlbum(3, sourceId = 1)
 
         controller.playAlbum(1, "al1", 0)
@@ -165,7 +165,7 @@ class PlaybackControllerTest {
                 ?.id == "s2"
         }
 
-        assertEquals(284_000L, controller.state.value.durationMs)
+        assertEquals(100_000L, controller.state.value.durationMs)
     }
 
     @Test
@@ -925,6 +925,7 @@ class PlaybackControllerTest {
         }
 
         assertEquals(12_000L, restored.state.value.positionMs)
+        assertEquals(100_000L, restored.state.value.durationMs)
         assertEquals(
             "setWindow(size=3, start=0, position=12000)",
             restoredHandle.operations.first { it.startsWith("setWindow") },
