@@ -9,7 +9,6 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
-import com.subtracks.data.model.SearchIndex
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
 import kotlinx.coroutines.sync.Mutex
@@ -53,18 +52,6 @@ class SyncService(
                         library.deletePlaylistSongsFrom(source.id, playlist.id, (playlistSongCounts[playlist.id] ?: 0).toLong())
                     }
                     (existingPlaylistIds - playlists.map { it.id }).forEach { library.deletePlaylistSongsFrom(source.id, it, 0) }
-
-                    val search = db.searchDao()
-                    val sourceKey = source.id.toString()
-                    search.clear(sourceKey)
-                    search.insert(
-                        buildList {
-                            artists.forEach { add(SearchIndex(sourceId = sourceKey, type = "artist", itemId = it.id, title = it.name)) }
-                            albums.forEach { add(SearchIndex(sourceId = sourceKey, type = "album", itemId = it.id, title = it.name)) }
-                            songs.forEach { add(SearchIndex(sourceId = sourceKey, type = "song", itemId = it.id, title = it.title)) }
-                            playlists.forEach { add(SearchIndex(sourceId = sourceKey, type = "playlist", itemId = it.id, title = it.name)) }
-                        },
-                    )
                 }
             }
         }

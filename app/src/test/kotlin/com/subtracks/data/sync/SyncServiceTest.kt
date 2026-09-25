@@ -161,35 +161,6 @@ class SyncServiceTest {
         }
 
     @Test
-    fun searchIndexMatchesSubstrings() =
-        runTest {
-            insertSource()
-            val source =
-                FakeMusicSource(
-                    artists = listOf(artist("a1", name = "Radiohead")),
-                    songs = listOf(song("s1")),
-                )
-
-            SyncService(db, source).sync()
-
-            val results = db.searchDao().search("1", "adio", 10)
-            assertEquals(1, results.size)
-            assertEquals("a1", results.single().itemId)
-            assertEquals("artist", results.single().type)
-        }
-
-    @Test
-    fun searchIgnoresTooShortQueries() =
-        runTest {
-            insertSource()
-            SyncService(db, FakeMusicSource(artists = listOf(artist("a1", name = "Radiohead")))).sync()
-
-            assertEquals(0, db.searchDao().search("1", "ad", 10).size)
-            assertEquals(0, db.searchDao().search("1", "", 10).size)
-            assertEquals(1, db.searchDao().search("1", "adi", 10).size)
-        }
-
-    @Test
     fun syncUpdatesExistingRows() =
         runTest {
             insertSource()

@@ -39,7 +39,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 - Prefer self-explanatory code; do not add comments unless the reason cannot be inferred from the code itself (docstrings for functions and exports are fine).
 - ktlint (`org.jlleitschuh.gradle.ktlint`) enforces style and flags unused imports; run `gradle :app:ktlintFormat` before committing. `.editorconfig` exempts `@Composable` functions from the lowerCamelCase function-naming rule.
-- Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (`BundledSQLiteDriver`, SQLite 3.50+, FTS5). Do not reintroduce SQLDelight or the platform SQLite.
+- Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (`BundledSQLiteDriver`, SQLite 3.50+). Do not reintroduce SQLDelight or the platform SQLite.
 - Networking uses OkHttp and DOM XML parsing; auth uses the Subsonic token scheme by default.
 - Use coroutines and `Flow`; library reads are exposed as `Flow` from Room. Large lists page with Paging 3 over Room `PagingSource` rather than loading the whole table.
 - Playback is Media3: `PlaybackService` is a `MediaSessionService` owning an `ExoPlayer`, and `PlaybackController` (app-scoped Koin singleton) is the only thing the UI talks to. The queue is a `queue_entries` list of references with optional ranges plus a `playback_cursor` row; keep only a bounded window in memory (never the whole queue, and never load a whole table to build one). Stream URLs are freshly salted per request, so attach artwork by `CoverArtRef` cache key, not by URL.

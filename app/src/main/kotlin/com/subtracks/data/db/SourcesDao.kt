@@ -3,7 +3,6 @@ package com.subtracks.data.db
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
-import androidx.room3.Transaction
 import androidx.room3.Upsert
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicConfig
@@ -42,14 +41,7 @@ interface SourcesDao {
     @Query("DELETE FROM sources WHERE id = :id")
     suspend fun deleteSourceRow(id: Long)
 
-    @Query("DELETE FROM search_index WHERE sourceId = :sourceId")
-    suspend fun clearSearchIndex(sourceId: String)
-
-    @Transaction
-    suspend fun deleteSource(id: Long) {
-        deleteSourceRow(id)
-        clearSearchIndex(id.toString())
-    }
+    suspend fun deleteSource(id: Long) = deleteSourceRow(id)
 
     @Query("UPDATE sources SET isActive = (id = :sourceId)")
     suspend fun setActiveSource(sourceId: Long)

@@ -5,8 +5,6 @@ import androidx.room3.ColumnTypeConverter
 import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
-import androidx.room3.Fts5
-import androidx.room3.FtsOptions
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
@@ -166,16 +164,6 @@ data class Song(
 data class SongListItem(
     @Embedded val song: Song,
     val coverArt: String?,
-)
-
-@Entity(tableName = "search_index")
-@Fts5(tokenizer = FtsOptions.TOKENIZER_TRIGRAM, notIndexed = ["sourceId", "type", "itemId"])
-data class SearchIndex(
-    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "rowid") val rowId: Long = 0,
-    val sourceId: String,
-    val type: String,
-    val itemId: String,
-    val title: String,
 )
 
 enum class QueueKind { Playlist, Album, Song, Songs }
