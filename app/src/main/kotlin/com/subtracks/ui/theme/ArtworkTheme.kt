@@ -32,6 +32,7 @@ private const val HERO_DARKEN_MAX = 1.0f
 private const val DARKEN_START_SCREENS = 0.5f
 private const val DARKEN_END_SCREENS = 1.5f
 private const val DARKEN_KNEE = 0.2f
+private const val PLAYER_SURFACE_SATURATION_FACTOR = 1.6f
 
 @Immutable
 data class ArtworkColors(
@@ -205,7 +206,10 @@ fun ArtworkTheme(
     }
 }
 
-fun playerSurfaceColor(artwork: ArtworkColors): Color = artwork.scheme.surfaceContainerHigh
+fun playerSurfaceColor(artwork: ArtworkColors): Color {
+    val (hue, saturation, lightness) = artwork.scheme.surfaceContainerHigh.toHsl()
+    return Color.hsl(hue, (saturation * PLAYER_SURFACE_SATURATION_FACTOR).coerceIn(0f, 1f), lightness)
+}
 
 fun heroBarColor(
     artwork: ArtworkColors?,
