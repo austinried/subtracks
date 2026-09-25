@@ -149,15 +149,15 @@ fun AlbumDetailScreen(
 private fun DiscHeader(text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = 28.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 4.dp),
     ) {
         Icon(
             imageVector = Icons.Outlined.FiberSmartRecord,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(18.dp),
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(16.dp))
         Text(
             text = text.uppercase(),
             style = MaterialTheme.typography.labelLarge,
