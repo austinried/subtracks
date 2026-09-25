@@ -482,7 +482,7 @@ fun LibraryScreen(
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
-                Box {
+                Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
                     ListOptionsGlyph(
                         modifier =
                             Modifier

@@ -153,7 +153,7 @@ private fun DiscHeader(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (first) 0.dp else 40.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (first) 16.dp else 40.dp, bottom = 4.dp),
     ) {
         Icon(
             imageVector = Icons.Outlined.FiberSmartRecord,
