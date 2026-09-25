@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -52,7 +53,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -625,6 +625,7 @@ private val BOTTOM_CLEARANCE = 80.dp
 private val TAB_BAR_CONTENT_HEIGHT = 52.dp
 private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
+private val TOUCH_TARGET = 48.dp
 
 @Composable
 private fun SearchField(
@@ -780,38 +781,43 @@ private fun TabButton(
             modifier
                 .onGloballyPositioned { tabLeft = it.boundsInParent().left }
                 .clickable(onClick = onClick)
-                .minimumInteractiveComponentSize()
-                .padding(start = 8.dp, end = 12.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
+                .widthIn(min = TOUCH_TARGET)
+                .height(TOUCH_TARGET),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        if (clipStart != null && clipEnd != null) {
-            Box(
-                modifier =
-                    Modifier.drawWithContent {
-                        val hole =
-                            Path().apply {
-                                addRect(Rect(clipStart, 0f, clipEnd, size.height))
-                            }
-                        clipPath(hole, clipOp = ClipOp.Difference) {
-                            this@drawWithContent.drawContent()
-                        }
-                    },
-            ) {
-                TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
-            }
-            Box(
-                modifier =
-                    Modifier
-                        .clearAndSetSemantics {}
-                        .drawWithContent {
-                            clipRect(clipStart, 0f, clipEnd, size.height) {
+        Box(
+            modifier = Modifier.padding(start = 8.dp, end = 12.dp, top = TAB_VERTICAL_PADDING, bottom = TAB_VERTICAL_PADDING),
+        ) {
+            if (clipStart != null && clipEnd != null) {
+                Box(
+                    modifier =
+                        Modifier.drawWithContent {
+                            val hole =
+                                Path().apply {
+                                    addRect(Rect(clipStart, 0f, clipEnd, size.height))
+                                }
+                            clipPath(hole, clipOp = ClipOp.Difference) {
                                 this@drawWithContent.drawContent()
                             }
                         },
-            ) {
-                TabContent(tab, progress, selectedContent)
+                ) {
+                    TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
+                }
+                Box(
+                    modifier =
+                        Modifier
+                            .clearAndSetSemantics {}
+                            .drawWithContent {
+                                clipRect(clipStart, 0f, clipEnd, size.height) {
+                                    this@drawWithContent.drawContent()
+                                }
+                            },
+                ) {
+                    TabContent(tab, progress, selectedContent)
+                }
+            } else {
+                TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
             }
-        } else {
-            TabContent(tab, progress, MaterialTheme.colorScheme.onBackground)
         }
     }
 }
