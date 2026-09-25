@@ -204,12 +204,11 @@ fun ArtworkTheme(
     colors: ArtworkColors?,
     content: @Composable () -> Unit,
 ) {
-    val scheme = colors?.scheme
-    if (scheme == null) {
-        content()
-    } else {
-        MaterialTheme(colorScheme = scheme, typography = SubtracksTypography, content = content)
-    }
+    MaterialTheme(
+        colorScheme = colors?.scheme ?: MaterialTheme.colorScheme,
+        typography = SubtracksTypography,
+        content = content,
+    )
 }
 
 fun playerSurfaceColor(artwork: ArtworkColors): Color {
