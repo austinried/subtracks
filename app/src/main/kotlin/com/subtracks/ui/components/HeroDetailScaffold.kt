@@ -255,7 +255,7 @@ fun HeroHeader(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onDownload) {
+            IconButton(onClick = onDownload, modifier = Modifier.padding(horizontal = 8.dp)) {
                 Icon(Icons.Rounded.Download, contentDescription = "Download")
             }
             Row(
@@ -266,19 +266,19 @@ fun HeroHeader(
                 FilledIconButton(
                     onClick = onPlay,
                     enabled = hasSongs,
-                    modifier = Modifier.width(64.dp).height(48.dp),
+                    modifier = Modifier.width(76.dp).height(48.dp),
                 ) {
                     Icon(Icons.Rounded.PlayArrow, contentDescription = "Play")
                 }
                 FilledIconButton(
                     onClick = onShuffle,
                     enabled = hasSongs,
-                    modifier = Modifier.width(64.dp).height(48.dp),
+                    modifier = Modifier.width(76.dp).height(48.dp),
                 ) {
                     Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
                 }
             }
-            IconButton(onClick = onMore) {
+            IconButton(onClick = onMore, modifier = Modifier.padding(horizontal = 8.dp)) {
                 Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
             }
         }
