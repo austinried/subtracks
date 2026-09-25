@@ -97,14 +97,14 @@ fun MiniPlayer(
                         Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(12.dp),
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     CoverArt(
                         ref = coverArt,
                         name = item.title,
-                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(6.dp)),
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)),
                     )
                     Column(Modifier.weight(1f)) {
                         Text(
@@ -128,14 +128,14 @@ fun MiniPlayer(
                                 CircularProgressIndicator(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     strokeWidth = 3.dp,
-                                    modifier = Modifier.size(28.dp),
+                                    modifier = Modifier.size(24.dp),
                                 )
                             } else {
                                 Icon(
                                     imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                     contentDescription = if (state.isPlaying) "Pause" else "Play",
                                     tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(36.dp),
                                 )
                             }
                         }
@@ -144,7 +144,7 @@ fun MiniPlayer(
                                 imageVector = Icons.Rounded.SkipNext,
                                 contentDescription = "Next",
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(40.dp),
+                                modifier = Modifier.size(36.dp),
                             )
                         }
                     }
