@@ -111,7 +111,7 @@ class AlbumDiscsTest {
         composeRule.waitUntil(timeoutMillis = 5_000) { nodesWithText(songs.first().title) == 1 }
     }
 
-    private fun nodesWithText(text: String) = composeRule.onAllNodesWithText(text).fetchSemanticsNodes().size
+    private fun nodesWithText(text: String) = composeRule.onAllNodesWithText(text, ignoreCase = true).fetchSemanticsNodes().size
 
     private fun song(
         id: String,

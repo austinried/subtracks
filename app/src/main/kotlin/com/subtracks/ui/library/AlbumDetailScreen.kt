@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.FiberSmartRecord
+import androidx.compose.material.icons.outlined.FiberSmartRecord
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
@@ -151,16 +152,17 @@ private fun DiscHeader(text: String) {
         modifier = Modifier.padding(start = 8.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
     ) {
         Icon(
-            imageVector = Icons.Rounded.FiberSmartRecord,
+            imageVector = Icons.Outlined.FiberSmartRecord,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
+            text = text.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
