@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -268,14 +269,14 @@ fun HeroHeader(
                     enabled = hasSongs,
                     modifier = Modifier.width(76.dp).height(48.dp),
                 ) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play")
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
                 }
                 FilledIconButton(
                     onClick = onShuffle,
                     enabled = hasSongs,
                     modifier = Modifier.width(76.dp).height(48.dp),
                 ) {
-                    Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play")
+                    Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
                 }
             }
             IconButton(onClick = onMore, modifier = Modifier.padding(horizontal = 8.dp)) {
