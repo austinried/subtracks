@@ -258,7 +258,7 @@ class AppScreenshotTest {
         awaitText("Everything In Its Right Place")
         composeRule.onRoot().performTouchInput { swipeUp(startY = centerY + 600f, endY = centerY - 600f, durationMillis = 400) }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Disc 2").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Disc 2", ignoreCase = true).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/album_detail_multidisc.png")
     }
