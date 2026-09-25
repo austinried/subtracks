@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.xml.sax.Attributes
 
@@ -38,8 +39,7 @@ class SubsonicSource(
             method = "getArtists",
             tag = "artist",
             create = { SubsonicXml.artist(id, it) },
-            accept = { it.id.isNotEmpty() },
-        )
+        ).map { batch -> batch.filter { it.id.isNotEmpty() } }
 
     override fun albums(): Flow<List<Album>> =
         flow {
@@ -47,26 +47,31 @@ class SubsonicSource(
             var offset = 0
             var pages = 0
             while (true) {
-                var count = 0
+                var raw = 0
                 entityBatches(
                     method = "getAlbumList2",
                     params = page("newest", offset),
                     tag = "album",
                     create = { SubsonicXml.albumDraft(id, it) },
                     onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
-                    accept = { it.id.isNotEmpty() },
                 ).collect { batch ->
-                    count += batch.size
-                    emit(
-                        batch.map {
-                            it.toAlbum().copy(
-                                frequentRank = frequent[it.id],
-                                recentRank = recent[it.id],
-                            )
-                        },
-                    )
+                    raw += batch.size
+                    val accepted = batch.filter { it.id.isNotEmpty() }
+                    if (accepted.isNotEmpty()) {
+                        emit(
+                            accepted.map {
+                                it.toAlbum().copy(
+                                    frequentRank = frequent[it.id],
+                                    recentRank = recent[it.id],
+                                )
+                            },
+                        )
+                    }
                 }
-                if (count < PAGE_SIZE) break
+                if (raw < PAGE_SIZE) {
+                    if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
+                    break
+                }
                 pages++
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
@@ -87,8 +92,7 @@ class SubsonicSource(
             method = "getPlaylists",
             tag = "playlist",
             create = { SubsonicXml.playlist(id, it) },
-            accept = { it.id.isNotEmpty() },
-        )
+        ).map { batch -> batch.filter { it.id.isNotEmpty() } }
 
     override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> =
         flow {
@@ -102,8 +106,10 @@ class SubsonicSource(
                         val entryId = attrs.attr("id")
                         SubsonicXml.playlistSong(id, playlistId, if (entryId.isEmpty()) -1L else position++, attrs)
                     },
-                    accept = { it.songId.isNotEmpty() },
-                ).collect { emit(it) }
+                ).collect { batch ->
+                    val accepted = batch.filter { it.songId.isNotEmpty() }
+                    if (accepted.isNotEmpty()) emit(accepted)
+                }
             }
         }.flowOn(Dispatchers.IO).buffer(1)
 
@@ -139,7 +145,7 @@ class SubsonicSource(
             var offset = 0
             var pages = 0
             while (true) {
-                var count = 0
+                var raw = 0
                 entityBatches(
                     method = "search3",
                     params =
@@ -152,12 +158,15 @@ class SubsonicSource(
                         ),
                     tag = "song",
                     create = { SubsonicXml.song(id, it) },
-                    accept = { it.id.isNotEmpty() },
                 ).collect { batch ->
-                    count += batch.size
-                    emit(batch)
+                    raw += batch.size
+                    val accepted = batch.filter { it.id.isNotEmpty() }
+                    if (accepted.isNotEmpty()) emit(accepted)
                 }
-                if (count < PAGE_SIZE) break
+                if (raw < PAGE_SIZE) {
+                    if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
+                    break
+                }
                 pages++
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
@@ -169,24 +178,32 @@ class SubsonicSource(
             var offset = 0
             var pages = 0
             while (true) {
+                var raw = 0
                 val albums = ArrayList<String>(PAGE_SIZE)
                 entityBatches(
                     method = "getAlbumList2",
                     params = page("alphabeticalByName", offset),
                     tag = "album",
                     create = { it.attr("id") },
-                    accept = { it.isNotEmpty() },
-                ).collect { albums += it }
+                ).collect { batch ->
+                    raw += batch.size
+                    batch.forEach { if (it.isNotEmpty()) albums += it }
+                }
                 for (albumId in albums) {
                     entityBatches(
                         method = "getAlbum",
                         params = mapOf("id" to albumId),
                         tag = "song",
                         create = { SubsonicXml.song(id, it) },
-                        accept = { it.id.isNotEmpty() },
-                    ).collect { emit(it) }
+                    ).collect { batch ->
+                        val accepted = batch.filter { it.id.isNotEmpty() }
+                        if (accepted.isNotEmpty()) emit(accepted)
+                    }
                 }
-                if (albums.size < PAGE_SIZE) break
+                if (raw < PAGE_SIZE) {
+                    if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
+                    break
+                }
                 pages++
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
@@ -201,26 +218,33 @@ class SubsonicSource(
             var offset = 0
             var pages = 0
             while (true) {
+                var raw = 0
                 var index = 0
                 entityBatches(
                     method = "getAlbumList2",
                     params = page(type, offset),
                     tag = "album",
                     create = { it.attr("id") },
-                    accept = { it.isNotEmpty() },
                 ).collect { batch ->
+                    raw += batch.size
                     batch.forEach { albumId ->
-                        ranks[albumId] = (offset + index).toLong()
-                        index++
+                        if (albumId.isNotEmpty()) {
+                            ranks[albumId] = (offset + index).toLong()
+                            index++
+                        }
                     }
                 }
-                if (index < PAGE_SIZE) break
+                if (raw < PAGE_SIZE) {
+                    if (raw > 0 && pages >= maxPages) throw pageCapExceeded()
+                    break
+                }
                 pages++
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
             }
             ranks
-        } catch (_: SubsonicException) {
+        } catch (failure: SubsonicException) {
+            if (failure is PageCapExceeded) throw failure
             emptyMap()
         }
 
@@ -239,7 +263,7 @@ class SubsonicSource(
         return supported
     }
 
-    private fun pageCapExceeded() = SubsonicException(-1, "Library exceeds the ${maxPages * PAGE_SIZE}-row page cap")
+    private fun pageCapExceeded() = PageCapExceeded("Library exceeds the ${maxPages * PAGE_SIZE}-row page cap")
 
     private fun <T> entityBatches(
         method: String,
@@ -247,7 +271,6 @@ class SubsonicSource(
         tag: String,
         create: (Attributes) -> T,
         onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
-        accept: (T) -> Boolean = { true },
     ): Flow<List<T>> =
         channelFlow {
             val buffer = ArrayList<T>(PAGE_SIZE)
@@ -267,10 +290,8 @@ class SubsonicSource(
                     create = create,
                     onChild = onChild,
                     onEnd = { entity ->
-                        if (accept(entity)) {
-                            buffer += entity
-                            if (buffer.size >= PAGE_SIZE) flush()
-                        }
+                        buffer += entity
+                        if (buffer.size >= PAGE_SIZE) flush()
                     },
                 )
             }
@@ -293,3 +314,7 @@ class SubsonicSource(
         const val THUMBNAIL_SIZE = 256
     }
 }
+
+private class PageCapExceeded(
+    message: String,
+) : SubsonicException(-1, message)

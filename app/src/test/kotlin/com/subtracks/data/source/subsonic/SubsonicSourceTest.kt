@@ -225,6 +225,52 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun albumsAbortWhenThePageJustOverTheCapIsNotEmpty() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
+                        if (url.queryParameter("type") != "newest") return MockResponse().setBody(emptyAlbumList())
+                        return when (url.queryParameter("offset")) {
+                            "0", "500" -> MockResponse().setBody(albumPage(url.queryParameter("offset")!!.toInt(), 500))
+                            else -> MockResponse().setBody(albumPage(1000, 1))
+                        }
+                    }
+                }
+
+            val failure =
+                runCatching {
+                    SubsonicSource(1, client(), maxPages = 2).albums().toList()
+                }
+
+            assertEquals(true, failure.exceptionOrNull() is SubsonicException)
+        }
+
+    @Test
+    fun emptyIdRowsDoNotEndPaginationEarly() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getAlbumList2.view") return MockResponse().setResponseCode(404)
+                        if (url.queryParameter("type") != "newest") return MockResponse().setBody(emptyAlbumList())
+                        return when (url.queryParameter("offset")) {
+                            "0" -> MockResponse().setBody(albumPageWithEmptyId(0, 500))
+                            else -> MockResponse().setBody(albumPage(500, 3))
+                        }
+                    }
+                }
+
+            val albums = SubsonicSource(1, client()).albums().toList().flatten()
+
+            assertEquals(502, albums.size)
+            assertEquals("al-502", albums.last().id)
+        }
+
+    @Test
     fun playlistEntriesWithoutIdsAreSkipped() =
         runBlocking {
             server.enqueue(
@@ -289,6 +335,16 @@ class SubsonicSourceTest {
         count: Int,
     ) = "<subsonic-response status=\"ok\"><albumList2>" +
         (offset until offset + count).joinToString("") {
+            "<album id=\"al-$it\" name=\"Album $it\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>"
+        } +
+        "</albumList2></subsonic-response>"
+
+    private fun albumPageWithEmptyId(
+        offset: Int,
+        count: Int,
+    ) = "<subsonic-response status=\"ok\"><albumList2>" +
+        "<album id=\"\" name=\"No id\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>" +
+        (offset until offset + count - 1).joinToString("") {
             "<album id=\"al-$it\" name=\"Album $it\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>"
         } +
         "</albumList2></subsonic-response>"

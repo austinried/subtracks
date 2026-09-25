@@ -6,7 +6,7 @@ import okhttp3.Request
 import java.io.InputStream
 import java.security.MessageDigest
 
-class SubsonicException(
+open class SubsonicException(
     val code: Int,
     message: String,
 ) : Exception(message)
