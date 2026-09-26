@@ -98,7 +98,7 @@ fun ArtistsContent(
                             modifier =
                                 Modifier.combinedClickable(
                                     onClick = { onArtistClick(artist) },
-                                    onLongClick = { onLongClick(MenuTarget.Artist(artist)) },
+                                    onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },
                                 ),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )

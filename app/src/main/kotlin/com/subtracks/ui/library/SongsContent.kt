@@ -91,7 +91,7 @@ fun SongsContent(
                             modifier =
                                 Modifier.combinedClickable(
                                     onClick = { onSongClick(item.song.id) },
-                                    onLongClick = { onLongClick(MenuTarget.Song(item.song)) },
+                                    onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                                 ),
                         )
                     }

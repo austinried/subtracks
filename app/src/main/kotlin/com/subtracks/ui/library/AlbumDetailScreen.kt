@@ -77,7 +77,7 @@ fun AlbumDetailRoute(
         onSongLongClick = { menuTarget = it },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { album?.let { menuTarget = MenuTarget.Album(it) } },
+        onMore = { album?.let { menuTarget = MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true)) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
     menuTarget?.let { target ->
@@ -161,7 +161,7 @@ fun AlbumDetailScreen(
                         modifier =
                             rowModifier.combinedClickable(
                                 onClick = { onSongClick(index) },
-                                onLongClick = { onSongLongClick(MenuTarget.Song(song)) },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(song, coverArt(album?.coverArt, true))) },
                             ),
                     )
                 }

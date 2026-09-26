@@ -9,8 +9,11 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Song
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.source.StarType
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -22,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class LibraryRepositoryTest {
@@ -80,7 +84,19 @@ class LibraryRepositoryTest {
         }
 
     @Test
-    fun aRejectedStarLeavesTheRowUntouchedAndReports() =
+    fun starringUpdatesTheRowBeforeTheServerResponds() =
+        runBlocking {
+            withSource { server ->
+                server.enqueue(ok().setBodyDelay(10, TimeUnit.SECONDS))
+
+                val call = launch { repository.setStar(StarType.Song, "s1", true) }
+                withTimeout(3_000) { while (starred() == null) delay(10) }
+                call.cancel()
+            }
+        }
+
+    @Test
+    fun aRejectedStarRollsBackAndReports() =
         runBlocking {
             withSource { server ->
                 server.enqueue(failed(40))
@@ -88,6 +104,22 @@ class LibraryRepositoryTest {
                 assertTrue(repository.setStar(StarType.Song, "s1", true).isFailure)
 
                 assertNull(starred())
+                assertEquals(listOf("Could not update star"), messages)
+            }
+        }
+
+    @Test
+    fun aRejectedUnstarRestoresTheStarredRow() =
+        runBlocking {
+            withSource { server ->
+                server.enqueue(ok())
+                repository.setStar(StarType.Song, "s1", true)
+                val starredAt = starred()
+                server.enqueue(failed(40))
+
+                assertTrue(repository.setStar(StarType.Song, "s1", false).isFailure)
+
+                assertEquals(starredAt, starred())
                 assertEquals(listOf("Could not update star"), messages)
             }
         }

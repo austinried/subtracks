@@ -61,7 +61,7 @@ fun PlaylistDetailRoute(
         onSongLongClick = { menuTarget = it },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { playlist?.let { menuTarget = MenuTarget.Playlist(it) } },
+        onMore = { playlist?.let { menuTarget = MenuTarget.Playlist(it, viewModel.coverArt(it.coverArt, true)) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
     menuTarget?.let { target ->
@@ -116,7 +116,7 @@ fun PlaylistDetailScreen(
                         modifier =
                             rowModifier.combinedClickable(
                                 onClick = { onSongClick(index) },
-                                onLongClick = { onSongLongClick(MenuTarget.Song(item.song)) },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                             ),
                     )
                 }

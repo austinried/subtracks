@@ -96,7 +96,7 @@ fun PlaylistsContent(
                             modifier =
                                 Modifier.combinedClickable(
                                     onClick = { onPlaylistClick(playlist) },
-                                    onLongClick = { onLongClick(MenuTarget.Playlist(playlist)) },
+                                    onLongClick = { onLongClick(MenuTarget.Playlist(playlist, coverArt(playlist.coverArt, true))) },
                                 ),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )

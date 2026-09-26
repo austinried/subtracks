@@ -18,6 +18,7 @@ import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class LibraryRepository(
     private val db: SubtracksDatabase,
@@ -249,10 +250,25 @@ class LibraryRepository(
         val sourceId = sourceRepository.activeSourceIdOnce()
         val source = sourceRepository.activeMusicSource()
         if (sourceId == null || source == null) return Result.failure(IllegalStateException("No active server"))
+        val previous = starredValue(sourceId, type, id)
+        updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
         return runCatching { source.setStar(type, id, starred) }
-            .onSuccess { updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null) }
-            .onFailure { showMessage("Could not update star") }
+            .onFailure {
+                updateStarred(sourceId, type, id, previous)
+                showMessage("Could not update star")
+            }
     }
+
+    private suspend fun starredValue(
+        sourceId: Long,
+        type: StarType,
+        id: String,
+    ): Long? =
+        when (type) {
+            StarType.Song -> song(sourceId, id).first()?.starred
+            StarType.Album -> album(sourceId, id).first()?.starred
+            StarType.Artist -> artist(sourceId, id).first()?.starred
+        }
 
     private suspend fun updateStarred(
         sourceId: Long,

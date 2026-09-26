@@ -116,7 +116,7 @@ fun ArtistDetailRoute(
         onBack = onBack,
         onAlbumClick = onAlbumClick,
         onAlbumLongClick = { menuTarget = it },
-        onMore = { artist?.let { menuTarget = MenuTarget.Artist(it) } },
+        onMore = { artist?.let { menuTarget = MenuTarget.Artist(it, artThumbnail ?: art) } },
     )
     menuTarget?.let { target ->
         ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
@@ -238,7 +238,7 @@ fun ArtistDetailScreen(
                                         end = if (index % 2 == 1) 16.dp else 0.dp,
                                     ).combinedClickable(
                                         onClick = { onAlbumClick(album) },
-                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album)) },
+                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, coverArt(album.coverArt, true))) },
                                     ),
                         ) {
                             CoverArt(

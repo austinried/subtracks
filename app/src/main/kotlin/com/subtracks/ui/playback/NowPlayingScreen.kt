@@ -138,7 +138,7 @@ fun NowPlayingRoute(
         onPrevious = controller::previous,
         onShuffle = controller::toggleShuffle,
         onRepeat = controller::cycleRepeat,
-        onMore = { song?.let { menuTarget = MenuTarget.Song(it) } },
+        onMore = { song?.let { menuTarget = MenuTarget.Song(it, thumbnail) } },
         onSeek = controller::seekTo,
         modifier = modifier,
     )

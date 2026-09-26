@@ -94,7 +94,7 @@ fun AlbumsContent(
                                     .clip(RoundedCornerShape(2.dp))
                                     .combinedClickable(
                                         onClick = { onAlbumClick(album) },
-                                        onLongClick = { onLongClick(MenuTarget.Album(album)) },
+                                        onLongClick = { onLongClick(MenuTarget.Album(album, art)) },
                                     ).testTag(ALBUM_COVER_TAG),
                         )
                     }
