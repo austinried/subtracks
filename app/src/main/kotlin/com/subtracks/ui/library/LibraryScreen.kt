@@ -43,7 +43,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -571,7 +570,7 @@ private fun ListOptionsSheet(
             shape = RoundedCornerShape(4.dp),
             color = Color.Transparent,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 12.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -582,7 +581,6 @@ private fun ListOptionsSheet(
                 Text("Search this list", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        HorizontalDivider()
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
