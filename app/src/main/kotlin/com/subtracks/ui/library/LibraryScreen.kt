@@ -335,6 +335,7 @@ fun LibraryScreen(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
         ) { page ->
             val pageTab = LibraryTab.entries[page]
             val resetKey = resetKeys[pageTab]

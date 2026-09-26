@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -112,7 +111,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun onlyTheVisibleTabCollectsItsPagingFlow() {
+    fun theVisibleTabAndItsNeighbourCollectTheirPagingFlows() {
         val collected = CopyOnWriteArrayList<String>()
         val albums =
             flow<PagingData<Album>> {
@@ -147,10 +146,10 @@ class LibraryScreenTest {
             }
         }
 
-        composeRule.waitUntil(timeoutMillis = 5_000) { collected.isNotEmpty() }
+        composeRule.waitUntil(timeoutMillis = 5_000) { collected.contains("artists") }
         composeRule.waitForIdle()
 
-        assertEquals(listOf("albums"), collected.toList())
+        assertEquals(listOf("albums", "artists"), collected.toList())
     }
 
     @Test
@@ -204,7 +203,6 @@ class LibraryScreenTest {
 
         assertTrue("returning to a tab should render its content", collected.contains("albums"))
         assertTrue("the tab that was shown should collect its flow", collected.contains("artists"))
-        assertFalse("inactive tabs should not collect their flows", collected.contains("playlists"))
     }
 
     @Test
