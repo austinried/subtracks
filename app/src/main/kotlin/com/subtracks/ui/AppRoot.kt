@@ -60,6 +60,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ContextMenuHost
+import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.library.AlbumDetailRoute
@@ -93,6 +95,7 @@ class RootViewModel(
 
 private const val NAVIGATION_DURATION_MS = 260
 private const val OVERLAY_DURATION_MS = 200
+private const val FADE_OUT_MS = 150
 private const val EXPAND_FADE = 0.1f
 private const val FLING_VELOCITY = 1000f
 private const val MINI_PLAYER_ANIM_MS = 200
@@ -145,11 +148,16 @@ private fun MainNavigation() {
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
     var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
+    var nowPlayingFadeOut by remember { mutableStateOf(false) }
     var settleJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
+    val contextMenuHost = remember { ContextMenuHost() }
 
     fun settleNowPlaying(open: Boolean) {
-        if (open) nowPlayingOpen = true
+        if (open) {
+            nowPlayingOpen = true
+            nowPlayingFadeOut = false
+        }
         settleJob?.cancel()
         settleJob =
             scope.launch {
@@ -158,6 +166,30 @@ private fun MainNavigation() {
                 }
                 if (!open) nowPlayingOpen = false
             }
+    }
+
+    fun fadeNowPlaying() {
+        nowPlayingFadeOut = true
+        settleJob?.cancel()
+        settleJob =
+            scope.launch {
+                animate(nowPlayingProgress, 0f, animationSpec = tween(FADE_OUT_MS)) { value, _ ->
+                    nowPlayingProgress = value
+                }
+                nowPlayingOpen = false
+                nowPlayingFadeOut = false
+            }
+    }
+
+    fun navigateDetail(
+        pattern: String,
+        argument: String,
+        value: String,
+        route: String,
+    ) {
+        val top = navController.currentBackStackEntry
+        if (top?.destination?.route == pattern && top.arguments?.getString(argument) == value) return
+        navController.navigate(route)
     }
     LaunchedEffect(Unit) { playbackController.connect() }
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
@@ -216,12 +248,21 @@ private fun MainNavigation() {
                 ) {
                     composable(Routes.LIBRARY) {
                         LibraryRoute(
-                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                            onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
-                            onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onPlaylistClick = { playlist ->
+                                navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
+                            },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
-                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            contextMenuHost = contextMenuHost,
                             bottomInset = bottomInset,
                         )
                     }
@@ -250,7 +291,10 @@ private fun MainNavigation() {
                                     .orEmpty()
                                     .ifEmpty { null },
                             onBack = { navController.popBackStack() },
-                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            contextMenuHost = contextMenuHost,
                         )
                     }
                     composable(
@@ -272,8 +316,11 @@ private fun MainNavigation() {
                                     .orEmpty()
                                     .ifEmpty { null },
                             onBack = { navController.popBackStack() },
-                            onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
-                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            contextMenuHost = contextMenuHost,
                         )
                     }
                     composable(
@@ -283,8 +330,11 @@ private fun MainNavigation() {
                         PlaylistDetailRoute(
                             playlistId = entry.arguments?.getString("playlistId").orEmpty(),
                             onBack = { navController.popBackStack() },
-                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
-                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            contextMenuHost = contextMenuHost,
                         )
                     }
                     composable(Routes.ADD_SERVER) {
@@ -330,8 +380,8 @@ private fun MainNavigation() {
                         Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                translationY = (1f - nowPlayingProgress) * miniPlayerTopPx
-                                alpha = (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
+                                translationY = if (nowPlayingFadeOut) 0f else (1f - nowPlayingProgress) * miniPlayerTopPx
+                                alpha = if (nowPlayingFadeOut) nowPlayingProgress else (nowPlayingProgress / EXPAND_FADE).coerceAtMost(1f)
                             }.draggable(
                                 orientation = Orientation.Vertical,
                                 state =
@@ -348,13 +398,14 @@ private fun MainNavigation() {
                         onBack = { settleNowPlaying(false) },
                         onQueue = { showingQueue = true },
                         onViewAlbum = { albumId ->
-                            settleNowPlaying(false)
-                            navController.navigate(Routes.album(albumId))
+                            navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId))
+                            fadeNowPlaying()
                         },
                         onViewArtist = { artistId ->
-                            settleNowPlaying(false)
-                            navController.navigate(Routes.artist(artistId))
+                            navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            fadeNowPlaying()
                         },
+                        contextMenuHost = contextMenuHost,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -388,6 +439,10 @@ private fun MainNavigation() {
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
+            }
+
+            contextMenuHost.target?.let { target ->
+                ItemContextMenu(target = target, actions = contextMenuHost.actions, onDismiss = { contextMenuHost.dismiss() })
             }
         }
     }

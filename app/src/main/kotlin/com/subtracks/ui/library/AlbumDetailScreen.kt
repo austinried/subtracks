@@ -13,9 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,10 +26,10 @@ import com.subtracks.data.model.Disc
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
 import com.subtracks.ui.components.ItemActions
-import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.rememberArtworkColors
@@ -48,6 +46,7 @@ fun AlbumDetailRoute(
     coverArtId: String?,
     onBack: () -> Unit,
     onViewArtist: (String) -> Unit,
+    contextMenuHost: ContextMenuHost? = null,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -57,7 +56,6 @@ fun AlbumDetailRoute(
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
-    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     val actions =
         ItemActions(
             playSong = { song -> songs.indexOfFirst { it.id == song.id }.takeIf { it >= 0 }?.let(viewModel::play) },
@@ -74,15 +72,12 @@ fun AlbumDetailRoute(
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
-        onSongLongClick = { menuTarget = it },
+        onSongLongClick = { contextMenuHost?.show(it, actions) },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { album?.let { menuTarget = MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true)) } },
+        onMore = { album?.let { contextMenuHost?.show(MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true)), actions) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
-    menuTarget?.let { target ->
-        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
-    }
 }
 
 @Composable

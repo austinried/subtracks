@@ -1,7 +1,14 @@
 package com.subtracks.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -92,6 +100,25 @@ class ItemActions(
     val viewArtist: ((String) -> Unit)? = null,
 )
 
+class ContextMenuHost {
+    var target by mutableStateOf<MenuTarget?>(null)
+        private set
+    var actions by mutableStateOf(ItemActions())
+        private set
+
+    fun show(
+        target: MenuTarget,
+        actions: ItemActions,
+    ) {
+        this.target = target
+        this.actions = actions
+    }
+
+    fun dismiss() {
+        target = null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemContextMenu(
@@ -103,9 +130,9 @@ fun ItemContextMenu(
     val scope = rememberCoroutineScope()
 
     fun dismiss(after: () -> Unit = {}) {
+        after()
         scope.launch {
             sheetState.hide()
-            after()
             onDismiss()
         }
     }
@@ -113,6 +140,7 @@ fun ItemContextMenu(
     ModalBottomSheet(
         onDismissRequest = { dismiss() },
         sheetState = sheetState,
+        dragHandle = null,
     ) {
         MenuHeader(target)
         when (target) {
@@ -159,39 +187,40 @@ fun ItemContextMenu(
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shufflePlaylist(target.playlist) } }
             }
         }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
 @Composable
 private fun MenuHeader(target: MenuTarget) {
-    ListItem(
-        headlineContent = {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CoverArt(
+            ref = target.coverArt,
+            name = target.title,
+            modifier = Modifier.size(48.dp).clip(if (target is MenuTarget.Artist) CircleShape else RoundedCornerShape(8.dp)),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
             Text(
                 text = target.title,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        },
-        supportingContent =
             target.subtitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
-                {
-                    Text(
-                        text = subtitle,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            },
-        leadingContent = {
-            CoverArt(
-                ref = target.coverArt,
-                name = target.title,
-                modifier = Modifier.size(48.dp).clip(if (target is MenuTarget.Artist) CircleShape else RoundedCornerShape(8.dp)),
-            )
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
 }
 
 @Composable

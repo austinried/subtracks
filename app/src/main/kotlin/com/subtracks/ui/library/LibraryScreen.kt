@@ -114,8 +114,8 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemActions
-import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
@@ -194,13 +194,13 @@ fun LibraryRoute(
     onOpenSettings: () -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
+    contextMenuHost: ContextMenuHost? = null,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
-    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
@@ -220,6 +220,17 @@ fun LibraryRoute(
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
+    val itemActions =
+        ItemActions(
+            playSong = { viewModel.playSong(it.id) },
+            playAlbum = { viewModel.playAlbum(it.id) },
+            shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
+            playPlaylist = { viewModel.playPlaylist(it.id) },
+            shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
+            setStar = viewModel::setStar,
+            viewAlbum = onViewAlbum,
+            viewArtist = onViewArtist,
+        )
     LibraryScreen(
         selectedTab = selectedTab,
         onTabSelected = { selectedTab = it },
@@ -237,7 +248,7 @@ fun LibraryRoute(
         onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
-        onItemLongClick = { menuTarget = it },
+        onItemLongClick = { contextMenuHost?.show(it, itemActions) },
         playingSongId = playingSongId,
         listQuery = listQuery,
         resetKeys = resetKeys,
@@ -261,23 +272,6 @@ fun LibraryRoute(
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
     )
-    menuTarget?.let { target ->
-        ItemContextMenu(
-            target = target,
-            actions =
-                ItemActions(
-                    playSong = { viewModel.playSong(it.id) },
-                    playAlbum = { viewModel.playAlbum(it.id) },
-                    shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
-                    playPlaylist = { viewModel.playPlaylist(it.id) },
-                    shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
-                    setStar = viewModel::setStar,
-                    viewAlbum = onViewAlbum,
-                    viewArtist = onViewArtist,
-                ),
-            onDismiss = { menuTarget = null },
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -531,7 +525,10 @@ fun LibraryScreen(
     }
 
     if (showOptions) {
-        ModalBottomSheet(onDismissRequest = { showOptions = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showOptions = false },
+            dragHandle = null,
+        ) {
             ListOptionsSheet(
                 listQuery = listQuery,
                 sortOptions = sortOptions,

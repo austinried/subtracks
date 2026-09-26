@@ -61,9 +61,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
-import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
@@ -91,6 +91,7 @@ fun ArtistDetailRoute(
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
     onViewAlbum: (String) -> Unit,
+    contextMenuHost: ContextMenuHost? = null,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
@@ -98,7 +99,6 @@ fun ArtistDetailRoute(
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
-    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     val actions =
         ItemActions(
             playAlbum = { viewModel.playAlbum(it.id) },
@@ -115,12 +115,9 @@ fun ArtistDetailRoute(
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
-        onAlbumLongClick = { menuTarget = it },
-        onMore = { artist?.let { menuTarget = MenuTarget.Artist(it, artThumbnail ?: art) } },
+        onAlbumLongClick = { contextMenuHost?.show(it, actions) },
+        onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art), actions) } },
     )
-    menuTarget?.let { target ->
-        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -69,9 +69,9 @@ import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.RepeatMode
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
-import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkSeedCache
@@ -87,6 +87,7 @@ fun NowPlayingRoute(
     onQueue: () -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
+    contextMenuHost: ContextMenuHost? = null,
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
@@ -101,9 +102,14 @@ fun NowPlayingRoute(
                 libraryRepository.song(sourceId, songId).collect { value = it }
             }
         }
-    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
-    val scope = rememberCoroutineScope()
     val context = LocalPlatformContext.current
+    val scope = rememberCoroutineScope()
+    val actions =
+        ItemActions(
+            setStar = { type, id, starred -> scope.launch { libraryRepository.setStar(type, id, starred) } },
+            viewAlbum = onViewAlbum,
+            viewArtist = onViewArtist,
+        )
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
     val queueContext = state.context
@@ -138,22 +144,10 @@ fun NowPlayingRoute(
         onPrevious = controller::previous,
         onShuffle = controller::toggleShuffle,
         onRepeat = controller::cycleRepeat,
-        onMore = { song?.let { menuTarget = MenuTarget.Song(it, thumbnail) } },
+        onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail), actions) } },
         onSeek = controller::seekTo,
         modifier = modifier,
     )
-    menuTarget?.let { target ->
-        ItemContextMenu(
-            target = target,
-            actions =
-                ItemActions(
-                    setStar = { type, id, starred -> scope.launch { libraryRepository.setStar(type, id, starred) } },
-                    viewAlbum = onViewAlbum,
-                    viewArtist = onViewArtist,
-                ),
-            onDismiss = { menuTarget = null },
-        )
-    }
 }
 
 internal fun prefetchImage(

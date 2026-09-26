@@ -16,10 +16,10 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
 import com.subtracks.ui.components.ItemActions
-import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.rememberArtworkColors
@@ -36,13 +36,13 @@ fun PlaylistDetailRoute(
     onBack: () -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
+    contextMenuHost: ContextMenuHost? = null,
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
-    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     val actions =
         ItemActions(
             playPlaylist = { viewModel.playAll() },
@@ -58,15 +58,12 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
-        onSongLongClick = { menuTarget = it },
+        onSongLongClick = { contextMenuHost?.show(it, actions) },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { playlist?.let { menuTarget = MenuTarget.Playlist(it, viewModel.coverArt(it.coverArt, true)) } },
+        onMore = { playlist?.let { contextMenuHost?.show(MenuTarget.Playlist(it, viewModel.coverArt(it.coverArt, true)), actions) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
-    menuTarget?.let { target ->
-        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
-    }
 }
 
 @Composable
