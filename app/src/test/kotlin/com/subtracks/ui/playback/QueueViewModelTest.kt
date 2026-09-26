@@ -199,8 +199,30 @@ class QueueViewModelTest {
             viewModel.rows[13]
                 .song.song.id,
         )
-        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
-        assertContiguous()
+        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+    }
+
+    @Test
+    fun movingTheTopRowDownRenumbersFromTheWindowStart() {
+        runBlocking { seedSongs(400) }
+        controller.playAlbum(1, "al1", 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        extendToEnd()
+        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+
+        val from = viewModel.rows.first().position
+        viewModel.reorder(0, 5)
+        val to = dropTarget(viewModel.rows, index = 5, from = from)
+        viewModel.move(from, to)
+        await {
+            viewModel.rows.firstOrNull()?.position == 220L &&
+                viewModel.rows.lastOrNull()?.position == 399L
+        }
+
+        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
     }
 
     @Test

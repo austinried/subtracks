@@ -21,6 +21,7 @@ const val QUEUE_CHUNK = 60
 private const val LENGTH_CACHE_LIMIT = 512
 
 private data class EntryLengthKey(
+    val version: Long,
     val sourceId: Long,
     val kind: QueueKind,
     val refId: String,
@@ -147,7 +148,7 @@ class QueueRepository(
         val loaded =
             db.useReaderConnection { transactor ->
                 transactor.deferredTransaction {
-                    val entries = dao.entries().map { ResolvedQueueEntry(it, lengthOf(it)) }
+                    val entries = dao.entries().map { ResolvedQueueEntry(it, lengthOf(it, version)) }
                     val row = dao.cursor()
                     val shuffled = row?.shuffleEnabled == true
                     val order = if (shuffled) loadShuffleOrder(row.shuffleSeed, entries.sumOf { it.length }) else null
@@ -386,8 +387,11 @@ class QueueRepository(
             }
         }
 
-    private suspend fun lengthOf(entry: QueueEntry): Long {
-        val key = entry.lengthKey()
+    private suspend fun lengthOf(
+        entry: QueueEntry,
+        version: Long,
+    ): Long {
+        val key = entry.lengthKey(version)
         lengthCache[key]?.let { return it }
         val length = entry.resolvedLength()
         if (lengthCache.size >= LENGTH_CACHE_LIMIT) lengthCache.clear()
@@ -395,8 +399,9 @@ class QueueRepository(
         return length
     }
 
-    private fun QueueEntry.lengthKey() =
+    private fun QueueEntry.lengthKey(version: Long) =
         EntryLengthKey(
+            version = version,
             sourceId = sourceId,
             kind = kind,
             refId = refId,

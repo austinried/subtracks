@@ -184,7 +184,7 @@ class QueueViewModel(
         viewModelScope.launch {
             playbackController.move(from, to)
             mutex.withLock {
-                val base = rows.firstOrNull()?.position ?: return@withLock
+                val base = rows.minOfOrNull { it.position } ?: return@withLock
                 // The loaded order already reflects the move, so only the positions need updating.
                 val updated =
                     rows.mapIndexed { index, row ->
