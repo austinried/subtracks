@@ -63,6 +63,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.source.StarType
+import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
@@ -77,6 +78,7 @@ import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -112,6 +114,7 @@ fun ArtistDetailRoute(
     contextMenuHost: ContextMenuHost? = null,
     setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
+    playbackController: PlaybackController = koinInject(),
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -122,6 +125,8 @@ fun ArtistDetailRoute(
         ItemActions(
             playAlbum = { viewModel.playAlbum(it.id) },
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
+            playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
+            addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )
