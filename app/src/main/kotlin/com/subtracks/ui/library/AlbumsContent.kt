@@ -1,6 +1,6 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +28,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
@@ -40,6 +41,7 @@ fun AlbumsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onAlbumClick: (Album) -> Unit,
+    onLongClick: (MenuTarget) -> Unit = {},
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
@@ -90,8 +92,10 @@ fun AlbumsContent(
                                     .fillMaxWidth()
                                     .aspectRatio(1f)
                                     .clip(RoundedCornerShape(2.dp))
-                                    .clickable { onAlbumClick(album) }
-                                    .testTag(ALBUM_COVER_TAG),
+                                    .combinedClickable(
+                                        onClick = { onAlbumClick(album) },
+                                        onLongClick = { onLongClick(MenuTarget.Album(album)) },
+                                    ).testTag(ALBUM_COVER_TAG),
                         )
                     }
                 }

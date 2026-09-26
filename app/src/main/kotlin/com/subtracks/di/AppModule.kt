@@ -32,20 +32,14 @@ fun appModule(
     http: OkHttpClient,
 ) = module {
     val mainHandler = Handler(Looper.getMainLooper())
+    val toast: (String) -> Unit = { message ->
+        mainHandler.post { Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
+    }
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single {
-        SourceRepository(
-            get(),
-            get(),
-            get(),
-            showMessage = { message ->
-                mainHandler.post { Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
-            },
-        )
-    }
-    single { LibraryRepository(get(), get()) }
+    single { SourceRepository(get(), get(), get(), showMessage = toast) }
+    single { LibraryRepository(get(), get(), toast) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }

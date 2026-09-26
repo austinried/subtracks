@@ -1,6 +1,6 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,6 +39,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
 import com.subtracks.ui.components.rememberViewportFill
 
@@ -48,6 +49,7 @@ fun SongsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onSongClick: (String) -> Unit,
+    onLongClick: (MenuTarget) -> Unit = {},
     playingSongId: String? = null,
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
@@ -86,7 +88,11 @@ fun SongsContent(
                             coverArtId = item.coverArt,
                             coverArt = coverArt,
                             isPlaying = item.song.id == playingSongId,
-                            modifier = Modifier.clickable { onSongClick(item.song.id) },
+                            modifier =
+                                Modifier.combinedClickable(
+                                    onClick = { onSongClick(item.song.id) },
+                                    onLongClick = { onLongClick(MenuTarget.Song(item.song)) },
+                                ),
                         )
                     }
                 }

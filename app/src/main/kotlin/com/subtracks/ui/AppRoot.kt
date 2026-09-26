@@ -220,6 +220,8 @@ private fun MainNavigation() {
                             onArtistClick = { artist -> navController.navigate(Routes.artist(artist.id, artist.coverArt)) },
                             onPlaylistClick = { playlist -> navController.navigate(Routes.playlist(playlist.id)) },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
+                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
                             bottomInset = bottomInset,
                         )
                     }

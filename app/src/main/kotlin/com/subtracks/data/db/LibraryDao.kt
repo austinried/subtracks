@@ -62,6 +62,27 @@ interface LibraryDao {
     @Upsert
     suspend fun upsertPlaylistSongs(items: List<PlaylistSong>)
 
+    @Query("UPDATE artists SET starred = :starred WHERE sourceId = :sourceId AND id = :id")
+    suspend fun setArtistStar(
+        sourceId: Long,
+        id: String,
+        starred: Long?,
+    )
+
+    @Query("UPDATE albums SET starred = :starred WHERE sourceId = :sourceId AND id = :id")
+    suspend fun setAlbumStar(
+        sourceId: Long,
+        id: String,
+        starred: Long?,
+    )
+
+    @Query("UPDATE songs SET starred = :starred WHERE sourceId = :sourceId AND id = :id")
+    suspend fun setSongStar(
+        sourceId: Long,
+        id: String,
+        starred: Long?,
+    )
+
     @Query("SELECT id FROM artists WHERE sourceId = :sourceId")
     suspend fun artistIds(sourceId: Long): List<String>
 

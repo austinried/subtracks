@@ -114,6 +114,9 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ItemContextMenu
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
@@ -189,12 +192,15 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
+    onViewAlbum: (String) -> Unit,
+    onViewArtist: (String) -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
+    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
@@ -231,6 +237,7 @@ fun LibraryRoute(
         onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
+        onItemLongClick = { menuTarget = it },
         playingSongId = playingSongId,
         listQuery = listQuery,
         resetKeys = resetKeys,
@@ -254,6 +261,23 @@ fun LibraryRoute(
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
     )
+    menuTarget?.let { target ->
+        ItemContextMenu(
+            target = target,
+            actions =
+                ItemActions(
+                    playSong = { viewModel.playSong(it.id) },
+                    playAlbum = { viewModel.playAlbum(it.id) },
+                    shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
+                    playPlaylist = { viewModel.playPlaylist(it.id) },
+                    shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
+                    setStar = viewModel::setStar,
+                    viewAlbum = onViewAlbum,
+                    viewArtist = onViewArtist,
+                ),
+            onDismiss = { menuTarget = null },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -272,6 +296,7 @@ fun LibraryScreen(
     onSongClick: (String) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    onItemLongClick: (MenuTarget) -> Unit = {},
     syncing: Boolean = false,
     playingSongId: String? = null,
     bottomInset: Dp = 0.dp,
@@ -364,6 +389,7 @@ fun LibraryScreen(
                                 dismissSearch()
                                 onAlbumClick(it)
                             },
+                            onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
@@ -381,6 +407,7 @@ fun LibraryScreen(
                                 dismissSearch()
                                 onArtistClick(it)
                             },
+                            onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
@@ -398,6 +425,7 @@ fun LibraryScreen(
                                 dismissSearch()
                                 onSongClick(it)
                             },
+                            onLongClick = onItemLongClick,
                             playingSongId,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -416,6 +444,7 @@ fun LibraryScreen(
                                 dismissSearch()
                                 onPlaylistClick(it)
                             },
+                            onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,

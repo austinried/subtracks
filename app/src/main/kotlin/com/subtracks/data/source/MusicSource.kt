@@ -12,6 +12,12 @@ interface MusicSource {
 
     suspend fun ping()
 
+    suspend fun setStar(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    )
+
     fun artists(): Flow<List<Artist>>
 
     fun albums(): Flow<List<Album>>
@@ -21,4 +27,10 @@ interface MusicSource {
     fun playlists(): Flow<List<Playlist>>
 
     fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>>
+}
+
+enum class StarType {
+    Song,
+    Album,
+    Artist,
 }

@@ -16,11 +16,13 @@ import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.data.source.StarType
 import kotlinx.coroutines.flow.Flow
 
 class LibraryRepository(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
+    private val showMessage: (String) -> Unit = {},
 ) {
     val activeSourceId: Flow<Long?> = sourceRepository.activeSourceId()
 
@@ -233,6 +235,33 @@ class LibraryRepository(
         sourceId: Long,
         playlistId: String,
     ): Flow<PagingData<SongListItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
+
+    suspend fun setStar(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ): Result<Unit> {
+        val sourceId = sourceRepository.activeSourceIdOnce()
+        val source = sourceRepository.activeMusicSource()
+        if (sourceId == null || source == null) return Result.failure(IllegalStateException("No active server"))
+        return runCatching { source.setStar(type, id, starred) }
+            .onSuccess { updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null) }
+            .onFailure { showMessage("Could not update star") }
+    }
+
+    private suspend fun updateStarred(
+        sourceId: Long,
+        type: StarType,
+        id: String,
+        starred: Long?,
+    ) {
+        val dao = db.libraryDao()
+        when (type) {
+            StarType.Song -> dao.setSongStar(sourceId, id, starred)
+            StarType.Album -> dao.setAlbumStar(sourceId, id, starred)
+            StarType.Artist -> dao.setArtistStar(sourceId, id, starred)
+        }
+    }
 
     private fun <T : Any> pager(
         pageSize: Int,

@@ -6,6 +6,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.MusicSource
+import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,6 +39,22 @@ class SubsonicSource(
 
     override suspend fun ping() {
         withContext(Dispatchers.IO) { client.check("ping") }
+    }
+
+    override suspend fun setStar(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ) {
+        val param =
+            when (type) {
+                StarType.Song -> "id"
+                StarType.Album -> "albumId"
+                StarType.Artist -> "artistId"
+            }
+        withContext(Dispatchers.IO) {
+            client.check(if (starred) "star" else "unstar", mapOf(param to id))
+        }
     }
 
     override fun artists(): Flow<List<Artist>> =

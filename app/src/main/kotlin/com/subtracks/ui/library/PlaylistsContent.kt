@@ -1,6 +1,6 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +28,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
 import com.subtracks.ui.components.rememberViewportFill
 
@@ -37,6 +38,7 @@ fun PlaylistsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onPlaylistClick: (Playlist) -> Unit,
+    onLongClick: (MenuTarget) -> Unit = {},
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
     resetKey: Any? = null,
@@ -91,7 +93,11 @@ fun PlaylistsContent(
                                     modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
                                 )
                             },
-                            modifier = Modifier.clickable { onPlaylistClick(playlist) },
+                            modifier =
+                                Modifier.combinedClickable(
+                                    onClick = { onPlaylistClick(playlist) },
+                                    onLongClick = { onLongClick(MenuTarget.Playlist(playlist)) },
+                                ),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }

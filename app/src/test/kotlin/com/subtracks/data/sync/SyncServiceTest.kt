@@ -16,6 +16,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.MusicSource
+import com.subtracks.data.source.StarType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -678,6 +679,12 @@ private class FakeMusicSource(
     val requestedPlaylistIds = mutableListOf<List<String>>()
 
     override suspend fun ping() = Unit
+
+    override suspend fun setStar(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ) = Unit
 
     override fun artists(): Flow<List<Artist>> = batches(artists)
 
