@@ -662,6 +662,7 @@ class PlaybackController(
             val position = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
             lastSavedPositionMs = queueRepository.cursorPositionMs().coerceAtLeast(0)
             loadWindow(position, autoplay = false, startPositionMs = lastSavedPositionMs)
+            player?.prepare()
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }

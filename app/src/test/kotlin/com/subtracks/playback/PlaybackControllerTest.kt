@@ -144,18 +144,20 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun togglingPlayOnARestoredQueuePreparesBeforePlaying() {
+    fun aRestoredQueueIsPreparedBeforeTheFirstPlay() {
         seedAlbum(5, sourceId = 1)
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
         controller.connect()
         await { handle.items.isNotEmpty() }
+        await { handle.operations.contains("prepare") }
+
         handle.operations.clear()
 
         controller.togglePlayPause()
         await { handle.operations.contains("play") }
 
-        assertEquals(listOf("prepare", "play"), handle.operations)
+        assertEquals(listOf("play"), handle.operations)
     }
 
     @Test
