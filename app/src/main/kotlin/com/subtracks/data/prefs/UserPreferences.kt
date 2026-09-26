@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.subtracks.data.net.NetworkMode
@@ -58,9 +57,7 @@ class UserPreferences(
 
     fun streamQuality(mode: NetworkMode): Flow<StreamQuality> =
         store.data.map { prefs ->
-            prefs[streamQualityKey(mode)]?.let(::decodeStreamQuality)
-                ?: legacyStreamQuality(prefs)
-                ?: defaultStreamQuality(mode)
+            prefs[streamQualityKey(mode)]?.let(::decodeStreamQuality) ?: defaultStreamQuality(mode)
         }
 
     suspend fun setStreamQuality(
@@ -86,16 +83,6 @@ class UserPreferences(
         )
     }
 
-    private fun legacyStreamQuality(prefs: Preferences): StreamQuality? {
-        val bitrate = prefs[LEGACY_BITRATE]
-        val format = prefs[LEGACY_FORMAT]
-        if (bitrate == null && format == null) return null
-        return StreamQuality(
-            maxBitrate = bitrate ?: 0,
-            format = format?.takeIf { it.isNotEmpty() },
-        )
-    }
-
     private fun defaultStreamQuality(mode: NetworkMode): StreamQuality =
         when (mode) {
             NetworkMode.Wifi -> StreamQuality()
@@ -113,11 +100,6 @@ class UserPreferences(
             descending = parts[1] == "1",
             starred = StarredFilter.entries.getOrElse(parts[2].toIntOrNull() ?: 0) { StarredFilter.Any },
         )
-    }
-
-    private companion object {
-        val LEGACY_BITRATE = intPreferencesKey("max_bitrate")
-        val LEGACY_FORMAT = stringPreferencesKey("stream_format")
     }
 }
 
