@@ -18,7 +18,17 @@ data class AddSourceState(
     val busy: Boolean = false,
     val message: String? = null,
     val isError: Boolean = false,
+    val nameError: Boolean = false,
+    val addressError: Boolean = false,
 )
+
+internal fun AddSourceState.validated(): AddSourceState =
+    copy(
+        nameError = name.isBlank(),
+        addressError = address.isBlank(),
+        message = null,
+        isError = false,
+    )
 
 class AddSourceViewModel(
     private val sourceRepository: SourceRepository,
@@ -27,9 +37,9 @@ class AddSourceViewModel(
     private val _state = MutableStateFlow(AddSourceState())
     val state: StateFlow<AddSourceState> = _state
 
-    fun setName(value: String) = _state.update { it.copy(name = value) }
+    fun setName(value: String) = _state.update { it.copy(name = value, nameError = false) }
 
-    fun setAddress(value: String) = _state.update { it.copy(address = value) }
+    fun setAddress(value: String) = _state.update { it.copy(address = value, addressError = false) }
 
     fun setUsername(value: String) = _state.update { it.copy(username = value) }
 
@@ -59,12 +69,13 @@ class AddSourceViewModel(
     }
 
     fun save(onSaved: () -> Unit) {
-        val current = _state.value
-        if (current.name.isBlank() || current.address.isBlank()) {
-            _state.update { it.copy(message = "Name and address are required", isError = true) }
+        val validated = _state.value.validated()
+        if (validated.nameError || validated.addressError) {
+            _state.value = validated
             return
         }
         _state.update { it.copy(busy = true, message = null) }
+        val current = _state.value
         viewModelScope.launch {
             runCatching {
                 sourceRepository.addSource(

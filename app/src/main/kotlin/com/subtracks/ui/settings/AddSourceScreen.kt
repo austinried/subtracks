@@ -28,9 +28,13 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -71,6 +75,14 @@ fun AddSourceScreen(
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    val nameFocus = remember { FocusRequester() }
+    val addressFocus = remember { FocusRequester() }
+    LaunchedEffect(state.nameError, state.addressError) {
+        when {
+            state.nameError -> nameFocus.requestFocus()
+            state.addressError -> addressFocus.requestFocus()
+        }
+    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -86,24 +98,35 @@ fun AddSourceScreen(
             )
         },
         bottomBar = {
-            Row(
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .imePadding()
-                        .navigationBarsPadding()
-                        .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                verticalAlignment = Alignment.CenterVertically,
+                        .navigationBarsPadding(),
             ) {
-                if (state.busy) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                if (state.message != null) {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+                    )
                 }
-                OutlinedButton(onClick = onTest, enabled = !state.busy) {
-                    Text("Test connection")
-                }
-                Button(onClick = onSave, enabled = !state.busy) {
-                    Text("Save and sync")
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (state.busy) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    }
+                    OutlinedButton(onClick = onTest, enabled = !state.busy) {
+                        Text("Test connection")
+                    }
+                    Button(onClick = onSave, enabled = !state.busy) {
+                        Text("Save and sync")
+                    }
                 }
             }
         },
@@ -127,7 +150,9 @@ fun AddSourceScreen(
                 onValueChange = onNameChange,
                 label = { Text("Name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                isError = state.nameError,
+                supportingText = if (state.nameError) ({ Text("Required") }) else null,
+                modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
             )
             OutlinedTextField(
                 value = state.address,
@@ -135,8 +160,10 @@ fun AddSourceScreen(
                 label = { Text("Server address") },
                 placeholder = { Text("https://music.example.com") },
                 singleLine = true,
+                isError = state.addressError,
+                supportingText = if (state.addressError) ({ Text("Required") }) else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(addressFocus),
             )
             OutlinedTextField(
                 value = state.username,
@@ -175,13 +202,6 @@ fun AddSourceScreen(
                             uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                             uncheckedBorderColor = MaterialTheme.colorScheme.outline,
                         ),
-                )
-            }
-            if (state.message != null) {
-                Text(
-                    text = state.message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 )
             }
         }
