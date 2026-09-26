@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
@@ -138,8 +139,8 @@ internal fun prefetchImageRequest(
     return ImageRequest
         .Builder(context)
         .data(ref.url)
-        .memoryCacheKey(ref.cacheKey)
         .diskCacheKey(ref.cacheKey)
+        .memoryCachePolicy(CachePolicy.DISABLED)
         .size(maxDimension)
         .build()
 }

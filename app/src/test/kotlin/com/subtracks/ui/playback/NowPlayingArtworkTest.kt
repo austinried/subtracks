@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
+import coil3.request.CachePolicy
 import coil3.size.Dimension
 import com.subtracks.data.model.CoverArtRef
 import kotlinx.coroutines.runBlocking
@@ -33,7 +34,7 @@ class NowPlayingArtworkTest {
 
             val metrics = context.resources.displayMetrics
             assertEquals(maxOf(metrics.widthPixels, metrics.heightPixels), width)
-            assertEquals(ref.cacheKey, request.memoryCacheKey)
             assertEquals(ref.cacheKey, request.diskCacheKey)
+            assertEquals(CachePolicy.DISABLED, request.memoryCachePolicy)
         }
 }

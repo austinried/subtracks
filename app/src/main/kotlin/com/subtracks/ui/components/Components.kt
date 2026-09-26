@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -73,13 +74,13 @@ fun CoverArt(
     var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf(thumbnailRef?.cacheKey?.let(ArtworkRatioCache::get)) }
-    val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
     val frameModifier =
         Modifier
             .shadow(elevation, RoundedCornerShape(2.dp), clip = elevation > 0.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
 
     if (square) {
+        val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
         Box(modifier.then(frameModifier)) {
             CoverArtContent(
                 ref = ref,
@@ -109,13 +110,28 @@ fun CoverArt(
             }
         }
     } else {
-        val painter =
-            rememberAsyncImagePainter(
-                model = model,
-                onError = { failed = true },
-                contentScale = ContentScale.Fit,
-            )
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+            val density = LocalDensity.current
+            val targetSize =
+                remember(maxWidth, maxHeight, density) {
+                    val width = with(density) { if (maxWidth.value.isFinite()) maxWidth.roundToPx() else 0 }
+                    val height = with(density) { if (maxHeight.value.isFinite()) maxHeight.roundToPx() else 0 }
+                    when {
+                        width > 0 && height > 0 -> IntSize(width, height)
+                        width > 0 -> IntSize(width, width)
+                        height > 0 -> IntSize(height, height)
+                        else -> null
+                    }
+                }
+            val painter =
+                rememberAsyncImagePainter(
+                    model =
+                        remember(ref, thumbnailRef, targetSize) {
+                            ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null, size = targetSize) }
+                        },
+                    onError = { failed = true },
+                    contentScale = ContentScale.Fit,
+                )
             val ratio =
                 painter.intrinsicSize.ratioOrNull()
                     ?: thumbnailRatio
@@ -191,18 +207,27 @@ private fun BoxScope.CoverArtContent(
 
 private fun Size.ratioOrNull(): Float? = if (width > 0f && height > 0f && width.isFinite() && height.isFinite()) width / height else null
 
-private fun imageRequest(
+internal fun imageRequest(
     context: Context,
     ref: CoverArtRef,
     crossfade: Boolean,
-): ImageRequest =
-    ImageRequest
-        .Builder(context)
-        .data(ref.url)
-        .memoryCacheKey(ref.cacheKey)
-        .diskCacheKey(ref.cacheKey)
-        .crossfade(crossfade)
-        .build()
+    size: IntSize? = null,
+): ImageRequest {
+    val builder =
+        ImageRequest
+            .Builder(context)
+            .data(ref.url)
+            .diskCacheKey(ref.cacheKey)
+            .crossfade(crossfade)
+    if (size == null) {
+        builder.memoryCacheKey(ref.cacheKey)
+    } else {
+        builder
+            .size(size.width, size.height)
+            .memoryCacheKey("${ref.cacheKey}:${size.width}x${size.height}")
+    }
+    return builder.build()
+}
 
 @Composable
 fun LoadingState(modifier: Modifier = Modifier) {
