@@ -312,7 +312,7 @@ class SubsonicSourceTest {
                 assertEquals(listOf(0L, 1L, 2L), batch.sortedBy { it.position }.map { it.position })
                 assertEquals((1..3).map { "$playlistId-s$it" }, batch.sortedBy { it.position }.map { it.songId })
             }
-            assertTrue(maxInFlight.get() >= 2)
+            assertTrue(maxInFlight.get() in 2..MAX_CONCURRENT_FETCHES)
         }
 
     @Test
@@ -389,7 +389,7 @@ class SubsonicSourceTest {
             val songs = SubsonicSource(1, client()).songs().toList().flatten()
 
             assertEquals(4, songs.size)
-            assertTrue(maxInFlight.get() >= 2)
+            assertTrue(maxInFlight.get() in 2..MAX_CONCURRENT_FETCHES)
         }
 
     @Test

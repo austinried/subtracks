@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
@@ -543,6 +544,34 @@ class SyncServiceTest {
         }
 
     @Test
+    fun partialDiscPruneAcrossManyPagesKeepsTheSurvivors() =
+        runTest {
+            insertSource()
+            val total = 1100
+
+            fun albumsWithDiscTitles(predicate: (Int) -> Boolean) =
+                (1..total).map { index ->
+                    if (predicate(index)) {
+                        album("al$index").copy(discTitles = mapOf(1L to "Disc $index"))
+                    } else {
+                        album("al$index")
+                    }
+                }
+            val source = FakeMusicSource(albums = albumsWithDiscTitles { true })
+
+            SyncService(db, source).sync()
+            assertEquals(total, storedDiscKeys().size)
+
+            source.albums = albumsWithDiscTitles { it % 2 == 0 }
+
+            SyncService(db, source).sync()
+
+            val survivors = (1..total).filter { it % 2 == 0 }.map { "al$it" }.toSet()
+            assertEquals(survivors.size, storedDiscKeys().size)
+            assertEquals(survivors, storedDiscKeys().map { it.albumId }.toSet())
+        }
+
+    @Test
     fun anIdenticalSyncDoesNotRewriteRows() =
         runTest {
             insertSource()
@@ -570,6 +599,11 @@ class SyncServiceTest {
                 statement.getLong(0)
             }
         }
+
+    private suspend fun storedDiscKeys(): List<DiscKey> =
+        db
+            .libraryDao()
+            .discKeysAfter(1, "", 0L, 100_000)
 
     private suspend fun storedDiscs(albumId: String): Map<Long, String> =
         db

@@ -282,10 +282,11 @@ class SubsonicSource(
     private companion object {
         const val PAGE_SIZE = 500
         const val MAX_PAGES = 20_000
-        const val MAX_CONCURRENT_FETCHES = 4
         const val THUMBNAIL_SIZE = 256
     }
 }
+
+internal const val MAX_CONCURRENT_FETCHES = 4
 
 private class PageCapExceeded(
     message: String,

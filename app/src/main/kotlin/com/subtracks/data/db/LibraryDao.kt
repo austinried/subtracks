@@ -82,9 +82,6 @@ interface LibraryDao {
         limit: Int,
     ): List<String>
 
-    @Query("SELECT albumId, disc FROM discs WHERE sourceId = :sourceId")
-    suspend fun discKeys(sourceId: Long): List<DiscKey>
-
     @Query(
         "SELECT albumId, disc FROM discs WHERE sourceId = :sourceId " +
             "AND (albumId > :afterAlbumId OR (albumId = :afterAlbumId AND disc > :afterDisc)) " +
