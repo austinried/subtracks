@@ -31,7 +31,7 @@ class SourceRepository(
 
     @Volatile
     private var active: SubsonicMusicSource? = null
-    private var probedTokenAuthId: Long? = null
+    private var activeSourceId: Long? = null
 
     init {
         scope.launch {
@@ -42,12 +42,11 @@ class SourceRepository(
             ) { config, maxBitrate, streamFormat -> Triple(config, maxBitrate, streamFormat) }
                 .collect { (config, maxBitrate, streamFormat) ->
                     active = config?.toMusicSource(maxBitrate, streamFormat)
-                    config
-                        ?.takeIf { it.useTokenAuth && it.id != probedTokenAuthId }
-                        ?.let { source ->
-                            probedTokenAuthId = source.id
-                            scope.launch { runCatching { source.toClient().check("ping") } }
-                        }
+                    val sourceChanged = config?.id != activeSourceId
+                    activeSourceId = config?.id
+                    if (sourceChanged && config != null && config.useTokenAuth) {
+                        scope.launch { runCatching { config.toClient().check("ping") } }
+                    }
                 }
         }
     }
