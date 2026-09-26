@@ -82,6 +82,21 @@ import org.koin.core.parameter.parametersOf
 
 private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
+private val ROW_GAP = 16.dp
+
+internal fun estimateScrollPx(
+    index: Int,
+    offset: Float,
+    imageHeightPx: Float,
+    albumHeightPx: Float,
+    albumRowGapPx: Float,
+): Float =
+    if (index <= 0) {
+        offset
+    } else {
+        imageHeightPx + albumRowGapPx + (albumHeightPx + albumRowGapPx) * ((index - 1) / 2) + offset
+    }
+
 private val FADE_LEAD = 24.dp
 private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
@@ -164,16 +179,16 @@ fun ArtistDetailScreen(
     }
     var imageHeightPx by remember { mutableFloatStateOf(0f) }
     var albumHeightPx by remember { mutableFloatStateOf(0f) }
-    val albumRowGapPx = with(density) { 16.dp.toPx() }
+    val albumRowGapPx = with(density) { ROW_GAP.toPx() }
     val scrollPx by remember {
         derivedStateOf {
-            val index = listState.firstVisibleItemIndex
-            val offset = listState.firstVisibleItemScrollOffset.toFloat()
-            if (index <= 0) {
-                offset
-            } else {
-                imageHeightPx + albumRowGapPx + (albumHeightPx + albumRowGapPx) * ((index - 1) / 2) + offset
-            }
+            estimateScrollPx(
+                index = listState.firstVisibleItemIndex,
+                offset = listState.firstVisibleItemScrollOffset.toFloat(),
+                imageHeightPx = imageHeightPx,
+                albumHeightPx = albumHeightPx,
+                albumRowGapPx = albumRowGapPx,
+            )
         }
     }
     val nameTextStyle = MaterialTheme.typography.headlineLarge
@@ -207,7 +222,7 @@ fun ArtistDetailScreen(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(ROW_GAP),
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
