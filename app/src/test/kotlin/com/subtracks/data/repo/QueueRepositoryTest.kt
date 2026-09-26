@@ -372,6 +372,142 @@ class QueueRepositoryTest {
             assertEquals(4, repository.snapshot().size)
         }
 
+    @Test
+    fun upNextResolvesAfterTheCurrentTrack() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            val updated = repository.snapshot()
+            assertEquals(4, updated.size)
+            assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(updated))
+        }
+
+    @Test
+    fun playNextGoesToTheFrontOfTheUpNextQueue() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            repository.addUpNext(
+                repository.snapshot(),
+                currentPosition = 0,
+                entry = repository.songEntry(1, "s5"),
+                playNext = true,
+            )
+
+            assertEquals(listOf("s1", "s5", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun removingAQueuedTrackDropsItFromTheCombinedQueue() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            repository.removeAt(repository.snapshot(), 1)
+
+            val updated = repository.snapshot()
+            assertEquals(3, updated.size)
+            assertEquals(listOf("s1", "s2", "s3"), resolveAll(updated))
+        }
+
+    @Test
+    fun movingAQueuedTrackReordersTheUpNextQueue() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(
+                repository.snapshot(),
+                currentPosition = 0,
+                entry = repository.songEntry(1, "s5"),
+                playNext = false,
+            )
+            assertEquals(listOf("s1", "s4", "s5", "s2", "s3"), resolveAll(repository.snapshot()))
+
+            repository.move(repository.snapshot(), from = 2, to = 1)
+
+            assertEquals(listOf("s1", "s5", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun queuedTracksNeverJoinAShuffledContext() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(true, longArrayOf(2, 0, 1))
+            val shuffled = repository.snapshot()
+
+            repository.addUpNext(shuffled, currentPosition = 0, entry = repository.songEntry(1, "s5"), playNext = false)
+
+            val updated = repository.snapshot()
+            assertEquals(4, updated.size)
+            assertEquals("s5", repository.itemAt(updated, 1)?.song?.id)
+            assertEquals(listOf("s3", "s5", "s1", "s2"), resolveAll(updated))
+            assertTrue(updated.shuffled)
+        }
+
+    @Test
+    fun consumingASliceOfAQueuedAlbumRemovesTheRightTrack() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
+            assertEquals(listOf("s1", "s4", "s5", "s2", "s3"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 2)
+
+            assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun removingTheLastAnchorTrackKeepsTheQueueResolvable() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 2, entry = repository.songEntry(1, "s4"), playNext = false)
+            assertEquals(listOf("s1", "s2", "s3", "s4"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 2)
+
+            val updated = repository.snapshot()
+            assertEquals(3, updated.size)
+            assertEquals(listOf("s1", "s2", "s4"), resolveAll(updated))
+        }
+
+    @Test
+    fun removingAContextTrackBeforeTheAnchorKeepsTheQueueAttached() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
+            assertEquals(listOf("s1", "s2", "s4", "s3"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 0)
+
+            assertEquals(listOf("s2", "s4", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
+    fun replacingTheContextClearsTheUpNextQueue() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            repository.replace(listOf(repository.songEntry(1, "s5")))
+
+            val updated = repository.snapshot()
+            assertTrue(updated.upNext.isEmpty())
+            assertEquals(1, updated.size)
+            assertEquals(listOf("s5"), resolveAll(updated))
+        }
+
     private fun albumRange(
         start: Long,
         end: Long,

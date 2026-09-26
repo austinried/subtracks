@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -75,6 +76,7 @@ data class QueueRow(
     val id: Long,
     val position: Long,
     val song: SongListItem,
+    val upNext: Boolean = false,
 )
 
 class QueueViewModel(
@@ -95,7 +97,7 @@ class QueueViewModel(
     private var nextId = 0L
     private val mutex = Mutex()
 
-    private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item)
+    private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item, item.upNext)
 
     private fun reusedIds(): Map<String, MutableList<Long>> =
         rows.groupBy { it.song.song.id }.mapValues { entry -> entry.value.map { it.id }.toMutableList() }
@@ -106,7 +108,7 @@ class QueueViewModel(
     ): QueueRow {
         val ids = reused[item.item.song.id]
         val id = if (!ids.isNullOrEmpty()) ids.removeAt(0) else nextId++
-        return QueueRow(id, item.position, item.item)
+        return QueueRow(id, item.position, item.item, item.upNext)
     }
 
     fun open() {
@@ -169,6 +171,7 @@ class QueueViewModel(
     ) {
         if (fromIndex == toIndex) return
         if (fromIndex !in rows.indices || toIndex !in rows.indices) return
+        if (rows[fromIndex].upNext != rows[toIndex].upNext) return
         rows.add(toIndex, rows.removeAt(fromIndex))
     }
 
@@ -256,6 +259,12 @@ fun QueueRoute(
     sourceRepository: SourceRepository = koinInject(),
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
+    val queueContext = playback.context
+    val fallbackTitle = "Next from here"
+    val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
+    LaunchedEffect(queueContext) {
+        sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
+    }
     LaunchedEffect(playback.shuffle, open) { if (open) viewModel.open() }
     QueueScreen(
         rows = viewModel.rows,
@@ -263,6 +272,8 @@ fun QueueRoute(
         initialIndex = viewModel.initialIndex,
         generation = viewModel.generation,
         currentSongId = playback.item?.id,
+        shuffle = playback.shuffle,
+        contextTitle = sourceTitle.value,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
         onPlay = viewModel::play,
@@ -294,6 +305,8 @@ fun QueueScreen(
     modifier: Modifier = Modifier,
     initialIndex: Int = 0,
     generation: Int = 0,
+    shuffle: Boolean = false,
+    contextTitle: String? = null,
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -360,6 +373,10 @@ fun QueueScreen(
                 ) {
                     items(count = rows.size, key = { rows[it].id }) { index ->
                         val row = rows[index]
+                        if (index == 0 || rows[index - 1].upNext != row.upNext) {
+                            QueueSectionHeader(if (row.upNext) "Up next" else contextTitle ?: "Next up")
+                        }
+                        val draggable = row.upNext || !shuffle
                         ReorderableItem(
                             state = reorderState,
                             key = row.id,
@@ -376,26 +393,35 @@ fun QueueScreen(
                                 floating = isDragging,
                                 coverArt = coverArt,
                                 dragHandle =
-                                    Modifier.draggableHandle(
-                                        onDragStarted = {
-                                            dragId = row.id
-                                            dragFrom = row.position
-                                        },
-                                        onDragStopped = {
-                                            val id = dragId
-                                            val from = dragFrom
-                                            if (id != null && from != null) {
-                                                val index = rows.indexOfFirst { it.id == id }
-                                                val to = if (index < 0) from else dropTarget(rows, index, from)
-                                                if (to != from) {
-                                                    onMove(from, to)
-                                                    showUndo("Queue reordered")
+                                    if (!draggable) {
+                                        null
+                                    } else {
+                                        Modifier.draggableHandle(
+                                            onDragStarted = {
+                                                dragId = row.id
+                                                dragFrom = row.position
+                                            },
+                                            onDragStopped = {
+                                                val id = dragId
+                                                val from = dragFrom
+                                                if (id != null && from != null) {
+                                                    val index = rows.indexOfFirst { it.id == id }
+                                                    val to = if (index < 0) from else dropTarget(rows, index, from)
+                                                    val left = rows.getOrNull(index - 1)?.upNext
+                                                    val right = rows.getOrNull(index + 1)?.upNext
+                                                    val sameSection =
+                                                        (left == null || left == row.upNext) &&
+                                                            (right == null || right == row.upNext)
+                                                    if (to != from && sameSection) {
+                                                        onMove(from, to)
+                                                        showUndo("Queue reordered")
+                                                    }
                                                 }
-                                            }
-                                            dragId = null
-                                            dragFrom = null
-                                        },
-                                    ),
+                                                dragId = null
+                                                dragFrom = null
+                                            },
+                                        )
+                                    },
                                 onClick = { onPlay(row.position) },
                                 onRemove = {
                                     onRemove(row.position)
@@ -409,6 +435,16 @@ fun QueueScreen(
             }
         }
     }
+}
+
+@Composable
+private fun QueueSectionHeader(label: String) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
 }
 
 internal fun dropTarget(
@@ -428,7 +464,7 @@ private fun QueueRowItem(
     isPlaying: Boolean,
     floating: Boolean,
     coverArt: (String?, Boolean) -> CoverArtRef?,
-    dragHandle: Modifier,
+    dragHandle: Modifier?,
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -446,8 +482,10 @@ private fun QueueRowItem(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                Box(modifier = Modifier.size(40.dp).then(dragHandle), contentAlignment = Alignment.Center) {
-                    Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = "Reorder")
+                if (dragHandle != null) {
+                    Box(modifier = Modifier.size(40.dp).then(dragHandle), contentAlignment = Alignment.Center) {
+                        Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = "Reorder")
+                    }
                 }
             }
         },

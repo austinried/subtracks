@@ -214,6 +214,8 @@ fun LibraryRoute(
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playPlaylist = { viewModel.playPlaylist(it.id) },
             shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
+            playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
+            addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,

@@ -105,6 +105,8 @@ fun NowPlayingRoute(
     val context = LocalPlatformContext.current
     val actions =
         ItemActions(
+            playNext = { controller.playNext(it.sourceId, it.kind, it.refId) },
+            addToQueue = { controller.addToQueue(it.sourceId, it.kind, it.refId) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,

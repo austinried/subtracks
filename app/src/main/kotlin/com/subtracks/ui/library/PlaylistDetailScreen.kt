@@ -49,6 +49,8 @@ fun PlaylistDetailRoute(
         ItemActions(
             playPlaylist = { viewModel.playAll() },
             shufflePlaylist = { viewModel.shuffle() },
+            playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
+            addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,

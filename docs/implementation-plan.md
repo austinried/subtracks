@@ -35,7 +35,8 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 - (done) A SQL-backed queue of references (whole playlist / album / song, each with an optional ordinal range) resolved lazily, with only a bounded window in memory and in the player.
 - (done) Streaming bitrate and preferred format from settings (`maxBitRate`/`format`, so the server transcodes as configured).
 - (done) A queue view that lists the resolved queue, jumps to a track on tap, removes tracks and reorders them by dragging, with a one-step undo.
-- Adding to the queue from the library (play next / add to queue), and gapless format preferences.
+- (done) Adding to the queue from the library (play next / add to queue), backed by a separate, editable up-next list that plays between the current track and the rest of the context.
+- Gapless format preferences.
 - Scrobbling and "now playing" back to the server.
 - Optional download/caching.
 

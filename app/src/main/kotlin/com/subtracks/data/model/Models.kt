@@ -265,6 +265,39 @@ data class QueueEntry(
     val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
 }
 
+@Entity(
+    tableName = "up_next_entries",
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId"), Index("position")],
+)
+data class UpNextEntry(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val position: Long,
+    val sourceId: Long,
+    val kind: QueueKind,
+    val refId: String,
+    val rangeStart: Long? = null,
+    val rangeEnd: Long? = null,
+) {
+    val offset: Long get() = rangeStart ?: 0
+
+    val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
+
+    fun toQueueEntry(): QueueEntry = QueueEntry(id, position, sourceId, kind, refId, rangeStart, rangeEnd)
+
+    companion object {
+        fun from(entry: QueueEntry) =
+            UpNextEntry(entry.id, entry.position, entry.sourceId, entry.kind, entry.refId, entry.rangeStart, entry.rangeEnd)
+    }
+}
+
 @Entity(tableName = "playback_cursor")
 data class PlaybackCursor(
     @PrimaryKey val id: Long = 1,
@@ -273,6 +306,7 @@ data class PlaybackCursor(
     @ColumnInfo(defaultValue = "0") val repeatMode: Int = 0,
     @ColumnInfo(defaultValue = "0") val shuffleSeed: Long = 0,
     @ColumnInfo(defaultValue = "0") val positionMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val upNextAnchor: Long = 0,
 )
 
 @Entity(tableName = "shuffle_order")

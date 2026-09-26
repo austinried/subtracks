@@ -8,6 +8,7 @@ import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
+import com.subtracks.data.model.UpNextEntry
 
 private const val ALBUM_SONGS_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
@@ -30,6 +31,15 @@ interface QueueDao {
 
     @Query("SELECT * FROM queue_entries ORDER BY position, id")
     suspend fun entries(): List<QueueEntry>
+
+    @Query("DELETE FROM up_next_entries")
+    suspend fun clearUpNext()
+
+    @Insert
+    suspend fun insertUpNext(entries: List<UpNextEntry>)
+
+    @Query("SELECT * FROM up_next_entries ORDER BY position, id")
+    suspend fun upNextEntries(): List<UpNextEntry>
 
     @Query("SELECT * FROM shuffle_order ORDER BY sequence")
     suspend fun shuffleOrder(): List<ShuffleOrder>

@@ -193,6 +193,167 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aQueuedTrackPlaysNextAndIsConsumed() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        assertEquals("s3", runBlocking { controller.upcomingItem()?.id })
+    }
+
+    @Test
+    fun addingToTheQueueFromAMiddleTrackPlaysTheQueuedTrackNext() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+    }
+
+    @Test
+    fun playNextGoesInFrontOfTheQueuedTracks() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.playNext(1, QueueKind.Song, "x2")
+        await { runBlocking { controller.upcomingItem()?.id } == "x2" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x2"
+        }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+    }
+
+    @Test
+    fun tappingAContextTrackWhileAQueuedTrackPlaysKeepsTheQueue() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.playAt(3)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        assertFalse(runBlocking { queues.snapshot().upNext }.isEmpty())
+    }
+
+    @Test
+    fun previousFromAQueuedTrackReturnsToTheContextWithoutConsuming() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.previous()
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        assertEquals("x1", runBlocking { controller.upcomingItem()?.id })
+    }
+
+    @Test
+    fun startingANewContextClearsTheQueue() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        assertTrue(runBlocking { queues.snapshot().upNext }.isEmpty())
+    }
+
+    @Test
     fun theDurationUsesTheNextTracksMetadataWhileItLoads() {
         seedAlbum(3, sourceId = 1)
 
@@ -1148,6 +1309,32 @@ class PlaybackControllerTest {
                         genre = null,
                     )
                 },
+            )
+        }
+    }
+
+    private fun seedSong(
+        id: String,
+        albumId: String,
+    ) {
+        runBlocking {
+            db.libraryDao().upsertSongs(
+                listOf(
+                    Song(
+                        sourceId = 1,
+                        id = id,
+                        albumId = albumId,
+                        artistId = "ar1",
+                        title = "Song $id",
+                        album = "Other Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = 1,
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    ),
+                ),
             )
         }
     }

@@ -144,6 +144,25 @@ val MIGRATION_14_15 =
         }
     }
 
+val MIGRATION_15_16 =
+    object : Migration(15, 16) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `up_next_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, `sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, " +
+                    "`refId` TEXT NOT NULL, `rangeStart` INTEGER, `rangeEnd` INTEGER, " +
+                    "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_up_next_entries_sourceId` ON `up_next_entries` (`sourceId`)",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_up_next_entries_position` ON `up_next_entries` (`position`)",
+            )
+            connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `upNextAnchor` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
 private suspend fun rebuildTable(
     connection: SQLiteConnection,
     table: String,
@@ -232,4 +251,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_12_13,
         MIGRATION_13_14,
         MIGRATION_14_15,
+        MIGRATION_15_16,
     )

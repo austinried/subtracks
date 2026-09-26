@@ -183,8 +183,10 @@ class FakePlayerHandle : PlayerHandle {
 
     override fun seekToIndex(index: Int) {
         operations += "seekToIndex($index)"
+        val changed = index != this.index
         this.index = index
         ended = false
+        if (changed) listeners.forEach { it.onTransition() }
         notifyEvents()
     }
 

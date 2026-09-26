@@ -16,6 +16,7 @@ import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
+import com.subtracks.data.model.UpNextEntry
 
 @Database(
     entities = [
@@ -28,11 +29,12 @@ import com.subtracks.data.model.SubsonicSource
         PlaylistSong::class,
         Song::class,
         QueueEntry::class,
+        UpNextEntry::class,
         PlaybackCursor::class,
         ShuffleOrder::class,
         ArtworkSeed::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)

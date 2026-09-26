@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.launch
 import com.subtracks.data.model.Album as AlbumModel
@@ -90,12 +93,28 @@ sealed interface MenuTarget {
     }
 }
 
+data class QueueRef(
+    val sourceId: Long,
+    val kind: QueueKind,
+    val refId: String,
+)
+
+fun MenuTarget.queueRef(): QueueRef? =
+    when (this) {
+        is MenuTarget.Song -> QueueRef(song.sourceId, QueueKind.Song, song.id)
+        is MenuTarget.Album -> QueueRef(album.sourceId, QueueKind.Album, album.id)
+        is MenuTarget.Playlist -> QueueRef(playlist.sourceId, QueueKind.Playlist, playlist.id)
+        is MenuTarget.Artist -> null
+    }
+
 class ItemActions(
     val playSong: ((SongModel) -> Unit)? = null,
     val playAlbum: (AlbumModel) -> Unit = {},
     val shuffleAlbum: (AlbumModel) -> Unit = {},
     val playPlaylist: (PlaylistModel) -> Unit = {},
     val shufflePlaylist: (PlaylistModel) -> Unit = {},
+    val playNext: ((QueueRef) -> Unit)? = null,
+    val addToQueue: ((QueueRef) -> Unit)? = null,
     val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
@@ -139,6 +158,19 @@ fun ItemContextMenu(
         }
     }
 
+    val queueRef = target.queueRef()
+
+    @Composable
+    fun queueItems() {
+        if (queueRef == null) return
+        actions.playNext?.let { next ->
+            MenuItem(Icons.Rounded.SkipNext, "Play next") { dismiss { next(queueRef) } }
+        }
+        actions.addToQueue?.let { add ->
+            MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") { dismiss { add(queueRef) } }
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = { dismiss() },
         sheetState = sheetState,
@@ -151,6 +183,7 @@ fun ItemContextMenu(
                 actions.playSong?.let { play ->
                     MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { play(target.song) } }
                 }
+                queueItems()
                 StarItem(target.song.starred) { starring -> actions.setStar(StarType.Song, target.song.id, starring) }
                 target.song.albumId?.let { albumId ->
                     actions.viewAlbum?.let { view ->
@@ -171,6 +204,7 @@ fun ItemContextMenu(
             is MenuTarget.Album -> {
                 MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playAlbum(target.album) } }
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shuffleAlbum(target.album) } }
+                queueItems()
                 StarItem(target.album.starred) { starring -> actions.setStar(StarType.Album, target.album.id, starring) }
                 target.album.artistId?.let { artistId ->
                     actions.viewArtist?.let { view ->
@@ -188,6 +222,7 @@ fun ItemContextMenu(
             is MenuTarget.Playlist -> {
                 MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playPlaylist(target.playlist) } }
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shufflePlaylist(target.playlist) } }
+                queueItems()
             }
         }
         Spacer(Modifier.height(16.dp))
