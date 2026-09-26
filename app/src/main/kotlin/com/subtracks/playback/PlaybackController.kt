@@ -273,13 +273,20 @@ class PlaybackController(
     fun playAt(position: Long) {
         scope.launch {
             startLock.withLock {
-                val snapshot = snapshot ?: return@withLock
-                if (snapshot.size == 0L) return@withLock
                 val player = player ?: return@withLock
-                val target = position.coerceIn(0, snapshot.size - 1)
+                var snapshot = snapshot ?: return@withLock
+                if (snapshot.size == 0L) return@withLock
+                val anchor = queueRepository.reanchorFor(snapshot, position)
+                if (anchor.changed) {
+                    snapshot = readSnapshot()
+                    this@PlaybackController.snapshot = snapshot
+                }
+                val target = anchor.position.coerceIn(0, snapshot.size - 1)
                 windowJob?.cancel()
                 queueRepository.setCursor(target)
-                if (target in windowStart..windowEnd) {
+                if (anchor.changed) {
+                    loadWindow(target, autoplay = true)
+                } else if (target in windowStart..windowEnd) {
                     player.ensurePrepared()
                     lastPosition = target
                     player.seekToIndex((target - windowStart).toInt())
@@ -635,10 +642,13 @@ class PlaybackController(
                         enabling -> reordered.combined(0)
                         else -> reordered.combined(flat)
                     }
-                queueRepository.setCursor(position)
-                rebuildWindow(queueRepository.window(reordered, position, QUEUE_WINDOW_RADIUS), position)
+                val anchor = queueRepository.reanchorFor(reordered, position)
+                val finalSnapshot = if (anchor.changed) readSnapshot() else reordered
+                this@PlaybackController.snapshot = finalSnapshot
+                queueRepository.setCursor(anchor.position)
+                rebuildWindow(queueRepository.window(finalSnapshot, anchor.position, QUEUE_WINDOW_RADIUS), anchor.position)
                 endedHandled = false
-                refresh(position)
+                refresh(anchor.position)
             }
         }
     }
@@ -741,9 +751,15 @@ class PlaybackController(
                 return@withLock
             }
             this.queueSourceId = queueSourceId
-            val position = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
+            val cursor = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
+            val anchor = queueRepository.reanchorFor(snapshot, cursor)
+            if (anchor.changed) {
+                snapshot = queueRepository.snapshot()
+                this.snapshot = snapshot
+                queueRepository.setCursor(anchor.position)
+            }
             lastSavedPositionMs = queueRepository.cursorPositionMs().coerceAtLeast(0)
-            loadWindow(position, autoplay = false, startPositionMs = lastSavedPositionMs)
+            loadWindow(anchor.position, autoplay = false, startPositionMs = lastSavedPositionMs)
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }
@@ -809,17 +825,24 @@ class PlaybackController(
     private fun jumpTo(target: Long) {
         scope.launch {
             startLock.withLock {
-                val snapshot = readSnapshot()
-                this@PlaybackController.snapshot = snapshot
+                val player = player ?: return@withLock
+                var snapshot = readSnapshot()
                 if (snapshot.size == 0L) return@withLock
+                val anchor = queueRepository.reanchorFor(snapshot, target)
+                if (anchor.changed) snapshot = readSnapshot()
+                this@PlaybackController.snapshot = snapshot
                 val current = currentPosition() ?: return@withLock
-                val dest = target.coerceIn(0, snapshot.size - 1)
-                val wasEnded = player?.isEnded == true
+                val dest = anchor.position.coerceIn(0, snapshot.size - 1)
+                val wasEnded = player.isEnded
                 if (dest == current && !wasEnded) return@withLock
                 windowJob?.cancel()
                 queueRepository.setCursor(dest)
+                if (anchor.changed) {
+                    loadWindow(dest, autoplay = player.playWhenReady || wasEnded)
+                    endedHandled = false
+                    return@withLock
+                }
                 shiftWindowLocked(dest)
-                val player = player ?: return@withLock
                 player.ensurePrepared()
                 player.seekToIndex((dest - windowStart).toInt())
                 if (wasEnded) player.play()

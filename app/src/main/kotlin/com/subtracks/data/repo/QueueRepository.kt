@@ -110,6 +110,11 @@ data class QueueWindowItem(
     val upNext: Boolean = false,
 )
 
+data class Reanchored(
+    val position: Long,
+    val changed: Boolean,
+)
+
 class QueueRepository(
     private val db: SubtracksDatabase,
 ) {
@@ -334,6 +339,18 @@ class QueueRepository(
         if (snapshot.upNextSize == 0L) return currentPosition
         val before = snapshot.upNext.take(insertIndex).sumOf { it.length }
         return if (currentPosition >= snapshot.anchorPlay + 1 + before) currentPosition + 1 else currentPosition
+    }
+
+    suspend fun reanchorFor(
+        snapshot: QueueSnapshot,
+        target: Long,
+    ): Reanchored {
+        if (snapshot.upNextSize == 0L || snapshot.isUpNext(target)) return Reanchored(target, false)
+        val play = snapshot.contextPlay(target)
+        val flat = snapshot.flatContext(play) ?: return Reanchored(target, false)
+        if (flat == snapshot.upNextAnchor) return Reanchored(target, false)
+        cursorMutex.withLock { dao.setCursor(cursorRow().copy(upNextAnchor = flat)) }
+        return Reanchored(play, true)
     }
 
     suspend fun removeUpNextAt(

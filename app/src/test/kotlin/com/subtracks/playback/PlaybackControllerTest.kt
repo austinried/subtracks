@@ -354,6 +354,82 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun skippingPastTheQueueBringsItBackBehindTheCurrentTrack() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.playAt(4)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+    }
+
+    @Test
+    fun goingBackInTheContextBringsTheQueueBackWithIt() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+
+        controller.previous()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+    }
+
+    @Test
+    fun togglingShuffleKeepsTheQueueBehindTheCurrentTrack() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+    }
+
+    @Test
     fun theDurationUsesTheNextTracksMetadataWhileItLoads() {
         seedAlbum(3, sourceId = 1)
 
