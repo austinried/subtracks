@@ -36,13 +36,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.size.Dimension
 import com.subtracks.data.model.CoverArtRef
 
 private const val MAX_CACHED_RATIOS = 256
@@ -112,22 +112,25 @@ fun CoverArt(
     } else {
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
             val density = LocalDensity.current
-            val targetSize =
+            val target =
                 remember(maxWidth, maxHeight, density) {
-                    val width = with(density) { if (maxWidth.value.isFinite()) maxWidth.roundToPx() else 0 }
-                    val height = with(density) { if (maxHeight.value.isFinite()) maxHeight.roundToPx() else 0 }
-                    when {
-                        width > 0 && height > 0 -> IntSize(width, height)
-                        width > 0 -> IntSize(width, width)
-                        height > 0 -> IntSize(height, height)
-                        else -> null
-                    }
+                    val width = with(density) { if (maxWidth.value.isFinite()) maxWidth.roundToPx() else 0 }.takeIf { it > 0 }
+                    val height = with(density) { if (maxHeight.value.isFinite()) maxHeight.roundToPx() else 0 }.takeIf { it > 0 }
+                    width to height
                 }
             val painter =
                 rememberAsyncImagePainter(
                     model =
-                        remember(ref, thumbnailRef, targetSize) {
-                            ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null, size = targetSize) }
+                        remember(ref, thumbnailRef, target) {
+                            ref?.let {
+                                imageRequest(
+                                    context,
+                                    it,
+                                    crossfade = thumbnailRef != null,
+                                    width = target.first,
+                                    height = target.second,
+                                )
+                            }
                         },
                     onError = { failed = true },
                     contentScale = ContentScale.Fit,
@@ -211,7 +214,8 @@ internal fun imageRequest(
     context: Context,
     ref: CoverArtRef,
     crossfade: Boolean,
-    size: IntSize? = null,
+    width: Int? = null,
+    height: Int? = null,
 ): ImageRequest {
     val builder =
         ImageRequest
@@ -219,12 +223,14 @@ internal fun imageRequest(
             .data(ref.url)
             .diskCacheKey(ref.cacheKey)
             .crossfade(crossfade)
-    if (size == null) {
+    if (width == null && height == null) {
         builder.memoryCacheKey(ref.cacheKey)
     } else {
         builder
-            .size(size.width, size.height)
-            .memoryCacheKey("${ref.cacheKey}:${size.width}x${size.height}")
+            .size(
+                width?.let { Dimension.Pixels(it) } ?: Dimension.Undefined,
+                height?.let { Dimension.Pixels(it) } ?: Dimension.Undefined,
+            ).memoryCacheKey("${ref.cacheKey}:${width ?: "u"}x${height ?: "u"}")
     }
     return builder.build()
 }

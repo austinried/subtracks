@@ -1,7 +1,6 @@
 package com.subtracks.ui.components
 
 import android.content.Context
-import androidx.compose.ui.unit.IntSize
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.CoverArtRef
@@ -16,9 +15,20 @@ class CoverArtRequestTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val ref = CoverArtRef(url = "http://example.test/art", cacheKey = "1:art:false")
 
-        val request = imageRequest(context, ref, crossfade = false, size = IntSize(600, 800))
+        val request = imageRequest(context, ref, crossfade = false, width = 600, height = 800)
 
         assertEquals("1:art:false:600x800", request.memoryCacheKey)
+        assertEquals(ref.cacheKey, request.diskCacheKey)
+    }
+
+    @Test
+    fun oneUnboundedAxisIsNotForcedSquare() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val ref = CoverArtRef(url = "http://example.test/art", cacheKey = "1:art:false")
+
+        val request = imageRequest(context, ref, crossfade = false, width = 600)
+
+        assertEquals("1:art:false:600xu", request.memoryCacheKey)
         assertEquals(ref.cacheKey, request.diskCacheKey)
     }
 
