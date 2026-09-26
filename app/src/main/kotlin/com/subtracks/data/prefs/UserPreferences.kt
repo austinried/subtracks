@@ -56,7 +56,9 @@ class UserPreferences(
 
     fun streamQuality(mode: NetworkMode): Flow<StreamQuality> =
         store.data.map { prefs ->
-            prefs[streamQualityKey(mode)]?.let(::decodeStreamQuality) ?: legacyStreamQuality(prefs)
+            prefs[streamQualityKey(mode)]?.let(::decodeStreamQuality)
+                ?: legacyStreamQuality(prefs)
+                ?: defaultStreamQuality(mode)
         }
 
     suspend fun setStreamQuality(
@@ -82,11 +84,21 @@ class UserPreferences(
         )
     }
 
-    private fun legacyStreamQuality(prefs: Preferences): StreamQuality =
-        StreamQuality(
-            maxBitrate = prefs[LEGACY_BITRATE] ?: 0,
-            format = prefs[LEGACY_FORMAT]?.takeIf { it.isNotEmpty() },
+    private fun legacyStreamQuality(prefs: Preferences): StreamQuality? {
+        val bitrate = prefs[LEGACY_BITRATE]
+        val format = prefs[LEGACY_FORMAT]
+        if (bitrate == null && format == null) return null
+        return StreamQuality(
+            maxBitrate = bitrate ?: 0,
+            format = format?.takeIf { it.isNotEmpty() },
         )
+    }
+
+    private fun defaultStreamQuality(mode: NetworkMode): StreamQuality =
+        when (mode) {
+            NetworkMode.Wifi -> StreamQuality()
+            NetworkMode.Mobile -> StreamQuality(maxBitrate = 192, format = "mp3")
+        }
 
     private fun decode(
         stored: String?,

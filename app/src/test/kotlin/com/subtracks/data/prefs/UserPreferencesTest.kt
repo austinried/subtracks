@@ -50,7 +50,7 @@ class UserPreferencesTest {
             val prefs = UserPreferences(store)
 
             assertEquals(StreamQuality(), prefs.streamQuality(NetworkMode.Wifi).first())
-            assertEquals(StreamQuality(), prefs.streamQuality(NetworkMode.Mobile).first())
+            assertEquals(StreamQuality(192, "mp3"), prefs.streamQuality(NetworkMode.Mobile).first())
 
             prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(320, null))
             prefs.setStreamQuality(NetworkMode.Mobile, StreamQuality(96, "opus"))

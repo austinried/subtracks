@@ -1,7 +1,9 @@
 package com.subtracks.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -150,7 +153,7 @@ fun SettingsScreen(
             item { SectionHeader("Network") }
             item {
                 ListItem(
-                    headlineContent = { Text("Wi-Fi") },
+                    headlineContent = { Text("Stream quality: Wi-Fi") },
                     supportingContent = { Text(qualityLabel(wifiQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.WifiQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -158,7 +161,7 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Mobile data") },
+                    headlineContent = { Text("Stream quality: Mobile") },
                     supportingContent = { Text(qualityLabel(mobileQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.MobileQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -171,7 +174,7 @@ fun SettingsScreen(
     when (dialog) {
         SettingsDialog.WifiQuality -> {
             QualityDialog(
-                title = "Wi-Fi",
+                title = "Stream quality: Wi-Fi",
                 quality = wifiQuality,
                 onSelect = onWifiQualityChange,
                 onDismiss = { dialog = null },
@@ -180,7 +183,7 @@ fun SettingsScreen(
 
         SettingsDialog.MobileQuality -> {
             QualityDialog(
-                title = "Mobile data",
+                title = "Stream quality: Mobile",
                 quality = mobileQuality,
                 onSelect = onMobileQualityChange,
                 onDismiss = { dialog = null },
@@ -205,34 +208,53 @@ private fun QualityDialog(
     onDismiss: () -> Unit,
 ) {
     var draft by remember(quality) { mutableStateOf(quality) }
+    val scrollState = rememberScrollState()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                ChoiceGroup(
-                    header = "Maximum bitrate",
-                    options = bitrateOptions.map { it to bitrateLabel(it) },
-                    selected = draft.maxBitrate,
-                    onSelect = {
-                        draft = draft.copy(maxBitrate = it)
-                        onSelect(draft)
-                    },
-                )
-                Spacer(Modifier.height(16.dp))
-                ChoiceGroup(
-                    header = "Preferred format",
-                    options = streamFormats.map { it to (it ?: "Use server default") },
-                    selected = draft.format,
-                    onSelect = {
-                        draft = draft.copy(format = it)
-                        onSelect(draft)
-                    },
-                )
+            Box {
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    ChoiceGroup(
+                        header = "Maximum bitrate",
+                        options = bitrateOptions.map { it to bitrateLabel(it) },
+                        selected = draft.maxBitrate,
+                        onSelect = { draft = draft.copy(maxBitrate = it) },
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    ChoiceGroup(
+                        header = "Preferred format",
+                        options = streamFormats.map { it to (it ?: "Use server default") },
+                        selected = draft.format,
+                        onSelect = { draft = draft.copy(format = it) },
+                    )
+                }
+                if (scrollState.canScrollForward) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .height(32.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceContainerHigh),
+                                    ),
+                                ),
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Done") }
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text("Done") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
 }
