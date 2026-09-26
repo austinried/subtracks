@@ -9,6 +9,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
+import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -25,7 +26,7 @@ class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var artworkLoader: CoverArtBitmapLoader? = null
 
-    @OptIn(UnstableApi::class)
+    @OptIn(UnstableApi::class, ExperimentalApi::class)
     override fun onCreate() {
         super.onCreate()
         val exoPlayer =
@@ -40,9 +41,11 @@ class PlaybackService : MediaSessionService() {
                     true,
                 ).setHandleAudioBecomingNoisy(true)
                 .setMediaSourceFactory(
-                    DefaultMediaSourceFactory(this).setDataSourceFactory(
-                        KnownLengthDataSourceFactory(OkHttpDataSource.Factory(streamingClient())),
-                    ),
+                    DefaultMediaSourceFactory(this)
+                        .setEnableClippingInMediaPeriod(true)
+                        .setDataSourceFactory(
+                            KnownLengthDataSourceFactory(OkHttpDataSource.Factory(streamingClient())),
+                        ),
                 ).build()
         val player = MetadataDurationPlayer(exoPlayer)
         val loader =

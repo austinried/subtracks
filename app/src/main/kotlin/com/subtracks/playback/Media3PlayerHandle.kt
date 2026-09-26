@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaItem.ClippingConfiguration
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -142,12 +143,20 @@ class Media3PlayerHandle(
                         item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
                     },
                 ).build()
-        return MediaItem
-            .Builder()
-            .setMediaId(item.id)
-            .setUri(sourceRepository.streamUri(item.id, item.durationMs))
-            .setMediaMetadata(metadata)
-            .build()
+        val builder =
+            MediaItem
+                .Builder()
+                .setMediaId(item.id)
+                .setUri(sourceRepository.streamUri(item.id, item.durationMs))
+                .setMediaMetadata(metadata)
+        if (sourceRepository.quality.value.transcodes) {
+            item.durationMs?.takeIf { it > 0 }?.let { duration ->
+                builder.setClippingConfiguration(
+                    ClippingConfiguration.Builder().setEndPositionMs(duration).build(),
+                )
+            }
+        }
+        return builder.build()
     }
 
     private fun toQueueItem(mediaItem: MediaItem): QueueItem =

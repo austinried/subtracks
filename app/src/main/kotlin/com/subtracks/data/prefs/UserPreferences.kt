@@ -38,7 +38,9 @@ data class ListQuery(
 data class StreamQuality(
     val maxBitrate: Int = 0,
     val format: String? = null,
-)
+) {
+    val transcodes: Boolean get() = maxBitrate > 0 || !format.isNullOrEmpty()
+}
 
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
 

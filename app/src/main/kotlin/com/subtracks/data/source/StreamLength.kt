@@ -13,7 +13,7 @@ fun declaredStreamLength(
     quality: StreamQuality,
 ): Long? {
     if (durationMs == null || durationMs <= 0) return null
-    if (quality.maxBitrate <= 0 && quality.format.isNullOrEmpty()) return null
+    if (!quality.transcodes) return null
     val bps = if (quality.maxBitrate > 0) maxOf(quality.maxBitrate * 1000L, MIN_TRANSCODE_BPS) else UNCAPPED_BPS
     return durationMs / 1000 * bps / 8 * 5 / 4 + OVERHEAD_BYTES
 }
