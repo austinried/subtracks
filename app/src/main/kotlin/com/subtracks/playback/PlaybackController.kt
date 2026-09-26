@@ -344,7 +344,6 @@ class PlaybackController(
                     RemovedUndo(entries, cursor, target, position, removed, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
                 }
             if (snapshot.upNextSize > 0L || updated.upNextSize > 0L) {
-                layoutVersion++
                 queueRepository.setCursor(target)
                 loadWindow(target, autoplay = playing, startPositionMs = if (position == current) 0 else player.currentPositionMs)
                 return@withLock

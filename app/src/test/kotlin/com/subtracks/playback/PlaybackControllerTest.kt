@@ -691,6 +691,49 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun movingAQueuedTrackBeforeTheCurrentDoesNotConsumeIt() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("q1", "al2")
+        seedSong("q2", "al2")
+        seedSong("q3", "al2")
+        val eagerHandle = FakePlayerHandle()
+        val inline =
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(
+                    context: kotlin.coroutines.CoroutineContext,
+                    block: Runnable,
+                ) = block.run()
+            }
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
+
+        eager.playAlbum(1, "al1", 0)
+        await {
+            eager.state.value.item
+                ?.id == "s1"
+        }
+        eager.addToQueue(1, QueueKind.Song, "q1")
+        eager.addToQueue(1, QueueKind.Song, "q2")
+        eager.addToQueue(1, QueueKind.Song, "q3")
+        await { runBlocking { eager.upcomingItem()?.id } == "q1" }
+        eager.playAt(2)
+        await {
+            eager.state.value.item
+                ?.id == "q2"
+        }
+
+        runBlocking { eager.move(3, 2) }
+        Thread.sleep(300)
+
+        assertEquals(
+            "q2",
+            eager.state.value.item
+                ?.id,
+        )
+        assertEquals(3, runBlocking { queues.snapshot().upNext.size })
+        eager.close()
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")

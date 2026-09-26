@@ -133,6 +133,30 @@ class QueueViewModel(
         }
     }
 
+    fun reconcile() {
+        viewModelScope.launch {
+            mutex.withLock {
+                if (!ready) return@withLock
+                val snapshot = queueRepository.snapshot()
+                if (snapshot.size == 0L) {
+                    rows.clear()
+                    return@withLock
+                }
+                val start = (rows.firstOrNull()?.position ?: 0L).coerceIn(0, snapshot.size - 1)
+                val end = (start + rows.size.coerceAtLeast(QUEUE_CHUNK) - 1).coerceAtMost(snapshot.size - 1)
+                val loaded = queueRepository.range(snapshot, start, end)
+                val reused = reusedIds()
+                val updated = loaded.map { rowFor(it, reused) }
+                if (updated.size == rows.size) {
+                    updated.forEachIndexed { index, row -> if (rows[index] != row) rows[index] = row }
+                } else {
+                    rows.clear()
+                    rows.addAll(updated)
+                }
+            }
+        }
+    }
+
     fun loadOlder() {
         val top = rows.firstOrNull()?.position ?: return
         if (top <= 0L) return
@@ -265,7 +289,8 @@ fun QueueRoute(
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
     }
-    LaunchedEffect(playback.shuffle, playback.layout, open) { if (open) viewModel.open() }
+    LaunchedEffect(playback.shuffle, open) { if (open) viewModel.open() }
+    LaunchedEffect(playback.layout) { if (open) viewModel.reconcile() }
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,
@@ -283,7 +308,6 @@ fun QueueRoute(
         onLoadOlder = viewModel::loadOlder,
         onLoadNewer = viewModel::loadNewer,
         onUndo = viewModel::undo,
-        onRefresh = viewModel::open,
         modifier = modifier,
     )
 }
@@ -308,7 +332,6 @@ fun QueueScreen(
     generation: Int = 0,
     shuffle: Boolean = false,
     contextTitle: String? = null,
-    onRefresh: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -318,25 +341,25 @@ fun QueueScreen(
     var dragFrom by remember { mutableStateOf<Long?>(null) }
 
     val upNextReorder =
-        rememberReorderableLazyListState(listState) { from, to ->
-            onReorder(from.index, to.index)
+        rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
+            onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
     val contextReorder =
-        rememberReorderableLazyListState(listState) { from, to ->
-            onReorder(from.index, to.index)
+        rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
+            onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
 
     LaunchedEffect(listState, ready, generation) {
         if (!ready) return@LaunchedEffect
-        if (initialIndex > 0) listState.scrollToItem(initialIndex)
+        if (initialIndex > 0) listState.scrollToItem(rows.lazyIndexOf(initialIndex))
         snapshotFlow {
             val info = listState.layoutInfo
-            val firstVisible = info.visibleItemsInfo.firstOrNull()?.index ?: -1
-            val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
-            firstVisible to lastVisible
-        }.collect { (firstVisible, lastVisible) ->
-            if (firstVisible in 0..LOAD_THRESHOLD) onLoadOlder()
-            if (lastVisible >= 0 && lastVisible >= rows.size - 1 - LOAD_THRESHOLD) onLoadNewer()
+            val first = info.visibleItemsInfo.firstOrNull { it.key is Long }?.let { rows.rowIndexOf(it.key) } ?: -1
+            val last = info.visibleItemsInfo.lastOrNull { it.key is Long }?.let { rows.rowIndexOf(it.key) } ?: -1
+            first to last
+        }.collect { (first, last) ->
+            if (first in 0..LOAD_THRESHOLD) onLoadOlder()
+            if (last >= 0 && last >= rows.size - 1 - LOAD_THRESHOLD) onLoadNewer()
         }
     }
 
@@ -377,69 +400,70 @@ fun QueueScreen(
                     modifier = Modifier.padding(padding).fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
-                    items(count = rows.size, key = { rows[it].id }) { index ->
-                        val row = rows[index]
+                    rows.forEachIndexed { index, row ->
                         if (index == 0 || rows[index - 1].upNext != row.upNext) {
-                            QueueSectionHeader(if (row.upNext) "Up next" else contextTitle ?: "Next up")
+                            item(key = "header-$index") {
+                                QueueSectionHeader(if (row.upNext) "Up next" else contextTitle ?: "Next up")
+                            }
                         }
                         val enabled = row.upNext || !shuffle
-                        ReorderableItem(
-                            state = if (row.upNext) upNextReorder else contextReorder,
-                            key = row.id,
-                            enabled = enabled,
-                            animateItemModifier =
-                                Modifier.animateItem(
-                                    fadeInSpec = tween(150),
-                                    fadeOutSpec = tween(150),
-                                    placementSpec = tween(200),
-                                ),
-                        ) { isDragging ->
-                            QueueRowItem(
-                                row = row,
-                                isPlaying = row.song.song.id == currentSongId,
-                                floating = isDragging,
-                                coverArt = coverArt,
-                                dragHandle =
-                                    if (!enabled) {
-                                        null
-                                    } else {
-                                        Modifier.draggableHandle(
-                                            onDragStarted = {
-                                                dragId = row.id
-                                                dragFrom = row.position
-                                            },
-                                            onDragStopped = {
-                                                val id = dragId
-                                                val from = dragFrom
-                                                if (id != null && from != null) {
-                                                    val index = rows.indexOfFirst { it.id == id }
-                                                    val to = if (index < 0) from else dropTarget(rows, index, from)
-                                                    val left = rows.getOrNull(index - 1)?.upNext
-                                                    val right = rows.getOrNull(index + 1)?.upNext
-                                                    val sameSection =
-                                                        (left == null || left == row.upNext) &&
-                                                            (right == null || right == row.upNext)
-                                                    if (to != from && sameSection) {
-                                                        onMove(from, to)
-                                                        showUndo("Queue reordered")
-                                                    } else if (to != from) {
-                                                        onRefresh()
+                        item(key = row.id) {
+                            ReorderableItem(
+                                state = if (row.upNext) upNextReorder else contextReorder,
+                                key = row.id,
+                                enabled = enabled,
+                                animateItemModifier =
+                                    Modifier.animateItem(
+                                        fadeInSpec = tween(150),
+                                        fadeOutSpec = tween(150),
+                                        placementSpec = tween(200),
+                                    ),
+                            ) { isDragging ->
+                                QueueRowItem(
+                                    row = row,
+                                    isPlaying = row.song.song.id == currentSongId,
+                                    floating = isDragging,
+                                    coverArt = coverArt,
+                                    dragHandle =
+                                        if (!enabled) {
+                                            null
+                                        } else {
+                                            Modifier.draggableHandle(
+                                                onDragStarted = {
+                                                    dragId = row.id
+                                                    dragFrom = row.position
+                                                },
+                                                onDragStopped = {
+                                                    val id = dragId
+                                                    val from = dragFrom
+                                                    if (id != null && from != null) {
+                                                        val draggedIndex = rows.indexOfFirst { it.id == id }
+                                                        val to =
+                                                            if (draggedIndex < 0) {
+                                                                from
+                                                            } else {
+                                                                dropTarget(rows, draggedIndex, from)
+                                                            }
+                                                        if (to != from) {
+                                                            onMove(from, to)
+                                                            showUndo("Queue reordered")
+                                                        }
                                                     }
-                                                }
-                                                dragId = null
-                                                dragFrom = null
-                                            },
-                                        )
+                                                    dragId = null
+                                                    dragFrom = null
+                                                },
+                                            )
+                                        },
+                                    onClick = { onPlay(row.position) },
+                                    onRemove = {
+                                        onRemove(row.position)
+                                        showUndo("Removed from queue")
                                     },
-                                onClick = { onPlay(row.position) },
-                                onRemove = {
-                                    onRemove(row.position)
-                                    showUndo("Removed from queue")
-                                },
-                            )
+                                )
+                            }
                         }
                     }
-                    item { Spacer(Modifier.height(fill)) }
+                    item(key = "fill") { Spacer(Modifier.height(fill)) }
                 }
             }
         }
@@ -454,6 +478,20 @@ private fun QueueSectionHeader(label: String) {
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
     )
+}
+
+private fun List<QueueRow>.rowIndexOf(key: Any?): Int {
+    val id = key as? Long ?: return -1
+    return indexOfFirst { it.id == id }
+}
+
+private fun List<QueueRow>.lazyIndexOf(rowIndex: Int): Int {
+    if (rowIndex !in indices) return 0
+    var headers = 0
+    for (i in 0..rowIndex) {
+        if (i == 0 || this[i - 1].upNext != this[i].upNext) headers++
+    }
+    return rowIndex + headers
 }
 
 internal fun dropTarget(
