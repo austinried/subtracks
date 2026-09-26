@@ -145,20 +145,18 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun aRestoredQueueIsPreparedBeforeTheFirstPlay() {
+    fun togglingPlayOnARestoredQueuePreparesBeforePlaying() {
         seedAlbum(5, sourceId = 1)
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
         controller.connect()
         await { handle.items.isNotEmpty() }
-        await { handle.operations.contains("prepare") }
-
         handle.operations.clear()
 
         controller.togglePlayPause()
         await { handle.operations.contains("play") }
 
-        assertEquals(listOf("play"), handle.operations)
+        assertEquals(listOf("prepare", "play"), handle.operations)
     }
 
     @Test
@@ -1081,9 +1079,7 @@ class PlaybackControllerTest {
 
         assertEquals(33_000L, handle.positionMs)
         assertFalse(handle.playWhenReady)
-        val reload = handle.operations.drop(before)
-        assertTrue("a reload must re-prepare, or the next play pays for it", reload.any { it == "prepare" })
-        assertTrue(reload.none { it == "play" })
+        assertTrue(handle.operations.drop(before).none { it.startsWith("prepare") || it.startsWith("play") })
     }
 
     @Test

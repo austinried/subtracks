@@ -705,8 +705,10 @@ class PlaybackController(
         updating = true
         player.setWindow(window.map { it.item.toQueueItem() }, startIndex, startPositionMs)
         updating = false
-        player.prepare()
-        if (autoplay) player.play()
+        if (autoplay) {
+            player.prepare()
+            player.play()
+        }
         refresh(position)
     }
 
