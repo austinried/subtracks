@@ -337,6 +337,7 @@ class PlaybackController(
                         if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
                     } ?: (if (position < current) current - 1 else current)
                 ).coerceIn(0, updated.size - 1)
+            lastPosition = target
             lastEdit =
                 if (removed == null) {
                     ReloadUndo(entries, cursor, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
@@ -390,6 +391,7 @@ class PlaybackController(
         if (!queueRepository.move(snapshot, from, to)) return@withLock
         this.snapshot = readSnapshot()
         val target = movedCursor(current, from, to)
+        lastPosition = target
         windowJob?.cancel()
         val fromInWindow = from in windowStart..windowEnd
         val toInWindow = to in windowStart..windowEnd
@@ -447,6 +449,7 @@ class PlaybackController(
                 return@withLock
             }
             val target = undo.cursor.coerceIn(0, restored.size - 1)
+            lastPosition = target
             val restoredId = queueRepository.itemAt(restored, target)?.song?.id
             windowJob?.cancel()
             val canMirror =
@@ -951,6 +954,7 @@ class PlaybackController(
         } finally {
             updating = false
         }
+        lastPosition = target
     }
 
     private fun rebuildWindow(

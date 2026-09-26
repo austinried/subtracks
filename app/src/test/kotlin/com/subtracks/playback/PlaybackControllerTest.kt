@@ -734,6 +734,96 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun movingAQueuedTrackFromAnotherAlbumBeforeTheCurrentDoesNotConsumeIt() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("b1", "al2")
+        seedSong("b2", "al2")
+        seedSong("c1", "al3")
+        val eagerHandle = FakePlayerHandle()
+        val inline =
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(
+                    context: kotlin.coroutines.CoroutineContext,
+                    block: Runnable,
+                ) = block.run()
+            }
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
+
+        eager.playAlbum(1, "al1", 0)
+        await {
+            eager.state.value.item
+                ?.id == "s1"
+        }
+        eager.addToQueue(1, QueueKind.Album, "al2")
+        eager.addToQueue(1, QueueKind.Song, "c1")
+        await { runBlocking { eager.upcomingItem()?.id } == "b1" }
+
+        eager.playAt(2)
+        await {
+            eager.state.value.item
+                ?.id == "b2"
+        }
+
+        runBlocking { eager.move(3, 2) }
+        Thread.sleep(300)
+
+        assertEquals(
+            "b2",
+            eager.state.value.item
+                ?.id,
+        )
+        assertEquals(3L, runBlocking { queues.snapshot().upNextSize })
+        eager.close()
+    }
+
+    @Test
+    fun movingAQueuedTrackBeforeTheCurrentConsumesTheRightTrackOnSkip() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("b1", "al2")
+        seedSong("b2", "al2")
+        seedSong("c1", "al3")
+        val eagerHandle = FakePlayerHandle()
+        val inline =
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(
+                    context: kotlin.coroutines.CoroutineContext,
+                    block: Runnable,
+                ) = block.run()
+            }
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
+
+        eager.playAlbum(1, "al1", 0)
+        await {
+            eager.state.value.item
+                ?.id == "s1"
+        }
+        eager.addToQueue(1, QueueKind.Album, "al2")
+        eager.addToQueue(1, QueueKind.Song, "c1")
+        await { runBlocking { eager.upcomingItem()?.id } == "b1" }
+        eager.playAt(1)
+        await {
+            eager.state.value.item
+                ?.id == "b1"
+        }
+
+        runBlocking { eager.move(3, 1) }
+        await {
+            eager.state.value.item
+                ?.id == "b1"
+        }
+
+        eagerHandle.advanceTo(eagerHandle.currentIndex + 1)
+        await {
+            eager.state.value.item
+                ?.id == "b2"
+        }
+
+        val queued = runBlocking { queues.snapshot().upNext.map { it.entry.refId } }
+        assertTrue("c1" in queued)
+        eager.close()
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")
