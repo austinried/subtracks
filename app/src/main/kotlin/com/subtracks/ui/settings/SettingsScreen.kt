@@ -204,6 +204,7 @@ private fun QualityDialog(
     onSelect: (StreamQuality) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var draft by remember(quality) { mutableStateOf(quality) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -212,15 +213,21 @@ private fun QualityDialog(
                 ChoiceGroup(
                     header = "Maximum bitrate",
                     options = bitrateOptions.map { it to bitrateLabel(it) },
-                    selected = quality.maxBitrate,
-                    onSelect = { onSelect(quality.copy(maxBitrate = it)) },
+                    selected = draft.maxBitrate,
+                    onSelect = {
+                        draft = draft.copy(maxBitrate = it)
+                        onSelect(draft)
+                    },
                 )
                 Spacer(Modifier.height(16.dp))
                 ChoiceGroup(
                     header = "Preferred format",
                     options = streamFormats.map { it to (it ?: "Use server default") },
-                    selected = quality.format,
-                    onSelect = { onSelect(quality.copy(format = it)) },
+                    selected = draft.format,
+                    onSelect = {
+                        draft = draft.copy(format = it)
+                        onSelect(draft)
+                    },
                 )
             }
         },

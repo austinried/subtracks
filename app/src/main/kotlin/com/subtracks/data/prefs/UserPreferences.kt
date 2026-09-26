@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.subtracks.data.net.NetworkMode
@@ -54,7 +55,9 @@ class UserPreferences(
     }
 
     fun streamQuality(mode: NetworkMode): Flow<StreamQuality> =
-        store.data.map { prefs -> decodeStreamQuality(prefs[streamQualityKey(mode)]) }
+        store.data.map { prefs ->
+            prefs[streamQualityKey(mode)]?.let(::decodeStreamQuality) ?: legacyStreamQuality(prefs)
+        }
 
     suspend fun setStreamQuality(
         mode: NetworkMode,
@@ -71,13 +74,19 @@ class UserPreferences(
 
     private fun encode(quality: StreamQuality) = "${quality.maxBitrate}|${quality.format.orEmpty()}"
 
-    private fun decodeStreamQuality(stored: String?): StreamQuality {
-        val parts = stored?.split("|") ?: return StreamQuality()
+    private fun decodeStreamQuality(stored: String): StreamQuality {
+        val parts = stored.split("|")
         return StreamQuality(
             maxBitrate = parts.getOrNull(0)?.toIntOrNull() ?: 0,
             format = parts.getOrNull(1)?.takeIf { it.isNotEmpty() },
         )
     }
+
+    private fun legacyStreamQuality(prefs: Preferences): StreamQuality =
+        StreamQuality(
+            maxBitrate = prefs[LEGACY_BITRATE] ?: 0,
+            format = prefs[LEGACY_FORMAT]?.takeIf { it.isNotEmpty() },
+        )
 
     private fun decode(
         stored: String?,
@@ -90,6 +99,11 @@ class UserPreferences(
             descending = parts[1] == "1",
             starred = StarredFilter.entries.getOrElse(parts[2].toIntOrNull() ?: 0) { StarredFilter.Any },
         )
+    }
+
+    private companion object {
+        val LEGACY_BITRATE = intPreferencesKey("max_bitrate")
+        val LEGACY_FORMAT = stringPreferencesKey("stream_format")
     }
 }
 

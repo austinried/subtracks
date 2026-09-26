@@ -5,7 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import com.subtracks.data.db.createAndroidDatabase
-import com.subtracks.data.net.NetworkMonitor
+import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.createUserPreferences
 import com.subtracks.data.repo.ArtworkSeedRepository
 import com.subtracks.data.repo.ArtworkSeedStore
@@ -39,8 +39,7 @@ fun appModule(
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single { NetworkMonitor(context.applicationContext) }
-    single { SourceRepository(get(), get(), get(), networkMode = get<NetworkMonitor>().mode, showMessage = toast) }
+    single { SourceRepository(get(), get(), get(), networkMode = networkMode(context.applicationContext), showMessage = toast) }
     single { LibraryRepository(get(), get(), toast) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }

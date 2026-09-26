@@ -7,6 +7,7 @@ import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
 import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.SourceRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -135,7 +136,14 @@ class PlaybackController(
             }
         }
         scope.launch {
-            sourceRepository.quality.drop(1).collect { reloadQuality() }
+            sourceRepository.quality.drop(1).collect {
+                try {
+                    reloadQuality()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                }
+            }
         }
     }
 
@@ -710,8 +718,12 @@ class PlaybackController(
             if (snapshot.size == 0L) return@withLock
             val sourceId = queueSourceId
             if (sourceId == null || sourceRepository.activeSourceIdOnce() != sourceId) return@withLock
-            val position = currentPosition() ?: return@withLock
-            loadWindow(position, autoplay = player.playWhenReady && !player.isEnded, startPositionMs = player.currentPositionMs)
+            if (player.isEnded) return@withLock
+            val index = player.currentIndex
+            val position = (windowStart + index).coerceIn(0, snapshot.size - 1)
+            val positionMs = player.currentPositionMs
+            if (player.currentIndex != index) return@withLock
+            loadWindow(position, autoplay = player.playWhenReady, startPositionMs = positionMs)
         }
 
     private fun jumpTo(target: Long) {

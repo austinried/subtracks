@@ -20,6 +20,7 @@ import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -39,6 +40,7 @@ class PlaybackControllerTest {
 
     private lateinit var db: SubtracksDatabase
     private lateinit var prefs: UserPreferences
+    private lateinit var networkMode: MutableStateFlow<NetworkMode>
     private lateinit var sources: SourceRepository
     private lateinit var queues: QueueRepository
     private lateinit var handle: FakePlayerHandle
@@ -53,7 +55,8 @@ class PlaybackControllerTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         prefs = fakeUserPreferences()
-        sources = SourceRepository(db, OkHttpClient(), prefs)
+        networkMode = MutableStateFlow(NetworkMode.Wifi)
+        sources = SourceRepository(db, OkHttpClient(), prefs, networkMode = networkMode)
         queues = QueueRepository(db)
         handle = FakePlayerHandle()
         controller = PlaybackController(sources, queues, FakePlayerConnection(handle), dispatcher = dispatcher)
@@ -1037,6 +1040,69 @@ class PlaybackControllerTest {
         assertEquals("s11", handle.currentItem?.id)
         assertEquals(42_000L, handle.positionMs)
         assertEquals(listOf("prepare", "play"), handle.operations.takeLast(2))
+    }
+
+    @Test
+    fun changingStreamQualityWhilePausedReloadsWithoutResuming() {
+        seedAlbum(60, sourceId = 1)
+        runBlocking { prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(64, null)) }
+        await { sources.quality.value == StreamQuality(64, null) }
+
+        controller.playAlbum(1, "al1", 10)
+        await { handle.playWhenReady }
+        controller.togglePlayPause()
+        await { !handle.playWhenReady }
+        handle.positionMs = 33_000L
+        val before = handle.operations.size
+        val windows = handle.operations.count { it.startsWith("setWindow") }
+
+        runBlocking { prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(128, "opus")) }
+        await { handle.operations.count { it.startsWith("setWindow") } > windows }
+
+        assertEquals(33_000L, handle.positionMs)
+        assertFalse(handle.playWhenReady)
+        assertTrue(handle.operations.drop(before).none { it.startsWith("prepare") || it.startsWith("play") })
+    }
+
+    @Test
+    fun switchingToTheOtherModeReloadsWithItsQuality() {
+        seedAlbum(60, sourceId = 1)
+        runBlocking {
+            prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(320, null))
+            prefs.setStreamQuality(NetworkMode.Mobile, StreamQuality(96, "opus"))
+        }
+        await { sources.quality.value == StreamQuality(320, null) }
+
+        controller.playAlbum(1, "al1", 10)
+        await { handle.operations.contains("play") }
+        handle.positionMs = 12_000L
+        val windows = handle.operations.count { it.startsWith("setWindow") }
+
+        networkMode.value = NetworkMode.Mobile
+        await { sources.quality.value == StreamQuality(96, "opus") }
+        await { handle.operations.count { it.startsWith("setWindow") } > windows }
+
+        assertEquals("s11", handle.currentItem?.id)
+        assertEquals(12_000L, handle.positionMs)
+    }
+
+    @Test
+    fun switchingToTheOtherModeWithEqualQualityDoesNotReload() {
+        seedAlbum(60, sourceId = 1)
+        runBlocking {
+            prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(96, "opus"))
+            prefs.setStreamQuality(NetworkMode.Mobile, StreamQuality(96, "opus"))
+        }
+        await { sources.quality.value == StreamQuality(96, "opus") }
+
+        controller.playAlbum(1, "al1", 10)
+        await { handle.operations.contains("play") }
+        val windows = handle.operations.count { it.startsWith("setWindow") }
+
+        networkMode.value = NetworkMode.Mobile
+        runBlocking { delay(300) }
+
+        assertEquals(windows, handle.operations.count { it.startsWith("setWindow") })
     }
 
     private fun seedAlbum(
