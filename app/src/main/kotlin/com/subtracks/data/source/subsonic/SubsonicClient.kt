@@ -15,10 +15,14 @@ class SubsonicClient(
     private val baseUrl: HttpUrl,
     private val username: String,
     private val password: String,
-    private val useTokenAuth: Boolean,
+    useTokenAuth: Boolean,
     private val http: OkHttpClient,
     private val userAgent: String = "subtracks/android",
+    private val onTokenAuthUnsupported: (() -> Unit)? = null,
 ) {
+    @Volatile
+    private var useTokenAuth: Boolean = useTokenAuth
+
     fun uri(
         method: String,
         params: Map<String, String> = emptyMap(),
@@ -49,6 +53,19 @@ class SubsonicClient(
         method: String,
         params: Map<String, String> = emptyMap(),
         body: (InputStream) -> T,
+    ): T =
+        try {
+            execute(method, params, body)
+        } catch (failure: SubsonicException) {
+            if (failure.code != TOKEN_AUTH_UNSUPPORTED || !useTokenAuth) throw failure
+            disableTokenAuth()
+            execute(method, params, body)
+        }
+
+    private fun <T> execute(
+        method: String,
+        params: Map<String, String>,
+        body: (InputStream) -> T,
     ): T {
         val request =
             Request
@@ -64,9 +81,17 @@ class SubsonicClient(
         }
     }
 
+    @Synchronized
+    private fun disableTokenAuth() {
+        if (!useTokenAuth) return
+        useTokenAuth = false
+        onTokenAuthUnsupported?.invoke()
+    }
+
     companion object {
         const val API_VERSION = "1.13.0"
         const val CLIENT = "subtracks"
+        const val TOKEN_AUTH_UNSUPPORTED = 41
 
         private fun randomSalt(): String = (1..4).map { ('a'..'z').random() }.joinToString("")
 

@@ -38,6 +38,9 @@ interface SourcesDao {
     @Upsert
     suspend fun upsertSubsonicSource(subsonic: SubsonicSource)
 
+    @Query("UPDATE subsonic_sources SET useTokenAuth = 0 WHERE sourceId = :sourceId")
+    suspend fun disableTokenAuth(sourceId: Long)
+
     @Query("DELETE FROM sources WHERE id = :id")
     suspend fun deleteSourceRow(id: Long)
 

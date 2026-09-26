@@ -25,6 +25,7 @@ class SourceRepository(
     private val db: SubtracksDatabase,
     private val http: OkHttpClient,
     private val prefs: UserPreferences,
+    private val showMessage: (String) -> Unit = {},
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -126,22 +127,38 @@ class SourceRepository(
     ): SubsonicMusicSource =
         SubsonicMusicSource(
             id = id,
-            client = client(address, username, password, useTokenAuth),
+            client =
+                client(
+                    address = address,
+                    username = username,
+                    password = password,
+                    useTokenAuth = useTokenAuth,
+                    onTokenAuthUnsupported = { disableTokenAuth(id) },
+                ),
             maxBitrate = maxBitrate,
             streamFormat = streamFormat,
         )
+
+    private fun disableTokenAuth(sourceId: Long) {
+        scope.launch {
+            db.sourcesDao().disableTokenAuth(sourceId)
+            showMessage("Server does not support token auth; using the password instead")
+        }
+    }
 
     private fun client(
         address: String,
         username: String,
         password: String,
         useTokenAuth: Boolean,
+        onTokenAuthUnsupported: (() -> Unit)? = null,
     ) = SubsonicClient(
         baseUrl = normalizeAddress(address).toHttpUrl(),
         username = username,
         password = password,
         useTokenAuth = useTokenAuth,
         http = http,
+        onTokenAuthUnsupported = onTokenAuthUnsupported,
     )
 
     private fun normalizeAddress(address: String): String {

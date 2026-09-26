@@ -1,6 +1,9 @@
 package com.subtracks.di
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.prefs.createUserPreferences
 import com.subtracks.data.repo.ArtworkSeedRepository
@@ -28,10 +31,20 @@ fun appModule(
     context: Context,
     http: OkHttpClient,
 ) = module {
+    val mainHandler = Handler(Looper.getMainLooper())
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single { SourceRepository(get(), get(), get()) }
+    single {
+        SourceRepository(
+            get(),
+            get(),
+            get(),
+            showMessage = { message ->
+                mainHandler.post { Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
+            },
+        )
+    }
     single { LibraryRepository(get(), get()) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
