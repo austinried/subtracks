@@ -105,6 +105,7 @@ fun AlbumsContent(
                             StarredBadge(
                                 starred = album.starred != null,
                                 size = 16.dp,
+                                shadow = true,
                                 modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
                             )
                         }

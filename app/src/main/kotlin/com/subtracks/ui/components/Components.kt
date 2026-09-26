@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -309,13 +310,17 @@ fun StarredBadge(
     starred: Boolean,
     modifier: Modifier = Modifier,
     size: Dp = 14.dp,
+    shadow: Boolean = false,
 ) {
     if (starred) {
         Icon(
             imageVector = Icons.Rounded.Star,
             contentDescription = "Starred",
             tint = MaterialTheme.colorScheme.primary,
-            modifier = modifier.size(size),
+            modifier =
+                modifier
+                    .then(if (shadow) Modifier.shadow(2.dp, CircleShape, clip = false) else Modifier)
+                    .size(size),
         )
     }
 }
