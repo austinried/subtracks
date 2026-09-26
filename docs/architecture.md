@@ -94,6 +94,8 @@ The window is also the queue the media notification and Android Auto can browse 
 
 `sources` and `subsonic_sources` hold the configured servers. Library tables are keyed by `(sourceId, id)` and cascade from `sources`: `artists`, `albums`, `playlists`, `playlist_songs`, `songs`.
 
+The library is mirrored wholesale at sync and must work offline, so metadata is never fetched on demand: everything used to browse, filter or sort a local list has to be present locally. The only on-demand network is media bytes (streams and downloads) and images. A sort whose key is server-derived — say play frequency — therefore has to be synced into a local column, not requested lazily when the sort is selected.
+
 UI and playback preferences live in DataStore (`user_prefs`), not in SQLite: they are not relational, nothing joins against them, and keeping them out of Room avoids a schema migration per preference. Room is for the library only.
 
 Every schema version step ships a hand-written `Migration` (`data/db/Migrations.kt`), and there is no destructive fallback, so an upgrade never silently wipes the local mirror. The exported schemas under `app/schemas/` are the source of truth for the migration SQL, and `MigrationsTest` runs each step against a real SQLite connection and asserts the resulting tables, columns and indices.

@@ -43,6 +43,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Room 3 (`androidx.room3`) on AndroidX `sqlite-bundled` (`BundledSQLiteDriver`, SQLite 3.50+). Do not reintroduce SQLDelight or the platform SQLite.
 - Networking uses OkHttp and DOM XML parsing; auth uses the Subsonic token scheme by default.
 - Use coroutines and `Flow`; library reads are exposed as `Flow` from Room. Large lists page with Paging 3 over Room `PagingSource` rather than loading the whole table.
+- The library is mirrored in full at sync and must work offline. Never fetch library metadata on demand for browsing, filtering or sorting; only media bytes (streams, downloads) and images are on-demand. A server-derived sort key must be synced into a local column, not requested lazily when the sort is selected.
 - Playback is Media3: `PlaybackService` is a `MediaSessionService` owning an `ExoPlayer`, and `PlaybackController` (app-scoped Koin singleton) is the only thing the UI talks to. The queue is a `queue_entries` list of references with optional ranges plus a `playback_cursor` row; keep only a bounded window in memory (never the whole queue, and never load a whole table to build one). Stream URLs are freshly salted per request, so attach artwork by `CoverArtRef` cache key, not by URL.
 - UI state lives in `androidx.lifecycle.ViewModel`, wired with Koin (`koinViewModel()`); screens split into a stateful `*Route` and a stateless `*Screen` for screenshot tests.
 - UI and playback preferences go in DataStore (`UserPreferences`), not Room.
