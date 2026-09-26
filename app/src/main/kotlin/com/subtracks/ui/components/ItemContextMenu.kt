@@ -232,7 +232,11 @@ private fun StarItem(
 ) {
     var starred by remember(current) { mutableStateOf(current) }
     val scope = rememberCoroutineScope()
-    MenuItem(starIcon(starred), starLabel(starred)) {
+    MenuItem(
+        starIcon(starred),
+        starLabel(starred),
+        tint = if (starred == null) Color.Unspecified else MaterialTheme.colorScheme.primary,
+    ) {
         val previous = starred
         val starring = previous == null
         starred = if (starring) System.currentTimeMillis() else null
@@ -246,11 +250,12 @@ private fun StarItem(
 private fun MenuItem(
     icon: ImageVector,
     label: String,
+    tint: Color = Color.Unspecified,
     onClick: () -> Unit,
 ) {
     ListItem(
         headlineContent = { Text(label) },
-        leadingContent = { Icon(icon, contentDescription = null) },
+        leadingContent = { Icon(icon, contentDescription = null, tint = tint) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable(onClick = onClick),
     )
