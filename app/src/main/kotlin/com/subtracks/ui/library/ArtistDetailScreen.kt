@@ -64,6 +64,7 @@ import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.StarredBadge
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
@@ -238,12 +239,19 @@ fun ArtistDetailScreen(
                                         onLongClick = { onAlbumLongClick(MenuTarget.Album(album, coverArt(album.coverArt, true))) },
                                     ),
                         ) {
-                            CoverArt(
-                                ref = coverArt(album.coverArt, false),
-                                name = album.name,
-                                thumbnailRef = coverArt(album.coverArt, true),
-                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                            )
+                            Box {
+                                CoverArt(
+                                    ref = coverArt(album.coverArt, false),
+                                    name = album.name,
+                                    thumbnailRef = coverArt(album.coverArt, true),
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+                                )
+                                StarredBadge(
+                                    starred = album.starred != null,
+                                    size = 16.dp,
+                                    modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+                                )
+                            }
                             Text(
                                 text = album.name,
                                 style = MaterialTheme.typography.bodyMedium,
