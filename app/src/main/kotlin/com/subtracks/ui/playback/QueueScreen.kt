@@ -98,11 +98,24 @@ class QueueViewModel(
 
     private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item)
 
+    private fun reusedIds(): Map<String, MutableList<Long>> =
+        rows.groupBy { it.song.song.id }.mapValues { entry -> entry.value.map { it.id }.toMutableList() }
+
+    private fun rowFor(
+        item: QueueWindowItem,
+        reused: Map<String, MutableList<Long>>,
+    ): QueueRow {
+        val ids = reused[item.item.song.id]
+        val id = if (!ids.isNullOrEmpty()) ids.removeAt(0) else nextId++
+        return QueueRow(id, item.position, item.item)
+    }
+
     fun open() {
         viewModelScope.launch {
             mutex.withLock {
                 val snapshot = queueRepository.snapshot()
                 size = snapshot.size
+                val reused = reusedIds()
                 rows.clear()
                 first = 0
                 last = -1
@@ -113,7 +126,7 @@ class QueueViewModel(
                         }?.coerceIn(0, size - 1) ?: 0L
                     val start = (cursor - OLDER_LOAD).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(size - 1)
-                    rows.addAll(queueRepository.range(snapshot, start, end).map(::newRow))
+                    rows.addAll(queueRepository.range(snapshot, start, end).map { rowFor(it, reused) })
                     first = rows.firstOrNull()?.position ?: 0
                     last = rows.lastOrNull()?.position ?: -1
                     initialIndex = rows.indexOfFirst { it.position == cursor }.coerceAtLeast(0)
@@ -236,13 +249,8 @@ class QueueViewModel(
         val start = (rows.firstOrNull()?.position ?: 0L).coerceIn(0, size - 1)
         val end = (start + rows.size.coerceAtLeast(QUEUE_CHUNK) - 1).coerceAtMost(size - 1)
         val loaded = queueRepository.range(snapshot, start, end)
-        val ids = rows.groupBy { it.song.song.id }.mapValues { entry -> entry.value.map { it.id }.toMutableList() }
-        val updated =
-            loaded.map { item ->
-                val reused = ids[item.item.song.id]
-                val id = if (!reused.isNullOrEmpty()) reused.removeAt(0) else nextId++
-                QueueRow(id, item.position, item.item)
-            }
+        val reused = reusedIds()
+        val updated = loaded.map { rowFor(it, reused) }
         rows.clear()
         rows.addAll(updated)
         first = rows.firstOrNull()?.position ?: 0
@@ -254,12 +262,13 @@ class QueueViewModel(
 fun QueueRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    open: Boolean = true,
     viewModel: QueueViewModel = koinViewModel(),
     controller: PlaybackController = koinInject(),
     sourceRepository: SourceRepository = koinInject(),
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
-    LaunchedEffect(playback.shuffle) { viewModel.open() }
+    LaunchedEffect(playback.shuffle, open) { if (open) viewModel.open() }
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,

@@ -63,6 +63,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
+import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
 
 private const val FADE_DISTANCE_DP = 64
@@ -84,8 +85,9 @@ fun HeroDetailScaffold(
     content: LazyListScope.(rowModifier: Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val effectiveArtwork = artwork ?: baseArtworkColors
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
-        ArtworkTheme(artwork) {
+        ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
@@ -117,14 +119,14 @@ fun HeroDetailScaffold(
                     }
                 }
                 val barColor by
-                    remember(artwork, barHeightPx, screenHeightPx) {
+                    remember(effectiveArtwork, barHeightPx, screenHeightPx) {
                         derivedStateOf {
-                            heroBarColor(artwork, scrollPx, barHeightPx, screenHeightPx)
+                            heroBarColor(effectiveArtwork, scrollPx, barHeightPx, screenHeightPx)
                         }
                     }
 
                 HeroGradient(
-                    colors = artwork,
+                    colors = effectiveArtwork,
                     scrollPx = { scrollPx },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -152,8 +154,8 @@ fun HeroDetailScaffold(
                 Box(
                     Modifier
                         .align(Alignment.TopStart)
-                        .statusBarScrim()
-                        .graphicsLayer { alpha = 1f - barFraction },
+                        .graphicsLayer { alpha = 1f - barFraction }
+                        .statusBarScrim(),
                 )
 
                 TopAppBar(

@@ -16,7 +16,7 @@ const val ARTWORK_THEME_TRANSITION_MS = 600
 
 private const val TRANSITION_STEPS = 24
 
-private val baseArtworkColors =
+internal val baseArtworkColors =
     ArtworkColors(
         scheme = SubtracksColorScheme,
         gradientHigh = SubtracksColorScheme.surfaceContainerHigh,

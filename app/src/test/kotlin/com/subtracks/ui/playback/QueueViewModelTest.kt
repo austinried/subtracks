@@ -109,6 +109,23 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun reopeningReusesRowIdentitySoComposeDoesNotCrossFadeTwoLists() {
+        runBlocking { seedSongs(200) }
+        controller.playSongs(1, 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        val firstIds = viewModel.rows.map { it.id }
+        val firstGeneration = viewModel.generation
+
+        viewModel.open()
+        await { viewModel.generation > firstGeneration }
+
+        assertEquals(firstIds, viewModel.rows.map { it.id })
+    }
+
+    @Test
     fun reorderingMovesTheRowLocally() {
         runBlocking { seedSongs(200) }
         controller.playSongs(1, 100)

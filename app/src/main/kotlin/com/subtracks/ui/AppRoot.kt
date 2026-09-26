@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -46,8 +47,11 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -345,10 +349,9 @@ private fun MainNavigation() {
                     modifier =
                         Modifier
                             .align(Alignment.TopCenter)
-                            .statusBarScrim()
                             .graphicsLayer {
                                 alpha = ((nowPlayingProgress - SCRIM_FADE_START) / (1f - SCRIM_FADE_START)).coerceIn(0f, 1f)
-                            },
+                            }.statusBarScrim(),
                 )
             }
 
@@ -357,10 +360,20 @@ private fun MainNavigation() {
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(OVERLAY_DURATION_MS)),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(OVERLAY_DURATION_MS)),
             ) {
-                QueueRoute(
-                    onBack = { showingQueue = false },
-                    modifier = Modifier.fillMaxSize(),
-                )
+                val queueStoreOwner =
+                    remember {
+                        object : ViewModelStoreOwner {
+                            override val viewModelStore = ViewModelStore()
+                        }
+                    }
+                DisposableEffect(queueStoreOwner) { onDispose { queueStoreOwner.viewModelStore.clear() } }
+                CompositionLocalProvider(LocalViewModelStoreOwner provides queueStoreOwner) {
+                    QueueRoute(
+                        open = showingQueue,
+                        onBack = { showingQueue = false },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
     }

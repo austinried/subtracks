@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
@@ -98,6 +99,7 @@ fun CoverArt(
                         model = model,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        filterQuality = FilterQuality.High,
                         onSuccess = { success ->
                             success.painter.intrinsicSize
                                 .ratioOrNull()
@@ -134,6 +136,7 @@ fun CoverArt(
                         },
                     onError = { failed = true },
                     contentScale = ContentScale.Fit,
+                    filterQuality = FilterQuality.High,
                 )
             val ratio =
                 painter.intrinsicSize.ratioOrNull()

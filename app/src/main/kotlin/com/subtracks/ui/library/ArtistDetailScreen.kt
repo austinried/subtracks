@@ -1,5 +1,7 @@
 package com.subtracks.ui.library
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -61,6 +63,7 @@ import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
+import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
@@ -71,6 +74,7 @@ private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
 private val FADE_LEAD = 24.dp
 private const val THEME_TRANSITION_MS = 100
+private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 
 @Composable
@@ -144,16 +148,18 @@ fun ArtistDetailScreen(
                     blurRadius = 10f,
                 ),
         )
-    val nameBusy = rememberOverlaidNameBusy(art ?: artThumbnail)
+    val nameBusy = rememberOverlaidNameBusy(artThumbnail ?: art)
+    val nameScrimAlpha by animateFloatAsState(if (nameBusy) 1f else 0f, tween(SCRIM_FADE_MS), label = "artistNameScrim")
+    val effectiveArtwork = artwork ?: baseArtworkColors
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
-        ArtworkTheme(artwork) {
+        ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
-                val barColor = heroBarColor(artwork, 0f, barHeightPx, screenHeightPx)
+                val barColor = heroBarColor(effectiveArtwork, 0f, barHeightPx, screenHeightPx)
                 HeroGradient(
-                    colors = artwork,
+                    colors = effectiveArtwork,
                     scrollPx = { 0f },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -174,13 +180,14 @@ fun ArtistDetailScreen(
                                 showPlaceholder = art == null,
                                 modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                             )
-                            if (nameBusy) {
+                            if (nameScrimAlpha > 0f) {
                                 Box(
                                     modifier =
                                         Modifier
                                             .align(Alignment.BottomStart)
                                             .fillMaxWidth()
                                             .height(ART_HEIGHT * 0.4f)
+                                            .graphicsLayer { alpha = nameScrimAlpha }
                                             .background(
                                                 Brush.verticalGradient(
                                                     listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
