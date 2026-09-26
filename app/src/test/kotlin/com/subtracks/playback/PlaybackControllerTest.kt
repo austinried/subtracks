@@ -977,6 +977,25 @@ class PlaybackControllerTest {
             collector.cancel()
         }
 
+    @Test
+    fun positionTickerStopsWhenPaused() =
+        runBlocking {
+            seedAlbum(3, sourceId = 1)
+            controller.playAlbum(1, "al1", 0)
+            await { controller.state.value.isPlaying }
+
+            handle.positionMs = 7_000L
+            delay(700L)
+            controller.togglePlayPause()
+            await { !controller.state.value.isPlaying }
+            val paused = controller.positionMs.value
+
+            handle.positionMs = 9_000L
+            delay(700L)
+
+            assertEquals(paused, controller.positionMs.value)
+        }
+
     private fun seedAlbum(
         count: Int,
         sourceId: Long,

@@ -2,6 +2,7 @@ package com.subtracks.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -12,6 +13,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -162,6 +166,68 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun switchingAwayAndBackReCollectsAndRendersTheTab() {
+        val collected = CopyOnWriteArrayList<String>()
+        val albums =
+            flow<PagingData<Album>> {
+                collected += "albums"
+                emit(PagingData.from(albums()))
+            }
+        val artists =
+            flow<PagingData<Artist>> {
+                collected += "artists"
+                emit(PagingData.from(artists()))
+            }
+        val songs =
+            flow<PagingData<SongListItem>> {
+                collected += "songs"
+                emit(PagingData.empty())
+            }
+        val playlists =
+            flow<PagingData<Playlist>> {
+                collected += "playlists"
+                emit(PagingData.empty())
+            }
+        val selectedTab = mutableStateOf(LibraryTab.Albums)
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = selectedTab.value,
+                    onTabSelected = { selectedTab.value = it },
+                    albums = albums,
+                    artists = artists,
+                    songs = songs,
+                    playlists = playlists,
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSongClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                )
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ALBUM_COVER_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) { collected.contains("artists") }
+
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ALBUM_COVER_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        assertTrue("returning to a tab should render its content", collected.contains("albums"))
+        assertTrue("the tab that was shown should collect its flow", collected.contains("artists"))
+        assertFalse("inactive tabs should not collect their flows", collected.contains("songs"))
+        assertFalse(collected.contains("playlists"))
+    }
+
+    @Test
     fun theTabRowReflowsInOneDirectionDuringASwitch() {
         val pagerState = PagerState(currentPage = 1, pageCount = { LibraryTab.entries.size })
         composeRule.setContent {
@@ -215,6 +281,18 @@ class LibraryScreenTest {
                 songCount = 1,
                 frequentRank = null,
                 recentRank = null,
+            )
+        }
+
+    private fun artists() =
+        (1..60).map { index ->
+            Artist(
+                sourceId = 1,
+                id = "ar-$index",
+                name = "Artist $index",
+                albumCount = 1,
+                starred = null,
+                coverArt = null,
             )
         }
 }
