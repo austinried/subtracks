@@ -824,6 +824,34 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun naturallyAdvancingOutOfAQueuedTrackDoesNotReloadTheWindow() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        handle.operations.clear()
+        handle.advanceTo(handle.currentIndex + 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")

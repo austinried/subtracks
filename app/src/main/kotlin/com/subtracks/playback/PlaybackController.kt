@@ -554,7 +554,17 @@ class PlaybackController(
             endedHandled = false
             val next = if (position < updated.size) position else 0L
             queueRepository.setCursor(next)
-            loadWindow(next, autoplay = true)
+            val player = player
+            if (next == position && player != null && position - windowStart in 0 until player.itemCount) {
+                updating = true
+                player.removeAt((position - windowStart).toInt())
+                updating = false
+                windowEnd--
+                shiftWindowLocked(next)
+                refresh(next)
+            } else {
+                loadWindow(next, autoplay = true)
+            }
         }
 
     fun previous() {
