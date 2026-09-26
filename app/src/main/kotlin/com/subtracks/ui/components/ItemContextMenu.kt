@@ -22,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -235,7 +236,7 @@ private fun StarItem(
     MenuItem(
         starIcon(starred),
         starLabel(starred),
-        tint = if (starred == null) Color.Unspecified else MaterialTheme.colorScheme.primary,
+        tint = if (starred == null) null else MaterialTheme.colorScheme.primary,
     ) {
         val previous = starred
         val starring = previous == null
@@ -250,12 +251,12 @@ private fun StarItem(
 private fun MenuItem(
     icon: ImageVector,
     label: String,
-    tint: Color = Color.Unspecified,
+    tint: Color? = null,
     onClick: () -> Unit,
 ) {
     ListItem(
         headlineContent = { Text(label) },
-        leadingContent = { Icon(icon, contentDescription = null, tint = tint) },
+        leadingContent = { Icon(icon, contentDescription = null, tint = tint ?: LocalContentColor.current) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable(onClick = onClick),
     )
