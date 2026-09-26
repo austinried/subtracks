@@ -197,6 +197,9 @@ private fun MainNavigation() {
             }
     }
 
+    // currentBackStack is restricted to androidx.navigation, but it is the only way to find a
+    // detail entry by its arguments; popBackStack(route) matches the destination and ignores them.
+    @Suppress("RestrictedApi")
     fun navigateDetail(
         pattern: String,
         argument: String,
