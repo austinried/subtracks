@@ -92,9 +92,8 @@ fun NowPlayingRoute(
         } else {
             state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
         }
-    val sourceTitle = remember(queueContext, fallbackTitle) { mutableStateOf(fallbackTitle) }
-    LaunchedEffect(queueContext, fallbackTitle) {
-        sourceTitle.value = fallbackTitle
+    val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
+    LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
     }
     LaunchedEffect(state.item?.id, state.hasNext) {
