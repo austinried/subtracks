@@ -1,6 +1,7 @@
 package com.subtracks.ui.playback
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -11,7 +12,6 @@ import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.ui.theme.SubtracksTheme
 import com.subtracks.ui.theme.artworkColorsFromSeed
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -41,8 +41,8 @@ class NowPlayingTapsTest {
         )
 
     private fun render(
-        onAlbumClick: () -> Unit = {},
-        onArtistClick: () -> Unit = {},
+        onAlbumClick: (() -> Unit)? = null,
+        onArtistClick: (() -> Unit)? = null,
     ) {
         composeRule.setContent {
             SubtracksTheme {
@@ -87,12 +87,9 @@ class NowPlayingTapsTest {
 
     @Test
     fun theTapTargetsStayInertWithoutADestination() {
-        var opened = false
         render()
 
-        composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).performClick()
-        composeRule.onNodeWithText("Radiohead").performClick()
-
-        assertFalse(opened)
+        composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).assertIsNotEnabled()
+        composeRule.onNodeWithText("Radiohead").assertIsNotEnabled()
     }
 }

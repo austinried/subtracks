@@ -260,7 +260,10 @@ fun NowPlayingScreen(
                                     .weight(1f)
                                     .fillMaxWidth()
                                     .padding(top = 2.dp)
-                                    .clickable(enabled = onAlbumClick != null) { onAlbumClick?.invoke() }
+                                    .clickable(
+                                        enabled = onAlbumClick != null,
+                                        onClickLabel = "Open album",
+                                    ) { onAlbumClick?.invoke() }
                                     .testTag(NOW_PLAYING_COVER_TAG),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -268,6 +271,7 @@ fun NowPlayingScreen(
                                 ref = coverArt,
                                 name = state.item?.title.orEmpty(),
                                 thumbnailRef = thumbnailRef,
+                                showPlaceholder = coverArt == null,
                                 square = false,
                                 elevation = 3.dp,
                                 modifier = Modifier.fillMaxSize(),
@@ -303,8 +307,12 @@ fun NowPlayingScreen(
                             Box(
                                 modifier =
                                     Modifier
+                                        .fillMaxWidth()
                                         .height(subtitleHeight)
-                                        .clickable(enabled = onArtistClick != null) { onArtistClick?.invoke() },
+                                        .clickable(
+                                            enabled = onArtistClick != null,
+                                            onClickLabel = "Open artist",
+                                        ) { onArtistClick?.invoke() },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
