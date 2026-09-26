@@ -2,7 +2,6 @@ package com.subtracks.playback
 
 import android.os.Bundle
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -133,7 +132,7 @@ class Media3PlayerHandle(
                 .setTitle(item.title)
                 .setArtist(item.artist)
                 .setAlbumTitle(item.album)
-                .setArtworkUri(sourceRepository.coverArt(item.coverArtId, true)?.url?.toUri())
+                .setArtworkUri(item.coverArtId?.let(CoverArtArtwork::uri))
                 .setIsBrowsable(false)
                 .setIsPlayable(true)
                 .setExtras(

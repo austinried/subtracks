@@ -13,12 +13,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import coil3.SingletonImageLoader
 import com.subtracks.MainActivity
+import com.subtracks.data.repo.SourceRepository
 import okhttp3.OkHttpClient
+import org.koin.core.context.GlobalContext
 
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         val player =
@@ -44,6 +48,12 @@ class PlaybackService : MediaSessionService() {
                         0,
                         Intent(this, MainActivity::class.java),
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                    ),
+                ).setBitmapLoader(
+                    CoverArtBitmapLoader(
+                        this,
+                        GlobalContext.get().get<SourceRepository>(),
+                        SingletonImageLoader.get(this),
                     ),
                 ).build()
     }
