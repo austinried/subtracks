@@ -42,10 +42,16 @@ class AddSourceViewModel(
         val current = _state.value
         viewModelScope.launch {
             val result = sourceRepository.ping(current.address, current.username, current.password, current.useTokenAuth)
-            _state.update {
-                it.copy(
+            _state.update { state ->
+                val fellBack = result.getOrDefault(false)
+                state.copy(
                     busy = false,
-                    message = result.fold({ "Connection OK" }, { error -> "Failed: ${error.message}" }),
+                    useTokenAuth = if (fellBack) false else state.useTokenAuth,
+                    message =
+                        result.fold(
+                            { if (fellBack) "Server does not support token auth; using the password instead" else "Connection OK" },
+                            { error -> "Failed: ${error.message}" },
+                        ),
                     isError = result.isFailure,
                 )
             }

@@ -27,7 +27,7 @@ class SubsonicClientTest {
 
     private fun client(
         tokenAuth: Boolean,
-        onTokenAuthUnsupported: (() -> Unit)? = null,
+        onTokenAuthUnsupported: () -> Unit = {},
     ) = SubsonicClient(
         baseUrl = server.url("/"),
         username = "guest",

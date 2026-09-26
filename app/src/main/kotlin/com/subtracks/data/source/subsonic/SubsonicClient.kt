@@ -18,7 +18,7 @@ class SubsonicClient(
     useTokenAuth: Boolean,
     private val http: OkHttpClient,
     private val userAgent: String = "subtracks/android",
-    private val onTokenAuthUnsupported: (() -> Unit)? = null,
+    private val onTokenAuthUnsupported: () -> Unit = {},
 ) {
     @Volatile
     private var useTokenAuth: Boolean = useTokenAuth
@@ -53,14 +53,16 @@ class SubsonicClient(
         method: String,
         params: Map<String, String> = emptyMap(),
         body: (InputStream) -> T,
-    ): T =
-        try {
+    ): T {
+        val usedTokenAuth = useTokenAuth
+        return try {
             execute(method, params, body)
         } catch (failure: SubsonicException) {
-            if (failure.code != TOKEN_AUTH_UNSUPPORTED || !useTokenAuth) throw failure
+            if (failure.code != TOKEN_AUTH_UNSUPPORTED || !usedTokenAuth) throw failure
             disableTokenAuth()
             execute(method, params, body)
         }
+    }
 
     private fun <T> execute(
         method: String,
@@ -85,7 +87,7 @@ class SubsonicClient(
     private fun disableTokenAuth() {
         if (!useTokenAuth) return
         useTokenAuth = false
-        onTokenAuthUnsupported?.invoke()
+        onTokenAuthUnsupported()
     }
 
     companion object {

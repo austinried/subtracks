@@ -31,6 +31,7 @@ class SourceRepository(
 
     @Volatile
     private var active: SubsonicMusicSource? = null
+    private var probedTokenAuthId: Long? = null
 
     init {
         scope.launch {
@@ -38,8 +39,16 @@ class SourceRepository(
                 db.sourcesDao().activeSubsonicConfig(),
                 prefs.maxBitrate,
                 prefs.streamFormat,
-            ) { config, maxBitrate, streamFormat -> config?.toMusicSource(maxBitrate, streamFormat) }
-                .collect { active = it }
+            ) { config, maxBitrate, streamFormat -> Triple(config, maxBitrate, streamFormat) }
+                .collect { (config, maxBitrate, streamFormat) ->
+                    active = config?.toMusicSource(maxBitrate, streamFormat)
+                    config
+                        ?.takeIf { it.useTokenAuth && it.id != probedTokenAuthId }
+                        ?.let { source ->
+                            probedTokenAuthId = source.id
+                            scope.launch { runCatching { source.toClient().check("ping") } }
+                        }
+                }
         }
     }
 
@@ -111,9 +120,12 @@ class SourceRepository(
         username: String,
         password: String,
         useTokenAuth: Boolean,
-    ): Result<Unit> =
+    ): Result<Boolean> =
         withContext(Dispatchers.IO) {
-            runCatching { client(address, username, password, useTokenAuth).check("ping") }
+            var fellBack = false
+            runCatching {
+                client(address, username, password, useTokenAuth) { fellBack = true }.check("ping")
+            }.map { fellBack }
         }
 
     suspend fun activeMusicSource(): MusicSource? {
@@ -121,20 +133,22 @@ class SourceRepository(
         return config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())
     }
 
+    private fun SubsonicConfig.toClient(): SubsonicClient =
+        client(
+            address = address,
+            username = username,
+            password = password,
+            useTokenAuth = useTokenAuth,
+            onTokenAuthUnsupported = { disableTokenAuth(id) },
+        )
+
     private fun SubsonicConfig.toMusicSource(
         maxBitrate: Int,
         streamFormat: String?,
     ): SubsonicMusicSource =
         SubsonicMusicSource(
             id = id,
-            client =
-                client(
-                    address = address,
-                    username = username,
-                    password = password,
-                    useTokenAuth = useTokenAuth,
-                    onTokenAuthUnsupported = { disableTokenAuth(id) },
-                ),
+            client = toClient(),
             maxBitrate = maxBitrate,
             streamFormat = streamFormat,
         )
@@ -151,7 +165,7 @@ class SourceRepository(
         username: String,
         password: String,
         useTokenAuth: Boolean,
-        onTokenAuthUnsupported: (() -> Unit)? = null,
+        onTokenAuthUnsupported: () -> Unit = {},
     ) = SubsonicClient(
         baseUrl = normalizeAddress(address).toHttpUrl(),
         username = username,
