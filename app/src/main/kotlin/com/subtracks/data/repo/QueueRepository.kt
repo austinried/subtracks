@@ -13,9 +13,20 @@ import com.subtracks.data.model.SongListItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 const val QUEUE_CHUNK = 60
+
+private const val LENGTH_CACHE_LIMIT = 512
+
+private data class EntryLengthKey(
+    val sourceId: Long,
+    val kind: QueueKind,
+    val refId: String,
+    val offset: Long,
+    val count: Long?,
+)
 
 data class ResolvedQueueEntry(
     val entry: QueueEntry,
@@ -73,6 +84,8 @@ class QueueRepository(
 
     @Volatile
     private var cachedFlatVersion = -1L
+
+    private val lengthCache = ConcurrentHashMap<EntryLengthKey, Long>()
 
     private val cursorMutex = Mutex()
 
@@ -134,7 +147,7 @@ class QueueRepository(
         val loaded =
             db.useReaderConnection { transactor ->
                 transactor.deferredTransaction {
-                    val entries = dao.entries().map { ResolvedQueueEntry(it, it.resolvedLength()) }
+                    val entries = dao.entries().map { ResolvedQueueEntry(it, lengthOf(it)) }
                     val row = dao.cursor()
                     val shuffled = row?.shuffleEnabled == true
                     val order = if (shuffled) loadShuffleOrder(row.shuffleSeed, entries.sumOf { it.length }) else null
@@ -173,6 +186,7 @@ class QueueRepository(
 
     fun invalidateLibraryCache() {
         cachedFlatIds = null
+        lengthCache.clear()
         queueVersion.incrementAndGet()
     }
 
@@ -272,11 +286,11 @@ class QueueRepository(
     ): QueueSnapshot {
         val order = snapshot.shuffleOrder
         if (order == null) {
-            write(removeEntry(snapshot.entries, position).map { it.entry })
+            write(compact(removeEntry(snapshot.entries, position)).map { it.entry })
             return snapshot()
         }
         val flat = order.getOrNull(position.toInt()) ?: return snapshot
-        write(removeEntry(snapshot.entries, flat).map { it.entry })
+        write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
         val reordered = order.toMutableList().apply { removeAt(position.toInt()) }
         for (index in reordered.indices) if (reordered[index] > flat) reordered[index] -= 1
         setShuffle(true, reordered.toLongArray())
@@ -299,8 +313,8 @@ class QueueRepository(
         val located = snapshot.locate(from) ?: return false
         val song = itemAt(snapshot, from) ?: return false
         val removed = removeEntry(snapshot.entries, from)
-        val moved = songEntry(located.first.sourceId, song.song.id)
-        write(insertEntry(removed, to.coerceIn(0, removed.sumOf { it.length }), moved))
+        val moved = ResolvedQueueEntry(songEntry(located.first.sourceId, song.song.id), 1L)
+        write(compact(insertEntry(removed, to.coerceIn(0, removed.sumOf { it.length }), moved)).map { it.entry })
         return true
     }
 
@@ -372,6 +386,24 @@ class QueueRepository(
             }
         }
 
+    private suspend fun lengthOf(entry: QueueEntry): Long {
+        val key = entry.lengthKey()
+        lengthCache[key]?.let { return it }
+        val length = entry.resolvedLength()
+        if (lengthCache.size >= LENGTH_CACHE_LIMIT) lengthCache.clear()
+        lengthCache[key] = length
+        return length
+    }
+
+    private fun QueueEntry.lengthKey() =
+        EntryLengthKey(
+            sourceId = sourceId,
+            kind = kind,
+            refId = refId,
+            offset = offset,
+            count = count,
+        )
+
     private suspend fun QueueEntry.resolvedLength(): Long {
         val total =
             when (kind) {
@@ -425,9 +457,9 @@ class QueueRepository(
     private fun insertEntry(
         entries: List<ResolvedQueueEntry>,
         index: Long,
-        newEntry: QueueEntry,
-    ): List<QueueEntry> {
-        val result = mutableListOf<QueueEntry>()
+        newEntry: ResolvedQueueEntry,
+    ): List<ResolvedQueueEntry> {
+        val result = mutableListOf<ResolvedQueueEntry>()
         var start = 0L
         var placed = false
         for (resolved in entries) {
@@ -435,21 +467,29 @@ class QueueRepository(
             when {
                 !placed && index <= start -> {
                     result += newEntry
-                    result += resolved.entry
+                    result += resolved
                     placed = true
                 }
 
                 !placed && index in start..end -> {
                     val cut = index - start
                     val offset = resolved.entry.offset
-                    if (cut > 0) result += resolved.entry.range(offset, offset + cut - 1)
+                    if (cut > 0) {
+                        result += ResolvedQueueEntry(resolved.entry.range(offset, offset + cut - 1), cut)
+                    }
                     result += newEntry
-                    if (cut < resolved.length) result += resolved.entry.range(offset + cut, offset + resolved.length - 1)
+                    if (cut < resolved.length) {
+                        result +=
+                            ResolvedQueueEntry(
+                                resolved.entry.range(offset + cut, offset + resolved.length - 1),
+                                resolved.length - cut,
+                            )
+                    }
                     placed = true
                 }
 
                 else -> {
-                    result += resolved.entry
+                    result += resolved
                 }
             }
             start += resolved.length
@@ -457,4 +497,27 @@ class QueueRepository(
         if (!placed) result += newEntry
         return result
     }
+
+    private fun compact(entries: List<ResolvedQueueEntry>): List<ResolvedQueueEntry> {
+        val merged = mutableListOf<ResolvedQueueEntry>()
+        for (resolved in entries) {
+            val previous = merged.lastOrNull()
+            if (previous != null && previous.contiguousWith(resolved)) {
+                merged[merged.size - 1] =
+                    ResolvedQueueEntry(
+                        previous.entry.range(previous.entry.offset, resolved.entry.offset + resolved.length - 1),
+                        previous.length + resolved.length,
+                    )
+            } else {
+                merged += resolved
+            }
+        }
+        return merged
+    }
+
+    private fun ResolvedQueueEntry.contiguousWith(next: ResolvedQueueEntry): Boolean =
+        entry.kind == next.entry.kind &&
+            entry.sourceId == next.entry.sourceId &&
+            entry.refId == next.entry.refId &&
+            entry.offset + length == next.entry.offset
 }

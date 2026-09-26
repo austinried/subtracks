@@ -140,6 +140,138 @@ class QueueViewModelTest {
         assertEquals(listOf(71L, 72L, 70L), positions.take(3))
     }
 
+    @Test
+    fun scrollingNewerEvictsOlderRowsToBoundTheWindow() {
+        runBlocking { seedSongs(400) }
+        controller.playAlbum(1, "al1", 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+
+        extendToEnd()
+
+        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
+        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+    }
+
+    @Test
+    fun scrollingOlderAfterEvictionDropsNewerRows() {
+        runBlocking { seedSongs(400) }
+        controller.playAlbum(1, "al1", 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        extendToEnd()
+
+        viewModel.loadOlder()
+        awaitWindow(first = 160, last = 339)
+
+        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
+    }
+
+    @Test
+    fun movingARowAfterEvictionKeepsPositionsContiguous() {
+        runBlocking { seedSongs(400) }
+        controller.playAlbum(1, "al1", 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        extendToEnd()
+
+        val movedSongId =
+            viewModel.rows[10]
+                .song.song.id
+        val from = viewModel.rows[10].position
+        val to = viewModel.rows[13].position
+        viewModel.reorder(10, 13)
+        viewModel.move(from, to)
+        await {
+            viewModel.rows.size == QUEUE_WINDOW_ROWS &&
+                viewModel.rows.getOrNull(13)?.position == 233L
+        }
+
+        assertEquals(
+            movedSongId,
+            viewModel.rows[13]
+                .song.song.id,
+        )
+        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
+        assertContiguous()
+    }
+
+    @Test
+    fun removeAndUndoKeepTheBoundedWindowConsistent() {
+        runBlocking { seedSongs(400) }
+        controller.playAlbum(1, "al1", 100)
+        await { controller.state.value.position == 100L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        val removedSongId =
+            viewModel.rows[30]
+                .song.song.id
+
+        viewModel.remove(viewModel.rows[30].position)
+        await {
+            viewModel.rows.size == 60 &&
+                viewModel.rows.firstOrNull()?.position == 70L &&
+                viewModel.rows
+                    .getOrNull(30)
+                    ?.song
+                    ?.song
+                    ?.id != removedSongId
+        }
+        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+
+        viewModel.undo()
+        await {
+            viewModel.rows.size == 60 &&
+                viewModel.rows.firstOrNull()?.position == 70L &&
+                viewModel.rows
+                    .getOrNull(30)
+                    ?.song
+                    ?.song
+                    ?.id == removedSongId
+        }
+        assertContiguous()
+    }
+
+    private fun assertContiguous() = assertTrue(isContiguous())
+
+    private fun isContiguous(): Boolean {
+        val positions = viewModel.rows.map { it.position }
+        return positions.isNotEmpty() && positions == (positions.first()..positions.last()).toList()
+    }
+
+    private fun awaitWindow(
+        first: Long,
+        last: Long,
+    ) = await {
+        viewModel.rows.size == (last - first + 1).toInt() &&
+            viewModel.rows.firstOrNull()?.position == first &&
+            viewModel.rows.lastOrNull()?.position == last
+    }
+
+    private fun extendTo(
+        position: Long,
+        first: Long,
+    ) {
+        viewModel.loadNewer()
+        awaitWindow(first = first, last = position)
+    }
+
+    private fun extendToEnd() {
+        extendTo(189, first = 70)
+        extendTo(249, first = 70)
+        extendTo(309, first = 130)
+        extendTo(369, first = 190)
+        extendTo(399, first = 220)
+    }
+
     private fun row(position: Int) =
         QueueRow(
             position.toLong(),
@@ -189,8 +321,10 @@ class QueueViewModelTest {
     }
 
     private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + 5_000_000_000L
-        while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
+        repeat(500) {
+            if (predicate()) return
+            Thread.sleep(10)
+        }
         assertTrue("Timed out waiting for the expected state", predicate())
     }
 }

@@ -299,6 +299,84 @@ class QueueRepositoryTest {
             assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
         }
 
+    @Test
+    fun removingASongBetweenContiguousRangesMergesThem() =
+        runTest {
+            seedLibrary()
+            repository.replace(
+                listOf(
+                    albumRange(0, 0),
+                    repository.songEntry(1, "s4"),
+                    albumRange(1, 2),
+                ),
+            )
+            assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 1)
+
+            val compacted = repository.snapshot()
+            assertEquals(1, compacted.entries.size)
+            assertEquals(listOf("s1", "s2", "s3"), resolveAll(compacted))
+        }
+
+    @Test
+    fun rangesSeparatedByAGapAreNotMerged() =
+        runTest {
+            seedLibrary()
+            repository.replace(
+                listOf(
+                    albumRange(0, 0),
+                    repository.songEntry(1, "s4"),
+                    albumRange(2, 2),
+                ),
+            )
+            assertEquals(listOf("s1", "s4", "s3"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 1)
+
+            val kept = repository.snapshot()
+            assertEquals(2, kept.entries.size)
+            assertEquals(listOf("s1", "s3"), resolveAll(kept))
+        }
+
+    @Test
+    fun movingATrackOutAndBackCompactsTheQueue() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
+
+            repository.move(repository.snapshot(), from = 3, to = 1)
+            assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+
+            repository.move(repository.snapshot(), from = 1, to = 3)
+
+            val compacted = repository.snapshot()
+            assertEquals(listOf("s1", "s2", "s3", "s4"), resolveAll(compacted))
+            assertEquals(2, compacted.entries.size)
+        }
+
+    @Test
+    fun resolvedLengthsSurviveQueueEditsUntilTheLibraryIsInvalidated() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s5")))
+            assertEquals(4, repository.snapshot().size)
+
+            repository.removeAt(repository.snapshot(), 3)
+            assertEquals(3, repository.snapshot().size)
+
+            db.libraryDao().upsertSongs(listOf(song("s6", "al1", track = 4, album = "First Album")))
+            assertEquals(3, repository.snapshot().size)
+
+            repository.invalidateLibraryCache()
+            assertEquals(4, repository.snapshot().size)
+        }
+
+    private fun albumRange(
+        start: Long,
+        end: Long,
+    ) = QueueEntry(position = 0, sourceId = 1, kind = QueueKind.Album, refId = "al1", rangeStart = start, rangeEnd = end)
+
     private suspend fun QueueRepository.snapshotAfter(entries: List<QueueEntry>): QueueSnapshot {
         replace(entries)
         return snapshot()
@@ -316,6 +394,7 @@ class QueueRepositoryTest {
             assertTrue(repository.snapshot().shuffled)
 
             db.libraryDao().upsertSongs(listOf(song("s6", "al1", track = 4, album = "First Album")))
+            repository.invalidateLibraryCache()
 
             assertFalse(repository.snapshot().shuffled)
         }
