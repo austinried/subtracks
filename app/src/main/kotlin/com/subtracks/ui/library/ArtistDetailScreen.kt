@@ -172,7 +172,7 @@ fun ArtistDetailScreen(
             if (index <= 0) {
                 offset
             } else {
-                imageHeightPx + (albumHeightPx + albumRowGapPx) * ((index - 1) / 2) + offset
+                imageHeightPx + albumRowGapPx + (albumHeightPx + albumRowGapPx) * ((index - 1) / 2) + offset
             }
         }
     }
@@ -195,10 +195,11 @@ fun ArtistDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
-                val barColor = heroBarColor(effectiveArtwork, scrollPx, barHeightPx, screenHeightPx)
+                val gradientScrollPx = scrollPx - imageHeightPx
+                val barColor = heroBarColor(effectiveArtwork, gradientScrollPx, barHeightPx, screenHeightPx)
                 HeroGradient(
                     colors = effectiveArtwork,
-                    scrollPx = { scrollPx - imageHeightPx },
+                    scrollPx = { gradientScrollPx },
                     modifier = Modifier.fillMaxSize(),
                 )
                 LazyVerticalGrid(
