@@ -111,7 +111,7 @@ class Media3PlayerHandle(
                         "Playback error ${error.errorCodeName} at ${controller.currentPosition}/${controller.duration}",
                         error,
                     )
-                    listener.onError(error.errorCodeName)
+                    listener.onError(playbackErrorMessage(error))
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
@@ -171,3 +171,14 @@ class Media3PlayerHandle(
         const val EXTRA_DURATION_MS = "durationMs"
     }
 }
+
+internal fun playbackErrorMessage(error: PlaybackException): String =
+    when (error.errorCode) {
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+        -> "Can't reach the server. Check your connection."
+
+        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "The server refused to stream this track."
+
+        else -> error.errorCodeName
+    }

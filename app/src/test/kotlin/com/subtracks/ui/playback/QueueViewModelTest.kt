@@ -51,7 +51,7 @@ class QueueViewModelTest {
                 .build()
         val sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
         queues = QueueRepository(db)
-        controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), dispatcher)
+        controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), dispatcher = dispatcher)
         viewModel = QueueViewModel(queues, controller)
     }
 

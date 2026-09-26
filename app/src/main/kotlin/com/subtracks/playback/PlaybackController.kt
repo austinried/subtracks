@@ -98,6 +98,7 @@ class PlaybackController(
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
     private val connection: PlayerConnection,
+    private val showMessage: (String) -> Unit = {},
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -870,6 +871,7 @@ class PlaybackController(
 
             override fun onError(message: String) {
                 lastError = message
+                showMessage(message)
                 refresh()
             }
         }

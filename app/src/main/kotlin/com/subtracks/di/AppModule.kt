@@ -45,7 +45,7 @@ fun appModule(
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }
-    single { PlaybackController(get(), get(), get()) }
+    single { PlaybackController(get(), get(), get(), showMessage = toast) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get()) }

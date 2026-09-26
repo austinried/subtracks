@@ -1,6 +1,7 @@
 package com.subtracks.playback
 
 import android.content.Context
+import androidx.media3.common.PlaybackException
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -45,6 +46,7 @@ class PlaybackControllerTest {
     private lateinit var queues: QueueRepository
     private lateinit var handle: FakePlayerHandle
     private lateinit var controller: PlaybackController
+    private val messages = CopyOnWriteArrayList<String>()
 
     @Before
     fun setUp() {
@@ -59,7 +61,8 @@ class PlaybackControllerTest {
         sources = SourceRepository(db, OkHttpClient(), prefs, networkMode = networkMode)
         queues = QueueRepository(db)
         handle = FakePlayerHandle()
-        controller = PlaybackController(sources, queues, FakePlayerConnection(handle), dispatcher = dispatcher)
+        controller =
+            PlaybackController(sources, queues, FakePlayerConnection(handle), showMessage = { messages += it }, dispatcher = dispatcher)
     }
 
     @After
@@ -297,6 +300,29 @@ class PlaybackControllerTest {
         }
 
         assertEquals(null, controller.state.value.error)
+    }
+
+    @Test
+    fun playbackErrorsAreShownAsAToast() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await { handle.operations.contains("play") }
+
+        handle.fail("Can't reach the server. Check your connection.")
+        await { messages.isNotEmpty() }
+
+        assertEquals(listOf("Can't reach the server. Check your connection."), messages.toList())
+    }
+
+    @Test
+    fun networkErrorsAreReportedWithAFriendlyMessage() {
+        val failed = PlaybackException("net", null, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
+        val timeout = PlaybackException("net", null, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+        val refused = PlaybackException("http", null, PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS)
+
+        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(failed))
+        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(timeout))
+        assertEquals("The server refused to stream this track.", playbackErrorMessage(refused))
     }
 
     @Test
