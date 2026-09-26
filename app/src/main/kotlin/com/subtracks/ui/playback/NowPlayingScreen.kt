@@ -319,14 +319,6 @@ fun NowPlayingScreen(
                             Text(formatTime(positionMs), style = MaterialTheme.typography.bodySmall)
                             Text(formatTime(state.durationMs), style = MaterialTheme.typography.bodySmall)
                         }
-                        if (state.error != null) {
-                            Text(
-                                text = state.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
-                        }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
