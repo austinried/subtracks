@@ -5,9 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.annotation.OptIn
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -20,6 +20,7 @@ import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 private const val ARTWORK_SIZE = 512
@@ -46,7 +47,11 @@ class CoverArtBitmapLoader(
 ) : BitmapLoader {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    override fun supportsMimeType(mimeType: String): Boolean = mimeType.startsWith("image/")
+    override fun supportsMimeType(mimeType: String): Boolean = Util.isBitmapFactorySupportedMimeType(mimeType)
+
+    fun shutdown() {
+        scope.cancel()
+    }
 
     override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> {
         val coverArtId =
@@ -80,19 +85,20 @@ class CoverArtBitmapLoader(
         return future
     }
 
-    override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap> {
-        metadata.artworkData?.let { return decodeBitmap(it) }
-        metadata.artworkUri?.let { return loadBitmap(it) }
-        return Futures.immediateFailedFuture(IllegalArgumentException("Artwork has no data or URI"))
-    }
-
-    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> =
-        try {
-            BitmapFactory
-                .decodeByteArray(data, 0, data.size)
-                ?.let { Futures.immediateFuture(it) }
-                ?: Futures.immediateFailedFuture(IllegalArgumentException("Could not decode artwork"))
-        } catch (e: Exception) {
-            Futures.immediateFailedFuture(e)
+    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> {
+        val future = SettableFuture.create<Bitmap>()
+        scope.launch {
+            try {
+                val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
+                if (bitmap == null) {
+                    future.setException(IllegalArgumentException("Could not decode artwork"))
+                } else {
+                    future.set(bitmap)
+                }
+            } catch (e: Exception) {
+                future.setException(e)
+            }
         }
+        return future
+    }
 }

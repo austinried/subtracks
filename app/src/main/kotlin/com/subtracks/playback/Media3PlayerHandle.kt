@@ -132,7 +132,7 @@ class Media3PlayerHandle(
                 .setTitle(item.title)
                 .setArtist(item.artist)
                 .setAlbumTitle(item.album)
-                .setArtworkUri(item.coverArtId?.let(CoverArtArtwork::uri))
+                .setArtworkUri(item.coverArtId?.takeIf { it.isNotEmpty() }?.let(CoverArtArtwork::uri))
                 .setIsBrowsable(false)
                 .setIsPlayable(true)
                 .setExtras(

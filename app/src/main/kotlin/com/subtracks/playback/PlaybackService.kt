@@ -21,6 +21,7 @@ import org.koin.core.context.GlobalContext
 
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
+    private var artworkLoader: CoverArtBitmapLoader? = null
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -39,6 +40,13 @@ class PlaybackService : MediaSessionService() {
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(this).setDataSourceFactory(OkHttpDataSource.Factory(streamingClient())),
                 ).build()
+        val loader =
+            CoverArtBitmapLoader(
+                applicationContext,
+                GlobalContext.get().get<SourceRepository>(),
+                SingletonImageLoader.get(this),
+            )
+        artworkLoader = loader
         session =
             MediaSession
                 .Builder(this, player)
@@ -49,13 +57,8 @@ class PlaybackService : MediaSessionService() {
                         Intent(this, MainActivity::class.java),
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     ),
-                ).setBitmapLoader(
-                    CoverArtBitmapLoader(
-                        this,
-                        GlobalContext.get().get<SourceRepository>(),
-                        SingletonImageLoader.get(this),
-                    ),
-                ).build()
+                ).setBitmapLoader(loader)
+                .build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
@@ -85,6 +88,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        artworkLoader?.shutdown()
+        artworkLoader = null
         session?.run {
             player.release()
             release()
