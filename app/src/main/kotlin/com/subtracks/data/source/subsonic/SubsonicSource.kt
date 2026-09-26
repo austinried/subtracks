@@ -136,8 +136,6 @@ class SubsonicSource(
             "stream",
             buildMap {
                 put("id", songId)
-                val transcodes = maxBitrate > 0 || !streamFormat.isNullOrEmpty()
-                if (transcodes) put("estimateContentLength", "true")
                 if (maxBitrate > 0) put("maxBitRate", maxBitrate.toString())
                 streamFormat?.takeIf { it.isNotEmpty() }?.let { put("format", it) }
             },

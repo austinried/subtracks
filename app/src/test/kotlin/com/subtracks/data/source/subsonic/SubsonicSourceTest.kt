@@ -416,7 +416,7 @@ class SubsonicSourceTest {
         val uri = SubsonicSource(1, client(), maxBitrate = 128).streamUri("s1").toString()
 
         assertTrue(uri, uri.contains("maxBitRate=128"))
-        assertTrue(uri, uri.contains("estimateContentLength=true"))
+        assertFalse(uri, uri.contains("estimateContentLength"))
     }
 
     @Test
@@ -433,7 +433,7 @@ class SubsonicSourceTest {
         val uri = SubsonicSource(1, client(), streamFormat = "opus").streamUri("s1").toString()
 
         assertTrue(uri, uri.contains("format=opus"))
-        assertTrue(uri, uri.contains("estimateContentLength=true"))
+        assertFalse(uri, uri.contains("estimateContentLength"))
     }
 
     private fun client() =
