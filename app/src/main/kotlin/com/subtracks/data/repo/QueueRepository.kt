@@ -378,6 +378,10 @@ class QueueRepository(
         return Reanchored(play, true)
     }
 
+    suspend fun clearUpNext() {
+        writeUpNext(emptyList())
+    }
+
     suspend fun removeUpNextAt(
         snapshot: QueueSnapshot,
         index: Long,

@@ -346,7 +346,19 @@ class PlaybackController(
                 }
             if (snapshot.upNextSize > 0L || updated.upNextSize > 0L) {
                 queueRepository.setCursor(target)
-                loadWindow(target, autoplay = playing, startPositionMs = if (position == current) 0 else player.currentPositionMs)
+                if (position != current) {
+                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
+                    refresh(target)
+                } else if (target - windowStart in 0 until player.itemCount) {
+                    updating = true
+                    player.removeAt((target - windowStart).toInt())
+                    updating = false
+                    windowEnd--
+                    shiftWindowLocked(target)
+                    refresh(target)
+                } else {
+                    loadWindow(target, autoplay = playing)
+                }
                 return@withLock
             }
             when {
@@ -389,7 +401,8 @@ class PlaybackController(
         val entries = snapshot.entries.map { it.entry }
         val upNext = snapshot.upNext.map { it.entry }
         if (!queueRepository.move(snapshot, from, to)) return@withLock
-        this.snapshot = readSnapshot()
+        val updated = readSnapshot()
+        this.snapshot = updated
         val target = movedCursor(current, from, to)
         lastPosition = target
         windowJob?.cancel()
@@ -425,7 +438,7 @@ class PlaybackController(
             }
 
             else -> {
-                loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
+                rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
             }
         }
         shiftWindowLocked(target)
@@ -566,6 +579,34 @@ class PlaybackController(
                 loadWindow(next, autoplay = true)
             }
         }
+
+    fun clearUpNext() {
+        scope.launch {
+            startLock.withLock {
+                val snapshot = snapshot ?: return@withLock
+                if (snapshot.upNextSize == 0L) return@withLock
+                player ?: return@withLock
+                val current = currentPosition() ?: return@withLock
+                val wasUpNext = snapshot.isUpNext(current)
+                queueRepository.clearUpNext()
+                val updated = readSnapshot()
+                this@PlaybackController.snapshot = updated
+                layoutVersion++
+                windowJob?.cancel()
+                endedHandled = false
+                val contextPlay = if (wasUpNext) snapshot.anchorPlay + 1 else snapshot.contextPlay(current)
+                val target = contextPlay.coerceIn(0, (updated.size - 1).coerceAtLeast(0))
+                queueRepository.setCursor(target)
+                lastPosition = target
+                if (wasUpNext) {
+                    loadWindow(target, autoplay = true)
+                } else {
+                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
+                    refresh(target)
+                }
+            }
+        }
+    }
 
     fun previous() {
         val player = player ?: return

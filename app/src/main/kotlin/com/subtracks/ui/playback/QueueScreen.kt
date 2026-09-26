@@ -299,6 +299,7 @@ fun QueueRoute(
         currentSongId = playback.item?.id,
         shuffle = playback.shuffle,
         contextTitle = sourceTitle.value,
+        onClearUpNext = controller::clearUpNext,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
         onPlay = viewModel::play,
@@ -332,6 +333,7 @@ fun QueueScreen(
     generation: Int = 0,
     shuffle: Boolean = false,
     contextTitle: String? = null,
+    onClearUpNext: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -403,7 +405,10 @@ fun QueueScreen(
                     rows.forEachIndexed { index, row ->
                         if (index == 0 || rows[index - 1].upNext != row.upNext) {
                             item(key = "header-$index") {
-                                QueueSectionHeader(if (row.upNext) "Up next" else contextTitle ?: "Next up")
+                                QueueSectionHeader(
+                                    label = if (row.upNext) "Up next" else contextTitle ?: "Next up",
+                                    onClear = if (row.upNext) onClearUpNext else null,
+                                )
                             }
                         }
                         val enabled = row.upNext || !shuffle
@@ -471,13 +476,26 @@ fun QueueScreen(
 }
 
 @Composable
-private fun QueueSectionHeader(label: String) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
+private fun QueueSectionHeader(
+    label: String,
+    onClear: (() -> Unit)? = null,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 4.dp, bottom = 4.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f),
+        )
+        if (onClear != null) {
+            IconButton(onClick = onClear) {
+                Icon(Icons.Rounded.Close, contentDescription = "Clear up next", modifier = Modifier.size(20.dp))
+            }
+        }
+    }
 }
 
 private fun List<QueueRow>.rowIndexOf(key: Any?): Int {

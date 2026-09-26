@@ -852,6 +852,81 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun clearingTheQueueResumesTheContext() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.clearUpNext()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertTrue(runBlocking { queues.snapshot().upNext }.isEmpty())
+    }
+
+    @Test
+    fun clearingTheQueueWhileOnTheContextKeepsPlaying() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.clearUpNext()
+        Thread.sleep(200)
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertTrue(runBlocking { queues.snapshot().upNext }.isEmpty())
+    }
+
+    @Test
+    fun movingAFarQueuedTrackDoesNotReloadTheWindow() {
+        seedAlbum(3, sourceId = 1)
+        seedAlbumTracks("al2", 60)
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Album, "al2")
+        await { runBlocking { controller.upcomingItem()?.id } == "al2-b1" }
+
+        handle.operations.clear()
+        runBlocking { controller.move(50, 2) }
+        Thread.sleep(300)
+
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")
@@ -1834,6 +1909,32 @@ class PlaybackControllerTest {
                         artistId = "ar1",
                         title = "Song $track",
                         album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = track.toLong(),
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    )
+                },
+            )
+        }
+    }
+
+    private fun seedAlbumTracks(
+        albumId: String,
+        count: Int,
+    ) {
+        runBlocking {
+            db.libraryDao().upsertSongs(
+                (1..count).map { track ->
+                    Song(
+                        sourceId = 1,
+                        id = "$albumId-b$track",
+                        albumId = albumId,
+                        artistId = "ar1",
+                        title = "Album $albumId track $track",
+                        album = "Album $albumId",
                         artist = "Artist",
                         duration = 100,
                         track = track.toLong(),
