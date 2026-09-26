@@ -80,6 +80,11 @@ fun AlbumDetailRoute(
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
         onMore = { album?.let { contextMenuHost?.show(MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true)), actions) } },
+        onArtistClick =
+            album
+                ?.takeIf { !it.albumArtist.isNullOrBlank() }
+                ?.let { it.artistId }
+                ?.let { id -> { onViewArtist(id) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
 }
@@ -98,6 +103,7 @@ fun AlbumDetailScreen(
     onPlay: () -> Unit = { onSongClick(0) },
     onDownload: () -> Unit = {},
     onMore: () -> Unit = {},
+    onArtistClick: (() -> Unit)? = null,
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -124,15 +130,17 @@ fun AlbumDetailScreen(
         title = album?.name.orEmpty(),
         onBack = onBack,
         header = { controlsModifier, topInset ->
+            val artistName = album?.albumArtist?.takeIf { it.isNotBlank() }
             HeroHeader(
                 art = coverArt(album?.coverArt, false),
                 thumbnailRef = coverArt(album?.coverArt, true),
                 name = album?.name.orEmpty(),
                 subtitle =
                     listOfNotNull(
-                        album?.albumArtist?.takeIf { it.isNotBlank() },
+                        artistName,
                         album?.year?.takeIf { it > 0 }?.toString(),
                     ).joinToString(" $DOT "),
+                onSubtitleClick = onArtistClick,
                 hasSongs = songs.isNotEmpty(),
                 onPlay = onPlay,
                 onShuffle = onShuffle,

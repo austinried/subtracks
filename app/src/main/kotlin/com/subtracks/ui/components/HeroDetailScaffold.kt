@@ -201,6 +201,7 @@ fun HeroHeader(
     controlsModifier: Modifier = Modifier,
     thumbnailRef: CoverArtRef? = null,
     comment: String? = null,
+    onSubtitleClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -235,6 +236,7 @@ fun HeroHeader(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                modifier = if (onSubtitleClick != null) Modifier.clickable { onSubtitleClick() } else Modifier,
             )
         }
         if (!comment.isNullOrBlank()) {

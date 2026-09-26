@@ -3,6 +3,7 @@ package com.subtracks.ui.playback
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -79,6 +81,8 @@ import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
+
+const val NOW_PLAYING_COVER_TAG = "now-playing-cover"
 
 @Composable
 fun NowPlayingRoute(
@@ -139,6 +143,8 @@ fun NowPlayingRoute(
         onShuffle = controller::toggleShuffle,
         onRepeat = controller::cycleRepeat,
         onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail), actions) } },
+        onAlbumClick = song?.albumId?.let { id -> { onViewAlbum(id) } },
+        onArtistClick = song?.artistId?.let { id -> { onViewArtist(id) } },
         onSeek = controller::seekTo,
         modifier = modifier,
     )
@@ -182,6 +188,8 @@ fun NowPlayingScreen(
     onShuffle: () -> Unit = {},
     onRepeat: () -> Unit = {},
     onMore: () -> Unit = {},
+    onAlbumClick: (() -> Unit)? = null,
+    onArtistClick: (() -> Unit)? = null,
     onSeek: (Long) -> Unit,
     thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
@@ -247,7 +255,13 @@ fun NowPlayingScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Box(
-                            modifier = Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .padding(top = 2.dp)
+                                    .clickable(enabled = onAlbumClick != null) { onAlbumClick?.invoke() }
+                                    .testTag(NOW_PLAYING_COVER_TAG),
                             contentAlignment = Alignment.Center,
                         ) {
                             CoverArt(
@@ -286,7 +300,13 @@ fun NowPlayingScreen(
                                     modifier = Modifier.basicMarquee(),
                                 )
                             }
-                            Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .height(subtitleHeight)
+                                        .clickable(enabled = onArtistClick != null) { onArtistClick?.invoke() },
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 Text(
                                     text = state.item?.artist.orEmpty(),
                                     style = subtitleStyle,

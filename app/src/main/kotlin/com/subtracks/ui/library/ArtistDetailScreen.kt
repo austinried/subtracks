@@ -270,7 +270,9 @@ fun ArtistDetailScreen(
                         }
                     }
                     itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
-                        PrefetchArtworkSeeds(coverArt(album.coverArt, true))
+                        val art = coverArt(album.coverArt, false)
+                        val thumbnail = coverArt(album.coverArt, true)
+                        PrefetchArtworkSeeds(thumbnail)
                         Column(
                             modifier =
                                 Modifier
@@ -279,14 +281,15 @@ fun ArtistDetailScreen(
                                         end = if (index % 2 == 1) 16.dp else 0.dp,
                                     ).combinedClickable(
                                         onClick = { onAlbumClick(album) },
-                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, coverArt(album.coverArt, true))) },
+                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, thumbnail)) },
                                     ).onSizeChanged { albumHeightPx = it.height.toFloat() },
                         ) {
                             Box {
                                 CoverArt(
-                                    ref = coverArt(album.coverArt, false),
+                                    ref = art,
                                     name = album.name,
-                                    thumbnailRef = coverArt(album.coverArt, true),
+                                    thumbnailRef = thumbnail,
+                                    showPlaceholder = art == null,
                                     modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
                                 )
                                 StarredBadge(
