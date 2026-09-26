@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -161,17 +162,16 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun restoringMarksTheStateUntilPlaybackStarts() {
+    fun theReadyStateResolvesWithTheRestoredItemAlreadyInPlace() {
         seedAlbum(5, sourceId = 1)
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
+        assertFalse(controller.ready.value)
+
         controller.connect()
-        await { handle.items.isNotEmpty() }
+        await { controller.ready.value }
 
-        assertTrue(controller.state.value.restored)
-
-        controller.playAlbum(1, "al1", 0)
-        await { !controller.state.value.restored }
+        assertNotNull("the mini player must be drawable once ready", controller.state.value.item)
     }
 
     @Test

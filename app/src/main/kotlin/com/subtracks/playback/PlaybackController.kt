@@ -52,7 +52,6 @@ data class PlaybackState(
     val hasPrevious: Boolean = false,
     val shuffle: Boolean = false,
     val repeat: RepeatMode = RepeatMode.Off,
-    val restored: Boolean = false,
 )
 
 private sealed interface QueueUndo {
@@ -128,7 +127,6 @@ class PlaybackController(
     private var repeatMode = RepeatMode.Off
     private var endedHandled = false
     private var lastSavedPositionMs = 0L
-    private var restored = false
 
     init {
         scope.launch {
@@ -152,6 +150,9 @@ class PlaybackController(
         scope.cancel()
     }
 
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready
+
     fun connect() {
         if (player != null || connecting) return
         connecting = true
@@ -170,12 +171,14 @@ class PlaybackController(
                         shuffle != null -> startShuffled(shuffle)
                         else -> restore()
                     }
+                    _ready.value = true
                 }
             },
             onDisconnected = {
                 player = null
                 connecting = false
                 scope.launch { stop() }
+                _ready.value = true
             },
         )
     }
@@ -228,7 +231,6 @@ class PlaybackController(
             windowEnd = -1
             lastEdit = null
             endedHandled = false
-            restored = false
             val previous = snapshot
             val previousEntry = previous?.entries?.firstOrNull()?.entry
             val same = previousEntry != null && previousEntry.kind == entry.kind && previousEntry.refId == entry.refId
@@ -604,7 +606,6 @@ class PlaybackController(
         windowEnd = -1
         lastEdit = null
         endedHandled = false
-        restored = false
         val modes = queueRepository.modes()
         shuffleEnabled = !disableShuffle && modes.shuffle
         repeatMode = modes.repeat.toRepeatMode()
@@ -665,7 +666,6 @@ class PlaybackController(
             this.queueSourceId = queueSourceId
             val position = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
             lastSavedPositionMs = queueRepository.cursorPositionMs().coerceAtLeast(0)
-            restored = true
             loadWindow(position, autoplay = false, startPositionMs = lastSavedPositionMs)
         }
 
@@ -681,7 +681,6 @@ class PlaybackController(
         windowStart = 0
         windowEnd = -1
         lastEdit = null
-        restored = false
         player?.run {
             stop()
             clear()
@@ -943,7 +942,6 @@ class PlaybackController(
                 hasPrevious = true,
                 shuffle = shuffleEnabled,
                 repeat = repeatMode,
-                restored = restored,
             )
         if (player.isPlaying) startPositionTicker() else stopPositionTicker()
     }

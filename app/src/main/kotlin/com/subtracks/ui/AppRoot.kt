@@ -4,11 +4,8 @@ import android.net.Uri
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -143,9 +140,20 @@ internal fun focusPops(
 @Composable
 fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
-        null -> LoadingState()
-        false -> AddSourceRoute(onSaved = {}, onBack = null)
-        true -> MainNavigation()
+        null -> {
+            LoadingState()
+        }
+
+        false -> {
+            AddSourceRoute(onSaved = {}, onBack = null)
+        }
+
+        true -> {
+            val playbackController = koinInject<PlaybackController>()
+            LaunchedEffect(Unit) { playbackController.connect() }
+            val playbackReady by playbackController.ready.collectAsStateWithLifecycle()
+            if (playbackReady) MainNavigation() else LoadingState()
+        }
     }
 }
 
@@ -219,7 +227,6 @@ private fun MainNavigation() {
             else -> repeat(pops) { navController.popBackStack() }
         }
     }
-    LaunchedEffect(Unit) { playbackController.connect() }
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
     val playerVisible = playback.item != null
@@ -236,7 +243,7 @@ private fun MainNavigation() {
     val showMiniPlayer = playerVisible && !keyboardUp
     val bottomInset by animateDpAsState(
         targetValue = if (showMiniPlayer) 0.dp else navBarInset,
-        animationSpec = if (playback.restored) snap() else tween(MINI_PLAYER_ANIM_MS),
+        animationSpec = tween(MINI_PLAYER_ANIM_MS),
         label = "libraryBottomInset",
     )
 
@@ -379,18 +386,8 @@ private fun MainNavigation() {
 
                 AnimatedVisibility(
                     visible = showMiniPlayer,
-                    enter =
-                        if (playback.restored) {
-                            EnterTransition.None
-                        } else {
-                            expandVertically(tween(MINI_PLAYER_ANIM_MS), expandFrom = Alignment.Bottom)
-                        },
-                    exit =
-                        if (playback.restored) {
-                            ExitTransition.None
-                        } else {
-                            shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom)
-                        },
+                    enter = expandVertically(tween(MINI_PLAYER_ANIM_MS), expandFrom = Alignment.Bottom),
+                    exit = shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom),
                 ) {
                     val positionMs by playbackController.positionMs.collectAsStateWithLifecycle()
                     val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
