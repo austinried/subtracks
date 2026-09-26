@@ -86,10 +86,11 @@ class SourceRepository(
 
     fun streamUri(
         songId: String,
-        durationMs: Long? = null,
+        durationMs: Long?,
+        quality: StreamQuality,
     ): String? {
         val uri = active?.streamUri(songId)?.toString() ?: return null
-        val length = declaredStreamLength(durationMs, quality.value) ?: return uri
+        val length = declaredStreamLength(durationMs, quality) ?: return uri
         return uri + streamLengthSuffix(length)
     }
 

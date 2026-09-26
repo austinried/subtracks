@@ -281,28 +281,6 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun playbackFailuresAreSurfacedUntilTheNextTrack() {
-        seedAlbum(3, sourceId = 1)
-
-        controller.playAlbum(1, "al1", 0)
-        await {
-            controller.state.value.item
-                ?.id == "s1"
-        }
-
-        handle.fail("ERROR_CODE_IO_UNSPECIFIED")
-        await { controller.state.value.error == "ERROR_CODE_IO_UNSPECIFIED" }
-
-        handle.advanceTo(handle.currentIndex + 1)
-        await {
-            controller.state.value.item
-                ?.id == "s2"
-        }
-
-        assertEquals(null, controller.state.value.error)
-    }
-
-    @Test
     fun playbackErrorsAreShownAsAToast() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 0)

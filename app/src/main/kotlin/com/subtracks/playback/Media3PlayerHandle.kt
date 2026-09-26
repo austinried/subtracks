@@ -143,13 +143,14 @@ class Media3PlayerHandle(
                         item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
                     },
                 ).build()
+        val quality = sourceRepository.quality.value
         val builder =
             MediaItem
                 .Builder()
                 .setMediaId(item.id)
-                .setUri(sourceRepository.streamUri(item.id, item.durationMs))
+                .setUri(sourceRepository.streamUri(item.id, item.durationMs, quality))
                 .setMediaMetadata(metadata)
-        if (sourceRepository.quality.value.transcodes) {
+        if (quality.transcodes) {
             item.durationMs?.takeIf { it > 0 }?.let { duration ->
                 builder.setClippingConfiguration(
                     ClippingConfiguration.Builder().setEndPositionMs(duration).build(),

@@ -7,8 +7,6 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.ForwardingPlayer
-import androidx.media3.common.Player
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -47,7 +45,6 @@ class PlaybackService : MediaSessionService() {
                             KnownLengthDataSourceFactory(OkHttpDataSource.Factory(streamingClient())),
                         ),
                 ).build()
-        val player = MetadataDurationPlayer(exoPlayer)
         val loader =
             CoverArtBitmapLoader(
                 applicationContext,
@@ -57,7 +54,7 @@ class PlaybackService : MediaSessionService() {
         artworkLoader = loader
         session =
             MediaSession
-                .Builder(this, player)
+                .Builder(this, exoPlayer)
                 .setSessionActivity(
                     PendingIntent.getActivity(
                         this,
@@ -105,11 +102,4 @@ class PlaybackService : MediaSessionService() {
         session = null
         super.onDestroy()
     }
-}
-
-@OptIn(UnstableApi::class)
-private class MetadataDurationPlayer(
-    player: Player,
-) : ForwardingPlayer(player) {
-    override fun getDuration(): Long = currentMediaItem?.mediaMetadata?.durationMs?.takeIf { it > 0 } ?: super.getDuration()
 }

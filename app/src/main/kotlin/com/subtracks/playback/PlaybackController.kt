@@ -45,7 +45,6 @@ data class PlaybackState(
     val item: QueueItem? = null,
     val context: QueueContext? = null,
     val position: Long? = null,
-    val error: String? = null,
     val isBuffering: Boolean = false,
     val isPlaying: Boolean = false,
     val durationMs: Long = 0,
@@ -119,7 +118,6 @@ class PlaybackController(
     private val startLock = Mutex()
 
     private var snapshot: QueueSnapshot? = null
-    private var lastError: String? = null
     private var queueSourceId: Long? = null
     private var windowStart = 0L
     private var windowEnd = -1L
@@ -226,7 +224,6 @@ class PlaybackController(
             windowJob?.cancel()
             windowStart = 0
             windowEnd = -1
-            lastError = null
             lastEdit = null
             endedHandled = false
             val previous = snapshot
@@ -602,7 +599,6 @@ class PlaybackController(
         windowJob?.cancel()
         windowStart = 0
         windowEnd = -1
-        lastError = null
         lastEdit = null
         endedHandled = false
         val modes = queueRepository.modes()
@@ -676,7 +672,6 @@ class PlaybackController(
         bufferingJob = null
         showBuffering = false
         snapshot = null
-        lastError = null
         queueSourceId = null
         windowStart = 0
         windowEnd = -1
@@ -858,7 +853,6 @@ class PlaybackController(
     private val playerListener =
         object : PlayerHandle.Listener {
             override fun onTransition() {
-                lastError = null
                 endedHandled = false
                 if (updating) return
                 scope.launch { onPositionChanged() }
@@ -870,7 +864,6 @@ class PlaybackController(
             }
 
             override fun onError(message: String) {
-                lastError = message
                 showMessage(message)
                 refresh()
             }
@@ -939,7 +932,6 @@ class PlaybackController(
                 item = player.currentItem,
                 context = contextAt(position),
                 position = position,
-                error = lastError,
                 isBuffering = showBuffering,
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
                 durationMs = durationMs,

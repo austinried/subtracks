@@ -27,9 +27,16 @@ class StreamLengthTest {
 
     @Test
     fun aTinyBitrateStillClearsTheEncodersFloor() {
-        val length = declaredStreamLength(180_000, StreamQuality(24, "mp3"))!!
+        assertEquals(2_062_144L, declaredStreamLength(180_000, StreamQuality(24, "mp3")))
+    }
 
-        assertTrue(length >= 180 * 32_000 / 8)
+    @Test
+    fun losslessFormatsIgnoreTheBitrateAndAllowForTheLargestStream() {
+        val cdQuality = declaredStreamLength(320_000, StreamQuality(64, "flac"))!!
+        val highBitrate = declaredStreamLength(320_000, StreamQuality(320, "flac"))!!
+
+        assertEquals(cdQuality, highBitrate)
+        assertTrue(cdQuality >= 320 * 1_411_200 / 8)
     }
 
     @Test

@@ -15,6 +15,7 @@ internal class KnownLengthDataSource(
     override fun open(dataSpec: DataSpec): Long {
         val length = delegate.open(dataSpec)
         if (length != C.LENGTH_UNSET.toLong()) return length
+        if (dataSpec.length != C.LENGTH_UNSET.toLong()) return dataSpec.length
         val declared = declaredLengthFromFragment(dataSpec.uri.fragment) ?: return length
         return (declared - dataSpec.position).coerceAtLeast(0)
     }
