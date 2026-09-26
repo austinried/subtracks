@@ -104,9 +104,6 @@ interface LibraryDao {
         limit: Int,
     ): List<String>
 
-    @Query("SELECT id FROM songs WHERE sourceId = :sourceId")
-    suspend fun songIds(sourceId: Long): List<String>
-
     @Query("SELECT id FROM songs WHERE sourceId = :sourceId AND id > :afterId ORDER BY id LIMIT :limit")
     suspend fun songIdsAfter(
         sourceId: Long,

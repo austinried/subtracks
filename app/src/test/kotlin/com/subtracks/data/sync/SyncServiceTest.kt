@@ -69,7 +69,7 @@ class SyncServiceTest {
                     .allRows()
                     .size,
             )
-            assertEquals(2, db.libraryDao().songIds(1).size)
+            assertEquals(2, songIds(1).size)
             assertEquals(
                 1,
                 db
@@ -92,7 +92,7 @@ class SyncServiceTest {
                     .allRows()
                     .map { it.id },
             )
-            assertEquals(listOf("s1"), db.libraryDao().songIds(1))
+            assertEquals(listOf("s1"), songIds(1))
         }
 
     @Test
@@ -113,7 +113,7 @@ class SyncServiceTest {
 
             assertEquals(2, db.libraryDao().artistIds(1).size)
             assertEquals(1, db.libraryDao().albumIds(1).size)
-            assertEquals(1, db.libraryDao().songIds(1).size)
+            assertEquals(1, songIds(1).size)
             assertEquals(1, db.libraryDao().playlistIds(1).size)
             assertEquals(
                 1,
@@ -298,7 +298,7 @@ class SyncServiceTest {
             SyncService(db, source).sync()
 
             assertEquals((1..5).map { "a$it" }, db.libraryDao().artistIds(1).sorted())
-            assertEquals((1..5).map { "s$it" }, db.libraryDao().songIds(1).sorted())
+            assertEquals((1..5).map { "s$it" }, songIds(1).sorted())
 
             source.artists = (1..3).map { artist("a$it") }
             source.songs = (1..3).map { song("s$it") }
@@ -306,7 +306,7 @@ class SyncServiceTest {
             SyncService(db, source).sync()
 
             assertEquals((1..3).map { "a$it" }, db.libraryDao().artistIds(1).sorted())
-            assertEquals((1..3).map { "s$it" }, db.libraryDao().songIds(1).sorted())
+            assertEquals((1..3).map { "s$it" }, songIds(1).sorted())
         }
 
     @Test
@@ -485,7 +485,7 @@ class SyncServiceTest {
             SyncService(db, sourceOne).sync()
 
             assertEquals(listOf("b1"), db.libraryDao().artistIds(2))
-            assertEquals(listOf("s2"), db.libraryDao().songIds(2))
+            assertEquals(listOf("s2"), songIds(2))
             assertEquals(listOf("p2"), db.libraryDao().playlistIds(2))
             assertEquals(
                 1,
@@ -586,6 +586,11 @@ class SyncServiceTest {
                 statement.getLong(0)
             }
         }
+
+    private suspend fun songIds(sourceId: Long): List<String> =
+        db
+            .libraryDao()
+            .songIdsAfter(sourceId, "", Int.MAX_VALUE)
 
     private suspend fun storedDiscKeys(): List<DiscKey> =
         db

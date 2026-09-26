@@ -46,7 +46,7 @@ fun appModule(
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }
     single { PlaybackController(get(), get(), get()) }
     viewModel { RootViewModel(get()) }
-    viewModel { LibraryViewModel(get(), get(), get(), get()) }
+    viewModel { LibraryViewModel(get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }

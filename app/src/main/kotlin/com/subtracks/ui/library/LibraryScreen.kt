@@ -186,14 +186,16 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
-    var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
+    var selectedTabName by rememberSaveable { mutableStateOf(LibraryTab.Albums.name) }
+    var previousTabName by rememberSaveable { mutableStateOf(LibraryTab.Albums.name) }
+    val selectedTab = LibraryTab.entries.firstOrNull { it.name == selectedTabName } ?: LibraryTab.Albums
+    val previousTab = LibraryTab.entries.firstOrNull { it.name == previousTabName } ?: LibraryTab.Albums
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
     LaunchedEffect(selectedTab) {
         if (previousTab != selectedTab) {
             viewModel.setSearch(previousTab.listTab(), "")
-            previousTab = selectedTab
+            previousTabName = selectedTab.name
         }
     }
     val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
@@ -208,7 +210,6 @@ fun LibraryRoute(
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
     val itemActions =
         ItemActions(
-            playSong = { viewModel.playSong(it.id) },
             playAlbum = { viewModel.playAlbum(it.id) },
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playPlaylist = { viewModel.playPlaylist(it.id) },
@@ -219,7 +220,7 @@ fun LibraryRoute(
         )
     LibraryScreen(
         selectedTab = selectedTab,
-        onTabSelected = { selectedTab = it },
+        onTabSelected = { selectedTabName = it.name },
         syncing = syncing,
         bottomInset = bottomInset,
         artwork = artwork,

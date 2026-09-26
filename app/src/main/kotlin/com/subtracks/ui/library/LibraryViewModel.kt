@@ -18,6 +18,7 @@ import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
+import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,7 @@ class LibraryViewModel(
     private val libraryRepository: LibraryRepository,
     private val sourceRepository: SourceRepository,
     private val syncManager: SyncManager,
+    private val playbackController: PlaybackController,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
     private val listQueries: Map<LibraryListTab, StateFlow<ListQuery>> =
