@@ -113,6 +113,7 @@ import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemActions
@@ -195,6 +196,7 @@ fun LibraryRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
+    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
@@ -227,7 +229,7 @@ fun LibraryRoute(
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playPlaylist = { viewModel.playPlaylist(it.id) },
             shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
-            setStar = viewModel::setStar,
+            setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
         )

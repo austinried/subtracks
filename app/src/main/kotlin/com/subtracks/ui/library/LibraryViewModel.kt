@@ -20,7 +20,6 @@ import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.QueueSongQuery
 import com.subtracks.data.repo.SourceRepository
-import com.subtracks.data.source.StarType
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
@@ -161,14 +160,6 @@ class LibraryViewModel(
         viewModelScope.launch {
             sourceRepository.activeSourceIdOnce()?.let { playbackController.shufflePlaylist(it, playlistId) }
         }
-    }
-
-    fun setStar(
-        type: StarType,
-        id: String,
-        starred: Boolean,
-    ) {
-        viewModelScope.launch { libraryRepository.setStar(type, id, starred) }
     }
 
     fun sync() = syncManager.requestSync()

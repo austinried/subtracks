@@ -9,7 +9,6 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
-import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -55,13 +54,5 @@ class PlaylistDetailViewModel(
         viewModelScope.launch {
             playbackController.shufflePlaylist(sourceId.first(), playlistId)
         }
-    }
-
-    fun setStar(
-        type: StarType,
-        id: String,
-        starred: Boolean,
-    ) {
-        viewModelScope.launch { libraryRepository.setStar(type, id, starred) }
     }
 }

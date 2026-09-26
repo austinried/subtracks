@@ -45,7 +45,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +65,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.LibraryRepository
+import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.RepeatMode
@@ -78,7 +78,6 @@ import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -88,6 +87,7 @@ fun NowPlayingRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
+    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
@@ -103,10 +103,9 @@ fun NowPlayingRoute(
             }
         }
     val context = LocalPlatformContext.current
-    val scope = rememberCoroutineScope()
     val actions =
         ItemActions(
-            setStar = { type, id, starred -> scope.launch { libraryRepository.setStar(type, id, starred) } },
+            setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
         )

@@ -17,8 +17,13 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class LibraryRepository(
     private val db: SubtracksDatabase,
@@ -242,22 +247,32 @@ class LibraryRepository(
         playlistId: String,
     ): Flow<PagingData<SongListItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
 
+    private val starLock = Mutex()
+
     suspend fun setStar(
         type: StarType,
         id: String,
         starred: Boolean,
-    ): Result<Unit> {
-        val sourceId = sourceRepository.activeSourceIdOnce()
-        val source = sourceRepository.activeMusicSource()
-        if (sourceId == null || source == null) return Result.failure(IllegalStateException("No active server"))
-        val previous = starredValue(sourceId, type, id)
-        updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
-        return runCatching { source.setStar(type, id, starred) }
-            .onFailure {
-                updateStarred(sourceId, type, id, previous)
-                showMessage("Could not update star")
+    ): Result<Unit> =
+        starLock.withLock {
+            val sourceId = sourceRepository.activeSourceIdOnce()
+            val source = sourceRepository.activeMusicSource()
+            if (sourceId == null || source == null) {
+                return@withLock Result.failure(IllegalStateException("No active server"))
             }
-    }
+            val previous = starredValue(sourceId, type, id)
+            updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
+            try {
+                source.setStar(type, id, starred)
+                Result.success(Unit)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Exception) {
+                withContext(NonCancellable) { updateStarred(sourceId, type, id, previous) }
+                showMessage("Could not update star")
+                Result.failure(failure)
+            }
+        }
 
     private suspend fun starredValue(
         sourceId: Long,

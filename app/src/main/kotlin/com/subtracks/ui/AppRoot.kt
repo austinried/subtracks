@@ -52,13 +52,13 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
@@ -123,6 +123,20 @@ private object Routes {
     fun playlist(id: String) = "playlist/${Uri.encode(id)}"
 }
 
+internal data class BackStackKey(
+    val route: String?,
+    val argument: String?,
+)
+
+internal fun focusPops(
+    stack: List<BackStackKey>,
+    pattern: String,
+    value: String,
+): Int? {
+    val index = stack.indexOfLast { it.route == pattern && it.argument == value }
+    return if (index < 0) null else stack.size - 1 - index
+}
+
 @Composable
 fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
@@ -144,6 +158,7 @@ private fun MainNavigation() {
             ?.route
     val tabBarVisible = currentRoute == Routes.LIBRARY
     val playbackController = koinInject<PlaybackController>()
+    val libraryRepository = koinInject<LibraryRepository>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
@@ -188,17 +203,14 @@ private fun MainNavigation() {
         value: String,
         route: String,
     ) {
-        val matches: (NavBackStackEntry?) -> Boolean = { entry ->
-            entry?.destination?.route == pattern && entry.arguments?.getString(argument) == value
-        }
-        if (matches(navController.currentBackStackEntry)) return
-        if (navController.currentBackStack.value.none(matches)) {
-            navController.navigate(route)
-            return
-        }
-        var guard = navController.currentBackStack.value.size
-        while (guard-- > 0 && !matches(navController.currentBackStackEntry) && navController.popBackStack()) {
-            // pop until the matching entry is back on top
+        val stack =
+            navController.currentBackStack.value.map {
+                BackStackKey(it.destination.route, it.arguments?.getString(argument))
+            }
+        when (val pops = focusPops(stack, pattern, value)) {
+            null -> navController.navigate(route)
+            0 -> Unit
+            else -> repeat(pops) { navController.popBackStack() }
         }
     }
     LaunchedEffect(Unit) { playbackController.connect() }
@@ -273,6 +285,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::setStar,
                             bottomInset = bottomInset,
                         )
                     }
@@ -305,6 +318,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::setStar,
                         )
                     }
                     composable(
@@ -331,6 +345,7 @@ private fun MainNavigation() {
                             },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::setStar,
                         )
                     }
                     composable(
@@ -345,6 +360,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::setStar,
                         )
                     }
                     composable(Routes.ADD_SERVER) {
@@ -416,6 +432,7 @@ private fun MainNavigation() {
                             fadeNowPlaying()
                         },
                         contextMenuHost = contextMenuHost,
+                        setStar = libraryRepository::setStar,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

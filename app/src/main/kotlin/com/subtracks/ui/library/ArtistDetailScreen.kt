@@ -41,9 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -61,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.source.StarType
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
@@ -92,6 +91,7 @@ fun ArtistDetailRoute(
     onAlbumClick: (Album) -> Unit,
     onViewAlbum: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
+    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
@@ -103,7 +103,7 @@ fun ArtistDetailRoute(
         ItemActions(
             playAlbum = { viewModel.playAlbum(it.id) },
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
-            setStar = viewModel::setStar,
+            setStar = setStar,
             viewAlbum = onViewAlbum,
         )
     ArtistDetailScreen(

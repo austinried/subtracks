@@ -15,6 +15,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongListItem
+import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
@@ -37,6 +38,7 @@ fun PlaylistDetailRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
+    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -47,7 +49,7 @@ fun PlaylistDetailRoute(
         ItemActions(
             playPlaylist = { viewModel.playAll() },
             shufflePlaylist = { viewModel.shuffle() },
-            setStar = viewModel::setStar,
+            setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
         )

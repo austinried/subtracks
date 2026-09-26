@@ -95,7 +95,7 @@ class ItemActions(
     val shuffleAlbum: (AlbumModel) -> Unit = {},
     val playPlaylist: (PlaylistModel) -> Unit = {},
     val shufflePlaylist: (PlaylistModel) -> Unit = {},
-    val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
+    val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
 )
@@ -116,6 +116,7 @@ class ContextMenuHost {
 
     fun dismiss() {
         target = null
+        actions = ItemActions()
     }
 }
 
@@ -227,13 +228,17 @@ private fun MenuHeader(target: MenuTarget) {
 @Composable
 private fun StarItem(
     current: Long?,
-    onToggle: (Boolean) -> Unit,
+    onSet: suspend (Boolean) -> Result<Unit>,
 ) {
     var starred by remember(current) { mutableStateOf(current) }
+    val scope = rememberCoroutineScope()
     MenuItem(starIcon(starred), starLabel(starred)) {
-        val starring = starred == null
+        val previous = starred
+        val starring = previous == null
         starred = if (starring) System.currentTimeMillis() else null
-        onToggle(starring)
+        scope.launch {
+            if (onSet(starring).isFailure) starred = previous
+        }
     }
 }
 

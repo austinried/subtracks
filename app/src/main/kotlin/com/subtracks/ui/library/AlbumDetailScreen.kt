@@ -25,6 +25,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
@@ -47,6 +48,7 @@ fun AlbumDetailRoute(
     onBack: () -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
+    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -61,7 +63,7 @@ fun AlbumDetailRoute(
             playSong = { song -> songs.indexOfFirst { it.id == song.id }.takeIf { it >= 0 }?.let(viewModel::play) },
             playAlbum = { viewModel.playAll() },
             shuffleAlbum = { viewModel.shuffle() },
-            setStar = viewModel::setStar,
+            setStar = setStar,
             viewArtist = onViewArtist,
         )
     AlbumDetailScreen(

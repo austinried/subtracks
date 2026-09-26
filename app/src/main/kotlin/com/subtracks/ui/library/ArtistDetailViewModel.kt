@@ -7,7 +7,6 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
-import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -67,14 +66,6 @@ class ArtistDetailViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
-
-    fun setStar(
-        type: StarType,
-        id: String,
-        starred: Boolean,
-    ) {
-        viewModelScope.launch { libraryRepository.setStar(type, id, starred) }
-    }
 
     fun playAlbum(albumId: String) {
         viewModelScope.launch {
