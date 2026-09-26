@@ -265,7 +265,7 @@ fun QueueRoute(
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
     }
-    LaunchedEffect(playback.shuffle, open) { if (open) viewModel.open() }
+    LaunchedEffect(playback.shuffle, playback.layout, open) { if (open) viewModel.open() }
     QueueScreen(
         rows = viewModel.rows,
         ready = viewModel.ready,
@@ -283,6 +283,7 @@ fun QueueRoute(
         onLoadOlder = viewModel::loadOlder,
         onLoadNewer = viewModel::loadNewer,
         onUndo = viewModel::undo,
+        onRefresh = viewModel::open,
         modifier = modifier,
     )
 }
@@ -307,6 +308,7 @@ fun QueueScreen(
     generation: Int = 0,
     shuffle: Boolean = false,
     contextTitle: String? = null,
+    onRefresh: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
@@ -415,6 +417,8 @@ fun QueueScreen(
                                                     if (to != from && sameSection) {
                                                         onMove(from, to)
                                                         showUndo("Queue reordered")
+                                                    } else if (to != from) {
+                                                        onRefresh()
                                                     }
                                                 }
                                                 dragId = null

@@ -87,6 +87,18 @@ data class QueueSnapshot(
     fun locateContext(contextPlay: Long): Pair<QueueEntry, Long>? = locateIn(entries, flatContext(contextPlay) ?: return null)
 }
 
+private fun entryIndexAfter(
+    entries: List<ResolvedQueueEntry>,
+    index: Long,
+): Int {
+    var start = 0L
+    entries.forEachIndexed { position, resolved ->
+        if (index < start + resolved.length) return position + 1
+        start += resolved.length
+    }
+    return entries.size
+}
+
 private fun locateIn(
     entries: List<ResolvedQueueEntry>,
     index: Long,
@@ -274,6 +286,13 @@ class QueueRepository(
     ): Long? {
         val upIndex = idsFor(snapshot.upNext).indexOf(songId)
         if (upIndex >= 0) return snapshot.anchorPlay + 1 + upIndex
+        return combinedContextIndexOf(snapshot, songId)
+    }
+
+    suspend fun combinedContextIndexOf(
+        snapshot: QueueSnapshot,
+        songId: String,
+    ): Long? {
         val flat = flatIds(snapshot).indexOf(songId)
         if (flat < 0) return null
         val play = snapshot.shuffleOrder?.indexOf(flat.toLong())?.toLong() ?: flat.toLong()
@@ -299,7 +318,6 @@ class QueueRepository(
         if (blockFirst <= blockLast) items += blockPlayRange(snapshot, blockFirst - anchor - 1, blockLast - anchor - 1)
         val afterFirst = maxOf(from, anchor + block + 1)
         if (afterFirst <= to) items += contextPlayRange(snapshot, afterFirst - block, to - block)
-        items.sortBy { it.position }
         return items
     }
 
@@ -319,12 +337,19 @@ class QueueRepository(
         playNext: Boolean,
     ): Long {
         val list = snapshot.upNext.map { it.entry }.toMutableList()
-        val active = snapshot.isUpNext(currentPosition)
         val insertIndex =
             when {
-                playNext && active -> 1
-                playNext -> 0
-                else -> list.size
+                playNext && snapshot.isUpNext(currentPosition) -> {
+                    entryIndexAfter(snapshot.upNext, snapshot.upNextIndex(currentPosition))
+                }
+
+                playNext -> {
+                    0
+                }
+
+                else -> {
+                    list.size
+                }
             }.coerceIn(0, list.size)
         list.add(insertIndex, entry.copy(id = 0, position = 0))
         val anchor =

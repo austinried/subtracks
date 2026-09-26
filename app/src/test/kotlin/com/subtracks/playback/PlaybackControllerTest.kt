@@ -430,6 +430,189 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun skippingPastTheBlockAfterConsumingKeepsGoing() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.addToQueue(1, QueueKind.Song, "x2")
+
+        controller.playAt(2)
+        await {
+            controller.state.value.item
+                ?.id == "x2"
+        }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+    }
+
+    @Test
+    fun playNextFromInsideTheBlockGoesAfterTheCurrentTrack() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+        seedSong("x3", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.addToQueue(1, QueueKind.Song, "x2")
+        controller.playAt(2)
+        await {
+            controller.state.value.item
+                ?.id == "x2"
+        }
+
+        controller.playNext(1, QueueKind.Song, "x3")
+        await {
+            controller.state.value.item
+                ?.id == "x2"
+        }
+        await { runBlocking { controller.upcomingItem()?.id } == "x3" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x3"
+        }
+    }
+
+    @Test
+    fun removingAContextTrackUnderTheBlockKeepsTheCursorOnThePlayingTrack() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        runBlocking { controller.removeAt(0) }
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        assertEquals(1L, runBlocking { queues.cursor() })
+    }
+
+    @Test
+    fun restoringKeepsTheSavedPositionWhenTheAnchorMoves() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.addToQueue(1, QueueKind.Song, "x2")
+        controller.playAt(2)
+        await {
+            controller.state.value.item
+                ?.id == "x2"
+        }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        runBlocking { queues.setPosition(12_000L) }
+
+        val restoredHandle = FakePlayerHandle()
+        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), dispatcher = dispatcher)
+        restored.connect()
+        await {
+            restored.state.value.item
+                ?.id == "s2"
+        }
+
+        assertEquals(12_000L, restored.positionMs.value)
+        restored.close()
+    }
+
+    @Test
+    fun nextOnTheLastQueuedTrackDoesNotStrandIt() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.next()
+        Thread.sleep(200)
+
+        assertFalse(runBlocking { queues.snapshot().upNext }.isEmpty())
+        assertEquals(
+            "x1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun reanchoringBumpsTheLayoutVersion() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        val before = controller.state.value.layout
+
+        controller.playAt(4)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        assertTrue(controller.state.value.layout > before)
+    }
+
+    @Test
     fun theDurationUsesTheNextTracksMetadataWhileItLoads() {
         seedAlbum(3, sourceId = 1)
 
