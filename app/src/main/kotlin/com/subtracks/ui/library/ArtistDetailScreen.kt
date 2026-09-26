@@ -41,7 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,6 +53,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -159,6 +162,20 @@ fun ArtistDetailScreen(
             }
         }
     }
+    var imageHeightPx by remember { mutableFloatStateOf(0f) }
+    var albumHeightPx by remember { mutableFloatStateOf(0f) }
+    val albumRowGapPx = with(density) { 16.dp.toPx() }
+    val scrollPx by remember {
+        derivedStateOf {
+            val index = listState.firstVisibleItemIndex
+            val offset = listState.firstVisibleItemScrollOffset.toFloat()
+            if (index <= 0) {
+                offset
+            } else {
+                imageHeightPx + (albumHeightPx + albumRowGapPx) * ((index - 1) / 2) + offset
+            }
+        }
+    }
     val nameTextStyle = MaterialTheme.typography.headlineLarge
     val imageNameStyle =
         nameTextStyle.copy(
@@ -178,10 +195,10 @@ fun ArtistDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
-                val barColor = heroBarColor(effectiveArtwork, 0f, barHeightPx, screenHeightPx)
+                val barColor = heroBarColor(effectiveArtwork, scrollPx, barHeightPx, screenHeightPx)
                 HeroGradient(
                     colors = effectiveArtwork,
-                    scrollPx = { 0f },
+                    scrollPx = { scrollPx - imageHeightPx },
                     modifier = Modifier.fillMaxSize(),
                 )
                 LazyVerticalGrid(
@@ -193,7 +210,12 @@ fun ArtistDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        Box(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { imageHeightPx = it.height.toFloat() }
+                                .padding(bottom = 12.dp),
+                        ) {
                             CoverArt(
                                 ref = art,
                                 name = artist?.name.orEmpty(),
@@ -237,7 +259,7 @@ fun ArtistDetailScreen(
                                     ).combinedClickable(
                                         onClick = { onAlbumClick(album) },
                                         onLongClick = { onAlbumLongClick(MenuTarget.Album(album, coverArt(album.coverArt, true))) },
-                                    ),
+                                    ).onSizeChanged { albumHeightPx = it.height.toFloat() },
                         ) {
                             Box {
                                 CoverArt(
