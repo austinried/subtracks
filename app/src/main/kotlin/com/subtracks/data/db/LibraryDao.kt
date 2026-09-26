@@ -23,6 +23,48 @@ internal const val PLAYLIST_SONGS_SQL =
         "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
         "ORDER BY playlist_songs.position"
 
+internal const val ALBUMS_FILTER =
+    "FROM albums WHERE sourceId = :sourceId " +
+        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
+        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) "
+
+internal const val ALBUM_ORDER_BY_NAME = "name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ARTIST = "albumArtist COLLATE NOCASE, year, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_ARTIST_REVERSED = "albumArtist COLLATE NOCASE DESC, year DESC, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_YEAR = "year DESC, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ADDED = "created DESC, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE NOCASE DESC, id DESC"
+
+// Starred orders keep unstarred rows last in both directions, matching the list grouping, so the
+// reversed order is not a literal mirror of the base order.
+internal const val ALBUM_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+
+internal const val ARTISTS_FILTER =
+    "FROM artists WHERE sourceId = :sourceId " +
+        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
+        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
+
+internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "albumCount ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+
+internal const val PLAYLISTS_FILTER =
+    "FROM playlists WHERE sourceId = :sourceId " +
+        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
+
+internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
+internal const val PLAYLIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
+internal const val PLAYLIST_ORDER_BY_ADDED = "created DESC, name COLLATE NOCASE, id"
+internal const val PLAYLIST_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val PLAYLIST_ORDER_BY_UPDATED = "changed DESC, name COLLATE NOCASE, id"
+internal const val PLAYLIST_ORDER_BY_UPDATED_REVERSED = "changed ASC, name COLLATE NOCASE DESC, id DESC"
+
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LibraryDao {
@@ -155,253 +197,149 @@ interface LibraryDao {
     )
     suspend fun deleteOrphanPlaylistSongs(sourceId: Long)
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME")
     fun albumsByName(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE DESC, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_REVERSED")
     fun albumsByNameReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY albumArtist COLLATE NOCASE, year, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST")
     fun albumsByArtist(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY albumArtist COLLATE NOCASE DESC, year DESC, name COLLATE NOCASE DESC, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_REVERSED")
     fun albumsByArtistReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY year DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR")
     fun albumsByYear(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY year ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR_REVERSED")
     fun albumsByYearReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY created DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED")
     fun albumsByRecentlyAdded(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY created ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED_REVERSED")
     fun albumsByRecentlyAddedReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED")
     fun albumsByStarred(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) " +
-            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED_REVERSED")
     fun albumsByStarredReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Album>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
     fun artistsByName(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE DESC, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_REVERSED")
     fun artistsByNameReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY albumCount DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
     fun artistsByAlbumCount(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY albumCount ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
     fun artistsByAlbumCountReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY starred IS NULL, starred DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED")
     fun artistsByStarred(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId " +
-            "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY starred IS NULL, starred ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
     fun artistsByStarredReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
     ): PagingSource<Int, Artist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME")
     fun playlistsByName(
         sourceId: Long,
         search: String,
     ): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY name COLLATE NOCASE DESC, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME_REVERSED")
     fun playlistsByNameReversed(
         sourceId: Long,
         search: String,
     ): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY created DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED")
     fun playlistsByAdded(
         sourceId: Long,
         search: String,
     ): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY created ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED_REVERSED")
     fun playlistsByAddedReversed(
         sourceId: Long,
         search: String,
     ): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY changed DESC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED")
     fun playlistsByUpdated(
         sourceId: Long,
         search: String,
     ): PagingSource<Int, Playlist>
 
-    @Query(
-        "SELECT * FROM playlists WHERE sourceId = :sourceId " +
-            "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) " +
-            "ORDER BY changed ASC, name COLLATE NOCASE, id",
-    )
+    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED_REVERSED")
     fun playlistsByUpdatedReversed(
         sourceId: Long,
         search: String,

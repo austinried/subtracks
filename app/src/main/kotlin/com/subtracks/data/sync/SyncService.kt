@@ -285,7 +285,7 @@ private suspend fun <T> PooledConnection.upsertChanged(
             "ON CONFLICT(${key.joinToString()}) DO UPDATE SET " +
             updates.joinToString { "$it = excluded.$it" } +
             " WHERE " +
-            updates.joinToString(" OR ") { "$table.$it IS NOT excluded.$it" }
+            updates.joinToString(" OR ") { "$table.$it COLLATE BINARY IS NOT excluded.$it" }
     usePrepared(sql) { statement ->
         rows.forEach { row ->
             values(row).forEachIndexed { index, value -> statement.bind(index + 1, value) }

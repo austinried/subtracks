@@ -183,6 +183,59 @@ class SyncServiceTest {
         }
 
     @Test
+    fun aCaseOnlyNameChangeRewritesTheRow() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", name = "the beatles")),
+                    albums = listOf(album("al1").copy(name = "abbey road", albumArtist = "the beatles")),
+                    playlists = listOf(playlist("p1").copy(name = "driving")),
+                )
+
+            SyncService(db, source).sync()
+
+            source.artists = listOf(artist("a1", name = "The Beatles"))
+            source.albums = listOf(album("al1").copy(name = "Abbey Road", albumArtist = "The Beatles"))
+            source.playlists = listOf(playlist("p1").copy(name = "Driving"))
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                "The Beatles",
+                db
+                    .libraryDao()
+                    .artist(1, "a1")
+                    .first()
+                    ?.name,
+            )
+            assertEquals(
+                "Abbey Road",
+                db
+                    .libraryDao()
+                    .album(1, "al1")
+                    .first()
+                    ?.name,
+            )
+            assertEquals(
+                "The Beatles",
+                db
+                    .libraryDao()
+                    .album(1, "al1")
+                    .first()
+                    ?.albumArtist,
+            )
+            assertEquals(
+                "Driving",
+                db
+                    .libraryDao()
+                    .playlist(1, "p1")
+                    .first()
+                    ?.name,
+            )
+        }
+
+    @Test
     fun syncStoresStarredAndAddedTimestamps() =
         runTest {
             insertSource()

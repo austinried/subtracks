@@ -48,12 +48,25 @@ data class SubsonicSource(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("sourceId")],
+    indices = [
+        Index("sourceId"),
+        Index(name = "index_artists_name", value = ["sourceId", "name", "id"]),
+        Index(
+            name = "index_artists_albumCount",
+            value = ["sourceId", "albumCount", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_artists_starred",
+            value = ["sourceId", "starred", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+    ],
 )
 data class Artist(
     val sourceId: Long,
     val id: String,
-    val name: String,
+    @ColumnInfo(collate = ColumnInfo.NOCASE) val name: String,
     val albumCount: Long,
     val starred: Long?,
     val coverArt: String? = null,
@@ -70,14 +83,34 @@ data class Artist(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("sourceId"), Index("sourceId", "artistId")],
+    indices = [
+        Index("sourceId"),
+        Index("sourceId", "artistId"),
+        Index(name = "index_albums_name", value = ["sourceId", "name", "id"]),
+        Index(name = "index_albums_artist", value = ["sourceId", "albumArtist", "year", "name", "id"]),
+        Index(
+            name = "index_albums_year",
+            value = ["sourceId", "year", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_albums_added",
+            value = ["sourceId", "created", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_albums_starred",
+            value = ["sourceId", "starred", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+    ],
 )
 data class Album(
     val sourceId: Long,
     val id: String,
     val artistId: String?,
-    val name: String,
-    val albumArtist: String?,
+    @ColumnInfo(collate = ColumnInfo.NOCASE) val name: String,
+    @ColumnInfo(collate = ColumnInfo.NOCASE) val albumArtist: String?,
     val created: Long,
     val coverArt: String?,
     val genre: String?,
@@ -118,12 +151,25 @@ data class Disc(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("sourceId")],
+    indices = [
+        Index("sourceId"),
+        Index(name = "index_playlists_name", value = ["sourceId", "name", "id"]),
+        Index(
+            name = "index_playlists_added",
+            value = ["sourceId", "created", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_playlists_updated",
+            value = ["sourceId", "changed", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+    ],
 )
 data class Playlist(
     val sourceId: Long,
     val id: String,
-    val name: String,
+    @ColumnInfo(collate = ColumnInfo.NOCASE) val name: String,
     val comment: String?,
     val coverArt: String?,
     val songCount: Long,

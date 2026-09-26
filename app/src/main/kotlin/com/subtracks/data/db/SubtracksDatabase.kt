@@ -32,7 +32,7 @@ import com.subtracks.data.model.SubsonicSource
         ShuffleOrder::class,
         ArtworkSeed::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)

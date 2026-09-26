@@ -3,16 +3,21 @@ package com.subtracks.data.db
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.room3.Room
+import androidx.room3.useReaderConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -108,6 +113,192 @@ class LibraryDaoTest {
             )
         }
 
+    @Test
+    fun starredSortsKeepUnstarredLastInBothDirections() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a1", "Alpha", year = null, starred = 100),
+                    album(sourceId, "a2", "Beta", year = null, starred = 200),
+                    album(sourceId, "a3", "Gamma", year = null, starred = null),
+                    album(sourceId, "a4", "Delta", year = null, starred = null),
+                ),
+            )
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "r1", "Alpha", albumCount = 1).copy(starred = 100),
+                    artist(sourceId, "r2", "Beta", albumCount = 1).copy(starred = 200),
+                    artist(sourceId, "r3", "Gamma", albumCount = 1).copy(starred = null),
+                    artist(sourceId, "r4", "Delta", albumCount = 1).copy(starred = null),
+                ),
+            )
+
+            assertEquals(
+                listOf("Beta", "Alpha", "Delta", "Gamma"),
+                dao.albumsByStarred(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma", "Delta"),
+                dao.albumsByStarredReversed(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beta", "Alpha", "Delta", "Gamma"),
+                dao.artistsByStarred(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma", "Delta"),
+                dao.artistsByStarredReversed(sourceId, 0, "").page().map { it.name },
+            )
+        }
+
+    @Test
+    fun reversedAlbumSortsReverseEveryTiebreaker() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a1", "Same", year = 2000, starred = null, created = 100).copy(albumArtist = "Zed"),
+                    album(sourceId, "a2", "Same", year = 2000, starred = null, created = 100).copy(albumArtist = "Amy"),
+                    album(sourceId, "a3", "Same", year = 1990, starred = null, created = 200).copy(albumArtist = "Amy"),
+                    album(sourceId, "a4", "Other", year = 2000, starred = null, created = 100).copy(albumArtist = "Amy"),
+                ),
+            )
+
+            val pairs =
+                listOf(
+                    dao.albumsByName(sourceId, 0, "") to dao.albumsByNameReversed(sourceId, 0, ""),
+                    dao.albumsByArtist(sourceId, 0, "") to dao.albumsByArtistReversed(sourceId, 0, ""),
+                    dao.albumsByYear(sourceId, 0, "") to dao.albumsByYearReversed(sourceId, 0, ""),
+                    dao.albumsByRecentlyAdded(sourceId, 0, "") to dao.albumsByRecentlyAddedReversed(sourceId, 0, ""),
+                )
+            for ((base, reversed) in pairs) {
+                val ids = base.page().map { it.id }
+                assertEquals(ids.reversed(), reversed.page().map { it.id })
+            }
+        }
+
+    @Test
+    fun reversedArtistAndPlaylistSortsReverseEveryTiebreaker() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "r1", "Same", albumCount = 2),
+                    artist(sourceId, "r2", "Other", albumCount = 1),
+                    artist(sourceId, "r3", "Same", albumCount = 1),
+                ),
+            )
+            dao.upsertPlaylists(
+                listOf(
+                    playlist(sourceId, "l1", "Same", created = 100, changed = 100),
+                    playlist(sourceId, "l2", "Other", created = 100, changed = 200),
+                    playlist(sourceId, "l3", "Same", created = 200, changed = 100),
+                ),
+            )
+
+            val artistPairs =
+                listOf(
+                    dao.artistsByName(sourceId, 0, "").page().map { it.id } to
+                        dao.artistsByNameReversed(sourceId, 0, "").page().map { it.id },
+                    dao.artistsByAlbumCount(sourceId, 0, "").page().map { it.id } to
+                        dao.artistsByAlbumCountReversed(sourceId, 0, "").page().map { it.id },
+                )
+            val playlistPairs =
+                listOf(
+                    dao.playlistsByName(sourceId, "").page().map { it.id } to
+                        dao.playlistsByNameReversed(sourceId, "").page().map { it.id },
+                    dao.playlistsByAdded(sourceId, "").page().map { it.id } to
+                        dao.playlistsByAddedReversed(sourceId, "").page().map { it.id },
+                    dao.playlistsByUpdated(sourceId, "").page().map { it.id } to
+                        dao.playlistsByUpdatedReversed(sourceId, "").page().map { it.id },
+                )
+            for ((base, reversed) in artistPairs + playlistPairs) {
+                assertEquals(base.reversed(), reversed)
+            }
+        }
+
+    @Test
+    fun albumOrdersAreIndexBacked() =
+        runTest {
+            val orders =
+                listOf(
+                    ALBUM_ORDER_BY_NAME to "index_albums_name",
+                    ALBUM_ORDER_BY_NAME_REVERSED to "index_albums_name",
+                    ALBUM_ORDER_BY_ARTIST to "index_albums_artist",
+                    ALBUM_ORDER_BY_ARTIST_REVERSED to "index_albums_artist",
+                    ALBUM_ORDER_BY_YEAR to "index_albums_year",
+                    ALBUM_ORDER_BY_YEAR_REVERSED to "index_albums_year",
+                    ALBUM_ORDER_BY_ADDED to "index_albums_added",
+                    ALBUM_ORDER_BY_ADDED_REVERSED to "index_albums_added",
+                    ALBUM_ORDER_BY_STARRED to "index_albums_starred",
+                    ALBUM_ORDER_BY_STARRED_REVERSED to "index_albums_starred",
+                )
+            for ((order, index) in orders) {
+                val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
+                assertTrue(plan, plan.contains("USING INDEX $index"))
+                assertFalse(plan, plan.contains("TEMP B-TREE"))
+            }
+        }
+
+    @Test
+    fun artistOrdersAreIndexBacked() =
+        runTest {
+            val orders =
+                listOf(
+                    ARTIST_ORDER_BY_NAME to "index_artists_name",
+                    ARTIST_ORDER_BY_NAME_REVERSED to "index_artists_name",
+                    ARTIST_ORDER_BY_ALBUM_COUNT to "index_artists_albumCount",
+                    ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED to "index_artists_albumCount",
+                    ARTIST_ORDER_BY_STARRED to "index_artists_starred",
+                    ARTIST_ORDER_BY_STARRED_REVERSED to "index_artists_starred",
+                )
+            for ((order, index) in orders) {
+                val plan = plan("SELECT * $ARTISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
+                assertTrue(plan, plan.contains("USING INDEX $index"))
+                assertFalse(plan, plan.contains("TEMP B-TREE"))
+            }
+        }
+
+    @Test
+    fun playlistOrdersAreIndexBacked() =
+        runTest {
+            val orders =
+                listOf(
+                    PLAYLIST_ORDER_BY_NAME to "index_playlists_name",
+                    PLAYLIST_ORDER_BY_NAME_REVERSED to "index_playlists_name",
+                    PLAYLIST_ORDER_BY_ADDED to "index_playlists_added",
+                    PLAYLIST_ORDER_BY_ADDED_REVERSED to "index_playlists_added",
+                    PLAYLIST_ORDER_BY_UPDATED to "index_playlists_updated",
+                    PLAYLIST_ORDER_BY_UPDATED_REVERSED to "index_playlists_updated",
+                )
+            for ((order, index) in orders) {
+                val plan = plan("SELECT * $PLAYLISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
+                assertTrue(plan, plan.contains("USING INDEX $index"))
+                assertFalse(plan, plan.contains("TEMP B-TREE"))
+            }
+        }
+
+    @Test
+    fun anUnindexedAlbumOrderStillShowsATempSort() =
+        runTest {
+            val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY songCount, id LIMIT 20 OFFSET 0")
+
+            assertTrue(plan, plan.contains("TEMP B-TREE"))
+        }
+
+    private suspend fun plan(sql: String): String =
+        db.useReaderConnection { connection ->
+            connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->
+                val details = mutableListOf<String>()
+                while (statement.step()) details += statement.getText(3)
+                details.joinToString("\n")
+            }
+        }
+
     private suspend fun source(): Long =
         db.sourcesDao().insertSource(Source(name = "Navidrome", address = "http://localhost", isActive = true, createdAt = 0))
 
@@ -137,6 +328,38 @@ class LibraryDaoTest {
         year = year,
         starred = starred,
         songCount = 1,
+    )
+
+    private fun artist(
+        sourceId: Long,
+        id: String,
+        name: String,
+        albumCount: Long,
+    ) = Artist(
+        sourceId = sourceId,
+        id = id,
+        name = name,
+        albumCount = albumCount,
+        starred = null,
+        coverArt = null,
+    )
+
+    private fun playlist(
+        sourceId: Long,
+        id: String,
+        name: String,
+        created: Long,
+        changed: Long,
+    ) = Playlist(
+        sourceId = sourceId,
+        id = id,
+        name = name,
+        comment = null,
+        coverArt = null,
+        songCount = 1,
+        created = created,
+        changed = changed,
+        duration = 100,
     )
 
     private fun song(

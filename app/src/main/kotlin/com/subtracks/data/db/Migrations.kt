@@ -135,6 +135,87 @@ val MIGRATION_13_14 =
         }
     }
 
+val MIGRATION_14_15 =
+    object : Migration(14, 15) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            rebuildTable(connection, "albums", ALBUMS_V14, ALBUMS_V14_COPY, ALBUMS_V14_INDICES)
+            rebuildTable(connection, "artists", ARTISTS_V14, ARTISTS_V14_COPY, ARTISTS_V14_INDICES)
+            rebuildTable(connection, "playlists", PLAYLISTS_V14, PLAYLISTS_V14_COPY, PLAYLISTS_V14_INDICES)
+        }
+    }
+
+private suspend fun rebuildTable(
+    connection: SQLiteConnection,
+    table: String,
+    createSql: String,
+    copySql: String,
+    indices: List<String>,
+) {
+    val temp = "${table}_new"
+    connection.execSQL(createSql.replace("\${TABLE_NAME}", temp))
+    connection.execSQL(copySql.replace("\${TABLE_NAME}", temp))
+    connection.execSQL("DROP TABLE `$table`")
+    connection.execSQL("ALTER TABLE `$temp` RENAME TO `$table`")
+    indices.forEach { connection.execSQL(it.replace("\${TABLE_NAME}", table)) }
+}
+
+private const val ALBUMS_V14 =
+    "CREATE TABLE IF NOT EXISTS `\${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `id` TEXT NOT NULL, `artistId` TEXT, " +
+        "`name` TEXT NOT NULL COLLATE NOCASE, `albumArtist` TEXT COLLATE NOCASE, `created` INTEGER NOT NULL, " +
+        "`coverArt` TEXT, `genre` TEXT, `year` INTEGER, `starred` INTEGER, `songCount` INTEGER NOT NULL, " +
+        "PRIMARY KEY(`sourceId`, `id`), " +
+        "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+
+private const val ALBUMS_V14_COPY =
+    "INSERT INTO `\${TABLE_NAME}` (sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount) " +
+        "SELECT sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount FROM `albums`"
+
+private val ALBUMS_V14_INDICES =
+    listOf(
+        "CREATE INDEX IF NOT EXISTS `index_albums_sourceId` ON `\${TABLE_NAME}` (`sourceId`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_sourceId_artistId` ON `\${TABLE_NAME}` (`sourceId`, `artistId`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_name` ON `\${TABLE_NAME}` (`sourceId`, `name`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_artist` ON `\${TABLE_NAME}` (`sourceId`, `albumArtist`, `year`, `name`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_year` ON `\${TABLE_NAME}` (`sourceId` ASC, `year` DESC, `name` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_added` ON `\${TABLE_NAME}` (`sourceId` ASC, `created` DESC, `name` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_starred` ON `\${TABLE_NAME}` (`sourceId` ASC, `starred` DESC, `name` ASC, `id` ASC)",
+    )
+
+private const val ARTISTS_V14 =
+    "CREATE TABLE IF NOT EXISTS `\${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `id` TEXT NOT NULL, " +
+        "`name` TEXT NOT NULL COLLATE NOCASE, `albumCount` INTEGER NOT NULL, `starred` INTEGER, `coverArt` TEXT, " +
+        "PRIMARY KEY(`sourceId`, `id`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+
+private const val ARTISTS_V14_COPY =
+    "INSERT INTO `\${TABLE_NAME}` (sourceId, id, name, albumCount, starred, coverArt) " +
+        "SELECT sourceId, id, name, albumCount, starred, coverArt FROM `artists`"
+
+private val ARTISTS_V14_INDICES =
+    listOf(
+        "CREATE INDEX IF NOT EXISTS `index_artists_sourceId` ON `\${TABLE_NAME}` (`sourceId`)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_name` ON `\${TABLE_NAME}` (`sourceId`, `name`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_albumCount` ON `\${TABLE_NAME}` (`sourceId` ASC, `albumCount` DESC, `name` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_starred` ON `\${TABLE_NAME}` (`sourceId` ASC, `starred` DESC, `name` ASC, `id` ASC)",
+    )
+
+private const val PLAYLISTS_V14 =
+    "CREATE TABLE IF NOT EXISTS `\${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `id` TEXT NOT NULL, " +
+        "`name` TEXT NOT NULL COLLATE NOCASE, `comment` TEXT, `coverArt` TEXT, `songCount` INTEGER NOT NULL, " +
+        "`created` INTEGER NOT NULL, `changed` INTEGER NOT NULL DEFAULT 0, `duration` INTEGER NOT NULL DEFAULT 0, " +
+        "PRIMARY KEY(`sourceId`, `id`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+
+private const val PLAYLISTS_V14_COPY =
+    "INSERT INTO `\${TABLE_NAME}` (sourceId, id, name, comment, coverArt, songCount, created, changed, duration) " +
+        "SELECT sourceId, id, name, comment, coverArt, songCount, created, changed, duration FROM `playlists`"
+
+private val PLAYLISTS_V14_INDICES =
+    listOf(
+        "CREATE INDEX IF NOT EXISTS `index_playlists_sourceId` ON `\${TABLE_NAME}` (`sourceId`)",
+        "CREATE INDEX IF NOT EXISTS `index_playlists_name` ON `\${TABLE_NAME}` (`sourceId`, `name`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_playlists_added` ON `\${TABLE_NAME}` (`sourceId` ASC, `created` DESC, `name` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_playlists_updated` ON `\${TABLE_NAME}` (`sourceId` ASC, `changed` DESC, `name` ASC, `id` ASC)",
+    )
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -150,4 +231,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_11_12,
         MIGRATION_12_13,
         MIGRATION_13_14,
+        MIGRATION_14_15,
     )

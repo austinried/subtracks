@@ -47,6 +47,109 @@ class MigrationsTest {
             }
         }
 
+    @Test
+    fun theLibrarySortIndicesInheritCaseInsensitiveCollationAndDirection() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, versions.first())
+                MIGRATIONS.sortedBy { it.startVersion }.forEach { it.migrate(migrated) }
+
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_name", "name").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "albumArtist").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "name").collation)
+                assertEquals(1, indexColumn(migrated, "index_albums_year", "year").descending)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_year", "name").collation)
+                assertEquals(0, indexColumn(migrated, "index_albums_year", "name").descending)
+                assertEquals(1, indexColumn(migrated, "index_albums_added", "created").descending)
+                assertEquals(1, indexColumn(migrated, "index_albums_starred", "starred").descending)
+                assertEquals("NOCASE", indexColumn(migrated, "index_artists_name", "name").collation)
+                assertEquals(1, indexColumn(migrated, "index_artists_albumCount", "albumCount").descending)
+                assertEquals(1, indexColumn(migrated, "index_artists_starred", "starred").descending)
+                assertEquals("NOCASE", indexColumn(migrated, "index_playlists_name", "name").collation)
+                assertEquals(1, indexColumn(migrated, "index_playlists_added", "created").descending)
+                assertEquals(1, indexColumn(migrated, "index_playlists_updated", "changed").descending)
+            }
+        }
+
+    @Test
+    fun thePlaylistChangedAndDurationColumnsSurviveTheRebuild() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, versions.first())
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) " +
+                        "VALUES (1, 'server', 'http://localhost', 1, 100)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, starred) " +
+                        "VALUES (1, 'ar1', 'The Artist', 1, NULL)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, " +
+                        "starred, songCount, frequentRank, recentRank) " +
+                        "VALUES (1, 'al1', 'ar1', 'The Album', 'The Artist', 101, NULL, NULL, 1999, NULL, 1, NULL, NULL)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO playlists (sourceId, id, name, comment, coverArt, songCount, created) " +
+                        "VALUES (1, 'pl1', 'The Playlist', NULL, NULL, 3, 102)",
+                )
+
+                MIGRATIONS.sortedBy { it.startVersion }.forEach { migration ->
+                    migration.migrate(migrated)
+                    when (migration.endVersion) {
+                        5 -> migrated.execSQL("UPDATE playlists SET duration = 987654 WHERE id = 'pl1'")
+                        8 -> migrated.execSQL("UPDATE playlists SET changed = 123456 WHERE id = 'pl1'")
+                        11 -> migrated.execSQL("INSERT INTO discs (sourceId, albumId, disc, title) VALUES (1, 'al1', 2, 'The Disc')")
+                    }
+                }
+
+                assertEquals("The Playlist", text(migrated, "SELECT name FROM playlists WHERE id = 'pl1'"))
+                assertEquals(123456L, long(migrated, "SELECT changed FROM playlists WHERE id = 'pl1'"))
+                assertEquals(987654L, long(migrated, "SELECT duration FROM playlists WHERE id = 'pl1'"))
+                assertEquals("The Album", text(migrated, "SELECT name FROM albums WHERE id = 'al1'"))
+                assertEquals("The Artist", text(migrated, "SELECT name FROM artists WHERE id = 'ar1'"))
+                assertEquals("The Disc", text(migrated, "SELECT title FROM discs WHERE albumId = 'al1' AND disc = 2"))
+            }
+        }
+
+    private fun text(
+        connection: SQLiteConnection,
+        sql: String,
+    ): String =
+        connection.prepare(sql).use { statement ->
+            check(statement.step()) { "No row for $sql" }
+            statement.getText(0)
+        }
+
+    private fun long(
+        connection: SQLiteConnection,
+        sql: String,
+    ): Long =
+        connection.prepare(sql).use { statement ->
+            check(statement.step()) { "No row for $sql" }
+            statement.getLong(0)
+        }
+
+    private fun indexColumn(
+        connection: SQLiteConnection,
+        index: String,
+        column: String,
+    ): IndexColumn {
+        connection.prepare("PRAGMA index_xinfo(`$index`)").use { statement ->
+            while (statement.step()) {
+                if (!statement.isNull(2) && statement.getText(2) == column) {
+                    return IndexColumn(collation = statement.getText(4), descending = statement.getInt(3))
+                }
+            }
+        }
+        error("Column $column not found in index $index")
+    }
+
+    private data class IndexColumn(
+        val collation: String,
+        val descending: Int,
+    )
+
     private fun applySchema(
         connection: SQLiteConnection,
         version: Int,
