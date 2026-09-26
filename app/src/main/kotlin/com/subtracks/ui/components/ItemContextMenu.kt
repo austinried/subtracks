@@ -64,14 +64,14 @@ sealed interface MenuTarget {
 }
 
 class ItemActions(
-    val playSong: (SongModel) -> Unit = {},
+    val playSong: ((SongModel) -> Unit)? = null,
     val playAlbum: (AlbumModel) -> Unit = {},
     val shuffleAlbum: (AlbumModel) -> Unit = {},
     val playPlaylist: (PlaylistModel) -> Unit = {},
     val shufflePlaylist: (PlaylistModel) -> Unit = {},
     val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
-    val viewAlbum: (String) -> Unit = {},
-    val viewArtist: (String) -> Unit = {},
+    val viewAlbum: ((String) -> Unit)? = null,
+    val viewArtist: ((String) -> Unit)? = null,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,15 +89,21 @@ fun ItemContextMenu(
         MenuHeader(target)
         when (target) {
             is MenuTarget.Song -> {
-                MenuItem(Icons.Rounded.PlayArrow, "Play") { dismissThen { actions.playSong(target.song) } }
+                actions.playSong?.let { play ->
+                    MenuItem(Icons.Rounded.PlayArrow, "Play") { dismissThen { play(target.song) } }
+                }
                 MenuItem(starIcon(target.song.starred), starLabel(target.song.starred)) {
                     dismissThen { actions.setStar(StarType.Song, target.song.id, target.song.starred == null) }
                 }
                 target.song.albumId?.let { albumId ->
-                    MenuItem(Icons.Rounded.Album, "View album") { dismissThen { actions.viewAlbum(albumId) } }
+                    actions.viewAlbum?.let { view ->
+                        MenuItem(Icons.Rounded.Album, "View album") { dismissThen { view(albumId) } }
+                    }
                 }
                 target.song.artistId?.let { artistId ->
-                    MenuItem(Icons.Rounded.Person, "View artist") { dismissThen { actions.viewArtist(artistId) } }
+                    actions.viewArtist?.let { view ->
+                        MenuItem(Icons.Rounded.Person, "View artist") { dismissThen { view(artistId) } }
+                    }
                 }
             }
 
@@ -108,7 +114,9 @@ fun ItemContextMenu(
                     dismissThen { actions.setStar(StarType.Album, target.album.id, target.album.starred == null) }
                 }
                 target.album.artistId?.let { artistId ->
-                    MenuItem(Icons.Rounded.Person, "View artist") { dismissThen { actions.viewArtist(artistId) } }
+                    actions.viewArtist?.let { view ->
+                        MenuItem(Icons.Rounded.Person, "View artist") { dismissThen { view(artistId) } }
+                    }
                 }
             }
 

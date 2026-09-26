@@ -8,6 +8,7 @@ import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,5 +53,13 @@ class AlbumDetailViewModel(
         viewModelScope.launch {
             playbackController.shuffleAlbum(sourceId.first(), albumId)
         }
+    }
+
+    fun setStar(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ) {
+        viewModelScope.launch { libraryRepository.setStar(type, id, starred) }
     }
 }

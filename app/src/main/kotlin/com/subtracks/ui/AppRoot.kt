@@ -250,6 +250,7 @@ private fun MainNavigation() {
                                     .orEmpty()
                                     .ifEmpty { null },
                             onBack = { navController.popBackStack() },
+                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
                         )
                     }
                     composable(
@@ -272,6 +273,7 @@ private fun MainNavigation() {
                                     .ifEmpty { null },
                             onBack = { navController.popBackStack() },
                             onAlbumClick = { album -> navController.navigate(Routes.album(album.id, album.coverArt)) },
+                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
                         )
                     }
                     composable(
@@ -281,6 +283,8 @@ private fun MainNavigation() {
                         PlaylistDetailRoute(
                             playlistId = entry.arguments?.getString("playlistId").orEmpty(),
                             onBack = { navController.popBackStack() },
+                            onViewAlbum = { albumId -> navController.navigate(Routes.album(albumId)) },
+                            onViewArtist = { artistId -> navController.navigate(Routes.artist(artistId)) },
                         )
                     }
                     composable(Routes.ADD_SERVER) {
@@ -343,6 +347,14 @@ private fun MainNavigation() {
                     NowPlayingRoute(
                         onBack = { settleNowPlaying(false) },
                         onQueue = { showingQueue = true },
+                        onViewAlbum = { albumId ->
+                            settleNowPlaying(false)
+                            navController.navigate(Routes.album(albumId))
+                        },
+                        onViewArtist = { artistId ->
+                            settleNowPlaying(false)
+                            navController.navigate(Routes.artist(artistId))
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

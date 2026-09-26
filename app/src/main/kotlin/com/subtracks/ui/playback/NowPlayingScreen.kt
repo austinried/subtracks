@@ -43,7 +43,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,26 +64,45 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.Song
+import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.RepeatMode
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ItemContextMenu
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
 fun NowPlayingRoute(
     onBack: () -> Unit,
     onQueue: () -> Unit,
+    onViewAlbum: (String) -> Unit,
+    onViewArtist: (String) -> Unit,
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
+    libraryRepository: LibraryRepository = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val positionMs by controller.positionMs.collectAsStateWithLifecycle()
+    val sourceId = state.context?.sourceId
+    val songId = state.item?.id
+    val song by
+        produceState<Song?>(null, sourceId, songId) {
+            if (sourceId != null && songId != null) {
+                libraryRepository.song(sourceId, songId).collect { value = it }
+            }
+        }
+    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    val scope = rememberCoroutineScope()
     val context = LocalPlatformContext.current
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
@@ -117,9 +138,22 @@ fun NowPlayingRoute(
         onPrevious = controller::previous,
         onShuffle = controller::toggleShuffle,
         onRepeat = controller::cycleRepeat,
+        onMore = { song?.let { menuTarget = MenuTarget.Song(it) } },
         onSeek = controller::seekTo,
         modifier = modifier,
     )
+    menuTarget?.let { target ->
+        ItemContextMenu(
+            target = target,
+            actions =
+                ItemActions(
+                    setStar = { type, id, starred -> scope.launch { libraryRepository.setStar(type, id, starred) } },
+                    viewAlbum = onViewAlbum,
+                    viewArtist = onViewArtist,
+                ),
+            onDismiss = { menuTarget = null },
+        )
+    }
 }
 
 internal fun prefetchImage(
@@ -159,6 +193,7 @@ fun NowPlayingScreen(
     onPrevious: () -> Unit,
     onShuffle: () -> Unit = {},
     onRepeat: () -> Unit = {},
+    onMore: () -> Unit = {},
     onSeek: (Long) -> Unit,
     thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
@@ -395,7 +430,7 @@ fun NowPlayingScreen(
                                     modifier = Modifier.size(30.dp),
                                 )
                             }
-                            IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
+                            IconButton(onClick = onMore, modifier = Modifier.size(40.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.MoreHoriz,
                                     contentDescription = "More",

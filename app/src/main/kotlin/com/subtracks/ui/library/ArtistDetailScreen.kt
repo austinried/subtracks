@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,6 +62,9 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ItemContextMenu
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
@@ -83,6 +90,7 @@ fun ArtistDetailRoute(
     coverArtId: String?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
+    onViewAlbum: (String) -> Unit,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
@@ -90,6 +98,14 @@ fun ArtistDetailRoute(
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
+    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    val actions =
+        ItemActions(
+            playAlbum = { viewModel.playAlbum(it.id) },
+            shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
+            setStar = viewModel::setStar,
+            viewAlbum = onViewAlbum,
+        )
     ArtistDetailScreen(
         artist = artist,
         albums = albums,
@@ -99,7 +115,12 @@ fun ArtistDetailRoute(
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
+        onAlbumLongClick = { menuTarget = it },
+        onMore = { artist?.let { menuTarget = MenuTarget.Artist(it) } },
     )
+    menuTarget?.let { target ->
+        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,6 +134,8 @@ fun ArtistDetailScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
+    onAlbumLongClick: (MenuTarget) -> Unit = {},
+    onMore: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
@@ -213,7 +236,10 @@ fun ArtistDetailScreen(
                                     .padding(
                                         start = if (index % 2 == 0) 16.dp else 0.dp,
                                         end = if (index % 2 == 1) 16.dp else 0.dp,
-                                    ).clickable { onAlbumClick(album) },
+                                    ).combinedClickable(
+                                        onClick = { onAlbumClick(album) },
+                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album)) },
+                                    ),
                         ) {
                             CoverArt(
                                 ref = coverArt(album.coverArt, false),
@@ -265,6 +291,11 @@ fun ArtistDetailScreen(
                     navigationIcon = {
                         IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = onMore, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
+                            Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),

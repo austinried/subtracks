@@ -1,8 +1,11 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -15,6 +18,9 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
+import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ItemContextMenu
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
@@ -28,12 +34,23 @@ private const val THEME_TRANSITION_MS = 100
 fun PlaylistDetailRoute(
     playlistId: String,
     onBack: () -> Unit,
+    onViewAlbum: (String) -> Unit,
+    onViewArtist: (String) -> Unit,
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
+    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    val actions =
+        ItemActions(
+            playPlaylist = { viewModel.playAll() },
+            shufflePlaylist = { viewModel.shuffle() },
+            setStar = viewModel::setStar,
+            viewAlbum = onViewAlbum,
+            viewArtist = onViewArtist,
+        )
     PlaylistDetailScreen(
         playlist = playlist,
         songs = viewModel.songs.collectAsLazyPagingItems(),
@@ -41,10 +58,15 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
+        onSongLongClick = { menuTarget = it },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
+        onMore = { playlist?.let { menuTarget = MenuTarget.Playlist(it) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
+    menuTarget?.let { target ->
+        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
+    }
 }
 
 @Composable
@@ -55,8 +77,10 @@ fun PlaylistDetailScreen(
     artwork: ArtworkColors?,
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
+    onSongLongClick: (MenuTarget) -> Unit = {},
     onShuffle: () -> Unit = {},
     onPlay: () -> Unit = { onSongClick(0) },
+    onMore: () -> Unit = {},
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -75,7 +99,7 @@ fun PlaylistDetailScreen(
                 onPlay = onPlay,
                 onShuffle = onShuffle,
                 onDownload = {},
-                onMore = {},
+                onMore = onMore,
                 topInset = topInset,
                 controlsModifier = controlsModifier,
             )
@@ -89,7 +113,11 @@ fun PlaylistDetailScreen(
                         coverArtId = item.coverArt,
                         coverArt = coverArt,
                         isPlaying = item.song.id == playingSongId,
-                        modifier = rowModifier.clickable { onSongClick(index) },
+                        modifier =
+                            rowModifier.combinedClickable(
+                                onClick = { onSongClick(index) },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(item.song)) },
+                            ),
                     )
                 }
             }

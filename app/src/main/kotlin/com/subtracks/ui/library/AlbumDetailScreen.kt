@@ -1,6 +1,6 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +30,9 @@ import com.subtracks.data.model.Song
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
+import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ItemContextMenu
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.rememberArtworkColors
 import org.koin.compose.koinInject
@@ -42,6 +47,7 @@ fun AlbumDetailRoute(
     albumId: String,
     coverArtId: String?,
     onBack: () -> Unit,
+    onViewArtist: (String) -> Unit,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -51,6 +57,15 @@ fun AlbumDetailRoute(
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
+    var menuTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    val actions =
+        ItemActions(
+            playSong = { song -> songs.indexOfFirst { it.id == song.id }.takeIf { it >= 0 }?.let(viewModel::play) },
+            playAlbum = { viewModel.playAll() },
+            shuffleAlbum = { viewModel.shuffle() },
+            setStar = viewModel::setStar,
+            viewArtist = onViewArtist,
+        )
     AlbumDetailScreen(
         album = album,
         songs = songs,
@@ -59,10 +74,15 @@ fun AlbumDetailRoute(
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         onBack = onBack,
         onSongClick = viewModel::play,
+        onSongLongClick = { menuTarget = it },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
+        onMore = { album?.let { menuTarget = MenuTarget.Album(it) } },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
+    menuTarget?.let { target ->
+        ItemContextMenu(target = target, actions = actions, onDismiss = { menuTarget = null })
+    }
 }
 
 @Composable
@@ -74,6 +94,7 @@ fun AlbumDetailScreen(
     artwork: ArtworkColors?,
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
+    onSongLongClick: (MenuTarget) -> Unit = {},
     onShuffle: () -> Unit = {},
     onPlay: () -> Unit = { onSongClick(0) },
     onDownload: () -> Unit = {},
@@ -137,7 +158,11 @@ fun AlbumDetailScreen(
                         song = song,
                         isPlaying = song.id == playingSongId,
                         trackNumber = song.track,
-                        modifier = rowModifier.clickable { onSongClick(index) },
+                        modifier =
+                            rowModifier.combinedClickable(
+                                onClick = { onSongClick(index) },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(song)) },
+                            ),
                     )
                 }
             }
