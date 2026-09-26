@@ -52,6 +52,7 @@ data class PlaybackState(
     val hasPrevious: Boolean = false,
     val shuffle: Boolean = false,
     val repeat: RepeatMode = RepeatMode.Off,
+    val restored: Boolean = false,
 )
 
 private sealed interface QueueUndo {
@@ -127,6 +128,7 @@ class PlaybackController(
     private var repeatMode = RepeatMode.Off
     private var endedHandled = false
     private var lastSavedPositionMs = 0L
+    private var restored = false
 
     init {
         scope.launch {
@@ -226,6 +228,7 @@ class PlaybackController(
             windowEnd = -1
             lastEdit = null
             endedHandled = false
+            restored = false
             val previous = snapshot
             val previousEntry = previous?.entries?.firstOrNull()?.entry
             val same = previousEntry != null && previousEntry.kind == entry.kind && previousEntry.refId == entry.refId
@@ -601,6 +604,7 @@ class PlaybackController(
         windowEnd = -1
         lastEdit = null
         endedHandled = false
+        restored = false
         val modes = queueRepository.modes()
         shuffleEnabled = !disableShuffle && modes.shuffle
         repeatMode = modes.repeat.toRepeatMode()
@@ -661,8 +665,8 @@ class PlaybackController(
             this.queueSourceId = queueSourceId
             val position = queueRepository.cursor().coerceIn(0, snapshot.size - 1)
             lastSavedPositionMs = queueRepository.cursorPositionMs().coerceAtLeast(0)
+            restored = true
             loadWindow(position, autoplay = false, startPositionMs = lastSavedPositionMs)
-            player?.prepare()
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }
@@ -677,6 +681,7 @@ class PlaybackController(
         windowStart = 0
         windowEnd = -1
         lastEdit = null
+        restored = false
         player?.run {
             stop()
             clear()
@@ -701,10 +706,8 @@ class PlaybackController(
         updating = true
         player.setWindow(window.map { it.item.toQueueItem() }, startIndex, startPositionMs)
         updating = false
-        if (autoplay) {
-            player.prepare()
-            player.play()
-        }
+        player.prepare()
+        if (autoplay) player.play()
         refresh(position)
     }
 
@@ -940,6 +943,7 @@ class PlaybackController(
                 hasPrevious = true,
                 shuffle = shuffleEnabled,
                 repeat = repeatMode,
+                restored = restored,
             )
         if (player.isPlaying) startPositionTicker() else stopPositionTicker()
     }

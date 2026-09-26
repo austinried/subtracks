@@ -161,6 +161,20 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun restoringMarksTheStateUntilPlaybackStarts() {
+        seedAlbum(5, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
+
+        controller.connect()
+        await { handle.items.isNotEmpty() }
+
+        assertTrue(controller.state.value.restored)
+
+        controller.playAlbum(1, "al1", 0)
+        await { !controller.state.value.restored }
+    }
+
+    @Test
     fun nextAdvancesTheCursor() {
         seedAlbum(3, sourceId = 1)
 
@@ -1067,7 +1081,9 @@ class PlaybackControllerTest {
 
         assertEquals(33_000L, handle.positionMs)
         assertFalse(handle.playWhenReady)
-        assertTrue(handle.operations.drop(before).none { it.startsWith("prepare") || it.startsWith("play") })
+        val reload = handle.operations.drop(before)
+        assertTrue("a reload must re-prepare, or the next play pays for it", reload.any { it == "prepare" })
+        assertTrue(reload.none { it == "play" })
     }
 
     @Test

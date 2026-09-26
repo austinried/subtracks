@@ -5,6 +5,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
@@ -233,12 +234,9 @@ private fun MainNavigation() {
     val navBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val keyboardUp = WindowInsets.imeAnimationTarget.getBottom(density) > 0
     val showMiniPlayer = playerVisible && !keyboardUp
-    var miniPlayerRevealed by remember { mutableStateOf(false) }
-    val firstReveal = !miniPlayerRevealed && showMiniPlayer
-    LaunchedEffect(showMiniPlayer) { if (showMiniPlayer) miniPlayerRevealed = true }
     val bottomInset by animateDpAsState(
         targetValue = if (showMiniPlayer) 0.dp else navBarInset,
-        animationSpec = if (firstReveal) snap() else tween(MINI_PLAYER_ANIM_MS),
+        animationSpec = if (playback.restored) snap() else tween(MINI_PLAYER_ANIM_MS),
         label = "libraryBottomInset",
     )
 
@@ -382,12 +380,17 @@ private fun MainNavigation() {
                 AnimatedVisibility(
                     visible = showMiniPlayer,
                     enter =
-                        if (firstReveal) {
+                        if (playback.restored) {
                             EnterTransition.None
                         } else {
                             expandVertically(tween(MINI_PLAYER_ANIM_MS), expandFrom = Alignment.Bottom)
                         },
-                    exit = shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom),
+                    exit =
+                        if (playback.restored) {
+                            ExitTransition.None
+                        } else {
+                            shrinkVertically(tween(MINI_PLAYER_ANIM_MS), shrinkTowards = Alignment.Bottom)
+                        },
                 ) {
                     val positionMs by playbackController.positionMs.collectAsStateWithLifecycle()
                     val miniArt = playbackController.coverArt(playback.item, thumbnail = true)
