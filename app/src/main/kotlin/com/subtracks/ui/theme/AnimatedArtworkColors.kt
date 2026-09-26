@@ -38,10 +38,15 @@ fun rememberAnimatedArtworkColors(
     LaunchedEffect(target, durationMillis) {
         val next = target ?: baseArtworkColors
         if (next !== to) {
-            from = lerpArtworkColors(from, to, progress.value)
-            to = next
-            progress.snapTo(0f)
-            progress.animateTo(1f, tween(durationMillis = durationMillis))
+            if (to === baseArtworkColors) {
+                from = next
+                to = next
+            } else {
+                from = lerpArtworkColors(from, to, progress.value)
+                to = next
+                progress.snapTo(0f)
+                progress.animateTo(1f, tween(durationMillis = durationMillis))
+            }
         }
     }
 

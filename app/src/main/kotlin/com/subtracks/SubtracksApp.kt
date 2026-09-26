@@ -5,6 +5,7 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.di.appModule
 import com.subtracks.ui.theme.ArtworkSeedCache
@@ -24,7 +25,7 @@ class SubtracksApp : Application() {
             startKoin {
                 modules(appModule(this@SubtracksApp, http))
             }.koin
-        ArtworkSeedCache.install(koin.get<ArtworkSeedStore>())
+        ArtworkSeedCache.install(koin.get<ArtworkSeedStore>(), koin.get<UserPreferences>())
         SingletonImageLoader.setSafe { context ->
             ImageLoader
                 .Builder(context)

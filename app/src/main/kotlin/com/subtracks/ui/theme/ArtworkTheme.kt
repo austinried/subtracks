@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -182,10 +183,16 @@ private fun blendHue(
 fun rememberArtworkColors(
     ref: CoverArtRef?,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
+    markActive: Boolean = false,
 ): ArtworkColors? {
     val cached = remember(ref?.cacheKey) { ref?.cacheKey?.let(ArtworkSeedCache::cached) }
     val seeds by rememberArtworkSeed(ref)
     val effective = seeds ?: cached
+    if (markActive) {
+        LaunchedEffect(ref?.cacheKey, effective) {
+            if (ref != null && effective != null) ArtworkSeedCache.markLast(ref)
+        }
+    }
     val target = remember(effective) { effective?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
     val colors = rememberAnimatedArtworkColors(target, durationMillis)
     return if (target == null) null else colors

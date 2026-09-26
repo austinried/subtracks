@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.subtracks.data.net.NetworkMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 enum class AlbumSort { Name, Artist, Year, Added, Starred }
@@ -43,6 +45,12 @@ data class StreamQuality(
 
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
 
+data class ArtworkSeedValue(
+    val cacheKey: String,
+    val primary: Int,
+    val secondary: Int?,
+)
+
 class UserPreferences(
     private val store: DataStore<Preferences>,
 ) {
@@ -68,6 +76,25 @@ class UserPreferences(
     }
 
     private fun streamQualityKey(mode: NetworkMode) = stringPreferencesKey("stream_quality_${mode.key}")
+
+    suspend fun lastSeed(): ArtworkSeedValue? {
+        val prefs = store.data.first()
+        val cacheKey = prefs[lastSeedKey] ?: return null
+        val primary = prefs[lastSeedPrimary] ?: return null
+        return ArtworkSeedValue(cacheKey, primary, prefs[lastSeedSecondary])
+    }
+
+    suspend fun setLastSeed(value: ArtworkSeedValue) {
+        store.edit { prefs ->
+            prefs[lastSeedKey] = value.cacheKey
+            prefs[lastSeedPrimary] = value.primary
+            if (value.secondary != null) prefs[lastSeedSecondary] = value.secondary else prefs.remove(lastSeedSecondary)
+        }
+    }
+
+    private val lastSeedKey = stringPreferencesKey("last_seed_key")
+    private val lastSeedPrimary = intPreferencesKey("last_seed_primary")
+    private val lastSeedSecondary = intPreferencesKey("last_seed_secondary")
 
     private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
 

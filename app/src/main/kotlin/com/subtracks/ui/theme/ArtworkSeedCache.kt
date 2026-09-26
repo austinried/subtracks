@@ -21,6 +21,8 @@ import coil3.request.allowHardware
 import coil3.toBitmap
 import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.prefs.ArtworkSeedValue
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.ArtworkSeedStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -56,11 +58,38 @@ object ArtworkSeedCache {
     @Volatile
     private var store: ArtworkSeedStore? = null
 
-    fun install(store: ArtworkSeedStore?) {
+    @Volatile
+    private var prefs: UserPreferences? = null
+
+    @Volatile
+    private var lastSeed: ArtworkSeedValue? = null
+
+    fun install(
+        store: ArtworkSeedStore?,
+        prefs: UserPreferences? = null,
+    ) {
         this.store = store
+        this.prefs = prefs
+        if (prefs == null) {
+            lastSeed = null
+            return
+        }
+        scope.launch {
+            ignoreFailure { prefs.lastSeed() }?.let { lastSeed = it }
+        }
     }
 
-    fun cached(cacheKey: String): Pair<Int, Int?>? = cache.get(cacheKey)?.let { it.primary to it.secondary }
+    fun cached(cacheKey: String): Pair<Int, Int?>? =
+        cache.get(cacheKey)?.let { it.primary to it.secondary }
+            ?: lastSeed?.takeIf { it.cacheKey == cacheKey }?.let { it.primary to it.secondary }
+
+    fun markLast(ref: CoverArtRef) {
+        val prefs = prefs ?: return
+        val seed = cache.get(ref.cacheKey) ?: return
+        val value = ArtworkSeedValue(ref.cacheKey, seed.primary, seed.secondary)
+        lastSeed = value
+        scope.launch { ignoreFailure { prefs.setLastSeed(value) } }
+    }
 
     fun cachedBusy(cacheKey: String): Boolean? = cache.get(cacheKey)?.busy
 

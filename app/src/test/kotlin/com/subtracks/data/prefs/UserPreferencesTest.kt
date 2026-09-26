@@ -57,4 +57,25 @@ class UserPreferencesTest {
 
             file.delete()
         }
+
+    @Test
+    fun lastSeedRoundTripsWithAndWithoutASecondary() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(null, prefs.lastSeed())
+
+            prefs.setLastSeed(ArtworkSeedValue("art:1", 0xFF112233.toInt(), 0xFF445566.toInt()))
+            assertEquals(
+                ArtworkSeedValue("art:1", 0xFF112233.toInt(), 0xFF445566.toInt()),
+                prefs.lastSeed(),
+            )
+
+            prefs.setLastSeed(ArtworkSeedValue("art:2", 0xFF778899.toInt(), null))
+            assertEquals(ArtworkSeedValue("art:2", 0xFF778899.toInt(), null), prefs.lastSeed())
+
+            file.delete()
+        }
 }

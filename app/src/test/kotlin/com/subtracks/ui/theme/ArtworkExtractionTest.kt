@@ -6,6 +6,7 @@ import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.luminance
@@ -90,6 +91,24 @@ class ArtworkExtractionTest {
         composeRule.runOnIdle { artwork.value = artworkColorsFromSeed(0xFF3A7BD5.toInt()) }
         composeRule.waitForIdle()
         assertEquals(42, state.value)
+    }
+
+    @Test
+    fun theFirstArtworkColourAppearsWithoutFadingFromTheBaseScheme() {
+        val target = artworkColorsFromSeed(0xFF3A7BD5.toInt())
+        val artwork = mutableStateOf<ArtworkColors?>(null)
+        val seen = mutableListOf<androidx.compose.ui.graphics.Color>()
+        composeRule.setContent {
+            val colors = rememberAnimatedArtworkColors(artwork.value)
+            SideEffect { seen += colors.scheme.background }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { artwork.value = target }
+        composeRule.waitForIdle()
+
+        val firstPainting = seen.first { it != baseArtworkColors.scheme.background }
+        assertEquals(target.scheme.background, firstPainting)
     }
 
     @Test
