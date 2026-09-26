@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
@@ -42,13 +44,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.ui.components.rememberViewportFill
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
 private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "flac")
 
-private enum class SettingsDialog { Bitrate, Format }
+private enum class SettingsDialog { WifiQuality, MobileQuality }
 
 @Composable
 fun SettingsRoute(
@@ -58,17 +61,17 @@ fun SettingsRoute(
 ) {
     val sources by viewModel.sources.collectAsStateWithLifecycle()
     val activeSourceId by viewModel.activeSourceId.collectAsStateWithLifecycle()
-    val maxBitrate by viewModel.maxBitrate.collectAsStateWithLifecycle()
-    val streamFormat by viewModel.streamFormat.collectAsStateWithLifecycle()
+    val wifiQuality by viewModel.wifiQuality.collectAsStateWithLifecycle()
+    val mobileQuality by viewModel.mobileQuality.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
-        maxBitrate = maxBitrate,
-        streamFormat = streamFormat,
+        wifiQuality = wifiQuality,
+        mobileQuality = mobileQuality,
         onSelectSource = viewModel::selectSource,
         onDeleteSource = viewModel::deleteSource,
-        onMaxBitrateChange = viewModel::setMaxBitrate,
-        onStreamFormatChange = viewModel::setStreamFormat,
+        onWifiQualityChange = viewModel::setWifiQuality,
+        onMobileQualityChange = viewModel::setMobileQuality,
         onAddServer = onAddServer,
         onBack = onBack,
     )
@@ -79,12 +82,12 @@ fun SettingsRoute(
 fun SettingsScreen(
     sources: List<Source>,
     activeSourceId: Long?,
-    maxBitrate: Int,
-    streamFormat: String?,
+    wifiQuality: StreamQuality,
+    mobileQuality: StreamQuality,
     onSelectSource: (Long) -> Unit,
     onDeleteSource: (Long) -> Unit,
-    onMaxBitrateChange: (Int) -> Unit,
-    onStreamFormatChange: (String?) -> Unit,
+    onWifiQualityChange: (StreamQuality) -> Unit,
+    onMobileQualityChange: (StreamQuality) -> Unit,
     onAddServer: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -147,17 +150,17 @@ fun SettingsScreen(
             item { SectionHeader("Network") }
             item {
                 ListItem(
-                    headlineContent = { Text("Maximum bitrate") },
-                    supportingContent = { Text(bitrateLabel(maxBitrate)) },
-                    modifier = Modifier.clickable { dialog = SettingsDialog.Bitrate },
+                    headlineContent = { Text("Wi-Fi") },
+                    supportingContent = { Text(qualityLabel(wifiQuality)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.WifiQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Preferred stream format") },
-                    supportingContent = { Text(streamFormat ?: "Use server default") },
-                    modifier = Modifier.clickable { dialog = SettingsDialog.Format },
+                    headlineContent = { Text("Mobile data") },
+                    supportingContent = { Text(qualityLabel(mobileQuality)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.MobileQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -166,28 +169,20 @@ fun SettingsScreen(
     }
 
     when (dialog) {
-        SettingsDialog.Bitrate -> {
-            ChoiceDialog(
-                title = "Maximum bitrate",
-                options = bitrateOptions.map { it to bitrateLabel(it) },
-                selected = maxBitrate,
-                onSelect = { value ->
-                    onMaxBitrateChange(value)
-                    dialog = null
-                },
+        SettingsDialog.WifiQuality -> {
+            QualityDialog(
+                title = "Wi-Fi",
+                quality = wifiQuality,
+                onSelect = onWifiQualityChange,
                 onDismiss = { dialog = null },
             )
         }
 
-        SettingsDialog.Format -> {
-            ChoiceDialog(
-                title = "Preferred stream format",
-                options = streamFormats.map { it to (it ?: "Use server default") },
-                selected = streamFormat,
-                onSelect = { value ->
-                    onStreamFormatChange(value)
-                    dialog = null
-                },
+        SettingsDialog.MobileQuality -> {
+            QualityDialog(
+                title = "Mobile data",
+                quality = mobileQuality,
+                onSelect = onMobileQualityChange,
                 onDismiss = { dialog = null },
             )
         }
@@ -198,37 +193,61 @@ fun SettingsScreen(
     }
 }
 
+private fun qualityLabel(quality: StreamQuality): String = "${bitrateLabel(quality.maxBitrate)} · ${quality.format ?: "Server default"}"
+
 private fun bitrateLabel(kbps: Int): String = if (kbps == 0) "Unlimited" else "${kbps}kbps"
 
 @Composable
-private fun <T> ChoiceDialog(
+private fun QualityDialog(
     title: String,
-    options: List<Pair<T, String>>,
-    selected: T,
-    onSelect: (T) -> Unit,
+    quality: StreamQuality,
+    onSelect: (StreamQuality) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
-                options.forEach { (value, label) ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().clickable { onSelect(value) },
-                    ) {
-                        RadioButton(selected = value == selected, onClick = { onSelect(value) })
-                        Spacer(Modifier.width(8.dp))
-                        Text(label)
-                    }
-                }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                ChoiceGroup(
+                    header = "Maximum bitrate",
+                    options = bitrateOptions.map { it to bitrateLabel(it) },
+                    selected = quality.maxBitrate,
+                    onSelect = { onSelect(quality.copy(maxBitrate = it)) },
+                )
+                Spacer(Modifier.height(16.dp))
+                ChoiceGroup(
+                    header = "Preferred format",
+                    options = streamFormats.map { it to (it ?: "Use server default") },
+                    selected = quality.format,
+                    onSelect = { onSelect(quality.copy(format = it)) },
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("Done") }
         },
     )
+}
+
+@Composable
+private fun <T> ChoiceGroup(
+    header: String,
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+) {
+    Text(header, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    options.forEach { (value, label) ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().clickable { onSelect(value) },
+        ) {
+            RadioButton(selected = value == selected, onClick = { onSelect(value) })
+            Spacer(Modifier.width(8.dp))
+            Text(label)
+        }
+    }
 }
 
 @Composable

@@ -2,6 +2,7 @@ package com.subtracks.data.prefs
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.net.NetworkMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -34,6 +35,25 @@ class UserPreferencesTest {
                 ListQuery("AlbumCount", descending = true),
                 prefs.listQuery(LibraryListTab.Artists).first(),
             )
+
+            file.delete()
+        }
+
+    @Test
+    fun streamQualityRoundTripsPerNetworkMode() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(StreamQuality(), prefs.streamQuality(NetworkMode.Wifi).first())
+            assertEquals(StreamQuality(), prefs.streamQuality(NetworkMode.Mobile).first())
+
+            prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(320, null))
+            prefs.setStreamQuality(NetworkMode.Mobile, StreamQuality(96, "opus"))
+
+            assertEquals(StreamQuality(320, null), prefs.streamQuality(NetworkMode.Wifi).first())
+            assertEquals(StreamQuality(96, "opus"), prefs.streamQuality(NetworkMode.Mobile).first())
 
             file.delete()
         }

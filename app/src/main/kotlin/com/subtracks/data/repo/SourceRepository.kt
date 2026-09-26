@@ -5,6 +5,8 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicConfig
 import com.subtracks.data.model.SubsonicSource
+import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.subsonic.SubsonicClient
@@ -13,8 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -25,6 +29,7 @@ class SourceRepository(
     private val db: SubtracksDatabase,
     private val http: OkHttpClient,
     private val prefs: UserPreferences,
+    networkMode: Flow<NetworkMode> = flowOf(NetworkMode.Wifi),
     private val showMessage: (String) -> Unit = {},
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -33,15 +38,20 @@ class SourceRepository(
     private var active: SubsonicMusicSource? = null
     private var activeSourceId: Long? = null
 
+    private val _quality = MutableStateFlow(StreamQuality())
+    val quality: StateFlow<StreamQuality> = _quality
+
     init {
         scope.launch {
             combine(
                 db.sourcesDao().activeSubsonicConfig(),
-                prefs.maxBitrate,
-                prefs.streamFormat,
-            ) { config, maxBitrate, streamFormat -> Triple(config, maxBitrate, streamFormat) }
-                .collect { (config, maxBitrate, streamFormat) ->
-                    active = config?.toMusicSource(maxBitrate, streamFormat)
+                networkMode,
+                prefs.streamQuality(NetworkMode.Wifi),
+                prefs.streamQuality(NetworkMode.Mobile),
+            ) { config, mode, wifi, mobile -> config to (if (mode == NetworkMode.Wifi) wifi else mobile) }
+                .collect { (config, quality) ->
+                    active = config?.toMusicSource(quality)
+                    _quality.value = quality
                     val sourceChanged = config?.id != activeSourceId
                     activeSourceId = config?.id
                     if (sourceChanged && config != null && config.useTokenAuth) {
@@ -129,7 +139,7 @@ class SourceRepository(
 
     suspend fun activeMusicSource(): MusicSource? {
         val config = db.sourcesDao().activeSubsonicConfigOnce() ?: return null
-        return config.toMusicSource(prefs.maxBitrate.first(), prefs.streamFormat.first())
+        return config.toMusicSource(quality.value)
     }
 
     private fun SubsonicConfig.toClient(): SubsonicClient =
@@ -141,15 +151,12 @@ class SourceRepository(
             onTokenAuthUnsupported = { disableTokenAuth(id) },
         )
 
-    private fun SubsonicConfig.toMusicSource(
-        maxBitrate: Int,
-        streamFormat: String?,
-    ): SubsonicMusicSource =
+    private fun SubsonicConfig.toMusicSource(quality: StreamQuality): SubsonicMusicSource =
         SubsonicMusicSource(
             id = id,
             client = toClient(),
-            maxBitrate = maxBitrate,
-            streamFormat = streamFormat,
+            maxBitrate = quality.maxBitrate,
+            streamFormat = quality.format,
         )
 
     private fun disableTokenAuth(sourceId: Long) {

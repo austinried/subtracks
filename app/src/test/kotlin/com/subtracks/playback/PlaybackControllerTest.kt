@@ -11,6 +11,9 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
+import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.StreamQuality
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
@@ -35,6 +38,7 @@ class PlaybackControllerTest {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private lateinit var db: SubtracksDatabase
+    private lateinit var prefs: UserPreferences
     private lateinit var sources: SourceRepository
     private lateinit var queues: QueueRepository
     private lateinit var handle: FakePlayerHandle
@@ -48,7 +52,8 @@ class PlaybackControllerTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
+        prefs = fakeUserPreferences()
+        sources = SourceRepository(db, OkHttpClient(), prefs)
         queues = QueueRepository(db)
         handle = FakePlayerHandle()
         controller = PlaybackController(sources, queues, FakePlayerConnection(handle), dispatcher = dispatcher)
@@ -1014,6 +1019,25 @@ class PlaybackControllerTest {
 
             assertEquals(paused, controller.positionMs.value)
         }
+
+    @Test
+    fun changingStreamQualityReloadsTheCurrentItemAtTheSamePosition() {
+        seedAlbum(60, sourceId = 1)
+        runBlocking { prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(64, null)) }
+        await { sources.quality.value == StreamQuality(64, null) }
+
+        controller.playAlbum(1, "al1", 10)
+        await { handle.operations.contains("play") }
+        handle.positionMs = 42_000L
+        val windows = handle.operations.count { it.startsWith("setWindow") }
+
+        runBlocking { prefs.setStreamQuality(NetworkMode.Wifi, StreamQuality(128, "opus")) }
+        await { handle.operations.count { it.startsWith("setWindow") } > windows }
+
+        assertEquals("s11", handle.currentItem?.id)
+        assertEquals(42_000L, handle.positionMs)
+        assertEquals(listOf("prepare", "play"), handle.operations.takeLast(2))
+    }
 
     private fun seedAlbum(
         count: Int,

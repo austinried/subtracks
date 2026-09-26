@@ -36,6 +36,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.playback.RepeatMode
@@ -303,12 +304,12 @@ class AppScreenshotTest {
                 SettingsScreen(
                     sources = Fixtures.sources,
                     activeSourceId = 1,
-                    maxBitrate = 0,
-                    streamFormat = null,
+                    wifiQuality = StreamQuality(),
+                    mobileQuality = StreamQuality(192, "mp3"),
                     onSelectSource = {},
                     onDeleteSource = {},
-                    onMaxBitrateChange = {},
-                    onStreamFormatChange = {},
+                    onWifiQualityChange = {},
+                    onMobileQualityChange = {},
                     onAddServer = {},
                     onBack = {},
                 )

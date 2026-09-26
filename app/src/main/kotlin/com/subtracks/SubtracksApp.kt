@@ -3,6 +3,7 @@ package com.subtracks
 import android.app.Application
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.di.appModule
@@ -14,9 +15,11 @@ import org.koin.core.context.stopKoin
 class SubtracksApp : Application() {
     private val http = OkHttpClient()
 
+    @OptIn(DelicateCoilApi::class)
     override fun onCreate() {
         super.onCreate()
         stopKoin()
+        SingletonImageLoader.reset()
         val koin =
             startKoin {
                 modules(appModule(this@SubtracksApp, http))

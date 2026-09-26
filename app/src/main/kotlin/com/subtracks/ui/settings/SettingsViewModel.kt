@@ -3,6 +3,8 @@ package com.subtracks.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Source
+import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,13 +22,15 @@ class SettingsViewModel(
     val activeSourceId: StateFlow<Long?> =
         sourceRepository.activeSourceId().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val maxBitrate: StateFlow<Int> =
-        userPreferences.maxBitrate
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    val wifiQuality: StateFlow<StreamQuality> =
+        userPreferences
+            .streamQuality(NetworkMode.Wifi)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
 
-    val streamFormat: StateFlow<String?> =
-        userPreferences.streamFormat
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val mobileQuality: StateFlow<StreamQuality> =
+        userPreferences
+            .streamQuality(NetworkMode.Mobile)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
 
     fun selectSource(id: Long) {
         viewModelScope.launch { sourceRepository.selectSource(id) }
@@ -36,11 +40,11 @@ class SettingsViewModel(
         viewModelScope.launch { sourceRepository.deleteSource(id) }
     }
 
-    fun setMaxBitrate(kbps: Int) {
-        viewModelScope.launch { userPreferences.setMaxBitrate(kbps) }
+    fun setWifiQuality(quality: StreamQuality) {
+        viewModelScope.launch { userPreferences.setStreamQuality(NetworkMode.Wifi, quality) }
     }
 
-    fun setStreamFormat(format: String?) {
-        viewModelScope.launch { userPreferences.setStreamFormat(format) }
+    fun setMobileQuality(quality: StreamQuality) {
+        viewModelScope.launch { userPreferences.setStreamQuality(NetworkMode.Mobile, quality) }
     }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -132,6 +133,9 @@ class PlaybackController(
             sourceRepository.activeSourceId().collect { sourceId ->
                 if (queueSourceId != null && sourceId != null && sourceId != queueSourceId) stop()
             }
+        }
+        scope.launch {
+            sourceRepository.quality.drop(1).collect { reloadQuality() }
         }
     }
 
@@ -698,6 +702,17 @@ class PlaybackController(
         }
         refresh(position)
     }
+
+    private suspend fun reloadQuality() =
+        startLock.withLock {
+            val player = player ?: return@withLock
+            val snapshot = snapshot ?: return@withLock
+            if (snapshot.size == 0L) return@withLock
+            val sourceId = queueSourceId
+            if (sourceId == null || sourceRepository.activeSourceIdOnce() != sourceId) return@withLock
+            val position = currentPosition() ?: return@withLock
+            loadWindow(position, autoplay = player.playWhenReady && !player.isEnded, startPositionMs = player.currentPositionMs)
+        }
 
     private fun jumpTo(target: Long) {
         scope.launch {
