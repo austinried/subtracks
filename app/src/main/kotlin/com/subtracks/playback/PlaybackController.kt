@@ -349,15 +349,8 @@ class PlaybackController(
                 if (position != current) {
                     rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
                     refresh(target)
-                } else if (target - windowStart in 0 until player.itemCount) {
-                    updating = true
-                    player.removeAt((target - windowStart).toInt())
-                    updating = false
-                    windowEnd--
-                    shiftWindowLocked(target)
-                    refresh(target)
                 } else {
-                    loadWindow(target, autoplay = playing)
+                    loadWindow(target, autoplay = playing, startPositionMs = 0)
                 }
                 return@withLock
             }
@@ -400,10 +393,17 @@ class PlaybackController(
         val cursor = queueRepository.cursor()
         val entries = snapshot.entries.map { it.entry }
         val upNext = snapshot.upNext.map { it.entry }
+        val wasUpNext = snapshot.isUpNext(current)
         if (!queueRepository.move(snapshot, from, to)) return@withLock
         val updated = readSnapshot()
         this.snapshot = updated
-        val target = movedCursor(current, from, to)
+        val currentId = player.currentItem?.id
+        val target =
+            (
+                currentId?.let {
+                    if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
+                } ?: movedCursor(current, from, to)
+            ).coerceIn(0, updated.size - 1)
         lastPosition = target
         windowJob?.cancel()
         val fromInWindow = from in windowStart..windowEnd

@@ -927,6 +927,81 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun removingTheLastContextTrackWithAQueuedTrackKeepsTheQueue() {
+        seedAlbum(1, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        runBlocking { controller.removeAt(0) }
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(1L, snapshot.size)
+        assertTrue(runBlocking { queues.range(snapshot, 0, 0) }.isNotEmpty())
+    }
+
+    @Test
+    fun movingTheAnchorKeepsThePlayingTrackPositionInSync() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        runBlocking { controller.move(1, 0) }
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(runBlocking { queues.combinedIndexOf(snapshot, "x1") }, controller.state.value.position)
+    }
+
+    @Test
+    fun removingThePlayingAnchorTrackPlaysTheModelNextTrack() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        runBlocking { controller.removeAt(1) }
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(runBlocking { queues.combinedIndexOf(snapshot, "s3") }, controller.state.value.position)
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")

@@ -58,10 +58,12 @@ data class QueueSnapshot(
     val shuffled: Boolean get() = shuffleOrder != null
 
     val anchorPlay: Long =
-        when (val order = shuffleOrder) {
-            null -> upNextAnchor
-            else -> order.indexOf(upNextAnchor).takeIf { it >= 0 }?.toLong() ?: 0L
-        }
+        (
+            when (val order = shuffleOrder) {
+                null -> upNextAnchor
+                else -> order.indexOf(upNextAnchor).takeIf { it >= 0 }?.toLong() ?: 0L
+            }
+        ).coerceAtMost(contextSize - 1L)
 
     fun isUpNext(position: Long): Boolean = upNextSize > 0L && position > anchorPlay && position <= anchorPlay + upNextSize
 

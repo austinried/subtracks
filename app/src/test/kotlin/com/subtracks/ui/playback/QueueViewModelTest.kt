@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
@@ -223,6 +224,37 @@ class QueueViewModelTest {
         }
 
         assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+    }
+
+    @Test
+    fun removingATrackUnderTheBlockReloadsRows() {
+        runBlocking { seedSongs(10) }
+        runBlocking {
+            db.libraryDao().upsertSongs(
+                listOf(Song(1, "x1", "al2", "ar1", "X", "Other Album", "Artist", 100, 1, 1, null, null)),
+            )
+        }
+        controller.playAlbum(1, "al1", 2)
+        await { controller.state.value.position == 2L }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        viewModel.open()
+        await { viewModel.ready }
+
+        viewModel.remove(2)
+        await {
+            val positions = viewModel.rows.map { it.position }
+            positions.isNotEmpty() && positions == (positions.first()..positions.last()).toList()
+        }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        val expected =
+            runBlocking {
+                (viewModel.rows.first().position..viewModel.rows.last().position)
+                    .mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, viewModel.rows.map { it.song.song.id })
     }
 
     @Test
