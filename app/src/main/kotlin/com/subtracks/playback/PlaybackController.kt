@@ -870,12 +870,12 @@ class PlaybackController(
                     endedHandled = false
                     return@withLock
                 }
+                lastPosition = dest
                 shiftWindowLocked(dest)
                 player.ensurePrepared()
                 player.seekToIndex((dest - windowStart).toInt())
                 if (wasEnded) player.play()
                 endedHandled = false
-                lastPosition = dest
                 refresh(dest)
             }
         }

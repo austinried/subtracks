@@ -317,7 +317,11 @@ fun QueueScreen(
     var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
 
-    val reorderState =
+    val upNextReorder =
+        rememberReorderableLazyListState(listState) { from, to ->
+            onReorder(from.index, to.index)
+        }
+    val contextReorder =
         rememberReorderableLazyListState(listState) { from, to ->
             onReorder(from.index, to.index)
         }
@@ -378,10 +382,11 @@ fun QueueScreen(
                         if (index == 0 || rows[index - 1].upNext != row.upNext) {
                             QueueSectionHeader(if (row.upNext) "Up next" else contextTitle ?: "Next up")
                         }
-                        val draggable = row.upNext || !shuffle
+                        val enabled = row.upNext || !shuffle
                         ReorderableItem(
-                            state = reorderState,
+                            state = if (row.upNext) upNextReorder else contextReorder,
                             key = row.id,
+                            enabled = enabled,
                             animateItemModifier =
                                 Modifier.animateItem(
                                     fadeInSpec = tween(150),
@@ -395,7 +400,7 @@ fun QueueScreen(
                                 floating = isDragging,
                                 coverArt = coverArt,
                                 dragHandle =
-                                    if (!draggable) {
+                                    if (!enabled) {
                                         null
                                     } else {
                                         Modifier.draggableHandle(

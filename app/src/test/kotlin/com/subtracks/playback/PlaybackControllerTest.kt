@@ -613,6 +613,119 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun previousFromADeepQueuedTrackGoesBackWithoutConsuming() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("q1", "al2")
+        seedSong("q2", "al2")
+        seedSong("q3", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "q1")
+        controller.addToQueue(1, QueueKind.Song, "q2")
+        controller.addToQueue(1, QueueKind.Song, "q3")
+        await { runBlocking { controller.upcomingItem()?.id } == "q1" }
+
+        controller.playAt(2)
+        await {
+            controller.state.value.item
+                ?.id == "q2"
+        }
+
+        controller.previous()
+        await {
+            controller.state.value.item
+                ?.id == "q1"
+        }
+        await { runBlocking { controller.upcomingItem()?.id } == "q2" }
+    }
+
+    @Test
+    fun previousFromAQueuedTrackDoesNotConsumeItWithAnEagerDispatcher() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("q1", "al2")
+        seedSong("q2", "al2")
+        seedSong("q3", "al2")
+        val eagerHandle = FakePlayerHandle()
+        val inline =
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(
+                    context: kotlin.coroutines.CoroutineContext,
+                    block: Runnable,
+                ) = block.run()
+            }
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
+
+        eager.playAlbum(1, "al1", 0)
+        await {
+            eager.state.value.item
+                ?.id == "s1"
+        }
+        eager.addToQueue(1, QueueKind.Song, "q1")
+        eager.addToQueue(1, QueueKind.Song, "q2")
+        eager.addToQueue(1, QueueKind.Song, "q3")
+        await { runBlocking { eager.upcomingItem()?.id } == "q1" }
+
+        eager.playAt(2)
+        await {
+            eager.state.value.item
+                ?.id == "q2"
+        }
+
+        eager.previous()
+        await {
+            eager.state.value.item
+                ?.id == "q1"
+        }
+        Thread.sleep(300)
+        assertEquals(
+            "q1",
+            eager.state.value.item
+                ?.id,
+        )
+        assertEquals("q2", runBlocking { eager.upcomingItem()?.id })
+        eager.close()
+    }
+
+    @Test
+    fun nextFollowsTheReorderedQueue() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("q1", "al2")
+        seedSong("q2", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "q1")
+        controller.addToQueue(1, QueueKind.Song, "q2")
+        await { runBlocking { controller.upcomingItem()?.id } == "q1" }
+
+        runBlocking { controller.move(2, 1) }
+        await { runBlocking { controller.upcomingItem()?.id } == "q2" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "q2"
+        }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "q1"
+        }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+    }
+
+    @Test
     fun theDurationUsesTheNextTracksMetadataWhileItLoads() {
         seedAlbum(3, sourceId = 1)
 
