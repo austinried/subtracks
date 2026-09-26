@@ -47,7 +47,7 @@ class SyncManager(
 
     private suspend fun runSync() {
         _status.value = SyncStatus.Running
-        _status.value =
+        val result =
             try {
                 val source = sourceRepository.activeMusicSource() ?: error("No server configured")
                 SyncService(db, source).sync()
@@ -59,6 +59,7 @@ class SyncManager(
                 SyncStatus.Failed(failure.message ?: "Sync failed")
             }
         queueRepository.invalidateLibraryCache()
+        _status.value = result
     }
 
     private companion object {
