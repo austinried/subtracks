@@ -255,7 +255,7 @@ data class ArtworkSeed(
     val secondary: Int?,
     val nameBusy: Boolean? = null,
     val sourceId: Long = 0,
-    @ColumnInfo(defaultValue = "0") val lastUsed: Long = 0,
+    @ColumnInfo(defaultValue = "0") val storedAt: Long = 0,
 )
 
 class QueueKindConverter {

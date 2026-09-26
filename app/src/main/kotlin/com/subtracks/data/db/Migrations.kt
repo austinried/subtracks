@@ -119,7 +119,7 @@ val MIGRATION_12_13 =
             connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `artwork_seeds` (`cacheKey` TEXT NOT NULL, " +
                     "`primary` INTEGER NOT NULL, `secondary` INTEGER, `nameBusy` INTEGER, " +
-                    "`sourceId` INTEGER NOT NULL, `lastUsed` INTEGER NOT NULL DEFAULT 0, " +
+                    "`sourceId` INTEGER NOT NULL, `storedAt` INTEGER NOT NULL DEFAULT 0, " +
                     "PRIMARY KEY(`cacheKey`), " +
                     "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
             )

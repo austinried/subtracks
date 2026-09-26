@@ -48,7 +48,7 @@ class ArtworkSeedDaoTest {
         }
 
     @Test
-    fun pruningKeepsTheMostRecentlyUsedSeeds() =
+    fun pruningKeepsTheMostRecentlyStoredSeeds() =
         runTest {
             val sourceId = source()
             val dao = db.artworkSeedDao()
@@ -59,7 +59,7 @@ class ArtworkSeedDaoTest {
                         sourceId = sourceId,
                         primary = index,
                         secondary = null,
-                        lastUsed = index.toLong(),
+                        storedAt = index.toLong(),
                     ),
                 )
             }
@@ -76,7 +76,7 @@ class ArtworkSeedDaoTest {
             val sourceId = source()
             val repository = ArtworkSeedRepository(db)
 
-            repository.save("$sourceId:cover:true", 10 to 20)
+            repository.save(ArtworkSeed(cacheKey = "$sourceId:cover:true", primary = 10, secondary = 20))
 
             val row = db.artworkSeedDao().seed("$sourceId:cover:true")
             assertEquals(sourceId, row?.sourceId)
@@ -88,11 +88,11 @@ class ArtworkSeedDaoTest {
     fun savingBeyondTheCapPrunesTheOldestSeeds() =
         runTest {
             val sourceId = source()
-            val repository = ArtworkSeedRepository(db, maxStoredSeeds = 2)
+            val repository = ArtworkSeedRepository(db, maxStoredSeeds = 2, pruneEverySaves = 1)
 
-            repository.save("$sourceId:cover1:false", 1 to null)
-            repository.save("$sourceId:cover2:false", 2 to null)
-            repository.save("$sourceId:cover3:false", 3 to null)
+            repository.save(ArtworkSeed(cacheKey = "$sourceId:cover1:false", primary = 1, secondary = null))
+            repository.save(ArtworkSeed(cacheKey = "$sourceId:cover2:false", primary = 2, secondary = null))
+            repository.save(ArtworkSeed(cacheKey = "$sourceId:cover3:false", primary = 3, secondary = null))
 
             val stored = (1..3).count { db.artworkSeedDao().seed("$sourceId:cover$it:false") != null }
             assertEquals(2, stored)
