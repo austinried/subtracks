@@ -52,6 +52,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -187,9 +188,18 @@ private fun MainNavigation() {
         value: String,
         route: String,
     ) {
-        val top = navController.currentBackStackEntry
-        if (top?.destination?.route == pattern && top.arguments?.getString(argument) == value) return
-        navController.navigate(route)
+        val matches: (NavBackStackEntry?) -> Boolean = { entry ->
+            entry?.destination?.route == pattern && entry.arguments?.getString(argument) == value
+        }
+        if (matches(navController.currentBackStackEntry)) return
+        if (navController.currentBackStack.value.none(matches)) {
+            navController.navigate(route)
+            return
+        }
+        var guard = navController.currentBackStack.value.size
+        while (guard-- > 0 && !matches(navController.currentBackStackEntry) && navController.popBackStack()) {
+            // pop until the matching entry is back on top
+        }
     }
     LaunchedEffect(Unit) { playbackController.connect() }
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }

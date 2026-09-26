@@ -528,6 +528,7 @@ fun LibraryScreen(
         ModalBottomSheet(
             onDismissRequest = { showOptions = false },
             dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             ListOptionsSheet(
                 listQuery = listQuery,

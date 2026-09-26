@@ -141,6 +141,7 @@ fun ItemContextMenu(
         onDismissRequest = { dismiss() },
         sheetState = sheetState,
         dragHandle = null,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         MenuHeader(target)
         when (target) {
