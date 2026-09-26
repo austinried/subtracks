@@ -288,7 +288,7 @@ fun NowPlayingScreen(
                             }
                             Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.Center) {
                                 Text(
-                                    text = listOfNotNull(state.item?.artist, state.item?.album).joinToString(" • "),
+                                    text = state.item?.artist.orEmpty(),
                                     style = subtitleStyle,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,

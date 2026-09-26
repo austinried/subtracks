@@ -2,18 +2,21 @@ package com.subtracks.ui.library
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -30,6 +33,7 @@ import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
+import com.subtracks.ui.components.StarredBadge
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
 
@@ -84,19 +88,26 @@ fun AlbumsContent(
                     if (album != null) {
                         val art = coverArt(album.coverArt, true)
                         PrefetchArtworkSeeds(art)
-                        CoverArt(
-                            ref = art,
-                            name = album.name,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .combinedClickable(
-                                        onClick = { onAlbumClick(album) },
-                                        onLongClick = { onLongClick(MenuTarget.Album(album, art)) },
-                                    ).testTag(ALBUM_COVER_TAG),
-                        )
+                        Box {
+                            CoverArt(
+                                ref = art,
+                                name = album.name,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .combinedClickable(
+                                            onClick = { onAlbumClick(album) },
+                                            onLongClick = { onLongClick(MenuTarget.Album(album, art)) },
+                                        ).testTag(ALBUM_COVER_TAG),
+                            )
+                            StarredBadge(
+                                starred = album.starred != null,
+                                size = 16.dp,
+                                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+                            )
+                        }
                     }
                 }
                 item(span = { GridItemSpan(maxLineSpan) }) {

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Song
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.StarredBadge
 
 @Composable
 fun SongRow(
@@ -80,6 +81,7 @@ fun SongRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
+                StarredBadge(song.starred != null)
             }
         },
         supportingContent = {

@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -298,6 +301,22 @@ fun FilteredEmptyState(
                 Text("Clear filters")
             }
         }
+    }
+}
+
+@Composable
+fun StarredBadge(
+    starred: Boolean,
+    modifier: Modifier = Modifier,
+    size: Dp = 14.dp,
+) {
+    if (starred) {
+        Icon(
+            imageVector = Icons.Rounded.Star,
+            contentDescription = "Starred",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = modifier.size(size),
+        )
     }
 }
 
