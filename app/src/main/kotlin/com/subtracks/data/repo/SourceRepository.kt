@@ -9,6 +9,8 @@ import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.source.MusicSource
+import com.subtracks.data.source.declaredStreamLength
+import com.subtracks.data.source.streamLengthSuffix
 import com.subtracks.data.source.subsonic.SubsonicClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +84,14 @@ class SourceRepository(
         return CoverArtRef(url = url, cacheKey = "${source.id}:$coverArt:$thumbnail")
     }
 
-    fun streamUri(songId: String): String? = active?.streamUri(songId)?.toString()
+    fun streamUri(
+        songId: String,
+        durationMs: Long? = null,
+    ): String? {
+        val uri = active?.streamUri(songId)?.toString() ?: return null
+        val length = declaredStreamLength(durationMs, quality.value) ?: return uri
+        return uri + streamLengthSuffix(length)
+    }
 
     suspend fun addSource(
         name: String,

@@ -133,6 +133,7 @@ class Media3PlayerHandle(
                 .setArtist(item.artist)
                 .setAlbumTitle(item.album)
                 .setArtworkUri(item.coverArtId?.takeIf { it.isNotEmpty() }?.let(CoverArtArtwork::uri))
+                .setDurationMs(item.durationMs)
                 .setIsBrowsable(false)
                 .setIsPlayable(true)
                 .setExtras(
@@ -144,7 +145,7 @@ class Media3PlayerHandle(
         return MediaItem
             .Builder()
             .setMediaId(item.id)
-            .setUri(sourceRepository.streamUri(item.id))
+            .setUri(sourceRepository.streamUri(item.id, item.durationMs))
             .setMediaMetadata(metadata)
             .build()
     }
