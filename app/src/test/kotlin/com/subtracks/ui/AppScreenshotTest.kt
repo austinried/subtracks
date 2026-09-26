@@ -107,13 +107,11 @@ class AppScreenshotTest {
                     onTabSelected = {},
                     albums = remember { flowOf(PagingData.from(albums)) },
                     artists = remember { flowOf(PagingData.empty<Artist>()) },
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
@@ -131,13 +129,6 @@ class AppScreenshotTest {
         setLibraryContent(LibraryTab.Artists)
         awaitText("Radiohead")
         composeRule.onRoot().captureRoboImage("src/test/screenshots/library_artists.png")
-    }
-
-    @Test
-    fun librarySongs() {
-        setLibraryContent(LibraryTab.Songs)
-        awaitText("Everything In Its Right Place")
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_songs.png")
     }
 
     @Test
@@ -166,13 +157,11 @@ class AppScreenshotTest {
                         onTabSelected = {},
                         albums = remember { flowOf(PagingData.from(Fixtures.albums)) },
                         artists = remember { flowOf(PagingData.from(Fixtures.artists)) },
-                        songs = remember { flowOf(PagingData.from(Fixtures.songItems)) },
                         playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) },
                         coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                         onAlbumClick = {},
                         onArtistClick = {},
                         onPlaylistClick = {},
-                        onSongClick = {},
                         onSync = {},
                         onOpenSettings = {},
                         artwork = artwork,
@@ -473,13 +462,11 @@ class AppScreenshotTest {
                     onTabSelected = {},
                     albums = remember { flowOf(PagingData.from(Fixtures.albums)) },
                     artists = remember { flowOf(PagingData.from(Fixtures.artists)) },
-                    songs = remember { flowOf(PagingData.from(Fixtures.songItems)) },
                     playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) },
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),

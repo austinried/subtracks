@@ -4,27 +4,18 @@ import androidx.room3.deferredTransaction
 import androidx.room3.immediateTransaction
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
-import com.subtracks.data.db.LibraryDao
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
-import com.subtracks.data.prefs.SongSort
-import com.subtracks.data.prefs.StarredFilter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicLong
 
 const val QUEUE_CHUNK = 60
-
-data class QueueSongQuery(
-    val sort: SongSort,
-    val descending: Boolean,
-    val starred: StarredFilter,
-)
 
 data class ResolvedQueueEntry(
     val entry: QueueEntry,
@@ -100,26 +91,6 @@ class QueueRepository(
         songId: String,
     ) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = songId)
 
-    fun songsEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Songs, refId = "")
-
-    fun songsEntry(
-        sourceId: Long,
-        query: QueueSongQuery,
-    ) = QueueEntry(
-        position = 0,
-        sourceId = sourceId,
-        kind = QueueKind.Songs,
-        refId = "${query.sort.name}|${if (query.descending) 1 else 0}|${query.starred.ordinal}",
-    )
-
-    suspend fun songsIndexOf(
-        entry: QueueEntry,
-        songId: String,
-    ): Long? {
-        val index = songIdsFor(entry).indexOf(songId)
-        return if (index >= 0) index.toLong() else null
-    }
-
     suspend fun sourceName(
         kind: QueueKind,
         sourceId: Long,
@@ -143,113 +114,8 @@ class QueueRepository(
                     ?.takeIf { it.isNotBlank() }
             }
 
-            QueueKind.Songs, QueueKind.Song -> {
+            QueueKind.Song -> {
                 null
-            }
-        }
-    }
-
-    private fun songsQuery(refId: String): QueueSongQuery? {
-        val parts = refId.split("|")
-        if (parts.size != 3) return null
-        val sort = SongSort.entries.firstOrNull { it.name == parts[0] } ?: return null
-        val starred = StarredFilter.entries.getOrElse(parts[2].toIntOrNull() ?: 0) { StarredFilter.Any }
-        return QueueSongQuery(sort, parts[1] == "1", starred)
-    }
-
-    private suspend fun songIdsFor(entry: QueueEntry): List<String> {
-        val query = songsQuery(entry.refId) ?: return dao.songIds(entry.sourceId)
-        val library = db.libraryDao()
-        val starred = query.starred.ordinal
-        return when (query.sort) {
-            SongSort.Album -> {
-                if (query.descending) {
-                    library.songIdsByAlbumReversed(entry.sourceId, starred)
-                } else {
-                    library.songIdsByAlbum(entry.sourceId, starred)
-                }
-            }
-
-            SongSort.Title -> {
-                if (query.descending) {
-                    library.songIdsByTitleReversed(entry.sourceId, starred)
-                } else {
-                    library.songIdsByTitle(entry.sourceId, starred)
-                }
-            }
-
-            SongSort.Artist -> {
-                if (query.descending) {
-                    library.songIdsByArtistReversed(entry.sourceId, starred)
-                } else {
-                    library.songIdsByArtist(entry.sourceId, starred)
-                }
-            }
-
-            SongSort.Starred -> {
-                if (query.descending) {
-                    library.songIdsByStarredReversed(entry.sourceId, starred)
-                } else {
-                    library.songIdsByStarred(entry.sourceId, starred)
-                }
-            }
-
-            SongSort.Added -> {
-                if (query.descending) {
-                    library.songIdsByAddedReversed(entry.sourceId, starred)
-                } else {
-                    library.songIdsByAdded(entry.sourceId, starred)
-                }
-            }
-        }
-    }
-
-    private suspend fun LibraryDao.songsPage(
-        sourceId: Long,
-        query: QueueSongQuery,
-        limit: Int,
-        offset: Long,
-    ): List<SongListItem> {
-        val starred = query.starred.ordinal
-        return when (query.sort) {
-            SongSort.Album -> {
-                if (query.descending) {
-                    songsPageByAlbumReversed(sourceId, starred, limit, offset)
-                } else {
-                    songsPageByAlbum(sourceId, starred, limit, offset)
-                }
-            }
-
-            SongSort.Title -> {
-                if (query.descending) {
-                    songsPageByTitleReversed(sourceId, starred, limit, offset)
-                } else {
-                    songsPageByTitle(sourceId, starred, limit, offset)
-                }
-            }
-
-            SongSort.Artist -> {
-                if (query.descending) {
-                    songsPageByArtistReversed(sourceId, starred, limit, offset)
-                } else {
-                    songsPageByArtist(sourceId, starred, limit, offset)
-                }
-            }
-
-            SongSort.Starred -> {
-                if (query.descending) {
-                    songsPageByStarredReversed(sourceId, starred, limit, offset)
-                } else {
-                    songsPageByStarred(sourceId, starred, limit, offset)
-                }
-            }
-
-            SongSort.Added -> {
-                if (query.descending) {
-                    songsPageByAddedReversed(sourceId, starred, limit, offset)
-                } else {
-                    songsPageByAdded(sourceId, starred, limit, offset)
-                }
             }
         }
     }
@@ -476,7 +342,6 @@ class QueueRepository(
                 when (entry.kind) {
                     QueueKind.Song -> listOf(entry.refId)
                     QueueKind.Album -> dao.albumSongIds(entry.sourceId, entry.refId)
-                    QueueKind.Songs -> songIdsFor(entry)
                     QueueKind.Playlist -> dao.playlistSongIds(entry.sourceId, entry.refId)
                 }
             val from = entry.offset.toInt().coerceIn(0, entryIds.size)
@@ -502,12 +367,6 @@ class QueueRepository(
                 dao.albumSongs(entry.sourceId, entry.refId, offset, limit)
             }
 
-            QueueKind.Songs -> {
-                songsQuery(entry.refId)?.let { query ->
-                    db.libraryDao().songsPage(entry.sourceId, query, limit, offset)
-                } ?: dao.songs(entry.sourceId, offset, limit)
-            }
-
             QueueKind.Song -> {
                 dao.song(entry.sourceId, entry.refId, offset, limit)
             }
@@ -526,11 +385,6 @@ class QueueRepository(
 
                 QueueKind.Album -> {
                     dao.albumLength(sourceId, refId)
-                }
-
-                QueueKind.Songs -> {
-                    songsQuery(refId)?.let { db.libraryDao().songCountForFilter(sourceId, it.starred.ordinal) }
-                        ?: dao.songsLength(sourceId)
                 }
             }
         val available = (total - offset).coerceAtLeast(0)

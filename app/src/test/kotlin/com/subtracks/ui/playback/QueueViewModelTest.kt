@@ -66,7 +66,7 @@ class QueueViewModelTest {
     @Test
     fun openingLoadsAWindowAtTheCursorAndExtendingGrowsIt() {
         runBlocking { seedSongs(200) }
-        controller.playSongs(1, 100)
+        controller.playAlbum(1, "al1", 100)
         await { controller.state.value.position == 100L }
 
         viewModel.open()
@@ -87,7 +87,7 @@ class QueueViewModelTest {
     @Test
     fun openingAtTheEndLoadsAWindowAndExtendsOlder() {
         runBlocking { seedSongs(200) }
-        controller.playSongs(1, 199)
+        controller.playAlbum(1, "al1", 199)
         await { controller.state.value.position == 199L }
 
         viewModel.open()
@@ -111,7 +111,7 @@ class QueueViewModelTest {
     @Test
     fun reopeningReusesRowIdentitySoComposeDoesNotCrossFadeTwoLists() {
         runBlocking { seedSongs(200) }
-        controller.playSongs(1, 100)
+        controller.playAlbum(1, "al1", 100)
         await { controller.state.value.position == 100L }
 
         viewModel.open()
@@ -128,7 +128,7 @@ class QueueViewModelTest {
     @Test
     fun reorderingMovesTheRowLocally() {
         runBlocking { seedSongs(200) }
-        controller.playSongs(1, 100)
+        controller.playAlbum(1, "al1", 100)
         await { controller.state.value.position == 100L }
 
         viewModel.open()

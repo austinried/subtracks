@@ -62,9 +62,6 @@ interface QueueDao {
         albumId: String,
     ): Long
 
-    @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId")
-    suspend fun songsLength(sourceId: Long): Long
-
     @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId AND id = :songId")
     suspend fun songLength(
         sourceId: Long,
@@ -87,13 +84,6 @@ interface QueueDao {
         limit: Int,
     ): List<SongListItem>
 
-    @Query("$SONGS_SQL LIMIT :limit OFFSET :offset")
-    suspend fun songs(
-        sourceId: Long,
-        offset: Long,
-        limit: Int,
-    ): List<SongListItem>
-
     @Query("$SONG_SQL LIMIT :limit OFFSET :offset")
     suspend fun song(
         sourceId: Long,
@@ -110,15 +100,6 @@ interface QueueDao {
         sourceId: Long,
         albumId: String,
     ): List<String>
-
-    @Query(
-        "SELECT songs.id FROM songs " +
-            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId " +
-            "ORDER BY albums.albumArtist COLLATE NOCASE, songs.album COLLATE NOCASE, songs.disc, songs.track, " +
-            "songs.title COLLATE NOCASE, songs.id",
-    )
-    suspend fun songIds(sourceId: Long): List<String>
 
     @Query(
         "SELECT songs.id FROM playlist_songs " +

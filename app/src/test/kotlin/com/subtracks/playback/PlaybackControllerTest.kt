@@ -107,19 +107,6 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun playingTheSongsListQueuesTheWholeLibrary() {
-        seedAlbum(60, sourceId = 1)
-
-        controller.playSongs(1, 30)
-        await { handle.operations.contains("play") }
-
-        assertEquals(51, handle.itemCount)
-        assertEquals(QueueContext(QueueKind.Songs, 1, ""), controller.state.value.context)
-        assertTrue(controller.state.value.hasNext)
-        assertTrue(controller.state.value.hasPrevious)
-    }
-
-    @Test
     fun advancingShiftsTheWindowAndKeepsItBounded() {
         seedAlbum(100, sourceId = 1)
 

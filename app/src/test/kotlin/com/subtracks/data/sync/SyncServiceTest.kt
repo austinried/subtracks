@@ -69,14 +69,7 @@ class SyncServiceTest {
                     .allRows()
                     .size,
             )
-            assertEquals(
-                2,
-                db
-                    .libraryDao()
-                    .songs(1, 0, "")
-                    .allRows()
-                    .size,
-            )
+            assertEquals(2, db.libraryDao().songIds(1).size)
             assertEquals(
                 1,
                 db
@@ -99,14 +92,7 @@ class SyncServiceTest {
                     .allRows()
                     .map { it.id },
             )
-            assertEquals(
-                listOf("s1"),
-                db
-                    .libraryDao()
-                    .songs(1, 0, "")
-                    .allRows()
-                    .map { it.song.id },
-            )
+            assertEquals(listOf("s1"), db.libraryDao().songIds(1))
         }
 
     @Test

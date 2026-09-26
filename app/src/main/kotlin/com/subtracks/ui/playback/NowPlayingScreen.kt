@@ -112,12 +112,7 @@ fun NowPlayingRoute(
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
     val queueContext = state.context
-    val fallbackTitle =
-        if (queueContext?.kind == QueueKind.Songs) {
-            "Library"
-        } else {
-            state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
-        }
+    val fallbackTitle = state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
     val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
@@ -443,7 +438,6 @@ private fun QueueKind.label(): String =
         QueueKind.Album -> "album"
         QueueKind.Playlist -> "playlist"
         QueueKind.Song -> "song"
-        QueueKind.Songs -> "songs"
     }
 
 private fun formatTime(milliseconds: Long): String {

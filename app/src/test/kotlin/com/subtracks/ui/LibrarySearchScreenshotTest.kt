@@ -15,7 +15,6 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
@@ -45,13 +44,11 @@ class LibrarySearchScreenshotTest {
                     onTabSelected = {},
                     albums = remember { flowOf(PagingData.from(albums())) },
                     artists = remember { flowOf(PagingData.empty<Artist>()) },
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                     listQuery = ListQuery("Name"),

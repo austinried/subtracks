@@ -8,21 +8,16 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.QueueKind
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.LibraryListTab
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
-import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
-import com.subtracks.data.repo.QueueSongQuery
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
-import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +35,6 @@ class LibraryViewModel(
     private val libraryRepository: LibraryRepository,
     private val sourceRepository: SourceRepository,
     private val syncManager: SyncManager,
-    private val playbackController: PlaybackController,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
     private val listQueries: Map<LibraryListTab, StateFlow<ListQuery>> =
@@ -86,26 +80,10 @@ class LibraryViewModel(
                 }
             }.cachedIn(viewModelScope)
 
-    val songs: Flow<PagingData<SongListItem>> =
-        libraryRepository.activeSourceId
-            .filterNotNull()
-            .flatMapLatest { sourceId ->
-                combine(listQueries.getValue(LibraryListTab.Songs), searches.getValue(LibraryListTab.Songs)) { query, search ->
-                    query to search
-                }.flatMapLatest { (query, search) ->
-                    libraryRepository.songs(sourceId, query.songSort(), query.descending, query.starred, search)
-                }
-            }.cachedIn(viewModelScope)
-
     val syncing: StateFlow<Boolean> =
         syncManager.status
             .map { it == SyncStatus.Running }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    val playingSongId: StateFlow<String?> =
-        playbackController.state
-            .map { state -> state.item?.id?.takeIf { state.context?.kind == QueueKind.Songs } }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun listQuery(tab: LibraryListTab): StateFlow<ListQuery> = listQueries.getValue(tab)
 
@@ -129,14 +107,6 @@ class LibraryViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
-
-    fun playSong(songId: String) {
-        viewModelScope.launch {
-            val sourceId = sourceRepository.activeSourceIdOnce() ?: return@launch
-            val query = listQueries.getValue(LibraryListTab.Songs).value
-            playbackController.playSong(sourceId, songId, QueueSongQuery(query.songSort(), query.descending, query.starred))
-        }
-    }
 
     fun playAlbum(albumId: String) {
         viewModelScope.launch {
@@ -170,5 +140,3 @@ private fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { i
 private fun ListQuery.artistSort(): ArtistSort = ArtistSort.entries.firstOrNull { it.name == sort } ?: ArtistSort.Name
 
 private fun ListQuery.playlistSort(): PlaylistSort = PlaylistSort.entries.firstOrNull { it.name == sort } ?: PlaylistSort.Name
-
-private fun ListQuery.songSort(): SongSort = SongSort.entries.firstOrNull { it.name == sort } ?: SongSort.Album

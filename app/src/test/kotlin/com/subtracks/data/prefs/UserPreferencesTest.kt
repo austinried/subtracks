@@ -21,15 +21,19 @@ class UserPreferencesTest {
             val prefs = UserPreferences(store)
 
             assertEquals(ListQuery("Name"), prefs.listQuery(LibraryListTab.Albums).first())
-            assertEquals(ListQuery("Album"), prefs.listQuery(LibraryListTab.Songs).first())
+            assertEquals(ListQuery("Name"), prefs.listQuery(LibraryListTab.Artists).first())
 
             prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, starred = StarredFilter.Starred))
+            prefs.setListQuery(LibraryListTab.Artists, ListQuery("AlbumCount", descending = true))
 
             assertEquals(
                 ListQuery("Added", descending = true, starred = StarredFilter.Starred),
                 prefs.listQuery(LibraryListTab.Albums).first(),
             )
-            assertEquals(ListQuery("Album"), prefs.listQuery(LibraryListTab.Songs).first())
+            assertEquals(
+                ListQuery("AlbumCount", descending = true),
+                prefs.listQuery(LibraryListTab.Artists).first(),
+            )
 
             file.delete()
         }

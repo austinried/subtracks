@@ -23,7 +23,6 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
@@ -60,13 +59,11 @@ class LibraryScreenTest {
                     onTabSelected = {},
                     albums = remember { flowOf(PagingData.from(albums())) },
                     artists = remember { flowOf(PagingData.empty<Artist>()) },
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = { synced = true },
                     onOpenSettings = { settingsOpened = true },
                 )
@@ -95,13 +92,11 @@ class LibraryScreenTest {
                     onTabSelected = {},
                     albums = remember { flowOf(PagingData.empty<Album>(settledLoadStates)) },
                     artists = remember { flowOf(PagingData.empty<Artist>()) },
-                    songs = remember { flowOf(PagingData.empty<SongListItem>()) },
                     playlists = remember { flowOf(PagingData.empty<Playlist>()) },
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = { synced = true },
                     onOpenSettings = {},
                 )
@@ -129,11 +124,6 @@ class LibraryScreenTest {
                 collected += "artists"
                 emit(PagingData.empty())
             }
-        val songs =
-            flow<PagingData<SongListItem>> {
-                collected += "songs"
-                emit(PagingData.empty())
-            }
         val playlists =
             flow<PagingData<Playlist>> {
                 collected += "playlists"
@@ -146,13 +136,11 @@ class LibraryScreenTest {
                     onTabSelected = {},
                     albums = albums,
                     artists = artists,
-                    songs = songs,
                     playlists = playlists,
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                 )
@@ -178,11 +166,6 @@ class LibraryScreenTest {
                 collected += "artists"
                 emit(PagingData.from(artists()))
             }
-        val songs =
-            flow<PagingData<SongListItem>> {
-                collected += "songs"
-                emit(PagingData.empty())
-            }
         val playlists =
             flow<PagingData<Playlist>> {
                 collected += "playlists"
@@ -196,13 +179,11 @@ class LibraryScreenTest {
                     onTabSelected = { selectedTab.value = it },
                     albums = albums,
                     artists = artists,
-                    songs = songs,
                     playlists = playlists,
                     coverArt = { _, _ -> null },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},
-                    onSongClick = {},
                     onSync = {},
                     onOpenSettings = {},
                 )
@@ -223,8 +204,7 @@ class LibraryScreenTest {
 
         assertTrue("returning to a tab should render its content", collected.contains("albums"))
         assertTrue("the tab that was shown should collect its flow", collected.contains("artists"))
-        assertFalse("inactive tabs should not collect their flows", collected.contains("songs"))
-        assertFalse(collected.contains("playlists"))
+        assertFalse("inactive tabs should not collect their flows", collected.contains("playlists"))
     }
 
     @Test
@@ -247,7 +227,7 @@ class LibraryScreenTest {
                 composeRule.runOnIdle { pagerState.requestScrollToPage(1, step * 0.05f) }
                 composeRule.waitForIdle()
                 composeRule
-                    .onNodeWithContentDescription(LibraryTab.Songs.label)
+                    .onNodeWithContentDescription(LibraryTab.Playlists.label)
                     .fetchSemanticsNode()
                     .boundsInRoot.left
             }

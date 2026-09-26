@@ -5,7 +5,6 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
-import com.subtracks.data.repo.QueueSongQuery
 import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -189,23 +188,6 @@ class PlaybackController(
         sourceId: Long,
         playlistId: String,
     ) = play(listOf(queueRepository.playlistEntry(sourceId, playlistId)), 0, disableShuffle = true)
-
-    fun playSongs(
-        sourceId: Long,
-        startPosition: Long,
-    ) = play(listOf(queueRepository.songsEntry(sourceId)), startPosition)
-
-    fun playSong(
-        sourceId: Long,
-        songId: String,
-        query: QueueSongQuery,
-    ) {
-        scope.launch {
-            val entry = queueRepository.songsEntry(sourceId, query)
-            val index = queueRepository.songsIndexOf(entry, songId) ?: return@launch
-            play(listOf(entry), index)
-        }
-    }
 
     fun shuffleAlbum(
         sourceId: Long,

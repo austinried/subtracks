@@ -1,17 +1,10 @@
 package com.subtracks.ui.library
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -27,80 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongListItem
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.EmptyState
-import com.subtracks.ui.components.FilteredEmptyState
-import com.subtracks.ui.components.LoadingState
-import com.subtracks.ui.components.MenuTarget
-import com.subtracks.ui.components.ResetScrollOnChange
-import com.subtracks.ui.components.rememberViewportFill
-
-@Composable
-fun SongsContent(
-    items: LazyPagingItems<SongListItem>,
-    coverArt: (String?, Boolean) -> CoverArtRef?,
-    bottomInset: Dp,
-    onSongClick: (String) -> Unit,
-    onLongClick: (MenuTarget) -> Unit = {},
-    playingSongId: String? = null,
-    filtered: Boolean = false,
-    onClearFilters: () -> Unit = {},
-    resetKey: Any? = null,
-    topInset: Dp = 0.dp,
-    onSync: () -> Unit = {},
-    modifier: Modifier = Modifier,
-) {
-    when {
-        items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {
-            LoadingState(modifier)
-        }
-
-        items.itemCount == 0 -> {
-            if (filtered) {
-                FilteredEmptyState(onClearFilters, modifier)
-            } else {
-                EmptyState("No songs yet.", modifier, actionLabel = "Sync", onAction = onSync)
-            }
-        }
-
-        else -> {
-            val listState = rememberLazyListState()
-            ResetScrollOnChange(resetKey, { items.loadState.refresh }) { listState.scrollToItem(0) }
-            val fill = rememberViewportFill(listState)
-            LazyColumn(
-                state = listState,
-                modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = topInset, bottom = bottomInset),
-            ) {
-                items(count = items.itemCount, key = items.itemKey { it.song.id }) { index ->
-                    val item = items[index]
-                    if (item != null) {
-                        SongRow(
-                            song = item.song,
-                            coverArtId = item.coverArt,
-                            coverArt = coverArt,
-                            isPlaying = item.song.id == playingSongId,
-                            modifier =
-                                Modifier.combinedClickable(
-                                    onClick = { onSongClick(item.song.id) },
-                                    onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
-                                ),
-                        )
-                    }
-                }
-                item { Spacer(Modifier.height(fill)) }
-            }
-        }
-    }
-}
 
 @Composable
 fun SongRow(

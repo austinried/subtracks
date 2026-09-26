@@ -12,8 +12,6 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
-import com.subtracks.data.prefs.SongSort
-import com.subtracks.data.prefs.StarredFilter
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -73,19 +71,6 @@ class QueueRepositoryTest {
 
             assertEquals(2, snapshot.size)
             assertEquals(listOf("s2", "s3"), resolveAll(snapshot))
-        }
-
-    @Test
-    fun theSongsEntryResolvesTheWholeLibraryInListOrder() =
-        runTest {
-            seedLibrary()
-            db.libraryDao().upsertAlbums(listOf(album("al0", "Zeroth Album", "Aardvark")))
-            db.libraryDao().upsertSongs(listOf(song("s0", "al0", track = 1, album = "Zeroth Album")))
-
-            val snapshot = repository.snapshotAfter(listOf(repository.songsEntry(1)))
-
-            assertEquals(6, snapshot.size)
-            assertEquals(listOf("s0", "s1", "s2", "s3", "s4", "s5"), resolveAll(snapshot))
         }
 
     @Test
@@ -312,39 +297,6 @@ class QueueRepositoryTest {
             assertFalse(repository.move(repository.snapshot(), from = 5, to = 0))
             assertTrue(repository.move(repository.snapshot(), from = 0, to = 2))
             assertEquals(listOf("s2", "s3", "s1"), resolveAll(repository.snapshot()))
-        }
-
-    @Test
-    fun theSongsEntryFollowsItsSortAndStarredFilter() =
-        runTest {
-            seedLibrary()
-            db.libraryDao().upsertSongs(
-                listOf(
-                    song("s1", "al1", track = 1, album = "First Album", title = "Charlie", starred = 5),
-                    song("s2", "al1", track = 2, album = "First Album", title = "Alpha"),
-                    song("s3", "al1", track = 3, album = "First Album", title = "Bravo", starred = 7),
-                    song("s4", "al2", track = 1, album = "Second Album", title = "Echo"),
-                    song("s5", "al2", track = 2, album = "Second Album", title = "Delta", starred = 3),
-                ),
-            )
-
-            val byTitle =
-                repository.snapshotAfter(
-                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Title, descending = false, StarredFilter.Any))),
-                )
-            assertEquals(listOf("s2", "s3", "s1", "s5", "s4"), resolveAll(byTitle))
-
-            val starredOnly =
-                repository.snapshotAfter(
-                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Starred, descending = false, StarredFilter.Starred))),
-                )
-            assertEquals(listOf("s3", "s1", "s5"), resolveAll(starredOnly))
-
-            val unstarred =
-                repository.snapshotAfter(
-                    listOf(repository.songsEntry(1, QueueSongQuery(SongSort.Album, descending = false, StarredFilter.NotStarred))),
-                )
-            assertEquals(listOf("s2", "s4"), resolveAll(unstarred))
         }
 
     private suspend fun QueueRepository.snapshotAfter(entries: List<QueueEntry>): QueueSnapshot {

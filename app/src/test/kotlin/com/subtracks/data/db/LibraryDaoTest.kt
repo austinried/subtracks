@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -64,29 +65,6 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun songSortsByTitleAndStarredFilter() =
-        runTest {
-            val sourceId = source()
-            val dao = db.libraryDao()
-            dao.upsertSongs(
-                listOf(
-                    song(sourceId, "s1", "Zebra", starred = null),
-                    song(sourceId, "s2", "Apple", starred = 7),
-                ),
-            )
-
-            assertEquals(
-                listOf("Apple", "Zebra"),
-                dao.songsByTitle(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
-            )
-            assertEquals(
-                listOf("Zebra", "Apple"),
-                dao.songsByTitleReversed(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
-            )
-            assertEquals(listOf("Apple"), dao.songsByTitle(sourceId, starredFilter = 1, search = "").page().map { it.song.title })
-        }
-
-    @Test
     fun albumAddedAndStarredSortsAndSearch() =
         runTest {
             val sourceId = source()
@@ -112,24 +90,21 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun songAddedSortOrdersByCreated() =
+    fun albumSongsAreOrderedByDiscAndTrack() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "Zebra", starred = null, created = 100),
-                    song(sourceId, "s2", "Apple", starred = null, created = 200),
+                    song(sourceId, "s2", "Second", starred = null, track = 2),
+                    song(sourceId, "s3", "Third", starred = null, track = 1, disc = 2),
+                    song(sourceId, "s1", "First", starred = null, track = 1),
                 ),
             )
 
             assertEquals(
-                listOf("Apple", "Zebra"),
-                dao.songsByAdded(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
-            )
-            assertEquals(
-                listOf("Zebra", "Apple"),
-                dao.songsByAddedReversed(sourceId, starredFilter = 0, search = "").page().map { it.song.title },
+                listOf("s1", "s2", "s3"),
+                dao.songsByAlbum(sourceId, "al-1").first().map { it.id },
             )
         }
 
@@ -170,6 +145,8 @@ class LibraryDaoTest {
         title: String,
         starred: Long?,
         created: Long = 0,
+        track: Long = 1,
+        disc: Long = 1,
     ) = Song(
         sourceId = sourceId,
         id = id,
@@ -179,8 +156,8 @@ class LibraryDaoTest {
         album = "Album",
         artist = "Artist",
         duration = 200,
-        track = 1,
-        disc = 1,
+        track = track,
+        disc = disc,
         starred = starred,
         genre = null,
         created = created,

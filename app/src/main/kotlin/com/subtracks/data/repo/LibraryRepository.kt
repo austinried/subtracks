@@ -14,7 +14,6 @@ import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
-import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CancellationException
@@ -150,58 +149,6 @@ class LibraryRepository(
                         dao.playlistsByUpdatedReversed(sourceId, search)
                     } else {
                         dao.playlistsByUpdated(sourceId, search)
-                    }
-                }
-            }
-        }
-
-    fun songs(
-        sourceId: Long,
-        sort: SongSort,
-        descending: Boolean,
-        starred: StarredFilter,
-        search: String,
-    ): Flow<PagingData<SongListItem>> =
-        pager(60) {
-            val dao = db.libraryDao()
-            when (sort) {
-                SongSort.Album -> {
-                    if (descending) {
-                        dao.songsByAlbumReversed(sourceId, starred.ordinal, search)
-                    } else {
-                        dao.songs(sourceId, starred.ordinal, search)
-                    }
-                }
-
-                SongSort.Title -> {
-                    if (descending) {
-                        dao.songsByTitleReversed(sourceId, starred.ordinal, search)
-                    } else {
-                        dao.songsByTitle(sourceId, starred.ordinal, search)
-                    }
-                }
-
-                SongSort.Artist -> {
-                    if (descending) {
-                        dao.songsByArtistReversed(sourceId, starred.ordinal, search)
-                    } else {
-                        dao.songsByArtist(sourceId, starred.ordinal, search)
-                    }
-                }
-
-                SongSort.Starred -> {
-                    if (descending) {
-                        dao.songsByStarredReversed(sourceId, starred.ordinal, search)
-                    } else {
-                        dao.songsByStarred(sourceId, starred.ordinal, search)
-                    }
-                }
-
-                SongSort.Added -> {
-                    if (descending) {
-                        dao.songsByAddedReversed(sourceId, starred.ordinal, search)
-                    } else {
-                        dao.songsByAdded(sourceId, starred.ordinal, search)
                     }
                 }
             }

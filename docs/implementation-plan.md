@@ -20,9 +20,9 @@ Everything needed to mirror a server library locally:
 Goal: a usable app for browsing a server, end to end.
 
 - Koin DI and DataStore-backed preferences (album sort); the unused `app_settings` Room table was removed in favour of DataStore.
-- App shell: a root gate that shows the add-server flow until a server exists, then the tabbed library screen matching the Flutter app (icon-only tabs for albums, artists, songs and playlists, with sync and settings actions), plus album and playlist detail screens and a monochrome theme.
+- App shell: a root gate that shows the add-server flow until a server exists, then the tabbed library screen matching the Flutter app (icon-only tabs for albums, artists and playlists, with sync and settings actions), plus album and playlist detail screens and a monochrome theme.
 - Source setup: name/address/username/password with token-auth toggle, a connection test, save-and-sync, plus server switching and removal in settings.
-- Library browsing: albums (covers-only grid), artists, songs and playlists paged from Room (`PagingSource`) and rendered with `LazyPagingItems`, with Coil cover art served from stable media URLs.
+- Library browsing: albums (covers-only grid), artists and playlists paged from Room (`PagingSource`) and rendered with `LazyPagingItems`, with Coil cover art served from stable media URLs.
 - Artist detail: tapping an artist opens their albums, newest first, and an album can be opened from there.
 - Roborazzi screenshots for the new screens, rendered on demand for review (not committed).
 
@@ -34,7 +34,6 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 - (done) Media notifications and headset/Bluetooth controls, from the media session.
 - (done) A SQL-backed queue of references (whole playlist / album / song, each with an optional ordinal range) resolved lazily, with only a bounded window in memory and in the player.
 - (done) Streaming bitrate and preferred format from settings (`maxBitRate`/`format`, so the server transcodes as configured).
-- (done) Playing from the Songs tab: the tapped song queues the whole songs list at that position.
 - (done) A queue view that lists the resolved queue, jumps to a track on tap, removes tracks and reorders them by dragging, with a one-step undo.
 - Adding to the queue from the library (play next / add to queue), and gapless format preferences.
 - Scrobbling and "now playing" back to the server.
@@ -56,7 +55,7 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 
 Follow-up work for very large libraries, playlists and long sessions, grouped so each block can be one PR.
 
-- **Library read path.** Index the normalized sort keys (a denormalized `albumArtist` on `songs` plus `NOCASE` indices on `albums`/`artists`/`playlists`) and replace `LIMIT 1 OFFSET` with keyset/cursor seeks in `QueueRepository`/`QueueDao`; compute the tapped-song ordinal with a SQL rank instead of materializing the whole sorted id list. Shared dependency for the read-side fixes; can split into "indices" then "keyset" if too large for one review.
+- **Library read path.** Index the sort keys used by album/artist/playlist browsing (a denormalized `albumArtist` on `albums` plus `NOCASE` indices) and replace `LIMIT 1 OFFSET` with keyset/cursor seeks in `QueueRepository`/`QueueDao`. Shared dependency for the read-side fixes; can split into "indices" then "keyset" if too large for one review.
 - **Shuffle.** Drop `shuffle_order` and the retained whole-order/whole-id arrays; derive the permutation from `(seed, size)` and resolve positions through the same positional lookup. Recommended after the read-path PR, since it shares `QueueRepository`.
 - **Sync pipeline.** Prune with a memory-bounded id set, remove `fetchRanks` and the write-only rank columns, fetch playlists/albums with bounded concurrency and skip unchanged ones, and raise/make configurable the page cap with a clear "library too large" failure. Independent of the read path.
 - **Queue view and edits.** Bound the queue view's loaded rows (or page over the queue ordinal) and scope its ViewModel to the overlay; compact adjacent same-ref ranges after an edit and cache resolved entry lengths. The view half is independent; the edit half shares `QueueRepository` with the read-path PR.

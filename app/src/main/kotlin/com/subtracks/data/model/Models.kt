@@ -191,7 +191,7 @@ data class DiscKey(
     val disc: Long,
 )
 
-enum class QueueKind { Playlist, Album, Song, Songs }
+enum class QueueKind { Playlist, Album, Song }
 
 @Entity(
     tableName = "queue_entries",
@@ -261,5 +261,5 @@ class QueueKindConverter {
     fun fromQueueKind(kind: QueueKind): String = kind.name
 
     @ColumnTypeConverter
-    fun toQueueKind(value: String): QueueKind = QueueKind.valueOf(value)
+    fun toQueueKind(value: String): QueueKind = QueueKind.entries.firstOrNull { it.name == value } ?: QueueKind.Song
 }

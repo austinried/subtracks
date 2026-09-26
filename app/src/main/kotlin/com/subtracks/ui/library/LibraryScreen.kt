@@ -33,7 +33,6 @@ import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilterAltOff
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
@@ -104,13 +103,11 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.LibraryListTab
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
-import com.subtracks.data.prefs.SongSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -135,7 +132,6 @@ enum class LibraryTab(
     Albums("Albums", Icons.Rounded.Album),
     Artists("Artists", Icons.Rounded.Person),
     Playlists("Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay),
-    Songs("Songs", Icons.Rounded.MusicNote),
 }
 
 data class SortOption(
@@ -173,16 +169,6 @@ fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
                 SortOption(PlaylistSort.Updated.name, "Updated", descendingByDefault = true),
             )
         }
-
-        LibraryTab.Songs -> {
-            listOf(
-                SortOption(SongSort.Album.name, "Album"),
-                SortOption(SongSort.Title.name, "Title"),
-                SortOption(SongSort.Artist.name, "Artist"),
-                SortOption(SongSort.Starred.name, "Starred", descendingByDefault = true),
-                SortOption(SongSort.Added.name, "Added", descendingByDefault = true),
-            )
-        }
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,7 +189,6 @@ fun LibraryRoute(
     var selectedTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     var previousTab by rememberSaveable { mutableStateOf(LibraryTab.Albums) }
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
-    val playingSongId by viewModel.playingSongId.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
     LaunchedEffect(selectedTab) {
         if (previousTab != selectedTab) {
@@ -240,17 +225,14 @@ fun LibraryRoute(
         artwork = artwork,
         albums = viewModel.albums,
         artists = viewModel.artists,
-        songs = viewModel.songs,
         playlists = viewModel.playlists,
         coverArt = viewModel::coverArt,
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onPlaylistClick = onPlaylistClick,
-        onSongClick = viewModel::playSong,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
         onItemLongClick = { contextMenuHost?.show(it, itemActions) },
-        playingSongId = playingSongId,
         listQuery = listQuery,
         resetKeys = resetKeys,
         sortOptions = sortOptionsFor(selectedTab),
@@ -282,18 +264,15 @@ fun LibraryScreen(
     onTabSelected: (LibraryTab) -> Unit,
     albums: Flow<PagingData<Album>>,
     artists: Flow<PagingData<Artist>>,
-    songs: Flow<PagingData<SongListItem>>,
     playlists: Flow<PagingData<Playlist>>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
-    onSongClick: (String) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     onItemLongClick: (MenuTarget) -> Unit = {},
     syncing: Boolean = false,
-    playingSongId: String? = null,
     bottomInset: Dp = 0.dp,
     listQuery: ListQuery = ListQuery(""),
     resetKeys: Map<LibraryTab, Any?> = emptyMap(),
@@ -403,25 +382,6 @@ fun LibraryScreen(
                                 onArtistClick(it)
                             },
                             onLongClick = onItemLongClick,
-                            filtered = filtersActive,
-                            onClearFilters = onClearFilters,
-                            resetKey = resetKey,
-                            topInset = listTopInset,
-                            onSync = onSync,
-                        )
-                    }
-
-                    LibraryTab.Songs -> {
-                        SongsContent(
-                            songs.collectAsLazyPagingItems(),
-                            coverArt,
-                            listBottomInset,
-                            {
-                                dismissSearch()
-                                onSongClick(it)
-                            },
-                            onLongClick = onItemLongClick,
-                            playingSongId,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
                             resetKey = resetKey,
