@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -313,15 +313,22 @@ fun StarredBadge(
     shadow: Boolean = false,
 ) {
     if (starred) {
-        Icon(
-            imageVector = Icons.Rounded.Star,
-            contentDescription = "Starred",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier =
-                modifier
-                    .then(if (shadow) Modifier.shadow(2.dp, CircleShape, clip = false) else Modifier)
-                    .size(size),
-        )
+        Box(modifier.size(size)) {
+            if (shadow) {
+                Icon(
+                    imageVector = Icons.Rounded.Star,
+                    contentDescription = null,
+                    tint = Color.Black.copy(alpha = 0.5f),
+                    modifier = Modifier.matchParentSize().offset(x = 0.5.dp, y = 1.dp),
+                )
+            }
+            Icon(
+                imageVector = Icons.Rounded.Star,
+                contentDescription = "Starred",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.matchParentSize(),
+            )
+        }
     }
 }
 
