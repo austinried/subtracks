@@ -60,8 +60,7 @@ data class QueueSnapshot(
         (
             when {
                 shuffleSeed == null -> upNextAnchor
-                upNextAnchor < 0L -> -1L
-                else -> playContext(upNextAnchor)
+                else -> playContext(upNextAnchor) ?: -1L
             }
         ).coerceAtMost(contextSize - 1L)
 
@@ -80,8 +79,8 @@ data class QueueSnapshot(
         return shuffleSeed?.let { Shuffle.toFlat(it, contextSize, contextPlay) } ?: contextPlay
     }
 
-    fun playContext(flat: Long): Long {
-        if (flat !in 0 until contextSize) return flat
+    fun playContext(flat: Long): Long? {
+        if (flat !in 0 until contextSize) return null
         return shuffleSeed?.let { Shuffle.toSequence(it, contextSize, flat) } ?: flat
     }
 
@@ -208,7 +207,7 @@ class QueueRepository(
     ) {
         write(entries)
         writeUpNext(upNext)
-        setShuffle(shuffleSeed != null, shuffleSeed ?: 0L)
+        setShuffle(shuffleSeed)
         cursorMutex.withLock {
             dao.setCursor(cursorRow().copy(queuePosition = 0, positionMs = 0, upNextAnchor = upNextAnchor))
         }
@@ -239,16 +238,13 @@ class QueueRepository(
         return QueueModes(row.shuffleEnabled, row.repeatMode)
     }
 
-    suspend fun setShuffle(
-        enabled: Boolean,
-        seed: Long,
-    ) {
-        val size = if (enabled) contextSize() else 0L
+    suspend fun setShuffle(seed: Long?) {
+        val size = if (seed != null) contextSize() else 0L
         cursorMutex.withLock {
             dao.setCursor(
                 cursorRow().copy(
-                    shuffleEnabled = enabled,
-                    shuffleSeed = if (enabled) seed else 0L,
+                    shuffleEnabled = seed != null,
+                    shuffleSeed = seed ?: 0L,
                     shuffleSize = size,
                 ),
             )
@@ -288,7 +284,7 @@ class QueueRepository(
     ): Long? {
         val flat = flatIds(snapshot).indexOf(songId)
         if (flat < 0) return null
-        return snapshot.combined(snapshot.playContext(flat.toLong()))
+        return snapshot.playContext(flat.toLong())?.let { snapshot.combined(it) }
     }
 
     suspend fun range(

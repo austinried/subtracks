@@ -255,7 +255,7 @@ class PlaybackController(
             val start = randomIndex(snap.contextSize, avoid)
             val seed = Random.nextLong()
             val position = Shuffle.toSequence(seed, snap.contextSize, start)
-            queueRepository.setShuffle(true, seed)
+            queueRepository.setShuffle(seed)
             shuffleEnabled = true
             queueSourceId = entry.sourceId
             queueRepository.setCursor(position)
@@ -732,9 +732,9 @@ class PlaybackController(
                 val enabling = !shuffleEnabled
                 val seed = if (enabling) Random.nextLong() else 0L
                 if (enabling) {
-                    queueRepository.setShuffle(true, seed)
+                    queueRepository.setShuffle(seed)
                 } else {
-                    queueRepository.setShuffle(false, 0L)
+                    queueRepository.setShuffle(null)
                 }
                 shuffleEnabled = enabling
                 val reordered = readSnapshot()
@@ -813,7 +813,7 @@ class PlaybackController(
         val position =
             if (shuffleEnabled) {
                 val seed = Random.nextLong()
-                queueRepository.setShuffle(true, seed)
+                queueRepository.setShuffle(seed)
                 Shuffle.toSequence(seed, snapshot.contextSize, start)
             } else {
                 start
@@ -837,7 +837,7 @@ class PlaybackController(
             if (shuffleEnabled && !snapshot.shuffled && snapshot.contextSize > 0L) {
                 val start = snapshot.anchorContextPlay(queueRepository.cursor()).coerceIn(0, snapshot.contextSize - 1)
                 val seed = Random.nextLong()
-                queueRepository.setShuffle(true, seed)
+                queueRepository.setShuffle(seed)
                 queueRepository.setCursor(Shuffle.toSequence(seed, snapshot.contextSize, start))
                 snapshot = queueRepository.snapshot()
             } else if (!snapshot.shuffled) {
@@ -1105,7 +1105,7 @@ class PlaybackController(
     private suspend fun readSnapshot(): QueueSnapshot {
         val snapshot = queueRepository.snapshot()
         if (!snapshot.shuffled) {
-            if (shuffleEnabled && snapshot.size > 0L) queueRepository.setShuffle(false, 0L)
+            if (shuffleEnabled && snapshot.size > 0L) queueRepository.setShuffle(null)
             shuffleEnabled = false
         }
         return snapshot

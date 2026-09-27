@@ -441,7 +441,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, 12345L)
+            repository.setShuffle(12345L)
             val shuffled = repository.snapshot()
             val contextBefore = (0 until shuffled.contextSize).mapNotNull { repository.itemAt(shuffled, it)?.song?.id }
 
@@ -545,7 +545,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             repository.replace(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, 1234L)
+            repository.setShuffle(1234L)
             assertTrue(repository.snapshot().shuffled)
 
             db.libraryDao().upsertSongs(listOf(song("s6", "al1", track = 4, album = "First Album")))
@@ -561,7 +561,7 @@ class QueueRepositoryTest {
             repository.replace(listOf(repository.albumEntry(1, "al1")))
             val entriesBefore = db.queueDao().entries().size
 
-            repository.setShuffle(true, 5678L)
+            repository.setShuffle(5678L)
             val snapshot = repository.snapshot()
 
             assertTrue(snapshot.shuffled)
@@ -584,7 +584,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, 42L)
+            repository.setShuffle(42L)
             val shuffled = repository.snapshot()
 
             val resolved = (0 until shuffled.size).mapNotNull { repository.itemAt(shuffled, it)?.song?.id }
@@ -600,10 +600,10 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, 99L)
+            repository.setShuffle(99L)
             assertTrue(repository.snapshot().shuffled)
 
-            repository.setShuffle(false, 0L)
+            repository.setShuffle(null)
 
             val restored = repository.snapshot()
             assertFalse(restored.shuffled)
@@ -615,7 +615,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
-            repository.setShuffle(true, 42L)
+            repository.setShuffle(42L)
             val snapshot = repository.snapshot()
 
             val range = repository.range(snapshot, 0, snapshot.size - 1)
@@ -630,7 +630,7 @@ class QueueRepositoryTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
             repository.removeAt(snapshot, 1)
-            repository.setShuffle(true, 7L)
+            repository.setShuffle(7L)
             val shuffled = repository.snapshot()
 
             val range = repository.range(shuffled, 0, shuffled.size - 1)
