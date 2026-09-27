@@ -309,16 +309,29 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 16.dp),
                                 verticalAlignment = Alignment.Top,
                             ) {
-                                Text(
-                                    text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                IconButton(onClick = { onToggleStar?.invoke() }, enabled = onToggleStar != null) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = "Artist biography coming soon.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onToggleStar?.invoke() },
+                                    enabled = onToggleStar != null,
+                                    modifier = Modifier.padding(top = 20.dp),
+                                ) {
                                     Icon(
                                         imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
                                         contentDescription = if (starred) "Unstar" else "Star",
@@ -330,18 +343,10 @@ fun ArtistDetailScreen(
                                             },
                                     )
                                 }
-                                IconButton(onClick = onMore) {
+                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 20.dp)) {
                                     Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
                                 }
                             }
-                            Text(
-                                text = "Artist biography coming soon.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                            )
                         }
                     }
                     itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
