@@ -209,7 +209,14 @@ data class PlaylistSong(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("sourceId", "albumId"), Index("sourceId", "artistId")],
+    indices = [
+        Index("sourceId", "albumId"),
+        Index("sourceId", "artistId"),
+        Index(
+            name = "index_songs_sourceId_albumId_order",
+            value = ["sourceId", "albumId", "disc", "track", "id"],
+        ),
+    ],
 )
 data class Song(
     val sourceId: Long,
@@ -230,6 +237,7 @@ data class Song(
 data class SongListItem(
     @Embedded val song: Song,
     val coverArt: String?,
+    val position: Long? = null,
 )
 
 data class DiscKey(

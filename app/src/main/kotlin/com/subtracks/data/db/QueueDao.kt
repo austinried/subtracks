@@ -9,14 +9,17 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.UpNextEntry
 
-private const val ALBUM_SONGS_SQL =
-    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+private const val ALBUM_SONGS_SELECT =
+    "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
-        "ORDER BY songs.disc, songs.track, songs.id"
+        "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId"
+
+private const val ALBUM_SONGS_ORDER = " ORDER BY songs.disc, songs.track, songs.id"
+
+private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 
 private const val SONG_SQL =
-    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+    "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.id = :songId"
 
@@ -76,11 +79,63 @@ interface QueueDao {
         limit: Int,
     ): List<SongListItem>
 
+    @Query(
+        "$PLAYLIST_SONGS_SELECT AND playlist_songs.position >= :position$PLAYLIST_SONGS_ORDER " +
+            "LIMIT :limit OFFSET :skip",
+    )
+    suspend fun playlistSongsFrom(
+        sourceId: Long,
+        playlistId: String,
+        position: Long,
+        skip: Long,
+        limit: Int,
+    ): List<SongListItem>
+
+    @Query(
+        "$PLAYLIST_SONGS_SELECT AND playlist_songs.position < :position " +
+            "ORDER BY playlist_songs.position DESC LIMIT :limit OFFSET :skip",
+    )
+    suspend fun playlistSongsBefore(
+        sourceId: Long,
+        playlistId: String,
+        position: Long,
+        skip: Long,
+        limit: Int,
+    ): List<SongListItem>
+
     @Query("$ALBUM_SONGS_SQL LIMIT :limit OFFSET :offset")
     suspend fun albumSongs(
         sourceId: Long,
         albumId: String,
         offset: Long,
+        limit: Int,
+    ): List<SongListItem>
+
+    @Query(
+        "$ALBUM_SONGS_SELECT AND (songs.disc, songs.track, songs.id) >= (:disc, :track, :id)" +
+            "$ALBUM_SONGS_ORDER LIMIT :limit OFFSET :skip",
+    )
+    suspend fun albumSongsFrom(
+        sourceId: Long,
+        albumId: String,
+        disc: Long,
+        track: Long,
+        id: String,
+        skip: Long,
+        limit: Int,
+    ): List<SongListItem>
+
+    @Query(
+        "$ALBUM_SONGS_SELECT AND (songs.disc, songs.track, songs.id) < (:disc, :track, :id) " +
+            "ORDER BY songs.disc DESC, songs.track DESC, songs.id DESC LIMIT :limit OFFSET :skip",
+    )
+    suspend fun albumSongsBefore(
+        sourceId: Long,
+        albumId: String,
+        disc: Long,
+        track: Long,
+        id: String,
+        skip: Long,
         limit: Int,
     ): List<SongListItem>
 
@@ -113,7 +168,7 @@ interface QueueDao {
     ): List<String>
 
     @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.id IN (:ids)",
     )

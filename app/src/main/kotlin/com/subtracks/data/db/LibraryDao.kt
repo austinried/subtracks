@@ -16,12 +16,15 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import kotlinx.coroutines.flow.Flow
 
-internal const val PLAYLIST_SONGS_SQL =
-    "SELECT songs.*, albums.coverArt AS coverArt FROM playlist_songs " +
+internal const val PLAYLIST_SONGS_SELECT =
+    "SELECT songs.*, albums.coverArt AS coverArt, playlist_songs.position AS position FROM playlist_songs " +
         "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
-        "ORDER BY playlist_songs.position"
+        "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId"
+
+internal const val PLAYLIST_SONGS_ORDER = " ORDER BY playlist_songs.position"
+
+internal const val PLAYLIST_SONGS_SQL = PLAYLIST_SONGS_SELECT + PLAYLIST_SONGS_ORDER
 
 internal const val ALBUMS_FILTER =
     "FROM albums WHERE sourceId = :sourceId " +

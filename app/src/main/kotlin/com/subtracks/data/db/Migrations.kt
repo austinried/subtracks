@@ -259,6 +259,16 @@ val MIGRATION_17_18 =
         }
     }
 
+val MIGRATION_18_19 =
+    object : Migration(18, 19) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_songs_sourceId_albumId_order` ON `songs` " +
+                    "(`sourceId`, `albumId`, `disc`, `track`, `id`)",
+            )
+        }
+    }
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -278,4 +288,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_15_16,
         MIGRATION_16_17,
         MIGRATION_17_18,
+        MIGRATION_18_19,
     )

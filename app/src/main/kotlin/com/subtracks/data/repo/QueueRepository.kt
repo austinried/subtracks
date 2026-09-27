@@ -36,6 +36,24 @@ private data class LoadedSnapshot(
     val anchor: Long,
 )
 
+private data class QueueRef(
+    val kind: QueueKind,
+    val sourceId: Long,
+    val refId: String,
+)
+
+private data class OrderKey(
+    val id: String,
+    val disc: Long? = null,
+    val track: Long? = null,
+    val position: Long? = null,
+)
+
+private data class KeyCursor(
+    val ordinal: Long,
+    val key: OrderKey,
+)
+
 data class ResolvedQueueEntry(
     val entry: QueueEntry,
     val length: Long,
@@ -206,6 +224,14 @@ class QueueRepository(
 
     private val lengthCache = ConcurrentHashMap<EntryLengthKey, Long>()
 
+    private val keyCache = ConcurrentHashMap<QueueRef, KeyCursor>()
+
+    internal var keysetSeeks = 0L
+        private set
+
+    internal var offsetSeeks = 0L
+        private set
+
     private val cursorMutex = Mutex()
 
     fun playlistEntry(
@@ -327,6 +353,7 @@ class QueueRepository(
     fun invalidateLibraryCache() {
         cachedFlatIds = null
         lengthCache.clear()
+        keyCache.clear()
         shuffleRemoved = null
         queueVersion.incrementAndGet()
     }
@@ -679,19 +706,99 @@ class QueueRepository(
         entry: QueueEntry,
         offset: Long,
         limit: Int,
+    ): List<SongListItem> {
+        if (entry.kind == QueueKind.Song) {
+            offsetSeeks++
+            return dao.song(entry.sourceId, entry.refId, offset, limit)
+        }
+        val ref = QueueRef(entry.kind, entry.sourceId, entry.refId)
+        val anchored = keyCache[ref]?.let { keyedRows(entry, offset, limit, it) }
+        if (anchored != null) {
+            keysetSeeks++
+            if (anchored.isNotEmpty()) remember(ref, offset, anchored)
+            return anchored
+        }
+        offsetSeeks++
+        val fresh =
+            when (entry.kind) {
+                QueueKind.Playlist -> dao.playlistSongs(entry.sourceId, entry.refId, offset, limit)
+                QueueKind.Album -> dao.albumSongs(entry.sourceId, entry.refId, offset, limit)
+                QueueKind.Song -> emptyList()
+            }
+        if (fresh.isNotEmpty()) remember(ref, offset, fresh)
+        return fresh
+    }
+
+    private fun remember(
+        ref: QueueRef,
+        offset: Long,
+        resolved: List<SongListItem>,
+    ) {
+        if (keyCache.size >= LENGTH_CACHE_LIMIT) keyCache.clear()
+        keyCache[ref] = KeyCursor(offset + resolved.size - 1, orderKey(ref.kind, resolved.last()))
+    }
+
+    private fun orderKey(
+        kind: QueueKind,
+        row: SongListItem,
+    ): OrderKey =
+        when (kind) {
+            QueueKind.Album -> OrderKey(row.song.id, disc = row.song.disc, track = row.song.track)
+            QueueKind.Playlist -> OrderKey(row.song.id, position = row.position)
+            QueueKind.Song -> OrderKey(row.song.id)
+        }
+
+    private suspend fun keyedRows(
+        entry: QueueEntry,
+        offset: Long,
+        limit: Int,
+        cursor: KeyCursor,
+    ): List<SongListItem>? {
+        if (!cursor.key.seekable(entry.kind)) return null
+        val from = cursor.ordinal
+        return if (offset >= from) {
+            rowsFrom(entry, cursor.key, offset - from, limit)
+        } else {
+            val end = offset + limit - 1
+            if (end < from) {
+                rowsBefore(entry, cursor.key, from - end - 1, limit).asReversed()
+            } else {
+                val head = rowsBefore(entry, cursor.key, 0, (from - offset).toInt()).asReversed()
+                val tail = rowsFrom(entry, cursor.key, 0, (end - from + 1).toInt())
+                head + tail
+            }
+        }
+    }
+
+    private suspend fun rowsFrom(
+        entry: QueueEntry,
+        key: OrderKey,
+        skip: Long,
+        limit: Int,
     ): List<SongListItem> =
         when (entry.kind) {
-            QueueKind.Playlist -> {
-                dao.playlistSongs(entry.sourceId, entry.refId, offset, limit)
-            }
+            QueueKind.Playlist -> dao.playlistSongsFrom(entry.sourceId, entry.refId, key.position!!, skip, limit)
+            QueueKind.Album -> dao.albumSongsFrom(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
+            QueueKind.Song -> emptyList()
+        }
 
-            QueueKind.Album -> {
-                dao.albumSongs(entry.sourceId, entry.refId, offset, limit)
-            }
+    private suspend fun rowsBefore(
+        entry: QueueEntry,
+        key: OrderKey,
+        skip: Long,
+        limit: Int,
+    ): List<SongListItem> =
+        when (entry.kind) {
+            QueueKind.Playlist -> dao.playlistSongsBefore(entry.sourceId, entry.refId, key.position!!, skip, limit)
+            QueueKind.Album -> dao.albumSongsBefore(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
+            QueueKind.Song -> emptyList()
+        }
 
-            QueueKind.Song -> {
-                dao.song(entry.sourceId, entry.refId, offset, limit)
-            }
+    private fun OrderKey.seekable(kind: QueueKind): Boolean =
+        when (kind) {
+            QueueKind.Playlist -> position != null
+            QueueKind.Album -> disc != null && track != null
+            QueueKind.Song -> false
         }
 
     private suspend fun lengthOf(
