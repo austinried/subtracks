@@ -89,16 +89,16 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+        assertEquals((70L..129L).toList(), rowsSnapshot().map { it.position })
         assertEquals(30, viewModel.initialIndex)
 
         viewModel.loadNewer()
-        await { viewModel.rows.lastOrNull()?.position == 189L }
-        assertEquals((70L..189L).toList(), viewModel.rows.map { it.position })
+        await { rowsSnapshot().lastOrNull()?.position == 189L }
+        assertEquals((70L..189L).toList(), rowsSnapshot().map { it.position })
 
         viewModel.loadOlder()
-        await { viewModel.rows.firstOrNull()?.position == 10L }
-        assertEquals((10L..189L).toList(), viewModel.rows.map { it.position })
+        await { rowsSnapshot().firstOrNull()?.position == 10L }
+        assertEquals((10L..189L).toList(), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -126,9 +126,9 @@ class QueueViewModelTest {
         await { viewModel.ready }
 
         assertEquals(0, viewModel.initialIndex)
-        assertEquals(0L, viewModel.rows.first().position)
+        assertEquals(0L, rowsSnapshot().first().position)
         assertTrue(
-            viewModel.rows.first().isPlaying(
+            rowsSnapshot().first().isPlaying(
                 0L,
                 controller.state.value.item
                     ?.id,
@@ -172,12 +172,12 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        assertEquals((169L..199L).toList(), viewModel.rows.map { it.position })
+        assertEquals((169L..199L).toList(), rowsSnapshot().map { it.position })
         assertEquals(30, viewModel.initialIndex)
 
         viewModel.loadOlder()
-        await { viewModel.rows.firstOrNull()?.position == 109L }
-        assertEquals((109L..199L).toList(), viewModel.rows.map { it.position })
+        await { rowsSnapshot().firstOrNull()?.position == 109L }
+        assertEquals((109L..199L).toList(), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -195,13 +195,13 @@ class QueueViewModelTest {
 
         viewModel.open()
         await { viewModel.ready }
-        val firstIds = viewModel.rows.map { it.id }
+        val firstIds = rowsSnapshot().map { it.id }
         val firstGeneration = viewModel.generation
 
         viewModel.open()
         await { viewModel.generation > firstGeneration }
 
-        assertEquals(firstIds, viewModel.rows.map { it.id })
+        assertEquals(firstIds, rowsSnapshot().map { it.id })
     }
 
     @Test
@@ -213,9 +213,9 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        viewModel.reorder(fromIndex = 0, toIndex = 2)
+        runOnMain { viewModel.reorder(fromIndex = 0, toIndex = 2) }
 
-        val positions = viewModel.rows.map { it.position }
+        val positions = rowsSnapshot().map { it.position }
         assertEquals(listOf(71L, 72L, 70L), positions.take(3))
     }
 
@@ -227,12 +227,12 @@ class QueueViewModelTest {
 
         viewModel.open()
         await { viewModel.ready }
-        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+        assertEquals((70L..129L).toList(), rowsSnapshot().map { it.position })
 
         extendToEnd()
 
-        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
-        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+        assertEquals(QUEUE_WINDOW_ROWS, rowsSnapshot().size)
+        assertEquals((220L..399L).toList(), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -248,7 +248,7 @@ class QueueViewModelTest {
         viewModel.loadOlder()
         awaitWindow(first = 160, last = 339)
 
-        assertEquals(QUEUE_WINDOW_ROWS, viewModel.rows.size)
+        assertEquals(QUEUE_WINDOW_ROWS, rowsSnapshot().size)
     }
 
     @Test
@@ -262,23 +262,23 @@ class QueueViewModelTest {
         extendToEnd()
 
         val movedSongId =
-            viewModel.rows[10]
+            rowsSnapshot()[10]
                 .song.song.id
-        val from = viewModel.rows[10].position
-        val to = viewModel.rows[13].position
-        viewModel.reorder(10, 13)
+        val from = rowsSnapshot()[10].position
+        val to = rowsSnapshot()[13].position
+        runOnMain { viewModel.reorder(10, 13) }
         viewModel.move(from, to)
         await {
-            viewModel.rows.size == QUEUE_WINDOW_ROWS &&
-                viewModel.rows.getOrNull(13)?.position == 233L
+            rowsSnapshot().size == QUEUE_WINDOW_ROWS &&
+                rowsSnapshot().getOrNull(13)?.position == 233L
         }
 
         assertEquals(
             movedSongId,
-            viewModel.rows[13]
+            rowsSnapshot()[13]
                 .song.song.id,
         )
-        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+        assertEquals((220L..399L).toList(), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -290,18 +290,18 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
         extendToEnd()
-        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+        assertEquals((220L..399L).toList(), rowsSnapshot().map { it.position })
 
-        val from = viewModel.rows.first().position
-        viewModel.reorder(0, 5)
-        val to = dropTarget(viewModel.rows, index = 5, from = from)
+        val from = rowsSnapshot().first().position
+        runOnMain { viewModel.reorder(0, 5) }
+        val to = dropTarget(rowsSnapshot(), index = 5, from = from)
         viewModel.move(from, to)
         await {
-            viewModel.rows.firstOrNull()?.position == 220L &&
-                viewModel.rows.lastOrNull()?.position == 399L
+            rowsSnapshot().firstOrNull()?.position == 220L &&
+                rowsSnapshot().lastOrNull()?.position == 399L
         }
 
-        assertEquals((220L..399L).toList(), viewModel.rows.map { it.position })
+        assertEquals((220L..399L).toList(), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -344,26 +344,26 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
         val removedSongId =
-            viewModel.rows[30]
+            rowsSnapshot()[30]
                 .song.song.id
 
-        viewModel.remove(viewModel.rows[30].position)
+        viewModel.remove(rowsSnapshot()[30].position)
         await {
-            viewModel.rows.size == 60 &&
-                viewModel.rows.firstOrNull()?.position == 70L &&
-                viewModel.rows
+            rowsSnapshot().size == 60 &&
+                rowsSnapshot().firstOrNull()?.position == 70L &&
+                rowsSnapshot()
                     .getOrNull(30)
                     ?.song
                     ?.song
                     ?.id != removedSongId
         }
-        assertEquals((70L..129L).toList(), viewModel.rows.map { it.position })
+        assertEquals((70L..129L).toList(), rowsSnapshot().map { it.position })
 
         viewModel.undo()
         await {
-            viewModel.rows.size == 60 &&
-                viewModel.rows.firstOrNull()?.position == 70L &&
-                viewModel.rows
+            rowsSnapshot().size == 60 &&
+                rowsSnapshot().firstOrNull()?.position == 70L &&
+                rowsSnapshot()
                     .getOrNull(30)
                     ?.song
                     ?.song
@@ -375,7 +375,7 @@ class QueueViewModelTest {
     private fun assertContiguous() = assertTrue(isContiguous())
 
     private fun isContiguous(): Boolean {
-        val positions = viewModel.rows.map { it.position }
+        val positions = rowsSnapshot().map { it.position }
         return positions.isNotEmpty() && positions == (positions.first()..positions.last()).toList()
     }
 
@@ -383,9 +383,9 @@ class QueueViewModelTest {
         first: Long,
         last: Long,
     ) = await {
-        viewModel.rows.size == (last - first + 1).toInt() &&
-            viewModel.rows.firstOrNull()?.position == first &&
-            viewModel.rows.lastOrNull()?.position == last
+        rowsSnapshot().size == (last - first + 1).toInt() &&
+            rowsSnapshot().firstOrNull()?.position == first &&
+            rowsSnapshot().lastOrNull()?.position == last
     }
 
     private fun extendTo(
@@ -455,6 +455,8 @@ class QueueViewModelTest {
     // `rows` is a snapshot list mutated on the main dispatcher, so read it there rather than from
     // the test thread (otherwise iterating it races the view model and throws or reads torn state).
     private fun rowsSnapshot(): List<QueueRow> = runBlocking { withContext(dispatcher) { viewModel.rows.toList() } }
+
+    private fun runOnMain(block: () -> Unit) = runBlocking { withContext(dispatcher) { block() } }
 
     private fun await(predicate: () -> Boolean) {
         repeat(500) {
