@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.ui.theme.ArtworkColors
@@ -207,8 +208,6 @@ private fun HeroSubtitle(
         modifier = modifier,
     )
 }
-
-enum class BulkDownloadAction { Download, Cancel, Delete }
 
 fun ListDownloadStatus.action(): BulkDownloadAction =
     when {

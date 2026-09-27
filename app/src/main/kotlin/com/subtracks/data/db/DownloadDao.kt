@@ -16,23 +16,18 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads")
     suspend fun all(): List<SongDownload>
 
-    @Query("SELECT id FROM songs WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY albumId, disc, track, id")
-    suspend fun artistSongIds(
-        sourceId: Long,
-        artistId: String,
-    ): List<String>
-
     @Query(
         "SELECT COUNT(songs.id) AS total, " +
             "COALESCE(SUM(CASE WHEN song_downloads.status = 'Completed' THEN 1 ELSE 0 END), 0) AS downloaded, " +
             "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
             "FROM songs " +
             "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
-            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId",
+            "WHERE songs.sourceId = :sourceId " +
+            "AND songs.albumId IN (SELECT id FROM albums WHERE sourceId = :sourceId AND artistId = :artistId)",
     )
-    fun albumStatus(
+    fun artistStatus(
         sourceId: Long,
-        albumId: String,
+        artistId: String,
     ): Flow<ListDownloadStatus>
 
     @Query(
@@ -55,11 +50,11 @@ interface DownloadDao {
             "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
             "FROM songs " +
             "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
-            "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId",
+            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId",
     )
-    fun artistStatus(
+    fun albumStatus(
         sourceId: Long,
-        artistId: String,
+        albumId: String,
     ): Flow<ListDownloadStatus>
 
     @Query(

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.ListDownloadStatus
@@ -29,7 +30,6 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
-import com.subtracks.ui.components.BulkDownloadAction
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
@@ -84,13 +84,7 @@ fun AlbumDetailRoute(
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
         downloadStatus = downloadStatus,
-        onDownloadAction = { action ->
-            when (action) {
-                BulkDownloadAction.Download -> viewModel.downloadAll()
-                BulkDownloadAction.Cancel -> viewModel.cancelDownloads()
-                BulkDownloadAction.Delete -> viewModel.deleteDownloads()
-            }
-        },
+        onDownloadAction = viewModel::onDownloadAction,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },

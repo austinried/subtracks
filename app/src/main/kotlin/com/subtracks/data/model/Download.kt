@@ -42,6 +42,8 @@ data class SongDownload(
 
 enum class DownloadList { Album, Playlist, Artist }
 
+enum class BulkDownloadAction { Download, Cancel, Delete }
+
 data class ListDownloadStatus(
     val total: Long = 0,
     val downloaded: Long = 0,

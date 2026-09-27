@@ -12,6 +12,7 @@ import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
@@ -490,6 +491,10 @@ class DownloadRepositoryTest {
             db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Queued, engineId = 22))
 
             assertEquals(ListDownloadStatus(total = 2, downloaded = 1, downloading = 1), statusOf(DownloadList.Album, "al1"))
+
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Running, engineId = 22))
+
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1, downloading = 1), statusOf(DownloadList.Album, "al1"))
         }
 
     @Test
@@ -513,6 +518,72 @@ class DownloadRepositoryTest {
         list: DownloadList,
         refId: String,
     ): ListDownloadStatus = runBlocking { repository.status(1, list, refId).first() }
+
+    @Test
+    fun downloadingAPlaylistQueuesEverySong() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertPlaylists(listOf(Playlist(1, "pl1", "Playlist", null, null, 2, 0)))
+                db.libraryDao().upsertPlaylistSongs(
+                    listOf(
+                        PlaylistSong(1, "pl1", "s1", 0),
+                        PlaylistSong(1, "pl1", "s2", 1),
+                    ),
+                )
+            }
+
+            runBlocking { repository.downloadAll(1, DownloadList.Playlist, "pl1") }
+
+            assertEquals(listOf("s1", "s2"), requestedSongIds())
+        }
+
+    @Test
+    fun downloadingAnArtistQueuesTheSongsOfItsAlbums() =
+        runTest {
+            seedLibrary()
+            // s2 is a guest on the album, so its own artistId differs: the artist page lists the
+            // album, and the download follows what the page shows.
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s2",
+                            albumId = "al1",
+                            artistId = "ar2",
+                            title = "Song 2",
+                            album = "Album",
+                            artist = "Guest",
+                            duration = 100,
+                            track = 2,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+            }
+
+            runBlocking { repository.downloadAll(1, DownloadList.Artist, "ar1") }
+
+            assertEquals(listOf("s1", "s2"), requestedSongIds())
+        }
+
+    @Test
+    fun applyActionRoutesToTheMatchingBulkAction() =
+        runTest {
+            seedLibrary()
+
+            runBlocking { repository.applyAction(1, DownloadList.Album, "al1", BulkDownloadAction.Download) }
+            assertEquals(2, engine.requests.size)
+
+            runBlocking { repository.applyAction(1, DownloadList.Album, "al1", BulkDownloadAction.Cancel) }
+
+            assertEquals(ListDownloadStatus(total = 2), statusOf(DownloadList.Album, "al1"))
+        }
+
+    private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun album(coverArt: String?) =
         Album(

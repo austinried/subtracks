@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
@@ -19,7 +20,6 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
-import com.subtracks.ui.components.BulkDownloadAction
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
@@ -70,13 +70,7 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
         downloadStatus = downloadStatus,
-        onDownloadAction = { action ->
-            when (action) {
-                BulkDownloadAction.Download -> viewModel.downloadAll()
-                BulkDownloadAction.Cancel -> viewModel.cancelDownloads()
-                BulkDownloadAction.Delete -> viewModel.deleteDownloads()
-            }
-        },
+        onDownloadAction = viewModel::onDownloadAction,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },

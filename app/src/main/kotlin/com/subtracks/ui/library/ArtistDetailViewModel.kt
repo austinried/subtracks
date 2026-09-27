@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.ListDownloadStatus
@@ -43,18 +44,10 @@ class ArtistDetailViewModel(
             .flatMapLatest { downloadRepository.status(it, DownloadList.Artist, artistId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListDownloadStatus())
 
-    fun downloadAll() {
-        viewModelScope.launch { downloadRepository.downloadAll(sourceId.first(), DownloadList.Artist, artistId) }
-    }
-
-    fun cancelDownloads() {
-        viewModelScope.launch { downloadRepository.cancelAll(sourceId.first(), DownloadList.Artist, artistId) }
-    }
-
-    fun deleteDownloads() {
+    fun onDownloadAction(action: BulkDownloadAction) {
         viewModelScope.launch {
-            downloadRepository.deleteAll(sourceId.first(), DownloadList.Artist, artistId)
-            playbackController.refreshMediaItems()
+            downloadRepository.applyAction(sourceId.first(), DownloadList.Artist, artistId, action)
+            if (action == BulkDownloadAction.Delete) playbackController.refreshMediaItems()
         }
     }
 

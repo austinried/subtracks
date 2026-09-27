@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -146,9 +147,9 @@ fun ArtistDetailRoute(
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            downloadArtist = { viewModel.downloadAll() },
-            cancelArtistDownload = { viewModel.cancelDownloads() },
-            deleteArtistDownload = { viewModel.deleteDownloads() },
+            downloadArtist = { viewModel.onDownloadAction(BulkDownloadAction.Download) },
+            cancelArtistDownload = { viewModel.onDownloadAction(BulkDownloadAction.Cancel) },
+            deleteArtistDownload = { viewModel.onDownloadAction(BulkDownloadAction.Delete) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )

@@ -8,6 +8,7 @@ import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
@@ -111,15 +112,19 @@ class DownloadRepository(
     private suspend fun enqueueIfAbsent(
         sourceId: Long,
         songId: String,
-    ): Boolean =
-        mutex.withLock {
-            if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withLock false
-            val existing = db.downloadDao().find(sourceId, songId)
-            existing?.engineId?.let(engine::cancel)
-            val url = sourceRepository.downloadUri(sourceId, songId) ?: return@withLock false
-            enqueue(sourceId, songId, url)
-            true
-        }
+    ): Boolean = mutex.withLock { enqueueIfAbsentLocked(sourceId, songId) }
+
+    private suspend fun enqueueIfAbsentLocked(
+        sourceId: Long,
+        songId: String,
+    ): Boolean {
+        if (alreadyDownloadingOrDownloaded(sourceId, songId)) return false
+        val existing = db.downloadDao().find(sourceId, songId)
+        existing?.engineId?.let(engine::cancel)
+        val url = sourceRepository.downloadUri(sourceId, songId) ?: return false
+        enqueue(sourceId, songId, url)
+        return true
+    }
 
     suspend fun remove(
         sourceId: Long,
@@ -152,13 +157,31 @@ class DownloadRepository(
             return@withContext
         }
         val songIds = songIds(sourceId, list, refId)
-        if (songIds.isEmpty()) return@withContext
+        if (songIds.isEmpty()) {
+            showMessage(EMPTY_LIST)
+            return@withContext
+        }
         if (sourceRepository.downloadUri(sourceId, songIds.first()) == null) {
             showMessage(NO_ADDRESS)
             return@withContext
         }
-        songIds.forEach { enqueueIfAbsent(sourceId, it) }
+        // Under one lock, so a cancel that lands mid-loop waits for the queue to be complete and
+        // then removes all of it, rather than missing the songs enqueued after it looked.
+        mutex.withLock {
+            songIds.forEach { songId -> runCatching { enqueueIfAbsentLocked(sourceId, songId) } }
+        }
         fetchArtworkSafely(sourceId, songIds)
+    }
+
+    suspend fun applyAction(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+        action: BulkDownloadAction,
+    ) = when (action) {
+        BulkDownloadAction.Download -> downloadAll(sourceId, list, refId)
+        BulkDownloadAction.Cancel -> cancelAll(sourceId, list, refId)
+        BulkDownloadAction.Delete -> deleteAll(sourceId, list, refId)
     }
 
     suspend fun cancelAll(
@@ -367,7 +390,7 @@ class DownloadRepository(
         when (list) {
             DownloadList.Album -> db.queueDao().albumSongIds(sourceId, refId)
             DownloadList.Playlist -> db.queueDao().playlistSongIds(sourceId, refId)
-            DownloadList.Artist -> db.downloadDao().artistSongIds(sourceId, refId)
+            DownloadList.Artist -> db.queueDao().artistSongIds(sourceId, refId)
         }
 
     private suspend fun fetchArtworkSafely(
@@ -471,6 +494,7 @@ class DownloadRepository(
         const val POLL_MS = 1_000L
         const val MISSING_FILE = "The downloaded file is missing"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
+        const val EMPTY_LIST = "Nothing left to download from this list"
         const val STOPPED = "The download stopped unexpectedly"
         const val NOT_ACTIVE = "Can't download from a source that isn't active"
         const val ART_TIMEOUT_MS = 60_000L

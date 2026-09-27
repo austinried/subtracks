@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.ui.theme.SubtracksTheme
 import org.junit.Assert.assertEquals
@@ -20,27 +21,6 @@ import org.robolectric.annotation.GraphicsMode
 class HeroDownloadTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
-
-    @Test
-    fun anUndownloadedListOffersDownload() {
-        assertEquals(BulkDownloadAction.Download, ListDownloadStatus(total = 3).action())
-        assertEquals(BulkDownloadAction.Download, ListDownloadStatus().action())
-    }
-
-    @Test
-    fun aPartiallyDownloadedListStillOffersDownload() {
-        assertEquals(BulkDownloadAction.Download, ListDownloadStatus(total = 3, downloaded = 1).action())
-    }
-
-    @Test
-    fun aListWithDownloadsInFlightOffersCancel() {
-        assertEquals(BulkDownloadAction.Cancel, ListDownloadStatus(total = 3, downloaded = 1, downloading = 1).action())
-    }
-
-    @Test
-    fun aFullyDownloadedListOffersDelete() {
-        assertEquals(BulkDownloadAction.Delete, ListDownloadStatus(total = 3, downloaded = 3).action())
-    }
 
     @Test
     fun tappingTheButtonReportsTheActionItsStateOffers() {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.ListDownloadStatus
@@ -50,18 +51,10 @@ class PlaylistDetailViewModel(
             .flatMapLatest { downloadRepository.status(it, DownloadList.Playlist, playlistId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListDownloadStatus())
 
-    fun downloadAll() {
-        viewModelScope.launch { downloadRepository.downloadAll(sourceId.first(), DownloadList.Playlist, playlistId) }
-    }
-
-    fun cancelDownloads() {
-        viewModelScope.launch { downloadRepository.cancelAll(sourceId.first(), DownloadList.Playlist, playlistId) }
-    }
-
-    fun deleteDownloads() {
+    fun onDownloadAction(action: BulkDownloadAction) {
         viewModelScope.launch {
-            downloadRepository.deleteAll(sourceId.first(), DownloadList.Playlist, playlistId)
-            playbackController.refreshMediaItems()
+            downloadRepository.applyAction(sourceId.first(), DownloadList.Playlist, playlistId, action)
+            if (action == BulkDownloadAction.Delete) playbackController.refreshMediaItems()
         }
     }
 
