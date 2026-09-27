@@ -327,6 +327,10 @@ fun QueueScreen(
     var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
 
+    // One reorder state per section: the library only targets keys registered with the state that
+    // started the drag, so an up-next drag cannot reach the context rows and vice versa.
+    // scrollThreshold 0 disables auto-scroll, which otherwise keeps scrolling past the section
+    // looking for a target that does not exist.
     val upNextReorder =
         rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
@@ -389,6 +393,8 @@ fun QueueScreen(
                 ) {
                     rows.forEachIndexed { index, row ->
                         if (index == 0 || rows[index - 1].upNext != row.upNext) {
+                            // Keyed by index, not section: the context sits on both sides of the
+                            // block, so a section-based key would duplicate.
                             item(key = "header-$index") {
                                 QueueSectionHeader(
                                     label = if (row.upNext) "Up next" else contextTitle ?: "Next up",
