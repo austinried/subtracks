@@ -19,10 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -59,10 +60,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -92,6 +96,10 @@ import org.koin.core.parameter.parametersOf
 private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
 private val ROW_GAP = 16.dp
+private val SHUFFLE_WIDTH = 68.dp
+private val SHUFFLE_HEIGHT = 48.dp
+private val SHUFFLE_ICON = 30.dp
+private val SHUFFLE_RESERVE = 80.dp
 
 internal fun estimateScrollPx(
     index: Int,
@@ -272,19 +280,28 @@ fun ArtistDetailScreen(
                                     )
                                 }
                                 Box(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
-                                    Text(
+                                    HangingTitle(
                                         text = artist?.name.orEmpty(),
                                         style = imageNameStyle,
                                         color = Color.White,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.fillMaxWidth().padding(TITLE_INSET),
+                                        endReserve = SHUFFLE_RESERVE,
+                                        modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(TITLE_INSET),
                                     )
-                                    IconButton(
+                                    FilledIconButton(
                                         onClick = onShuffle,
-                                        modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 8.dp),
+                                        shape = RoundedCornerShape(24.dp),
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(end = TITLE_INSET, bottom = TITLE_INSET)
+                                                .width(SHUFFLE_WIDTH)
+                                                .height(SHUFFLE_HEIGHT),
                                     ) {
-                                        ShadowedIcon(Icons.Rounded.Shuffle, "Shuffle artist", size = 28.dp)
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = "Shuffle artist",
+                                            modifier = Modifier.size(SHUFFLE_ICON),
+                                        )
                                     }
                                 }
                             }
@@ -408,23 +425,62 @@ fun ArtistDetailScreen(
 }
 
 @Composable
-private fun ShadowedIcon(
-    imageVector: ImageVector,
-    contentDescription: String,
-    size: Dp = 24.dp,
+private fun HangingTitle(
+    text: String,
+    style: TextStyle,
+    color: Color,
+    endReserve: Dp,
+    modifier: Modifier = Modifier,
 ) {
-    Box(Modifier.size(size)) {
-        Icon(
-            imageVector = imageVector,
-            contentDescription = null,
-            tint = Color.Black.copy(alpha = 0.5f),
-            modifier = Modifier.matchParentSize().offset(x = 0.5.dp, y = 1.5.dp),
-        )
-        Icon(
-            imageVector = imageVector,
-            contentDescription = contentDescription,
-            tint = Color.White,
-            modifier = Modifier.matchParentSize(),
-        )
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier) {
+        val fullWidth = with(density) { maxWidth.roundToPx() }
+        val reserve = with(density) { endReserve.roundToPx() }
+        val lines = remember(text, style, fullWidth, reserve) { splitTitle(measurer, text, style, fullWidth, reserve) }
+        Column {
+            lines.forEachIndexed { index, line ->
+                Text(
+                    text = line,
+                    style = style,
+                    color = color,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .then(if (index == lines.lastIndex) Modifier.padding(end = endReserve) else Modifier),
+                )
+            }
+        }
     }
+}
+
+internal fun splitTitle(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    fullWidth: Int,
+    reserve: Int,
+): List<String> {
+    if (text.isBlank()) return listOf(text)
+    if (measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width <= fullWidth - reserve) {
+        return listOf(text)
+    }
+    val words = text.split(' ').filter { it.isNotEmpty() }
+    if (words.size <= 1) return listOf(text)
+    var count = 0
+    var acc = ""
+    for (i in words.indices) {
+        val candidate = if (acc.isEmpty()) words[i] else "$acc ${words[i]}"
+        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= fullWidth) {
+            acc = candidate
+            count = i + 1
+        } else {
+            break
+        }
+    }
+    if (count >= words.size) count = words.size - 1
+    if (count < 1) count = 1
+    return listOf(words.take(count).joinToString(" "), words.drop(count).joinToString(" "))
 }
