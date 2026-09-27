@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -117,9 +119,16 @@ private fun DownloadBadge(download: SongDownload?) {
         DownloadStatus.Queued, DownloadStatus.Running -> {
             val progress = download.progress
             if (progress == null) {
-                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
+                    strokeWidth = 2.dp,
+                )
             } else {
-                CircularProgressIndicator(progress = { progress }, modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
+                    strokeWidth = 2.dp,
+                )
             }
         }
 

@@ -241,8 +241,9 @@ val MIGRATION_16_17 =
             connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `song_downloads` (`sourceId` INTEGER NOT NULL, `songId` TEXT NOT NULL, " +
                     "`status` TEXT NOT NULL, `engineId` INTEGER, `bytes` INTEGER NOT NULL DEFAULT 0, " +
-                    "`total` INTEGER NOT NULL DEFAULT 0, `error` TEXT, `queuedAt` INTEGER NOT NULL DEFAULT 0, " +
+                    "`total` INTEGER NOT NULL DEFAULT 0, `error` TEXT, " +
                     "PRIMARY KEY(`sourceId`, `songId`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`sourceId`, `songId`) REFERENCES `songs`(`sourceId`, `id`) " +
                     "ON UPDATE NO ACTION ON DELETE CASCADE )",
             )
             connection.execSQL("CREATE INDEX IF NOT EXISTS `index_song_downloads_sourceId` ON `song_downloads` (`sourceId`)")

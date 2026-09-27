@@ -17,14 +17,18 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class DownloadRepository(
@@ -32,9 +36,8 @@ class DownloadRepository(
     private val sourceRepository: SourceRepository,
     private val engine: DownloadEngine,
     private val downloadsDir: File,
-    private val allowMetered: Boolean = false,
     private val showMessage: (String) -> Unit = {},
-    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val mutex = Mutex()
@@ -44,25 +47,20 @@ class DownloadRepository(
     @Volatile
     private var started = false
 
-    private val completedFiles = MutableStateFlow<Map<String, File>>(emptyMap())
+    private val sharedStates: StateFlow<Map<String, SongDownload>> by lazy {
+        downloadStates()
+            .onEach { loaded.complete(Unit) }
+            .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+    }
 
     fun start() {
         if (started) return
         started = true
         downloadsDir.mkdirs()
         File(downloadsDir, NO_MEDIA).createNewFile()
+        sharedStates
         scope.launch {
             sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
-        }
-        scope.launch {
-            states().collect { rows ->
-                completedFiles.value =
-                    rows
-                        .filterValues { it.status == DownloadStatus.Completed }
-                        .mapValues { (_, row) -> file(row.sourceId, row.songId) }
-                        .filterValues { it.exists() }
-                loaded.complete(Unit)
-            }
         }
     }
 
@@ -70,67 +68,84 @@ class DownloadRepository(
         scope.cancel()
     }
 
-    fun states(): Flow<Map<String, SongDownload>> =
-        sourceRepository
-            .activeSourceId()
-            .flatMapLatest { sourceId -> if (sourceId == null) flowOf(emptyList()) else db.downloadDao().downloads(sourceId) }
-            .map { rows -> rows.associateBy { it.songId } }
+    fun states(): StateFlow<Map<String, SongDownload>> = sharedStates
 
     suspend fun awaitLoaded() {
-        if (started) loaded.await()
+        if (!started) return
+        states()
+        loaded.await()
     }
 
-    fun localUri(songId: String): String? = completedFiles.value[songId]?.takeIf { it.exists() }?.let { Uri.fromFile(it).toString() }
+    fun localUri(songId: String): String? =
+        sharedStates.value[songId]
+            ?.takeIf { it.status == DownloadStatus.Completed }
+            ?.let { file(it.sourceId, it.songId) }
+            ?.takeIf { it.exists() }
+            ?.let { Uri.fromFile(it).toString() }
 
     suspend fun download(
         sourceId: Long,
         songId: String,
-    ) = mutex.withLock {
-        if (sourceRepository.activeSourceIdOnce() != sourceId) {
-            showMessage("Can't download from a source that isn't active")
-            return@withLock
+    ) = withContext(dispatcher) {
+        mutex.withLock {
+            if (sourceRepository.activeSourceIdOnce() != sourceId) {
+                showMessage("Can't download from a source that isn't active")
+                return@withLock
+            }
+            val existing = db.downloadDao().find(sourceId, songId)
+            if (existing != null && existing.status != DownloadStatus.Failed) return@withLock
+            existing?.engineId?.let(engine::cancel)
+            val url = sourceRepository.downloadUri(songId)
+            if (url == null) {
+                showMessage("Can't download: the server address is unavailable")
+                return@withLock
+            }
+            enqueue(sourceId, songId, url)
         }
-        val existing = db.downloadDao().find(sourceId, songId)
-        if (existing != null && existing.status != DownloadStatus.Failed) return@withLock
-        existing?.engineId?.let(engine::cancel)
-        val url = sourceRepository.downloadUri(songId)
-        if (url == null) {
-            showMessage("Can't download: the server address is unavailable")
-            return@withLock
-        }
-        enqueue(sourceId, songId, url)
     }
 
     suspend fun remove(
         sourceId: Long,
         songId: String,
-    ) = mutex.withLock {
-        val row = db.downloadDao().find(sourceId, songId) ?: return@withLock
-        row.engineId?.let(engine::cancel)
-        file(sourceId, songId).delete()
-        db.downloadDao().delete(sourceId, songId)
+    ) = withContext(dispatcher) {
+        mutex.withLock {
+            val row = db.downloadDao().find(sourceId, songId) ?: return@withLock
+            row.engineId?.let(engine::cancel)
+            file(sourceId, songId).delete()
+            db.downloadDao().delete(sourceId, songId)
+        }
     }
 
     suspend fun removeSource(sourceId: Long) =
-        mutex.withLock {
-            db
-                .downloadDao()
-                .all()
-                .filter { it.sourceId == sourceId }
-                .forEach { row -> row.engineId?.let(engine::cancel) }
-            db.downloadDao().deleteSource(sourceId)
-            dir(sourceId).deleteRecursively()
+        withContext(dispatcher) {
+            mutex.withLock {
+                db
+                    .downloadDao()
+                    .all()
+                    .filter { it.sourceId == sourceId }
+                    .forEach { row -> row.engineId?.let(engine::cancel) }
+                db.downloadDao().deleteSource(sourceId)
+                dir(sourceId).deleteRecursively()
+            }
         }
 
     suspend fun reconcile() =
-        mutex.withLock {
-            db.downloadDao().all().forEach { row ->
-                val state = row.engineId?.let(engine::download)
-                if (state == null) recover(row) else apply(row, state)
+        withContext(dispatcher) {
+            mutex.withLock {
+                db.downloadDao().all().forEach { row ->
+                    val state = row.engineId?.let(engine::download)
+                    if (state == null) recover(row) else apply(row, state)
+                }
+                sweep(db.downloadDao().all())
+                ensurePolling()
             }
-            sweep(db.downloadDao().all())
-            ensurePolling()
         }
+
+    private fun downloadStates(): Flow<Map<String, SongDownload>> =
+        sourceRepository
+            .activeSourceId()
+            .flatMapLatest { sourceId -> if (sourceId == null) flowOf(emptyList()) else db.downloadDao().downloads(sourceId) }
+            .map { rows -> rows.associateBy { it.songId } }
 
     private suspend fun enqueue(
         sourceId: Long,
@@ -142,40 +157,32 @@ class DownloadRepository(
         val title = db.libraryDao().songOnce(sourceId, songId)?.title ?: songId
         val engineId =
             engine.enqueue(
-                EngineRequest(uri = url, path = enginePath(sourceId, songId), title = title, allowMetered = allowMetered),
+                EngineRequest(uri = url, path = enginePath(sourceId, songId), title = title, allowMetered = false),
             )
         db.downloadDao().upsert(
-            SongDownload(
-                sourceId = sourceId,
-                songId = songId,
-                status = DownloadStatus.Queued,
-                engineId = engineId,
-                queuedAt = System.currentTimeMillis(),
-            ),
+            SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued, engineId = engineId),
         )
         ensurePolling()
     }
 
     private suspend fun recover(row: SongDownload) {
-        when {
-            row.status == DownloadStatus.Completed && file(row.sourceId, row.songId).exists() -> {
-                Unit
+        when (row.status) {
+            DownloadStatus.Completed -> {
+                if (!file(row.sourceId, row.songId).exists()) markFailed(row, MISSING_FILE)
             }
 
-            row.status == DownloadStatus.Completed -> {
-                markFailed(row, "The downloaded file is missing")
-            }
-
-            sourceRepository.activeSourceIdOnce() != row.sourceId -> {
-                Unit
-            }
-
-            else -> {
+            DownloadStatus.Queued -> {
+                if (sourceRepository.activeSourceIdOnce() != row.sourceId) return
                 val url = sourceRepository.downloadUri(row.songId)
-                when (url) {
-                    null -> markFailed(row, "Can't download: the server address is unavailable")
-                    else -> enqueue(row.sourceId, row.songId, url)
-                }
+                if (url == null) markFailed(row, NO_ADDRESS) else enqueue(row.sourceId, row.songId, url)
+            }
+
+            DownloadStatus.Running -> {
+                markFailed(row, STOPPED)
+            }
+
+            DownloadStatus.Failed -> {
+                Unit
             }
         }
     }
@@ -257,5 +264,8 @@ class DownloadRepository(
         const val ENGINE_DIR = "downloads"
         const val NO_MEDIA = ".nomedia"
         const val POLL_MS = 1_000L
+        const val MISSING_FILE = "The downloaded file is missing"
+        const val NO_ADDRESS = "Can't download: the server address is unavailable"
+        const val STOPPED = "The download stopped unexpectedly"
     }
 }

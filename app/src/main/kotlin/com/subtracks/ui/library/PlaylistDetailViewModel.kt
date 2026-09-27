@@ -15,12 +15,10 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,7 +39,7 @@ class PlaylistDetailViewModel(
             .cachedIn(viewModelScope)
 
     val downloads: StateFlow<Map<String, SongDownload>> =
-        downloadRepository.states().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+        downloadRepository.states()
 
     fun download(song: Song) {
         viewModelScope.launch { downloadRepository.download(song.sourceId, song.id) }

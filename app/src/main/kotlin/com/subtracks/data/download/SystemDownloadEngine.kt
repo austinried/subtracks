@@ -9,15 +9,14 @@ class SystemDownloadEngine(
     private val context: Context,
 ) : DownloadEngine {
     override fun enqueue(request: EngineRequest): Long {
-        val builder =
+        val download =
             DownloadManager
                 .Request(Uri.parse(request.uri))
                 .setTitle(request.title)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MUSIC, request.path)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                 .setAllowedOverMetered(request.allowMetered)
-        request.mimeType?.let(builder::setMimeType)
-        return manager().enqueue(builder)
+        return manager().enqueue(download)
     }
 
     override fun download(id: Long): EngineDownload? {
@@ -31,15 +30,8 @@ class SystemDownloadEngine(
                 cursor
                     .getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
                     .takeIf { status == DownloadManager.STATUS_FAILED }
-            val mapped =
-                when (status) {
-                    DownloadManager.STATUS_SUCCESSFUL -> EngineStatus.Completed
-                    DownloadManager.STATUS_FAILED -> EngineStatus.Failed
-                    DownloadManager.STATUS_RUNNING -> EngineStatus.Running
-                    else -> EngineStatus.Pending
-                }
             return EngineDownload(
-                status = mapped,
+                status = engineStatus(status),
                 bytes = bytes.coerceAtLeast(0),
                 total = total.coerceAtLeast(0),
                 error = reason?.let(::failureMessage),
@@ -52,15 +44,23 @@ class SystemDownloadEngine(
     }
 
     private fun manager(): DownloadManager = context.getSystemService(DownloadManager::class.java)
-
-    private fun failureMessage(reason: Int): String =
-        when (reason) {
-            DownloadManager.ERROR_INSUFFICIENT_SPACE -> "Not enough space to download"
-            DownloadManager.ERROR_DEVICE_NOT_FOUND -> "Storage is unavailable"
-            DownloadManager.ERROR_FILE_ERROR, DownloadManager.ERROR_FILE_ALREADY_EXISTS -> "Could not write the download"
-            DownloadManager.ERROR_HTTP_DATA_ERROR, DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "The server refused to send this track"
-            DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "The server redirected too many times"
-            DownloadManager.ERROR_CANNOT_RESUME -> "The download could not be resumed"
-            else -> "Download failed"
-        }
 }
+
+internal fun engineStatus(status: Int): EngineStatus =
+    when (status) {
+        DownloadManager.STATUS_SUCCESSFUL -> EngineStatus.Completed
+        DownloadManager.STATUS_FAILED -> EngineStatus.Failed
+        DownloadManager.STATUS_RUNNING -> EngineStatus.Running
+        else -> EngineStatus.Pending
+    }
+
+internal fun failureMessage(reason: Int): String =
+    when (reason) {
+        DownloadManager.ERROR_INSUFFICIENT_SPACE -> "Not enough space to download"
+        DownloadManager.ERROR_DEVICE_NOT_FOUND -> "Storage is unavailable"
+        DownloadManager.ERROR_FILE_ERROR, DownloadManager.ERROR_FILE_ALREADY_EXISTS -> "Could not write the download"
+        DownloadManager.ERROR_HTTP_DATA_ERROR, DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> "The server refused to send this track"
+        DownloadManager.ERROR_TOO_MANY_REDIRECTS -> "The server redirected too many times"
+        DownloadManager.ERROR_CANNOT_RESUME -> "The download could not be resumed"
+        else -> "Download failed"
+    }
