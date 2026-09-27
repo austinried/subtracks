@@ -349,9 +349,6 @@ fun QueueScreen(
             val last = info.visibleItemsInfo.lastOrNull { it.key is Long }?.let { rows.rowIndexOf(it.key) } ?: -1
             first to last
         }.collect { (first, last) ->
-            // Mid-drag the live reorder leaves row positions inconsistent, so extending here would
-            // re-add rows that are already loaded.
-            if (dragId != null) return@collect
             if (first in 0..LOAD_THRESHOLD) onLoadOlder()
             if (last >= 0 && last >= rows.size - 1 - LOAD_THRESHOLD) onLoadNewer()
         }

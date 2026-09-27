@@ -190,8 +190,14 @@ class QueueRepository(
                     ?.takeIf { it.isNotBlank() }
             }
 
+            // An explicit song entry in the middle of a queue is a reordered context track, so
+            // label it by its album rather than losing the context name.
             QueueKind.Song -> {
-                null
+                library
+                    .song(sourceId, refId)
+                    .first()
+                    ?.album
+                    ?.takeIf { it.isNotBlank() }
             }
         }
     }

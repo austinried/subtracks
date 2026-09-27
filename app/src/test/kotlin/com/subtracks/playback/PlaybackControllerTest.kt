@@ -1002,6 +1002,25 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun movingThePlayingContextTrackStillResolvesAnAlbumTitle() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        runBlocking { controller.move(1, 0) }
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertEquals("Album", runBlocking { controller.sourceTitle(controller.state.value.context) })
+    }
+
+    @Test
     fun nextFollowsTheReorderedQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("q1", "al2")
