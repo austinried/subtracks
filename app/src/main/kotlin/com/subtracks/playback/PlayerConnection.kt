@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 import java.util.concurrent.Executor
 
@@ -17,6 +18,7 @@ interface PlayerConnection {
 class MediaSessionConnection(
     private val context: Context,
     private val sourceRepository: SourceRepository,
+    private val downloads: DownloadRepository,
 ) : PlayerConnection {
     override fun connect(
         onConnected: (PlayerHandle) -> Unit,
@@ -34,7 +36,7 @@ class MediaSessionConnection(
         future.addListener(
             {
                 val controller = runCatching { future.get() }.getOrNull()
-                if (controller == null) onDisconnected() else onConnected(Media3PlayerHandle(controller, sourceRepository))
+                if (controller == null) onDisconnected() else onConnected(Media3PlayerHandle(controller, sourceRepository, downloads))
             },
             Executor { it.run() },
         )

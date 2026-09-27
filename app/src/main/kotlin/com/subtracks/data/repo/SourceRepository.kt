@@ -94,6 +94,8 @@ class SourceRepository(
         return uri + streamLengthSuffix(length)
     }
 
+    fun downloadUri(songId: String): String? = active?.downloadUri(songId)?.toString()
+
     suspend fun addSource(
         name: String,
         address: String,
