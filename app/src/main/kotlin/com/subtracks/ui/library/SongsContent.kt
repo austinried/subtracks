@@ -89,16 +89,21 @@ fun SongRow(
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 StarredBadge(song.starred != null)
-                DownloadBadge(download)
             }
         },
         supportingContent = {
-            Text(
-                text = song.artist.orEmpty().ifEmpty { "\u00A0" },
-                color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                DownloadBadge(download)
+                Text(
+                    text = song.artist.orEmpty().ifEmpty { "\u00A0" },
+                    color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
