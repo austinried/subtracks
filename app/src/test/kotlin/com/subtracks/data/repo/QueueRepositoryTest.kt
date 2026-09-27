@@ -692,6 +692,48 @@ class QueueRepositoryTest {
             assertEquals((0L until after.contextSize).toList(), (0 until after.contextSize).map { after.flatContext(it)!! }.sorted())
         }
 
+    @Test
+    fun removingAnyPositionWhileShuffledKeepsTheCoordinatesConsistent() =
+        runTest {
+            seedLibrary()
+            for (seed in listOf(1L, 42L, 999L)) {
+                for (position in 0L..4L) {
+                    repository.replace(listOf(repository.albumEntry(1, "al1")))
+                    repository.setShuffle(seed)
+                    repository.addUpNext(
+                        repository.snapshot(),
+                        currentPosition = 0,
+                        entry = repository.songEntry(1, "s4"),
+                        playNext = false,
+                    )
+                    val before = repository.snapshot()
+                    if (position >= before.size) continue
+
+                    repository.removeAt(before, position)
+
+                    val after = repository.snapshot()
+                    assertTrue("seed=$seed position=$position stopped being shuffled", after.shuffled)
+                    assertEquals(before.size - 1, after.size)
+                    val flats = (0 until after.contextSize).map { after.flatContext(it)!! }
+                    assertEquals((0L until after.contextSize).toList(), flats.sorted())
+                    for (play in 0 until after.contextSize) {
+                        assertEquals(play, after.playContext(after.flatContext(play)!!))
+                    }
+                    for (p in 0 until after.size) {
+                        if (after.isUpNext(p)) continue
+                        assertEquals(p, after.combined(after.contextPlay(p)))
+                    }
+                    val block = (0 until after.size).filter { after.isUpNext(it) }
+                    assertEquals(
+                        (after.anchorPlay + 1..after.anchorPlay + after.upNextSize).toList(),
+                        block,
+                    )
+                    val ids = (0 until after.size).mapNotNull { repository.itemAt(after, it)?.song?.id }
+                    assertEquals(ids.distinct().size, ids.size)
+                }
+            }
+        }
+
     private suspend fun seedLibrary() {
         db.sourcesDao().upsertSource(
             Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),

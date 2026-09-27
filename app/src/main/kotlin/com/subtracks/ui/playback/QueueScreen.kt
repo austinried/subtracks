@@ -80,6 +80,13 @@ data class QueueRow(
     val upNext: Boolean = false,
 )
 
+// Both must match: the position alone can transiently point at the row above while the list
+// reconciles, and the song id alone lights up a duplicate elsewhere in the queue.
+internal fun QueueRow.isPlaying(
+    currentPosition: Long?,
+    currentSongId: String?,
+): Boolean = position == currentPosition && song.song.id == currentSongId
+
 class QueueViewModel(
     private val queueRepository: QueueRepository,
     private val playbackController: PlaybackController,
@@ -436,7 +443,7 @@ fun QueueScreen(
                             ) { isDragging ->
                                 QueueRowItem(
                                     row = row,
-                                    isPlaying = row.position == currentPosition && row.song.song.id == currentSongId,
+                                    isPlaying = row.isPlaying(currentPosition, currentSongId),
                                     floating = isDragging,
                                     coverArt = coverArt,
                                     dragHandle =

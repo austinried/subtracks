@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -1732,6 +1733,73 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun undoingARemovalRestoresTheShuffledOrder() {
+        seedShuffledQueue(seed = 42L)
+        val orderBefore = resolvedIds()
+        val currentPosition = controller.state.value.position!!
+        val before = runBlocking { queues.snapshot() }
+        val removePosition = (0 until before.size).first { it != currentPosition }
+
+        runBlocking { controller.removeAt(removePosition) }
+        assertNotEquals(orderBefore, resolvedIds())
+
+        runBlocking { controller.undo() }
+
+        await { controller.state.value.shuffle && resolvedIds() == orderBefore }
+        assertEquals(orderBefore, resolvedIds())
+        assertEquals(currentPosition, controller.state.value.position)
+    }
+
+    @Test
+    fun removingANonCurrentTrackWhileShuffledKeepsTheCursorOnThePlayingTrack() {
+        seedShuffledQueue(seed = 12345L)
+        val currentId =
+            controller.state.value.item!!
+                .id
+        val before = runBlocking { queues.snapshot() }
+        val currentPosition = controller.state.value.position!!
+        val removePosition = (0 until before.size).first { it != currentPosition }
+
+        runBlocking { controller.removeAt(removePosition) }
+
+        val after = runBlocking { queues.snapshot() }
+        assertEquals(
+            currentId,
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(currentId, runBlocking { queues.itemAt(after, controller.state.value.position!!)?.song?.id })
+    }
+
+    @Test
+    fun removingANonCurrentTrackWhileShuffledKeepsTheBlockNext() {
+        seedAlbum(6, sourceId = 1)
+        seedSong("x1", "al2")
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al1")))
+            queues.setShuffle(999L)
+            queues.setCursor(0)
+        }
+        controller.connect()
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        val currentId =
+            controller.state.value.item!!
+                .id
+        val before = runBlocking { queues.snapshot() }
+        val currentPosition = controller.state.value.position!!
+        val removePosition = (0 until before.size).first { !before.isUpNext(it) && it != currentPosition }
+
+        runBlocking { controller.removeAt(removePosition) }
+
+        val after = runBlocking { queues.snapshot() }
+        assertEquals(currentId, runBlocking { queues.itemAt(after, controller.state.value.position!!)?.song?.id })
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+    }
+
+    @Test
     fun movingContextTracksWhileShuffledIsIgnored() {
         seedAlbum(6, sourceId = 1)
 
@@ -2375,6 +2443,28 @@ class PlaybackControllerTest {
             )
         }
     }
+
+    // Loads a shuffled album under a fixed seed, so the permutation is deterministic and a test can
+    // assert exact positions rather than looping until a lucky seed exposes a bug.
+    private fun seedShuffledQueue(
+        seed: Long,
+        count: Int = 6,
+    ) {
+        seedAlbum(count, sourceId = 1)
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al1")))
+            queues.setShuffle(seed)
+            queues.setCursor(0)
+        }
+        controller.connect()
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+    }
+
+    private fun resolvedIds(): List<String> =
+        runBlocking {
+            val snapshot = queues.snapshot()
+            (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+        }
 
     private fun await(predicate: () -> Boolean) {
         val deadline = System.nanoTime() + 5_000_000_000L

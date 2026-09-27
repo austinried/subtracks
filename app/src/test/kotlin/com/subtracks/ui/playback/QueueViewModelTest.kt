@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.setMain
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -83,6 +84,67 @@ class QueueViewModelTest {
         viewModel.loadOlder()
         await { viewModel.rows.firstOrNull()?.position == 10L }
         assertEquals((10L..189L).toList(), viewModel.rows.map { it.position })
+    }
+
+    @Test
+    fun thePlayingHighlightNeedsBothPositionAndSong() {
+        val playing = row(5)
+
+        assertTrue(playing.isPlaying(5L, "s5"))
+        assertFalse("position lagged while the list reconciled", playing.isPlaying(6L, "s5"))
+        assertFalse("duplicate song elsewhere in the queue", playing.isPlaying(5L, "s6"))
+        assertFalse(playing.isPlaying(null, "s5"))
+    }
+
+    @Test
+    fun openingAShuffledQueueStartsAtTheTop() {
+        runBlocking { seedSongs(20) }
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al1")))
+            queues.setShuffle(12345L)
+            queues.setCursor(0)
+        }
+        controller.connect()
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        viewModel.open()
+        await { viewModel.ready }
+
+        assertEquals(0, viewModel.initialIndex)
+        assertEquals(0L, viewModel.rows.first().position)
+        assertTrue(
+            viewModel.rows.first().isPlaying(
+                0L,
+                controller.state.value.item
+                    ?.id,
+            ),
+        )
+    }
+
+    @Test
+    fun removingWhileShuffledReconcilesTheRows() {
+        runBlocking { seedSongs(20) }
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al1")))
+            queues.setShuffle(12345L)
+            queues.setCursor(0)
+        }
+        controller.connect()
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+        viewModel.open()
+        await { viewModel.ready }
+
+        val before = runBlocking { queues.snapshot() }
+        val currentPosition = controller.state.value.position!!
+        val removePosition = (0 until before.size).first { it != currentPosition }
+
+        viewModel.remove(removePosition)
+
+        await {
+            val snapshot = runBlocking { queues.snapshot() }
+            viewModel.rows.isNotEmpty() &&
+                viewModel.rows.all { runBlocking { queues.itemAt(snapshot, it.position)?.song?.id } == it.song.song.id }
+        }
     }
 
     @Test

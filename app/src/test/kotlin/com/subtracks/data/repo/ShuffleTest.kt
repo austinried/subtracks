@@ -1,6 +1,7 @@
 package com.subtracks.data.repo
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -100,6 +101,22 @@ class ShuffleTest {
         for (seed in seeds) {
             val moved = (0 until size).count { Shuffle.toFlat(seed, size, it) != it }
             assertTrue("seed=$seed left too many tracks in place", moved > size * 9 / 10)
+        }
+    }
+
+    @Test
+    fun handlesDegenerateAndOutOfRangeInputs() {
+        assertEquals(0L, Shuffle.toFlat(1L, 0L, 5L))
+        assertEquals(0L, Shuffle.toSequence(1L, 0L, 5L))
+        assertEquals(0L, Shuffle.toFlat(1L, 1L, 0L))
+        assertEquals(10L, Shuffle.toFlat(1L, 10L, 10L))
+        assertEquals(10L, Shuffle.toSequence(1L, 10L, 10L))
+    }
+
+    @Test
+    fun rejectsSizesBeyondThePermutationDomain() {
+        assertThrows(IllegalArgumentException::class.java) {
+            Shuffle.toFlat(1L, (1L shl 40) + 1L, 0L)
         }
     }
 
