@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -499,7 +500,7 @@ private fun QueueSectionHeader(
         )
         if (onClear != null) {
             IconButton(onClick = onClear) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear up next", modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.DeleteSweep, contentDescription = "Clear up next", modifier = Modifier.size(20.dp))
             }
         }
     }
