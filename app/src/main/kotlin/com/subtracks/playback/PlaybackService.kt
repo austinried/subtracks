@@ -22,6 +22,7 @@ import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import coil3.SingletonImageLoader
 import com.google.common.util.concurrent.Futures
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.koin.core.context.GlobalContext
 
+@OptIn(UnstableApi::class)
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var artworkLoader: CoverArtBitmapLoader? = null
@@ -55,15 +57,17 @@ class PlaybackService : MediaSessionService() {
             override fun onConnect(
                 session: MediaSession,
                 controller: MediaSession.ControllerInfo,
-            ): MediaSession.ConnectionResult =
-                MediaSession.ConnectionResult
-                    .AcceptedResultBuilder(session)
+            ): MediaSession.ConnectionResult {
+                val base = MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller).build()
+                return MediaSession.ConnectionResult
+                    .AcceptedResultBuilder(session, controller)
                     .setAvailableSessionCommands(
-                        MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
+                        base.availableSessionCommands
                             .buildUpon()
                             .add(STAR_COMMAND)
                             .build(),
                     ).build()
+            }
 
             override fun onCustomCommand(
                 session: MediaSession,
@@ -72,7 +76,7 @@ class PlaybackService : MediaSessionService() {
                 args: Bundle,
             ): ListenableFuture<SessionResult> {
                 if (customCommand.customAction != STAR_COMMAND.customAction) {
-                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+                    return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
                 }
                 toggleStar()
                 return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
@@ -163,8 +167,7 @@ class PlaybackService : MediaSessionService() {
     private fun toggleStar() {
         val songId = currentSongId ?: return
         val library = library ?: return
-        starred = !starred
-        library.star(StarType.Song, songId, starred)
+        library.star(StarType.Song, songId, !starred)
     }
 
     private fun starButton(isStarred: Boolean): CommandButton =
@@ -190,7 +193,6 @@ class PlaybackService : MediaSessionService() {
             }.build()
 
     override fun onDestroy() {
-        starJob?.cancel()
         scope.cancel()
         artworkLoader?.shutdown()
         artworkLoader = null

@@ -57,16 +57,24 @@ fun SongRow(
     ListItem(
         modifier = modifier,
         leadingContent =
-            if (coverArt != null) {
-                {
-                    CoverArtCell(
-                        ref = coverArt(coverArtId, true),
-                        name = song.album ?: song.title,
-                        isPlaying = isPlaying,
-                    )
+            when {
+                coverArt != null -> {
+                    {
+                        CoverArtCell(
+                            ref = coverArt(coverArtId, true),
+                            name = song.album ?: song.title,
+                            isPlaying = isPlaying,
+                        )
+                    }
                 }
-            } else {
-                { TrackCell(trackNumber, isPlaying) }
+
+                trackNumber != null || isPlaying -> {
+                    { TrackCell(trackNumber, isPlaying) }
+                }
+
+                else -> {
+                    null
+                }
             },
         trailingContent = {
             Row(

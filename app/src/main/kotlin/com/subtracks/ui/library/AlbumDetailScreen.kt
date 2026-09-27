@@ -132,6 +132,16 @@ fun AlbumDetailScreen(
                     }
             }
         }
+    val discOrdinals =
+        remember(songs) {
+            val counters = mutableMapOf<Long, Long>()
+            songs.associate { song ->
+                val disc = song.disc ?: 1L
+                val ordinal = (counters[disc] ?: 0L) + 1
+                counters[disc] = ordinal
+                song.id to ordinal
+            }
+        }
     HeroDetailScaffold(
         artwork = artwork,
         title = album?.name.orEmpty(),
@@ -171,7 +181,7 @@ fun AlbumDetailScreen(
                     SongRow(
                         song = song,
                         isPlaying = song.id == playingSongId,
-                        trackNumber = song.track ?: (index + 1).toLong(),
+                        trackNumber = song.track ?: discOrdinals[song.id],
                         durationSeconds = song.duration,
                         download = downloads[song.id],
                         modifier =
