@@ -50,6 +50,7 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.subtracks.data.model.Album as AlbumModel
 import com.subtracks.data.model.Artist as ArtistModel
@@ -124,7 +125,7 @@ class ItemActions(
     val download: ((SongModel) -> Unit)? = null,
     val cancelDownload: ((SongModel) -> Unit)? = null,
     val deleteDownload: ((SongModel) -> Unit)? = null,
-    val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
+    val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
 )
@@ -194,7 +195,11 @@ fun ItemContextMenu(
                 }
                 queueItems()
                 DownloadItem(target.download, target.song, actions, ::dismiss)
-                StarItem(target.song.starred) { starring -> actions.setStar(StarType.Song, target.song.id, starring) }
+                StarItem(
+                    current = target.song.starred,
+                    onSet = { starring -> actions.setStar(StarType.Song, target.song.id, starring) },
+                    onDismiss = { dismiss() },
+                )
                 target.song.albumId?.let { albumId ->
                     actions.viewAlbum?.let { view ->
                         MenuItem(Icons.Rounded.Album, target.song.album?.takeIf { it.isNotBlank() } ?: "Album") {
@@ -215,7 +220,11 @@ fun ItemContextMenu(
                 MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playAlbum(target.album) } }
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shuffleAlbum(target.album) } }
                 queueItems()
-                StarItem(target.album.starred) { starring -> actions.setStar(StarType.Album, target.album.id, starring) }
+                StarItem(
+                    current = target.album.starred,
+                    onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
+                    onDismiss = { dismiss() },
+                )
                 target.album.artistId?.let { artistId ->
                     actions.viewArtist?.let { view ->
                         MenuItem(Icons.Rounded.Person, target.album.albumArtist?.takeIf { it.isNotBlank() } ?: "Artist") {
@@ -226,7 +235,11 @@ fun ItemContextMenu(
             }
 
             is MenuTarget.Artist -> {
-                StarItem(target.artist.starred) { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) }
+                StarItem(
+                    current = target.artist.starred,
+                    onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
+                    onDismiss = { dismiss() },
+                )
             }
 
             is MenuTarget.Playlist -> {
@@ -308,7 +321,8 @@ private fun DownloadItem(
 @Composable
 private fun StarItem(
     current: Long?,
-    onSet: suspend (Boolean) -> Result<Unit>,
+    onSet: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     var starred by remember(current) { mutableStateOf(current) }
     val scope = rememberCoroutineScope()
@@ -317,11 +331,12 @@ private fun StarItem(
         starLabel(starred),
         tint = if (starred == null) null else MaterialTheme.colorScheme.primary,
     ) {
-        val previous = starred
-        val starring = previous == null
+        val starring = starred == null
         starred = if (starring) System.currentTimeMillis() else null
+        onSet(starring)
         scope.launch {
-            if (onSet(starring).isFailure) starred = previous
+            delay(STAR_DISMISS_DELAY_MS)
+            onDismiss()
         }
     }
 }
@@ -344,3 +359,5 @@ private fun MenuItem(
 private fun starIcon(starred: Long?): ImageVector = if (starred == null) Icons.Rounded.StarBorder else Icons.Rounded.Star
 
 private fun starLabel(starred: Long?): String = if (starred == null) "Star" else "Unstar"
+
+private const val STAR_DISMISS_DELAY_MS = 400L

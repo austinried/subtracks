@@ -39,7 +39,7 @@ fun PlaylistDetailRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
-    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
+    setStar: (StarType, String, Boolean) -> Unit,
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -121,6 +121,7 @@ fun PlaylistDetailScreen(
                         coverArtId = item.coverArt,
                         coverArt = coverArt,
                         isPlaying = item.song.id == playingSongId,
+                        durationSeconds = item.song.duration,
                         download = downloads[item.song.id],
                         modifier =
                             rowModifier.combinedClickable(

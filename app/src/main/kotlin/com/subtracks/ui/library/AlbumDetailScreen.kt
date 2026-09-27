@@ -49,7 +49,7 @@ fun AlbumDetailRoute(
     onBack: () -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
-    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
+    setStar: (StarType, String, Boolean) -> Unit,
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -171,7 +171,8 @@ fun AlbumDetailScreen(
                     SongRow(
                         song = song,
                         isPlaying = song.id == playingSongId,
-                        trackNumber = song.track,
+                        trackNumber = song.track ?: (index + 1).toLong(),
+                        durationSeconds = song.duration,
                         download = downloads[song.id],
                         modifier =
                             rowModifier.combinedClickable(

@@ -298,7 +298,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
-                            setStar = libraryRepository::setStar,
+                            setStar = libraryRepository::star,
                             bottomInset = bottomInset,
                         )
                     }
@@ -331,7 +331,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
-                            setStar = libraryRepository::setStar,
+                            setStar = libraryRepository::star,
                         )
                     }
                     composable(
@@ -358,7 +358,7 @@ private fun MainNavigation() {
                             },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             contextMenuHost = contextMenuHost,
-                            setStar = libraryRepository::setStar,
+                            setStar = libraryRepository::star,
                         )
                     }
                     composable(
@@ -373,7 +373,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             contextMenuHost = contextMenuHost,
-                            setStar = libraryRepository::setStar,
+                            setStar = libraryRepository::star,
                         )
                     }
                     composable(Routes.ADD_SERVER) {
@@ -445,7 +445,7 @@ private fun MainNavigation() {
                             fadeNowPlaying()
                         },
                         contextMenuHost = contextMenuHost,
-                        setStar = libraryRepository::setStar,
+                        setStar = libraryRepository::star,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

@@ -27,6 +27,8 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.ShuffleOn
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -94,7 +96,7 @@ fun NowPlayingRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
-    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
+    setStar: (StarType, String, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
@@ -160,6 +162,8 @@ fun NowPlayingRoute(
         onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail, download), actions) } },
         onAlbumClick = song?.albumId?.let { id -> { onViewAlbum(id) } },
         onArtistClick = song?.artistId?.let { id -> { onViewArtist(id) } },
+        starred = song?.starred != null,
+        onToggleStar = song?.let { s -> { setStar(StarType.Song, s.id, s.starred == null) } },
         onSeek = controller::seekTo,
         modifier = modifier,
     )
@@ -205,6 +209,8 @@ fun NowPlayingScreen(
     onMore: () -> Unit = {},
     onAlbumClick: (() -> Unit)? = null,
     onArtistClick: (() -> Unit)? = null,
+    starred: Boolean = false,
+    onToggleStar: (() -> Unit)? = null,
     onSeek: (Long) -> Unit,
     thumbnailRef: CoverArtRef? = null,
     modifier: Modifier = Modifier,
@@ -303,33 +309,53 @@ fun NowPlayingScreen(
                                 MaterialTheme.typography.bodyMedium.lineHeight
                                     .toDp()
                             }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier =
                                 Modifier
+                                    .fillMaxWidth()
                                     .padding(top = 12.dp)
-                                    .height(titleHeight + 6.dp + subtitleHeight)
-                                    .clickable(
-                                        enabled = onArtistClick != null,
-                                        onClickLabel = "Open artist",
-                                    ) { onArtistClick?.invoke() },
+                                    .height(titleHeight + 6.dp + subtitleHeight),
                         ) {
-                            Box(Modifier.height(titleHeight), contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = state.item?.title.orEmpty(),
-                                    style = titleStyle,
-                                    maxLines = 1,
-                                    modifier = Modifier.basicMarquee(),
-                                )
+                            Column(
+                                horizontalAlignment = Alignment.Start,
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .clickable(
+                                            enabled = onArtistClick != null,
+                                            onClickLabel = "Open artist",
+                                        ) { onArtistClick?.invoke() },
+                            ) {
+                                Box(Modifier.height(titleHeight), contentAlignment = Alignment.CenterStart) {
+                                    Text(
+                                        text = state.item?.title.orEmpty(),
+                                        style = titleStyle,
+                                        maxLines = 1,
+                                        modifier = Modifier.basicMarquee(),
+                                    )
+                                }
+                                Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.CenterStart) {
+                                    Text(
+                                        text = state.item?.artist.orEmpty(),
+                                        style = subtitleStyle,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        modifier = Modifier.basicMarquee(),
+                                    )
+                                }
                             }
-                            Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = state.item?.artist.orEmpty(),
-                                    style = subtitleStyle,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    modifier = Modifier.basicMarquee(),
+                            IconButton(onClick = { onToggleStar?.invoke() }, enabled = onToggleStar != null) {
+                                Icon(
+                                    imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                                    contentDescription = if (starred) "Unstar" else "Star",
+                                    tint =
+                                        if (starred) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
                                 )
                             }
                         }

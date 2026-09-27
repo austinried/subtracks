@@ -181,7 +181,7 @@ fun LibraryRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
-    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
+    setStar: (StarType, String, Boolean) -> Unit,
     bottomInset: Dp,
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),

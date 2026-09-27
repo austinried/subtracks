@@ -1,11 +1,15 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -23,14 +27,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.StarredBadge
+
+private val TRACK_COLUMN_WIDTH = 24.dp
+private val TIME_COLUMN_WIDTH = 36.dp
+private val PLAY_ICON_SIZE = 22.dp
+private val MIN_SMALL_FONT = 8.sp
 
 @Composable
 fun SongRow(
@@ -39,74 +49,152 @@ fun SongRow(
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
     isPlaying: Boolean = false,
     trackNumber: Long? = null,
+    durationSeconds: Long? = null,
     download: SongDownload? = null,
     trailingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val leadingTrack = trackNumber?.takeIf { coverArt == null }
     ListItem(
         modifier = modifier,
         leadingContent =
-            when {
-                coverArt != null -> {
-                    {
-                        CoverArt(
-                            ref = coverArt(coverArtId, true),
-                            name = song.album ?: song.title,
-                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)),
-                        )
-                    }
+            if (coverArt != null) {
+                {
+                    CoverArtCell(
+                        ref = coverArt(coverArtId, true),
+                        name = song.album ?: song.title,
+                        isPlaying = isPlaying,
+                    )
                 }
-
-                leadingTrack != null -> {
-                    { TrackNumber(leadingTrack, isPlaying) }
-                }
-
-                else -> {
-                    null
-                }
+            } else {
+                { TrackCell(trackNumber, isPlaying) }
             },
-        trailingContent = trailingContent,
-        headlineContent = {
+        trailingContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (isPlaying && leadingTrack == null) {
-                    Icon(
-                        imageVector = Icons.Rounded.PlayArrow,
-                        contentDescription = "Playing",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-                Text(
-                    text = song.title,
-                    color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                    fontWeight = if (isPlaying) FontWeight.SemiBold else null,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                StarredBadge(song.starred != null)
+                if (download.showsIndicator()) DownloadBadge(download)
+                if (durationSeconds != null) TrackTime(durationSeconds)
+                trailingContent?.invoke()
             }
         },
+        headlineContent = {
+            Text(
+                text = song.title,
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                fontWeight = if (isPlaying) FontWeight.SemiBold else null,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
         supportingContent = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                DownloadBadge(download)
-                Text(
-                    text = song.artist.orEmpty().ifEmpty { "\u00A0" },
-                    color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                text = song.artist.orEmpty().ifEmpty { "\u00A0" },
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
+}
+
+private fun SongDownload?.showsIndicator(): Boolean =
+    when (this?.status) {
+        DownloadStatus.Completed, DownloadStatus.Queued, DownloadStatus.Running -> true
+        else -> false
+    }
+
+@Composable
+private fun CoverArtCell(
+    ref: CoverArtRef?,
+    name: String,
+    isPlaying: Boolean,
+) {
+    val shape = RoundedCornerShape(6.dp)
+    Box(Modifier.size(48.dp)) {
+        CoverArt(
+            ref = ref,
+            name = name,
+            modifier = Modifier.size(48.dp).clip(shape),
+        )
+        if (isPlaying) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .border(1.5.dp, MaterialTheme.colorScheme.primary, shape),
+            )
+            Icon(
+                imageVector = Icons.Rounded.PlayArrow,
+                contentDescription = "Playing",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.Center).size(PLAY_ICON_SIZE),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrackCell(
+    track: Long?,
+    isPlaying: Boolean,
+) {
+    Box(
+        modifier = Modifier.width(TRACK_COLUMN_WIDTH),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isPlaying) {
+            Icon(
+                imageVector = Icons.Rounded.PlayArrow,
+                contentDescription = "Playing",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(PLAY_ICON_SIZE),
+            )
+        } else if (track != null) {
+            SmallNumber(track.toString())
+        }
+    }
+}
+
+@Composable
+private fun TrackTime(seconds: Long) {
+    SmallNumber(
+        text = formatTrackTime(seconds),
+        modifier = Modifier.width(TIME_COLUMN_WIDTH),
+    )
+}
+
+@Composable
+private fun SmallNumber(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    val style = MaterialTheme.typography.bodySmall
+    BasicText(
+        text = text,
+        modifier = modifier.fillMaxWidth(),
+        style = style.copy(textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant),
+        maxLines = 1,
+        autoSize =
+            TextAutoSize.StepBased(
+                minFontSize = MIN_SMALL_FONT,
+                maxFontSize = style.fontSize,
+                stepSize = 1.sp,
+            ),
+    )
+}
+
+internal fun formatTrackTime(seconds: Long): String {
+    val total = seconds.coerceAtLeast(0)
+    val hours = total / 3600
+    val minutes = (total % 3600) / 60
+    val secs = total % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, secs)
+    } else {
+        "%02d:%02d".format(minutes, secs)
+    }
 }
 
 @Composable
@@ -139,32 +227,6 @@ private fun DownloadBadge(download: SongDownload?) {
 
         else -> {
             Unit
-        }
-    }
-}
-
-@Composable
-private fun TrackNumber(
-    track: Long,
-    isPlaying: Boolean,
-) {
-    Box(
-        modifier = Modifier.width(18.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (isPlaying) {
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = "Playing",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
-            )
-        } else {
-            Text(
-                text = track.toString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

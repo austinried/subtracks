@@ -68,7 +68,6 @@ import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
-import com.subtracks.ui.components.StarredBadge
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
@@ -112,7 +111,7 @@ fun ArtistDetailRoute(
     onAlbumClick: (Album) -> Unit,
     onViewAlbum: (String) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
-    setStar: suspend (StarType, String, Boolean) -> Result<Unit>,
+    setStar: (StarType, String, Boolean) -> Unit,
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
@@ -284,21 +283,13 @@ fun ArtistDetailScreen(
                                         onLongClick = { onAlbumLongClick(MenuTarget.Album(album, thumbnail)) },
                                     ).onSizeChanged { albumHeightPx = it.height.toFloat() },
                         ) {
-                            Box {
-                                CoverArt(
-                                    ref = art,
-                                    name = album.name,
-                                    thumbnailRef = thumbnail,
-                                    showPlaceholder = art == null,
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                                )
-                                StarredBadge(
-                                    starred = album.starred != null,
-                                    size = 16.dp,
-                                    shadow = true,
-                                    modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
-                                )
-                            }
+                            CoverArt(
+                                ref = art,
+                                name = album.name,
+                                thumbnailRef = thumbnail,
+                                showPlaceholder = art == null,
+                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+                            )
                             Text(
                                 text = album.name,
                                 style = MaterialTheme.typography.bodyMedium,

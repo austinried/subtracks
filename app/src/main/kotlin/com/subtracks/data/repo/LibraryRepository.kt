@@ -17,9 +17,13 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -195,6 +199,15 @@ class LibraryRepository(
     ): Flow<PagingData<PlaylistSongItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
 
     private val starLock = Mutex()
+    private val starScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun star(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ) {
+        starScope.launch { setStar(type, id, starred) }
+    }
 
     suspend fun setStar(
         type: StarType,
