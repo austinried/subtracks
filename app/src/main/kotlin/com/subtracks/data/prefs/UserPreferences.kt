@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -43,8 +44,6 @@ data class StreamQuality(
     val transcodes: Boolean get() = maxBitrate > 0 || !format.isNullOrEmpty()
 }
 
-const val DEFAULT_SYNC_CONCURRENCY = 4
-
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
 
 data class ArtworkSeedValue(
@@ -79,7 +78,7 @@ class UserPreferences(
 
     private fun streamQualityKey(mode: NetworkMode) = stringPreferencesKey("stream_quality_${mode.key}")
 
-    fun syncConcurrency(): Flow<Int> = store.data.map { prefs -> prefs[syncConcurrencyKey] ?: DEFAULT_SYNC_CONCURRENCY }
+    fun syncConcurrency(): Flow<Int> = store.data.map { prefs -> (prefs[syncConcurrencyKey] ?: DEFAULT_FETCH_CONCURRENCY).coerceAtLeast(1) }
 
     suspend fun setSyncConcurrency(value: Int) {
         store.edit { prefs -> prefs[syncConcurrencyKey] = value.coerceAtLeast(1) }

@@ -7,6 +7,8 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import kotlinx.coroutines.flow.Flow
 
+const val DEFAULT_FETCH_CONCURRENCY = 4
+
 interface MusicSource {
     val id: Long
 

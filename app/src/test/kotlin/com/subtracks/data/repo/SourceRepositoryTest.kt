@@ -9,15 +9,21 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.coverArtKey
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,10 +32,14 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(AndroidJUnit4::class)
 class SourceRepositoryTest {
     private lateinit var db: SubtracksDatabase
+    private lateinit var prefs: UserPreferences
     private lateinit var repository: SourceRepository
     private lateinit var artwork: ArtworkStore
     private val messages = ArrayList<String>()
@@ -43,7 +53,8 @@ class SourceRepositoryTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
-        repository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork, showMessage = { messages += it })
+        prefs = fakeUserPreferences()
+        repository = SourceRepository(db, OkHttpClient(), prefs, artwork, showMessage = { messages += it })
     }
 
     @After
@@ -85,6 +96,46 @@ class SourceRepositoryTest {
                 assertFalse(config!!.useTokenAuth)
                 withTimeout(5_000) { while (messages.isEmpty()) delay(10) }
                 assertEquals(1, messages.size)
+            }
+        }
+
+    @Test
+    fun theActiveSourceFetchConcurrencyComesFromThePreference() =
+        runBlocking {
+            withServer { server ->
+                val dispatches = AtomicInteger()
+                val secondStarted = CountDownLatch(1)
+                val release = CountDownLatch(1)
+                server.dispatcher =
+                    object : Dispatcher() {
+                        override fun dispatch(request: RecordedRequest): MockResponse {
+                            val url = request.requestUrl!!
+                            if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                            if (dispatches.incrementAndGet() == 2) secondStarted.countDown()
+                            release.await(5, TimeUnit.SECONDS)
+                            val id = url.queryParameter("id")!!
+                            return MockResponse().setBody(
+                                "<subsonic-response status=\"ok\"><playlist id=\"$id\">" +
+                                    (1..3).joinToString("") { "<entry id=\"$id-s$it\" title=\"t$it\"/>" } +
+                                    "</playlist></subsonic-response>",
+                            )
+                        }
+                    }
+
+                prefs.setSyncConcurrency(1)
+                repository.addSource("nav", server.url("/").toString(), "u", "p", false)
+
+                val source = repository.activeMusicSource()!!
+                val fetching =
+                    async(Dispatchers.IO) {
+                        source.playlistSongs(listOf("p1", "p2", "p3")).toList().flatten()
+                    }
+
+                // With concurrency 1 the second fetch must not start while the first is in flight;
+                // if the preference is not wired the source defaults to a higher bound and it does.
+                assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS))
+                release.countDown()
+                assertEquals(9, fetching.await().size)
             }
         }
 

@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
-import com.subtracks.data.prefs.DEFAULT_SYNC_CONCURRENCY
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -38,7 +38,7 @@ class SettingsViewModel(
     val syncConcurrency: StateFlow<Int> =
         userPreferences
             .syncConcurrency()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_SYNC_CONCURRENCY)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_FETCH_CONCURRENCY)
 
     fun selectSource(id: Long) {
         viewModelScope.launch { sourceRepository.selectSource(id) }

@@ -1,5 +1,6 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -314,7 +315,7 @@ class SubsonicSourceTest {
                 assertEquals(listOf(0L, 1L, 2L), batch.sortedBy { it.position }.map { it.position })
                 assertEquals((1..3).map { "$playlistId-s$it" }, batch.sortedBy { it.position }.map { it.songId })
             }
-            assertTrue(maxInFlight.get() in 2..MAX_CONCURRENT_FETCHES)
+            assertTrue(maxInFlight.get() in 2..DEFAULT_FETCH_CONCURRENCY)
         }
 
     @Test
@@ -349,20 +350,17 @@ class SubsonicSourceTest {
     fun playlistSongsRespectsASmallerFetchBound() =
         runBlocking {
             val bound = 2
-            val inFlight = AtomicInteger()
-            val maxInFlight = AtomicInteger()
             val started = CountDownLatch(bound)
+            val beyondBound = CountDownLatch(bound + 1)
             val release = CountDownLatch(1)
             server.dispatcher =
                 object : Dispatcher() {
                     override fun dispatch(request: RecordedRequest): MockResponse {
                         val url = request.requestUrl!!
                         if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
-                        val current = inFlight.incrementAndGet()
-                        maxInFlight.updateAndGet { maxOf(it, current) }
+                        beyondBound.countDown()
                         started.countDown()
                         release.await(5, TimeUnit.SECONDS)
-                        inFlight.decrementAndGet()
                         return MockResponse().setBody(playlistResponse(url.queryParameter("id")!!))
                     }
                 }
@@ -376,11 +374,15 @@ class SubsonicSourceTest {
                 }
 
             assertTrue("$bound fetches should have started together", started.await(5, TimeUnit.SECONDS))
+            // While those are held, the semaphore must block any further fetch.
+            assertFalse(
+                "a ${bound + 1}th fetch started past the bound",
+                beyondBound.await(500, TimeUnit.MILLISECONDS),
+            )
             release.countDown()
             val entries = fetching.await()
 
             assertEquals(12, entries.size)
-            assertEquals(bound, maxInFlight.get())
         }
 
     @Test
@@ -496,7 +498,7 @@ class SubsonicSourceTest {
             val songs = SubsonicSource(1, client()).songs().toList().flatten()
 
             assertEquals(4, songs.size)
-            assertTrue(maxInFlight.get() in 2..MAX_CONCURRENT_FETCHES)
+            assertTrue(maxInFlight.get() in 2..DEFAULT_FETCH_CONCURRENCY)
         }
 
     @Test

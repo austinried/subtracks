@@ -5,6 +5,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
 import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CancellationException
@@ -34,7 +35,7 @@ class SubsonicSource(
     private val maxBitrate: Int = 0,
     private val streamFormat: String? = null,
     private val maxPages: Int = MAX_PAGES,
-    private val maxConcurrentFetches: Int = MAX_CONCURRENT_FETCHES,
+    private val maxConcurrentFetches: Int = DEFAULT_FETCH_CONCURRENCY,
 ) : MusicSource {
     private var emptyQuerySearchSupported: Boolean? = null
 
@@ -305,8 +306,6 @@ class SubsonicSource(
         const val THUMBNAIL_SIZE = 256
     }
 }
-
-internal const val MAX_CONCURRENT_FETCHES = 4
 
 private class PageCapExceeded(
     message: String,

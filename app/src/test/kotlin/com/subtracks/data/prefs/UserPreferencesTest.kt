@@ -3,6 +3,7 @@ package com.subtracks.data.prefs
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -65,7 +66,7 @@ class UserPreferencesTest {
             val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
             val prefs = UserPreferences(store)
 
-            assertEquals(DEFAULT_SYNC_CONCURRENCY, prefs.syncConcurrency().first())
+            assertEquals(DEFAULT_FETCH_CONCURRENCY, prefs.syncConcurrency().first())
 
             prefs.setSyncConcurrency(8)
             assertEquals(8, prefs.syncConcurrency().first())
