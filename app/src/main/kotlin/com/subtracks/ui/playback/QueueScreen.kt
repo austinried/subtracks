@@ -285,6 +285,7 @@ fun QueueRoute(
         initialIndex = viewModel.initialIndex,
         generation = viewModel.generation,
         currentPosition = playback.position,
+        currentSongId = playback.item?.id,
         shuffle = playback.shuffle,
         contextTitle = sourceTitle.value,
         onClearUpNext = controller::clearUpNext,
@@ -307,6 +308,7 @@ fun QueueScreen(
     rows: List<QueueRow>,
     ready: Boolean,
     currentPosition: Long?,
+    currentSongId: String?,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onPlay: (Long) -> Unit,
@@ -434,7 +436,7 @@ fun QueueScreen(
                             ) { isDragging ->
                                 QueueRowItem(
                                     row = row,
-                                    isPlaying = row.position == currentPosition,
+                                    isPlaying = row.position == currentPosition && row.song.song.id == currentSongId,
                                     floating = isDragging,
                                     coverArt = coverArt,
                                     dragHandle =

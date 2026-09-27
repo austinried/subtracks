@@ -2004,6 +2004,76 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun shufflePlayStartsAtTheTopOfTheQueue() {
+        seedAlbum(20, sourceId = 1)
+
+        controller.shuffleAlbum(1, "al1")
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertEquals(0L, controller.state.value.position)
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(
+            controller.state.value.item
+                ?.id,
+            runBlocking { queues.itemAt(snapshot, 0)?.song?.id },
+        )
+    }
+
+    @Test
+    fun enablingShufflePinsThePlayingTrackToTheTop() {
+        seedAlbum(20, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 7)
+        await {
+            controller.state.value.item
+                ?.id == "s8"
+        }
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+
+        assertEquals(0L, controller.state.value.position)
+        assertEquals(
+            "s8",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun removingAContextTrackWhileShuffledKeepsThePlayingTrackAndTheBlock() {
+        seedAlbum(6, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle && runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        val currentId =
+            controller.state.value.item!!
+                .id
+        val before = runBlocking { queues.snapshot() }
+        val currentPosition = controller.state.value.position!!
+        val removePosition = (0 until before.size).first { !before.isUpNext(it) && it != currentPosition }
+
+        runBlocking { controller.removeAt(removePosition) }
+
+        await {
+            val snap = runBlocking { queues.snapshot() }
+            controller.state.value.item
+                ?.id == currentId &&
+                runBlocking { queues.itemAt(snap, controller.state.value.position!!)?.song?.id } == currentId
+        }
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+    }
+
+    @Test
     fun shufflingTheSameAlbumAgainPicksADifferentTrack() {
         seedAlbum(5, sourceId = 1)
 

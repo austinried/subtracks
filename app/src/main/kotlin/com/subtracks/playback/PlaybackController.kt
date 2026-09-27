@@ -253,15 +253,13 @@ class PlaybackController(
                 return@withLock
             }
             val start = randomIndex(snap.contextSize, avoid)
-            val seed = Random.nextLong()
-            val position = Shuffle.toSequence(seed, snap.contextSize, start)
-            queueRepository.setShuffle(seed)
+            queueRepository.setShuffle(pinnedSeed(snap.contextSize, start))
             shuffleEnabled = true
             queueSourceId = entry.sourceId
-            queueRepository.setCursor(position)
+            queueRepository.setCursor(0)
             snap = queueRepository.snapshot()
             this@PlaybackController.snapshot = snap
-            loadWindow(position, autoplay = true)
+            loadWindow(0, autoplay = true)
         }
 
     private fun randomIndex(
@@ -271,6 +269,21 @@ class PlaybackController(
         if (size <= 1L) return 0L
         val index = Random.nextLong(size)
         return if (avoid != null && index == avoid) (index + 1L) % size else index
+    }
+
+    // A seed whose permutation puts `flat` at play position 0, so the shuffled queue starts on the
+    // track that should play instead of somewhere in the middle. Each random seed hits with
+    // probability 1/size; fall back to a random seed for queues too large to search.
+    private fun pinnedSeed(
+        size: Long,
+        flat: Long,
+    ): Long {
+        if (size <= 1L) return Random.nextLong()
+        repeat(SEED_PIN_TRIES) {
+            val seed = Random.nextLong()
+            if (Shuffle.toFlat(seed, size, 0L) == flat) return seed
+        }
+        return Random.nextLong()
     }
 
     fun playAt(position: Long) {
@@ -333,21 +346,21 @@ class PlaybackController(
             }
             // Derive the current track's new position from the edit. Resolving its song id after
             // the edit can match an identical song elsewhere (a duplicate in the context or the
-            // block), so use positions throughout; a context removal can move the anchor, so read
-            // the combined position back from the updated snapshot.
+            // block), so use canonical positions throughout: a shuffled removal re-derives the
+            // permutation at the smaller size, so the current track's play position is a remap of
+            // its flat index, not a simple shift.
             var target =
                 when {
                     position == current && snapshot.shuffled && !wasUpNext -> {
                         // The permutation is re-derived at the smaller size, so there is no stable
                         // "next"; play whatever now fills the removed track's slot.
-                        val seed = snapshot.shuffleSeed!!
                         val removedFlat = snapshot.flatContext(snapshot.contextPlay(position)) ?: 0L
                         val newContextSize = (snapshot.contextSize - 1).coerceAtLeast(0)
                         if (newContextSize == 0L) {
                             0L
                         } else {
                             val slot = removedFlat.coerceIn(0, newContextSize - 1)
-                            updated.combined(Shuffle.toSequence(seed, newContextSize, slot))
+                            updated.combined(updated.playContext(slot) ?: 0L)
                         }
                     }
 
@@ -363,16 +376,18 @@ class PlaybackController(
                     }
 
                     else -> {
-                        val play = snapshot.contextPlay(current)
-                        val newPlay =
-                            if (!snapshot.isUpNext(position) && snapshot.contextPlay(position) < play) play - 1 else play
-                        updated.combined(newPlay)
+                        // The current is a context track. Map its flat index through the (possibly
+                        // re-derived) order, decremented when a context track before it was removed.
+                        val flat = snapshot.flatContext(snapshot.contextPlay(current)) ?: 0L
+                        val removedFlat =
+                            if (snapshot.isUpNext(position)) null else snapshot.flatContext(snapshot.contextPlay(position))
+                        val movedFlat = if (removedFlat != null && removedFlat < flat) flat - 1 else flat
+                        updated.combined(if (snapshot.shuffled) updated.playContext(movedFlat) ?: 0L else movedFlat)
                     }
                 }.coerceIn(0, updated.size - 1)
-            // Removing the playing context track while shuffled leaves the block anchored to some
-            // other track; re-anchor it to the track the cursor landed on so the queued tracks
-            // still play next rather than being stranded behind the cursor.
-            if (snapshot.shuffled && !wasUpNext && position == current && updated.upNextSize > 0L) {
+            // Keep the up-next block next: after a removal the cursor may have landed on a context
+            // track that no longer carries the block (its anchor moved), so re-anchor it there.
+            if (updated.upNextSize > 0L && !updated.isUpNext(target)) {
                 val reanchored = queueRepository.reanchorFor(updated, target)
                 if (reanchored.changed) {
                     updated = readSnapshot()
@@ -762,9 +777,8 @@ class PlaybackController(
                 val flat = snapshot.flatContext(snapshot.anchorContextPlay(current)) ?: return@withLock
                 windowJob?.cancel()
                 val enabling = !shuffleEnabled
-                val seed = if (enabling) Random.nextLong() else 0L
                 if (enabling) {
-                    queueRepository.setShuffle(seed)
+                    queueRepository.setShuffle(pinnedSeed(snapshot.contextSize, flat))
                 } else {
                     queueRepository.setShuffle(null)
                 }
@@ -774,7 +788,7 @@ class PlaybackController(
                 val position =
                     when {
                         wasUpNext -> reordered.anchorPlay + 1 + blockIndex
-                        enabling -> reordered.combined(Shuffle.toSequence(seed, reordered.contextSize, flat))
+                        enabling -> reordered.combined(0L)
                         else -> reordered.combined(flat)
                     }
                 val anchor = queueRepository.reanchorFor(reordered, position)
@@ -844,9 +858,8 @@ class PlaybackController(
         val start = startPosition.coerceIn(0, snapshot.contextSize - 1)
         val position =
             if (shuffleEnabled) {
-                val seed = Random.nextLong()
-                queueRepository.setShuffle(seed)
-                Shuffle.toSequence(seed, snapshot.contextSize, start)
+                queueRepository.setShuffle(pinnedSeed(snapshot.contextSize, start))
+                0L
             } else {
                 start
             }
@@ -868,9 +881,9 @@ class PlaybackController(
             var snapshot = queueRepository.snapshot()
             if (shuffleEnabled && !snapshot.shuffled && snapshot.contextSize > 0L) {
                 val start = snapshot.anchorContextPlay(queueRepository.cursor()).coerceIn(0, snapshot.contextSize - 1)
-                val seed = Random.nextLong()
-                queueRepository.setShuffle(seed)
-                queueRepository.setCursor(Shuffle.toSequence(seed, snapshot.contextSize, start))
+                val flat = snapshot.flatContext(start) ?: start
+                queueRepository.setShuffle(pinnedSeed(snapshot.contextSize, flat))
+                queueRepository.setCursor(0)
                 snapshot = queueRepository.snapshot()
             } else if (!snapshot.shuffled) {
                 shuffleEnabled = false
@@ -1235,5 +1248,6 @@ class PlaybackController(
         const val QUEUE_WINDOW_RADIUS = 25L
         const val WINDOW_SHIFT_DELAY_MS = 400L
         const val RESTART_THRESHOLD_MS = 3_000L
+        const val SEED_PIN_TRIES = 1_000_000
     }
 }
