@@ -356,6 +356,7 @@ fun NowPlayingScreen(
                                         } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
                                         },
+                                    modifier = Modifier.size(32.dp),
                                 )
                             }
                         }

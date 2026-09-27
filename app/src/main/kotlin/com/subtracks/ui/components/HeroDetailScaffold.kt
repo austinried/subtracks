@@ -225,7 +225,7 @@ fun HeroHeader(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = topInset + 24.dp, bottom = 16.dp),
+                .padding(start = 24.dp, end = 24.dp, top = topInset + 24.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(

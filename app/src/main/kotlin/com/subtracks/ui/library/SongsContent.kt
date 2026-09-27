@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,13 +134,34 @@ private fun CoverArtCell(
                     .matchParentSize()
                     .border(1.5.dp, MaterialTheme.colorScheme.primary, shape),
             )
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = "Playing",
-                tint = MaterialTheme.colorScheme.primary,
+            PlayIndicator(
+                shadow = true,
                 modifier = Modifier.align(Alignment.Center).size(PLAY_ICON_SIZE),
             )
         }
+    }
+}
+
+@Composable
+private fun PlayIndicator(
+    shadow: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier) {
+        if (shadow) {
+            Icon(
+                imageVector = Icons.Rounded.PlayArrow,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.6f),
+                modifier = Modifier.matchParentSize().offset(x = 1.dp, y = 1.dp),
+            )
+        }
+        Icon(
+            imageVector = Icons.Rounded.PlayArrow,
+            contentDescription = "Playing",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.matchParentSize(),
+        )
     }
 }
 
@@ -153,12 +175,7 @@ private fun TrackCell(
         contentAlignment = Alignment.Center,
     ) {
         if (isPlaying) {
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = "Playing",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(PLAY_ICON_SIZE),
-            )
+            PlayIndicator(shadow = false, modifier = Modifier.size(PLAY_ICON_SIZE))
         } else if (track != null) {
             SmallNumber(track.toString())
         }
