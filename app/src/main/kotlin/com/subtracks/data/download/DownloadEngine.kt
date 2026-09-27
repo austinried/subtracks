@@ -4,7 +4,6 @@ data class EngineRequest(
     val uri: String,
     val path: String,
     val title: String,
-    val allowMetered: Boolean = false,
 )
 
 enum class EngineStatus { Pending, Running, Completed, Failed }

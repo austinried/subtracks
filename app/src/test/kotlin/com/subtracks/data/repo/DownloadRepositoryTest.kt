@@ -188,17 +188,19 @@ class DownloadRepositoryTest {
         }
 
     @Test
-    fun anEngineFailureIsMirroredWithItsMessage() =
+    fun anEngineFailureIsMirroredWithItsMessageAndLeavesNoPartialFile() =
         runTest {
             seedLibrary()
             runBlocking { repository.download(1, "s1") }
             val id = engine.requests.single().first
+            writeFile(1, "s1", "half")
 
             engine.fail(id)
             runBlocking { repository.reconcile() }
 
             assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
             assertEquals("Download failed", row(1, "s1")?.error)
+            assertFalse(file(1, "s1").exists())
         }
 
     @Test
@@ -291,7 +293,7 @@ class DownloadRepositoryTest {
                 ),
             )
         }
-        await { sources.downloadUri("s1") != null }
+        await { sources.downloadUri(1, "s1") != null }
     }
 
     private fun file(
