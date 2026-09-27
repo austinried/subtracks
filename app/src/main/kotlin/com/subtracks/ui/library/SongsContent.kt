@@ -64,6 +64,8 @@ private val MIN_SMALL_FONT = 8.sp
 private val COVER_CORNER = 6.dp
 private val PLAY_SHADOW_RADIUS = 3.dp
 private val PLAY_SHADOW = Color.Black.copy(alpha = 0.6f)
+private val INNER_SHADOW_RADIUS = 8.dp
+private val INNER_SHADOW = Color.Black.copy(alpha = 0.85f)
 private val PLAY_ARROW = Icons.Rounded.PlayArrow
 private val PLAY_ARROW_PATH: Path by lazy { buildVectorPath(PLAY_ARROW) }
 
@@ -202,7 +204,7 @@ private fun DrawScope.drawInnerShadow() {
                 android.graphics.Paint().apply {
                     isAntiAlias = true
                     color = android.graphics.Color.BLACK
-                    setShadowLayer(PLAY_SHADOW_RADIUS.toPx(), 0f, 0f, PLAY_SHADOW.toArgb())
+                    setShadowLayer(INNER_SHADOW_RADIUS.toPx(), 0f, 0f, INNER_SHADOW.toArgb())
                 }
             canvas.nativeCanvas.drawPath(ring.asAndroidPath(), paint)
         }
