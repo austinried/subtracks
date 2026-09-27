@@ -48,7 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.SongDownload
-import com.subtracks.data.model.SongListItem
+import com.subtracks.data.model.SongItem
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QUEUE_CHUNK
 import com.subtracks.data.repo.QueueRepository
@@ -78,7 +78,7 @@ internal const val QUEUE_WINDOW_ROWS = QUEUE_CHUNK * 3
 data class QueueRow(
     val id: Long,
     val position: Long,
-    val song: SongListItem,
+    val song: SongItem,
     val upNext: Boolean = false,
 )
 

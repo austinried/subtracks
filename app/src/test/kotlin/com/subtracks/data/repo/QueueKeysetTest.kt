@@ -146,7 +146,7 @@ class QueueKeysetTest {
             val actual =
                 db
                     .queueDao()
-                    .playlistSongsFrom(1, "pl1", anchor.position!!, skip = 0, limit = 5)
+                    .playlistSongsFrom(1, "pl1", anchor.position, skip = 0, limit = 5)
                     .map { it.song.id }
             assertEquals(expected, actual)
         }
@@ -234,7 +234,7 @@ class QueueKeysetTest {
             seedLibrary()
             val plan =
                 queryPlan(
-                    "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
+                    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
                         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
                         "WHERE songs.sourceId = 1 AND songs.albumId = 'big' " +
                         "AND (songs.disc, songs.track, songs.id) >= (1, 1, 'b0') " +

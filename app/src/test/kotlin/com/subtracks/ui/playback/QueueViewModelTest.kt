@@ -8,9 +8,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
+import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
@@ -408,7 +408,7 @@ class QueueViewModelTest {
         QueueRow(
             position.toLong(),
             position.toLong(),
-            SongListItem(
+            AlbumSongItem(
                 song =
                     Song(
                         sourceId = 1,

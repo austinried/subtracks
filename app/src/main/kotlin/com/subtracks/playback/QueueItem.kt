@@ -1,8 +1,8 @@
 package com.subtracks.playback
 
-import com.subtracks.data.model.SongListItem
+import com.subtracks.data.model.SongItem
 
-fun SongListItem.toQueueItem() =
+fun SongItem.toQueueItem() =
     QueueItem(
         id = song.id,
         title = song.title,

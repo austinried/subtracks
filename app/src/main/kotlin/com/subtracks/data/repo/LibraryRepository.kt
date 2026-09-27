@@ -9,8 +9,8 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
@@ -192,7 +192,7 @@ class LibraryRepository(
     fun playlistSongs(
         sourceId: Long,
         playlistId: String,
-    ): Flow<PagingData<SongListItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
+    ): Flow<PagingData<PlaylistSongItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
 
     private val starLock = Mutex()
 

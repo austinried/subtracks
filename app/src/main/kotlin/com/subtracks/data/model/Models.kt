@@ -233,11 +233,24 @@ data class Song(
     @ColumnInfo(defaultValue = "0") val created: Long = 0,
 )
 
-data class SongListItem(
-    @Embedded val song: Song,
-    val coverArt: String?,
-    val position: Long? = null,
-)
+sealed interface SongItem {
+    val song: Song
+    val coverArt: String?
+    val playlistPosition: Long? get() = null
+}
+
+data class AlbumSongItem(
+    @Embedded override val song: Song,
+    override val coverArt: String?,
+) : SongItem
+
+data class PlaylistSongItem(
+    @Embedded override val song: Song,
+    override val coverArt: String?,
+    val position: Long,
+) : SongItem {
+    override val playlistPosition: Long get() = position
+}
 
 data class DiscKey(
     val albumId: String,

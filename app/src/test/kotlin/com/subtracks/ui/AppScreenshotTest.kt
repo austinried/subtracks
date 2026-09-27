@@ -33,8 +33,8 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.playback.PlaybackState
@@ -530,8 +530,12 @@ private object Fixtures {
         )
 
     val songItems =
-        songs.map { song ->
-            SongListItem(song = song, coverArt = albums.firstOrNull { it.id == song.albumId }?.coverArt)
+        songs.mapIndexed { index, song ->
+            PlaylistSongItem(
+                song = song,
+                coverArt = albums.firstOrNull { it.id == song.albumId }?.coverArt,
+                position = index.toLong(),
+            )
         }
 
     val playlists =

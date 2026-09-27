@@ -4,13 +4,14 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Upsert
+import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.PlaybackCursor
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.QueueEntry
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.UpNextEntry
 
 private const val ALBUM_SONGS_SELECT =
-    "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId"
 
@@ -19,7 +20,7 @@ private const val ALBUM_SONGS_ORDER = " ORDER BY songs.disc, songs.track, songs.
 private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 
 private const val SONG_SQL =
-    "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.id = :songId"
 
@@ -77,7 +78,7 @@ interface QueueDao {
         playlistId: String,
         offset: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<PlaylistSongItem>
 
     @Query(
         "$PLAYLIST_SONGS_SELECT AND playlist_songs.position >= :position$PLAYLIST_SONGS_ORDER " +
@@ -89,7 +90,7 @@ interface QueueDao {
         position: Long,
         skip: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<PlaylistSongItem>
 
     @Query(
         "$PLAYLIST_SONGS_SELECT AND playlist_songs.position < :position " +
@@ -101,7 +102,7 @@ interface QueueDao {
         position: Long,
         skip: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<PlaylistSongItem>
 
     @Query("$ALBUM_SONGS_SQL LIMIT :limit OFFSET :offset")
     suspend fun albumSongs(
@@ -109,7 +110,7 @@ interface QueueDao {
         albumId: String,
         offset: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<AlbumSongItem>
 
     @Query(
         "$ALBUM_SONGS_SELECT AND (songs.disc, songs.track, songs.id) >= (:disc, :track, :id)" +
@@ -123,7 +124,7 @@ interface QueueDao {
         id: String,
         skip: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<AlbumSongItem>
 
     // Row-value `<` is null-intolerant, and NULL disc/track sort first, so a plain
     // `(disc, track, id) < (...)` would drop exactly the untagged tracks a backward window needs.
@@ -142,7 +143,7 @@ interface QueueDao {
         id: String,
         skip: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<AlbumSongItem>
 
     @Query("$SONG_SQL LIMIT :limit OFFSET :offset")
     suspend fun song(
@@ -150,7 +151,7 @@ interface QueueDao {
         songId: String,
         offset: Long,
         limit: Int,
-    ): List<SongListItem>
+    ): List<AlbumSongItem>
 
     @Query(
         "SELECT songs.id FROM songs WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
@@ -173,12 +174,12 @@ interface QueueDao {
     ): List<String>
 
     @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt, NULL AS position FROM songs " +
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.id IN (:ids)",
     )
     suspend fun songsByIds(
         sourceId: Long,
         ids: List<String>,
-    ): List<SongListItem>
+    ): List<AlbumSongItem>
 }

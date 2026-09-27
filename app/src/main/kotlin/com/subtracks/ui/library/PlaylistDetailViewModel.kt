@@ -6,9 +6,9 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
@@ -33,7 +33,7 @@ class PlaylistDetailViewModel(
 
     val playlist: Flow<Playlist?> = sourceId.flatMapLatest { libraryRepository.playlist(it, playlistId) }
 
-    val songs: Flow<PagingData<SongListItem>> =
+    val songs: Flow<PagingData<PlaylistSongItem>> =
         sourceId
             .flatMapLatest { libraryRepository.playlistSongs(it, playlistId) }
             .cachedIn(viewModelScope)

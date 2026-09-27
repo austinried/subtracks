@@ -13,9 +13,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
-import com.subtracks.data.model.SongListItem
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
@@ -79,7 +79,7 @@ fun PlaylistDetailRoute(
 @Composable
 fun PlaylistDetailScreen(
     playlist: Playlist?,
-    songs: LazyPagingItems<SongListItem>,
+    songs: LazyPagingItems<PlaylistSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
     downloads: Map<String, SongDownload> = emptyMap(),

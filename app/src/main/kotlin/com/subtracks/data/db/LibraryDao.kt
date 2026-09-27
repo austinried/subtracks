@@ -12,8 +12,8 @@ import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
+import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongListItem
 import kotlinx.coroutines.flow.Flow
 
 internal const val PLAYLIST_SONGS_SELECT =
@@ -352,7 +352,7 @@ interface LibraryDao {
     fun playlistSongs(
         sourceId: Long,
         playlistId: String,
-    ): PagingSource<Int, SongListItem>
+    ): PagingSource<Int, PlaylistSongItem>
 
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND id = :albumId")
     fun album(

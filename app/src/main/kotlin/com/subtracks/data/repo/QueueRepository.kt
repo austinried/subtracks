@@ -8,7 +8,7 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
-import com.subtracks.data.model.SongListItem
+import com.subtracks.data.model.SongItem
 import com.subtracks.data.model.UpNextEntry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -197,7 +197,8 @@ data class QueueModes(
 
 data class QueueWindowItem(
     val position: Long,
-    val item: SongListItem,
+    val item: SongItem,
+    val playlistPosition: Long? = null,
     val upNext: Boolean = false,
 )
 
@@ -363,7 +364,7 @@ class QueueRepository(
     suspend fun itemAt(
         snapshot: QueueSnapshot,
         position: Long,
-    ): SongListItem? {
+    ): SongItem? {
         val (entry, offset) = snapshot.locate(position) ?: return null
         return rows(entry, entry.offset + offset, 1).firstOrNull()
     }
@@ -673,8 +674,9 @@ class QueueRepository(
             val from = maxOf(first, entryStart)
             val to = minOf(last, end)
             val offset = resolved.entry.offset + (from - entryStart)
-            rows(resolved.entry, offset, (to - from + 1).toInt())
-                .forEachIndexed { index, item -> items += QueueWindowItem(snapshot.combined(from + index), item) }
+            rows(resolved.entry, offset, (to - from + 1).toInt()).forEachIndexed { index, item ->
+                items += QueueWindowItem(snapshot.combined(from + index), item, playlistPosition = item.playlistPosition)
+            }
         }
         return items
     }
@@ -696,7 +698,13 @@ class QueueRepository(
             val to = minOf(last, end)
             val offset = resolved.entry.offset + (from - entryStart)
             rows(resolved.entry, offset, (to - from + 1).toInt()).forEachIndexed { index, item ->
-                items += QueueWindowItem(snapshot.anchorPlay + 1 + from + index, item, upNext = true)
+                items +=
+                    QueueWindowItem(
+                        snapshot.anchorPlay + 1 + from + index,
+                        item,
+                        playlistPosition = item.playlistPosition,
+                        upNext = true,
+                    )
             }
         }
         return items
@@ -706,7 +714,7 @@ class QueueRepository(
         entry: QueueEntry,
         offset: Long,
         limit: Int,
-    ): List<SongListItem> {
+    ): List<SongItem> {
         if (entry.kind == QueueKind.Song) {
             offsetSeeks++
             return dao.song(entry.sourceId, entry.refId, offset, limit)
@@ -732,7 +740,7 @@ class QueueRepository(
     private fun remember(
         ref: QueueRef,
         offset: Long,
-        resolved: List<SongListItem>,
+        resolved: List<SongItem>,
     ) {
         if (keyCache.size >= LENGTH_CACHE_LIMIT) keyCache.clear()
         keyCache[ref] = KeyCursor(offset + resolved.size - 1, orderKey(ref.kind, resolved.last()))
@@ -740,11 +748,11 @@ class QueueRepository(
 
     private fun orderKey(
         kind: QueueKind,
-        row: SongListItem,
+        row: SongItem,
     ): OrderKey =
         when (kind) {
             QueueKind.Album -> OrderKey(row.song.id, disc = row.song.disc, track = row.song.track)
-            QueueKind.Playlist -> OrderKey(row.song.id, position = row.position)
+            QueueKind.Playlist -> OrderKey(row.song.id, position = row.playlistPosition)
             QueueKind.Song -> OrderKey(row.song.id)
         }
 
@@ -753,7 +761,7 @@ class QueueRepository(
         offset: Long,
         limit: Int,
         cursor: KeyCursor,
-    ): List<SongListItem>? {
+    ): List<SongItem>? {
         if (!cursor.key.seekable(entry.kind)) return null
         val from = cursor.ordinal
         return if (offset >= from) {
@@ -775,7 +783,7 @@ class QueueRepository(
         key: OrderKey,
         skip: Long,
         limit: Int,
-    ): List<SongListItem> =
+    ): List<SongItem> =
         when (entry.kind) {
             QueueKind.Playlist -> dao.playlistSongsFrom(entry.sourceId, entry.refId, key.position!!, skip, limit)
             QueueKind.Album -> dao.albumSongsFrom(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
@@ -787,7 +795,7 @@ class QueueRepository(
         key: OrderKey,
         skip: Long,
         limit: Int,
-    ): List<SongListItem> =
+    ): List<SongItem> =
         when (entry.kind) {
             QueueKind.Playlist -> dao.playlistSongsBefore(entry.sourceId, entry.refId, key.position!!, skip, limit)
             QueueKind.Album -> dao.albumSongsBefore(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
