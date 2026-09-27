@@ -317,7 +317,7 @@ internal fun formatTrackTime(seconds: Long): String {
     return if (hours > 0) {
         "%d:%02d:%02d".format(hours, minutes, secs)
     } else {
-        "%02d:%02d".format(minutes, secs)
+        "%d:%02d".format(minutes, secs)
     }
 }
 

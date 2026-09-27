@@ -5,8 +5,14 @@ import org.junit.Test
 
 class TrackTimeTest {
     @Test
-    fun minutesAndSecondsAreZeroPadded() {
-        assertEquals("04:11", formatTrackTime(251))
+    fun minutesAreNotPaddedButSecondsAre() {
+        assertEquals("4:11", formatTrackTime(251))
+        assertEquals("12:05", formatTrackTime(725))
+    }
+
+    @Test
+    fun underAMinuteKeepsASingleLeadingZero() {
+        assertEquals("0:05", formatTrackTime(5))
     }
 
     @Test
@@ -16,6 +22,6 @@ class TrackTimeTest {
 
     @Test
     fun negativeDurationsClampToZero() {
-        assertEquals("00:00", formatTrackTime(-5))
+        assertEquals("0:00", formatTrackTime(-5))
     }
 }
