@@ -269,7 +269,9 @@ fun QueueRoute(
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
     val queueContext = playback.context
-    val fallbackTitle = "Next from here"
+    // The item's album keeps the header stable while the async name lookup runs, so it does not
+    // flash the fallback when tapping between context and manually queued tracks.
+    val fallbackTitle = playback.item?.album?.takeIf { it.isNotBlank() } ?: "Next from here"
     val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
@@ -327,15 +329,21 @@ fun QueueScreen(
     var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
 
-    // One reorder state per section: sh.calvin.reorderable only targets keys registered with the
-    // state that started the drag, so an up-next drag cannot reach the context rows and vice versa.
-    // The up-next state disables auto-scroll (scrollThreshold 0): its block is followed by context
-    // rows, so the scroller keeps going past the last place the item can actually drop.
+    // One reorder state per run of rows: sh.calvin.reorderable only targets keys registered with
+    // the state that started the drag, so a drag can never reach a row in another run. The context
+    // sits on both sides of the up-next block, and splitting it there stops a context drag crossing
+    // the block (which would move a track over the queued songs and relocate the anchor). The
+    // up-next state disables auto-scroll (scrollThreshold 0): its block is followed by context
+    // rows the scroller would otherwise keep scrolling towards with nowhere to drop.
     val upNextReorder =
         rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
-    val contextReorder =
+    val contextBeforeReorder =
+        rememberReorderableLazyListState(listState) { from, to ->
+            onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
+        }
+    val contextAfterReorder =
         rememberReorderableLazyListState(listState) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
@@ -391,6 +399,7 @@ fun QueueScreen(
                     modifier = Modifier.padding(padding).fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
+                    val blockFirst = rows.indexOfFirst { it.upNext }
                     rows.forEachIndexed { index, row ->
                         if (index == 0 || rows[index - 1].upNext != row.upNext) {
                             // Keyed by index, not section: the context sits on both sides of the
@@ -403,9 +412,15 @@ fun QueueScreen(
                             }
                         }
                         val enabled = row.upNext || !shuffle
+                        val section =
+                            when {
+                                row.upNext -> upNextReorder
+                                blockFirst < 0 || index < blockFirst -> contextBeforeReorder
+                                else -> contextAfterReorder
+                            }
                         item(key = row.id) {
                             ReorderableItem(
-                                state = if (row.upNext) upNextReorder else contextReorder,
+                                state = section,
                                 key = row.id,
                                 enabled = enabled,
                                 animateItemModifier =
