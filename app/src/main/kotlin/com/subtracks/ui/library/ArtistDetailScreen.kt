@@ -309,7 +309,7 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 20.dp, bottom = 16.dp),
                                 verticalAlignment = Alignment.Top,
                             ) {
                                 Column(Modifier.weight(1f)) {
@@ -324,13 +324,13 @@ fun ArtistDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.padding(top = 4.dp),
+                                        modifier = Modifier.padding(top = 8.dp),
                                     )
                                 }
                                 IconButton(
                                     onClick = { onToggleStar?.invoke() },
                                     enabled = onToggleStar != null,
-                                    modifier = Modifier.padding(top = 20.dp),
+                                    modifier = Modifier.padding(top = 8.dp),
                                 ) {
                                     Icon(
                                         imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
@@ -343,7 +343,7 @@ fun ArtistDetailScreen(
                                             },
                                     )
                                 }
-                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 20.dp)) {
+                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 8.dp)) {
                                     Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
                                 }
                             }
