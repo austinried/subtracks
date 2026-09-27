@@ -102,6 +102,7 @@ private val SHUFFLE_HEIGHT = 48.dp
 private val SHUFFLE_ICON = 30.dp
 private val SHUFFLE_RESERVE = 80.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
+private val SHUFFLE_ROW_CLEARANCE = TITLE_INSET + SHUFFLE_WIDTH + 8.dp
 
 internal fun estimateScrollPx(
     index: Int,
@@ -309,7 +310,7 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = SHUFFLE_HANG + 8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = SHUFFLE_ROW_CLEARANCE, top = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
