@@ -167,8 +167,18 @@ class DownloadRepository(
         }
         // Under one lock, so a cancel that lands mid-loop waits for the queue to be complete and
         // then removes all of it, rather than missing the songs enqueued after it looked.
+        // ponytail: the lock is held for the whole loop, so cancel latency and the poll tick scale
+        // with the list length; a per-list cancel generation would lift that if it ever bites.
         mutex.withLock {
-            songIds.forEach { songId -> runCatching { enqueueIfAbsentLocked(sourceId, songId) } }
+            songIds.forEach { songId ->
+                try {
+                    enqueueIfAbsentLocked(sourceId, songId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // One song failing to enqueue must not abandon the rest of the list.
+                }
+            }
         }
         fetchArtworkSafely(sourceId, songIds)
     }
@@ -398,7 +408,12 @@ class DownloadRepository(
         songIds: List<String>,
     ) {
         try {
-            withTimeoutOrNull(ART_TIMEOUT_MS) { songIds.forEach { fetchArtwork(sourceId, it) } }
+            withTimeoutOrNull(ART_TIMEOUT_MS) {
+                songIds.forEach { songId ->
+                    // A cancel between the queue and this pass takes the row away; nothing to warm.
+                    if (db.downloadDao().find(sourceId, songId) != null) fetchArtwork(sourceId, songId)
+                }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {

@@ -24,7 +24,9 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
@@ -501,15 +503,7 @@ class DownloadRepositoryTest {
     fun thePlaylistStatusCountsASongThatAppearsTwiceOnce() =
         runTest {
             seedLibrary()
-            runBlocking {
-                db.libraryDao().upsertPlaylists(listOf(Playlist(1, "pl1", "Playlist", null, null, 2, 0)))
-                db.libraryDao().upsertPlaylistSongs(
-                    listOf(
-                        PlaylistSong(1, "pl1", "s1", 0),
-                        PlaylistSong(1, "pl1", "s1", 1),
-                    ),
-                )
-            }
+            seedPlaylist(listOf("s1", "s1"))
 
             assertEquals(ListDownloadStatus(total = 1, downloaded = 0, downloading = 0), statusOf(DownloadList.Playlist, "pl1"))
         }
@@ -523,15 +517,7 @@ class DownloadRepositoryTest {
     fun downloadingAPlaylistQueuesEverySong() =
         runTest {
             seedLibrary()
-            runBlocking {
-                db.libraryDao().upsertPlaylists(listOf(Playlist(1, "pl1", "Playlist", null, null, 2, 0)))
-                db.libraryDao().upsertPlaylistSongs(
-                    listOf(
-                        PlaylistSong(1, "pl1", "s1", 0),
-                        PlaylistSong(1, "pl1", "s2", 1),
-                    ),
-                )
-            }
+            seedPlaylist(listOf("s1", "s2"))
 
             runBlocking { repository.downloadAll(1, DownloadList.Playlist, "pl1") }
 
@@ -571,6 +557,43 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun cancellingWhileAListIsStillQueuingRemovesTheWholeList() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..40)
+            engine.enqueueDelayMs = 1
+
+            val queuing = launch(Dispatchers.IO) { repository.downloadAll(1, DownloadList.Album, "al1") }
+            await { engine.requests.size >= 3 }
+            val cancelling = launch(Dispatchers.IO) { repository.cancelAll(1, DownloadList.Album, "al1") }
+            queuing.join()
+            cancelling.join()
+
+            assertTrue("expected the whole list cancelled, ${db.downloadDao().all().size} rows left", db.downloadDao().all().isEmpty())
+        }
+
+    @Test
+    fun oneSongFailingToQueueDoesNotAbandonTheRest() =
+        runTest {
+            seedLibrary()
+            engine.failEnqueueFor = "s1"
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(listOf("s2"), requestedSongIds())
+        }
+
+    @Test
+    fun downloadingAListWithNothingInItSaysSo() =
+        runTest {
+            seedLibrary()
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "missing-album") }
+
+            assertEquals(listOf("Nothing left to download from this list"), messages.toList())
+        }
+
+    @Test
     fun applyActionRoutesToTheMatchingBulkAction() =
         runTest {
             seedLibrary()
@@ -581,9 +604,48 @@ class DownloadRepositoryTest {
             runBlocking { repository.applyAction(1, DownloadList.Album, "al1", BulkDownloadAction.Cancel) }
 
             assertEquals(ListDownloadStatus(total = 2), statusOf(DownloadList.Album, "al1"))
+
+            runBlocking { repository.applyAction(1, DownloadList.Album, "al1", BulkDownloadAction.Download) }
+            runBlocking { db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, engineId = 22)) }
+            runBlocking { repository.applyAction(1, DownloadList.Album, "al1", BulkDownloadAction.Delete) }
+
+            assertNotNull(row(1, "s1"))
+            assertNull(row(1, "s2"))
         }
 
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
+
+    private fun seedSongs(tracks: IntRange) {
+        runBlocking {
+            db.libraryDao().upsertSongs(
+                tracks.map { track ->
+                    Song(
+                        sourceId = 1,
+                        id = "s$track",
+                        albumId = "al1",
+                        artistId = "ar1",
+                        title = "Song $track",
+                        album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = track.toLong(),
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    )
+                },
+            )
+        }
+    }
+
+    private fun seedPlaylist(songIds: List<String>) {
+        runBlocking {
+            db.libraryDao().upsertPlaylists(listOf(Playlist(1, "pl1", "Playlist", null, null, songIds.size.toLong(), 0)))
+            db.libraryDao().upsertPlaylistSongs(
+                songIds.mapIndexed { index, songId -> PlaylistSong(1, "pl1", songId, index.toLong()) },
+            )
+        }
+    }
 
     private fun album(coverArt: String?) =
         Album(

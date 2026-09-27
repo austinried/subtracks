@@ -6,8 +6,13 @@ class FakeDownloadEngine : DownloadEngine {
 
     val requests = mutableListOf<Pair<Long, EngineRequest>>()
     val cancelled = mutableListOf<Long>()
+    var enqueueDelayMs = 0L
+    var failEnqueueFor: String? = null
 
     override fun enqueue(request: EngineRequest): Long {
+        if (enqueueDelayMs > 0) Thread.sleep(enqueueDelayMs)
+        val failing = failEnqueueFor
+        if (failing != null && request.path.endsWith(failing)) throw IllegalStateException("enqueue failed")
         val id = nextId++
         requests += id to request
         downloads[id] = EngineDownload(EngineStatus.Pending)
