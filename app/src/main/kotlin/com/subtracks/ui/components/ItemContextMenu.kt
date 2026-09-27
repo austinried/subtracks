@@ -14,6 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -43,7 +46,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.launch
 import com.subtracks.data.model.Album as AlbumModel
@@ -59,6 +64,7 @@ sealed interface MenuTarget {
     data class Song(
         val song: SongModel,
         override val coverArt: CoverArtRef? = null,
+        val download: SongDownload? = null,
     ) : MenuTarget {
         override val title: String get() = song.title
 
@@ -115,6 +121,9 @@ class ItemActions(
     val shufflePlaylist: (PlaylistModel) -> Unit = {},
     val playNext: ((QueueRef) -> Unit)? = null,
     val addToQueue: ((QueueRef) -> Unit)? = null,
+    val download: ((SongModel) -> Unit)? = null,
+    val cancelDownload: ((SongModel) -> Unit)? = null,
+    val deleteDownload: ((SongModel) -> Unit)? = null,
     val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
@@ -184,6 +193,7 @@ fun ItemContextMenu(
                     MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { play(target.song) } }
                 }
                 queueItems()
+                DownloadItem(target.download, target.song, actions, ::dismiss)
                 StarItem(target.song.starred) { starring -> actions.setStar(StarType.Song, target.song.id, starring) }
                 target.song.albumId?.let { albumId ->
                     actions.viewAlbum?.let { view ->
@@ -256,6 +266,40 @@ private fun MenuHeader(target: MenuTarget) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DownloadItem(
+    download: SongDownload?,
+    song: SongModel,
+    actions: ItemActions,
+    dismiss: (() -> Unit) -> Unit,
+) {
+    when (download?.status) {
+        DownloadStatus.Completed -> {
+            actions.deleteDownload?.let { delete ->
+                MenuItem(Icons.Rounded.Delete, "Delete download") { dismiss { delete(song) } }
+            }
+        }
+
+        DownloadStatus.Queued, DownloadStatus.Running -> {
+            actions.cancelDownload?.let { cancel ->
+                MenuItem(Icons.Rounded.Cancel, "Cancel download") { dismiss { cancel(song) } }
+            }
+        }
+
+        DownloadStatus.Failed -> {
+            actions.download?.let { start ->
+                MenuItem(Icons.Rounded.Download, "Retry download") { dismiss { start(song) } }
+            }
+        }
+
+        null -> {
+            actions.download?.let { start ->
+                MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(song) } }
             }
         }
     }

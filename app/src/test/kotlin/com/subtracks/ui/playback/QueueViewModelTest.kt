@@ -6,11 +6,13 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.fakeUserPreferences
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.FakePlayerConnection
@@ -30,6 +32,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -53,7 +56,8 @@ class QueueViewModelTest {
                 .build()
         val sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
         queues = QueueRepository(db)
-        controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), dispatcher = dispatcher)
+        val downloads = DownloadRepository(db, sources, FakeDownloadEngine(), File(context.cacheDir, "downloads"))
+        controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), downloads, dispatcher = dispatcher)
         viewModel = QueueViewModel(queues, controller)
     }
 

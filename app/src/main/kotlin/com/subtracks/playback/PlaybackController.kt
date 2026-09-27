@@ -3,6 +3,7 @@ package com.subtracks.playback
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
 import com.subtracks.data.repo.QueueWindowItem
@@ -106,6 +107,7 @@ class PlaybackController(
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
     private val connection: PlayerConnection,
+    private val downloads: DownloadRepository,
     private val showMessage: (String) -> Unit = {},
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) {
@@ -928,6 +930,7 @@ class PlaybackController(
     ) {
         val player = player ?: return
         val snapshot = snapshot ?: return
+        downloads.awaitLoaded()
         val window = queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS)
         val startIndex = window.indexOfFirst { it.position == position }
         if (startIndex < 0) return
@@ -946,18 +949,28 @@ class PlaybackController(
 
     private suspend fun reloadQuality() =
         startLock.withLock {
-            val player = player ?: return@withLock
-            val snapshot = snapshot ?: return@withLock
-            if (snapshot.size == 0L) return@withLock
             val sourceId = queueSourceId
             if (sourceId == null || sourceRepository.activeSourceIdOnce() != sourceId) return@withLock
-            if (player.isEnded) return@withLock
-            val index = player.currentIndex
-            val position = (windowStart + index).coerceIn(0, snapshot.size - 1)
-            val positionMs = player.currentPositionMs
-            if (player.currentIndex != index) return@withLock
-            loadWindow(position, autoplay = player.playWhenReady, startPositionMs = positionMs)
+            reloadWindowLocked()
         }
+
+    fun refreshMediaItems() {
+        scope.launch {
+            startLock.withLock { reloadWindowLocked() }
+        }
+    }
+
+    private suspend fun reloadWindowLocked() {
+        val player = player ?: return
+        val snapshot = snapshot ?: return
+        if (snapshot.size == 0L) return
+        if (player.isEnded) return
+        val index = player.currentIndex
+        val position = (windowStart + index).coerceIn(0, snapshot.size - 1)
+        val positionMs = player.currentPositionMs
+        if (player.currentIndex != index) return
+        loadWindow(position, autoplay = player.playWhenReady, startPositionMs = positionMs)
+    }
 
     private fun jumpTo(target: Long) {
         scope.launch {

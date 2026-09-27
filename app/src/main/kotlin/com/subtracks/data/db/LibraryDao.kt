@@ -369,6 +369,12 @@ interface LibraryDao {
         songId: String,
     ): Flow<Song?>
 
+    @Query("SELECT * FROM songs WHERE sourceId = :sourceId AND id = :songId")
+    suspend fun songOnce(
+        sourceId: Long,
+        songId: String,
+    ): Song?
+
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE, id")
     fun albumsForArtist(
         sourceId: Long,

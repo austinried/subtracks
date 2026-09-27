@@ -47,7 +47,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.SongListItem
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QUEUE_CHUNK
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueWindowItem
@@ -274,8 +276,10 @@ fun QueueRoute(
     viewModel: QueueViewModel = koinViewModel(),
     controller: PlaybackController = koinInject(),
     sourceRepository: SourceRepository = koinInject(),
+    downloadRepository: DownloadRepository = koinInject(),
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
+    val downloads by downloadRepository.states().collectAsStateWithLifecycle(initialValue = emptyMap())
     val queueContext = playback.context
     // The item's album keeps the header stable while the async name lookup runs, so it does not
     // flash the fallback when tapping between context and manually queued tracks.
@@ -295,6 +299,7 @@ fun QueueRoute(
         currentSongId = playback.item?.id,
         shuffle = playback.shuffle,
         contextTitle = sourceTitle.value,
+        downloads = downloads,
         onClearUpNext = controller::clearUpNext,
         coverArt = sourceRepository::coverArt,
         onBack = onBack,
@@ -330,6 +335,7 @@ fun QueueScreen(
     generation: Int = 0,
     shuffle: Boolean = false,
     contextTitle: String? = null,
+    downloads: Map<String, SongDownload> = emptyMap(),
     onClearUpNext: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
@@ -446,6 +452,7 @@ fun QueueScreen(
                                     isPlaying = row.isPlaying(currentPosition, currentSongId),
                                     floating = isDragging,
                                     coverArt = coverArt,
+                                    download = downloads[row.song.song.id],
                                     dragHandle =
                                         if (!enabled) {
                                             null
@@ -546,6 +553,7 @@ private fun QueueRowItem(
     isPlaying: Boolean,
     floating: Boolean,
     coverArt: (String?, Boolean) -> CoverArtRef?,
+    download: SongDownload?,
     dragHandle: Modifier?,
     onClick: () -> Unit,
     onRemove: () -> Unit,
@@ -554,6 +562,7 @@ private fun QueueRowItem(
         song = row.song.song,
         coverArtId = row.song.coverArt,
         coverArt = coverArt,
+        download = download,
         isPlaying = isPlaying,
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
