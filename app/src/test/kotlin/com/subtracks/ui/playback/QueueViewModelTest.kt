@@ -24,6 +24,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -146,8 +147,9 @@ class QueueViewModelTest {
 
         await {
             val snapshot = runBlocking { queues.snapshot() }
-            viewModel.rows.isNotEmpty() &&
-                viewModel.rows.all { runBlocking { queues.itemAt(snapshot, it.position)?.song?.id } == it.song.song.id }
+            val rows = rowsSnapshot()
+            rows.isNotEmpty() &&
+                runBlocking { rows.all { queues.itemAt(snapshot, it.position)?.song?.id == it.song.song.id } }
         }
     }
 
@@ -310,17 +312,17 @@ class QueueViewModelTest {
 
         viewModel.remove(2)
         await {
-            val positions = viewModel.rows.map { it.position }
+            val positions = rowsSnapshot().map { it.position }
             positions.isNotEmpty() && positions == (positions.first()..positions.last()).toList()
         }
 
         val snapshot = runBlocking { queues.snapshot() }
+        val rows = rowsSnapshot()
         val expected =
             runBlocking {
-                (viewModel.rows.first().position..viewModel.rows.last().position)
-                    .mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+                (rows.first().position..rows.last().position).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
             }
-        assertEquals(expected, viewModel.rows.map { it.song.song.id })
+        assertEquals(expected, rows.map { it.song.song.id })
     }
 
     @Test
@@ -439,6 +441,10 @@ class QueueViewModelTest {
             },
         )
     }
+
+    // `rows` is a snapshot list mutated on the main dispatcher, so read it there rather than from
+    // the test thread (otherwise iterating it races the view model and throws or reads torn state).
+    private fun rowsSnapshot(): List<QueueRow> = runBlocking { withContext(dispatcher) { viewModel.rows.toList() } }
 
     private fun await(predicate: () -> Boolean) {
         repeat(500) {
