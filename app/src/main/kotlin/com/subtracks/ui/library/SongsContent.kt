@@ -286,6 +286,7 @@ private fun TrackTime(seconds: Long) {
     SmallNumber(
         text = formatTrackTime(seconds),
         modifier = Modifier.width(TIME_COLUMN_WIDTH),
+        textAlign = TextAlign.End,
     )
 }
 
@@ -293,12 +294,13 @@ private fun TrackTime(seconds: Long) {
 private fun SmallNumber(
     text: String,
     modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Center,
 ) {
     val style = MaterialTheme.typography.bodySmall
     BasicText(
         text = text,
         modifier = modifier.fillMaxWidth(),
-        style = style.copy(textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant),
+        style = style.copy(textAlign = textAlign, color = MaterialTheme.colorScheme.onSurfaceVariant),
         maxLines = 1,
         autoSize =
             TextAutoSize.StepBased(
