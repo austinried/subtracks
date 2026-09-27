@@ -68,7 +68,7 @@ private val PLAY_SHADOW_RADIUS = 3.dp
 private val PLAY_SHADOW = Color.Black.copy(alpha = 0.6f)
 private val INNER_SHADOW_RADIUS = 8.dp
 private val INNER_SHADOW = Color.Black.copy(alpha = 0.85f)
-private val DESATURATE = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0.45f) })
+private val DIM = ColorFilter.colorMatrix(ColorMatrix().apply { setToScale(0.6f, 0.6f, 0.6f, 1f) })
 private val PLAY_ARROW = Icons.Rounded.PlayArrow
 private val PLAY_ARROW_PATH: Path by lazy { buildVectorPath(PLAY_ARROW) }
 
@@ -171,7 +171,7 @@ private fun CoverArtCell(
             ref = ref,
             name = name,
             modifier = Modifier.size(48.dp).clip(shape),
-            colorFilter = if (isPlaying) DESATURATE else null,
+            colorFilter = if (isPlaying) DIM else null,
         )
         if (isPlaying) {
             Box(Modifier.matchParentSize().drawBehind { drawInnerShadow() })
