@@ -331,43 +331,44 @@ class PlaybackController(
                 lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 return@withLock
             }
-            val currentId = player.currentItem?.id
-            val fallback =
-                if (snapshot.shuffled && !wasUpNext) {
-                    // The permutation is re-derived at the smaller size, so there is no stable
-                    // "next"; play whatever now fills the removed track's slot.
-                    val seed = snapshot.shuffleSeed!!
-                    val removedFlat = snapshot.flatContext(snapshot.contextPlay(position)) ?: 0L
-                    val newContextSize = (snapshot.contextSize - 1).coerceAtLeast(0)
-                    if (newContextSize == 0L) {
-                        0L
-                    } else {
-                        val slot = removedFlat.coerceIn(0, newContextSize - 1)
-                        updated.combined(Shuffle.toSequence(seed, newContextSize, slot))
-                    }
-                } else {
-                    (if (position < current) current - 1 else current)
-                }
+            // Derive the current track's new position from the edit. Resolving its song id after
+            // the edit can match an identical song elsewhere (a duplicate in the context or the
+            // block), so use positions throughout; a context removal can move the anchor, so read
+            // the combined position back from the updated snapshot.
             var target =
-                (
-                    if (position == current) {
-                        // The playing entry was removed; resolving its song id afterwards can match
-                        // an identical song elsewhere (a duplicate in the context or the block), so
-                        // advance from the fallback instead.
-                        fallback
-                    } else {
-                        currentId?.let {
-                            if (wasUpNext) {
-                                queueRepository.combinedIndexOf(
-                                    updated,
-                                    it,
-                                )
-                            } else {
-                                queueRepository.combinedContextIndexOf(updated, it)
-                            }
-                        } ?: fallback
+                when {
+                    position == current && snapshot.shuffled && !wasUpNext -> {
+                        // The permutation is re-derived at the smaller size, so there is no stable
+                        // "next"; play whatever now fills the removed track's slot.
+                        val seed = snapshot.shuffleSeed!!
+                        val removedFlat = snapshot.flatContext(snapshot.contextPlay(position)) ?: 0L
+                        val newContextSize = (snapshot.contextSize - 1).coerceAtLeast(0)
+                        if (newContextSize == 0L) {
+                            0L
+                        } else {
+                            val slot = removedFlat.coerceIn(0, newContextSize - 1)
+                            updated.combined(Shuffle.toSequence(seed, newContextSize, slot))
+                        }
                     }
-                ).coerceIn(0, updated.size - 1)
+
+                    position == current -> {
+                        current
+                    }
+
+                    wasUpNext -> {
+                        val blockIndex = snapshot.upNextIndex(current)
+                        val newIndex =
+                            if (snapshot.isUpNext(position) && position < current) blockIndex - 1 else blockIndex
+                        updated.anchorPlay + 1 + newIndex
+                    }
+
+                    else -> {
+                        val play = snapshot.contextPlay(current)
+                        val newPlay =
+                            if (!snapshot.isUpNext(position) && snapshot.contextPlay(position) < play) play - 1 else play
+                        updated.combined(newPlay)
+                    }
+                }.coerceIn(0, updated.size - 1)
             // Removing the playing context track while shuffled leaves the block anchored to some
             // other track; re-anchor it to the track the cursor landed on so the queued tracks
             // still play next rather than being stranded behind the cursor.
@@ -439,13 +440,30 @@ class PlaybackController(
         if (!queueRepository.move(snapshot, from, to)) return@withLock
         val updated = readSnapshot()
         this.snapshot = updated
-        val currentId = player.currentItem?.id
+        // The current track still exists, so derive its new position from the edit instead of
+        // resolving its song id, which is ambiguous when the same song appears more than once.
+        // A context move can also shift the anchor (and with it an up-next block), so read the
+        // position back from the updated snapshot rather than only shifting `current`.
         val target =
-            (
-                currentId?.let {
-                    if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
-                } ?: movedCursor(current, from, to)
-            ).coerceIn(0, updated.size - 1)
+            if (wasUpNext) {
+                val blockIndex = snapshot.upNextIndex(current)
+                val newIndex =
+                    if (snapshot.isUpNext(from) && snapshot.isUpNext(to)) {
+                        movedCursor(blockIndex, snapshot.upNextIndex(from), snapshot.upNextIndex(to))
+                    } else {
+                        blockIndex
+                    }
+                updated.anchorPlay + 1 + newIndex
+            } else {
+                val play = snapshot.contextPlay(current)
+                val newPlay =
+                    if (!snapshot.isUpNext(from) && !snapshot.isUpNext(to)) {
+                        movedCursor(play, snapshot.contextPlay(from), snapshot.contextPlay(to))
+                    } else {
+                        play
+                    }
+                updated.combined(newPlay)
+            }.coerceIn(0, updated.size - 1)
         lastPosition = target
         windowJob?.cancel()
         val fromInWindow = from in windowStart..windowEnd

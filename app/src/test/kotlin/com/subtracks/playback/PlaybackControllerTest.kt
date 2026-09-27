@@ -491,6 +491,42 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun movingWithADuplicateInTheContextKeepsThePlayingCopy() {
+        seedAlbum(4, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"), queues.songEntry(1, "s2"))) }
+        controller.connect()
+        await { controller.state.value.item != null }
+        // Context is s1,s2,s3,s4,s2; play the second copy.
+        controller.playAt(4)
+        await { controller.state.value.position == 4L }
+
+        runBlocking { controller.move(0, 3) }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        val playing = controller.state.value.position!!
+        assertTrue(runBlocking { queues.itemAt(snapshot, playing)?.song?.id } == "s2")
+        // Still the second copy (flat index 4), not the first.
+        assertEquals(4L, snapshot.flatContext(snapshot.contextPlay(playing)))
+    }
+
+    @Test
+    fun removingAnotherTrackWithADuplicateInTheContextKeepsThePlayingCopy() {
+        seedAlbum(4, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"), queues.songEntry(1, "s2"))) }
+        controller.connect()
+        await { controller.state.value.item != null }
+        controller.playAt(4)
+        await { controller.state.value.position == 4L }
+
+        runBlocking { controller.removeAt(0) }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        val playing = controller.state.value.position!!
+        assertTrue(runBlocking { queues.itemAt(snapshot, playing)?.song?.id } == "s2")
+        assertEquals(3L, snapshot.flatContext(snapshot.contextPlay(playing)))
+    }
+
+    @Test
     fun playNextFromInsideTheBlockGoesAfterTheCurrentTrack() {
         seedAlbum(3, sourceId = 1)
         seedSong("x1", "al2")
@@ -1635,6 +1671,29 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id,
         )
+    }
+
+    @Test
+    fun removingThePlayingAnchorWhileShuffledPlaysTheQueuedTrackNext() {
+        seedAlbum(6, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+        val current = controller.state.value.position!!
+
+        runBlocking { controller.removeAt(current) }
+
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
     }
 
     @Test
