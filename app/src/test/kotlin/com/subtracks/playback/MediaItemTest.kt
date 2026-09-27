@@ -36,14 +36,14 @@ class MediaItemTest {
     fun aDownloadedFileIsNotClippedEvenForATranscodingQuality() {
         val item = queueMediaItem(song, local = "file:///downloads/1/s1", stream = "http://server/stream?s=s1", transcode = true)
 
-        assertEquals(C.TIME_END_OF_SOURCE, item.clippingConfiguration?.endPositionMs)
+        assertEquals(C.TIME_END_OF_SOURCE, item.clippingConfiguration.endPositionMs)
     }
 
     @Test
     fun aTranscodedStreamIsClippedToItsDeclaredDuration() {
         val item = queueMediaItem(song, local = null, stream = "http://server/stream?s=s1", transcode = true)
 
-        assertEquals(100_000L, item.clippingConfiguration?.endPositionMs)
+        assertEquals(100_000L, item.clippingConfiguration.endPositionMs)
     }
 
     @Test

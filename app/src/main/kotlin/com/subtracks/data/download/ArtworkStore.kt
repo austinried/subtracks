@@ -85,7 +85,7 @@ class OkHttpArtworkFetcher(
             val request = Request.Builder().url(url).build()
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Artwork request failed with ${response.code}")
-                val body = response.body ?: throw IOException("Artwork response had no body")
+                val body = response.body
                 if (body.contentLength() > maxBytes) throw IOException("Artwork response is larger than $maxBytes bytes")
                 val source = body.source()
                 source.request(maxBytes + 1)

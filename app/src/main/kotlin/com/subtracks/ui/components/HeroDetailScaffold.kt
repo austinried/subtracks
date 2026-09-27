@@ -253,7 +253,7 @@ fun HeroHeader(
                 modifier =
                     Modifier
                         .heightIn(min = 32.dp)
-                        .clickable(onClickLabel = "Open artist") { onSubtitleClick?.invoke() },
+                        .clickable(onClickLabel = "Open artist") { onSubtitleClick() },
                 contentAlignment = Alignment.TopCenter,
             ) {
                 HeroSubtitle(subtitle, Modifier.padding(top = 4.dp))
