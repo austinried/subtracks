@@ -59,6 +59,24 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun syncConcurrencyDefaultsAndClampsToAtLeastOne() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(DEFAULT_SYNC_CONCURRENCY, prefs.syncConcurrency().first())
+
+            prefs.setSyncConcurrency(8)
+            assertEquals(8, prefs.syncConcurrency().first())
+
+            prefs.setSyncConcurrency(0)
+            assertEquals(1, prefs.syncConcurrency().first())
+
+            file.delete()
+        }
+
+    @Test
     fun lastSeedRoundTripsWithAndWithoutASecondary() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }

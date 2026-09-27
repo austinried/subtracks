@@ -1,6 +1,5 @@
 package com.subtracks.data.source.subsonic
 
-import androidx.annotation.VisibleForTesting
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
@@ -35,7 +34,6 @@ class SubsonicSource(
     private val maxBitrate: Int = 0,
     private val streamFormat: String? = null,
     private val maxPages: Int = MAX_PAGES,
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     private val maxConcurrentFetches: Int = MAX_CONCURRENT_FETCHES,
 ) : MusicSource {
     private var emptyQuerySearchSupported: Boolean? = null

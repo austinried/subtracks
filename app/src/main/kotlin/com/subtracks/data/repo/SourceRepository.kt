@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,16 +56,18 @@ class SourceRepository(
                 networkMode,
                 prefs.streamQuality(NetworkMode.Wifi),
                 prefs.streamQuality(NetworkMode.Mobile),
-            ) { config, mode, wifi, mobile -> config to (if (mode == NetworkMode.Wifi) wifi else mobile) }
-                .collect { (config, quality) ->
-                    active = config?.toMusicSource(quality)
-                    _quality.value = quality
-                    val sourceChanged = config?.id != activeSourceId
-                    activeSourceId = config?.id
-                    if (sourceChanged && config != null && config.useTokenAuth) {
-                        scope.launch { runCatching { config.toClient().check("ping") } }
-                    }
+                prefs.syncConcurrency(),
+            ) { config, mode, wifi, mobile, concurrency ->
+                Triple(config, if (mode == NetworkMode.Wifi) wifi else mobile, concurrency)
+            }.collect { (config, quality, concurrency) ->
+                active = config?.toMusicSource(quality, concurrency)
+                _quality.value = quality
+                val sourceChanged = config?.id != activeSourceId
+                activeSourceId = config?.id
+                if (sourceChanged && config != null && config.useTokenAuth) {
+                    scope.launch { runCatching { config.toClient().check("ping") } }
                 }
+            }
         }
     }
 
@@ -172,7 +175,7 @@ class SourceRepository(
 
     suspend fun activeMusicSource(): MusicSource? {
         val config = db.sourcesDao().activeSubsonicConfigOnce() ?: return null
-        return config.toMusicSource(quality.value)
+        return config.toMusicSource(quality.value, prefs.syncConcurrency().first())
     }
 
     private fun SubsonicConfig.toClient(): SubsonicClient =
@@ -184,12 +187,16 @@ class SourceRepository(
             onTokenAuthUnsupported = { disableTokenAuth(id) },
         )
 
-    private fun SubsonicConfig.toMusicSource(quality: StreamQuality): SubsonicMusicSource =
+    private fun SubsonicConfig.toMusicSource(
+        quality: StreamQuality,
+        syncConcurrency: Int,
+    ): SubsonicMusicSource =
         SubsonicMusicSource(
             id = id,
             client = toClient(),
             maxBitrate = quality.maxBitrate,
             streamFormat = quality.format,
+            maxConcurrentFetches = syncConcurrency,
         )
 
     private fun disableTokenAuth(sourceId: Long) {

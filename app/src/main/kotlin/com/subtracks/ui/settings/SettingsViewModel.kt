@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.DEFAULT_SYNC_CONCURRENCY
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.DownloadRepository
@@ -34,6 +35,11 @@ class SettingsViewModel(
             .streamQuality(NetworkMode.Mobile)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
 
+    val syncConcurrency: StateFlow<Int> =
+        userPreferences
+            .syncConcurrency()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_SYNC_CONCURRENCY)
+
     fun selectSource(id: Long) {
         viewModelScope.launch { sourceRepository.selectSource(id) }
     }
@@ -51,5 +57,9 @@ class SettingsViewModel(
 
     fun setMobileQuality(quality: StreamQuality) {
         viewModelScope.launch { userPreferences.setStreamQuality(NetworkMode.Mobile, quality) }
+    }
+
+    fun setSyncConcurrency(value: Int) {
+        viewModelScope.launch { userPreferences.setSyncConcurrency(value) }
     }
 }

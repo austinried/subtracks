@@ -54,7 +54,7 @@ import org.koin.compose.viewmodel.koinViewModel
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
 private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "flac")
 
-private enum class SettingsDialog { WifiQuality, MobileQuality }
+private enum class SettingsDialog { WifiQuality, MobileQuality, SyncConcurrency }
 
 @Composable
 fun SettingsRoute(
@@ -66,15 +66,18 @@ fun SettingsRoute(
     val activeSourceId by viewModel.activeSourceId.collectAsStateWithLifecycle()
     val wifiQuality by viewModel.wifiQuality.collectAsStateWithLifecycle()
     val mobileQuality by viewModel.mobileQuality.collectAsStateWithLifecycle()
+    val syncConcurrency by viewModel.syncConcurrency.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
         wifiQuality = wifiQuality,
         mobileQuality = mobileQuality,
+        syncConcurrency = syncConcurrency,
         onSelectSource = viewModel::selectSource,
         onDeleteSource = viewModel::deleteSource,
         onWifiQualityChange = viewModel::setWifiQuality,
         onMobileQualityChange = viewModel::setMobileQuality,
+        onSyncConcurrencyChange = viewModel::setSyncConcurrency,
         onAddServer = onAddServer,
         onBack = onBack,
     )
@@ -87,10 +90,12 @@ fun SettingsScreen(
     activeSourceId: Long?,
     wifiQuality: StreamQuality,
     mobileQuality: StreamQuality,
+    syncConcurrency: Int,
     onSelectSource: (Long) -> Unit,
     onDeleteSource: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
     onMobileQualityChange: (StreamQuality) -> Unit,
+    onSyncConcurrencyChange: (Int) -> Unit,
     onAddServer: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -167,6 +172,14 @@ fun SettingsScreen(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
+            item {
+                ListItem(
+                    headlineContent = { Text("Sync concurrency") },
+                    supportingContent = { Text(concurrencyLabel(syncConcurrency)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
             item { Spacer(Modifier.height(fill)) }
         }
     }
@@ -190,6 +203,14 @@ fun SettingsScreen(
             )
         }
 
+        SettingsDialog.SyncConcurrency -> {
+            ConcurrencyDialog(
+                selected = syncConcurrency,
+                onSelect = onSyncConcurrencyChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
         null -> {
             Unit
         }
@@ -199,6 +220,42 @@ fun SettingsScreen(
 private fun qualityLabel(quality: StreamQuality): String = "${bitrateLabel(quality.maxBitrate)} · ${quality.format ?: "Server default"}"
 
 private fun bitrateLabel(kbps: Int): String = if (kbps == 0) "Unlimited" else "${kbps}kbps"
+
+private val syncConcurrencyOptions = listOf(1, 2, 4, 8, 16)
+
+private fun concurrencyLabel(value: Int): String = if (value <= 1) "1 (sequential)" else value.toString()
+
+@Composable
+private fun ConcurrencyDialog(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var draft by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sync concurrency") },
+        text = {
+            ChoiceGroup(
+                header = "Parallel server requests while syncing",
+                options = syncConcurrencyOptions.map { it to concurrencyLabel(it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text("Done") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
 
 @Composable
 private fun QualityDialog(

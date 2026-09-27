@@ -306,10 +306,12 @@ class AppScreenshotTest {
                     activeSourceId = 1,
                     wifiQuality = StreamQuality(),
                     mobileQuality = StreamQuality(192, "mp3"),
+                    syncConcurrency = 4,
                     onSelectSource = {},
                     onDeleteSource = {},
                     onWifiQualityChange = {},
                     onMobileQualityChange = {},
+                    onSyncConcurrencyChange = {},
                     onAddServer = {},
                     onBack = {},
                 )

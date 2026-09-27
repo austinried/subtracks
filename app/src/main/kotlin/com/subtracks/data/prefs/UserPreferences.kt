@@ -43,6 +43,8 @@ data class StreamQuality(
     val transcodes: Boolean get() = maxBitrate > 0 || !format.isNullOrEmpty()
 }
 
+const val DEFAULT_SYNC_CONCURRENCY = 4
+
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
 
 data class ArtworkSeedValue(
@@ -76,6 +78,14 @@ class UserPreferences(
     }
 
     private fun streamQualityKey(mode: NetworkMode) = stringPreferencesKey("stream_quality_${mode.key}")
+
+    fun syncConcurrency(): Flow<Int> = store.data.map { prefs -> prefs[syncConcurrencyKey] ?: DEFAULT_SYNC_CONCURRENCY }
+
+    suspend fun setSyncConcurrency(value: Int) {
+        store.edit { prefs -> prefs[syncConcurrencyKey] = value.coerceAtLeast(1) }
+    }
+
+    private val syncConcurrencyKey = intPreferencesKey("sync_concurrency")
 
     suspend fun lastSeed(): ArtworkSeedValue? {
         val prefs = store.data.first()
