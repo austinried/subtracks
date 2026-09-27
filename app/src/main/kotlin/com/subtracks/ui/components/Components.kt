@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -70,6 +71,7 @@ fun CoverArt(
     showPlaceholder: Boolean = true,
     square: Boolean = true,
     elevation: Dp = 0.dp,
+    colorFilter: ColorFilter? = null,
 ) {
     val context = LocalPlatformContext.current
     var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
@@ -93,6 +95,7 @@ fun CoverArt(
                 onThumbnailLoaded = { thumbnailLoaded = true },
                 onThumbnailRatio = { thumbnailRatio = it },
                 contentScale = ContentScale.Crop,
+                colorFilter = colorFilter,
             ) {
                 if (ref != null) {
                     AsyncImage(
@@ -100,6 +103,7 @@ fun CoverArt(
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         filterQuality = FilterQuality.High,
+                        colorFilter = colorFilter,
                         onSuccess = { success ->
                             success.painter.intrinsicSize
                                 .ratioOrNull()
@@ -154,12 +158,14 @@ fun CoverArt(
                     onThumbnailLoaded = { thumbnailLoaded = true },
                     onThumbnailRatio = { thumbnailRatio = it },
                     contentScale = ContentScale.Fit,
+                    colorFilter = colorFilter,
                 ) {
                     if (ref != null) {
                         Image(
                             painter = painter,
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
+                            colorFilter = colorFilter,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -180,6 +186,7 @@ private fun BoxScope.CoverArtContent(
     onThumbnailLoaded: () -> Unit,
     onThumbnailRatio: (Float) -> Unit,
     contentScale: ContentScale,
+    colorFilter: ColorFilter?,
     main: @Composable () -> Unit,
 ) {
     val context = LocalPlatformContext.current
@@ -196,6 +203,7 @@ private fun BoxScope.CoverArtContent(
             model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
             contentDescription = null,
             contentScale = contentScale,
+            colorFilter = colorFilter,
             onSuccess = { success ->
                 onThumbnailLoaded()
                 success.painter.intrinsicSize
