@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,7 +19,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -29,6 +32,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,10 +59,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.data.model.Album
@@ -140,6 +148,8 @@ fun ArtistDetailRoute(
         onAlbumClick = onAlbumClick,
         onAlbumLongClick = { contextMenuHost?.show(it, actions) },
         onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art), actions) } },
+        starred = artist?.starred != null,
+        onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
     )
 }
 
@@ -156,6 +166,9 @@ fun ArtistDetailScreen(
     onAlbumClick: (Album) -> Unit,
     onAlbumLongClick: (MenuTarget) -> Unit = {},
     onMore: () -> Unit = {},
+    starred: Boolean = false,
+    onToggleStar: (() -> Unit)? = null,
+    onShuffle: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
@@ -230,41 +243,84 @@ fun ArtistDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        Box(
+                        Column(
                             Modifier
                                 .fillMaxWidth()
-                                .onSizeChanged { imageHeightPx = it.height.toFloat() }
-                                .padding(bottom = 12.dp),
+                                .onSizeChanged { imageHeightPx = it.height.toFloat() },
                         ) {
-                            CoverArt(
-                                ref = art,
-                                name = artist?.name.orEmpty(),
-                                thumbnailRef = artThumbnail,
-                                showPlaceholder = art == null,
-                                modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                            )
-                            if (nameScrimAlpha > 0f) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.BottomStart)
-                                            .fillMaxWidth()
-                                            .height(ART_HEIGHT * 0.4f)
-                                            .graphicsLayer { alpha = nameScrimAlpha }
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                                                ),
-                                            ).testTag(ARTIST_NAME_SCRIM_TAG),
+                            Box(Modifier.fillMaxWidth()) {
+                                CoverArt(
+                                    ref = art,
+                                    name = artist?.name.orEmpty(),
+                                    thumbnailRef = artThumbnail,
+                                    showPlaceholder = art == null,
+                                    modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                                 )
+                                if (nameScrimAlpha > 0f) {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomStart)
+                                                .fillMaxWidth()
+                                                .height(ART_HEIGHT * 0.4f)
+                                                .graphicsLayer { alpha = nameScrimAlpha }
+                                                .background(
+                                                    Brush.verticalGradient(
+                                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                                                    ),
+                                                ).testTag(ARTIST_NAME_SCRIM_TAG),
+                                    )
+                                }
+                                Box(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
+                                    Text(
+                                        text = artist?.name.orEmpty(),
+                                        style = imageNameStyle,
+                                        color = Color.White,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth().padding(TITLE_INSET),
+                                    )
+                                    IconButton(
+                                        onClick = onShuffle,
+                                        modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 8.dp),
+                                    ) {
+                                        ShadowedIcon(Icons.Rounded.Shuffle, "Shuffle artist", size = 28.dp)
+                                    }
+                                }
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                IconButton(onClick = { onToggleStar?.invoke() }, enabled = onToggleStar != null) {
+                                    Icon(
+                                        imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                                        contentDescription = if (starred) "Unstar" else "Star",
+                                        tint =
+                                            if (starred) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
+                                    )
+                                }
+                                IconButton(onClick = onMore) {
+                                    Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
+                                }
                             }
                             Text(
-                                text = artist?.name.orEmpty(),
-                                style = imageNameStyle,
-                                color = Color.White,
-                                maxLines = 1,
+                                text = "Artist biography coming soon.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.align(Alignment.BottomStart).padding(TITLE_INSET),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                             )
                         }
                     }
@@ -336,11 +392,6 @@ fun ArtistDetailScreen(
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    actions = {
-                        IconButton(onClick = onMore, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
-                            Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
-                        }
-                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                     modifier =
                         Modifier
@@ -353,5 +404,27 @@ fun ArtistDetailScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ShadowedIcon(
+    imageVector: ImageVector,
+    contentDescription: String,
+    size: Dp = 24.dp,
+) {
+    Box(Modifier.size(size)) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            tint = Color.Black.copy(alpha = 0.5f),
+            modifier = Modifier.matchParentSize().offset(x = 0.5.dp, y = 1.5.dp),
+        )
+        Icon(
+            imageVector = imageVector,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.matchParentSize(),
+        )
     }
 }
