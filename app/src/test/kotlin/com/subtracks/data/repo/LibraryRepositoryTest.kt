@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Song
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.source.StarType
@@ -25,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -42,7 +44,7 @@ class LibraryRepositoryTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
+        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         repository = LibraryRepository(db, sourceRepository, showMessage = { messages += it })
     }
 

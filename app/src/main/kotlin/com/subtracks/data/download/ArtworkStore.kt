@@ -1,0 +1,81 @@
+package com.subtracks.data.download
+
+import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.IOException
+import java.util.Base64
+
+/**
+ * Cover art downloaded alongside the media, stored per source under `downloads/<sourceId>/art`.
+ *
+ * Cover art ids come from the server, so keys are base64url encoded rather than used as file
+ * names: a key can contain separators or spaces and must never reach outside the art directory.
+ */
+class ArtworkStore(
+    private val downloadsDir: File,
+) {
+    fun file(
+        sourceId: Long,
+        cacheKey: String,
+    ): File = artDir(sourceId).resolve(fileName(cacheKey))
+
+    fun uri(
+        sourceId: Long,
+        cacheKey: String,
+    ): String? = file(sourceId, cacheKey).takeIf { it.exists() }?.let { Uri.fromFile(it).toString() }
+
+    fun write(
+        sourceId: Long,
+        cacheKey: String,
+        bytes: ByteArray,
+    ): Boolean {
+        val target = file(sourceId, cacheKey)
+        return runCatching {
+            target.parentFile?.mkdirs()
+            val partial = File(target.parentFile, target.name + PARTIAL_SUFFIX)
+            partial.writeBytes(bytes)
+            partial.renameTo(target)
+        }.getOrDefault(false)
+    }
+
+    fun sweep(
+        sourceId: Long,
+        keep: Set<String>,
+    ) {
+        val keepNames = keep.mapTo(HashSet(), ::fileName)
+        artDir(sourceId).listFiles().orEmpty().forEach { file ->
+            if (file.isFile && file.name !in keepNames) file.delete()
+        }
+    }
+
+    private fun artDir(sourceId: Long): File = downloadsDir.resolve(sourceId.toString()).resolve(ART_DIR)
+
+    private fun fileName(cacheKey: String): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(cacheKey.toByteArray(Charsets.UTF_8))
+
+    private companion object {
+        const val ART_DIR = "art"
+        const val PARTIAL_SUFFIX = ".part"
+    }
+}
+
+fun interface ArtworkFetcher {
+    suspend fun fetch(url: String): ByteArray
+}
+
+class OkHttpArtworkFetcher(
+    private val http: OkHttpClient,
+) : ArtworkFetcher {
+    override suspend fun fetch(url: String): ByteArray =
+        withContext(Dispatchers.IO) {
+            val request = Request.Builder().url(url).build()
+            http.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("Artwork request failed with ${response.code}")
+                response.body?.bytes() ?: throw IOException("Artwork response had no body")
+            }
+        }
+}

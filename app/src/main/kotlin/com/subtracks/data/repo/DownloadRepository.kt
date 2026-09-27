@@ -2,12 +2,15 @@ package com.subtracks.data.repo
 
 import android.net.Uri
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkFetcher
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.SongDownload
+import com.subtracks.data.model.coverArtKey
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 
 class DownloadRepository(
@@ -34,6 +38,8 @@ class DownloadRepository(
     private val sourceRepository: SourceRepository,
     private val engine: DownloadEngine,
     private val downloadsDir: File,
+    private val artworkStore: ArtworkStore,
+    private val artworkFetcher: ArtworkFetcher,
     private val showMessage: (String) -> Unit = {},
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -84,19 +90,23 @@ class DownloadRepository(
         sourceId: Long,
         songId: String,
     ) = withContext(dispatcher) {
+        if (sourceRepository.activeSourceIdOnce() != sourceId) {
+            showMessage(NOT_ACTIVE)
+            return@withContext
+        }
+        if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withContext
+        if (sourceRepository.downloadUri(sourceId, songId) == null) {
+            showMessage(NO_ADDRESS)
+            return@withContext
+        }
+        // Artwork runs in our process and is fetched while the app is in the foreground; the
+        // media itself is handed to the platform, which keeps going without us.
+        runCatching { withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) } }
         mutex.withLock {
-            if (sourceRepository.activeSourceIdOnce() != sourceId) {
-                showMessage("Can't download from a source that isn't active")
-                return@withLock
-            }
+            if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withLock
             val existing = db.downloadDao().find(sourceId, songId)
-            if (existing != null && existing.status != DownloadStatus.Failed) return@withLock
             existing?.engineId?.let(engine::cancel)
-            val url = sourceRepository.downloadUri(sourceId, songId)
-            if (url == null) {
-                showMessage(NO_ADDRESS)
-                return@withLock
-            }
+            val url = sourceRepository.downloadUri(sourceId, songId) ?: return@withLock
             enqueue(sourceId, songId, url)
         }
     }
@@ -110,6 +120,7 @@ class DownloadRepository(
             row.engineId?.let(engine::cancel)
             file(sourceId, songId).delete()
             db.downloadDao().delete(sourceId, songId)
+            sweep(db.downloadDao().all())
         }
     }
 
@@ -143,6 +154,57 @@ class DownloadRepository(
             .activeSourceId()
             .flatMapLatest { sourceId -> if (sourceId == null) flowOf(emptyList()) else db.downloadDao().downloads(sourceId) }
             .map { rows -> rows.associateBy { it.songId } }
+
+    private suspend fun alreadyDownloadingOrDownloaded(
+        sourceId: Long,
+        songId: String,
+    ): Boolean =
+        db
+            .downloadDao()
+            .find(sourceId, songId)
+            ?.status
+            ?.let { it != DownloadStatus.Failed } == true
+
+    private suspend fun fetchArtwork(
+        sourceId: Long,
+        songId: String,
+    ) {
+        val song = db.libraryDao().songOnce(sourceId, songId)
+        val coverArt =
+            listOfNotNull(
+                song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it)?.coverArt },
+                song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it)?.coverArt },
+            ).distinct()
+        coverArt.forEach { cover ->
+            storeArtwork(sourceId, cover, thumbnail = false)
+            storeArtwork(sourceId, cover, thumbnail = true)
+        }
+    }
+
+    private suspend fun storeArtwork(
+        sourceId: Long,
+        coverArt: String,
+        thumbnail: Boolean,
+    ) {
+        val cacheKey = coverArtKey(sourceId, coverArt, thumbnail)
+        if (artworkStore.file(sourceId, cacheKey).exists()) return
+        val url = sourceRepository.networkCoverArt(sourceId, coverArt, thumbnail) ?: return
+        val bytes = runCatching { artworkFetcher.fetch(url) }.getOrNull() ?: return
+        if (bytes.isEmpty()) return
+        artworkStore.write(sourceId, cacheKey, bytes)
+    }
+
+    private suspend fun neededArtwork(): Map<Long, Set<String>> =
+        db
+            .downloadDao()
+            .artwork()
+            .groupBy { it.sourceId }
+            .mapValues { (sourceId, rows) ->
+                rows
+                    .flatMap { row -> listOfNotNull(row.albumCoverArt, row.artistCoverArt) }
+                    .flatMap { cover -> listOf(false, true).map { thumbnail -> coverArtKey(sourceId, cover, thumbnail) } }
+                    .toSet()
+            }
 
     private suspend fun enqueue(
         sourceId: Long,
@@ -234,13 +296,14 @@ class DownloadRepository(
             }
     }
 
-    private fun sweep(rows: List<SongDownload>) {
-        val known = rows.map { it.sourceId to it.songId }.toHashSet()
-        // Artwork (a later block) lives in subdirectories and is swept separately.
+    private suspend fun sweep(rows: List<SongDownload>) {
+        val knownSongs = rows.map { it.sourceId to it.songId }.toHashSet()
+        val knownArt = neededArtwork()
         downloadsDir.listFiles().orEmpty().filter { it.isDirectory }.forEach { sourceDir ->
             val sourceId = sourceDir.name.toLongOrNull() ?: return@forEach
+            artworkStore.sweep(sourceId, knownArt[sourceId].orEmpty())
             sourceDir.listFiles().orEmpty().filter { it.isFile }.forEach { file ->
-                if ((sourceId to file.name) !in known) file.delete()
+                if ((sourceId to file.name) !in knownSongs) file.delete()
             }
         }
     }
@@ -267,5 +330,7 @@ class DownloadRepository(
         const val MISSING_FILE = "The downloaded file is missing"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val STOPPED = "The download stopped unexpectedly"
+        const val NOT_ACTIVE = "Can't download from a source that isn't active"
+        const val ART_TIMEOUT_MS = 10_000L
     }
 }

@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
@@ -19,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class SyncManagerTest {
@@ -35,7 +37,7 @@ class SyncManagerTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
+        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queueRepository = QueueRepository(db)
         manager = SyncManager(db, sourceRepository, queueRepository)
     }

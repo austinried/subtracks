@@ -6,6 +6,9 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
+import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -22,11 +25,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class SourceRepositoryTest {
     private lateinit var db: SubtracksDatabase
     private lateinit var repository: SourceRepository
+    private lateinit var artwork: ArtworkStore
     private val messages = ArrayList<String>()
 
     @Before
@@ -37,7 +42,8 @@ class SourceRepositoryTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        repository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), showMessage = { messages += it })
+        artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
+        repository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork, showMessage = { messages += it })
     }
 
     @After
@@ -93,6 +99,41 @@ class SourceRepositoryTest {
                 assertTrue(repository.ping(server.url("/").toString(), "u", "s3cret", true).getOrThrow())
                 assertFalse(repository.ping(server.url("/").toString(), "u", "s3cret", false).getOrThrow())
             }
+        }
+
+    @Test
+    fun downloadedArtworkIsPreferredOverTheServer() =
+        runBlocking {
+            repository.addSource("server", "http://a.example/", "u", "p", true)
+            val sourceId = awaitActiveSourceId()
+            artwork.write(sourceId, coverArtKey(sourceId, "art-1", false), byteArrayOf(1, 2, 3))
+
+            val ref = awaitCoverArt("art-1")
+
+            assertTrue("expected the stored file, was ${ref.url}", ref.url.startsWith("file:"))
+            assertEquals(coverArtKey(sourceId, "art-1", false), ref.cacheKey)
+        }
+
+    @Test
+    fun coverArtFallsBackToTheServerWithoutDownloadedArtwork() =
+        runBlocking {
+            repository.addSource("server", "http://a.example/", "u", "p", true)
+
+            val ref = awaitCoverArt("art-1")
+
+            assertTrue("expected the server url, was ${ref.url}", ref.url.startsWith("http"))
+        }
+
+    private suspend fun awaitActiveSourceId(): Long = withTimeout(5_000) { repository.activeSourceId().first { it != null }!! }
+
+    private suspend fun awaitCoverArt(coverArt: String): CoverArtRef =
+        withTimeout(5_000) {
+            var ref = repository.coverArt(coverArt)
+            while (ref == null) {
+                delay(10)
+                ref = repository.coverArt(coverArt)
+            }
+            ref
         }
 
     private suspend fun withServer(block: suspend (MockWebServer) -> Unit) {

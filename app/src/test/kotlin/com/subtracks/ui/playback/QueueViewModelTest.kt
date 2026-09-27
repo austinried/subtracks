@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
@@ -55,9 +56,18 @@ class QueueViewModelTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        val sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences())
+        val sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queues = QueueRepository(db)
-        val downloads = DownloadRepository(db, sources, FakeDownloadEngine(), File(context.cacheDir, "downloads"))
+        val artwork = ArtworkStore(File(context.cacheDir, "art"))
+        val downloads =
+            DownloadRepository(
+                db,
+                sources,
+                FakeDownloadEngine(),
+                File(context.cacheDir, "downloads"),
+                artworkStore = artwork,
+                artworkFetcher = { ByteArray(0) },
+            )
         controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), downloads, dispatcher = dispatcher)
         viewModel = QueueViewModel(queues, controller)
     }

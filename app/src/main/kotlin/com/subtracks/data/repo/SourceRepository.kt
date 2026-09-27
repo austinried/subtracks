@@ -1,10 +1,12 @@
 package com.subtracks.data.repo
 
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicConfig
 import com.subtracks.data.model.SubsonicSource
+import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
@@ -31,6 +33,7 @@ class SourceRepository(
     private val db: SubtracksDatabase,
     private val http: OkHttpClient,
     private val prefs: UserPreferences,
+    private val artworkStore: ArtworkStore,
     networkMode: Flow<NetworkMode> = flowOf(NetworkMode.Wifi),
     private val showMessage: (String) -> Unit = {},
 ) {
@@ -81,10 +84,19 @@ class SourceRepository(
         coverArt: String?,
         thumbnail: Boolean = false,
     ): CoverArtRef? {
-        val source = active ?: return null
-        val url = source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
-        return CoverArtRef(url = url, cacheKey = "${source.id}:$coverArt:$thumbnail")
+        val sourceId = activeSourceId ?: return null
+        if (coverArt == null) return null
+        val cacheKey = coverArtKey(sourceId, coverArt, thumbnail)
+        artworkStore.uri(sourceId, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
+        val url = active?.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
+        return CoverArtRef(url = url, cacheKey = cacheKey)
     }
+
+    fun networkCoverArt(
+        sourceId: Long,
+        coverArt: String,
+        thumbnail: Boolean,
+    ): String? = if (activeSourceId == sourceId) active?.coverArtUri(coverArt, thumbnail)?.toString() else null
 
     fun streamUri(
         songId: String,

@@ -3,6 +3,7 @@ package com.subtracks.data.db
 import androidx.room3.Dao
 import androidx.room3.Query
 import androidx.room3.Upsert
+import com.subtracks.data.model.DownloadArtwork
 import com.subtracks.data.model.SongDownload
 import kotlinx.coroutines.flow.Flow
 
@@ -13,6 +14,15 @@ interface DownloadDao {
 
     @Query("SELECT * FROM song_downloads")
     suspend fun all(): List<SongDownload>
+
+    @Query(
+        "SELECT d.sourceId AS sourceId, al.coverArt AS albumCoverArt, ar.coverArt AS artistCoverArt " +
+            "FROM song_downloads d " +
+            "LEFT JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
+            "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +
+            "LEFT JOIN artists ar ON ar.sourceId = s.sourceId AND ar.id = s.artistId",
+    )
+    suspend fun artwork(): List<DownloadArtwork>
 
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId AND songId = :songId")
     suspend fun find(

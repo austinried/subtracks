@@ -6,7 +6,10 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import com.subtracks.data.db.createAndroidDatabase
+import com.subtracks.data.download.ArtworkFetcher
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.DownloadEngine
+import com.subtracks.data.download.OkHttpArtworkFetcher
 import com.subtracks.data.download.SystemDownloadEngine
 import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.createUserPreferences
@@ -44,18 +47,22 @@ fun appModule(
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single { SourceRepository(get(), get(), get(), networkMode = networkMode(context.applicationContext), showMessage = toast) }
+    single { SourceRepository(get(), get(), get(), get(), networkMode = networkMode(context.applicationContext), showMessage = toast) }
     single { LibraryRepository(get(), get(), toast) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }
+    single { ArtworkStore(downloadsRoot(context)) }
+    single<ArtworkFetcher> { OkHttpArtworkFetcher(get()) }
     single<DownloadEngine> { SystemDownloadEngine(context.applicationContext) }
     single {
         DownloadRepository(
             db = get(),
             sourceRepository = get(),
             engine = get(),
-            downloadsDir = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: context.filesDir, "downloads"),
+            downloadsDir = downloadsRoot(context),
+            artworkStore = get(),
+            artworkFetcher = get(),
             showMessage = toast,
         ).also { it.start() }
     }
@@ -70,3 +77,6 @@ fun appModule(
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { QueueViewModel(get(), get()) }
 }
+
+private fun downloadsRoot(context: Context): File =
+    File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: context.filesDir, "downloads")

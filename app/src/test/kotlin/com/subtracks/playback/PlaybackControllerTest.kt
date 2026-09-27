@@ -7,6 +7,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.QueueEntry
@@ -64,9 +65,17 @@ class PlaybackControllerTest {
                 .build()
         prefs = fakeUserPreferences()
         networkMode = MutableStateFlow(NetworkMode.Wifi)
-        sources = SourceRepository(db, OkHttpClient(), prefs, networkMode = networkMode)
+        sources = SourceRepository(db, OkHttpClient(), prefs, ArtworkStore(File(context.cacheDir, "art")), networkMode = networkMode)
         queues = QueueRepository(db)
-        downloads = DownloadRepository(db, sources, FakeDownloadEngine(), File(context.cacheDir, "downloads"))
+        downloads =
+            DownloadRepository(
+                db,
+                sources,
+                FakeDownloadEngine(),
+                File(context.cacheDir, "downloads"),
+                artworkStore = ArtworkStore(File(context.cacheDir, "art")),
+                artworkFetcher = { ByteArray(0) },
+            )
         handle = FakePlayerHandle()
         controller =
             PlaybackController(

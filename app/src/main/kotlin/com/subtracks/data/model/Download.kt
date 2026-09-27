@@ -40,6 +40,12 @@ data class SongDownload(
         get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
 }
 
+data class DownloadArtwork(
+    val sourceId: Long,
+    val albumCoverArt: String?,
+    val artistCoverArt: String?,
+)
+
 class DownloadStatusConverter {
     @ColumnTypeConverter
     fun fromDownloadStatus(status: DownloadStatus): String = status.name
