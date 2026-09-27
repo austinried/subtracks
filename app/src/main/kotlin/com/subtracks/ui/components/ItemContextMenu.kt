@@ -360,4 +360,4 @@ private fun starIcon(starred: Long?): ImageVector = if (starred == null) Icons.R
 
 private fun starLabel(starred: Long?): String = if (starred == null) "Star" else "Unstar"
 
-private const val STAR_DISMISS_DELAY_MS = 400L
+private const val STAR_DISMISS_DELAY_MS = 200L
