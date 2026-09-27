@@ -246,14 +246,13 @@ fun HeroHeader(
         )
         val subtitleIsTarget = onSubtitleClick != null && subtitle.isNotEmpty() && comment.isNullOrBlank()
         if (subtitleIsTarget) {
-            // The target spans the 4dp lead-in and the 20dp gap that would sit below the
-            // line, so the text stays put and the row clears 48dp; without those the
-            // subtitle alone is a single 20dp line.
+            // The line plus the 4dp lead-in above and 8dp below: shorter than the 48dp
+            // recommendation, deliberately, so it stays 12dp clear of the controls rather
+            // than reaching down to them. Hugs the text instead of the row.
             Box(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
+                        .heightIn(min = 32.dp)
                         .clickable(onClickLabel = "Open artist") { onSubtitleClick?.invoke() },
                 contentAlignment = Alignment.TopCenter,
             ) {
@@ -267,7 +266,7 @@ fun HeroHeader(
             Spacer(Modifier.height(4.dp))
             HeroSubtitle(comment)
         }
-        if (!subtitleIsTarget) Spacer(Modifier.height(20.dp))
+        if (!subtitleIsTarget) Spacer(Modifier.height(20.dp)) else Spacer(Modifier.height(12.dp))
         Row(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

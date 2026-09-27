@@ -2,11 +2,13 @@ package com.subtracks.ui.playback
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -92,8 +94,29 @@ class NowPlayingTapsTest {
     fun theArtistTargetIsAtLeastTheMinimumTouchSize() {
         render(onArtistClick = {})
 
+        // The block is the title line (32dp) plus the gap (6dp) plus the artist line
+        // (20dp); it must not absorb the slider's own top padding.
         composeRule.onNodeWithText("Radiohead").assertHeightIsAtLeast(48.dp)
+        composeRule.onNodeWithText("Radiohead").assertHeightIsEqualTo(58.dp)
         composeRule.onNodeWithText("Radiohead").assertWidthIsAtLeast(48.dp)
+    }
+
+    @Test
+    fun theArtistTargetHugsTheTextRatherThanTheRow() {
+        render(onArtistClick = {})
+
+        val target =
+            composeRule
+                .onNodeWithText("Radiohead")
+                .fetchSemanticsNode()
+                .boundsInRoot.width
+        val screen =
+            composeRule
+                .onRoot()
+                .fetchSemanticsNode()
+                .boundsInRoot.width
+
+        assertTrue("the target should not span the row", target < screen)
     }
 
     @Test

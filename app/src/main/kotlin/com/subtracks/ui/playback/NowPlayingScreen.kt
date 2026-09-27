@@ -293,7 +293,6 @@ fun NowPlayingScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
-                                    .fillMaxWidth()
                                     .padding(top = 12.dp)
                                     .height(titleHeight + 6.dp + subtitleHeight)
                                     .clickable(

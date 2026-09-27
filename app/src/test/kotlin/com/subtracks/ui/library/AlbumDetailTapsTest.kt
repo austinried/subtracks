@@ -7,7 +7,9 @@ import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -68,10 +70,39 @@ class AlbumDetailTapsTest {
     }
 
     @Test
-    fun theArtistTargetIsAtLeastTheMinimumTouchSize() {
+    fun theArtistTargetCoversTheLineAndItsGaps() {
         render(onArtistClick = {})
 
-        composeRule.onNodeWithText("Radiohead \u00B7 2000").assertHeightIsAtLeast(48.dp)
+        composeRule.onNodeWithText("Radiohead \u00B7 2000").assertHeightIsAtLeast(32.dp)
+    }
+
+    @Test
+    fun theArtistTargetHugsTheTextRatherThanTheRow() {
+        render(onArtistClick = {})
+
+        val target =
+            composeRule
+                .onNodeWithText("Radiohead \u00B7 2000")
+                .fetchSemanticsNode()
+                .boundsInRoot.width
+        val screen =
+            composeRule
+                .onRoot()
+                .fetchSemanticsNode()
+                .boundsInRoot.width
+
+        assertTrue("the target should not span the row", target < screen)
+    }
+
+    @Test
+    fun theArtistTargetKeepsClearOfTheControls() {
+        render(onArtistClick = {})
+
+        val target = composeRule.onNodeWithText("Radiohead \u00B7 2000").fetchSemanticsNode().boundsInRoot
+        val controls = composeRule.onNodeWithContentDescription("Download").fetchSemanticsNode().boundsInRoot
+        val gap = controls.top - target.bottom
+
+        assertTrue("expected a clear gap above the controls, was ${gap}px", gap >= with(composeRule.density) { 12.dp.roundToPx() })
     }
 
     @Test
