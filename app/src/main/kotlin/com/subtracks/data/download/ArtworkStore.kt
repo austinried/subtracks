@@ -8,6 +8,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.Base64
+import java.util.concurrent.TimeUnit
 
 /**
  * Cover art downloaded alongside the media, stored per source under `downloads/<sourceId>/art`.
@@ -68,8 +69,12 @@ fun interface ArtworkFetcher {
 }
 
 class OkHttpArtworkFetcher(
-    private val http: OkHttpClient,
+    http: OkHttpClient,
 ) : ArtworkFetcher {
+    // A blocking OkHttp call is not interrupted when the coroutine around it is cancelled, so the
+    // per-call timeout is what actually bounds a stuck artwork request.
+    private val http = http.newBuilder().callTimeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS).build()
+
     override suspend fun fetch(url: String): ByteArray =
         withContext(Dispatchers.IO) {
             val request = Request.Builder().url(url).build()
@@ -78,4 +83,8 @@ class OkHttpArtworkFetcher(
                 response.body?.bytes() ?: throw IOException("Artwork response had no body")
             }
         }
+
+    private companion object {
+        const val CALL_TIMEOUT_SECONDS = 15L
+    }
 }

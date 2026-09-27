@@ -99,17 +99,24 @@ class DownloadRepository(
             showMessage(NO_ADDRESS)
             return@withContext
         }
-        // Artwork runs in our process and is fetched while the app is in the foreground; the
-        // media itself is handed to the platform, which keeps going without us.
-        runCatching { withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) } }
+        if (!enqueueIfAbsent(sourceId, songId)) return@withContext
+        // The media is already with the platform, so this only has to happen while we are still
+        // in the foreground: artwork is fetched by us, and it must not hold up the download.
+        fetchArtworkSafely(sourceId, songId)
+    }
+
+    private suspend fun enqueueIfAbsent(
+        sourceId: Long,
+        songId: String,
+    ): Boolean =
         mutex.withLock {
-            if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withLock
+            if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withLock false
             val existing = db.downloadDao().find(sourceId, songId)
             existing?.engineId?.let(engine::cancel)
-            val url = sourceRepository.downloadUri(sourceId, songId) ?: return@withLock
+            val url = sourceRepository.downloadUri(sourceId, songId) ?: return@withLock false
             enqueue(sourceId, songId, url)
+            true
         }
-    }
 
     suspend fun remove(
         sourceId: Long,
@@ -139,14 +146,14 @@ class DownloadRepository(
 
     suspend fun reconcile() =
         withContext(dispatcher) {
-            mutex.withLock {
-                db.downloadDao().all().forEach { row ->
-                    val state = row.engineId?.let(engine::download)
-                    if (state == null) recover(row) else apply(row, state)
+            val resumed =
+                mutex.withLock {
+                    val resumed = reconcileRows(db.downloadDao().all())
+                    sweep(db.downloadDao().all())
+                    ensurePolling()
+                    resumed
                 }
-                sweep(db.downloadDao().all())
-                ensurePolling()
-            }
+            resumed.forEach { fetchArtworkSafely(it.sourceId, it.songId) }
         }
 
     private fun downloadStates(): Flow<Map<String, SongDownload>> =
@@ -224,26 +231,48 @@ class DownloadRepository(
         ensurePolling()
     }
 
-    private suspend fun recover(row: SongDownload) {
+    private suspend fun recover(row: SongDownload): Boolean =
         when (row.status) {
             DownloadStatus.Completed -> {
                 if (!file(row.sourceId, row.songId).exists()) markFailed(row, MISSING_FILE)
+                false
             }
 
             DownloadStatus.Queued -> {
-                if (sourceRepository.activeSourceIdOnce() != row.sourceId) return
-                val url = sourceRepository.downloadUri(row.sourceId, row.songId) ?: return
+                if (sourceRepository.activeSourceIdOnce() != row.sourceId) return false
+                val url = sourceRepository.downloadUri(row.sourceId, row.songId) ?: return false
                 enqueue(row.sourceId, row.songId, url)
+                true
             }
 
             DownloadStatus.Running -> {
                 markFailed(row, STOPPED)
+                false
             }
 
             DownloadStatus.Failed -> {
-                Unit
+                false
             }
         }
+
+    private suspend fun reconcileRows(rows: List<SongDownload>): List<SongDownload> {
+        val resumed = ArrayList<SongDownload>()
+        rows.forEach { row ->
+            val state = row.engineId?.let(engine::download)
+            if (state == null) {
+                if (recover(row)) resumed += row
+            } else {
+                apply(row, state)
+            }
+        }
+        return resumed
+    }
+
+    private suspend fun fetchArtworkSafely(
+        sourceId: Long,
+        songId: String,
+    ) {
+        runCatching { withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) } }
     }
 
     private suspend fun apply(
@@ -283,15 +312,14 @@ class DownloadRepository(
             scope.launch {
                 while (true) {
                     delay(POLL_MS)
-                    mutex.withLock {
-                        val sourceId = sourceRepository.activeSourceIdOnce()
-                        val active = db.downloadDao().all().filter { it.status.isActive && it.sourceId == sourceId }
-                        if (active.isEmpty()) return@launch
-                        active.forEach { row ->
-                            val state = row.engineId?.let(engine::download)
-                            if (state == null) recover(row) else apply(row, state)
+                    val resumed =
+                        mutex.withLock {
+                            val sourceId = sourceRepository.activeSourceIdOnce()
+                            val active = db.downloadDao().all().filter { it.status.isActive && it.sourceId == sourceId }
+                            if (active.isEmpty()) return@launch
+                            reconcileRows(active)
                         }
-                    }
+                    resumed.forEach { fetchArtworkSafely(it.sourceId, it.songId) }
                 }
             }
     }
@@ -331,6 +359,6 @@ class DownloadRepository(
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val STOPPED = "The download stopped unexpectedly"
         const val NOT_ACTIVE = "Can't download from a source that isn't active"
-        const val ART_TIMEOUT_MS = 10_000L
+        const val ART_TIMEOUT_MS = 60_000L
     }
 }

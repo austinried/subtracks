@@ -46,10 +46,12 @@ class DownloadRepositoryTest {
     private lateinit var dir: File
     private val messages = CopyOnWriteArrayList<String>()
     private val requestedArt = CopyOnWriteArrayList<String>()
+    private val artFetchedAfterTheEngineRequest = CopyOnWriteArrayList<Boolean>()
     private var failArtworkFetch = false
     private val fetcher =
         ArtworkFetcher { url ->
             requestedArt += url
+            artFetchedAfterTheEngineRequest += engine.requests.isNotEmpty()
             if (failArtworkFetch) throw IOException("boom")
             byteArrayOf(1, 2, 3)
         }
@@ -310,6 +312,29 @@ class DownloadRepositoryTest {
                     assertNotNull("expected stored art for $key", artwork.uri(1, key))
                 }
             }
+        }
+
+    @Test
+    fun theDownloadStartsBeforeItsArtworkIsFetched() =
+        runTest {
+            seedLibrary()
+
+            runBlocking { repository.download(1, "s1") }
+
+            assertTrue(artFetchedAfterTheEngineRequest.isNotEmpty())
+            assertTrue(artFetchedAfterTheEngineRequest.all { it })
+        }
+
+    @Test
+    fun resumingAQueuedDownloadAlsoStoresItsArtwork() =
+        runTest {
+            seedLibrary()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Queued, engineId = 7))
+
+            runBlocking { repository.reconcile() }
+
+            assertEquals(1, engine.requests.size)
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
         }
 
     @Test
