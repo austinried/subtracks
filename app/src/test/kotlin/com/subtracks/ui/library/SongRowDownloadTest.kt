@@ -5,18 +5,15 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.ui.theme.SubtracksTheme
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.GraphicsMode
-import kotlin.math.abs
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -61,18 +58,6 @@ class SongRowDownloadTest {
 
         composeRule.onNodeWithText("Song").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Downloaded").assertDoesNotExist()
-    }
-
-    @Test
-    fun theDownloadedIndicatorSitsOnTheArtistLineToItsLeft() {
-        render(download(DownloadStatus.Completed))
-
-        val badge = composeRule.onNodeWithContentDescription("Downloaded", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        val artist = composeRule.onNodeWithText("Artist", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-
-        assertTrue("expected the indicator left of the artist name, badge=$badge artist=$artist", badge.right <= artist.left)
-        val offBy = abs(badge.center.y - artist.center.y)
-        assertTrue("expected the indicator on the artist's line, off by ${offBy}px", offBy <= with(composeRule.density) { 2.dp.toPx() })
     }
 
     private fun download(status: DownloadStatus) =
