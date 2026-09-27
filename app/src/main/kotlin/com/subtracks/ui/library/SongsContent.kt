@@ -216,7 +216,7 @@ private fun PlayIndicator(
     shadow: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val tint = MaterialTheme.colorScheme.primary
+    val tint = Color.White
     if (shadow) {
         val radius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
         Canvas(modifier.semantics { contentDescription = "Playing" }) {
