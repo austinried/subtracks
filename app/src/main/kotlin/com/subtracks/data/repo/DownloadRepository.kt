@@ -119,7 +119,7 @@ class DownloadRepository(
     ): Boolean {
         if (alreadyDownloadingOrDownloaded(sourceId, songId)) return false
         val existing = db.downloadDao().find(sourceId, songId)
-        existing?.engineId?.let(engine::cancel)
+        existing?.engineId?.let { engine.cancel(listOf(it)) }
         dir(sourceId).mkdirs()
         file(sourceId, songId).delete()
         db.downloadDao().upsert(SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued))
@@ -251,10 +251,7 @@ class DownloadRepository(
         list: DownloadList,
         refId: String,
     ) = withContext(dispatcher) {
-        mutex.withLock {
-            val removed = rowsFor(sourceId, list, refId).filter { it.status.isActive }.map { removeRow(sourceId, it.songId) }
-            if (removed.any { it }) sweep(db.downloadDao().all())
-        }
+        mutex.withLock { removeListRows(sourceId, list, refId) { it.status.isActive } }
     }
 
     suspend fun deleteAll(
@@ -262,13 +259,25 @@ class DownloadRepository(
         list: DownloadList,
         refId: String,
     ) = withContext(dispatcher) {
-        mutex.withLock {
-            val removed =
-                rowsFor(sourceId, list, refId)
-                    .filter { it.status == DownloadStatus.Completed }
-                    .map { removeRow(sourceId, it.songId) }
-            if (removed.any { it }) sweep(db.downloadDao().all())
-        }
+        mutex.withLock { removeListRows(sourceId, list, refId) { it.status == DownloadStatus.Completed } }
+    }
+
+    /**
+     * One binder call for the platform, one delete per chunk and one sweep, rather than a round of
+     * each per row: a playlist of thousands took seconds to cancel and left the button stale.
+     */
+    private suspend fun removeListRows(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+        selecting: (SongDownload) -> Boolean,
+    ) {
+        val rows = rowsFor(sourceId, list, refId).filter(selecting)
+        if (rows.isEmpty()) return
+        engine.cancel(rows.mapNotNull { it.engineId })
+        rows.forEach { file(sourceId, it.songId).delete() }
+        rows.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
+        sweep(db.downloadDao().all())
     }
 
     suspend fun removeSource(sourceId: Long) =
@@ -278,7 +287,8 @@ class DownloadRepository(
                     .downloadDao()
                     .all()
                     .filter { it.sourceId == sourceId }
-                    .forEach { row -> row.engineId?.let(engine::cancel) }
+                    .mapNotNull { it.engineId }
+                    .let(engine::cancel)
                 db.downloadDao().deleteSource(sourceId)
                 dir(sourceId).deleteRecursively()
             }
@@ -407,7 +417,7 @@ class DownloadRepository(
         songId: String,
     ): Boolean {
         val row = db.downloadDao().find(sourceId, songId) ?: return false
-        row.engineId?.let(engine::cancel)
+        row.engineId?.let { engine.cancel(listOf(it)) }
         file(sourceId, songId).delete()
         db.downloadDao().delete(sourceId, songId)
         return true
@@ -478,7 +488,7 @@ class DownloadRepository(
         row: SongDownload,
         message: String,
     ) {
-        row.engineId?.let(engine::cancel)
+        row.engineId?.let { engine.cancel(listOf(it)) }
         file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = message))
     }
@@ -542,6 +552,7 @@ class DownloadRepository(
         const val NO_MEDIA = ".nomedia"
         const val POLL_MS = 1_000L
         const val IN_FLIGHT_LIMIT = 8
+        const val DELETE_CHUNK = 900
         const val MISSING_FILE = "The downloaded file is missing"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val EMPTY_LIST = "Nothing left to download from this list"

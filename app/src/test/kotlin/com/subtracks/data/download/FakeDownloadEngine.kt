@@ -6,6 +6,7 @@ class FakeDownloadEngine : DownloadEngine {
 
     val requests = mutableListOf<Pair<Long, EngineRequest>>()
     val cancelled = mutableListOf<Long>()
+    var cancelCalls = 0
     var enqueueDelayMs = 0L
     var failEnqueueFor: String? = null
 
@@ -21,8 +22,9 @@ class FakeDownloadEngine : DownloadEngine {
 
     override fun download(id: Long): EngineDownload? = downloads[id]
 
-    override fun cancel(id: Long) {
-        cancelled += id
+    override fun cancel(ids: List<Long>) {
+        cancelCalls++
+        cancelled += ids
     }
 
     fun running(

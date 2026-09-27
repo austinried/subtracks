@@ -20,5 +20,5 @@ interface DownloadEngine {
 
     fun download(id: Long): EngineDownload?
 
-    fun cancel(id: Long)
+    fun cancel(ids: List<Long>)
 }

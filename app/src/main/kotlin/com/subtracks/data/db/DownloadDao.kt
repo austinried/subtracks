@@ -83,6 +83,12 @@ interface DownloadDao {
         songId: String,
     )
 
+    @Query("DELETE FROM song_downloads WHERE sourceId = :sourceId AND songId IN (:songIds)")
+    suspend fun deleteSongs(
+        sourceId: Long,
+        songIds: Collection<String>,
+    )
+
     @Query("DELETE FROM song_downloads WHERE sourceId = :sourceId")
     suspend fun deleteSource(sourceId: Long)
 }

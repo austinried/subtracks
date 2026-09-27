@@ -40,8 +40,8 @@ class SystemDownloadEngine(
         }
     }
 
-    override fun cancel(id: Long) {
-        manager().remove(id)
+    override fun cancel(ids: List<Long>) {
+        manager().remove(*ids.toLongArray())
     }
 
     private fun manager(): DownloadManager = context.getSystemService(DownloadManager::class.java)

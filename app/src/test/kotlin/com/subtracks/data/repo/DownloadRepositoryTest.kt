@@ -670,6 +670,35 @@ class DownloadRepositoryTest {
             assertEquals(5L, repository.downloadedBytes(1, DownloadList.Artist, "ar1"))
         }
 
+    @Test
+    fun cancellingAListRemovesPartialFilesToo() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+            writeFile(1, "s1", "half")
+            writeFile(1, "s1.part", "half")
+            writeFile(1, "s2", "half")
+
+            runBlocking { repository.cancelAll(1, DownloadList.Album, "al1") }
+
+            assertFalse(file(1, "s1").exists())
+            assertFalse(File(file(1, "s1").parentFile, "s1.part").exists())
+            assertFalse(file(1, "s2").exists())
+        }
+
+    @Test
+    fun cancellingAListCancelsThePlatformOnce() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..40)
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            runBlocking { repository.cancelAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(1, engine.cancelCalls)
+            assertTrue(allRows().isEmpty())
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {
