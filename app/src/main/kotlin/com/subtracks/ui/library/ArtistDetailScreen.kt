@@ -331,7 +331,7 @@ fun ArtistDetailScreen(
                                 IconButton(
                                     onClick = { onToggleStar?.invoke() },
                                     enabled = onToggleStar != null,
-                                    modifier = Modifier.padding(top = 24.dp),
+                                    modifier = Modifier.padding(top = 14.dp),
                                 ) {
                                     Icon(
                                         imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
@@ -344,7 +344,7 @@ fun ArtistDetailScreen(
                                             },
                                     )
                                 }
-                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 24.dp)) {
+                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 14.dp)) {
                                     Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
                                 }
                             }
