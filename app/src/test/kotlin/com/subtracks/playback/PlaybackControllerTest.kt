@@ -519,7 +519,8 @@ class PlaybackControllerTest {
                 ?.id == "x1"
         }
 
-        assertEquals(1L, runBlocking { queues.cursor() })
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(runBlocking { queues.combinedIndexOf(snapshot, "x1") }, controller.state.value.position)
     }
 
     @Test
@@ -979,7 +980,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun removingThePlayingAnchorTrackPlaysTheModelNextTrack() {
+    fun removingThePlayingAnchorTrackPlaysTheQueuedTrackNext() {
         seedAlbum(4, sourceId = 1)
         seedSong("x1", "al2")
 
@@ -994,11 +995,11 @@ class PlaybackControllerTest {
         runBlocking { controller.removeAt(1) }
         await {
             controller.state.value.item
-                ?.id == "s3"
+                ?.id == "x1"
         }
 
         val snapshot = runBlocking { queues.snapshot() }
-        assertEquals(runBlocking { queues.combinedIndexOf(snapshot, "s3") }, controller.state.value.position)
+        assertEquals(runBlocking { queues.combinedIndexOf(snapshot, "x1") }, controller.state.value.position)
     }
 
     @Test

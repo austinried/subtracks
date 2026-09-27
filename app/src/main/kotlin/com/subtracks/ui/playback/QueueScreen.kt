@@ -332,19 +332,20 @@ fun QueueScreen(
     // One reorder state per run of rows: sh.calvin.reorderable only targets keys registered with
     // the state that started the drag, so a drag can never reach a row in another run. The context
     // sits on both sides of the up-next block, and splitting it there stops a context drag crossing
-    // the block (which would move a track over the queued songs and relocate the anchor). The
-    // up-next state disables auto-scroll (scrollThreshold 0): its block is followed by context
-    // rows the scroller would otherwise keep scrolling towards with nowhere to drop.
+    // the block (which would move a track over the queued songs and relocate the anchor).
+    // scrollThreshold 0 disables auto-scroll: the library keeps scrolling past a run's last valid
+    // target with nowhere to drop, and the dragged item can be left off-screen. Scroll to where
+    // you want to drop first, then drag.
     val upNextReorder =
         rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
     val contextBeforeReorder =
-        rememberReorderableLazyListState(listState) { from, to ->
+        rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
     val contextAfterReorder =
-        rememberReorderableLazyListState(listState) { from, to ->
+        rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
 

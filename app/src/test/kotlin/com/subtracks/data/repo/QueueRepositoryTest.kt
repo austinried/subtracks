@@ -466,6 +466,19 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun removingTheAnchorTrackPutsTheQueueFirst() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+
+            repository.removeAt(repository.snapshot(), 0)
+
+            assertEquals(listOf("s4", "s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
     fun removingTheLastAnchorTrackKeepsTheQueueResolvable() =
         runTest {
             seedLibrary()

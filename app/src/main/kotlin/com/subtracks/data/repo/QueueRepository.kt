@@ -61,7 +61,7 @@ data class QueueSnapshot(
         (
             when (val order = shuffleOrder) {
                 null -> upNextAnchor
-                else -> order.indexOf(upNextAnchor).takeIf { it >= 0 }?.toLong() ?: 0L
+                else -> if (upNextAnchor < 0L) -1L else order.indexOf(upNextAnchor).takeIf { it >= 0 }?.toLong() ?: 0L
             }
         ).coerceAtMost(contextSize - 1L)
 
@@ -411,33 +411,28 @@ class QueueRepository(
         if (order == null) {
             val removed = compact(removeEntry(snapshot.entries, play))
             write(removed.map { it.entry })
-            adjustAnchorOnRemove(play, removed.sumOf { it.length })
+            adjustAnchorOnRemove(play)
         } else {
             val flat = order.getOrNull(play.toInt()) ?: return snapshot
-            val removed = compact(removeEntry(snapshot.entries, flat))
-            write(removed.map { it.entry })
+            write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
             val reordered = order.toMutableList().apply { removeAt(play.toInt()) }
             for (index in reordered.indices) if (reordered[index] > flat) reordered[index] -= 1
             setShuffle(true, reordered.toLongArray())
-            adjustAnchorOnRemove(flat, removed.sumOf { it.length })
+            adjustAnchorOnRemove(flat)
         }
         return snapshot()
     }
 
-    private suspend fun adjustAnchorOnRemove(
-        removedFlat: Long,
-        newSize: Long,
-    ) = cursorMutex.withLock {
-        val row = cursorRow()
-        val anchor = row.upNextAnchor
-        val adjusted =
-            when {
-                anchor > removedFlat -> anchor - 1
-                anchor == removedFlat -> removedFlat.coerceIn(0, (newSize - 1).coerceAtLeast(0))
-                else -> anchor
-            }
-        if (adjusted != anchor) dao.setCursor(row.copy(upNextAnchor = adjusted))
-    }
+    private suspend fun adjustAnchorOnRemove(removedFlat: Long) =
+        cursorMutex.withLock {
+            val row = cursorRow()
+            val anchor = row.upNextAnchor
+            // Removing the track the block sits behind leaves the block next in line, so move the
+            // anchor back to the preceding track (or in front of the whole context, -1, when the
+            // anchor was the first track) rather than letting the following track play first.
+            val adjusted = if (anchor >= removedFlat) anchor - 1 else anchor
+            if (adjusted != anchor) dao.setCursor(row.copy(upNextAnchor = adjusted))
+        }
 
     private suspend fun adjustAnchorOnMove(
         flatFrom: Long,
