@@ -34,8 +34,13 @@ class SubsonicSource(
     private val maxBitrate: Int = 0,
     private val streamFormat: String? = null,
     private val maxPages: Int = MAX_PAGES,
+    private val maxConcurrentFetches: Int = MAX_CONCURRENT_FETCHES,
 ) : MusicSource {
     private var emptyQuerySearchSupported: Boolean? = null
+
+    init {
+        require(maxConcurrentFetches > 0) { "maxConcurrentFetches must be positive" }
+    }
 
     override suspend fun ping() {
         withContext(Dispatchers.IO) { client.check("ping") }
@@ -109,7 +114,7 @@ class SubsonicSource(
 
     override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> =
         channelFlow {
-            val permits = Semaphore(MAX_CONCURRENT_FETCHES)
+            val permits = Semaphore(maxConcurrentFetches)
             playlistIds.forEach { playlistId ->
                 launch {
                     permits.withPermit {
@@ -191,7 +196,7 @@ class SubsonicSource(
 
     private fun albumSongs(): Flow<List<Song>> =
         channelFlow {
-            val permits = Semaphore(MAX_CONCURRENT_FETCHES)
+            val permits = Semaphore(maxConcurrentFetches)
             var offset = 0
             var pages = 0
             while (true) {

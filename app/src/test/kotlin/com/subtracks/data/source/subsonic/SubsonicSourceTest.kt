@@ -1,5 +1,6 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.data.model.PlaylistSong
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -316,6 +317,123 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun playlistSongsFetchesSequentiallyWhenTheBoundIsOne() =
+        runBlocking {
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                        val current = inFlight.incrementAndGet()
+                        maxInFlight.updateAndGet { maxOf(it, current) }
+                        Thread.sleep(50)
+                        inFlight.decrementAndGet()
+                        return MockResponse().setBody(playlistResponse(url.queryParameter("id")!!))
+                    }
+                }
+
+            val entries =
+                SubsonicSource(1, client(), maxConcurrentFetches = 1)
+                    .playlistSongs(listOf("p1", "p2", "p3", "p4"))
+                    .toList()
+                    .flatten()
+
+            assertEquals(12, entries.size)
+            assertEquals(1, maxInFlight.get())
+        }
+
+    @Test
+    fun playlistSongsRespectsASmallerFetchBound() =
+        runBlocking {
+            val bound = 2
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
+            val moreThanBoundStarted = CountDownLatch(bound + 1)
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                        val current = inFlight.incrementAndGet()
+                        maxInFlight.updateAndGet { maxOf(it, current) }
+                        moreThanBoundStarted.countDown()
+                        moreThanBoundStarted.await(300, TimeUnit.MILLISECONDS)
+                        inFlight.decrementAndGet()
+                        return MockResponse().setBody(playlistResponse(url.queryParameter("id")!!))
+                    }
+                }
+
+            val entries =
+                SubsonicSource(1, client(), maxConcurrentFetches = bound)
+                    .playlistSongs(listOf("p1", "p2", "p3", "p4"))
+                    .toList()
+                    .flatten()
+
+            assertEquals(12, entries.size)
+            assertEquals(bound, maxInFlight.get())
+        }
+
+    @Test
+    fun playlistSongsUseTheSameRowsAtAnyFetchBound() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
+                        return MockResponse().setBody(playlistResponse(url.queryParameter("id")!!))
+                    }
+                }
+            val ids = listOf("p1", "p2", "p3", "p4")
+
+            val sequential = SubsonicSource(1, client(), maxConcurrentFetches = 1).playlistSongs(ids).toList().flatten()
+            val concurrent = SubsonicSource(1, client(), maxConcurrentFetches = 4).playlistSongs(ids).toList().flatten()
+
+            assertEquals(normalized(sequential), normalized(concurrent))
+        }
+
+    @Test
+    fun albumSongsFetchesSequentiallyWhenTheBoundIsOne() =
+        runBlocking {
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        return when {
+                            url.encodedPath == "/rest/search3.view" -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            url.encodedPath == "/rest/getAlbumList2.view" -> {
+                                MockResponse().setBody(albumListOf(4))
+                            }
+
+                            url.encodedPath == "/rest/getAlbum.view" -> {
+                                val current = inFlight.incrementAndGet()
+                                maxInFlight.updateAndGet { maxOf(it, current) }
+                                Thread.sleep(50)
+                                inFlight.decrementAndGet()
+                                MockResponse().setBody(albumWithSong(url.queryParameter("id")!!))
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                    }
+                }
+
+            val songs = SubsonicSource(1, client(), maxConcurrentFetches = 1).songs().toList().flatten()
+
+            assertEquals(4, songs.size)
+            assertEquals(1, maxInFlight.get())
+        }
+
+    @Test
     fun playlistSongsPropagatesFailuresFromAnyPlaylist() =
         runBlocking {
             server.dispatcher =
@@ -444,6 +562,26 @@ class SubsonicSourceTest {
             useTokenAuth = false,
             http = OkHttpClient(),
         )
+
+    private fun playlistResponse(playlistId: String) =
+        "<subsonic-response status=\"ok\"><playlist id=\"$playlistId\">" +
+            (1..3).joinToString("") { "<entry id=\"$playlistId-s$it\" title=\"Title $it\"/>" } +
+            "</playlist></subsonic-response>"
+
+    private fun normalized(entries: List<PlaylistSong>): List<PlaylistSong> =
+        entries.sortedWith(compareBy({ it.playlistId }, { it.position }))
+
+    private fun albumListOf(count: Int) =
+        "<subsonic-response status=\"ok\"><albumList2>" +
+            (0 until count).joinToString("") {
+                "<album id=\"al$it\" name=\"Album $it\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>"
+            } +
+            "</albumList2></subsonic-response>"
+
+    private fun albumWithSong(albumId: String) =
+        "<subsonic-response status=\"ok\"><album id=\"$albumId\">" +
+            "<song id=\"$albumId-s1\" title=\"One\"/>" +
+            "</album></subsonic-response>"
 
     private fun failed(
         code: Int,
