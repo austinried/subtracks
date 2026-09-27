@@ -6,6 +6,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
 import com.subtracks.data.repo.QueueWindowItem
+import com.subtracks.data.repo.Shuffle
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,7 +22,6 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 data class QueueItem(
@@ -59,7 +59,7 @@ private sealed interface QueueUndo {
     val entries: List<QueueEntry>
     val cursor: Long
     val current: Long?
-    val shuffleOrder: LongArray?
+    val shuffleSeed: Long?
     val upNext: List<QueueEntry>
     val upNextAnchor: Long
 }
@@ -70,7 +70,7 @@ private data class RemovedUndo(
     override val current: Long,
     val position: Long,
     val item: QueueItem?,
-    override val shuffleOrder: LongArray?,
+    override val shuffleSeed: Long?,
     override val upNext: List<QueueEntry>,
     override val upNextAnchor: Long,
 ) : QueueUndo
@@ -81,7 +81,7 @@ private data class MovedUndo(
     override val current: Long,
     val from: Long,
     val to: Long,
-    override val shuffleOrder: LongArray?,
+    override val shuffleSeed: Long?,
     override val upNext: List<QueueEntry>,
     override val upNextAnchor: Long,
 ) : QueueUndo
@@ -89,7 +89,7 @@ private data class MovedUndo(
 private data class ReloadUndo(
     override val entries: List<QueueEntry>,
     override val cursor: Long,
-    override val shuffleOrder: LongArray?,
+    override val shuffleSeed: Long?,
     override val upNext: List<QueueEntry>,
     override val upNextAnchor: Long,
 ) : QueueUndo {
@@ -253,14 +253,15 @@ class PlaybackController(
                 return@withLock
             }
             val start = randomIndex(snap.contextSize, avoid)
-            val order = withContext(Dispatchers.Default) { shuffledOrder(snap.contextSize, start) }
-            queueRepository.setShuffle(true, order)
+            val seed = Random.nextLong()
+            val position = Shuffle.toSequence(seed, snap.contextSize, start)
+            queueRepository.setShuffle(true, seed)
             shuffleEnabled = true
             queueSourceId = entry.sourceId
-            queueRepository.setCursor(0)
+            queueRepository.setCursor(position)
             snap = queueRepository.snapshot()
             this@PlaybackController.snapshot = snap
-            loadWindow(0, autoplay = true)
+            loadWindow(position, autoplay = true)
         }
 
     private fun randomIndex(
@@ -314,7 +315,7 @@ class PlaybackController(
             if (snapshot.size == 1L) {
                 queueRepository.removeAt(snapshot, position)
                 stopLocked()
-                lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 return@withLock
             }
             val current = currentPosition() ?: return@withLock
@@ -327,24 +328,40 @@ class PlaybackController(
             windowJob?.cancel()
             if (updated.size == 0L) {
                 stopLocked()
-                lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 return@withLock
             }
             val currentId = player.currentItem?.id
+            val fallback =
+                if (snapshot.shuffled && !wasUpNext) {
+                    // The permutation is re-derived at the smaller size, so there is no stable
+                    // "next"; play whatever now fills the removed track's slot.
+                    val seed = snapshot.shuffleSeed!!
+                    val removedFlat = snapshot.flatContext(snapshot.contextPlay(position)) ?: 0L
+                    val newContextSize = (snapshot.contextSize - 1).coerceAtLeast(0)
+                    if (newContextSize == 0L) {
+                        0L
+                    } else {
+                        val slot = removedFlat.coerceIn(0, newContextSize - 1)
+                        updated.combined(Shuffle.toSequence(seed, newContextSize, slot))
+                    }
+                } else {
+                    (if (position < current) current - 1 else current)
+                }
             val target =
                 (
                     currentId?.let {
                         if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
-                    } ?: (if (position < current) current - 1 else current)
+                    } ?: fallback
                 ).coerceIn(0, updated.size - 1)
             lastPosition = target
             lastEdit =
                 if (removed == null) {
-                    ReloadUndo(entries, cursor, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                    ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 } else {
-                    RemovedUndo(entries, cursor, target, position, removed, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                    RemovedUndo(entries, cursor, target, position, removed, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 }
-            if (snapshot.upNextSize > 0L || updated.upNextSize > 0L) {
+            if (snapshot.upNextSize > 0L || updated.upNextSize > 0L || snapshot.shuffled) {
                 queueRepository.setCursor(target)
                 if (position != current) {
                     rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
@@ -410,9 +427,9 @@ class PlaybackController(
         val toInWindow = to in windowStart..windowEnd
         lastEdit =
             if (fromInWindow == toInWindow) {
-                MovedUndo(entries, cursor, target, from, to, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                MovedUndo(entries, cursor, target, from, to, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
             } else {
-                ReloadUndo(entries, cursor, snapshot.shuffleOrder, upNext, snapshot.upNextAnchor)
+                ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
             }
         when {
             fromInWindow && toInWindow -> {
@@ -452,8 +469,8 @@ class PlaybackController(
             val player = player ?: return@withLock
             val playing = player.playWhenReady
             val positionMs = player.currentPositionMs
-            queueRepository.replace(undo.entries, undo.shuffleOrder, undo.upNext, undo.upNextAnchor)
-            shuffleEnabled = undo.shuffleOrder != null
+            queueRepository.replace(undo.entries, undo.shuffleSeed, undo.upNext, undo.upNextAnchor)
+            shuffleEnabled = undo.shuffleSeed != null
             val restored = readSnapshot()
             this.snapshot = restored
             lastEdit = null
@@ -702,11 +719,11 @@ class PlaybackController(
                 val flat = snapshot.flatContext(snapshot.anchorContextPlay(current)) ?: return@withLock
                 windowJob?.cancel()
                 val enabling = !shuffleEnabled
+                val seed = if (enabling) Random.nextLong() else 0L
                 if (enabling) {
-                    val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.contextSize, flat) }
-                    queueRepository.setShuffle(true, order)
+                    queueRepository.setShuffle(true, seed)
                 } else {
-                    queueRepository.setShuffle(false, null)
+                    queueRepository.setShuffle(false, 0L)
                 }
                 shuffleEnabled = enabling
                 val reordered = readSnapshot()
@@ -714,7 +731,7 @@ class PlaybackController(
                 val position =
                     when {
                         wasUpNext -> reordered.anchorPlay + 1 + blockIndex
-                        enabling -> reordered.combined(0)
+                        enabling -> reordered.combined(Shuffle.toSequence(seed, reordered.contextSize, flat))
                         else -> reordered.combined(flat)
                     }
                 val anchor = queueRepository.reanchorFor(reordered, position)
@@ -784,9 +801,9 @@ class PlaybackController(
         val start = startPosition.coerceIn(0, snapshot.contextSize - 1)
         val position =
             if (shuffleEnabled) {
-                val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.contextSize, start) }
-                queueRepository.setShuffle(true, order)
-                0L
+                val seed = Random.nextLong()
+                queueRepository.setShuffle(true, seed)
+                Shuffle.toSequence(seed, snapshot.contextSize, start)
             } else {
                 start
             }
@@ -808,9 +825,9 @@ class PlaybackController(
             var snapshot = queueRepository.snapshot()
             if (shuffleEnabled && !snapshot.shuffled && snapshot.contextSize > 0L) {
                 val start = snapshot.anchorContextPlay(queueRepository.cursor()).coerceIn(0, snapshot.contextSize - 1)
-                val order = withContext(Dispatchers.Default) { shuffledOrder(snapshot.contextSize, start) }
-                queueRepository.setShuffle(true, order)
-                queueRepository.setCursor(0)
+                val seed = Random.nextLong()
+                queueRepository.setShuffle(true, seed)
+                queueRepository.setCursor(Shuffle.toSequence(seed, snapshot.contextSize, start))
                 snapshot = queueRepository.snapshot()
             } else if (!snapshot.shuffled) {
                 shuffleEnabled = false
@@ -1072,20 +1089,12 @@ class PlaybackController(
         if (repeatMode == RepeatMode.All) jumpTo(0)
     }
 
-    private fun shuffledOrder(
-        size: Long,
-        first: Long,
-    ): LongArray {
-        val rest = (0 until size).filter { it != first }.shuffled()
-        return (listOf(first) + rest).toLongArray()
-    }
-
     private fun Int.toRepeatMode(): RepeatMode = RepeatMode.entries.getOrElse(this) { RepeatMode.Off }
 
     private suspend fun readSnapshot(): QueueSnapshot {
         val snapshot = queueRepository.snapshot()
         if (!snapshot.shuffled) {
-            if (shuffleEnabled && snapshot.size > 0L) queueRepository.setShuffle(false, null)
+            if (shuffleEnabled && snapshot.size > 0L) queueRepository.setShuffle(false, 0L)
             shuffleEnabled = false
         }
         return snapshot

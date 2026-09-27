@@ -8,7 +8,6 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
-import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.model.UpNextEntry
 import kotlinx.coroutines.flow.first
@@ -33,7 +32,7 @@ private data class EntryLengthKey(
 private data class LoadedSnapshot(
     val entries: List<ResolvedQueueEntry>,
     val upNext: List<ResolvedQueueEntry>,
-    val shuffleOrder: LongArray?,
+    val shuffleSeed: Long?,
     val anchor: Long,
 )
 
@@ -45,7 +44,7 @@ data class ResolvedQueueEntry(
 data class QueueSnapshot(
     val entries: List<ResolvedQueueEntry>,
     val upNext: List<ResolvedQueueEntry> = emptyList(),
-    val shuffleOrder: LongArray? = null,
+    val shuffleSeed: Long? = null,
     val upNextAnchor: Long = 0,
     val version: Long = 0,
 ) {
@@ -55,13 +54,14 @@ data class QueueSnapshot(
 
     val size: Long = contextSize + upNextSize
 
-    val shuffled: Boolean get() = shuffleOrder != null
+    val shuffled: Boolean get() = shuffleSeed != null
 
     val anchorPlay: Long =
         (
-            when (val order = shuffleOrder) {
-                null -> upNextAnchor
-                else -> if (upNextAnchor < 0L) -1L else order.indexOf(upNextAnchor).takeIf { it >= 0 }?.toLong() ?: 0L
+            when {
+                shuffleSeed == null -> upNextAnchor
+                upNextAnchor < 0L -> -1L
+                else -> playContext(upNextAnchor)
             }
         ).coerceAtMost(contextSize - 1L)
 
@@ -75,11 +75,15 @@ data class QueueSnapshot(
 
     fun combined(contextPlay: Long): Long = if (contextPlay <= anchorPlay) contextPlay else contextPlay + upNextSize
 
-    fun flatContext(contextPlay: Long): Long? =
-        when (val order = shuffleOrder) {
-            null -> contextPlay.takeIf { it in 0 until contextSize }
-            else -> order.getOrNull(contextPlay.toInt())
-        }
+    fun flatContext(contextPlay: Long): Long? {
+        if (contextPlay !in 0 until contextSize) return null
+        return shuffleSeed?.let { Shuffle.toFlat(it, contextSize, contextPlay) } ?: contextPlay
+    }
+
+    fun playContext(flat: Long): Long {
+        if (flat !in 0 until contextSize) return flat
+        return shuffleSeed?.let { Shuffle.toSequence(it, contextSize, flat) } ?: flat
+    }
 
     fun locate(position: Long): Pair<QueueEntry, Long>? {
         if (isUpNext(position)) return locateIn(upNext, upNextIndex(position))
@@ -133,12 +137,6 @@ class QueueRepository(
     private val db: SubtracksDatabase,
 ) {
     private val dao get() = db.queueDao()
-
-    @Volatile
-    private var cachedShuffleSeed = 0L
-
-    @Volatile
-    private var cachedShuffleOrder: LongArray? = null
 
     private val queueVersion = AtomicLong()
 
@@ -204,13 +202,13 @@ class QueueRepository(
 
     suspend fun replace(
         entries: List<QueueEntry>,
-        shuffleOrder: LongArray? = null,
+        shuffleSeed: Long? = null,
         upNext: List<QueueEntry> = emptyList(),
         upNextAnchor: Long = 0,
     ) {
         write(entries)
         writeUpNext(upNext)
-        setShuffle(shuffleOrder != null, shuffleOrder)
+        setShuffle(shuffleSeed != null, shuffleSeed ?: 0L)
         cursorMutex.withLock {
             dao.setCursor(cursorRow().copy(queuePosition = 0, positionMs = 0, upNextAnchor = upNextAnchor))
         }
@@ -228,11 +226,12 @@ class QueueRepository(
                             ResolvedQueueEntry(entry, lengthOf(entry, version))
                         }
                     val row = dao.cursor()
-                    val order = if (row?.shuffleEnabled == true) loadShuffleOrder(row.shuffleSeed, entries.sumOf { it.length }) else null
-                    LoadedSnapshot(entries, upNext, order, row?.upNextAnchor ?: 0L)
+                    val size = entries.sumOf { it.length }
+                    val seed = row?.takeIf { it.shuffleEnabled && size > 0L && it.shuffleSize == size }?.shuffleSeed
+                    LoadedSnapshot(entries, upNext, seed, row?.upNextAnchor ?: 0L)
                 }
             }
-        return QueueSnapshot(loaded.entries, loaded.upNext, loaded.shuffleOrder, loaded.anchor, version)
+        return QueueSnapshot(loaded.entries, loaded.upNext, loaded.shuffleSeed, loaded.anchor, version)
     }
 
     suspend fun modes(): QueueModes {
@@ -242,23 +241,21 @@ class QueueRepository(
 
     suspend fun setShuffle(
         enabled: Boolean,
-        order: LongArray?,
+        seed: Long,
     ) {
-        val seed = if (enabled && order != null) System.nanoTime() else 0L
+        val size = if (enabled) contextSize() else 0L
         cursorMutex.withLock {
-            db.useWriterConnection { transactor ->
-                transactor.immediateTransaction {
-                    dao.clearShuffleOrder()
-                    if (enabled && order != null) {
-                        dao.insertShuffleOrder(order.mapIndexed { index, flat -> ShuffleOrder(index.toLong(), flat) })
-                    }
-                    dao.setCursor(cursorRow().copy(shuffleEnabled = enabled, shuffleSeed = seed))
-                }
-            }
+            dao.setCursor(
+                cursorRow().copy(
+                    shuffleEnabled = enabled,
+                    shuffleSeed = if (enabled) seed else 0L,
+                    shuffleSize = size,
+                ),
+            )
         }
-        cachedShuffleSeed = 0
-        cachedShuffleOrder = null
     }
+
+    private suspend fun setShuffleSize(size: Long) = cursorMutex.withLock { dao.setCursor(cursorRow().copy(shuffleSize = size)) }
 
     fun invalidateLibraryCache() {
         cachedFlatIds = null
@@ -267,18 +264,6 @@ class QueueRepository(
     }
 
     suspend fun setRepeat(mode: Int) = cursorMutex.withLock { dao.setCursor(cursorRow().copy(repeatMode = mode)) }
-
-    private suspend fun loadShuffleOrder(
-        seed: Long,
-        size: Long,
-    ): LongArray? {
-        val cached = cachedShuffleOrder
-        if (seed == cachedShuffleSeed && cached != null && cached.size.toLong() == size) return cached
-        val loaded = dao.shuffleOrder().map { it.flatPosition }.toLongArray()
-        cachedShuffleSeed = seed
-        cachedShuffleOrder = loaded.takeIf { it.size.toLong() == size }
-        return cachedShuffleOrder
-    }
 
     suspend fun itemAt(
         snapshot: QueueSnapshot,
@@ -303,9 +288,7 @@ class QueueRepository(
     ): Long? {
         val flat = flatIds(snapshot).indexOf(songId)
         if (flat < 0) return null
-        val play = snapshot.shuffleOrder?.indexOf(flat.toLong())?.toLong() ?: flat.toLong()
-        if (play < 0) return null
-        return snapshot.combined(play)
+        return snapshot.combined(snapshot.playContext(flat.toLong()))
     }
 
     suspend fun range(
@@ -407,18 +390,18 @@ class QueueRepository(
             return snapshot()
         }
         val play = snapshot.contextPlay(position)
-        val order = snapshot.shuffleOrder
-        if (order == null) {
+        if (snapshot.shuffled) {
+            // The permutation is derived from (seed, size), so removing a track re-derives it at
+            // the smaller size; keep the same seed and store the new size so the queue stays
+            // shuffled. There is no stable "next" to preserve here.
+            val flat = snapshot.flatContext(play) ?: return snapshot
+            write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
+            adjustAnchorOnRemove(flat)
+            setShuffleSize(contextSize())
+        } else {
             val removed = compact(removeEntry(snapshot.entries, play))
             write(removed.map { it.entry })
             adjustAnchorOnRemove(play)
-        } else {
-            val flat = order.getOrNull(play.toInt()) ?: return snapshot
-            write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
-            val reordered = order.toMutableList().apply { removeAt(play.toInt()) }
-            for (index in reordered.indices) if (reordered[index] > flat) reordered[index] -= 1
-            setShuffle(true, reordered.toLongArray())
-            adjustAnchorOnRemove(flat)
         }
         return snapshot()
     }
@@ -466,16 +449,12 @@ class QueueRepository(
             return true
         }
         if (fromUpNext != toUpNext) return false
+        // Reordering the context while shuffled would have to make the derived order match the
+        // drop, which needs materialising the order again. The queue view disables context drags
+        // while shuffled; manual ordering goes through the up-next block instead.
+        if (snapshot.shuffled) return false
         val playFrom = snapshot.contextPlay(from)
         val playTo = snapshot.contextPlay(to)
-        val order = snapshot.shuffleOrder
-        if (order != null) {
-            val reordered = order.toMutableList()
-            val moved = reordered.removeAt(playFrom.toInt())
-            reordered.add(playTo.coerceIn(0L, reordered.size.toLong()).toInt(), moved)
-            setShuffle(true, reordered.toLongArray())
-            return true
-        }
         val located = snapshot.locateContext(playFrom) ?: return false
         val song = itemAt(snapshot, from) ?: return false
         val removed = removeEntry(snapshot.entries, playFrom)
@@ -502,6 +481,8 @@ class QueueRepository(
         }
 
     private suspend fun cursorRow(): PlaybackCursor = dao.cursor() ?: PlaybackCursor(queuePosition = 0)
+
+    private suspend fun contextSize(): Long = dao.entries().sumOf { it.resolvedLength() }
 
     private suspend fun write(entries: List<QueueEntry>) {
         db.useWriterConnection { transactor ->

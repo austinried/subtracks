@@ -2,6 +2,7 @@ package com.subtracks.data.repo
 
 import android.content.Context
 import androidx.room3.Room
+import androidx.room3.useReaderConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -440,15 +441,20 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, longArrayOf(2, 0, 1))
+            repository.setShuffle(true, 12345L)
             val shuffled = repository.snapshot()
+            val contextBefore = (0 until shuffled.contextSize).mapNotNull { repository.itemAt(shuffled, it)?.song?.id }
 
             repository.addUpNext(shuffled, currentPosition = 0, entry = repository.songEntry(1, "s5"), playNext = false)
 
             val updated = repository.snapshot()
             assertEquals(4, updated.size)
-            assertEquals("s5", repository.itemAt(updated, 1)?.song?.id)
-            assertEquals(listOf("s3", "s5", "s1", "s2"), resolveAll(updated))
+            assertEquals("s5", repository.itemAt(updated, updated.anchorPlay + 1)?.song?.id)
+            val contextAfter =
+                (0 until updated.size)
+                    .filterNot { updated.isUpNext(it) }
+                    .mapNotNull { repository.itemAt(updated, it)?.song?.id }
+            assertEquals(contextBefore, contextAfter)
             assertTrue(updated.shuffled)
         }
 
@@ -535,17 +541,102 @@ class QueueRepositoryTest {
         (0 until snapshot.size).mapNotNull { repository.itemAt(snapshot, it)?.song?.id }
 
     @Test
-    fun aStaleShuffleOrderIsIgnoredWhenTheQueueLengthChanges() =
+    fun aStaleShuffleSizeIsIgnoredWhenTheQueueLengthChanges() =
         runTest {
             seedLibrary()
             repository.replace(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(true, longArrayOf(2, 0, 1))
+            repository.setShuffle(true, 1234L)
             assertTrue(repository.snapshot().shuffled)
 
             db.libraryDao().upsertSongs(listOf(song("s6", "al1", track = 4, album = "First Album")))
             repository.invalidateLibraryCache()
 
             assertFalse(repository.snapshot().shuffled)
+        }
+
+    @Test
+    fun enablingShuffleStoresNoPerTrackRows() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+            val entriesBefore = db.queueDao().entries().size
+
+            repository.setShuffle(true, 5678L)
+            val snapshot = repository.snapshot()
+
+            assertTrue(snapshot.shuffled)
+            assertEquals(3L, snapshot.contextSize)
+            assertEquals(entriesBefore, db.queueDao().entries().size)
+            assertFalse(shuffleOrderTableExists())
+        }
+
+    private suspend fun shuffleOrderTableExists(): Boolean =
+        db.useReaderConnection { transactor ->
+            transactor.usePrepared(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'shuffle_order'",
+            ) { statement ->
+                if (statement.step()) statement.getLong(0) > 0 else false
+            }
+        }
+
+    @Test
+    fun shuffledPositionsResolveToEveryTrackExactlyOnce() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(true, 42L)
+            val shuffled = repository.snapshot()
+
+            val resolved = (0 until shuffled.size).mapNotNull { repository.itemAt(shuffled, it)?.song?.id }
+
+            assertEquals(3, resolved.distinct().size)
+            assertEquals(listOf("s1", "s2", "s3"), resolved.sorted())
+            val flatPositions = (0 until shuffled.size).map { shuffled.flatContext(it)!! }
+            assertEquals((0L until shuffled.size).toList(), flatPositions.sorted())
+        }
+
+    @Test
+    fun togglingShuffleOffRestoresTheOriginalOrder() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(true, 99L)
+            assertTrue(repository.snapshot().shuffled)
+
+            repository.setShuffle(false, 0L)
+
+            val restored = repository.snapshot()
+            assertFalse(restored.shuffled)
+            assertEquals(listOf("s1", "s2", "s3"), resolveAll(restored))
+        }
+
+    @Test
+    fun shuffledRangeResolvesEntriesInPositionOrder() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
+            repository.setShuffle(true, 42L)
+            val snapshot = repository.snapshot()
+
+            val range = repository.range(snapshot, 0, snapshot.size - 1)
+
+            assertEquals((0L until snapshot.size).toList(), range.map { it.position })
+            assertEquals(setOf("s1", "s2", "s3", "s4"), range.map { it.item.song.id }.toSet())
+        }
+
+    @Test
+    fun shuffledRangeResolvesASplitEntryWithoutRepeatingOrSkipping() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.removeAt(snapshot, 1)
+            repository.setShuffle(true, 7L)
+            val shuffled = repository.snapshot()
+
+            val range = repository.range(shuffled, 0, shuffled.size - 1)
+
+            assertEquals(listOf(0L, 1L), range.map { it.position })
+            assertEquals(setOf("s1", "s3"), range.map { it.item.song.id }.toSet())
         }
 
     private suspend fun seedLibrary() {

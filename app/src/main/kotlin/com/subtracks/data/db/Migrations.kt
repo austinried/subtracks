@@ -163,6 +163,14 @@ val MIGRATION_15_16 =
         }
     }
 
+val MIGRATION_16_17 =
+    object : Migration(16, 17) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `playback_cursor` ADD COLUMN `shuffleSize` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("DROP TABLE IF EXISTS `shuffle_order`")
+        }
+    }
+
 private suspend fun rebuildTable(
     connection: SQLiteConnection,
     table: String,
@@ -252,4 +260,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_13_14,
         MIGRATION_14_15,
         MIGRATION_15_16,
+        MIGRATION_16_17,
     )

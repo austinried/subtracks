@@ -12,7 +12,6 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKindConverter
-import com.subtracks.data.model.ShuffleOrder
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
@@ -31,10 +30,9 @@ import com.subtracks.data.model.UpNextEntry
         QueueEntry::class,
         UpNextEntry::class,
         PlaybackCursor::class,
-        ShuffleOrder::class,
         ArtworkSeed::class,
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class)
