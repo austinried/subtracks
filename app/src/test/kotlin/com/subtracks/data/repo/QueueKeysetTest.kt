@@ -121,6 +121,44 @@ class QueueKeysetTest {
         }
 
     @Test
+    fun playlistKeysetBeforeMatchesTheOffsetWindow() =
+        runTest {
+            seedLibrary()
+            val all = allPlaylistRows()
+            val anchor = all[10]
+
+            val expected = all.drop(5).take(5).map { it.song.id }
+            val actual =
+                db
+                    .queueDao()
+                    .playlistSongsBefore(1, "pl1", anchor.position, skip = 0, limit = 5)
+                    .asReversed()
+                    .map { it.song.id }
+
+            assertEquals(expected, actual)
+        }
+
+    @Test
+    fun scanningAPlaylistThroughTheRepositoryUsesKeysetSeeks() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.playlistEntry(1, "pl1")))
+            val snapshot = repository.snapshot()
+            val expected = allPlaylistRows().map { it.song.id }
+            assertEquals(expected.size, snapshot.size.toInt())
+
+            val forward = (0 until snapshot.size).map { repository.itemAt(snapshot, it)?.song?.id }
+            assertEquals(expected, forward)
+            assertTrue("forward keyset seeks: ${repository.keysetSeeks}", repository.keysetSeeks >= snapshot.size - 1)
+            assertEquals(1L, repository.offsetSeeks)
+
+            val beforeBackward = repository.keysetSeeks
+            val backward = (snapshot.size - 1 downTo 0).map { repository.itemAt(snapshot, it)?.song?.id }.asReversed()
+            assertEquals(expected, backward)
+            assertTrue("backward keyset seeks", repository.keysetSeeks > beforeBackward)
+        }
+
+    @Test
     fun scanningAnAlbumWithNullDiscAndTrackBackwardsResolvesEveryRow() =
         runTest {
             seedLibrary()
@@ -176,7 +214,9 @@ class QueueKeysetTest {
             val resolved =
                 (snapshot.size - 1 downTo 0).map { repository.itemAt(snapshot, it)?.song?.id }.asReversed()
             assertEquals(expected, resolved)
-            assertTrue(repository.keysetSeeks >= snapshot.size - 1)
+            // Most steps are keyset; the first few near the start fall back to OFFSET, which is
+            // cheaper there.
+            assertTrue("backward keyset seeks: ${repository.keysetSeeks}", repository.keysetSeeks >= snapshot.size * 9 / 10)
         }
 
     @Test

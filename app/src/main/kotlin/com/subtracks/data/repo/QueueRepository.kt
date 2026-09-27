@@ -764,6 +764,11 @@ class QueueRepository(
     ): List<SongItem>? {
         if (!cursor.key.seekable(entry.kind)) return null
         val from = cursor.ordinal
+        // A backward seek from a far cursor is not cheaper than the offset query: the album
+        // predicate is not sargable (it has to include NULL disc/track), so it scans the partition
+        // back to `offset` instead of using a range. Fall back when the anchor is more than twice
+        // the offset away, matching the documented far-jump behaviour.
+        if (from > offset && from - offset >= offset) return null
         return if (offset >= from) {
             rowsFrom(entry, cursor.key, offset - from, limit)
         } else {
