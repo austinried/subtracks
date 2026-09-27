@@ -639,6 +639,59 @@ class QueueRepositoryTest {
             assertEquals(setOf("s1", "s3"), range.map { it.item.song.id }.toSet())
         }
 
+    @Test
+    fun removingAContextTrackWhileShuffledKeepsTheRemainingOrder() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(42L)
+            val before = repository.snapshot()
+            val orderBefore = (0 until before.contextSize).mapNotNull { repository.itemAt(before, it)?.song?.id }
+
+            repository.removeAt(before, 1)
+
+            val after = repository.snapshot()
+            assertTrue(after.shuffled)
+            assertEquals(2L, after.contextSize)
+            val orderAfter = (0 until after.contextSize).mapNotNull { repository.itemAt(after, it)?.song?.id }
+            assertEquals(orderBefore.filterIndexed { index, _ -> index != 1 }, orderAfter)
+        }
+
+    @Test
+    fun severalRemovalsWhileShuffledKeepTheRemainingOrder() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.setShuffle(42L)
+            val before = repository.snapshot()
+            val orderBefore = (0 until before.contextSize).mapNotNull { repository.itemAt(before, it)?.song?.id }
+
+            repository.removeAt(before, 0)
+            repository.removeAt(repository.snapshot(), 0)
+
+            val after = repository.snapshot()
+            assertTrue(after.shuffled)
+            assertEquals(1L, after.contextSize)
+            val orderAfter = (0 until after.contextSize).mapNotNull { repository.itemAt(after, it)?.song?.id }
+            assertEquals(orderBefore.drop(2), orderAfter)
+        }
+
+    @Test
+    fun removingWhileShuffledKeepsTheOrderInverse() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
+            repository.setShuffle(9L)
+            repository.removeAt(repository.snapshot(), 2)
+
+            val after = repository.snapshot()
+            assertEquals(3L, after.contextSize)
+            for (play in 0 until after.contextSize) {
+                assertEquals(play, after.playContext(after.flatContext(play)!!))
+            }
+            assertEquals((0L until after.contextSize).toList(), (0 until after.contextSize).map { after.flatContext(it)!! }.sorted())
+        }
+
     private suspend fun seedLibrary() {
         db.sourcesDao().upsertSource(
             Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),

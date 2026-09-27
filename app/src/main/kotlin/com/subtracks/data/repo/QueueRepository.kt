@@ -32,7 +32,7 @@ private data class EntryLengthKey(
 private data class LoadedSnapshot(
     val entries: List<ResolvedQueueEntry>,
     val upNext: List<ResolvedQueueEntry>,
-    val shuffleSeed: Long?,
+    val shuffle: ShuffleState?,
     val anchor: Long,
 )
 
@@ -41,10 +41,64 @@ data class ResolvedQueueEntry(
     val length: Long,
 )
 
+/**
+ * A shuffled order over a fixed domain of [domain] tracks, plus the domain positions removed since
+ * the order was created. The permutation stays fixed and removals are subtracted (sparsely, in
+ * memory) rather than re-derived, so editing a shuffled queue keeps the remaining tracks in place.
+ * Only the seed and domain are persisted; on restart the removals are gone, so a queue with edits
+ * falls back to unshuffled rather than guessing.
+ */
+class ShuffleState(
+    val seed: Long,
+    val domain: Long,
+    private val removedFlats: LongArray = LongArray(0),
+    private val removedSlots: LongArray = LongArray(0),
+) {
+    fun flatFor(play: Long): Long {
+        val domainFlat = Shuffle.toFlat(seed, domain, liveSlot(play))
+        return domainFlat - removedFlats.count { it < domainFlat }
+    }
+
+    fun playFor(canonical: Long): Long {
+        val slot = Shuffle.toSequence(seed, domain, liveFlat(canonical))
+        return slot - removedSlots.count { it < slot }
+    }
+
+    fun domainFor(canonical: Long): Long = liveFlat(canonical)
+
+    val liveSize: Long get() = domain - removedFlats.size.toLong()
+
+    fun withRemoved(domainFlat: Long): ShuffleState =
+        ShuffleState(
+            seed,
+            domain,
+            (removedFlats + domainFlat).sortedArray(),
+            (removedSlots + Shuffle.toSequence(seed, domain, domainFlat)).sortedArray(),
+        )
+
+    private fun liveSlot(play: Long): Long {
+        var slot = play
+        while (true) {
+            val next = play + removedSlots.count { it <= slot }
+            if (next <= slot) return slot
+            slot = next
+        }
+    }
+
+    private fun liveFlat(canonical: Long): Long {
+        var flat = canonical
+        while (true) {
+            val next = canonical + removedFlats.count { it <= flat }
+            if (next <= flat) return flat
+            flat = next
+        }
+    }
+}
+
 data class QueueSnapshot(
     val entries: List<ResolvedQueueEntry>,
     val upNext: List<ResolvedQueueEntry> = emptyList(),
-    val shuffleSeed: Long? = null,
+    val shuffle: ShuffleState? = null,
     val upNextAnchor: Long = 0,
     val version: Long = 0,
 ) {
@@ -54,12 +108,14 @@ data class QueueSnapshot(
 
     val size: Long = contextSize + upNextSize
 
-    val shuffled: Boolean get() = shuffleSeed != null
+    val shuffled: Boolean get() = shuffle != null
+
+    val shuffleSeed: Long? get() = shuffle?.seed
 
     val anchorPlay: Long =
         (
             when {
-                shuffleSeed == null -> upNextAnchor
+                shuffle == null -> upNextAnchor
                 else -> playContext(upNextAnchor) ?: -1L
             }
         ).coerceAtMost(contextSize - 1L)
@@ -76,12 +132,12 @@ data class QueueSnapshot(
 
     fun flatContext(contextPlay: Long): Long? {
         if (contextPlay !in 0 until contextSize) return null
-        return shuffleSeed?.let { Shuffle.toFlat(it, contextSize, contextPlay) } ?: contextPlay
+        return shuffle?.flatFor(contextPlay) ?: contextPlay
     }
 
     fun playContext(flat: Long): Long? {
         if (flat !in 0 until contextSize) return null
-        return shuffleSeed?.let { Shuffle.toSequence(it, contextSize, flat) } ?: flat
+        return shuffle?.playFor(flat) ?: flat
     }
 
     fun locate(position: Long): Pair<QueueEntry, Long>? {
@@ -144,6 +200,9 @@ class QueueRepository(
 
     @Volatile
     private var cachedFlatVersion = -1L
+
+    @Volatile
+    private var shuffleRemoved: ShuffleState? = null
 
     private val lengthCache = ConcurrentHashMap<EntryLengthKey, Long>()
 
@@ -226,11 +285,24 @@ class QueueRepository(
                         }
                     val row = dao.cursor()
                     val size = entries.sumOf { it.length }
-                    val seed = row?.takeIf { it.shuffleEnabled && size > 0L && it.shuffleSize == size }?.shuffleSeed
-                    LoadedSnapshot(entries, upNext, seed, row?.upNextAnchor ?: 0L)
+                    val state = shuffleRemoved
+                    val shuffle =
+                        if (row != null && row.shuffleEnabled && size > 0L) {
+                            when {
+                                state != null && state.seed == row.shuffleSeed && state.domain == row.shuffleSize &&
+                                    state.liveSize == size -> state
+
+                                state == null && row.shuffleSize == size -> ShuffleState(row.shuffleSeed, row.shuffleSize)
+
+                                else -> null
+                            }
+                        } else {
+                            null
+                        }
+                    LoadedSnapshot(entries, upNext, shuffle, row?.upNextAnchor ?: 0L)
                 }
             }
-        return QueueSnapshot(loaded.entries, loaded.upNext, loaded.shuffleSeed, loaded.anchor, version)
+        return QueueSnapshot(loaded.entries, loaded.upNext, loaded.shuffle, loaded.anchor, version)
     }
 
     suspend fun modes(): QueueModes {
@@ -249,13 +321,13 @@ class QueueRepository(
                 ),
             )
         }
+        shuffleRemoved = seed?.let { ShuffleState(it, size) }
     }
-
-    private suspend fun setShuffleSize(size: Long) = cursorMutex.withLock { dao.setCursor(cursorRow().copy(shuffleSize = size)) }
 
     fun invalidateLibraryCache() {
         cachedFlatIds = null
         lengthCache.clear()
+        shuffleRemoved = null
         queueVersion.incrementAndGet()
     }
 
@@ -387,13 +459,13 @@ class QueueRepository(
         }
         val play = snapshot.contextPlay(position)
         if (snapshot.shuffled) {
-            // The permutation is derived from (seed, size), so removing a track re-derives it at
-            // the smaller size; keep the same seed and store the new size so the queue stays
-            // shuffled. There is no stable "next" to preserve here.
+            // Subtract the track from the fixed shuffle order instead of re-deriving it, so the
+            // tracks that remain keep their positions.
+            val order = snapshot.shuffle ?: return
             val flat = snapshot.flatContext(play) ?: return
+            shuffleRemoved = order.withRemoved(order.domainFor(flat))
             write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
             adjustAnchorOnRemove(flat)
-            setShuffleSize(contextSize())
         } else {
             val removed = compact(removeEntry(snapshot.entries, play))
             write(removed.map { it.entry })
