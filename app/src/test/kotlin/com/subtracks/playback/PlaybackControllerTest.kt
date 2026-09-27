@@ -462,6 +462,35 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun removingThePlayingQueuedTrackAdvancesPastADuplicateInTheContext() {
+        seedAlbum(4, sourceId = 1)
+        seedSong("y1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        // "s2" is both queued and in the context; removing the queued copy must advance to the
+        // next queued track, not jump to the identical song in the context.
+        controller.addToQueue(1, QueueKind.Song, "s2")
+        controller.addToQueue(1, QueueKind.Song, "y1")
+        await { runBlocking { controller.upcomingItem()?.id } == "s2" }
+        controller.playAt(1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        runBlocking { controller.removeAt(1) }
+
+        await {
+            controller.state.value.item
+                ?.id == "y1"
+        }
+    }
+
+    @Test
     fun playNextFromInsideTheBlockGoesAfterTheCurrentTrack() {
         seedAlbum(3, sourceId = 1)
         seedSong("x1", "al2")

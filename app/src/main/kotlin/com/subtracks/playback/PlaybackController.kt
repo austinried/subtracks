@@ -350,9 +350,23 @@ class PlaybackController(
                 }
             var target =
                 (
-                    currentId?.let {
-                        if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
-                    } ?: fallback
+                    if (position == current) {
+                        // The playing entry was removed; resolving its song id afterwards can match
+                        // an identical song elsewhere (a duplicate in the context or the block), so
+                        // advance from the fallback instead.
+                        fallback
+                    } else {
+                        currentId?.let {
+                            if (wasUpNext) {
+                                queueRepository.combinedIndexOf(
+                                    updated,
+                                    it,
+                                )
+                            } else {
+                                queueRepository.combinedContextIndexOf(updated, it)
+                            }
+                        } ?: fallback
+                    }
                 ).coerceIn(0, updated.size - 1)
             // Removing the playing context track while shuffled leaves the block anchored to some
             // other track; re-anchor it to the track the cursor landed on so the queued tracks
