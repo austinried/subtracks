@@ -17,7 +17,6 @@ import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
-import com.subtracks.data.repo.Shuffle
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -1595,15 +1594,53 @@ class PlaybackControllerTest {
 
         val after = runBlocking { queues.snapshot() }
         val newContextSize = (before.contextSize - 1).coerceAtLeast(0)
-        val slot = removedFlat.coerceIn(0, (newContextSize - 1).coerceAtLeast(0))
-        val expected = after.combined(Shuffle.toSequence(before.shuffleSeed!!, newContextSize, slot))
+        val slot = removedFlat.coerceIn(0, newContextSize - 1)
         assertEquals(5L, after.size)
-        assertEquals(expected, controller.state.value.position)
         assertEquals(
-            runBlocking { queues.itemAt(after, expected)?.song?.id },
+            // The song now occupying the removed track's canonical slot is the one playing.
+            slot,
+            after.flatContext(after.contextPlay(controller.state.value.position!!)),
+        )
+        assertEquals(
+            runBlocking { queues.itemAt(after, controller.state.value.position!!)?.song?.id },
             controller.state.value.item
                 ?.id,
         )
+    }
+
+    @Test
+    fun removingThePlayingTrackWhileShuffledLeavesTheBlockReachable() {
+        seedAlbum(6, sourceId = 1)
+        seedSong("x1", "al2")
+
+        repeat(30) {
+            if (controller.state.value.shuffle) {
+                controller.toggleShuffle()
+                await { !controller.state.value.shuffle }
+            }
+            runBlocking { controller.clearUpNext() }
+            controller.playAlbum(1, "al1", 2)
+            await {
+                controller.state.value.item
+                    ?.id == "s3" && !controller.state.value.shuffle
+            }
+            controller.addToQueue(1, QueueKind.Song, "x1")
+            await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+            controller.toggleShuffle()
+            await { controller.state.value.shuffle }
+            await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+            val current = controller.state.value.position!!
+
+            runBlocking { controller.removeAt(current) }
+
+            val snapshot = runBlocking { queues.snapshot() }
+            val position = controller.state.value.position!!
+            assertTrue(
+                "queued track stranded behind the cursor at $position (block at ${snapshot.anchorPlay})",
+                position <= snapshot.anchorPlay || snapshot.isUpNext(position),
+            )
+        }
     }
 
     @Test

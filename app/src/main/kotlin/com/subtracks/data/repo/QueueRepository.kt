@@ -384,17 +384,17 @@ class QueueRepository(
     suspend fun removeAt(
         snapshot: QueueSnapshot,
         position: Long,
-    ): QueueSnapshot {
+    ) {
         if (snapshot.isUpNext(position)) {
             removeUpNextAt(snapshot, snapshot.upNextIndex(position))
-            return snapshot()
+            return
         }
         val play = snapshot.contextPlay(position)
         if (snapshot.shuffled) {
             // The permutation is derived from (seed, size), so removing a track re-derives it at
             // the smaller size; keep the same seed and store the new size so the queue stays
             // shuffled. There is no stable "next" to preserve here.
-            val flat = snapshot.flatContext(play) ?: return snapshot
+            val flat = snapshot.flatContext(play) ?: return
             write(compact(removeEntry(snapshot.entries, flat)).map { it.entry })
             adjustAnchorOnRemove(flat)
             setShuffleSize(contextSize())
@@ -403,7 +403,6 @@ class QueueRepository(
             write(removed.map { it.entry })
             adjustAnchorOnRemove(play)
         }
-        return snapshot()
     }
 
     private suspend fun adjustAnchorOnRemove(removedFlat: Long) =

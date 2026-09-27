@@ -323,7 +323,7 @@ class PlaybackController(
             val wasUpNext = snapshot.isUpNext(current)
             val removed = if (position == current) null else queueRepository.itemAt(snapshot, position)?.toQueueItem()
             queueRepository.removeAt(snapshot, position)
-            val updated = readSnapshot()
+            var updated = readSnapshot()
             this.snapshot = updated
             windowJob?.cancel()
             if (updated.size == 0L) {
@@ -348,12 +348,23 @@ class PlaybackController(
                 } else {
                     (if (position < current) current - 1 else current)
                 }
-            val target =
+            var target =
                 (
                     currentId?.let {
                         if (wasUpNext) queueRepository.combinedIndexOf(updated, it) else queueRepository.combinedContextIndexOf(updated, it)
                     } ?: fallback
                 ).coerceIn(0, updated.size - 1)
+            // Removing the playing context track while shuffled leaves the block anchored to some
+            // other track; re-anchor it to the track the cursor landed on so the queued tracks
+            // still play next rather than being stranded behind the cursor.
+            if (snapshot.shuffled && !wasUpNext && position == current && updated.upNextSize > 0L) {
+                val reanchored = queueRepository.reanchorFor(updated, target)
+                if (reanchored.changed) {
+                    updated = readSnapshot()
+                    this.snapshot = updated
+                    target = reanchored.position
+                }
+            }
             lastPosition = target
             lastEdit =
                 if (removed == null) {
