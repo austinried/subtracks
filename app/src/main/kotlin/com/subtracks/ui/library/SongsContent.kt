@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -20,15 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
-import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongDownload
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.StarredBadge
 
@@ -39,7 +33,6 @@ fun SongRow(
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
     isPlaying: Boolean = false,
     trackNumber: Long? = null,
-    download: SongDownload? = null,
     trailingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -89,7 +82,6 @@ fun SongRow(
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 StarredBadge(song.starred != null)
-                DownloadBadge(download)
             }
         },
         supportingContent = {
@@ -102,40 +94,6 @@ fun SongRow(
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
-}
-
-@Composable
-private fun DownloadBadge(download: SongDownload?) {
-    when (download?.status) {
-        DownloadStatus.Completed -> {
-            Icon(
-                imageVector = Icons.Rounded.DownloadDone,
-                contentDescription = "Downloaded",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-
-        DownloadStatus.Queued, DownloadStatus.Running -> {
-            val progress = download.progress
-            if (progress == null) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
-                    strokeWidth = 2.dp,
-                )
-            } else {
-                CircularProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
-                    strokeWidth = 2.dp,
-                )
-            }
-        }
-
-        else -> {
-            Unit
-        }
-    }
 }
 
 @Composable

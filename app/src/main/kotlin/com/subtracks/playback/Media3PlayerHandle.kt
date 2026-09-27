@@ -9,13 +9,11 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
-import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 
 class Media3PlayerHandle(
     private val controller: MediaController,
     private val sourceRepository: SourceRepository,
-    private val downloads: DownloadRepository,
 ) : PlayerHandle {
     override val itemCount: Int get() = controller.mediaItemCount
 
@@ -129,13 +127,37 @@ class Media3PlayerHandle(
     }
 
     private fun toMediaItem(item: QueueItem): MediaItem {
+        val metadata =
+            MediaMetadata
+                .Builder()
+                .setTitle(item.title)
+                .setArtist(item.artist)
+                .setAlbumTitle(item.album)
+                .setArtworkUri(item.coverArtId?.takeIf { it.isNotEmpty() }?.let(CoverArtArtwork::uri))
+                .setDurationMs(item.durationMs)
+                .setIsBrowsable(false)
+                .setIsPlayable(true)
+                .setExtras(
+                    Bundle().apply {
+                        putString(EXTRA_COVER_ART_ID, item.coverArtId)
+                        item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
+                    },
+                ).build()
         val quality = sourceRepository.quality.value
-        return queueMediaItem(
-            item = item,
-            local = downloads.localUri(item.id),
-            stream = sourceRepository.streamUri(item.id, item.durationMs, quality),
-            transcode = quality.transcodes,
-        )
+        val builder =
+            MediaItem
+                .Builder()
+                .setMediaId(item.id)
+                .setUri(sourceRepository.streamUri(item.id, item.durationMs, quality))
+                .setMediaMetadata(metadata)
+        if (quality.transcodes) {
+            item.durationMs?.takeIf { it > 0 }?.let { duration ->
+                builder.setClippingConfiguration(
+                    ClippingConfiguration.Builder().setEndPositionMs(duration).build(),
+                )
+            }
+        }
+        return builder.build()
     }
 
     private fun toQueueItem(mediaItem: MediaItem): QueueItem =
@@ -156,48 +178,9 @@ class Media3PlayerHandle(
 
     private companion object {
         const val TAG = "SubtracksPlayback"
+        const val EXTRA_COVER_ART_ID = "coverArtId"
+        const val EXTRA_DURATION_MS = "durationMs"
     }
-}
-
-private const val EXTRA_COVER_ART_ID = "coverArtId"
-private const val EXTRA_DURATION_MS = "durationMs"
-
-internal fun queueMediaItem(
-    item: QueueItem,
-    local: String?,
-    stream: String?,
-    transcode: Boolean,
-): MediaItem {
-    val metadata =
-        MediaMetadata
-            .Builder()
-            .setTitle(item.title)
-            .setArtist(item.artist)
-            .setAlbumTitle(item.album)
-            .setArtworkUri(item.coverArtId?.takeIf { it.isNotEmpty() }?.let(CoverArtArtwork::uri))
-            .setDurationMs(item.durationMs)
-            .setIsBrowsable(false)
-            .setIsPlayable(true)
-            .setExtras(
-                Bundle().apply {
-                    putString(EXTRA_COVER_ART_ID, item.coverArtId)
-                    item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
-                },
-            ).build()
-    val builder =
-        MediaItem
-            .Builder()
-            .setMediaId(item.id)
-            .setUri(local ?: stream)
-            .setMediaMetadata(metadata)
-    if (local == null && transcode) {
-        item.durationMs?.takeIf { it > 0 }?.let { duration ->
-            builder.setClippingConfiguration(
-                ClippingConfiguration.Builder().setEndPositionMs(duration).build(),
-            )
-        }
-    }
-    return builder.build()
 }
 
 internal fun playbackErrorMessage(error: PlaybackException): String =

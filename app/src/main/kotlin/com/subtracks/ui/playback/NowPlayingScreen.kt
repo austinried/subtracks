@@ -46,7 +46,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,7 +66,6 @@ import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
-import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -82,7 +80,6 @@ import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 const val NOW_PLAYING_COVER_TAG = "now-playing-cover"
@@ -98,15 +95,11 @@ fun NowPlayingRoute(
     modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
-    downloadRepository: DownloadRepository = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val positionMs by controller.positionMs.collectAsStateWithLifecycle()
     val sourceId = state.context?.sourceId
     val songId = state.item?.id
-    val downloads by downloadRepository.states().collectAsStateWithLifecycle()
-    val download = songId?.let { downloads[it] }
-    val scope = rememberCoroutineScope()
     val song by
         produceState<Song?>(null, sourceId, songId) {
             if (sourceId != null && songId != null) {
@@ -116,14 +109,6 @@ fun NowPlayingRoute(
     val context = LocalPlatformContext.current
     val actions =
         ItemActions(
-            download = { track -> scope.launch { downloadRepository.download(track.sourceId, track.id) } },
-            cancelDownload = { track -> scope.launch { downloadRepository.remove(track.sourceId, track.id) } },
-            deleteDownload = { track ->
-                scope.launch {
-                    downloadRepository.remove(track.sourceId, track.id)
-                    controller.refreshMediaItems()
-                }
-            },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
@@ -157,7 +142,7 @@ fun NowPlayingRoute(
         onPrevious = controller::previous,
         onShuffle = controller::toggleShuffle,
         onRepeat = controller::cycleRepeat,
-        onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail, download), actions) } },
+        onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail), actions) } },
         onAlbumClick = song?.albumId?.let { id -> { onViewAlbum(id) } },
         onArtistClick = song?.artistId?.let { id -> { onViewArtist(id) } },
         onSeek = controller::seekTo,

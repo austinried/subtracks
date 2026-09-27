@@ -6,7 +6,6 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
-import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +14,6 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val sourceRepository: SourceRepository,
-    private val downloadRepository: DownloadRepository,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
     val sources: StateFlow<List<Source>> =
@@ -39,10 +37,7 @@ class SettingsViewModel(
     }
 
     fun deleteSource(id: Long) {
-        viewModelScope.launch {
-            downloadRepository.removeSource(id)
-            sourceRepository.deleteSource(id)
-        }
+        viewModelScope.launch { sourceRepository.deleteSource(id) }
     }
 
     fun setWifiQuality(quality: StreamQuality) {

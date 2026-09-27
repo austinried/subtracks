@@ -14,7 +14,6 @@ import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.QueueKind
-import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.SongListItem
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -44,7 +43,6 @@ fun PlaylistDetailRoute(
     playbackController: PlaybackController = koinInject(),
 ) {
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
-    val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val actions =
@@ -53,9 +51,6 @@ fun PlaylistDetailRoute(
             shufflePlaylist = { viewModel.shuffle() },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            download = viewModel::download,
-            cancelDownload = viewModel::cancelDownload,
-            deleteDownload = viewModel::deleteDownload,
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
@@ -65,7 +60,6 @@ fun PlaylistDetailRoute(
         songs = viewModel.songs.collectAsLazyPagingItems(),
         coverArt = viewModel::coverArt,
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
-        downloads = downloads,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },
@@ -82,7 +76,6 @@ fun PlaylistDetailScreen(
     songs: LazyPagingItems<SongListItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
-    downloads: Map<String, SongDownload> = emptyMap(),
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
     onSongLongClick: (MenuTarget) -> Unit = {},
@@ -121,13 +114,10 @@ fun PlaylistDetailScreen(
                         coverArtId = item.coverArt,
                         coverArt = coverArt,
                         isPlaying = item.song.id == playingSongId,
-                        download = downloads[item.song.id],
                         modifier =
                             rowModifier.combinedClickable(
                                 onClick = { onSongClick(index) },
-                                onLongClick = {
-                                    onSongLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true), downloads[item.song.id]))
-                                },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                             ),
                     )
                 }

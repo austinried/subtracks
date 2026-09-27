@@ -25,7 +25,6 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
@@ -56,7 +55,6 @@ fun AlbumDetailRoute(
     val album by viewModel.album.collectAsStateWithLifecycle(initialValue = null)
     val songs by viewModel.songs.collectAsStateWithLifecycle(initialValue = emptyList())
     val discs by viewModel.discs.collectAsStateWithLifecycle(initialValue = emptyList())
-    val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
@@ -67,9 +65,6 @@ fun AlbumDetailRoute(
             shuffleAlbum = { viewModel.shuffle() },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            download = viewModel::download,
-            cancelDownload = viewModel::cancelDownload,
-            deleteDownload = viewModel::deleteDownload,
             setStar = setStar,
             viewArtist = onViewArtist,
         )
@@ -79,7 +74,6 @@ fun AlbumDetailRoute(
         discs = discs,
         coverArt = viewModel::coverArt,
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
-        downloads = downloads,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },
@@ -102,7 +96,6 @@ fun AlbumDetailScreen(
     discs: List<Disc> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
-    downloads: Map<String, SongDownload> = emptyMap(),
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
     onSongLongClick: (MenuTarget) -> Unit = {},
@@ -172,13 +165,10 @@ fun AlbumDetailScreen(
                         song = song,
                         isPlaying = song.id == playingSongId,
                         trackNumber = song.track,
-                        download = downloads[song.id],
                         modifier =
                             rowModifier.combinedClickable(
                                 onClick = { onSongClick(index) },
-                                onLongClick = {
-                                    onSongLongClick(MenuTarget.Song(song, coverArt(album?.coverArt, true), downloads[song.id]))
-                                },
+                                onLongClick = { onSongLongClick(MenuTarget.Song(song, coverArt(album?.coverArt, true))) },
                             ),
                     )
                 }

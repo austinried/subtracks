@@ -1,17 +1,14 @@
 package com.subtracks.di
 
 import android.content.Context
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import com.subtracks.data.db.createAndroidDatabase
-import com.subtracks.data.download.SystemDownloadEngine
 import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.createUserPreferences
 import com.subtracks.data.repo.ArtworkSeedRepository
 import com.subtracks.data.repo.ArtworkSeedStore
-import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
@@ -30,7 +27,6 @@ import com.subtracks.ui.settings.SettingsViewModel
 import okhttp3.OkHttpClient
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import java.io.File
 
 fun appModule(
     context: Context,
@@ -48,24 +44,14 @@ fun appModule(
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }
-    single { SystemDownloadEngine(context.applicationContext) }
-    single {
-        DownloadRepository(
-            db = get(),
-            sourceRepository = get(),
-            engine = get(),
-            downloadsDir = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: context.filesDir, "downloads"),
-            showMessage = toast,
-        ).also { it.start() }
-    }
-    single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
-    single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
+    single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get()) }
+    single { PlaybackController(get(), get(), get(), showMessage = toast) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
-    viewModel { params -> AlbumDetailViewModel(get(), get(), get(), get(), params.get()) }
+    viewModel { params -> AlbumDetailViewModel(get(), get(), get(), params.get()) }
     viewModel { params -> ArtistDetailViewModel(get(), get(), get(), params.get()) }
-    viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), get(), params.get()) }
+    viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), params.get()) }
     viewModel { QueueViewModel(get(), get()) }
 }

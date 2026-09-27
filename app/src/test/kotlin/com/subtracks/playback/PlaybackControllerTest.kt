@@ -7,7 +7,6 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
-import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
@@ -17,7 +16,6 @@ import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
-import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +33,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
@@ -48,7 +45,6 @@ class PlaybackControllerTest {
     private lateinit var networkMode: MutableStateFlow<NetworkMode>
     private lateinit var sources: SourceRepository
     private lateinit var queues: QueueRepository
-    private lateinit var downloads: DownloadRepository
     private lateinit var handle: FakePlayerHandle
     private lateinit var controller: PlaybackController
     private val messages = CopyOnWriteArrayList<String>()
@@ -65,24 +61,15 @@ class PlaybackControllerTest {
         networkMode = MutableStateFlow(NetworkMode.Wifi)
         sources = SourceRepository(db, OkHttpClient(), prefs, networkMode = networkMode)
         queues = QueueRepository(db)
-        downloads = DownloadRepository(db, sources, FakeDownloadEngine(), File(context.cacheDir, "downloads"))
         handle = FakePlayerHandle()
         controller =
-            PlaybackController(
-                sources,
-                queues,
-                FakePlayerConnection(handle),
-                downloads,
-                showMessage = { messages += it },
-                dispatcher = dispatcher,
-            )
+            PlaybackController(sources, queues, FakePlayerConnection(handle), showMessage = { messages += it }, dispatcher = dispatcher)
     }
 
     @After
     fun tearDown() {
         controller.close()
         sources.close()
-        downloads.close()
         db.close()
         dispatcher.close()
     }
@@ -563,7 +550,7 @@ class PlaybackControllerTest {
         runBlocking { queues.setPosition(12_000L) }
 
         val restoredHandle = FakePlayerHandle()
-        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), downloads, dispatcher = dispatcher)
+        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), dispatcher = dispatcher)
         restored.connect()
         await {
             restored.state.value.item
@@ -671,7 +658,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -718,7 +705,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -761,7 +748,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -804,7 +791,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), dispatcher = inline)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -1843,7 +1830,7 @@ class PlaybackControllerTest {
         runBlocking { queues.setPosition(12_000L) }
 
         val restoredHandle = FakePlayerHandle()
-        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), downloads, dispatcher = dispatcher)
+        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), dispatcher = dispatcher)
         restored.connect()
         await {
             restored.state.value.item
@@ -1877,21 +1864,6 @@ class PlaybackControllerTest {
         }
 
         assertEquals(0L, runBlocking { queues.cursorPositionMs() })
-    }
-
-    @Test
-    fun refreshingMediaItemsRebuildsTheWindowAtTheSamePosition() {
-        seedAlbum(3, sourceId = 1)
-        controller.playAlbum(1, "al1", 0)
-        await { handle.operations.contains("play") }
-        handle.positionMs = 42_000L
-        val windows = handle.operations.count { it.startsWith("setWindow") }
-
-        controller.refreshMediaItems()
-
-        await { handle.operations.count { it.startsWith("setWindow") } > windows }
-        assertEquals("s1", handle.currentItem?.id)
-        assertEquals(42_000L, handle.positionMs)
     }
 
     @Test

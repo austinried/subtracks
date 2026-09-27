@@ -1,7 +1,6 @@
 package com.subtracks.playback
 
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
@@ -10,8 +9,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -44,7 +41,9 @@ class PlaybackService : MediaSessionService() {
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(this)
                         .setEnableClippingInMediaPeriod(true)
-                        .setDataSourceFactory(mediaDataSourceFactory(this, OkHttpDataSource.Factory(streamingClient()))),
+                        .setDataSourceFactory(
+                            KnownLengthDataSourceFactory(OkHttpDataSource.Factory(streamingClient())),
+                        ),
                 ).build()
         val loader =
             CoverArtBitmapLoader(
@@ -89,6 +88,10 @@ class PlaybackService : MediaSessionService() {
                 response
             }.build()
 
+    private companion object {
+        const val STREAM_TAG = "SubtracksPlayback"
+    }
+
     override fun onDestroy() {
         artworkLoader?.shutdown()
         artworkLoader = null
@@ -99,14 +102,4 @@ class PlaybackService : MediaSessionService() {
         session = null
         super.onDestroy()
     }
-
-    private companion object {
-        const val STREAM_TAG = "SubtracksPlayback"
-    }
 }
-
-@OptIn(UnstableApi::class)
-internal fun mediaDataSourceFactory(
-    context: Context,
-    upstream: DataSource.Factory,
-): DataSource.Factory = DefaultDataSource.Factory(context, KnownLengthDataSourceFactory(upstream))
