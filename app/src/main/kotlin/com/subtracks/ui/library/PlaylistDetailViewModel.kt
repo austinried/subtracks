@@ -51,6 +51,8 @@ class PlaylistDetailViewModel(
             .flatMapLatest { downloadRepository.status(it, DownloadList.Playlist, playlistId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListDownloadStatus())
 
+    suspend fun downloadedBytes(): Long = downloadRepository.downloadedBytes(sourceId.first(), DownloadList.Playlist, playlistId)
+
     fun onDownloadAction(action: BulkDownloadAction) {
         viewModelScope.launch {
             downloadRepository.applyAction(sourceId.first(), DownloadList.Playlist, playlistId, action)

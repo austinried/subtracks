@@ -13,7 +13,7 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
     fun downloads(sourceId: Long): Flow<List<SongDownload>>
 
-    @Query("SELECT * FROM song_downloads")
+    @Query("SELECT * FROM song_downloads ORDER BY rowid")
     suspend fun all(): List<SongDownload>
 
     @Query(

@@ -47,6 +47,8 @@ class AlbumDetailViewModel(
             .flatMapLatest { downloadRepository.status(it, DownloadList.Album, albumId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListDownloadStatus())
 
+    suspend fun downloadedBytes(): Long = downloadRepository.downloadedBytes(sourceId.first(), DownloadList.Album, albumId)
+
     fun onDownloadAction(action: BulkDownloadAction) {
         viewModelScope.launch {
             downloadRepository.applyAction(sourceId.first(), DownloadList.Album, albumId, action)

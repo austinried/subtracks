@@ -163,9 +163,10 @@ interface QueueDao {
     ): List<String>
 
     @Query(
-        "SELECT id FROM songs WHERE sourceId = :sourceId " +
-            "AND albumId IN (SELECT id FROM albums WHERE sourceId = :sourceId AND artistId = :artistId) " +
-            "ORDER BY albumId, disc, track, id",
+        "SELECT songs.id FROM songs " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND albums.artistId = :artistId " +
+            "ORDER BY albums.year DESC, albums.name COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id",
     )
     suspend fun artistSongIds(
         sourceId: Long,

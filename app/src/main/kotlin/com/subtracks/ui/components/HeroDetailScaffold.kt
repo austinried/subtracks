@@ -28,8 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -291,7 +291,11 @@ fun HeroHeader(
             ) {
                 when (downloadStatus.action()) {
                     BulkDownloadAction.Delete -> {
-                        Icon(Icons.Rounded.Delete, contentDescription = "Delete download", modifier = Modifier.offset(y = 1.5.dp))
+                        Icon(
+                            imageVector = Icons.Rounded.DownloadDone,
+                            contentDescription = "Delete download",
+                            modifier = Modifier.size(28.dp).offset(y = 1.5.dp),
+                        )
                     }
 
                     BulkDownloadAction.Cancel -> {

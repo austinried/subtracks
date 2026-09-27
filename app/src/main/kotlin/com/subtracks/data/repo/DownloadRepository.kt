@@ -103,27 +103,62 @@ class DownloadRepository(
             showMessage(NO_ADDRESS)
             return@withContext
         }
-        if (!enqueueIfAbsent(sourceId, songId)) return@withContext
+        val promoted =
+            mutex.withLock {
+                if (!queueIfAbsentLocked(sourceId, songId)) return@withContext
+                promote()
+            }
         // The media is already with the platform, so this only has to happen while we are still
         // in the foreground: artwork is fetched by us, and it must not hold up the download.
-        fetchArtworkSafely(sourceId, listOf(songId))
+        fetchArtworkSafely(sourceId, promoted.map { it.songId })
     }
 
-    private suspend fun enqueueIfAbsent(
-        sourceId: Long,
-        songId: String,
-    ): Boolean = mutex.withLock { enqueueIfAbsentLocked(sourceId, songId) }
-
-    private suspend fun enqueueIfAbsentLocked(
+    private suspend fun queueIfAbsentLocked(
         sourceId: Long,
         songId: String,
     ): Boolean {
         if (alreadyDownloadingOrDownloaded(sourceId, songId)) return false
         val existing = db.downloadDao().find(sourceId, songId)
         existing?.engineId?.let(engine::cancel)
-        val url = sourceRepository.downloadUri(sourceId, songId) ?: return false
-        enqueue(sourceId, songId, url)
+        dir(sourceId).mkdirs()
+        file(sourceId, songId).delete()
+        db.downloadDao().upsert(SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued))
+        ensurePolling()
         return true
+    }
+
+    /**
+     * Hands the platform as many waiting songs as it can run, oldest first, so the queue it holds
+     * mirrors the list on screen rather than the whole library. Everything else waits as a row
+     * without an engine id, and the next tick promotes it.
+     */
+    private suspend fun promote(): List<SongDownload> {
+        val rows = db.downloadDao().all()
+        val free = IN_FLIGHT_LIMIT - rows.count { it.status.isActive && it.engineId != null }
+        if (free <= 0) return emptyList()
+        val promoted = ArrayList<SongDownload>()
+        rows
+            .filter { it.status == DownloadStatus.Queued && it.engineId == null }
+            .take(free)
+            .forEach { row ->
+                val url = sourceRepository.downloadUri(row.sourceId, row.songId) ?: return@forEach
+                val title = db.libraryDao().songOnce(row.sourceId, row.songId)?.title ?: row.songId
+                val engineId =
+                    try {
+                        engine.enqueue(
+                            EngineRequest(uri = url, path = enginePath(row.sourceId, row.songId), title = title),
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // Leave it failed rather than waiting, or the next tick would retry it forever.
+                        markFailed(row, STOPPED)
+                        return@forEach
+                    }
+                db.downloadDao().upsert(row.copy(engineId = engineId))
+                promoted += row
+            }
+        return promoted
     }
 
     suspend fun remove(
@@ -167,20 +202,23 @@ class DownloadRepository(
         }
         // Under one lock, so a cancel that lands mid-loop waits for the queue to be complete and
         // then removes all of it, rather than missing the songs enqueued after it looked.
-        // ponytail: the lock is held for the whole loop, so cancel latency and the poll tick scale
-        // with the list length; a per-list cancel generation would lift that if it ever bites.
-        mutex.withLock {
-            songIds.forEach { songId ->
-                try {
-                    enqueueIfAbsentLocked(sourceId, songId)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    // One song failing to enqueue must not abandon the rest of the list.
+        // ponytail: the lock is held for the whole insert pass, so cancel latency scales with the
+        // list length; the promote below hands over at most IN_FLIGHT_LIMIT, which is what keeps
+        // the platform's queue (and our poll writes) bounded.
+        val promoted =
+            mutex.withLock {
+                songIds.forEach { songId ->
+                    try {
+                        queueIfAbsentLocked(sourceId, songId)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // One song failing to queue must not abandon the rest of the list.
+                    }
                 }
+                promote()
             }
-        }
-        fetchArtworkSafely(sourceId, songIds)
+        fetchArtworkSafely(sourceId, promoted.map { it.songId })
     }
 
     suspend fun applyAction(
@@ -193,6 +231,20 @@ class DownloadRepository(
         BulkDownloadAction.Cancel -> cancelAll(sourceId, list, refId)
         BulkDownloadAction.Delete -> deleteAll(sourceId, list, refId)
     }
+
+    suspend fun downloadedBytes(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ): Long =
+        withContext(dispatcher) {
+            val songIds = songIds(sourceId, list, refId).toHashSet()
+            db
+                .downloadDao()
+                .all()
+                .filter { it.sourceId == sourceId && it.songId in songIds && it.status == DownloadStatus.Completed }
+                .sumOf { file(it.sourceId, it.songId).length() }
+        }
 
     suspend fun cancelAll(
         sourceId: Long,
@@ -234,15 +286,15 @@ class DownloadRepository(
 
     suspend fun reconcile() =
         withContext(dispatcher) {
-            val resumed =
+            val promoted =
                 mutex.withLock {
                     val rows = db.downloadDao().all()
-                    val resumed = reconcileRows(rows)
+                    reconcileRows(rows)
                     sweep(rows)
                     ensurePolling()
-                    resumed
+                    promote()
                 }
-            resumed.forEach { fetchArtworkSafely(it.sourceId, listOf(it.songId)) }
+            warmArtwork(promoted)
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -316,59 +368,38 @@ class DownloadRepository(
                     .toSet()
             }
 
-    private suspend fun enqueue(
-        sourceId: Long,
-        songId: String,
-        url: String,
-    ) {
-        dir(sourceId).mkdirs()
-        file(sourceId, songId).delete()
-        val title = db.libraryDao().songOnce(sourceId, songId)?.title ?: songId
-        val engineId =
-            engine.enqueue(
-                EngineRequest(uri = url, path = enginePath(sourceId, songId), title = title),
-            )
-        db.downloadDao().upsert(
-            SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued, engineId = engineId),
-        )
-        ensurePolling()
-    }
-
-    private suspend fun recover(row: SongDownload): Boolean =
+    private suspend fun recover(row: SongDownload) {
         when (row.status) {
             DownloadStatus.Completed -> {
                 if (!file(row.sourceId, row.songId).exists()) markFailed(row, MISSING_FILE)
-                false
             }
 
+            // Waiting rows have no engine id by design; the next promote hands them over.
             DownloadStatus.Queued -> {
-                if (sourceRepository.activeSourceIdOnce() != row.sourceId) return false
-                val url = sourceRepository.downloadUri(row.sourceId, row.songId) ?: return false
-                enqueue(row.sourceId, row.songId, url)
-                true
+                if (row.engineId != null) db.downloadDao().upsert(row.copy(engineId = null))
             }
 
             DownloadStatus.Running -> {
                 markFailed(row, STOPPED)
-                false
             }
 
             DownloadStatus.Failed -> {
-                false
+                Unit
             }
         }
+    }
 
-    private suspend fun reconcileRows(rows: List<SongDownload>): List<SongDownload> {
-        val resumed = ArrayList<SongDownload>()
+    private suspend fun reconcileRows(rows: List<SongDownload>) {
         rows.forEach { row ->
             val state = row.engineId?.let(engine::download)
-            if (state == null) {
-                if (recover(row)) resumed += row
-            } else {
-                apply(row, state)
-            }
+            if (state == null) recover(row) else apply(row, state)
         }
-        return resumed
+    }
+
+    private suspend fun warmArtwork(promoted: List<SongDownload>) {
+        promoted.groupBy { it.sourceId }.forEach { (sourceId, rows) ->
+            fetchArtworkSafely(sourceId, rows.map { it.songId })
+        }
     }
 
     private suspend fun removeRow(
@@ -458,16 +489,19 @@ class DownloadRepository(
             scope.launch {
                 while (true) {
                     delay(POLL_MS)
-                    val resumed =
+                    val promoted =
                         mutex.withLock {
                             val sourceId = sourceRepository.activeSourceIdOnce()
                             val active = db.downloadDao().all().filter { it.status.isActive && it.sourceId == sourceId }
                             if (active.isEmpty()) return@launch
                             reconcileRows(active)
+                            promote()
                         }
                     // Fetching artwork here would hold up the next tick, and with it the progress
                     // the queue is mirrored from.
-                    resumed.forEach { row -> scope.launch { fetchArtworkSafely(row.sourceId, listOf(row.songId)) } }
+                    promoted.groupBy { it.sourceId }.forEach { (sourceId, rows) ->
+                        scope.launch { fetchArtworkSafely(sourceId, rows.map { it.songId }) }
+                    }
                 }
             }
     }
@@ -507,6 +541,7 @@ class DownloadRepository(
         const val ENGINE_DIR = "downloads"
         const val NO_MEDIA = ".nomedia"
         const val POLL_MS = 1_000L
+        const val IN_FLIGHT_LIMIT = 8
         const val MISSING_FILE = "The downloaded file is missing"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val EMPTY_LIST = "Nothing left to download from this list"

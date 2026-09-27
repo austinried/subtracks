@@ -560,16 +560,59 @@ class DownloadRepositoryTest {
     fun cancellingWhileAListIsStillQueuingRemovesTheWholeList() =
         runTest {
             seedLibrary()
-            seedSongs(3..40)
-            engine.enqueueDelayMs = 1
+            seedSongs(3..400)
 
             val queuing = launch(Dispatchers.IO) { repository.downloadAll(1, DownloadList.Album, "al1") }
-            await { engine.requests.size >= 3 }
+            await { allRows().size >= 50 }
             val cancelling = launch(Dispatchers.IO) { repository.cancelAll(1, DownloadList.Album, "al1") }
             queuing.join()
             cancelling.join()
 
             assertTrue("expected the whole list cancelled, ${db.downloadDao().all().size} rows left", db.downloadDao().all().isEmpty())
+        }
+
+    @Test
+    fun aLongListHandsThePlatformOnlyTheInFlightLimit() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..40)
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(8, engine.requests.size)
+            assertEquals(32, db.downloadDao().all().count { it.status == DownloadStatus.Queued && it.engineId == null })
+        }
+
+    @Test
+    fun finishingADownloadHandsOverTheNextSongInListOrder() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..12)
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+            val first = engine.requests.first()
+
+            engine.complete(first.first, total = 10)
+            writeFile(1, first.second.path.substringAfterLast('/'), "audio")
+            runBlocking { repository.reconcile() }
+
+            assertEquals(9, engine.requests.size)
+            assertEquals((1..9).map { "s$it" }, requestedSongIds())
+        }
+
+    @Test
+    fun reconcilingAWaitingListDoesNotHandItOverWholesale() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..40)
+            runBlocking {
+                (1..40).forEach { track ->
+                    db.downloadDao().upsert(SongDownload(1, "s$track", DownloadStatus.Queued))
+                }
+            }
+
+            runBlocking { repository.reconcile() }
+
+            assertEquals(8, engine.requests.size)
         }
 
     @Test
@@ -611,6 +654,19 @@ class DownloadRepositoryTest {
 
             assertNotNull(row(1, "s1"))
             assertNull(row(1, "s2"))
+        }
+
+    @Test
+    fun downloadedBytesCountsTheCompletedFilesOfTheList() =
+        runTest {
+            seedLibrary()
+            writeFile(1, "s1", "12345")
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, engineId = 11))
+            writeFile(1, "s2", "1234")
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Running, engineId = 22))
+            writeFile(1, "s3", "123")
+
+            assertEquals(5L, repository.downloadedBytes(1, DownloadList.Album, "al1"))
         }
 
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
