@@ -125,8 +125,13 @@ interface QueueDao {
         limit: Int,
     ): List<SongListItem>
 
+    // Row-value `<` is null-intolerant, and NULL disc/track sort first, so a plain
+    // `(disc, track, id) < (...)` would drop exactly the untagged tracks a backward window needs.
     @Query(
-        "$ALBUM_SONGS_SELECT AND (songs.disc, songs.track, songs.id) < (:disc, :track, :id) " +
+        "$ALBUM_SONGS_SELECT AND (" +
+            "songs.disc IS NULL OR songs.disc < :disc OR " +
+            "(songs.disc = :disc AND (songs.track IS NULL OR songs.track < :track OR " +
+            "(songs.track = :track AND songs.id < :id)))) " +
             "ORDER BY songs.disc DESC, songs.track DESC, songs.id DESC LIMIT :limit OFFSET :skip",
     )
     suspend fun albumSongsBefore(

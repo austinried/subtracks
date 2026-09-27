@@ -104,6 +104,37 @@ class QueueKeysetTest {
         }
 
     @Test
+    fun albumKeysetBeforeIncludesNullDiscAndTrack() =
+        runTest {
+            seedLibrary()
+            val all = allAlbumRows("mixed").map { it.song.id }
+            assertEquals(listOf("n1", "n2", "s1", "s2"), all)
+
+            val actual =
+                db
+                    .queueDao()
+                    .albumSongsBefore(1, "mixed", disc = 1, track = 2, id = "s2", skip = 0, limit = 2)
+                    .asReversed()
+                    .map { it.song.id }
+
+            assertEquals(listOf("n2", "s1"), actual)
+        }
+
+    @Test
+    fun scanningAnAlbumWithNullDiscAndTrackBackwardsResolvesEveryRow() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "mixed")))
+            val snapshot = repository.snapshot()
+            val expected = allAlbumRows("mixed").map { it.song.id }
+
+            val resolved =
+                (snapshot.size - 1 downTo 0).map { repository.itemAt(snapshot, it)?.song?.id }.asReversed()
+
+            assertEquals(expected, resolved)
+        }
+
+    @Test
     fun playlistKeysetMatchesOffsetWindowWithGapsAndGhosts() =
         runTest {
             seedLibrary()
@@ -234,6 +265,7 @@ class QueueKeysetTest {
             listOf(
                 album("big", "Big Album"),
                 album("tie", "Tie Album"),
+                album("mixed", "Mixed Album"),
             ),
         )
         val big =
@@ -247,7 +279,14 @@ class QueueKeysetTest {
                 song(id = "t1z", albumId = "tie", disc = 1, track = 1),
                 song(id = "t1a", albumId = "tie", disc = 1, track = 1),
             )
-        db.libraryDao().upsertSongs(big + tie)
+        val mixed =
+            listOf(
+                song(id = "n1", albumId = "mixed"),
+                song(id = "n2", albumId = "mixed", track = 3),
+                song(id = "s1", albumId = "mixed", disc = 1, track = 1),
+                song(id = "s2", albumId = "mixed", disc = 1, track = 2),
+            )
+        db.libraryDao().upsertSongs(big + tie + mixed)
 
         val positions = (0 until 20).map { it * 2L }
         val playlistSongs =
@@ -281,8 +320,8 @@ class QueueKeysetTest {
     private fun song(
         id: String,
         albumId: String,
-        disc: Long,
-        track: Long,
+        disc: Long? = null,
+        track: Long? = null,
     ) = Song(
         sourceId = 1,
         id = id,

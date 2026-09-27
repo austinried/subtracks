@@ -266,6 +266,8 @@ val MIGRATION_18_19 =
                 "CREATE INDEX IF NOT EXISTS `index_songs_sourceId_albumId_order` ON `songs` " +
                     "(`sourceId`, `albumId`, `disc`, `track`, `id`)",
             )
+            // Covered by the prefix of the new index.
+            connection.execSQL("DROP INDEX IF EXISTS `index_songs_sourceId_albumId`")
         }
     }
 

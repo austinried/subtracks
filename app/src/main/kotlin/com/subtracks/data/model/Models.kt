@@ -210,7 +210,6 @@ data class PlaylistSong(
         ),
     ],
     indices = [
-        Index("sourceId", "albumId"),
         Index("sourceId", "artistId"),
         Index(
             name = "index_songs_sourceId_albumId_order",
