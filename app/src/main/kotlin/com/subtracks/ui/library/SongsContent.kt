@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -174,7 +175,9 @@ private fun CoverArtCell(
             colorFilter = if (isPlaying) DIM else null,
         )
         if (isPlaying) {
-            Box(Modifier.matchParentSize().drawBehind { drawInnerShadow() })
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Box(Modifier.matchParentSize().drawBehind { drawInnerShadow() })
+            }
             Box(
                 Modifier
                     .matchParentSize()
@@ -227,13 +230,27 @@ private fun PlayIndicator(
             val scale = minOf(size.width / PLAY_ARROW.viewportWidth, size.height / PLAY_ARROW.viewportHeight)
             withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
                 drawIntoCanvas { canvas ->
-                    val paint =
+                    val path = PLAY_ARROW_PATH.asAndroidPath()
+                    val glyph =
                         android.graphics.Paint().apply {
                             isAntiAlias = true
                             color = tint.toArgb()
-                            setShadowLayer(radius, 0f, 0f, PLAY_SHADOW.toArgb())
                         }
-                    canvas.nativeCanvas.drawPath(PLAY_ARROW_PATH.asAndroidPath(), paint)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        glyph.setShadowLayer(radius, 0f, 0f, PLAY_SHADOW.toArgb())
+                        canvas.nativeCanvas.drawPath(path, glyph)
+                    } else {
+                        val halo =
+                            android.graphics.Paint().apply {
+                                isAntiAlias = true
+                                color = PLAY_SHADOW.toArgb()
+                            }
+                        canvas.nativeCanvas.save()
+                        canvas.nativeCanvas.translate(1f, 1.5f)
+                        canvas.nativeCanvas.drawPath(path, halo)
+                        canvas.nativeCanvas.restore()
+                        canvas.nativeCanvas.drawPath(path, glyph)
+                    }
                 }
             }
         }

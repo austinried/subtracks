@@ -147,12 +147,13 @@ class PlaybackService : MediaSessionService() {
     private fun observeStar(songId: String?) {
         starJob?.cancel()
         currentSongId = songId
+        starred = false
         val library = library ?: return
         if (songId == null) {
-            starred = false
             session?.setMediaButtonPreferences(emptyList())
             return
         }
+        session?.setMediaButtonPreferences(listOf(starButton(false)))
         starJob =
             scope.launch {
                 val sourceId = sourceRepository?.activeSourceIdOnce() ?: return@launch
@@ -167,7 +168,7 @@ class PlaybackService : MediaSessionService() {
     private fun toggleStar() {
         val songId = currentSongId ?: return
         val library = library ?: return
-        library.star(StarType.Song, songId, !starred)
+        library.toggleStar(StarType.Song, songId)
     }
 
     private fun starButton(isStarred: Boolean): CommandButton =

@@ -209,30 +209,47 @@ class LibraryRepository(
         starScope.launch { setStar(type, id, starred) }
     }
 
+    fun toggleStar(
+        type: StarType,
+        id: String,
+    ) {
+        starScope.launch {
+            starLock.withLock {
+                val sourceId = sourceRepository.activeSourceIdOnce() ?: return@withLock
+                setStarLocked(type, id, starredValue(sourceId, type, id) == null)
+            }
+        }
+    }
+
     suspend fun setStar(
         type: StarType,
         id: String,
         starred: Boolean,
-    ): Result<Unit> =
-        starLock.withLock {
-            val sourceId = sourceRepository.activeSourceIdOnce()
-            val source = sourceRepository.activeMusicSource()
-            if (sourceId == null || source == null) {
-                return@withLock Result.failure(IllegalStateException("No active server"))
-            }
-            val previous = starredValue(sourceId, type, id)
-            updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
-            try {
-                source.setStar(type, id, starred)
-                Result.success(Unit)
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (failure: Exception) {
-                withContext(NonCancellable) { updateStarred(sourceId, type, id, previous) }
-                showMessage("Could not update star")
-                Result.failure(failure)
-            }
+    ): Result<Unit> = starLock.withLock { setStarLocked(type, id, starred) }
+
+    private suspend fun setStarLocked(
+        type: StarType,
+        id: String,
+        starred: Boolean,
+    ): Result<Unit> {
+        val sourceId = sourceRepository.activeSourceIdOnce()
+        val source = sourceRepository.activeMusicSource()
+        if (sourceId == null || source == null) {
+            return Result.failure(IllegalStateException("No active server"))
         }
+        val previous = starredValue(sourceId, type, id)
+        updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
+        return try {
+            source.setStar(type, id, starred)
+            Result.success(Unit)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            withContext(NonCancellable) { updateStarred(sourceId, type, id, previous) }
+            showMessage("Could not update star")
+            Result.failure(failure)
+        }
+    }
 
     private suspend fun starredValue(
         sourceId: Long,
