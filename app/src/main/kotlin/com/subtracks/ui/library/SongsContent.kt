@@ -174,7 +174,7 @@ private fun CoverArtCell(
             Box(
                 Modifier
                     .matchParentSize()
-                    .border(1.5.dp, MaterialTheme.colorScheme.primary, shape),
+                    .border(1.5.dp, Color.White, shape),
             )
             PlayIndicator(
                 shadow = true,
@@ -216,7 +216,7 @@ private fun PlayIndicator(
     shadow: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val tint = MaterialTheme.colorScheme.secondary
+    val tint = MaterialTheme.colorScheme.primary
     if (shadow) {
         val radius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
         Canvas(modifier.semantics { contentDescription = "Playing" }) {
