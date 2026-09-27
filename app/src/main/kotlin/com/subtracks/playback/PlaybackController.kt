@@ -344,26 +344,24 @@ class PlaybackController(
                 lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 return@withLock
             }
+            // The block floats behind the currently playing context track, so removing that track
+            // removes its anchor. Re-anchor the block to the track that now precedes the removed
+            // slot in play order, so it takes the slot and plays next, rather than the anchor
+            // landing wherever `adjustAnchorOnRemove` left it.
+            if (snapshot.shuffled && position == current && !wasUpNext && updated.upNextSize > 0L) {
+                val play = snapshot.contextPlay(current)
+                val predecessor = play - 1L
+                val anchor = if (predecessor < 0L) -1L else updated.flatContext(predecessor) ?: -1L
+                queueRepository.setUpNextAnchor(anchor)
+                updated = readSnapshot()
+                this.snapshot = updated
+            }
             // Derive the current track's new position from the edit. Resolving its song id after
             // the edit can match an identical song elsewhere (a duplicate in the context or the
-            // block), so use canonical positions throughout: a shuffled removal re-derives the
-            // permutation at the smaller size, so the current track's play position is a remap of
-            // its flat index, not a simple shift.
+            // block), so use positions throughout. Removing the playing track resumes at the same
+            // slot, which now holds whatever was next (the block, if one is queued).
             var target =
                 when {
-                    position == current && snapshot.shuffled && !wasUpNext -> {
-                        // The permutation is re-derived at the smaller size, so there is no stable
-                        // "next"; play whatever now fills the removed track's slot.
-                        val removedFlat = snapshot.flatContext(snapshot.contextPlay(position)) ?: 0L
-                        val newContextSize = (snapshot.contextSize - 1).coerceAtLeast(0)
-                        if (newContextSize == 0L) {
-                            0L
-                        } else {
-                            val slot = removedFlat.coerceIn(0, newContextSize - 1)
-                            updated.combined(updated.playContext(slot) ?: 0L)
-                        }
-                    }
-
                     position == current -> {
                         current
                     }

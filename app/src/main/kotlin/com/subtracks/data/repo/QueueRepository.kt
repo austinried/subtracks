@@ -437,6 +437,8 @@ class QueueRepository(
         return Reanchored(play, true)
     }
 
+    suspend fun setUpNextAnchor(anchor: Long) = cursorMutex.withLock { dao.setCursor(cursorRow().copy(upNextAnchor = anchor)) }
+
     suspend fun clearUpNext() {
         writeUpNext(emptyList())
     }
