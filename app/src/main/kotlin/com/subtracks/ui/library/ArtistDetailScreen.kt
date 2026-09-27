@@ -50,7 +50,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +82,7 @@ import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.rememberViewportFill
@@ -91,6 +94,7 @@ import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -140,6 +144,8 @@ fun ArtistDetailRoute(
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var pendingDelete by remember { mutableStateOf<Long?>(null) }
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
@@ -149,7 +155,7 @@ fun ArtistDetailRoute(
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             downloadArtist = { viewModel.onDownloadAction(BulkDownloadAction.Download) },
             cancelArtistDownload = { viewModel.onDownloadAction(BulkDownloadAction.Cancel) },
-            deleteArtistDownload = { viewModel.onDownloadAction(BulkDownloadAction.Delete) },
+            deleteArtistDownload = { scope.launch { pendingDelete = viewModel.downloadedBytes() } },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )
@@ -167,6 +173,15 @@ fun ArtistDetailRoute(
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
     )
+
+    pendingDelete?.let { bytes ->
+        DeleteDownloadsDialog(
+            name = artist?.name.orEmpty(),
+            bytes = bytes,
+            onConfirm = { viewModel.onDownloadAction(BulkDownloadAction.Delete) },
+            onDismiss = { pendingDelete = null },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

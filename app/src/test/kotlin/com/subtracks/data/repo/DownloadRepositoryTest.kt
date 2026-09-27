@@ -667,6 +667,7 @@ class DownloadRepositoryTest {
             writeFile(1, "s3", "123")
 
             assertEquals(5L, repository.downloadedBytes(1, DownloadList.Album, "al1"))
+            assertEquals(5L, repository.downloadedBytes(1, DownloadList.Artist, "ar1"))
         }
 
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
