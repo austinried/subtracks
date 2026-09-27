@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -188,6 +189,22 @@ fun HeroDetailScaffold(
 }
 
 @Composable
+private fun HeroSubtitle(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
+}
+
+@Composable
 fun HeroHeader(
     art: CoverArtRef?,
     name: String,
@@ -227,30 +244,30 @@ fun HeroHeader(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        if (subtitle.isNotEmpty()) {
+        val subtitleIsTarget = onSubtitleClick != null && subtitle.isNotEmpty() && comment.isNullOrBlank()
+        if (subtitleIsTarget) {
+            // The target spans the 4dp lead-in and the 20dp gap that would sit below the
+            // line, so the text stays put and the row clears 48dp; without those the
+            // subtitle alone is a single 20dp line.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clickable(onClickLabel = "Open artist") { onSubtitleClick?.invoke() },
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                HeroSubtitle(subtitle, Modifier.padding(top = 4.dp))
+            }
+        } else if (subtitle.isNotEmpty()) {
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = if (onSubtitleClick != null) Modifier.clickable { onSubtitleClick() } else Modifier,
-            )
+            HeroSubtitle(subtitle)
         }
         if (!comment.isNullOrBlank()) {
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = comment,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            HeroSubtitle(comment)
         }
-        Spacer(Modifier.height(20.dp))
+        if (!subtitleIsTarget) Spacer(Modifier.height(20.dp))
         Row(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
