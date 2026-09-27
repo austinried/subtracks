@@ -1,5 +1,10 @@
 package com.subtracks.ui.library
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +18,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DownloadDone
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -21,6 +25,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,13 +41,8 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.ui.graphics.vector.VectorGroup
-import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +56,8 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.ui.components.CoverArt
+import kotlin.math.PI
+import kotlin.math.sin
 
 private val TRACK_COLUMN_WIDTH = 24.dp
 private val TIME_COLUMN_WIDTH = 36.dp
@@ -66,23 +68,9 @@ private val PLAY_SHADOW_RADIUS = 3.dp
 private val PLAY_SHADOW = Color.Black.copy(alpha = 0.6f)
 private val INNER_SHADOW_RADIUS = 8.dp
 private val INNER_SHADOW = Color.Black.copy(alpha = 0.85f)
-private val PLAY_ARROW = Icons.Rounded.PlayArrow
-private val PLAY_ARROW_PATH: Path by lazy { buildVectorPath(PLAY_ARROW) }
-
-private fun buildVectorPath(vector: ImageVector): Path {
-    val parser = PathParser()
-
-    fun collect(group: VectorGroup) {
-        for (node in group) {
-            when (node) {
-                is VectorPath -> parser.addPathNodes(node.pathData)
-                is VectorGroup -> collect(node)
-            }
-        }
-    }
-    collect(vector.root)
-    return parser.toPath()
-}
+private const val BAR_COUNT = 3
+private const val PLAY_BAR_PERIOD_MS = 900
+private const val PLAY_BAR_PHASE = 0.18f
 
 @Composable
 fun SongRow(
@@ -216,30 +204,44 @@ private fun PlayIndicator(
     shadow: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val phase by
+        rememberInfiniteTransition(label = "playing")
+            .animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(PLAY_BAR_PERIOD_MS, easing = LinearEasing)),
+                label = "phase",
+            )
     val tint = MaterialTheme.colorScheme.primary
-    if (shadow) {
-        val radius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
-        Canvas(modifier.semantics { contentDescription = "Playing" }) {
-            val scale = minOf(size.width / PLAY_ARROW.viewportWidth, size.height / PLAY_ARROW.viewportHeight)
-            withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
-                drawIntoCanvas { canvas ->
-                    val paint =
-                        android.graphics.Paint().apply {
-                            isAntiAlias = true
-                            color = tint.toArgb()
-                            setShadowLayer(radius, 0f, 0f, PLAY_SHADOW.toArgb())
-                        }
-                    canvas.nativeCanvas.drawPath(PLAY_ARROW_PATH.asAndroidPath(), paint)
-                }
+    val shadowRadius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
+    Canvas(modifier.semantics { contentDescription = "Playing" }) {
+        val barWidth = size.width * 0.22f
+        val gap = size.width * 0.11f
+        val radius = CornerRadius(barWidth / 2f)
+        val total = barWidth * BAR_COUNT + gap * (BAR_COUNT - 1)
+        val startX = (size.width - total) / 2f
+        val minHeight = size.height * 0.3f
+        val bars =
+            (0 until BAR_COUNT).map { index ->
+                val wave = ((sin((phase + index * PLAY_BAR_PHASE) * 2.0 * PI) + 1.0) / 2.0).toFloat()
+                val height = minHeight + (size.height - minHeight) * wave
+                val x = startX + index * (barWidth + gap)
+                Rect(x, (size.height - height) / 2f, x + barWidth, (size.height + height) / 2f)
             }
+        if (shadow) {
+            val path = Path().apply { bars.forEach { addRoundRect(RoundRect(it, radius)) } }
+            drawIntoCanvas { canvas ->
+                val paint =
+                    android.graphics.Paint().apply {
+                        isAntiAlias = true
+                        color = tint.toArgb()
+                        setShadowLayer(shadowRadius, 0f, 0f, PLAY_SHADOW.toArgb())
+                    }
+                canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
+            }
+        } else {
+            bars.forEach { drawRoundRect(color = tint, topLeft = it.topLeft, size = it.size, cornerRadius = radius) }
         }
-    } else {
-        Icon(
-            imageVector = PLAY_ARROW,
-            contentDescription = "Playing",
-            tint = tint,
-            modifier = modifier,
-        )
     }
 }
 
