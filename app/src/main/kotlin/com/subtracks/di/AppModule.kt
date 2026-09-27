@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import com.subtracks.data.db.createAndroidDatabase
+import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.SystemDownloadEngine
 import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.createUserPreferences
@@ -48,7 +49,7 @@ fun appModule(
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }
-    single { SystemDownloadEngine(context.applicationContext) }
+    single<DownloadEngine> { SystemDownloadEngine(context.applicationContext) }
     single {
         DownloadRepository(
             db = get(),
