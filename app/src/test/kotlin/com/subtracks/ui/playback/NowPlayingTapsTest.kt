@@ -1,11 +1,14 @@
 package com.subtracks.ui.playback
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
@@ -83,6 +86,14 @@ class NowPlayingTapsTest {
         composeRule.onNodeWithText("Radiohead").performClick()
 
         assertTrue("the artist name should open the artist", opened)
+    }
+
+    @Test
+    fun theArtistTargetIsAtLeastTheMinimumTouchSize() {
+        render(onArtistClick = {})
+
+        composeRule.onNodeWithText("Radiohead").assertHeightIsAtLeast(48.dp)
+        composeRule.onNodeWithText("Radiohead").assertWidthIsAtLeast(48.dp)
     }
 
     @Test

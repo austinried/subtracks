@@ -293,8 +293,13 @@ fun NowPlayingScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
+                                    .fillMaxWidth()
                                     .padding(top = 12.dp)
-                                    .height(titleHeight + 6.dp + subtitleHeight),
+                                    .height(titleHeight + 6.dp + subtitleHeight)
+                                    .clickable(
+                                        enabled = onArtistClick != null,
+                                        onClickLabel = "Open artist",
+                                    ) { onArtistClick?.invoke() },
                         ) {
                             Box(Modifier.height(titleHeight), contentAlignment = Alignment.Center) {
                                 Text(
@@ -304,17 +309,7 @@ fun NowPlayingScreen(
                                     modifier = Modifier.basicMarquee(),
                                 )
                             }
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(subtitleHeight)
-                                        .clickable(
-                                            enabled = onArtistClick != null,
-                                            onClickLabel = "Open artist",
-                                        ) { onArtistClick?.invoke() },
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.Center) {
                                 Text(
                                     text = state.item?.artist.orEmpty(),
                                     style = subtitleStyle,
