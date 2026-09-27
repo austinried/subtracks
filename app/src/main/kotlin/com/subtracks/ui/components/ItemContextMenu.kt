@@ -131,7 +131,7 @@ class ItemActions(
     val downloadArtist: ((ArtistModel) -> Unit)? = null,
     val cancelArtistDownload: ((ArtistModel) -> Unit)? = null,
     val deleteArtistDownload: ((ArtistModel) -> Unit)? = null,
-    val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
+    val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
 )
