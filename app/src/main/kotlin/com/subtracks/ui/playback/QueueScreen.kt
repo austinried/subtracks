@@ -327,9 +327,9 @@ fun QueueScreen(
     var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
 
-    // One reorder state per section: the library only targets keys registered with the state that
-    // started the drag, so an up-next drag cannot reach the context rows and vice versa.
-    // scrollThreshold 0 disables auto-scroll, which otherwise keeps scrolling past the section
+    // One reorder state per section: sh.calvin.reorderable only targets keys registered with the
+    // state that started the drag, so an up-next drag cannot reach the context rows and vice versa.
+    // scrollThreshold 0 disables its auto-scroll, which otherwise keeps scrolling past the section
     // looking for a target that does not exist.
     val upNextReorder =
         rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
