@@ -158,11 +158,11 @@ class QueueViewModel(
     }
 
     fun loadOlder() {
-        val top = rows.firstOrNull()?.position ?: return
+        val top = rows.minOfOrNull { it.position } ?: return
         if (top <= 0L) return
         viewModelScope.launch {
             mutex.withLock {
-                val first = rows.firstOrNull()?.position ?: return@withLock
+                val first = rows.minOfOrNull { it.position } ?: return@withLock
                 if (first <= 0L) return@withLock
                 val snapshot = queueRepository.snapshot()
                 val loaded = queueRepository.range(snapshot, (first - QUEUE_CHUNK).coerceAtLeast(0), first - 1)
@@ -174,10 +174,10 @@ class QueueViewModel(
     }
 
     fun loadNewer() {
-        if (rows.lastOrNull() == null) return
+        if (rows.isEmpty()) return
         viewModelScope.launch {
             mutex.withLock {
-                val last = rows.lastOrNull()?.position ?: return@withLock
+                val last = rows.maxOfOrNull { it.position } ?: return@withLock
                 val snapshot = queueRepository.snapshot()
                 if (last >= snapshot.size - 1) return@withLock
                 val to = (last + QUEUE_CHUNK).coerceAtMost(snapshot.size - 1)
@@ -329,14 +329,14 @@ fun QueueScreen(
 
     // One reorder state per section: sh.calvin.reorderable only targets keys registered with the
     // state that started the drag, so an up-next drag cannot reach the context rows and vice versa.
-    // scrollThreshold 0 disables its auto-scroll, which otherwise keeps scrolling past the section
-    // looking for a target that does not exist.
+    // The up-next state disables auto-scroll (scrollThreshold 0): its block is followed by context
+    // rows, so the scroller keeps going past the last place the item can actually drop.
     val upNextReorder =
         rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
     val contextReorder =
-        rememberReorderableLazyListState(listState, scrollThreshold = 0.dp) { from, to ->
+        rememberReorderableLazyListState(listState) { from, to ->
             onReorder(rows.rowIndexOf(from.key), rows.rowIndexOf(to.key))
         }
 
@@ -349,6 +349,9 @@ fun QueueScreen(
             val last = info.visibleItemsInfo.lastOrNull { it.key is Long }?.let { rows.rowIndexOf(it.key) } ?: -1
             first to last
         }.collect { (first, last) ->
+            // Mid-drag the live reorder leaves row positions inconsistent, so extending here would
+            // re-add rows that are already loaded.
+            if (dragId != null) return@collect
             if (first in 0..LOAD_THRESHOLD) onLoadOlder()
             if (last >= 0 && last >= rows.size - 1 - LOAD_THRESHOLD) onLoadNewer()
         }
