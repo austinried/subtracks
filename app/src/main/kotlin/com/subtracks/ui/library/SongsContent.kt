@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,11 +23,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.VectorGroup
+import androidx.compose.ui.graphics.vector.VectorPath
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +61,26 @@ private val TRACK_COLUMN_WIDTH = 24.dp
 private val TIME_COLUMN_WIDTH = 36.dp
 private val PLAY_ICON_SIZE = 22.dp
 private val MIN_SMALL_FONT = 8.sp
+private val COVER_CORNER = 6.dp
+private val PLAY_SHADOW_RADIUS = 3.dp
+private val PLAY_SHADOW = Color.Black.copy(alpha = 0.6f)
+private val PLAY_ARROW = Icons.Rounded.PlayArrow
+private val PLAY_ARROW_PATH: Path by lazy { buildVectorPath(PLAY_ARROW) }
+
+private fun buildVectorPath(vector: ImageVector): Path {
+    val parser = PathParser()
+
+    fun collect(group: VectorGroup) {
+        for (node in group) {
+            when (node) {
+                is VectorPath -> parser.addPathNodes(node.pathData)
+                is VectorGroup -> collect(node)
+            }
+        }
+    }
+    collect(vector.root)
+    return parser.toPath()
+}
 
 @Composable
 fun SongRow(
@@ -123,7 +160,7 @@ private fun CoverArtCell(
     name: String,
     isPlaying: Boolean,
 ) {
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(COVER_CORNER)
     Box(Modifier.size(48.dp)) {
         CoverArt(
             ref = ref,
@@ -131,6 +168,7 @@ private fun CoverArtCell(
             modifier = Modifier.size(48.dp).clip(shape),
         )
         if (isPlaying) {
+            Box(Modifier.matchParentSize().drawBehind { drawInnerShadow() })
             Box(
                 Modifier
                     .matchParentSize()
@@ -144,31 +182,61 @@ private fun CoverArtCell(
     }
 }
 
+private fun DrawScope.drawInnerShadow() {
+    val corner = COVER_CORNER.toPx()
+    val shapePath =
+        Path().apply {
+            addRoundRect(RoundRect(Rect(Offset.Zero, size), CornerRadius(corner, corner)))
+        }
+    val outer =
+        Path().apply {
+            addRect(Rect(-size.width, -size.height, size.width * 2f, size.height * 2f))
+        }
+    val ring =
+        Path().apply {
+            op(outer, shapePath, PathOperation.Difference)
+        }
+    clipPath(shapePath) {
+        drawIntoCanvas { canvas ->
+            val paint =
+                android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    color = android.graphics.Color.BLACK
+                    setShadowLayer(PLAY_SHADOW_RADIUS.toPx(), 0f, 0f, PLAY_SHADOW.toArgb())
+                }
+            canvas.nativeCanvas.drawPath(ring.asAndroidPath(), paint)
+        }
+    }
+}
+
 @Composable
 private fun PlayIndicator(
     shadow: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier) {
-        if (shadow) {
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = null,
-                tint = Color.Black.copy(alpha = 0.5f),
-                modifier =
-                    Modifier
-                        .matchParentSize()
-                        .graphicsLayer {
-                            scaleX = 1.35f
-                            scaleY = 1.35f
-                        }.blur(3.dp, BlurredEdgeTreatment.Unbounded),
-            )
+    val tint = MaterialTheme.colorScheme.primary
+    if (shadow) {
+        val radius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
+        Canvas(modifier.semantics { contentDescription = "Playing" }) {
+            val scale = minOf(size.width / PLAY_ARROW.viewportWidth, size.height / PLAY_ARROW.viewportHeight)
+            withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
+                drawIntoCanvas { canvas ->
+                    val paint =
+                        android.graphics.Paint().apply {
+                            isAntiAlias = true
+                            color = tint.toArgb()
+                            setShadowLayer(radius, 0f, 0f, PLAY_SHADOW.toArgb())
+                        }
+                    canvas.nativeCanvas.drawPath(PLAY_ARROW_PATH.asAndroidPath(), paint)
+                }
+            }
         }
+    } else {
         Icon(
-            imageVector = Icons.Rounded.PlayArrow,
+            imageVector = PLAY_ARROW,
             contentDescription = "Playing",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.matchParentSize(),
+            tint = tint,
+            modifier = modifier,
         )
     }
 }
