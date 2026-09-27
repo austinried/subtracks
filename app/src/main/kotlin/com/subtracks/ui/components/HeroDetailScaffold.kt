@@ -2,6 +2,7 @@ package com.subtracks.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -209,11 +210,21 @@ private fun HeroSubtitle(
     )
 }
 
-fun ListDownloadStatus.action(): BulkDownloadAction =
+fun ListDownloadStatus.actions(): List<BulkDownloadAction> =
     when {
-        complete -> BulkDownloadAction.Delete
-        downloading > 0 -> BulkDownloadAction.Cancel
-        else -> BulkDownloadAction.Download
+        complete -> listOf(BulkDownloadAction.Delete)
+        downloading > 0 -> listOf(BulkDownloadAction.Cancel)
+        downloaded > 0 -> listOf(BulkDownloadAction.Download, BulkDownloadAction.Delete)
+        else -> listOf(BulkDownloadAction.Download)
+    }
+
+fun ListDownloadStatus.action(): BulkDownloadAction = actions().first()
+
+private fun downloadActionLabel(action: BulkDownloadAction): String =
+    when (action) {
+        BulkDownloadAction.Download -> "Download"
+        BulkDownloadAction.Cancel -> "Cancel download"
+        BulkDownloadAction.Delete -> "Delete download"
     }
 
 @Composable
@@ -284,17 +295,29 @@ fun HeroHeader(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
-                onClick = { onDownloadAction(downloadStatus.action()) },
-                enabled = hasSongs,
-                modifier = Modifier.padding(horizontal = 8.dp),
+            Box(
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .combinedClickable(
+                            enabled = hasSongs,
+                            onClick = { onDownloadAction(downloadStatus.action()) },
+                            onClickLabel = downloadActionLabel(downloadStatus.action()),
+                            onLongClick = {
+                                if (BulkDownloadAction.Delete in downloadStatus.actions()) {
+                                    onDownloadAction(BulkDownloadAction.Delete)
+                                }
+                            },
+                            onLongClickLabel = "Delete download",
+                        ),
+                contentAlignment = Alignment.Center,
             ) {
                 when (downloadStatus.action()) {
                     BulkDownloadAction.Delete -> {
                         Icon(
                             imageVector = Icons.Rounded.DownloadDone,
                             contentDescription = "Delete download",
-                            modifier = Modifier.size(28.dp).offset(y = 1.5.dp),
+                            modifier = Modifier.size(28.dp),
                         )
                     }
 
@@ -310,7 +333,7 @@ fun HeroHeader(
                     }
 
                     BulkDownloadAction.Download -> {
-                        Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.offset(y = 1.5.dp))
+                        Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.size(24.dp))
                     }
                 }
             }
