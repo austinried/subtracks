@@ -344,18 +344,6 @@ class PlaybackController(
                 lastEdit = ReloadUndo(entries, cursor, snapshot.shuffleSeed, upNext, snapshot.upNextAnchor)
                 return@withLock
             }
-            // The block floats behind the currently playing context track, so removing that track
-            // removes its anchor. Re-anchor the block to the track that now precedes the removed
-            // slot in play order, so it takes the slot and plays next, rather than the anchor
-            // landing wherever `adjustAnchorOnRemove` left it.
-            if (snapshot.shuffled && position == current && !wasUpNext && updated.upNextSize > 0L) {
-                val play = snapshot.contextPlay(current)
-                val predecessor = play - 1L
-                val anchor = if (predecessor < 0L) -1L else updated.flatContext(predecessor) ?: -1L
-                queueRepository.setUpNextAnchor(anchor)
-                updated = readSnapshot()
-                this.snapshot = updated
-            }
             // Derive the current track's new position from the edit. Resolving its song id after
             // the edit can match an identical song elsewhere (a duplicate in the context or the
             // block), so use positions throughout. Removing the playing track resumes at the same

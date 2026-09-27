@@ -1671,6 +1671,32 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun removingTheAnchorWhilePlayingABlockTrackKeepsTheBlockInPlace() {
+        seedShuffledQueue(seed = 5L)
+        seedSong("x1", "al2")
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.playAt(1)
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+        val before = runBlocking { queues.snapshot() }
+
+        runBlocking { controller.removeAt(before.anchorPlay) }
+
+        val after = runBlocking { queues.snapshot() }
+        assertEquals(-1L, after.anchorPlay)
+        assertEquals("x1", runBlocking { queues.itemAt(after, 0)?.song?.id })
+        assertEquals(
+            "x1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
     fun removingThePlayingTrackWhileShuffledPlaysTheNextShuffledTrack() {
         seedShuffledQueue(seed = 12345L)
         val orderBefore = resolvedIds()
