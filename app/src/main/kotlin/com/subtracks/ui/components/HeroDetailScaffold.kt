@@ -27,10 +27,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -61,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
@@ -204,6 +208,15 @@ private fun HeroSubtitle(
     )
 }
 
+enum class BulkDownloadAction { Download, Cancel, Delete }
+
+fun ListDownloadStatus.action(): BulkDownloadAction =
+    when {
+        complete -> BulkDownloadAction.Delete
+        downloading > 0 -> BulkDownloadAction.Cancel
+        else -> BulkDownloadAction.Download
+    }
+
 @Composable
 fun HeroHeader(
     art: CoverArtRef?,
@@ -212,7 +225,8 @@ fun HeroHeader(
     hasSongs: Boolean,
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
-    onDownload: () -> Unit,
+    downloadStatus: ListDownloadStatus,
+    onDownloadAction: (BulkDownloadAction) -> Unit,
     onMore: () -> Unit,
     topInset: Dp,
     controlsModifier: Modifier = Modifier,
@@ -271,8 +285,31 @@ fun HeroHeader(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onDownload, modifier = Modifier.padding(horizontal = 8.dp)) {
-                Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.offset(y = 1.5.dp))
+            IconButton(
+                onClick = { onDownloadAction(downloadStatus.action()) },
+                enabled = hasSongs,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            ) {
+                when (downloadStatus.action()) {
+                    BulkDownloadAction.Delete -> {
+                        Icon(Icons.Rounded.Delete, contentDescription = "Delete download", modifier = Modifier.offset(y = 1.5.dp))
+                    }
+
+                    BulkDownloadAction.Cancel -> {
+                        Box(contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                progress = { downloadStatus.downloaded.toFloat() / downloadStatus.total },
+                                modifier = Modifier.size(26.dp),
+                                strokeWidth = 2.dp,
+                            )
+                            Icon(Icons.Rounded.Close, contentDescription = "Cancel download", modifier = Modifier.size(16.dp))
+                        }
+                    }
+
+                    BulkDownloadAction.Download -> {
+                        Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.offset(y = 1.5.dp))
+                    }
+                }
             }
             Row(
                 modifier = Modifier.weight(1f),

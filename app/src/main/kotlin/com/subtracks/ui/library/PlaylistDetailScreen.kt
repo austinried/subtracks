@@ -12,12 +12,14 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.BulkDownloadAction
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
@@ -45,6 +47,7 @@ fun PlaylistDetailRoute(
 ) {
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
+    val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val actions =
@@ -66,6 +69,14 @@ fun PlaylistDetailRoute(
         coverArt = viewModel::coverArt,
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
+        downloadStatus = downloadStatus,
+        onDownloadAction = { action ->
+            when (action) {
+                BulkDownloadAction.Download -> viewModel.downloadAll()
+                BulkDownloadAction.Cancel -> viewModel.cancelDownloads()
+                BulkDownloadAction.Delete -> viewModel.deleteDownloads()
+            }
+        },
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },
@@ -83,6 +94,8 @@ fun PlaylistDetailScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
     downloads: Map<String, SongDownload> = emptyMap(),
+    downloadStatus: ListDownloadStatus = ListDownloadStatus(),
+    onDownloadAction: (BulkDownloadAction) -> Unit = {},
     onBack: () -> Unit,
     onSongClick: (Int) -> Unit,
     onSongLongClick: (MenuTarget) -> Unit = {},
@@ -106,7 +119,8 @@ fun PlaylistDetailScreen(
                 hasSongs = songs.itemCount > 0,
                 onPlay = onPlay,
                 onShuffle = onShuffle,
-                onDownload = {},
+                downloadStatus = downloadStatus,
+                onDownloadAction = onDownloadAction,
                 onMore = onMore,
                 topInset = topInset,
                 controlsModifier = controlsModifier,

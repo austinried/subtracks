@@ -138,6 +138,7 @@ fun ArtistDetailRoute(
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
+    val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
@@ -145,6 +146,9 @@ fun ArtistDetailRoute(
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
+            downloadArtist = { viewModel.downloadAll() },
+            cancelArtistDownload = { viewModel.cancelDownloads() },
+            deleteArtistDownload = { viewModel.deleteDownloads() },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )
@@ -158,7 +162,7 @@ fun ArtistDetailRoute(
         onBack = onBack,
         onAlbumClick = onAlbumClick,
         onAlbumLongClick = { contextMenuHost?.show(it, actions) },
-        onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art), actions) } },
+        onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art, downloadStatus), actions) } },
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
     )

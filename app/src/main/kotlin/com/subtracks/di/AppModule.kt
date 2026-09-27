@@ -73,7 +73,7 @@ fun appModule(
     viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), get(), params.get()) }
-    viewModel { params -> ArtistDetailViewModel(get(), get(), get(), params.get()) }
+    viewModel { params -> ArtistDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { QueueViewModel(get(), get()) }
 }

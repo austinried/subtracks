@@ -40,6 +40,16 @@ data class SongDownload(
         get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
 }
 
+enum class DownloadList { Album, Playlist, Artist }
+
+data class ListDownloadStatus(
+    val total: Long = 0,
+    val downloaded: Long = 0,
+    val downloading: Long = 0,
+) {
+    val complete: Boolean get() = total > 0 && downloaded == total
+}
+
 data class DownloadArtwork(
     val sourceId: Long,
     val albumId: String?,

@@ -8,7 +8,9 @@ import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
+import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.coverArtKey
 import kotlinx.coroutines.CancellationException
@@ -103,7 +105,7 @@ class DownloadRepository(
         if (!enqueueIfAbsent(sourceId, songId)) return@withContext
         // The media is already with the platform, so this only has to happen while we are still
         // in the foreground: artwork is fetched by us, and it must not hold up the download.
-        fetchArtworkSafely(sourceId, songId)
+        fetchArtworkSafely(sourceId, listOf(songId))
     }
 
     private suspend fun enqueueIfAbsent(
@@ -124,11 +126,63 @@ class DownloadRepository(
         songId: String,
     ) = withContext(dispatcher) {
         mutex.withLock {
-            val row = db.downloadDao().find(sourceId, songId) ?: return@withLock
-            row.engineId?.let(engine::cancel)
-            file(sourceId, songId).delete()
-            db.downloadDao().delete(sourceId, songId)
+            if (!removeRow(sourceId, songId)) return@withLock
             sweep(db.downloadDao().all())
+        }
+    }
+
+    fun status(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ): Flow<ListDownloadStatus> =
+        when (list) {
+            DownloadList.Album -> db.downloadDao().albumStatus(sourceId, refId)
+            DownloadList.Playlist -> db.downloadDao().playlistStatus(sourceId, refId)
+            DownloadList.Artist -> db.downloadDao().artistStatus(sourceId, refId)
+        }
+
+    suspend fun downloadAll(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ) = withContext(dispatcher) {
+        if (sourceRepository.activeSourceIdOnce() != sourceId) {
+            showMessage(NOT_ACTIVE)
+            return@withContext
+        }
+        val songIds = songIds(sourceId, list, refId)
+        if (songIds.isEmpty()) return@withContext
+        if (sourceRepository.downloadUri(sourceId, songIds.first()) == null) {
+            showMessage(NO_ADDRESS)
+            return@withContext
+        }
+        songIds.forEach { enqueueIfAbsent(sourceId, it) }
+        fetchArtworkSafely(sourceId, songIds)
+    }
+
+    suspend fun cancelAll(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ) = withContext(dispatcher) {
+        mutex.withLock {
+            val removed = rowsFor(sourceId, list, refId).filter { it.status.isActive }.map { removeRow(sourceId, it.songId) }
+            if (removed.any { it }) sweep(db.downloadDao().all())
+        }
+    }
+
+    suspend fun deleteAll(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ) = withContext(dispatcher) {
+        mutex.withLock {
+            val removed =
+                rowsFor(sourceId, list, refId)
+                    .filter { it.status == DownloadStatus.Completed }
+                    .map { removeRow(sourceId, it.songId) }
+            if (removed.any { it }) sweep(db.downloadDao().all())
         }
     }
 
@@ -155,7 +209,7 @@ class DownloadRepository(
                     ensurePolling()
                     resumed
                 }
-            resumed.forEach { fetchArtworkSafely(it.sourceId, it.songId) }
+            resumed.forEach { fetchArtworkSafely(it.sourceId, listOf(it.songId)) }
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -284,12 +338,44 @@ class DownloadRepository(
         return resumed
     }
 
-    private suspend fun fetchArtworkSafely(
+    private suspend fun removeRow(
         sourceId: Long,
         songId: String,
+    ): Boolean {
+        val row = db.downloadDao().find(sourceId, songId) ?: return false
+        row.engineId?.let(engine::cancel)
+        file(sourceId, songId).delete()
+        db.downloadDao().delete(sourceId, songId)
+        return true
+    }
+
+    private suspend fun rowsFor(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ): List<SongDownload> {
+        val ids = songIds(sourceId, list, refId).toHashSet()
+        if (ids.isEmpty()) return emptyList()
+        return db.downloadDao().all().filter { it.sourceId == sourceId && it.songId in ids }
+    }
+
+    private suspend fun songIds(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ): List<String> =
+        when (list) {
+            DownloadList.Album -> db.queueDao().albumSongIds(sourceId, refId)
+            DownloadList.Playlist -> db.queueDao().playlistSongIds(sourceId, refId)
+            DownloadList.Artist -> db.downloadDao().artistSongIds(sourceId, refId)
+        }
+
+    private suspend fun fetchArtworkSafely(
+        sourceId: Long,
+        songIds: List<String>,
     ) {
         try {
-            withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) }
+            withTimeoutOrNull(ART_TIMEOUT_MS) { songIds.forEach { fetchArtwork(sourceId, it) } }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -343,7 +429,7 @@ class DownloadRepository(
                         }
                     // Fetching artwork here would hold up the next tick, and with it the progress
                     // the queue is mirrored from.
-                    resumed.forEach { row -> scope.launch { fetchArtworkSafely(row.sourceId, row.songId) } }
+                    resumed.forEach { row -> scope.launch { fetchArtworkSafely(row.sourceId, listOf(row.songId)) } }
                 }
             }
     }

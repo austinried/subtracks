@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
@@ -84,6 +85,7 @@ sealed interface MenuTarget {
     data class Artist(
         val artist: ArtistModel,
         override val coverArt: CoverArtRef? = null,
+        val download: ListDownloadStatus? = null,
     ) : MenuTarget {
         override val title: String get() = artist.name
 
@@ -125,7 +127,10 @@ class ItemActions(
     val download: ((SongModel) -> Unit)? = null,
     val cancelDownload: ((SongModel) -> Unit)? = null,
     val deleteDownload: ((SongModel) -> Unit)? = null,
-    val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
+    val downloadArtist: ((ArtistModel) -> Unit)? = null,
+    val cancelArtistDownload: ((ArtistModel) -> Unit)? = null,
+    val deleteArtistDownload: ((ArtistModel) -> Unit)? = null,
+    val setStar: suspend (StarType, String, Boolean) -> Result<Unit> = { _, _, _ -> Result.success(Unit) },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
 )
@@ -235,6 +240,7 @@ fun ItemContextMenu(
             }
 
             is MenuTarget.Artist -> {
+                BulkDownloadItem(target.download, target.artist, actions, ::dismiss)
                 StarItem(
                     current = target.artist.starred,
                     onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
@@ -313,6 +319,34 @@ private fun DownloadItem(
         null -> {
             actions.download?.let { start ->
                 MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(song) } }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BulkDownloadItem(
+    download: ListDownloadStatus?,
+    artist: ArtistModel,
+    actions: ItemActions,
+    dismiss: (() -> Unit) -> Unit,
+) {
+    when ((download ?: ListDownloadStatus()).action()) {
+        BulkDownloadAction.Delete -> {
+            actions.deleteArtistDownload?.let { delete ->
+                MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { delete(artist) } }
+            }
+        }
+
+        BulkDownloadAction.Cancel -> {
+            actions.cancelArtistDownload?.let { cancel ->
+                MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { cancel(artist) } }
+            }
+        }
+
+        BulkDownloadAction.Download -> {
+            actions.downloadArtist?.let { start ->
+                MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(artist) } }
             }
         }
     }

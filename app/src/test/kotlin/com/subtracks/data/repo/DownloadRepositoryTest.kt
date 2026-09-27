@@ -12,13 +12,18 @@ import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.ListDownloadStatus
+import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
@@ -417,6 +422,97 @@ class DownloadRepositoryTest {
 
             assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
         }
+
+    @Test
+    fun downloadingAListQueuesEverySongAndStoresItsArtworkOnce() =
+        runTest {
+            seedLibrary()
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(2, engine.requests.size)
+            assertEquals(4, requestedArt.size)
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, true)))
+        }
+
+    @Test
+    fun downloadingAListSkipsTheSongsItAlreadyHas() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+            val before = engine.requests.size
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(before + 1, engine.requests.size)
+        }
+
+    @Test
+    fun cancelAllStopsTheRunningSongsAndKeepsTheCompletedOnes() =
+        runTest {
+            seedLibrary()
+            writeFile(1, "s1", "audio")
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, engineId = 11))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Running, engineId = 22))
+
+            runBlocking { repository.cancelAll(1, DownloadList.Album, "al1") }
+
+            assertNotNull(row(1, "s1"))
+            assertNull(row(1, "s2"))
+            assertTrue(engine.cancelled.contains(22L))
+        }
+
+    @Test
+    fun deleteAllRemovesTheCompletedSongsAndKeepsTheRunningOnes() =
+        runTest {
+            seedLibrary()
+            writeFile(1, "s1", "audio")
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, engineId = 11))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Running, engineId = 22))
+
+            runBlocking { repository.deleteAll(1, DownloadList.Album, "al1") }
+
+            assertNull(row(1, "s1"))
+            assertFalse(file(1, "s1").exists())
+            assertNotNull(row(1, "s2"))
+        }
+
+    @Test
+    fun theListStatusCountsTheSongsAndTracksProgress() =
+        runTest {
+            seedLibrary()
+            writeFile(1, "s1", "audio")
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, engineId = 11))
+
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1, downloading = 0), statusOf(DownloadList.Album, "al1"))
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1, downloading = 0), statusOf(DownloadList.Artist, "ar1"))
+
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Queued, engineId = 22))
+
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1, downloading = 1), statusOf(DownloadList.Album, "al1"))
+        }
+
+    @Test
+    fun thePlaylistStatusCountsASongThatAppearsTwiceOnce() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertPlaylists(listOf(Playlist(1, "pl1", "Playlist", null, null, 2, 0)))
+                db.libraryDao().upsertPlaylistSongs(
+                    listOf(
+                        PlaylistSong(1, "pl1", "s1", 0),
+                        PlaylistSong(1, "pl1", "s1", 1),
+                    ),
+                )
+            }
+
+            assertEquals(ListDownloadStatus(total = 1, downloaded = 0, downloading = 0), statusOf(DownloadList.Playlist, "pl1"))
+        }
+
+    private fun statusOf(
+        list: DownloadList,
+        refId: String,
+    ): ListDownloadStatus = runBlocking { repository.status(1, list, refId).first() }
 
     private fun album(coverArt: String?) =
         Album(
