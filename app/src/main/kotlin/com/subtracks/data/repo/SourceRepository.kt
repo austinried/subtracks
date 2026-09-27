@@ -84,11 +84,11 @@ class SourceRepository(
         coverArt: String?,
         thumbnail: Boolean = false,
     ): CoverArtRef? {
-        val sourceId = activeSourceId ?: return null
+        val source = active ?: return null
         if (coverArt == null) return null
-        val cacheKey = coverArtKey(sourceId, coverArt, thumbnail)
-        artworkStore.uri(sourceId, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
-        val url = active?.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
+        val cacheKey = coverArtKey(source.id, coverArt, thumbnail)
+        artworkStore.uri(source.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
+        val url = source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
         return CoverArtRef(url = url, cacheKey = cacheKey)
     }
 
@@ -96,7 +96,11 @@ class SourceRepository(
         sourceId: Long,
         coverArt: String,
         thumbnail: Boolean,
-    ): String? = if (activeSourceId == sourceId) active?.coverArtUri(coverArt, thumbnail)?.toString() else null
+    ): String? {
+        val source = active ?: return null
+        if (source.id != sourceId) return null
+        return source.coverArtUri(coverArt, thumbnail)?.toString()
+    }
 
     fun streamUri(
         songId: String,

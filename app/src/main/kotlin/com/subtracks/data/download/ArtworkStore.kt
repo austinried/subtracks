@@ -37,9 +37,13 @@ class ArtworkStore(
         val target = file(sourceId, cacheKey)
         return runCatching {
             target.parentFile?.mkdirs()
-            val partial = File(target.parentFile, target.name + PARTIAL_SUFFIX)
-            partial.writeBytes(bytes)
-            partial.renameTo(target)
+            val partial = File.createTempFile(target.name, PARTIAL_SUFFIX, target.parentFile)
+            try {
+                partial.writeBytes(bytes)
+                partial.renameTo(target)
+            } finally {
+                partial.delete()
+            }
         }.getOrDefault(false)
     }
 
@@ -70,6 +74,7 @@ fun interface ArtworkFetcher {
 
 class OkHttpArtworkFetcher(
     http: OkHttpClient,
+    private val maxBytes: Long = MAX_BYTES,
 ) : ArtworkFetcher {
     // A blocking OkHttp call is not interrupted when the coroutine around it is cancelled, so the
     // per-call timeout is what actually bounds a stuck artwork request.
@@ -80,11 +85,17 @@ class OkHttpArtworkFetcher(
             val request = Request.Builder().url(url).build()
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Artwork request failed with ${response.code}")
-                response.body?.bytes() ?: throw IOException("Artwork response had no body")
+                val body = response.body ?: throw IOException("Artwork response had no body")
+                if (body.contentLength() > maxBytes) throw IOException("Artwork response is larger than $maxBytes bytes")
+                val source = body.source()
+                source.request(maxBytes + 1)
+                if (source.buffer.size > maxBytes) throw IOException("Artwork response is larger than $maxBytes bytes")
+                source.readByteArray()
             }
         }
 
     private companion object {
         const val CALL_TIMEOUT_SECONDS = 15L
+        const val MAX_BYTES = 8L * 1024 * 1024
     }
 }

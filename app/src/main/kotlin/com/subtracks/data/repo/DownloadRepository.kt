@@ -11,6 +11,7 @@ import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.coverArtKey
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +95,6 @@ class DownloadRepository(
             showMessage(NOT_ACTIVE)
             return@withContext
         }
-        if (alreadyDownloadingOrDownloaded(sourceId, songId)) return@withContext
         if (sourceRepository.downloadUri(sourceId, songId) == null) {
             showMessage(NO_ADDRESS)
             return@withContext
@@ -148,8 +148,9 @@ class DownloadRepository(
         withContext(dispatcher) {
             val resumed =
                 mutex.withLock {
-                    val resumed = reconcileRows(db.downloadDao().all())
-                    sweep(db.downloadDao().all())
+                    val rows = db.downloadDao().all()
+                    val resumed = reconcileRows(rows)
+                    sweep(rows)
                     ensurePolling()
                     resumed
                 }
@@ -196,17 +197,30 @@ class DownloadRepository(
         val cacheKey = coverArtKey(sourceId, coverArt, thumbnail)
         if (artworkStore.file(sourceId, cacheKey).exists()) return
         val url = sourceRepository.networkCoverArt(sourceId, coverArt, thumbnail) ?: return
-        val bytes = runCatching { artworkFetcher.fetch(url) }.getOrNull() ?: return
+        val bytes =
+            try {
+                artworkFetcher.fetch(url)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                return
+            }
         if (bytes.isEmpty()) return
         artworkStore.write(sourceId, cacheKey, bytes)
     }
 
-    private suspend fun neededArtwork(): Map<Long, Set<String>> =
+    /**
+     * The artwork keys every download row still needs, per source. A null entry means the source's
+     * rows could not all be resolved against the library, in which case nothing is swept for it:
+     * pruning an album or artist would otherwise delete artwork a download still holds.
+     */
+    private suspend fun artworkToKeep(): Map<Long, Set<String>?> =
         db
             .downloadDao()
             .artwork()
             .groupBy { it.sourceId }
             .mapValues { (sourceId, rows) ->
+                if (rows.any { it.hasMissingLibraryRow }) return@mapValues null
                 rows
                     .flatMap { row -> listOfNotNull(row.albumCoverArt, row.artistCoverArt) }
                     .flatMap { cover -> listOf(false, true).map { thumbnail -> coverArtKey(sourceId, cover, thumbnail) } }
@@ -272,7 +286,13 @@ class DownloadRepository(
         sourceId: Long,
         songId: String,
     ) {
-        runCatching { withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) } }
+        try {
+            withTimeoutOrNull(ART_TIMEOUT_MS) { fetchArtwork(sourceId, songId) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Artwork is best effort and must never disturb a download that is already running.
+        }
     }
 
     private suspend fun apply(
@@ -319,17 +339,23 @@ class DownloadRepository(
                             if (active.isEmpty()) return@launch
                             reconcileRows(active)
                         }
-                    resumed.forEach { fetchArtworkSafely(it.sourceId, it.songId) }
+                    // Fetching artwork here would hold up the next tick, and with it the progress
+                    // the queue is mirrored from.
+                    resumed.forEach { row -> scope.launch { fetchArtworkSafely(row.sourceId, row.songId) } }
                 }
             }
     }
 
     private suspend fun sweep(rows: List<SongDownload>) {
         val knownSongs = rows.map { it.sourceId to it.songId }.toHashSet()
-        val knownArt = neededArtwork()
+        val sourcesWithRows = rows.mapTo(HashSet()) { it.sourceId }
+        val knownArt = artworkToKeep()
         downloadsDir.listFiles().orEmpty().filter { it.isDirectory }.forEach { sourceDir ->
             val sourceId = sourceDir.name.toLongOrNull() ?: return@forEach
-            artworkStore.sweep(sourceId, knownArt[sourceId].orEmpty())
+            when {
+                sourceId !in sourcesWithRows -> artworkStore.sweep(sourceId, emptySet())
+                else -> knownArt[sourceId]?.let { artworkStore.sweep(sourceId, it) }
+            }
             sourceDir.listFiles().orEmpty().filter { it.isFile }.forEach { file ->
                 if ((sourceId to file.name) !in knownSongs) file.delete()
             }

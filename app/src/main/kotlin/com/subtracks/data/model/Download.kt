@@ -42,9 +42,16 @@ data class SongDownload(
 
 data class DownloadArtwork(
     val sourceId: Long,
+    val albumId: String?,
+    val artistId: String?,
+    val albumRow: String?,
+    val artistRow: String?,
     val albumCoverArt: String?,
     val artistCoverArt: String?,
-)
+) {
+    val hasMissingLibraryRow: Boolean
+        get() = (albumId != null && albumRow == null) || (artistId != null && artistRow == null)
+}
 
 class DownloadStatusConverter {
     @ColumnTypeConverter

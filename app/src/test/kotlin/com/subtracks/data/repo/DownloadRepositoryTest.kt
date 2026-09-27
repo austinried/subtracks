@@ -382,6 +382,19 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun artworkSurvivesALibraryRowGoingMissing() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
+
+            runBlocking { db.libraryDao().deleteAlbums(1, listOf("al1")) }
+            runBlocking { repository.reconcile() }
+
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
+        }
+
+    @Test
     fun removingTheLastDownloadOfAnAlbumRemovesItsArtwork() =
         runTest {
             seedLibrary()

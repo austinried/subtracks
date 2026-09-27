@@ -16,7 +16,9 @@ interface DownloadDao {
     suspend fun all(): List<SongDownload>
 
     @Query(
-        "SELECT d.sourceId AS sourceId, al.coverArt AS albumCoverArt, ar.coverArt AS artistCoverArt " +
+        "SELECT d.sourceId AS sourceId, s.albumId AS albumId, s.artistId AS artistId, " +
+            "al.id AS albumRow, al.coverArt AS albumCoverArt, " +
+            "ar.id AS artistRow, ar.coverArt AS artistCoverArt " +
             "FROM song_downloads d " +
             "LEFT JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
             "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +

@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
 
 @RunWith(AndroidJUnit4::class)
 class ArtworkStoreTest {
@@ -50,6 +51,29 @@ class ArtworkStoreTest {
         assertTrue(store.file(1, "1:keep:false").exists())
         assertFalse(store.file(1, "1:drop:false").exists())
         assertTrue(store.file(2, "2:other:false").exists())
+    }
+
+    @Test
+    fun concurrentWritesOfTheSameKeyLeaveAWholeFile() {
+        // Unequal lengths on purpose: two writers sharing a partial file interleave into a file
+        // that matches neither payload, which equal-length payloads would hide.
+        val long = ByteArray(1 shl 20) { 1 }
+        val short = ByteArray(1 shl 19) { 2 }
+        repeat(50) {
+            val go = CountDownLatch(1)
+            val writers =
+                listOf(long, short).map { payload ->
+                    Thread {
+                        go.await()
+                        store.write(1, "1:art-1:false", payload)
+                    }.apply { start() }
+                }
+            go.countDown()
+            writers.forEach { it.join() }
+
+            val written = store.file(1, "1:art-1:false").readBytes()
+            assertTrue("torn write: ${written.size} bytes", written.contentEquals(long) || written.contentEquals(short))
+        }
     }
 
     @Test
