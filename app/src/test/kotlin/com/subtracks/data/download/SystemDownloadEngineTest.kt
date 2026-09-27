@@ -1,12 +1,9 @@
 package com.subtracks.data.download
 
 import android.app.DownloadManager
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class SystemDownloadEngineTest {
     @Test
     fun successfulRunningAndFailedStatusesAreMapped() {

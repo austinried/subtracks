@@ -15,7 +15,8 @@ class SystemDownloadEngine(
                 .setTitle(request.title)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MUSIC, request.path)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                .setAllowedOverMetered(request.allowMetered)
+                // Downloads wait for an unmetered network until the preference for them exists.
+                .setAllowedOverMetered(false)
         return manager().enqueue(download)
     }
 

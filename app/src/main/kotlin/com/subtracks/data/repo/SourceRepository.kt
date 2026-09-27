@@ -38,6 +38,8 @@ class SourceRepository(
 
     @Volatile
     private var active: SubsonicMusicSource? = null
+
+    @Volatile
     private var activeSourceId: Long? = null
 
     private val _quality = MutableStateFlow(StreamQuality())
@@ -94,7 +96,10 @@ class SourceRepository(
         return uri + streamLengthSuffix(length)
     }
 
-    fun downloadUri(songId: String): String? = active?.downloadUri(songId)?.toString()
+    fun downloadUri(
+        sourceId: Long,
+        songId: String,
+    ): String? = if (activeSourceId == sourceId) active?.downloadUri(songId)?.toString() else null
 
     suspend fun addSource(
         name: String,

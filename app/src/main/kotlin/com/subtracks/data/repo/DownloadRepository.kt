@@ -17,14 +17,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,18 +45,19 @@ class DownloadRepository(
     @Volatile
     private var started = false
 
-    private val sharedStates: StateFlow<Map<String, SongDownload>> by lazy {
-        downloadStates()
-            .onEach { loaded.complete(Unit) }
-            .stateIn(scope, SharingStarted.Eagerly, emptyMap())
-    }
+    private val statesFlow = MutableStateFlow<Map<String, SongDownload>>(emptyMap())
 
     fun start() {
         if (started) return
         started = true
         downloadsDir.mkdirs()
         File(downloadsDir, NO_MEDIA).createNewFile()
-        sharedStates
+        scope.launch {
+            downloadStates().collect { rows ->
+                statesFlow.value = rows
+                loaded.complete(Unit)
+            }
+        }
         scope.launch {
             sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
         }
@@ -68,16 +67,14 @@ class DownloadRepository(
         scope.cancel()
     }
 
-    fun states(): StateFlow<Map<String, SongDownload>> = sharedStates
+    fun states(): StateFlow<Map<String, SongDownload>> = statesFlow
 
     suspend fun awaitLoaded() {
-        if (!started) return
-        states()
-        loaded.await()
+        if (started) loaded.await()
     }
 
     fun localUri(songId: String): String? =
-        sharedStates.value[songId]
+        statesFlow.value[songId]
             ?.takeIf { it.status == DownloadStatus.Completed }
             ?.let { file(it.sourceId, it.songId) }
             ?.takeIf { it.exists() }
@@ -95,9 +92,9 @@ class DownloadRepository(
             val existing = db.downloadDao().find(sourceId, songId)
             if (existing != null && existing.status != DownloadStatus.Failed) return@withLock
             existing?.engineId?.let(engine::cancel)
-            val url = sourceRepository.downloadUri(songId)
+            val url = sourceRepository.downloadUri(sourceId, songId)
             if (url == null) {
-                showMessage("Can't download: the server address is unavailable")
+                showMessage(NO_ADDRESS)
                 return@withLock
             }
             enqueue(sourceId, songId, url)
@@ -157,7 +154,7 @@ class DownloadRepository(
         val title = db.libraryDao().songOnce(sourceId, songId)?.title ?: songId
         val engineId =
             engine.enqueue(
-                EngineRequest(uri = url, path = enginePath(sourceId, songId), title = title, allowMetered = false),
+                EngineRequest(uri = url, path = enginePath(sourceId, songId), title = title),
             )
         db.downloadDao().upsert(
             SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued, engineId = engineId),
@@ -173,8 +170,8 @@ class DownloadRepository(
 
             DownloadStatus.Queued -> {
                 if (sourceRepository.activeSourceIdOnce() != row.sourceId) return
-                val url = sourceRepository.downloadUri(row.songId)
-                if (url == null) markFailed(row, NO_ADDRESS) else enqueue(row.sourceId, row.songId, url)
+                val url = sourceRepository.downloadUri(row.sourceId, row.songId) ?: return
+                enqueue(row.sourceId, row.songId, url)
             }
 
             DownloadStatus.Running -> {
@@ -198,6 +195,7 @@ class DownloadRepository(
                 EngineStatus.Completed -> if (file(row.sourceId, row.songId).exists()) DownloadStatus.Completed else DownloadStatus.Failed
                 EngineStatus.Failed -> DownloadStatus.Failed
             }
+        if (status == DownloadStatus.Failed) file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(
             row.copy(
                 status = status,
@@ -213,6 +211,7 @@ class DownloadRepository(
         message: String,
     ) {
         row.engineId?.let(engine::cancel)
+        file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = message))
     }
 
@@ -223,7 +222,8 @@ class DownloadRepository(
                 while (true) {
                     delay(POLL_MS)
                     mutex.withLock {
-                        val active = db.downloadDao().all().filter { it.status.isActive }
+                        val sourceId = sourceRepository.activeSourceIdOnce()
+                        val active = db.downloadDao().all().filter { it.status.isActive && it.sourceId == sourceId }
                         if (active.isEmpty()) return@launch
                         active.forEach { row ->
                             val state = row.engineId?.let(engine::download)
