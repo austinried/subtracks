@@ -100,7 +100,8 @@ private val ROW_GAP = 16.dp
 private val SHUFFLE_WIDTH = 68.dp
 private val SHUFFLE_HEIGHT = 48.dp
 private val SHUFFLE_ICON = 30.dp
-private val SHUFFLE_RESERVE = 80.dp
+private val SHUFFLE_END = 22.dp
+private val SHUFFLE_RESERVE = 86.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 
 internal fun estimateScrollPx(
@@ -296,7 +297,7 @@ fun ArtistDetailScreen(
                                             Modifier
                                                 .align(Alignment.BottomEnd)
                                                 .offset(y = SHUFFLE_HANG)
-                                                .padding(end = TITLE_INSET)
+                                                .padding(end = SHUFFLE_END)
                                                 .width(SHUFFLE_WIDTH)
                                                 .height(SHUFFLE_HEIGHT),
                                     ) {
