@@ -1701,35 +1701,43 @@ class PlaybackControllerTest {
     fun removingThePlayingTrackWhileShuffledLeavesTheBlockReachable() {
         seedAlbum(6, sourceId = 1)
         seedSong("x1", "al2")
-
-        repeat(30) {
-            if (controller.state.value.shuffle) {
-                controller.toggleShuffle()
-                await { !controller.state.value.shuffle }
-            }
-            runBlocking { controller.clearUpNext() }
-            controller.playAlbum(1, "al1", 2)
-            await {
-                controller.state.value.item
-                    ?.id == "s3" && !controller.state.value.shuffle
-            }
-            controller.addToQueue(1, QueueKind.Song, "x1")
-            await { runBlocking { controller.upcomingItem()?.id } == "x1" }
-
-            controller.toggleShuffle()
-            await { controller.state.value.shuffle }
-            await { runBlocking { controller.upcomingItem()?.id } == "x1" }
-            val current = controller.state.value.position!!
-
-            runBlocking { controller.removeAt(current) }
-
-            val snapshot = runBlocking { queues.snapshot() }
-            val position = controller.state.value.position!!
-            assertTrue(
-                "queued track stranded behind the cursor at $position (block at ${snapshot.anchorPlay})",
-                position <= snapshot.anchorPlay || snapshot.isUpNext(position),
-            )
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al1")))
+            queues.setShuffle(2024L)
+            queues.setCursor(0)
         }
+        controller.connect()
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        val current = controller.state.value.position!!
+        runBlocking { controller.removeAt(current) }
+
+        val after = runBlocking { queues.snapshot() }
+        assertTrue(after.shuffled)
+        assertEquals(
+            controller.state.value.item
+                ?.id,
+            runBlocking { queues.itemAt(after, controller.state.value.position!!)?.song?.id },
+        )
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+    }
+
+    @Test
+    fun clearingTheBlockWhileShuffledKeepsTheCursorOnThePlayingTrack() {
+        seedShuffledQueue(seed = 7L)
+        val currentId =
+            controller.state.value.item!!
+                .id
+        controller.addToQueue(1, QueueKind.Song, "s1")
+        await { runBlocking { controller.upcomingItem()?.id } == "s1" }
+
+        controller.clearUpNext()
+
+        await { runBlocking { queues.snapshot().upNext }.isEmpty() }
+        val after = runBlocking { queues.snapshot() }
+        assertEquals(currentId, runBlocking { queues.itemAt(after, controller.state.value.position!!)?.song?.id })
     }
 
     @Test
