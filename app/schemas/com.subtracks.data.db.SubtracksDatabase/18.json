@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 18,
-    "identityHash": "5af02d01d5774106a81b2d031b6bd215",
+    "identityHash": "982f1044d9532868990a4e14017ad3d1",
     "entities": [
       {
         "tableName": "sources",
@@ -1105,7 +1105,7 @@
       },
       {
         "tableName": "song_downloads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `songId` TEXT NOT NULL, `status` TEXT NOT NULL, `engineId` INTEGER, `bytes` INTEGER NOT NULL DEFAULT 0, `total` INTEGER NOT NULL DEFAULT 0, `error` TEXT, `queuedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`sourceId`, `songId`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sourceId` INTEGER NOT NULL, `songId` TEXT NOT NULL, `status` TEXT NOT NULL, `engineId` INTEGER, `bytes` INTEGER NOT NULL DEFAULT 0, `total` INTEGER NOT NULL DEFAULT 0, `error` TEXT, PRIMARY KEY(`sourceId`, `songId`), FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`sourceId`, `songId`) REFERENCES `songs`(`sourceId`, `id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "sourceId",
@@ -1148,13 +1148,6 @@
             "fieldPath": "error",
             "columnName": "error",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "queuedAt",
-            "columnName": "queuedAt",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -1195,13 +1188,26 @@
             "referencedColumns": [
               "id"
             ]
+          },
+          {
+            "table": "songs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "sourceId",
+              "songId"
+            ],
+            "referencedColumns": [
+              "sourceId",
+              "id"
+            ]
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5af02d01d5774106a81b2d031b6bd215')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '982f1044d9532868990a4e14017ad3d1')"
     ]
   }
 }

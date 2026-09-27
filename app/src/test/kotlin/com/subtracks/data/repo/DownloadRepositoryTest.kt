@@ -174,6 +174,62 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun aFailedDownloadIsNotRestartedByReconcile() =
+        runTest {
+            seedLibrary()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Failed, engineId = null, error = "boom"))
+
+            runBlocking { repository.reconcile() }
+            runBlocking { repository.reconcile() }
+
+            assertTrue(engine.requests.isEmpty())
+            assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
+            assertEquals("boom", row(1, "s1")?.error)
+        }
+
+    @Test
+    fun anEngineFailureIsMirroredWithItsMessage() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+            val id = engine.requests.single().first
+
+            engine.fail(id)
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
+            assertEquals("Download failed", row(1, "s1")?.error)
+        }
+
+    @Test
+    fun aRunningDownloadWhoseEngineEntryVanishesIsFailedRatherThanRestarted() =
+        runTest {
+            seedLibrary()
+            repository.start()
+            runBlocking { repository.download(1, "s1") }
+            val id = engine.requests.single().first
+            engine.running(id, bytes = 40, total = 100)
+            await { row(1, "s1")?.status == DownloadStatus.Running }
+
+            engine.forget(id)
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
+            assertEquals(1, engine.requests.size)
+        }
+
+    @Test
+    fun aSongRemovedFromTheServerTakesItsDownloadRowWithIt() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+
+            runBlocking { db.libraryDao().deleteSongs(1, listOf("s1")) }
+
+            assertNull(row(1, "s1"))
+        }
+
+    @Test
     fun downloadingFromASourceThatIsNotActiveIsRefused() =
         runTest {
             seedLibrary()

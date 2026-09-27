@@ -45,10 +45,11 @@ class SongRowDownloadTest {
     }
 
     @Test
-    fun aRunningDownloadShowsNoDownloadedIndicator() {
+    fun aRunningDownloadShowsProgressRatherThanTheDownloadedIndicator() {
         render(download(DownloadStatus.Running))
 
         composeRule.onNodeWithContentDescription("Downloaded").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Downloading").assertIsDisplayed()
     }
 
     @Test

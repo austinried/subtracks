@@ -279,7 +279,7 @@ fun QueueRoute(
     downloadRepository: DownloadRepository = koinInject(),
 ) {
     val playback by controller.state.collectAsStateWithLifecycle()
-    val downloads by downloadRepository.states().collectAsStateWithLifecycle(initialValue = emptyMap())
+    val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     val queueContext = playback.context
     // The item's album keeps the header stable while the async name lookup runs, so it does not
     // flash the fallback when tapping between context and manually queued tracks.

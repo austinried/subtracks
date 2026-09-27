@@ -144,7 +144,7 @@ class PlaybackController(
     init {
         scope.launch {
             sourceRepository.activeSourceId().collect { sourceId ->
-                if (queueSourceId != null && sourceId != null && sourceId != queueSourceId) stop()
+                if (queueSourceId != null && sourceId != queueSourceId) stop()
             }
         }
         scope.launch {
@@ -965,10 +965,8 @@ class PlaybackController(
         val snapshot = snapshot ?: return
         if (snapshot.size == 0L) return
         if (player.isEnded) return
-        val index = player.currentIndex
-        val position = (windowStart + index).coerceIn(0, snapshot.size - 1)
+        val position = (windowStart + player.currentIndex).coerceIn(0, snapshot.size - 1)
         val positionMs = player.currentPositionMs
-        if (player.currentIndex != index) return
         loadWindow(position, autoplay = player.playWhenReady, startPositionMs = positionMs)
     }
 

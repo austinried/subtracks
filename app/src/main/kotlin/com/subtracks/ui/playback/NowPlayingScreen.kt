@@ -104,7 +104,7 @@ fun NowPlayingRoute(
     val positionMs by controller.positionMs.collectAsStateWithLifecycle()
     val sourceId = state.context?.sourceId
     val songId = state.item?.id
-    val downloads by downloadRepository.states().collectAsStateWithLifecycle(initialValue = emptyMap())
+    val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     val download = songId?.let { downloads[it] }
     val scope = rememberCoroutineScope()
     val song by

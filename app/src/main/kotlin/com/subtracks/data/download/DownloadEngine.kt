@@ -4,7 +4,6 @@ data class EngineRequest(
     val uri: String,
     val path: String,
     val title: String,
-    val mimeType: String? = null,
     val allowMetered: Boolean = false,
 )
 
