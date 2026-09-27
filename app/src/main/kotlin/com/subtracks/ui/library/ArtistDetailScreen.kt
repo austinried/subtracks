@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -99,8 +100,8 @@ private val ROW_GAP = 16.dp
 private val SHUFFLE_WIDTH = 68.dp
 private val SHUFFLE_HEIGHT = 48.dp
 private val SHUFFLE_ICON = 30.dp
-private val SHUFFLE_GAP = 12.dp
 private val SHUFFLE_RESERVE = 80.dp
+private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 
 internal fun estimateScrollPx(
     index: Int,
@@ -287,23 +288,28 @@ fun ArtistDetailScreen(
                                         color = Color.White,
                                         endReserve = SHUFFLE_RESERVE,
                                         modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(TITLE_INSET),
+                                    )
+                                    FilledIconButton(
+                                        onClick = onShuffle,
+                                        shape = RoundedCornerShape(24.dp),
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .offset(y = SHUFFLE_HANG)
+                                                .padding(end = TITLE_INSET)
+                                                .width(SHUFFLE_WIDTH)
+                                                .height(SHUFFLE_HEIGHT),
                                     ) {
-                                        FilledIconButton(
-                                            onClick = onShuffle,
-                                            shape = RoundedCornerShape(24.dp),
-                                            modifier = Modifier.width(SHUFFLE_WIDTH).height(SHUFFLE_HEIGHT),
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Shuffle,
-                                                contentDescription = "Shuffle artist",
-                                                modifier = Modifier.size(SHUFFLE_ICON),
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = "Shuffle artist",
+                                            modifier = Modifier.size(SHUFFLE_ICON),
+                                        )
                                     }
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 4.dp),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = SHUFFLE_HANG + 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
@@ -428,7 +434,6 @@ private fun ArtistTitle(
     color: Color,
     endReserve: Dp,
     modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit,
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -437,30 +442,18 @@ private fun ArtistTitle(
         val reserve = with(density) { endReserve.roundToPx() }
         val lines = remember(text, style, fullWidth, reserve) { splitTitle(measurer, text, style, fullWidth, reserve) }
         Column {
-            if (lines.size > 1) {
+            lines.forEachIndexed { index, line ->
                 Text(
-                    text = lines.first(),
+                    text = line,
                     style = style,
                     color = color,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .then(if (index == lines.lastIndex) Modifier.padding(end = endReserve) else Modifier),
                 )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = lines.last(),
-                    style = style,
-                    color = color,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(SHUFFLE_GAP))
-                trailing()
             }
         }
     }
