@@ -108,6 +108,7 @@ private object Routes {
     const val SETTINGS = "settings"
     const val DOWNLOADS = "downloads"
     const val ADD_SERVER = "add-server"
+    const val EDIT_SERVER = "edit-server/{sourceId}"
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
     const val ARTIST_DETAIL = "artist/{artistId}?coverArt={coverArt}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
@@ -123,6 +124,8 @@ private object Routes {
     ) = "artist/${Uri.encode(id)}?coverArt=${Uri.encode(coverArt.orEmpty())}"
 
     fun playlist(id: String) = "playlist/${Uri.encode(id)}"
+
+    fun editServer(id: Long) = "edit-server/$id"
 }
 
 internal data class BackStackKey(
@@ -308,6 +311,7 @@ private fun MainNavigation() {
                         SettingsRoute(
                             onAddServer = { navController.navigate(Routes.ADD_SERVER) },
                             onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
+                            onEditServer = { id -> navController.navigate(Routes.editServer(id)) },
                             onBack = { navController.popBackStack() },
                         )
                     }
@@ -386,6 +390,16 @@ private fun MainNavigation() {
                         AddSourceRoute(
                             onSaved = { navController.popBackStack() },
                             onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
+                        route = Routes.EDIT_SERVER,
+                        arguments = listOf(navArgument("sourceId") { type = NavType.LongType }),
+                    ) { entry ->
+                        AddSourceRoute(
+                            onSaved = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() },
+                            sourceId = entry.arguments?.getLong("sourceId"),
                         )
                     }
                 }

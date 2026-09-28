@@ -84,6 +84,43 @@ class SourceRepositoryTest {
         }
 
     @Test
+    fun editingASourceRewritesItsDetailsWithoutAddingOne() =
+        runTest {
+            repository.addSource("first", "http://a.example", "u1", "p1", true)
+            val id = repository.activeSourceId().first()!!
+            repository.addSource("second", "http://b.example", "u2", "p2", true)
+
+            repository.updateSource(id, "renamed", "c.example", "u3", "p3", false)
+
+            val sources = repository.sources().first()
+            assertEquals(2, sources.size)
+            val edited = sources.first { it.id == id }
+            assertEquals("renamed", edited.name)
+            assertEquals("http://c.example/", edited.address)
+            assertFalse("editing must not change which source is active", edited.isActive)
+            val config = repository.sourceConfigOnce(id)!!
+            assertEquals("u3", config.username)
+            assertEquals("p3", config.password)
+            assertFalse(config.useTokenAuth)
+        }
+
+    @Test
+    fun theLastSourceCannotBeDeleted() =
+        runTest {
+            repository.addSource("only", "http://a.example", "u", "p", true)
+            val id = repository.activeSourceId().first()!!
+
+            assertFalse("the last source must survive deletion", repository.deleteSource(id))
+            assertEquals(1, repository.sources().first().size)
+
+            repository.addSource("second", "http://b.example", "u", "p", true)
+
+            assertTrue(repository.deleteSource(id))
+            assertEquals(listOf("second"), repository.sources().first().map { it.name })
+            assertEquals("second", repository.activeConfig().first()?.name)
+        }
+
+    @Test
     fun aTokenAuthSourceIsProbedAndSwitchedToPassword() =
         runBlocking {
             withServer { server ->

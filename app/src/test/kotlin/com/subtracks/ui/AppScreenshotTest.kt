@@ -344,7 +344,7 @@ class AppScreenshotTest {
                     mobileQuality = StreamQuality(192, "mp3"),
                     syncConcurrency = 4,
                     onSelectSource = {},
-                    onDeleteSource = {},
+                    onEditServer = {},
                     onWifiQualityChange = {},
                     onMobileQualityChange = {},
                     onSyncConcurrencyChange = {},
@@ -390,12 +390,44 @@ class AppScreenshotTest {
                     onTokenAuthChange = {},
                     onTest = {},
                     onSave = {},
+                    onDelete = {},
                     onBack = null,
                 )
             }
         }
         awaitText("Add server")
         composeRule.onRoot().captureRoboImage(file)
+    }
+
+    @Test
+    fun editSource() {
+        composeRule.setContent {
+            SubtracksTheme {
+                AddSourceScreen(
+                    state =
+                        AddSourceState(
+                            name = "Home",
+                            address = "https://music.example.com",
+                            username = "austin",
+                            password = "hunter2",
+                            useTokenAuth = true,
+                            isEditing = true,
+                            canDelete = true,
+                        ),
+                    onNameChange = {},
+                    onAddressChange = {},
+                    onUsernameChange = {},
+                    onPasswordChange = {},
+                    onTokenAuthChange = {},
+                    onTest = {},
+                    onSave = {},
+                    onDelete = {},
+                    onBack = {},
+                )
+            }
+        }
+        awaitText("Edit server")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/edit_source.png")
     }
 
     @Test

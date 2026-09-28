@@ -2,6 +2,7 @@ package com.subtracks.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,8 @@ data class AddSourceState(
     val isError: Boolean = false,
     val nameError: Boolean = false,
     val addressError: Boolean = false,
+    val isEditing: Boolean = false,
+    val canDelete: Boolean = false,
 )
 
 internal fun AddSourceState.validated(): AddSourceState =
@@ -33,9 +36,33 @@ internal fun AddSourceState.validated(): AddSourceState =
 class AddSourceViewModel(
     private val sourceRepository: SourceRepository,
     private val syncManager: SyncManager,
+    private val downloadRepository: DownloadRepository,
+    private val sourceId: Long? = null,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(AddSourceState())
+    private val _state = MutableStateFlow(AddSourceState(isEditing = sourceId != null))
     val state: StateFlow<AddSourceState> = _state
+
+    init {
+        sourceId?.let { id ->
+            viewModelScope.launch {
+                val config = sourceRepository.sourceConfigOnce(id) ?: return@launch
+                _state.update {
+                    it.copy(
+                        name = config.name,
+                        address = config.address,
+                        username = config.username,
+                        password = config.password,
+                        useTokenAuth = config.useTokenAuth,
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            sourceRepository.sources().collect { sources ->
+                _state.update { it.copy(canDelete = sources.size > 1) }
+            }
+        }
+    }
 
     fun setName(value: String) = _state.update { it.copy(name = value, nameError = false) }
 
@@ -78,13 +105,25 @@ class AddSourceViewModel(
         val current = _state.value
         viewModelScope.launch {
             runCatching {
-                sourceRepository.addSource(
-                    name = current.name,
-                    address = current.address,
-                    username = current.username,
-                    password = current.password,
-                    useTokenAuth = current.useTokenAuth,
-                )
+                val id = sourceId
+                if (id == null) {
+                    sourceRepository.addSource(
+                        name = current.name,
+                        address = current.address,
+                        username = current.username,
+                        password = current.password,
+                        useTokenAuth = current.useTokenAuth,
+                    )
+                } else {
+                    sourceRepository.updateSource(
+                        id = id,
+                        name = current.name,
+                        address = current.address,
+                        username = current.username,
+                        password = current.password,
+                        useTokenAuth = current.useTokenAuth,
+                    )
+                }
             }.fold(
                 onSuccess = {
                     syncManager.requestSync()
@@ -97,6 +136,22 @@ class AddSourceViewModel(
                     }
                 },
             )
+        }
+    }
+
+    fun delete(onDeleted: () -> Unit) {
+        val id = sourceId ?: return
+        _state.update { it.copy(busy = true, message = null) }
+        viewModelScope.launch {
+            if (!sourceRepository.deleteSource(id)) {
+                _state.update {
+                    it.copy(busy = false, message = "At least one server is required", isError = true)
+                }
+                return@launch
+            }
+            downloadRepository.removeSource(id)
+            _state.update { it.copy(busy = false) }
+            onDeleted()
         }
     }
 }

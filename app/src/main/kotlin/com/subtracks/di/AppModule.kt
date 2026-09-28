@@ -73,9 +73,9 @@ fun appModule(
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get()) }
     viewModel { DownloadsViewModel(get(), get(), get()) }
-    viewModel { AddSourceViewModel(get(), get()) }
+    viewModel { params -> AddSourceViewModel(get(), get(), get(), params.getOrNull()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> ArtistDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), get(), params.get()) }

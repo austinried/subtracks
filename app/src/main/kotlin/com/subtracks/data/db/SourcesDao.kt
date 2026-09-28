@@ -17,6 +17,12 @@ interface SourcesDao {
     @Query("SELECT * FROM sources WHERE id = :id")
     fun source(id: Long): Flow<Source?>
 
+    @Query("SELECT * FROM sources WHERE id = :id")
+    suspend fun sourceOnce(id: Long): Source?
+
+    @Query("SELECT COUNT(*) FROM sources")
+    suspend fun sourceCount(): Int
+
     @Query("SELECT id FROM sources WHERE isActive = 1 LIMIT 1")
     fun activeSourceId(): Flow<Long?>
 
@@ -64,4 +70,12 @@ interface SourcesDao {
             "WHERE s.isActive = 1 LIMIT 1",
     )
     suspend fun activeSubsonicConfigOnce(): SubsonicConfig?
+
+    @Query(
+        "SELECT s.id AS id, s.name AS name, s.address AS address, c.username AS username, " +
+            "c.password AS password, c.useTokenAuth AS useTokenAuth " +
+            "FROM sources s JOIN subsonic_sources c ON c.sourceId = s.id " +
+            "WHERE s.id = :sourceId LIMIT 1",
+    )
+    suspend fun subsonicConfigOnce(sourceId: Long): SubsonicConfig?
 }

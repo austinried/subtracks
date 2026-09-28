@@ -19,8 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +60,7 @@ private enum class SettingsDialog { WifiQuality, MobileQuality, SyncConcurrency 
 fun SettingsRoute(
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
+    onEditServer: (Long) -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -75,7 +76,7 @@ fun SettingsRoute(
         mobileQuality = mobileQuality,
         syncConcurrency = syncConcurrency,
         onSelectSource = viewModel::selectSource,
-        onDeleteSource = viewModel::deleteSource,
+        onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
         onMobileQualityChange = viewModel::setMobileQuality,
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
@@ -94,7 +95,7 @@ fun SettingsScreen(
     mobileQuality: StreamQuality,
     syncConcurrency: Int,
     onSelectSource: (Long) -> Unit,
-    onDeleteSource: (Long) -> Unit,
+    onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
     onMobileQualityChange: (StreamQuality) -> Unit,
     onSyncConcurrencyChange: (Int) -> Unit,
@@ -139,10 +140,9 @@ fun SettingsScreen(
                         )
                     },
                     trailingContent = {
-                        IconButton(onClick = { onDeleteSource(source.id) }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Remove ${source.name}")
-                        }
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
                     },
+                    modifier = Modifier.clickable(onClickLabel = "Edit ${source.name}") { onEditServer(source.id) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

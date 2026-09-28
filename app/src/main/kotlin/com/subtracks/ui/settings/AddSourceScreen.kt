@@ -14,11 +14,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,11 +29,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -40,12 +46,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AddSourceRoute(
     onSaved: () -> Unit,
     onBack: (() -> Unit)?,
-    viewModel: AddSourceViewModel = koinViewModel(),
+    sourceId: Long? = null,
+    viewModel: AddSourceViewModel = koinViewModel(key = sourceId?.toString() ?: "new") { parametersOf(sourceId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AddSourceScreen(
@@ -57,6 +65,7 @@ fun AddSourceRoute(
         onTokenAuthChange = viewModel::setTokenAuth,
         onTest = viewModel::testConnection,
         onSave = { viewModel.save(onSaved) },
+        onDelete = { viewModel.delete(onSaved) },
         onBack = onBack,
     )
 }
@@ -72,11 +81,13 @@ fun AddSourceScreen(
     onTokenAuthChange: (Boolean) -> Unit,
     onTest: () -> Unit,
     onSave: () -> Unit,
+    onDelete: () -> Unit,
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val nameFocus = remember { FocusRequester() }
     val addressFocus = remember { FocusRequester() }
+    var confirmingDelete by remember { mutableStateOf(false) }
     LaunchedEffect(state.nameError, state.addressError) {
         when {
             state.nameError -> nameFocus.requestFocus()
@@ -87,11 +98,22 @@ fun AddSourceScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Add server") },
+                title = { Text(if (state.isEditing) "Edit server" else "Add server") },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
+                actions = {
+                    if (state.isEditing) {
+                        IconButton(
+                            onClick = { confirmingDelete = true },
+                            enabled = state.canDelete && !state.busy,
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        ) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Delete server")
                         }
                     }
                 },
@@ -141,10 +163,21 @@ fun AddSourceScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "Connect a Subsonic-compatible server such as Navidrome, gonic or Airsonic.",
+                if (state.isEditing) {
+                    "Update this server's connection details."
+                } else {
+                    "Connect a Subsonic-compatible server such as Navidrome, gonic or Airsonic."
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (state.isEditing && !state.canDelete) {
+                Text(
+                    "This is the only server. Add another before you can remove this one.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             OutlinedTextField(
                 value = state.name,
                 onValueChange = onNameChange,
@@ -205,5 +238,24 @@ fun AddSourceScreen(
                 )
             }
         }
+    }
+
+    if (confirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            title = { Text("Delete server?") },
+            text = { Text("${state.name} and its downloaded songs will be removed from this device.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmingDelete = false
+                        onDelete()
+                    },
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") }
+            },
+        )
     }
 }

@@ -83,6 +83,8 @@ class SourceRepository(
 
     fun activeConfig(): Flow<SubsonicConfig?> = db.sourcesDao().activeSubsonicConfig()
 
+    suspend fun sourceConfigOnce(id: Long): SubsonicConfig? = db.sourcesDao().subsonicConfigOnce(id)
+
     fun coverArt(
         coverArt: String?,
         thumbnail: Boolean = false,
@@ -151,13 +153,36 @@ class SourceRepository(
 
     suspend fun selectSource(id: Long) = db.sourcesDao().setActiveSource(id)
 
-    suspend fun deleteSource(id: Long) {
+    suspend fun updateSource(
+        id: Long,
+        name: String,
+        address: String,
+        username: String,
+        password: String,
+        useTokenAuth: Boolean,
+    ) {
         val dao = db.sourcesDao()
+        val source = dao.sourceOnce(id) ?: return
+        dao.upsertSource(source.copy(name = name.trim(), address = normalizeAddress(address)))
+        dao.upsertSubsonicSource(
+            SubsonicSource(
+                sourceId = id,
+                username = username.trim(),
+                password = password,
+                useTokenAuth = useTokenAuth,
+            ),
+        )
+    }
+
+    suspend fun deleteSource(id: Long): Boolean {
+        val dao = db.sourcesDao()
+        if (dao.sourceCount() <= 1) return false
         val wasActive = dao.activeSourceIdOnce() == id
         dao.deleteSource(id)
         if (wasActive) {
             dao.firstSourceId()?.let { dao.setActiveSource(it) }
         }
+        return true
     }
 
     suspend fun ping(
