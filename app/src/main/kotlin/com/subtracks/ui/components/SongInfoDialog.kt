@@ -92,7 +92,7 @@ private fun InfoRow(
     }
 }
 
-private val INFO_LABEL_WIDTH = 104.dp
+private val INFO_LABEL_WIDTH = 80.dp
 
 private fun downloadStatus(status: DownloadStatus): String =
     when (status) {
