@@ -303,7 +303,7 @@ class SubsonicSource(
     private companion object {
         const val PAGE_SIZE = 500
         const val MAX_PAGES = 20_000
-        const val THUMBNAIL_SIZE = 512
+        const val THUMBNAIL_SIZE = 384
     }
 }
 
