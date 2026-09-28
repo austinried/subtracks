@@ -216,17 +216,11 @@ fun LibraryRoute(
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
-    val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
-    val artistDownloads by viewModel.artistDownloads.collectAsStateWithLifecycle()
-    val playlistDownloads by viewModel.playlistDownloads.collectAsStateWithLifecycle()
+    val downloads by viewModel.downloads(listTab).collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
     val itemActions =
         ItemActions(
-            playAlbum = { viewModel.playAlbum(it.id) },
-            shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
-            playPlaylist = { viewModel.playPlaylist(it.id) },
-            shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             bulkDownload = { target, action ->
@@ -282,9 +276,9 @@ fun LibraryRoute(
         },
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
-        albumDownloads = albumDownloads,
-        artistDownloads = artistDownloads,
-        playlistDownloads = playlistDownloads,
+        albumDownloads = downloads.takeIf { listTab == LibraryListTab.Albums }.orEmpty(),
+        artistDownloads = downloads.takeIf { listTab == LibraryListTab.Artists }.orEmpty(),
+        playlistDownloads = downloads.takeIf { listTab == LibraryListTab.Playlists }.orEmpty(),
     )
 
     pendingDelete?.let { pending ->

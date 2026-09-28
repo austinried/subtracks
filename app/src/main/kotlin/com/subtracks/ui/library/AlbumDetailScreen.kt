@@ -79,9 +79,6 @@ fun AlbumDetailRoute(
     }
     val actions =
         ItemActions(
-            playSong = { song -> songs.indexOfFirst { it.id == song.id }.takeIf { it >= 0 }?.let(viewModel::play) },
-            playAlbum = { viewModel.playAll() },
-            shuffleAlbum = { viewModel.shuffle() },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             download = viewModel::download,

@@ -99,16 +99,4 @@ class ArtistDetailViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
-
-    fun playAlbum(albumId: String) {
-        viewModelScope.launch {
-            playbackController.playAlbum(sourceId.first(), albumId, 0)
-        }
-    }
-
-    fun shuffleAlbum(albumId: String) {
-        viewModelScope.launch {
-            playbackController.shuffleAlbum(sourceId.first(), albumId)
-        }
-    }
 }

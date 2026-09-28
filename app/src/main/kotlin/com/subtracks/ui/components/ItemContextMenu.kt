@@ -18,8 +18,6 @@ import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
@@ -137,11 +135,6 @@ fun MenuTarget.listDownload(): ListDownloadStatus? =
     }
 
 class ItemActions(
-    val playSong: ((SongModel) -> Unit)? = null,
-    val playAlbum: (AlbumModel) -> Unit = {},
-    val shuffleAlbum: (AlbumModel) -> Unit = {},
-    val playPlaylist: (PlaylistModel) -> Unit = {},
-    val shufflePlaylist: (PlaylistModel) -> Unit = {},
     val playNext: ((QueueRef) -> Unit)? = null,
     val addToQueue: ((QueueRef) -> Unit)? = null,
     val download: ((SongModel) -> Unit)? = null,
@@ -213,9 +206,6 @@ fun ItemContextMenu(
         MenuHeader(target)
         when (target) {
             is MenuTarget.Song -> {
-                actions.playSong?.let { play ->
-                    MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { play(target.song) } }
-                }
                 queueItems()
                 DownloadItem(target.download, target.song, actions, ::dismiss)
                 StarItem(
@@ -240,8 +230,6 @@ fun ItemContextMenu(
             }
 
             is MenuTarget.Album -> {
-                MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playAlbum(target.album) } }
-                MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shuffleAlbum(target.album) } }
                 queueItems()
                 BulkDownloadItem(target, actions, ::dismiss)
                 StarItem(
@@ -268,8 +256,6 @@ fun ItemContextMenu(
             }
 
             is MenuTarget.Playlist -> {
-                MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playPlaylist(target.playlist) } }
-                MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shufflePlaylist(target.playlist) } }
                 queueItems()
                 BulkDownloadItem(target, actions, ::dismiss)
             }

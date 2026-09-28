@@ -154,8 +154,6 @@ fun ArtistDetailRoute(
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
-            playAlbum = { viewModel.playAlbum(it.id) },
-            shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
             bulkDownload = { target, action ->

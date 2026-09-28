@@ -95,20 +95,27 @@ class LibraryViewModel(
 
     private val activeSourceId = libraryRepository.activeSourceId.filterNotNull()
 
-    val albumDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+    private val albumDownloads: StateFlow<Map<String, ListDownloadStatus>> =
         activeSourceId
             .flatMapLatest { downloadRepository.statuses(it, DownloadList.Album) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    val artistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+    private val artistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
         activeSourceId
             .flatMapLatest { downloadRepository.statuses(it, DownloadList.Artist) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    val playlistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+    private val playlistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
         activeSourceId
             .flatMapLatest { downloadRepository.statuses(it, DownloadList.Playlist) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    fun downloads(tab: LibraryListTab): StateFlow<Map<String, ListDownloadStatus>> =
+        when (tab) {
+            LibraryListTab.Albums -> albumDownloads
+            LibraryListTab.Artists -> artistDownloads
+            LibraryListTab.Playlists -> playlistDownloads
+        }
 
     suspend fun downloadedBytes(
         list: DownloadList,
@@ -148,30 +155,6 @@ class LibraryViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
-
-    fun playAlbum(albumId: String) {
-        viewModelScope.launch {
-            sourceRepository.activeSourceIdOnce()?.let { playbackController.playAlbum(it, albumId, 0) }
-        }
-    }
-
-    fun shuffleAlbum(albumId: String) {
-        viewModelScope.launch {
-            sourceRepository.activeSourceIdOnce()?.let { playbackController.shuffleAlbum(it, albumId) }
-        }
-    }
-
-    fun playPlaylist(playlistId: String) {
-        viewModelScope.launch {
-            sourceRepository.activeSourceIdOnce()?.let { playbackController.playPlaylist(it, playlistId, 0) }
-        }
-    }
-
-    fun shufflePlaylist(playlistId: String) {
-        viewModelScope.launch {
-            sourceRepository.activeSourceIdOnce()?.let { playbackController.shufflePlaylist(it, playlistId) }
-        }
-    }
 
     fun sync() = syncManager.requestSync()
 }
