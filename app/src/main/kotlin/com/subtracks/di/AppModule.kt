@@ -57,7 +57,7 @@ fun appModule(
     single<ServerActionSink> { NetworkServerActionSink(get()) }
     single { LibraryRepository(get(), get(), get(), toast) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
-    single { SyncManager(get(), get(), get()) }
+    single { SyncManager(get(), get(), get(), showMessage = toast) }
     single { QueueRepository(get()) }
     single { ArtworkStore(downloadsRoot(context)) }
     single<ArtworkFetcher> { OkHttpArtworkFetcher(get()) }

@@ -21,6 +21,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(AndroidJUnit4::class)
 class SyncManagerTest {
@@ -28,6 +29,7 @@ class SyncManagerTest {
     private lateinit var sourceRepository: SourceRepository
     private lateinit var queueRepository: QueueRepository
     private lateinit var manager: SyncManager
+    private val messages = CopyOnWriteArrayList<String>()
 
     @Before
     fun setUp() {
@@ -39,7 +41,7 @@ class SyncManagerTest {
                 .build()
         sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queueRepository = QueueRepository(db)
-        manager = SyncManager(db, sourceRepository, queueRepository)
+        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it })
     }
 
     @After
@@ -47,6 +49,15 @@ class SyncManagerTest {
         sourceRepository.close()
         db.close()
     }
+
+    @Test
+    fun aFailedSyncTellsTheUser() =
+        runBlocking {
+            manager.requestSync()
+            withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals(listOf("Sync failed: No server configured"), messages)
+        }
 
     @Test
     fun aFailedSyncStillInvalidatesTheLibraryCache() =

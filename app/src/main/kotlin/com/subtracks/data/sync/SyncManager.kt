@@ -29,6 +29,7 @@ class SyncManager(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
+    private val showMessage: (String) -> Unit = {},
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val requests = Channel<Unit>(Channel.CONFLATED)
@@ -56,7 +57,9 @@ class SyncManager(
                 throw cancellation
             } catch (failure: Exception) {
                 Log.w(TAG, "Sync failed", failure)
-                SyncStatus.Failed(failure.message ?: "Sync failed")
+                val message = failure.message ?: "unknown error"
+                showMessage("Sync failed: $message")
+                SyncStatus.Failed(message)
             }
         queueRepository.invalidateLibraryCache()
         _status.value = result
