@@ -330,7 +330,7 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 28.dp, bottom = 12.dp),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 34.dp, bottom = 0.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
