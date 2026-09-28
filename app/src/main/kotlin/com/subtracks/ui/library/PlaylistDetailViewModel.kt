@@ -20,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -39,8 +40,8 @@ class PlaylistDetailViewModel(
     val playlist: Flow<Playlist?> = sourceId.flatMapLatest { libraryRepository.playlist(it, playlistId) }
 
     val songs: Flow<PagingData<PlaylistSongItem>> =
-        sourceId
-            .flatMapLatest { libraryRepository.playlistSongs(it, playlistId) }
+        combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }
+            .flatMapLatest { (id, offline) -> libraryRepository.playlistSongs(id, playlistId, offline) }
             .cachedIn(viewModelScope)
 
     val downloads: StateFlow<Map<String, SongDownload>> =

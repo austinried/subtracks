@@ -26,6 +26,10 @@ internal const val PLAYLIST_SONGS_ORDER = " ORDER BY playlist_songs.position"
 
 internal const val PLAYLIST_SONGS_SQL = PLAYLIST_SONGS_SELECT + PLAYLIST_SONGS_ORDER
 
+internal const val DOWNLOADED_SONG =
+    "EXISTS (SELECT 1 FROM song_downloads sd WHERE sd.sourceId = playlist_songs.sourceId " +
+        "AND sd.songId = playlist_songs.songId AND sd.status = 'Completed')"
+
 internal const val ALBUMS_FILTER =
     "FROM albums WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
@@ -455,4 +459,55 @@ interface LibraryDao {
         sourceId: Long,
         albumId: String,
     ): Flow<List<Song>>
+
+    @Query(
+        "SELECT songs.* FROM songs " +
+            "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id AND sd.status = 'Completed' " +
+            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
+            "ORDER BY songs.disc, songs.track, songs.id",
+    )
+    fun songsByAlbumDownloaded(
+        sourceId: Long,
+        albumId: String,
+    ): Flow<List<Song>>
+
+    @Query(
+        "SELECT songs.id FROM songs " +
+            "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id AND sd.status = 'Completed' " +
+            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
+            "ORDER BY songs.disc, songs.track, songs.id",
+    )
+    suspend fun downloadedAlbumSongIds(
+        sourceId: Long,
+        albumId: String,
+    ): List<String>
+
+    @Query(
+        "SELECT playlist_songs.songId FROM playlist_songs " +
+            "JOIN song_downloads sd ON sd.sourceId = playlist_songs.sourceId " +
+            "AND sd.songId = playlist_songs.songId AND sd.status = 'Completed' " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+            "ORDER BY playlist_songs.position",
+    )
+    suspend fun downloadedPlaylistSongIds(
+        sourceId: Long,
+        playlistId: String,
+    ): List<String>
+
+    @Query("$PLAYLIST_SONGS_SELECT AND $DOWNLOADED_SONG$PLAYLIST_SONGS_ORDER")
+    fun playlistSongsDownloaded(
+        sourceId: Long,
+        playlistId: String,
+    ): PagingSource<Int, PlaylistSongItem>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId " +
+            "AND EXISTS (SELECT 1 FROM songs JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+            "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+            "ORDER BY year DESC, name COLLATE NOCASE, id",
+    )
+    fun albumsForArtistDownloaded(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<List<Album>>
 }

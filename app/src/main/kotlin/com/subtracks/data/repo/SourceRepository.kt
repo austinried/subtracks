@@ -55,7 +55,14 @@ class SourceRepository(
     @Volatile
     private var allowMeteredDownloads = false
 
+    private val _offline = MutableStateFlow(false)
+    val offline: StateFlow<Boolean> = _offline
+
     fun downloadsAllowedOverMetered(): Boolean = allowMeteredDownloads
+
+    fun setOfflineMode(enabled: Boolean) {
+        scope.launch { prefs.setOfflineMode(enabled) }
+    }
 
     init {
         scope.launch {
@@ -63,6 +70,9 @@ class SourceRepository(
         }
         scope.launch {
             prefs.downloadOverMetered().collect { allowMeteredDownloads = it }
+        }
+        scope.launch {
+            prefs.offlineMode().collect { _offline.value = it }
         }
         scope.launch {
             combine(
@@ -78,7 +88,7 @@ class SourceRepository(
                 _quality.value = quality
                 val sourceChanged = config?.id != activeSourceId
                 activeSourceId = config?.id
-                if (sourceChanged && config != null && config.useTokenAuth) {
+                if (!_offline.value && sourceChanged && config != null && config.useTokenAuth) {
                     scope.launch { runCatching { config.toClient().check("ping") } }
                 }
             }
@@ -107,6 +117,7 @@ class SourceRepository(
         if (coverArt == null) return null
         val cacheKey = coverArtKey(source.id, coverArt, thumbnail)
         artworkStore.uri(source.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
+        if (_offline.value) return null
         val url = source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
         return CoverArtRef(url = url, cacheKey = cacheKey)
     }
@@ -116,6 +127,7 @@ class SourceRepository(
         coverArt: String,
         thumbnail: Boolean,
     ): String? {
+        if (_offline.value) return null
         val source = active ?: return null
         if (source.id != sourceId) return null
         return source.coverArtUri(coverArt, thumbnail)?.toString()
@@ -126,6 +138,7 @@ class SourceRepository(
         durationMs: Long?,
         quality: StreamQuality,
     ): String? {
+        if (_offline.value) return null
         val uri = active?.streamUri(songId)?.toString() ?: return null
         val length = declaredStreamLength(durationMs, quality) ?: return uri
         return uri + streamLengthSuffix(length)
@@ -135,6 +148,7 @@ class SourceRepository(
         sourceId: Long,
         songId: String,
     ): String? {
+        if (_offline.value) return null
         val source = active?.takeIf { activeSourceId == sourceId } ?: return null
         // A transcode preference downloads the stream, so the saved file is already the wanted
         // quality rather than the original that would then have to be transcoded on every play.
@@ -210,14 +224,19 @@ class SourceRepository(
         password: String,
         useTokenAuth: Boolean,
     ): Result<Boolean> =
-        withContext(Dispatchers.IO) {
-            var fellBack = false
-            runCatching {
-                client(address, username, password, useTokenAuth) { fellBack = true }.check("ping")
-            }.map { fellBack }
+        if (_offline.value) {
+            Result.failure(OfflineException())
+        } else {
+            withContext(Dispatchers.IO) {
+                var fellBack = false
+                runCatching {
+                    client(address, username, password, useTokenAuth) { fellBack = true }.check("ping")
+                }.map { fellBack }
+            }
         }
 
     suspend fun activeMusicSource(): MusicSource? {
+        if (_offline.value) return null
         val config = db.sourcesDao().activeSubsonicConfigOnce() ?: return null
         return config.toMusicSource(quality.value, prefs.syncConcurrency().first())
     }

@@ -74,6 +74,7 @@ fun SettingsRoute(
     val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
@@ -83,6 +84,7 @@ fun SettingsRoute(
         downloadQuality = downloadQuality,
         downloadOverMetered = downloadOverMetered,
         scrobbling = scrobbling,
+        offline = offline,
         onSelectSource = viewModel::selectSource,
         onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
@@ -91,6 +93,7 @@ fun SettingsRoute(
         onDownloadQualityChange = viewModel::setDownloadQuality,
         onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
         onScrobblingChange = viewModel::setScrobbling,
+        onOfflineChange = viewModel::setOfflineMode,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onBack = onBack,
@@ -108,6 +111,7 @@ fun SettingsScreen(
     downloadQuality: StreamQuality,
     downloadOverMetered: Boolean,
     scrobbling: Boolean,
+    offline: Boolean = false,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -116,6 +120,7 @@ fun SettingsScreen(
     onDownloadQualityChange: (StreamQuality) -> Unit,
     onDownloadOverMeteredChange: (Boolean) -> Unit,
     onScrobblingChange: (Boolean) -> Unit,
+    onOfflineChange: (Boolean) -> Unit = {},
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
@@ -178,6 +183,19 @@ fun SettingsScreen(
                 }
             }
             item { SectionHeader("Network") }
+            item {
+                ListItem(
+                    headlineContent = { Text("Offline mode") },
+                    supportingContent = {
+                        Text(if (offline) "Don't use the internet to sync or play music." else "Use the internet to sync music.")
+                    },
+                    trailingContent = {
+                        Switch(checked = offline, onCheckedChange = onOfflineChange)
+                    },
+                    modifier = Modifier.clickable { onOfflineChange(!offline) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
             item {
                 ListItem(
                     headlineContent = { Text("Stream quality: Wi-Fi") },

@@ -53,6 +53,12 @@ class SettingsViewModel(
             .scrobbling()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
+    val offline: StateFlow<Boolean> = sourceRepository.offline
+
+    fun setOfflineMode(enabled: Boolean) {
+        sourceRepository.setOfflineMode(enabled)
+    }
+
     fun selectSource(id: Long) {
         viewModelScope.launch { sourceRepository.selectSource(id) }
     }

@@ -184,7 +184,13 @@ class LibraryRepository(
     fun artistAlbums(
         sourceId: Long,
         artistId: String,
-    ): Flow<List<Album>> = db.libraryDao().albumsForArtist(sourceId, artistId)
+        downloaded: Boolean = false,
+    ): Flow<List<Album>> =
+        if (downloaded) {
+            db.libraryDao().albumsForArtistDownloaded(sourceId, artistId)
+        } else {
+            db.libraryDao().albumsForArtist(sourceId, artistId)
+        }
 
     fun albumDiscs(
         sourceId: Long,
@@ -194,7 +200,13 @@ class LibraryRepository(
     fun albumSongs(
         sourceId: Long,
         albumId: String,
-    ): Flow<List<Song>> = db.libraryDao().songsByAlbum(sourceId, albumId)
+        downloaded: Boolean = false,
+    ): Flow<List<Song>> =
+        if (downloaded) {
+            db.libraryDao().songsByAlbumDownloaded(sourceId, albumId)
+        } else {
+            db.libraryDao().songsByAlbum(sourceId, albumId)
+        }
 
     fun playlist(
         sourceId: Long,
@@ -204,7 +216,15 @@ class LibraryRepository(
     fun playlistSongs(
         sourceId: Long,
         playlistId: String,
-    ): Flow<PagingData<PlaylistSongItem>> = pager(60) { db.libraryDao().playlistSongs(sourceId, playlistId) }
+        downloaded: Boolean = false,
+    ): Flow<PagingData<PlaylistSongItem>> =
+        pager(60) {
+            if (downloaded) {
+                db.libraryDao().playlistSongsDownloaded(sourceId, playlistId)
+            } else {
+                db.libraryDao().playlistSongs(sourceId, playlistId)
+            }
+        }
 
     private val starLock = Mutex()
     private val starScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

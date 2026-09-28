@@ -18,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -36,7 +37,9 @@ class AlbumDetailViewModel(
 
     val album: Flow<Album?> = sourceId.flatMapLatest { libraryRepository.album(it, albumId) }
 
-    val songs: Flow<List<Song>> = sourceId.flatMapLatest { libraryRepository.albumSongs(it, albumId) }
+    val songs: Flow<List<Song>> =
+        combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }
+            .flatMapLatest { (id, offline) -> libraryRepository.albumSongs(id, albumId, offline) }
 
     val discs: Flow<List<Disc>> = sourceId.flatMapLatest { libraryRepository.albumDiscs(it, albumId) }
 

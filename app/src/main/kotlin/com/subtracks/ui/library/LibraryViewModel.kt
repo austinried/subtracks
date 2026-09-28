@@ -59,34 +59,61 @@ class LibraryViewModel(
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                combine(listQueries.getValue(LibraryListTab.Albums), searches.getValue(LibraryListTab.Albums)) { query, search ->
-                    query to search
-                }.flatMapLatest { (query, search) ->
-                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starred, search, query.downloaded)
-                }
+                combine(
+                    listQueries.getValue(LibraryListTab.Albums),
+                    searches.getValue(LibraryListTab.Albums),
+                    sourceRepository.offline,
+                ) { query, search, offline -> Triple(query, search, offline) }
+                    .flatMapLatest { (query, search, offline) ->
+                        libraryRepository.albums(
+                            sourceId,
+                            query.albumSort(),
+                            query.descending,
+                            query.starred,
+                            search,
+                            query.downloaded || offline,
+                        )
+                    }
             }.cachedIn(viewModelScope)
 
     val artists: Flow<PagingData<Artist>> =
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                combine(listQueries.getValue(LibraryListTab.Artists), searches.getValue(LibraryListTab.Artists)) { query, search ->
-                    query to search
-                }.flatMapLatest { (query, search) ->
-                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starred, search, query.downloaded)
-                }
+                combine(
+                    listQueries.getValue(LibraryListTab.Artists),
+                    searches.getValue(LibraryListTab.Artists),
+                    sourceRepository.offline,
+                ) { query, search, offline -> Triple(query, search, offline) }
+                    .flatMapLatest { (query, search, offline) ->
+                        libraryRepository.artists(
+                            sourceId,
+                            query.artistSort(),
+                            query.descending,
+                            query.starred,
+                            search,
+                            query.downloaded || offline,
+                        )
+                    }
             }.cachedIn(viewModelScope)
 
     val playlists: Flow<PagingData<Playlist>> =
         libraryRepository.activeSourceId
             .filterNotNull()
             .flatMapLatest { sourceId ->
-                combine(listQueries.getValue(LibraryListTab.Playlists), searches.getValue(LibraryListTab.Playlists)) { query, search ->
-                    query to search
-                }.flatMapLatest { (query, search) ->
-                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending, search, query.downloaded)
-                }
+                combine(
+                    listQueries.getValue(LibraryListTab.Playlists),
+                    searches.getValue(LibraryListTab.Playlists),
+                    sourceRepository.offline,
+                ) { query, search, offline -> Triple(query, search, offline) }
+                    .flatMapLatest { (query, search, offline) ->
+                        libraryRepository.playlists(sourceId, query.playlistSort(), query.descending, search, query.downloaded || offline)
+                    }
             }.cachedIn(viewModelScope)
+
+    val offline: StateFlow<Boolean> = sourceRepository.offline
+
+    fun setOffline(enabled: Boolean) = sourceRepository.setOfflineMode(enabled)
 
     val syncing: StateFlow<Boolean> =
         syncManager.status

@@ -113,6 +113,14 @@ class UserPreferences(
 
     private val scrobblingKey = booleanPreferencesKey("scrobbling")
 
+    fun offlineMode(): Flow<Boolean> = store.data.map { prefs -> prefs[offlineModeKey] ?: false }
+
+    suspend fun setOfflineMode(enabled: Boolean) {
+        store.edit { prefs -> prefs[offlineModeKey] = enabled }
+    }
+
+    private val offlineModeKey = booleanPreferencesKey("offline_mode")
+
     suspend fun lastSeed(): ArtworkSeedValue? {
         val prefs = store.data.first()
         val cacheKey = prefs[lastSeedKey] ?: return null

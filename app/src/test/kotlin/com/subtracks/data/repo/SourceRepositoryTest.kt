@@ -244,6 +244,35 @@ class SourceRepositoryTest {
             assertTrue("expected the server url, was ${ref.url}", ref.url.startsWith("http"))
         }
 
+    @Test
+    fun offlineModeDisablesNetworkAndStreaming() =
+        runBlocking {
+            repository.addSource("server", "http://a.example/", "u", "p", true)
+            val sourceId = awaitActiveSourceId()
+            repository.setOfflineMode(true)
+            withTimeout(5_000) { repository.offline.first { it } }
+
+            assertEquals(null, repository.streamUri("s1", 1_000L, StreamQuality()))
+            assertEquals(null, repository.networkCoverArt(sourceId, "art-1", false))
+            assertEquals(null, repository.downloadUri(sourceId, "s1"))
+            assertEquals(null, repository.activeMusicSource())
+            assertEquals(null, repository.coverArt("art-1"))
+        }
+
+    @Test
+    fun offlineModeStillServesDownloadedArtwork() =
+        runBlocking {
+            repository.addSource("server", "http://a.example/", "u", "p", true)
+            val sourceId = awaitActiveSourceId()
+            artwork.write(sourceId, coverArtKey(sourceId, "art-1", false), byteArrayOf(1, 2, 3))
+            repository.setOfflineMode(true)
+            withTimeout(5_000) { repository.offline.first { it } }
+
+            val ref = repository.coverArt("art-1")
+
+            assertTrue("expected the stored file, was ${ref?.url}", ref?.url?.startsWith("file:") == true)
+        }
+
     private suspend fun awaitActiveSourceId(): Long = withTimeout(5_000) { repository.activeSourceId().first { it != null }!! }
 
     private suspend fun awaitCoverArt(coverArt: String): CoverArtRef =

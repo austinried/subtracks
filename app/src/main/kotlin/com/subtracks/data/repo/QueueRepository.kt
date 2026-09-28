@@ -250,6 +250,19 @@ class QueueRepository(
         songId: String,
     ) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = songId)
 
+    suspend fun downloadedSongIds(
+        sourceId: Long,
+        kind: QueueKind,
+        refId: String,
+    ): List<String> {
+        val library = db.libraryDao()
+        return when (kind) {
+            QueueKind.Album -> library.downloadedAlbumSongIds(sourceId, refId)
+            QueueKind.Playlist -> library.downloadedPlaylistSongIds(sourceId, refId)
+            QueueKind.Song -> emptyList()
+        }
+    }
+
     suspend fun sourceName(
         kind: QueueKind,
         sourceId: Long,

@@ -350,6 +350,44 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun offlineListQueriesReturnOnlyCompletedDownloads() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Album", year = null, starred = null)))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null, track = 1),
+                    song(sourceId, "s2", "Two", starred = null, track = 2),
+                    song(sourceId, "s3", "Three", starred = null, track = 3),
+                ),
+            )
+            dao.upsertPlaylists(listOf(playlist(sourceId, "pl-1", "List", created = 0, changed = 0)))
+            dao.upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(sourceId, "pl-1", "s1", 0),
+                    PlaylistSong(sourceId, "pl-1", "s2", 1),
+                    PlaylistSong(sourceId, "pl-1", "s3", 2),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Queued))
+            db.downloadDao().upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed))
+
+            assertEquals(listOf("s1", "s3"), dao.songsByAlbumDownloaded(sourceId, "al-1").first().map { it.id })
+            assertEquals(listOf("s1", "s3"), dao.downloadedAlbumSongIds(sourceId, "al-1"))
+            assertEquals(listOf("s1", "s3"), dao.downloadedPlaylistSongIds(sourceId, "pl-1"))
+            assertEquals(
+                listOf("s1", "s3"),
+                dao.playlistSongsDownloaded(sourceId, "pl-1").page().map { it.song.id },
+            )
+            assertEquals(
+                listOf("al-1"),
+                dao.albumsForArtistDownloaded(sourceId, "ar-1").first().map { it.id },
+            )
+        }
+
+    @Test
     fun searchMatchesInfixCaseInsensitivelyAndFallsBackToAScanBelowThreeCharacters() =
         runTest {
             val sourceId = source()

@@ -224,4 +224,15 @@ class SyncManagerTest {
                 "<song id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
                 "</searchResult3></subsonic-response>"
     }
+    @Test
+    fun aSyncRequestWhileOfflineIsRefusedWithoutTouchingTheNetwork() =
+        runBlocking {
+            sourceRepository.setOfflineMode(true)
+            withTimeout(5_000) { sourceRepository.offline.first { it } }
+
+            manager.requestSync()
+            val status = withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals("Offline mode is on", (status as SyncStatus.Failed).message)
+        }
 }

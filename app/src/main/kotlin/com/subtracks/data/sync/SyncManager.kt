@@ -47,6 +47,11 @@ class SyncManager(
     }
 
     private suspend fun runSync() {
+        if (sourceRepository.offline.value) {
+            showMessage("Offline mode is on")
+            _status.value = SyncStatus.Failed("Offline mode is on")
+            return
+        }
         _status.value = SyncStatus.Running
         val result =
             try {

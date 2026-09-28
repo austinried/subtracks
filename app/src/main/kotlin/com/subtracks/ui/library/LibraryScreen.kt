@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.FilterAltOff
 import androidx.compose.material.icons.rounded.Person
@@ -211,12 +212,14 @@ fun LibraryRoute(
         }
     }
     val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val displayQuery = if (offline) listQuery.copy(downloaded = true) else listQuery
     val search by viewModel.search(listTab).collectAsStateWithLifecycle()
     val resetKeys =
         LibraryTab.entries.associateWith { tab ->
             val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
             val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
-            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded}|$term"
+            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term|$offline"
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
@@ -259,8 +262,10 @@ fun LibraryRoute(
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
         onItemLongClick = { contextMenuHost?.show(it, itemActions) },
-        listQuery = listQuery,
+        listQuery = displayQuery,
         resetKeys = resetKeys,
+        offline = offline,
+        onExitOffline = { viewModel.setOffline(false) },
         sortOptions = sortOptionsFor(selectedTab),
         starredSupported = listTab.supportsStarred,
         onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
@@ -310,6 +315,8 @@ fun LibraryScreen(
     onPlaylistClick: (Playlist) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    offline: Boolean = false,
+    onExitOffline: () -> Unit = {},
     onItemLongClick: (MenuTarget) -> Unit = {},
     syncing: Boolean = false,
     bottomInset: Dp = 0.dp,
@@ -479,6 +486,8 @@ fun LibraryScreen(
                     pagerState = pagerState,
                     onTabSelected = onTabSelected,
                     onOpenSettings = onOpenSettings,
+                    offline = offline,
+                    onExitOffline = onExitOffline,
                     artwork = artwork,
                 )
             }
@@ -762,6 +771,8 @@ internal fun LibraryTabs(
     pagerState: PagerState,
     onTabSelected: (LibraryTab) -> Unit,
     onOpenSettings: () -> Unit,
+    offline: Boolean = false,
+    onExitOffline: () -> Unit = {},
     artwork: ArtworkColors?,
 ) {
     val indicatorStretch = 18.dp
@@ -844,6 +855,15 @@ internal fun LibraryTabs(
                         )
                     }
                     Spacer(Modifier.weight(1f))
+                    if (offline) {
+                        IconButton(onClick = onExitOffline) {
+                            Icon(
+                                imageVector = Icons.Rounded.CloudOff,
+                                contentDescription = "Offline mode; tap to go online",
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
