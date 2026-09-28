@@ -224,6 +224,8 @@ class LibraryDaoTest {
             }
         }
 
+    // These plan assertions depend on the query planner in the pinned androidx.sqlite:sqlite-bundled
+    // (see gradle/libs.versions.toml); re-check the expected index names when that engine is bumped.
     @Test
     fun albumOrdersAreIndexBacked() =
         runTest {
@@ -442,7 +444,11 @@ class LibraryDaoTest {
     @Test
     fun searchRunsThroughTheTrigramIndex() =
         runTest {
-            val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME LIMIT 20 OFFSET 0")
+            val plan =
+                plan(
+                    "SELECT * ${ALBUMS_FILTER.replace(":search", "'abc'")} " +
+                        "ORDER BY $ALBUM_ORDER_BY_NAME LIMIT 20 OFFSET 0",
+                )
 
             assertTrue(plan, plan.contains("album_search"))
         }

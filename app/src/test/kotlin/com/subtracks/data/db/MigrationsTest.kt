@@ -87,7 +87,7 @@ class MigrationsTest {
                 migrated.execSQL(
                     "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, " +
                         "starred, songCount, frequentRank, recentRank) " +
-                        "VALUES (1, 'al1', 'ar1', 'The Album', 'The Artist', 101, NULL, NULL, 1999, NULL, 1, NULL, NULL)",
+                        "VALUES (1, 'al1', 'ar1', 'The Album', 'The Artist', 101, NULL, NULL, 1999, 555, 1, NULL, NULL)",
                 )
                 migrated.execSQL(
                     "INSERT INTO playlists (sourceId, id, name, comment, coverArt, songCount, created) " +
@@ -97,9 +97,24 @@ class MigrationsTest {
                 MIGRATIONS.sortedBy { it.startVersion }.forEach { migration ->
                     migration.migrate(migrated)
                     when (migration.endVersion) {
-                        5 -> migrated.execSQL("UPDATE playlists SET duration = 987654 WHERE id = 'pl1'")
-                        8 -> migrated.execSQL("UPDATE playlists SET changed = 123456 WHERE id = 'pl1'")
-                        11 -> migrated.execSQL("INSERT INTO discs (sourceId, albumId, disc, title) VALUES (1, 'al1', 2, 'The Disc')")
+                        5 -> {
+                            migrated.execSQL("UPDATE playlists SET duration = 987654 WHERE id = 'pl1'")
+                        }
+
+                        8 -> {
+                            migrated.execSQL("UPDATE playlists SET changed = 123456 WHERE id = 'pl1'")
+                        }
+
+                        11 -> {
+                            migrated.execSQL("INSERT INTO discs (sourceId, albumId, disc, title) VALUES (1, 'al1', 2, 'The Disc')")
+                        }
+
+                        18 -> {
+                            migrated.execSQL(
+                                "INSERT INTO song_downloads (sourceId, songId, status, bytes, total) " +
+                                    "VALUES (1, 's1', 'Completed', 10, 20)",
+                            )
+                        }
                     }
                 }
 
@@ -107,8 +122,11 @@ class MigrationsTest {
                 assertEquals(123456L, long(migrated, "SELECT changed FROM playlists WHERE id = 'pl1'"))
                 assertEquals(987654L, long(migrated, "SELECT duration FROM playlists WHERE id = 'pl1'"))
                 assertEquals("The Album", text(migrated, "SELECT name FROM albums WHERE id = 'al1'"))
+                assertEquals(555L, long(migrated, "SELECT starred FROM albums WHERE id = 'al1'"))
                 assertEquals("The Artist", text(migrated, "SELECT name FROM artists WHERE id = 'ar1'"))
                 assertEquals("The Disc", text(migrated, "SELECT title FROM discs WHERE albumId = 'al1' AND disc = 2"))
+                assertEquals("Completed", text(migrated, "SELECT status FROM song_downloads WHERE songId = 's1'"))
+                assertEquals(10L, long(migrated, "SELECT bytes FROM song_downloads WHERE songId = 's1'"))
             }
         }
 

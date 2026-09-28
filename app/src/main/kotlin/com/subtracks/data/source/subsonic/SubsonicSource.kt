@@ -27,6 +27,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.xml.sax.Attributes
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SubsonicSource(
@@ -271,6 +272,8 @@ class SubsonicSource(
                     mapOf("query" to "\"\"", "songCount" to "1", "artistCount" to "0", "albumCount" to "0"),
                 ) { input -> SubsonicXml.containsEntity(input, "song") }
             } catch (_: SubsonicException) {
+                false
+            } catch (_: IOException) {
                 false
             }
         emptyQuerySearchSupported = supported

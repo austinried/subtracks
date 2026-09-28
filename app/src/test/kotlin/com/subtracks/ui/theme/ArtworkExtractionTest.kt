@@ -65,7 +65,7 @@ class ArtworkExtractionTest {
 
     @Test
     fun resolvesColorsFromCoverArt() {
-        val ref = CoverArtRef(url = "art", cacheKey = "art-${System.nanoTime()}")
+        val ref = CoverArtRef(url = "art", cacheKey = "art")
         var colors: ArtworkColors? = null
         composeRule.setContent {
             colors = rememberArtworkColors(ref)
@@ -113,7 +113,7 @@ class ArtworkExtractionTest {
 
     @Test
     fun keepsTheStoredSeedWhenTheArtCannotBeDecoded() {
-        val key = "missing-${System.nanoTime()}"
+        val key = "missing"
         val stored = ArtworkSeed(key, 0xFF3A7BD5.toInt(), 0xFFD53A3A.toInt(), null)
         ArtworkSeedCache.install(
             object : ArtworkSeedStore {

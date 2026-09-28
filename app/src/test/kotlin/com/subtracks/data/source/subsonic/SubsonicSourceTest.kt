@@ -12,6 +12,7 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,6 +48,42 @@ class SubsonicSourceTest {
                         when {
                             request.path?.startsWith("/rest/search3.view") == true -> {
                                 MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            request.path?.startsWith("/rest/getAlbumList2.view") == true -> {
+                                MockResponse().setBody(ALBUM_LIST)
+                            }
+
+                            request.path?.startsWith("/rest/getAlbum.view") == true -> {
+                                MockResponse().setBody(ALBUM)
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                }
+            val source = SubsonicSource(1, client())
+
+            assertEquals(
+                listOf("s1", "s2"),
+                source
+                    .songs()
+                    .toList()
+                    .flatten()
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun getSongsFallsBackToAlbumsWhenEmptySearchProbeFails() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/search3.view") == true -> {
+                                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
                             }
 
                             request.path?.startsWith("/rest/getAlbumList2.view") == true -> {
@@ -353,6 +390,8 @@ class SubsonicSourceTest {
             val bound = 2
             val started = CountDownLatch(bound)
             val beyondBound = CountDownLatch(bound + 1)
+            val inFlight = AtomicInteger()
+            val maxInFlight = AtomicInteger()
             val release = CountDownLatch(1)
             server.dispatcher =
                 object : Dispatcher() {
@@ -361,7 +400,10 @@ class SubsonicSourceTest {
                         if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
                         beyondBound.countDown()
                         started.countDown()
+                        val current = inFlight.incrementAndGet()
+                        maxInFlight.updateAndGet { maxOf(it, current) }
                         release.await(5, TimeUnit.SECONDS)
+                        inFlight.decrementAndGet()
                         return MockResponse().setBody(playlistResponse(url.queryParameter("id")!!))
                     }
                 }
@@ -384,6 +426,7 @@ class SubsonicSourceTest {
             val entries = fetching.await()
 
             assertEquals(12, entries.size)
+            assertEquals("the bound must cap concurrent fetches", bound, maxInFlight.get())
         }
 
     @Test

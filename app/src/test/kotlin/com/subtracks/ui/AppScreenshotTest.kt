@@ -71,6 +71,11 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.random.Random
 
+/**
+ * Render smoke tests: these render each screen and assert the awaited node exists, then write a PNG
+ * for local review. No golden images are committed and `verifyRoborazziDebug` is not run in CI, so
+ * pixel/layout regressions are NOT caught here. Use `recordRoborazziDebug` to inspect output.
+ */
 @OptIn(DelicateCoilApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

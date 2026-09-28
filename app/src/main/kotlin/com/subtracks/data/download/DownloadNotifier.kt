@@ -14,6 +14,7 @@ import com.subtracks.data.repo.DownloadRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +41,10 @@ class DownloadNotifier(
                 }
             }
         }
+    }
+
+    internal fun close() {
+        scope.cancel()
     }
 
     private fun build(content: DownloadNotification): Notification =

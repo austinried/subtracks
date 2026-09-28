@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -22,6 +27,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(AndroidJUnit4::class)
 class SyncManagerTest {
@@ -30,6 +38,7 @@ class SyncManagerTest {
     private lateinit var queueRepository: QueueRepository
     private lateinit var manager: SyncManager
     private val messages = CopyOnWriteArrayList<String>()
+    private lateinit var server: MockWebServer
 
     @Before
     fun setUp() {
@@ -42,12 +51,15 @@ class SyncManagerTest {
         sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queueRepository = QueueRepository(db)
         manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it })
+        server = MockWebServer()
+        server.start()
     }
 
     @After
     fun tearDown() {
         sourceRepository.close()
         db.close()
+        server.shutdown()
     }
 
     @Test
@@ -70,4 +82,146 @@ class SyncManagerTest {
             assertTrue(status is SyncStatus.Failed)
             assertEquals(before + 1, queueRepository.snapshot().version)
         }
+
+    @Test
+    fun aSuccessfulSyncMirrorsTheLibraryIntoRoom() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+
+            manager.requestSync()
+            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+
+            assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
+            assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
+        }
+
+    @Test
+    fun aMidSyncFailureKeepsCommittedRowsAndRecovers() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/getArtists.view") == true -> {
+                                MockResponse().setBody(ARTISTS)
+                            }
+
+                            request.path?.startsWith("/rest/getAlbumList2.view") == true -> {
+                                MockResponse().setBody(ALBUM_LIST)
+                            }
+
+                            request.path?.startsWith("/rest/search3.view") == true -> {
+                                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+                            }
+
+                            request.path?.startsWith("/rest/getAlbum.view") == true -> {
+                                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                }
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+
+            manager.requestSync()
+            withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
+
+            server.dispatcher = healthyDispatcher()
+            manager.requestSync()
+            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+
+            assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
+            assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
+        }
+
+    @Test
+    fun requestsWhileRunningCoalesceIntoOneSync() =
+        runBlocking {
+            val artistRequests = AtomicInteger()
+            val firstArtistStarted = CountDownLatch(1)
+            val secondArtistStarted = CountDownLatch(1)
+            val releaseFirst = CountDownLatch(1)
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        if (request.path?.startsWith("/rest/getArtists.view") == true) {
+                            when (artistRequests.incrementAndGet()) {
+                                1 -> {
+                                    firstArtistStarted.countDown()
+                                    releaseFirst.await(10, TimeUnit.SECONDS)
+                                }
+
+                                2 -> {
+                                    secondArtistStarted.countDown()
+                                }
+                            }
+                        }
+                        return healthyDispatcher().dispatch(request)
+                    }
+                }
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+
+            manager.requestSync()
+            assertTrue(firstArtistStarted.await(10, TimeUnit.SECONDS))
+            manager.requestSync()
+            manager.requestSync()
+            releaseFirst.countDown()
+
+            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+            assertTrue("the coalesced sync should start", secondArtistStarted.await(10, TimeUnit.SECONDS))
+            assertEquals(2, artistRequests.get())
+        }
+
+    private fun healthyDispatcher() =
+        object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when {
+                    request.path?.startsWith("/rest/getArtists.view") == true -> {
+                        MockResponse().setBody(ARTISTS)
+                    }
+
+                    request.path?.startsWith("/rest/getAlbumList2.view") == true -> {
+                        val type = request.requestUrl?.queryParameter("type")
+                        MockResponse().setBody(if (type == "newest") ALBUM_LIST else emptyAlbumList())
+                    }
+
+                    request.path?.startsWith("/rest/search3.view") == true -> {
+                        MockResponse().setBody(SONG)
+                    }
+
+                    request.path?.startsWith("/rest/getPlaylists.view") == true -> {
+                        MockResponse().setBody(emptyPlaylists())
+                    }
+
+                    else -> {
+                        MockResponse().setResponseCode(404)
+                    }
+                }
+        }
+
+    private fun emptyAlbumList() = "<subsonic-response status=\"ok\"><albumList2></albumList2></subsonic-response>"
+
+    private fun emptyPlaylists() = "<subsonic-response status=\"ok\"><playlists></playlists></subsonic-response>"
+
+    private companion object {
+        const val ARTISTS =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\"><artists>" +
+                "<artist id=\"ar1\" name=\"Artist One\" albumCount=\"1\"/>" +
+                "</artists></subsonic-response>"
+
+        const val ALBUM_LIST =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\"><albumList2>" +
+                "<album id=\"al1\" artistId=\"ar1\" name=\"Album One\" artist=\"Artist One\" songCount=\"1\"/>" +
+                "</albumList2></subsonic-response>"
+
+        const val SONG =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\"><searchResult3>" +
+                "<song id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
+                "</searchResult3></subsonic-response>"
+    }
 }

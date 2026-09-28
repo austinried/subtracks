@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -78,7 +79,9 @@ class DownloadRepository(
     }
 
     fun close() {
+        val job = scope.coroutineContext[Job]
         scope.cancel()
+        runBlocking { job?.join() }
     }
 
     fun states(): StateFlow<Map<String, SongDownload>> = statesFlow

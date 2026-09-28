@@ -167,6 +167,8 @@ class SourceRepositoryTest {
         runBlocking {
             withServer { server ->
                 val dispatches = AtomicInteger()
+                val inFlight = AtomicInteger()
+                val maxInFlight = AtomicInteger()
                 val secondStarted = CountDownLatch(1)
                 val release = CountDownLatch(1)
                 server.dispatcher =
@@ -175,7 +177,10 @@ class SourceRepositoryTest {
                             val url = request.requestUrl!!
                             if (url.encodedPath != "/rest/getPlaylist.view") return MockResponse().setResponseCode(404)
                             if (dispatches.incrementAndGet() == 2) secondStarted.countDown()
+                            val current = inFlight.incrementAndGet()
+                            maxInFlight.updateAndGet { maxOf(it, current) }
                             release.await(5, TimeUnit.SECONDS)
+                            inFlight.decrementAndGet()
                             val id = url.queryParameter("id")!!
                             return MockResponse().setBody(
                                 "<subsonic-response status=\"ok\"><playlist id=\"$id\">" +
@@ -199,6 +204,7 @@ class SourceRepositoryTest {
                 assertFalse(secondStarted.await(500, TimeUnit.MILLISECONDS))
                 release.countDown()
                 assertEquals(9, fetching.await().size)
+                assertEquals("only one fetch may be in flight at a time", 1, maxInFlight.get())
             }
         }
 

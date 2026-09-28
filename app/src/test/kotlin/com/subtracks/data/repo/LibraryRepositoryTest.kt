@@ -89,11 +89,15 @@ class LibraryRepositoryTest {
     fun starringUpdatesTheRowBeforeTheServerResponds() =
         runBlocking {
             withSource { server ->
-                server.enqueue(ok().setBodyDelay(10, TimeUnit.SECONDS))
+                server.enqueue(ok().setBodyDelay(250, TimeUnit.MILLISECONDS))
 
                 val call = launch { repository.setStar(StarType.Song, "s1", true) }
                 withTimeout(3_000) { while (starred() == null) delay(10) }
                 call.cancel()
+                call.join()
+
+                assertNotNull(starred())
+                assertEquals(emptyList<String>(), messages)
             }
         }
 

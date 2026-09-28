@@ -75,12 +75,16 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
-val integrationTestClassName = "com.subtracks.data.source.subsonic.SubsonicSourceIntegrationTest"
+val integrationTestClasses =
+    listOf(
+        "com.subtracks.data.source.subsonic.SubsonicSourceIntegrationTest",
+        "com.subtracks.data.sync.SyncServiceIntegrationTest",
+    )
 
 tasks.withType<Test>().configureEach {
     if (name.endsWith("UnitTest")) {
         filter {
-            excludeTestsMatching(integrationTestClassName)
+            integrationTestClasses.forEach { excludeTestsMatching(it) }
         }
     }
 }
@@ -93,7 +97,7 @@ tasks.register<Test>("integrationTest") {
     testClassesDirs = files(provider { unitTest.get().testClassesDirs })
     classpath = files(provider { unitTest.get().classpath })
     filter {
-        includeTestsMatching(integrationTestClassName)
+        integrationTestClasses.forEach { includeTestsMatching(it) }
     }
 }
 

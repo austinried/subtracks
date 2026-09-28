@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -1236,11 +1237,10 @@ class PlaybackControllerTest {
         await { controller.state.value.isPlaying }
 
         handle.startBuffering()
-        Thread.sleep(300)
-        assertFalse(controller.state.value.isBuffering)
+        runBlocking { withContext(dispatcher) { } }
+        assertFalse("buffering must be debounced, not reported immediately", controller.state.value.isBuffering)
 
-        Thread.sleep(1_200)
-        assertTrue(controller.state.value.isBuffering)
+        await { controller.state.value.isBuffering }
 
         handle.becomeReady()
         await { !controller.state.value.isBuffering }

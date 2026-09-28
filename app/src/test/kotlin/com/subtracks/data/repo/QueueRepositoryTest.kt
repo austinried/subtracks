@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
@@ -733,6 +734,121 @@ class QueueRepositoryTest {
                 }
             }
         }
+
+    @Test
+    fun upNextCombinedIndexOfCountsFromTheAnchorIntoTheBlock() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            repository.addUpNext(snapshot, currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            val updated = repository.snapshot()
+            assertEquals(1L, updated.anchorPlay)
+            assertEquals(1L, updated.upNextSize)
+            assertEquals(2L, repository.combinedIndexOf(updated, "s4"))
+            assertEquals(1L, repository.combinedContextIndexOf(updated, "s2"))
+            assertEquals(3L, repository.combinedContextIndexOf(updated, "s3"))
+        }
+
+    @Test
+    fun combinedContextIndexOfTracksTheAnchorAsItMoves() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            val before = repository.snapshot()
+            assertEquals(0L, before.anchorPlay)
+            assertEquals(3L, repository.combinedContextIndexOf(before, "s3"))
+
+            repository.setUpNextAnchor(2)
+
+            val after = repository.snapshot()
+            assertEquals(2L, after.anchorPlay)
+            assertEquals(2L, repository.combinedContextIndexOf(after, "s3"))
+            assertEquals(3L, repository.combinedIndexOf(after, "s4"))
+        }
+
+    @Test
+    fun combinedIndexOfPrefersTheUpNextCopyOverTheContextCopy() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.songEntry(1, "s4")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+
+            val updated = repository.snapshot()
+            assertEquals(0L, repository.combinedContextIndexOf(updated, "s4"))
+            assertEquals(1L, repository.combinedIndexOf(updated, "s4"))
+        }
+
+    @Test
+    fun sourceNameReadsTheAlbumPlaylistOrSongAlbum() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertPlaylists(listOf(playlist("p1", "Road Trip")))
+
+            assertEquals("First Album", repository.sourceName(QueueKind.Album, 1, "al1"))
+            assertEquals("Road Trip", repository.sourceName(QueueKind.Playlist, 1, "p1"))
+            assertEquals("Second Album", repository.sourceName(QueueKind.Song, 1, "s4"))
+            assertEquals(null, repository.sourceName(QueueKind.Song, 1, "ghost"))
+        }
+
+    @Test
+    fun aReorderedAlbumTrackKeepsItsAlbumAsSourceName() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+
+            repository.move(repository.snapshot(), from = 0, to = 2)
+
+            val (entry, _) = repository.snapshot().locate(2)!!
+            assertEquals(QueueKind.Song, entry.kind)
+            assertEquals("s1", entry.refId)
+            assertEquals("First Album", repository.sourceName(entry.kind, entry.sourceId, entry.refId))
+        }
+
+    @Test
+    fun anAlbumSplitByRemovalIsStillLabeledByItsAlbum() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+
+            repository.removeAt(snapshot, 1)
+
+            val (entry, _) = repository.snapshot().locate(1)!!
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals("First Album", repository.sourceName(entry.kind, entry.sourceId, entry.refId))
+        }
+
+    @Test
+    fun queueModesRoundTrip() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+            assertEquals(QueueModes(shuffle = false, repeat = 0), repository.modes())
+
+            repository.setShuffle(4321L)
+            repository.setRepeat(2)
+            assertEquals(QueueModes(shuffle = true, repeat = 2), repository.modes())
+
+            repository.setShuffle(null)
+            repository.setRepeat(0)
+            assertEquals(QueueModes(shuffle = false, repeat = 0), repository.modes())
+        }
+
+    private fun playlist(
+        id: String,
+        name: String,
+    ) = Playlist(
+        sourceId = 1,
+        id = id,
+        name = name,
+        comment = null,
+        coverArt = null,
+        songCount = 0,
+        created = 0,
+    )
 
     private suspend fun seedLibrary() {
         db.sourcesDao().upsertSource(

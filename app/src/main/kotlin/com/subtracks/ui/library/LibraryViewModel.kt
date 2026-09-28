@@ -159,8 +159,8 @@ class LibraryViewModel(
     fun sync() = syncManager.requestSync()
 }
 
-private fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { it.name == sort } ?: AlbumSort.Name
+internal fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { it.name == sort } ?: AlbumSort.Name
 
-private fun ListQuery.artistSort(): ArtistSort = ArtistSort.entries.firstOrNull { it.name == sort } ?: ArtistSort.Name
+internal fun ListQuery.artistSort(): ArtistSort = ArtistSort.entries.firstOrNull { it.name == sort } ?: ArtistSort.Name
 
-private fun ListQuery.playlistSort(): PlaylistSort = PlaylistSort.entries.firstOrNull { it.name == sort } ?: PlaylistSort.Name
+internal fun ListQuery.playlistSort(): PlaylistSort = PlaylistSort.entries.firstOrNull { it.name == sort } ?: PlaylistSort.Name

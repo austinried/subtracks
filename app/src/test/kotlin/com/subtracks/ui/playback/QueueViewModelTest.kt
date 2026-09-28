@@ -1,6 +1,7 @@
 package com.subtracks.ui.playback
 
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -22,6 +23,7 @@ import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -43,6 +45,8 @@ class QueueViewModelTest {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private lateinit var db: SubtracksDatabase
+    private lateinit var sources: SourceRepository
+    private lateinit var downloads: DownloadRepository
     private lateinit var queues: QueueRepository
     private lateinit var controller: PlaybackController
     private lateinit var viewModel: QueueViewModel
@@ -56,10 +60,10 @@ class QueueViewModelTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        val sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
+        sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queues = QueueRepository(db)
         val artwork = ArtworkStore(File(context.cacheDir, "art"))
-        val downloads =
+        downloads =
             DownloadRepository(
                 db,
                 sources,
@@ -74,7 +78,10 @@ class QueueViewModelTest {
 
     @After
     fun tearDown() {
+        viewModel.viewModelScope.cancel()
         controller.close()
+        downloads.close()
+        sources.close()
         db.close()
         Dispatchers.resetMain()
         dispatcher.close()

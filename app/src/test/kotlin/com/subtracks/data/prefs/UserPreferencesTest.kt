@@ -82,6 +82,25 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun downloadQualityAndMeteredRoundTrip() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(StreamQuality(), prefs.downloadQuality().first())
+            assertEquals(false, prefs.downloadOverMetered().first())
+
+            prefs.setDownloadQuality(StreamQuality(192, "opus"))
+            prefs.setDownloadOverMetered(true)
+
+            assertEquals(StreamQuality(192, "opus"), prefs.downloadQuality().first())
+            assertEquals(true, prefs.downloadOverMetered().first())
+
+            file.delete()
+        }
+
+    @Test
     fun syncConcurrencyDefaultsAndClampsToAtLeastOne() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }

@@ -5,11 +5,13 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
+import java.security.MessageDigest
 
 class SubsonicClientTest {
     private lateinit var server: MockWebServer
@@ -56,6 +58,36 @@ class SubsonicClientTest {
         assertNotNull(url.queryParameter("t"))
         assertNull(url.queryParameter("p"))
     }
+
+    @Test
+    fun tokenHashIsMd5OfPasswordAndSalt() {
+        server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))
+
+        client(tokenAuth = true).check("ping")
+
+        val url = server.takeRequest().requestUrl!!
+        val salt = url.queryParameter("s")!!
+        assertEquals(md5Hex("secret$salt"), url.queryParameter("t"))
+    }
+
+    @Test
+    fun tokenSaltIsFreshPerRequest() {
+        repeat(2) { server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>")) }
+        val client = client(tokenAuth = true)
+
+        client.check("ping")
+        client.check("ping")
+
+        val first = server.takeRequest().requestUrl!!.queryParameter("s")
+        val second = server.takeRequest().requestUrl!!.queryParameter("s")
+        assertNotEquals(first, second)
+    }
+
+    private fun md5Hex(input: String): String =
+        MessageDigest
+            .getInstance("MD5")
+            .digest(input.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
 
     @Test
     fun plaintextAuthSendsPassword() {
