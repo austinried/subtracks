@@ -330,28 +330,18 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 20.dp, bottom = 16.dp),
-                                verticalAlignment = Alignment.Top,
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 28.dp, bottom = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                    Text(
-                                        text = "Artist biography coming soon.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.padding(top = 8.dp),
-                                    )
-                                }
+                                Text(
+                                    text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                )
                                 IconButton(
                                     onClick = { onToggleStar?.invoke() },
                                     enabled = onToggleStar != null,
-                                    modifier = Modifier.padding(top = 14.dp),
                                 ) {
                                     Icon(
                                         imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
@@ -364,7 +354,7 @@ fun ArtistDetailScreen(
                                             },
                                     )
                                 }
-                                IconButton(onClick = onMore, modifier = Modifier.padding(top = 14.dp)) {
+                                IconButton(onClick = onMore) {
                                     Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
                                 }
                             }
