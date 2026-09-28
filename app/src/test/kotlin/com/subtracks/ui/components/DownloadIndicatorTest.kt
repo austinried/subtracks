@@ -11,7 +11,7 @@ class DownloadIndicatorTest {
     }
 
     @Test
-    fun aListWithNothingStartedButNoSongsShowsNothing() {
+    fun aPopulatedButUnstartedListShowsNothing() {
         assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4).indicator())
     }
 
@@ -31,7 +31,7 @@ class DownloadIndicatorTest {
     }
 
     @Test
-    fun aFullyDownloadedListShowsDone() {
-        assertEquals(DownloadIndicator.Complete, ListDownloadStatus(total = 4, downloaded = 4).indicator())
+    fun aFullyDownloadedListShowsNothing() {
+        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4, downloaded = 4).indicator())
     }
 }
