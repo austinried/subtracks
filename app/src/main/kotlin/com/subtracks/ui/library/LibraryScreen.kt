@@ -219,7 +219,7 @@ fun LibraryRoute(
         LibraryTab.entries.associateWith { tab ->
             val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
             val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
-            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term|$offline"
+            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term"
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))

@@ -124,8 +124,7 @@ class PlaybackController(
     private var player: PlayerHandle? = null
     private var connecting = false
     private var pendingPlay: PendingPlay? = null
-    private var pendingShuffle: QueueEntry? = null
-    private var pendingShuffleList: List<QueueEntry>? = null
+    private var pendingShuffle: List<QueueEntry>? = null
     private var positionJob: Job? = null
     private var windowJob: Job? = null
     private var bufferingJob: Job? = null
@@ -144,8 +143,9 @@ class PlaybackController(
     private var repeatMode = RepeatMode.Off
     private var endedHandled = false
     private var lastSavedPositionMs = 0L
-    private var offline = false
+    private val offline: Boolean get() = sourceRepository.offline.value
     private var windowPositions = LongArray(0)
+    private var windowFiltered = false
 
     init {
         scope.launch {
@@ -154,11 +154,7 @@ class PlaybackController(
             }
         }
         scope.launch {
-            sourceRepository.offline.collect { value ->
-                if (value == offline) return@collect
-                offline = value
-                reloadForOffline()
-            }
+            sourceRepository.offline.drop(1).collect { reloadForOffline() }
         }
         scope.launch {
             sourceRepository.quality.drop(1).collect {
@@ -190,9 +186,8 @@ class PlaybackController(
                 scope.launch {
                     val pending = pendingPlay
                     pendingPlay = null
-                    val shuffle = pendingShuffle?.let { listOf(it) } ?: pendingShuffleList
+                    val shuffle = pendingShuffle
                     pendingShuffle = null
-                    pendingShuffleList = null
                     when {
                         pending != null -> start(pending.entries, pending.position, pending.disableShuffle)
                         shuffle != null -> startShuffled(shuffle)
@@ -287,7 +282,7 @@ class PlaybackController(
 
     private fun shufflePlay(entries: List<QueueEntry>) {
         if (player == null) {
-            if (entries.size == 1) pendingShuffle = entries.first() else pendingShuffleList = entries
+            pendingShuffle = entries
             connect()
             return
         }
@@ -1022,6 +1017,8 @@ class PlaybackController(
         queueSourceId = null
         windowStart = 0
         windowEnd = -1
+        windowPositions = LongArray(0)
+        windowFiltered = false
         lastPosition = null
         lastEdit = null
         player?.run {
@@ -1054,6 +1051,7 @@ class PlaybackController(
         }
         val actual = window[startIndex].position
         windowPositions = LongArray(window.size) { window[it].position }
+        windowFiltered = offline
         windowStart = window.first().position
         windowEnd = window.last().position
         lastPosition = actual
@@ -1262,18 +1260,18 @@ class PlaybackController(
         val player = player ?: return null
         if (player.itemCount == 0) return null
         val index = player.currentIndex
-        return if (offline) windowPositions.getOrNull(index) ?: (windowStart + index) else (windowStart + index)
+        return if (windowFiltered) windowPositions.getOrNull(index) ?: (windowStart + index) else (windowStart + index)
     }
 
     private fun windowIndexOf(position: Long): Int =
-        if (offline) {
+        if (windowFiltered) {
             windowPositions.indexOf(position)
         } else {
             (position - windowStart).toInt()
         }
 
     private fun inWindow(position: Long): Boolean =
-        if (offline) {
+        if (windowFiltered) {
             windowPositions.contains(position)
         } else {
             position in windowStart..windowEnd
@@ -1309,7 +1307,7 @@ class PlaybackController(
         startLock.withLock {
             val player = player ?: return@withLock
             val snapshot = snapshot ?: return@withLock
-            if (snapshot.size == 0L || player.isEnded) return@withLock
+            if (snapshot.size == 0L) return@withLock
             downloads.awaitLoaded()
             val current = currentPosition() ?: return@withLock
             val positionMs = player.currentPositionMs
@@ -1362,6 +1360,18 @@ class PlaybackController(
     private fun handleEnded() {
         if (endedHandled) return
         endedHandled = true
+        if (offline) {
+            scope.launch {
+                val snapshot = snapshot ?: return@launch
+                val current = currentPosition() ?: return@launch
+                downloads.awaitLoaded()
+                val target =
+                    downloadedAtOrAfter(snapshot, current + 1)
+                        ?: if (repeatMode == RepeatMode.All) downloadedAtOrAfter(snapshot, 0L) else null
+                target?.let { jumpTo(it) }
+            }
+            return
+        }
         if (repeatMode == RepeatMode.All) jumpTo(0)
     }
 
@@ -1472,6 +1482,9 @@ class PlaybackController(
         const val RESTART_THRESHOLD_MS = 3_000L
         const val SEED_PIN_TRIES = 1_000_000
         const val FILE_SCHEME = "file:"
+
+        // ponytail: walks the queue one row at a time to find the next downloaded track; swap for a
+        // single query over the downloaded ids if a sparse queue ever makes the scan noticeable.
         const val OFFLINE_SCAN_LIMIT = 10_000L
     }
 }

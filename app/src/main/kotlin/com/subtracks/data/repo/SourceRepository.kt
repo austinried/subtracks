@@ -225,7 +225,7 @@ class SourceRepository(
         useTokenAuth: Boolean,
     ): Result<Boolean> =
         if (_offline.value) {
-            Result.failure(OfflineException())
+            Result.failure(IllegalStateException("Offline mode is on"))
         } else {
             withContext(Dispatchers.IO) {
                 var fellBack = false

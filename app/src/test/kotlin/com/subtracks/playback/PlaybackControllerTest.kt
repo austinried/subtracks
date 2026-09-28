@@ -10,9 +10,11 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
@@ -25,9 +27,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -52,6 +56,7 @@ class PlaybackControllerTest {
     private lateinit var sources: SourceRepository
     private lateinit var queues: QueueRepository
     private lateinit var downloads: DownloadRepository
+    private lateinit var downloadsDir: File
     private lateinit var handle: FakePlayerHandle
     private lateinit var controller: PlaybackController
     private val messages = CopyOnWriteArrayList<String>()
@@ -68,15 +73,16 @@ class PlaybackControllerTest {
         networkMode = MutableStateFlow(NetworkMode.Wifi)
         sources = SourceRepository(db, OkHttpClient(), prefs, ArtworkStore(File(context.cacheDir, "art")), networkMode = networkMode)
         queues = QueueRepository(db)
+        downloadsDir = File(context.cacheDir, "downloads")
         downloads =
             DownloadRepository(
                 db,
                 sources,
                 FakeDownloadEngine(),
-                File(context.cacheDir, "downloads"),
+                downloadsDir,
                 artworkStore = ArtworkStore(File(context.cacheDir, "art")),
                 artworkFetcher = { ByteArray(0) },
-            )
+            ).also { it.start() }
         handle = FakePlayerHandle()
         controller =
             PlaybackController(
@@ -2449,6 +2455,191 @@ class PlaybackControllerTest {
         runBlocking { delay(300) }
 
         assertEquals(windows, handle.operations.count { it.startsWith("setWindow") })
+    }
+
+    @Test
+    fun togglingOnlineKeepsTheCurrentDownloadedTrack() {
+        seedAlbum(5, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        markDownloaded(1, "s5")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        setOffline()
+        await { handle.items.map { it.id } == listOf("s1", "s3", "s5") }
+
+        handle.advanceTo(2)
+        await {
+            controller.state.value.item
+                ?.id == "s5"
+        }
+        assertEquals(
+            "s5",
+            controller.state.value.item
+                ?.id,
+        )
+
+        handle.operations.clear()
+        setOnline()
+
+        await { handle.operations.any { it.startsWith("setWindow") } }
+        assertEquals(
+            "s5",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun offlinePlayAlbumBuildsADownloadedOnlyQueue() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+
+        await { handle.items.map { it.id } == listOf("s1", "s3") }
+        assertEquals(listOf("s1", "s3"), handle.items.map { it.id })
+    }
+
+    @Test
+    fun togglingOfflineKeepsADownloadedCurrentTrack() {
+        seedAlbum(4, sourceId = 1)
+        (1..4).forEach { markDownloaded(1, "s$it") }
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+        handle.operations.clear()
+
+        setOffline()
+
+        await { handle.operations.any { it.startsWith("setWindow") } }
+        assertEquals(
+            "s2",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun togglingOfflineSkipsANonDownloadedCurrentTrack() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s3")
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        setOffline()
+
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun offlineNextCrossesTheLoadedWindowBoundary() {
+        seedAlbum(30, sourceId = 1)
+        (1..30).forEach { markDownloaded(1, "s$it") }
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        assertTrue("expected a bounded window, was ${handle.itemCount}", handle.itemCount < 30)
+
+        handle.advanceTo(handle.itemCount - 1)
+        await {
+            controller.state.value.item
+                ?.id == "s26"
+        }
+
+        controller.next()
+
+        await {
+            controller.state.value.item
+                ?.id == "s27"
+        }
+        assertEquals(
+            "s27",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun offlineEndedPlaybackAdvancesPastTheLoadedWindow() {
+        seedAlbum(30, sourceId = 1)
+        (1..30).forEach { markDownloaded(1, "s$it") }
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        handle.advanceTo(handle.itemCount - 1)
+        await {
+            controller.state.value.item
+                ?.id == "s26"
+        }
+
+        handle.finish()
+
+        await {
+            controller.state.value.item
+                ?.id == "s27"
+        }
+        assertEquals(
+            "s27",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    private fun markDownloaded(
+        sourceId: Long,
+        songId: String,
+    ) {
+        val file = File(downloadsDir, "$sourceId/$songId")
+        val deadline = System.nanoTime() + 5_000_000_000L
+        while (System.nanoTime() < deadline) {
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
+                file.parentFile?.mkdirs()
+                file.writeBytes(byteArrayOf(1))
+            }
+            if (downloads.localUri(songId) != null) return
+            Thread.sleep(10)
+        }
+        assertTrue("Timed out marking $songId downloaded", downloads.localUri(songId) != null)
+    }
+
+    private fun setOffline() {
+        sources.setOfflineMode(true)
+        runBlocking { withTimeout(5_000) { sources.offline.first { it } } }
+    }
+
+    private fun setOnline() {
+        sources.setOfflineMode(false)
+        runBlocking { withTimeout(5_000) { sources.offline.first { !it } } }
     }
 
     private fun seedAlbum(
