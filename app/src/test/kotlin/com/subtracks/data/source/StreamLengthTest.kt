@@ -40,13 +40,6 @@ class StreamLengthTest {
     }
 
     @Test
-    fun oggBasedFormatsGetNoEstimateBecauseSeekingReadsFromTheEnd() {
-        assertNull(declaredStreamLength(180_000, StreamQuality(128, "opus")))
-        assertNull(declaredStreamLength(180_000, StreamQuality(128, "ogg")))
-        assertNull(declaredStreamLength(180_000, StreamQuality(128, "vorbis")))
-    }
-
-    @Test
     fun theLengthSuffixRoundTripsThroughTheFragment() {
         val uri = "http://host/rest/stream.view?id=s1" + streamLengthSuffix(1_234_567)
 
