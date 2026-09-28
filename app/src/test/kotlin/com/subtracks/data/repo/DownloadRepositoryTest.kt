@@ -851,6 +851,40 @@ class DownloadRepositoryTest {
             assertEquals(setOf("ar1" to "Artist"), songs.map { it.artistId to it.artistName }.toSet())
         }
 
+    @Test
+    fun activeDownloadsCoverEverySourceNotJustTheActiveOne() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(2, "other", "http://other/", isActive = false, createdAt = 0))
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 2,
+                            id = "o1",
+                            albumId = "al2",
+                            artistId = "ar2",
+                            title = "Other",
+                            album = "Other",
+                            artist = "Other",
+                            duration = 100,
+                            track = 1,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Running, engineId = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Queued))
+            }
+
+            val rows = runBlocking { repository.activeDownloads().first() }
+
+            assertEquals(setOf(1L to "s1", 2L to "o1"), rows.map { it.sourceId to it.songId }.toSet())
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {

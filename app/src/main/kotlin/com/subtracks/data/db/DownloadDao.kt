@@ -15,6 +15,9 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
     fun downloads(sourceId: Long): Flow<List<SongDownload>>
 
+    @Query("SELECT * FROM song_downloads WHERE status IN ('Queued', 'Running')")
+    fun activeDownloads(): Flow<List<SongDownload>>
+
     @Query("SELECT * FROM song_downloads ORDER BY rowid")
     suspend fun all(): List<SongDownload>
 
@@ -67,7 +70,8 @@ interface DownloadDao {
             "FROM songs " +
             "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND songs.albumId IS NOT NULL " +
-            "GROUP BY songs.albumId",
+            "GROUP BY songs.albumId " +
+            "HAVING downloaded > 0 OR downloading > 0",
     )
     fun albumStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 
@@ -80,7 +84,8 @@ interface DownloadDao {
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
-            "GROUP BY albums.artistId",
+            "GROUP BY albums.artistId " +
+            "HAVING downloaded > 0 OR downloading > 0",
     )
     fun artistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 
@@ -93,7 +98,8 @@ interface DownloadDao {
             "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
             "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
             "WHERE playlist_songs.sourceId = :sourceId " +
-            "GROUP BY playlist_songs.playlistId",
+            "GROUP BY playlist_songs.playlistId " +
+            "HAVING downloaded > 0 OR downloading > 0",
     )
     fun playlistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 

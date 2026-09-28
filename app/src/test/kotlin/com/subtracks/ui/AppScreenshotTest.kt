@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
@@ -41,6 +43,7 @@ import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.playback.RepeatMode
+import com.subtracks.ui.components.DOWNLOADING_INDICATOR_TAG
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.ARTIST_NAME_SCRIM_TAG
 import com.subtracks.ui.library.AlbumDetailScreen
@@ -154,6 +157,7 @@ class AppScreenshotTest {
             }
         }
         awaitTag(ALBUM_COVER_TAG)
+        composeRule.onAllNodesWithContentDescription(DOWNLOADING_INDICATOR_TAG).assertCountEquals(1)
         composeRule.onRoot().captureRoboImage("src/test/screenshots/library_albums_downloads.png")
     }
 

@@ -82,6 +82,8 @@ class DownloadRepository(
 
     fun states(): StateFlow<Map<String, SongDownload>> = statesFlow
 
+    fun activeDownloads(): Flow<List<SongDownload>> = db.downloadDao().activeDownloads()
+
     suspend fun awaitLoaded() {
         if (started) loaded.await()
     }
@@ -539,8 +541,10 @@ class DownloadRepository(
                     delay(POLL_MS)
                     val promoted =
                         mutex.withLock {
-                            val sourceId = sourceRepository.activeSourceIdOnce()
-                            val active = db.downloadDao().all().filter { it.status.isActive && it.sourceId == sourceId }
+                            // Reconcile every source's in-flight rows, not just the active one: the
+                            // engine reports status without a source, and a source switched away
+                            // from keeps downloading, so its rows must not freeze as Running.
+                            val active = db.downloadDao().all().filter { it.status.isActive }
                             if (active.isEmpty()) return@launch
                             reconcileRows(active)
                             promote()

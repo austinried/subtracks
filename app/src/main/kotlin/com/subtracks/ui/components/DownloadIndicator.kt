@@ -20,10 +20,7 @@ import com.subtracks.data.model.ListDownloadStatus
 
 const val DOWNLOADING_INDICATOR_TAG = "Downloading"
 
-enum class DownloadIndicator { Hidden, InProgress }
-
-fun ListDownloadStatus.indicator(): DownloadIndicator =
-    if (total > 0 && downloading > 0) DownloadIndicator.InProgress else DownloadIndicator.Hidden
+internal fun ListDownloadStatus.isDownloading(): Boolean = total > 0 && downloading > 0
 
 @Composable
 fun ListDownloadIndicator(
@@ -32,7 +29,7 @@ fun ListDownloadIndicator(
     scrim: Boolean = false,
 ) {
     val current = status ?: return
-    if (current.indicator() == DownloadIndicator.Hidden) return
+    if (!current.isDownloading()) return
     val progress = { current.downloaded.toFloat() / current.total }
     if (scrim) {
         Surface(

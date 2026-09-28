@@ -126,14 +126,6 @@ fun MenuTarget.bulkRef(): Pair<DownloadList, String>? =
         is MenuTarget.Song -> null
     }
 
-fun MenuTarget.listDownload(): ListDownloadStatus? =
-    when (this) {
-        is MenuTarget.Album -> download
-        is MenuTarget.Playlist -> download
-        is MenuTarget.Artist -> download
-        is MenuTarget.Song -> null
-    }
-
 class ItemActions(
     val playNext: ((QueueRef) -> Unit)? = null,
     val addToQueue: ((QueueRef) -> Unit)? = null,
@@ -337,7 +329,14 @@ private fun BulkDownloadItem(
     dismiss: (() -> Unit) -> Unit,
 ) {
     val bulk = actions.bulkDownload ?: return
-    for (action in (target.listDownload() ?: ListDownloadStatus()).actions()) {
+    val status =
+        when (target) {
+            is MenuTarget.Album -> target.download
+            is MenuTarget.Playlist -> target.download
+            is MenuTarget.Artist -> target.download
+            is MenuTarget.Song -> null
+        }
+    for (action in (status ?: ListDownloadStatus()).actions()) {
         when (action) {
             BulkDownloadAction.Delete -> MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { bulk(target, action) } }
             BulkDownloadAction.Cancel -> MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { bulk(target, action) } }

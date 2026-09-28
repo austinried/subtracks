@@ -1,37 +1,38 @@
 package com.subtracks.ui.components
 
 import com.subtracks.data.model.ListDownloadStatus
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DownloadIndicatorTest {
     @Test
-    fun anUntouchedListShowsNothing() {
-        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus().indicator())
+    fun anUntouchedListIsNotDownloading() {
+        assertFalse(ListDownloadStatus().isDownloading())
     }
 
     @Test
-    fun aPopulatedButUnstartedListShowsNothing() {
-        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4).indicator())
+    fun aPopulatedButUnstartedListIsNotDownloading() {
+        assertFalse(ListDownloadStatus(total = 4).isDownloading())
     }
 
     @Test
-    fun aQueuedButNotYetDownloadedListShowsProgress() {
-        assertEquals(DownloadIndicator.InProgress, ListDownloadStatus(total = 4, downloading = 4).indicator())
+    fun aQueuedButNotYetDownloadedListIsDownloading() {
+        assertTrue(ListDownloadStatus(total = 4, downloading = 4).isDownloading())
     }
 
     @Test
-    fun aPartlyDownloadedIdleListShowsNothing() {
-        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4, downloaded = 2).indicator())
+    fun aPartlyDownloadedIdleListIsNotDownloading() {
+        assertFalse(ListDownloadStatus(total = 4, downloaded = 2).isDownloading())
     }
 
     @Test
-    fun aPartlyDownloadedListWithSomethingInFlightShowsProgress() {
-        assertEquals(DownloadIndicator.InProgress, ListDownloadStatus(total = 4, downloaded = 2, downloading = 1).indicator())
+    fun aPartlyDownloadedListWithSomethingInFlightIsDownloading() {
+        assertTrue(ListDownloadStatus(total = 4, downloaded = 2, downloading = 1).isDownloading())
     }
 
     @Test
-    fun aFullyDownloadedListShowsNothing() {
-        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4, downloaded = 4).indicator())
+    fun aFullyDownloadedListIsNotDownloading() {
+        assertFalse(ListDownloadStatus(total = 4, downloaded = 4).isDownloading())
     }
 }

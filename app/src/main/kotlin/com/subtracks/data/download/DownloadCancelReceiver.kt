@@ -20,6 +20,8 @@ class DownloadCancelReceiver :
         context: Context,
         intent: Intent,
     ) {
+        // The broadcast budget is short, and cancelActive waits for the repository mutex, which a
+        // large downloadAll holds for the whole insert pass; a huge queue could outlast it.
         val pending = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
