@@ -52,6 +52,15 @@ data class ListDownloadStatus(
     val complete: Boolean get() = total > 0 && downloaded == total
 }
 
+data class EntityDownloadStatus(
+    val id: String,
+    val total: Long = 0,
+    val downloaded: Long = 0,
+    val downloading: Long = 0,
+) {
+    fun toListStatus(): ListDownloadStatus = ListDownloadStatus(total, downloaded, downloading)
+}
+
 data class DownloadArtwork(
     val sourceId: Long,
     val albumId: String?,

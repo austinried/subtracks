@@ -731,6 +731,64 @@ class DownloadRepositoryTest {
             assertEquals(listOf("s1", "s2"), requestedSongIds())
         }
 
+    @Test
+    fun groupedStatusesCountEachAlbumArtistAndPlaylistSeparately() =
+        runTest {
+            seedLibrary()
+            seedPlaylist(listOf("s1", "s2"))
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s3",
+                            albumId = "al2",
+                            artistId = "ar2",
+                            title = "Song 3",
+                            album = "Other",
+                            artist = "Other",
+                            duration = 100,
+                            track = 1,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.libraryDao().upsertAlbums(
+                    listOf(
+                        Album(
+                            sourceId = 1,
+                            id = "al2",
+                            artistId = "ar2",
+                            name = "Other",
+                            albumArtist = "Other",
+                            created = 0,
+                            coverArt = null,
+                            genre = null,
+                            year = 2000,
+                            starred = null,
+                            songCount = 1,
+                        ),
+                    ),
+                )
+                db.libraryDao().upsertArtists(listOf(Artist(sourceId = 1, id = "ar2", name = "Other", albumCount = 1, starred = null, coverArt = null)))
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+                db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Queued))
+            }
+
+            val albums = runBlocking { repository.statuses(1, DownloadList.Album).first() }
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1), albums["al1"])
+            assertEquals(ListDownloadStatus(total = 1, downloading = 1), albums["al2"])
+
+            val artists = runBlocking { repository.statuses(1, DownloadList.Artist).first() }
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1), artists["ar1"])
+            assertEquals(ListDownloadStatus(total = 1, downloading = 1), artists["ar2"])
+
+            val playlists = runBlocking { repository.statuses(1, DownloadList.Playlist).first() }
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1), playlists["pl1"])
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {

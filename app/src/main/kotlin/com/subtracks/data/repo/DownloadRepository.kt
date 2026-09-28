@@ -185,6 +185,16 @@ class DownloadRepository(
             DownloadList.Artist -> db.downloadDao().artistStatus(sourceId, refId)
         }
 
+    fun statuses(
+        sourceId: Long,
+        list: DownloadList,
+    ): Flow<Map<String, ListDownloadStatus>> =
+        when (list) {
+            DownloadList.Album -> db.downloadDao().albumStatuses(sourceId)
+            DownloadList.Playlist -> db.downloadDao().playlistStatuses(sourceId)
+            DownloadList.Artist -> db.downloadDao().artistStatuses(sourceId)
+        }.map { rows -> rows.associate { it.id to it.toListStatus() } }
+
     suspend fun downloadAll(
         sourceId: Long,
         list: DownloadList,

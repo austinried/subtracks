@@ -4,6 +4,7 @@ import androidx.room3.Dao
 import androidx.room3.Query
 import androidx.room3.Upsert
 import com.subtracks.data.model.DownloadArtwork
+import com.subtracks.data.model.EntityDownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +57,44 @@ interface DownloadDao {
         sourceId: Long,
         albumId: String,
     ): Flow<ListDownloadStatus>
+
+    @Query(
+        "SELECT songs.albumId AS id, " +
+            "COUNT(songs.id) AS total, " +
+            "COALESCE(SUM(CASE WHEN song_downloads.status = 'Completed' THEN 1 ELSE 0 END), 0) AS downloaded, " +
+            "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
+            "FROM songs " +
+            "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+            "WHERE songs.sourceId = :sourceId AND songs.albumId IS NOT NULL " +
+            "GROUP BY songs.albumId",
+    )
+    fun albumStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
+
+    @Query(
+        "SELECT albums.artistId AS id, " +
+            "COUNT(songs.id) AS total, " +
+            "COALESCE(SUM(CASE WHEN song_downloads.status = 'Completed' THEN 1 ELSE 0 END), 0) AS downloaded, " +
+            "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
+            "FROM songs " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+            "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+            "GROUP BY albums.artistId",
+    )
+    fun artistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
+
+    @Query(
+        "SELECT playlist_songs.playlistId AS id, " +
+            "COUNT(DISTINCT songs.id) AS total, " +
+            "COUNT(DISTINCT CASE WHEN song_downloads.status = 'Completed' THEN songs.id END) AS downloaded, " +
+            "COUNT(DISTINCT CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN songs.id END) AS downloading " +
+            "FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+            "WHERE playlist_songs.sourceId = :sourceId " +
+            "GROUP BY playlist_songs.playlistId",
+    )
+    fun playlistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 
     @Query(
         "SELECT d.sourceId AS sourceId, s.albumId AS albumId, s.artistId AS artistId, " +
