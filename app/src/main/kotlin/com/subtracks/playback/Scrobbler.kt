@@ -1,11 +1,12 @@
 package com.subtracks.playback
 
-import com.subtracks.data.source.MusicSource
+import com.subtracks.data.source.ServerActionSink
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -33,6 +34,14 @@ class ScrobblePolicy(
     private var lastPositionMs = 0L
     private var nowPlayingSent = false
     private var submitted = false
+
+    fun reset() {
+        songId = null
+        playedMs = 0
+        lastPositionMs = 0
+        nowPlayingSent = false
+        submitted = false
+    }
 
     fun advance(
         item: QueueItem?,
@@ -80,7 +89,8 @@ class ScrobblePolicy(
 }
 
 class Scrobbler(
-    private val source: suspend () -> MusicSource?,
+    private val sink: ServerActionSink,
+    private val enabled: Flow<Boolean>,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val policy: ScrobblePolicy = ScrobblePolicy(),
 ) {
@@ -89,28 +99,25 @@ class Scrobbler(
         positionMs: StateFlow<Long>,
     ) {
         scope.launch {
-            combine(state, positionMs) { current, position -> current to position }.collect { (current, position) ->
-                val event = policy.advance(current.item, current.isPlaying, position) ?: return@collect
-                submit(event)
-            }
+            combine(state, positionMs, enabled) { current, position, on -> Triple(current, position, on) }
+                .collect { (current, position, on) ->
+                    if (!on) {
+                        policy.reset()
+                        return@collect
+                    }
+                    val event = policy.advance(current.item, current.isPlaying, position) ?: return@collect
+                    submit(event)
+                }
         }
     }
 
     fun close() = scope.cancel()
 
     private suspend fun submit(event: Scrobble) {
-        val source =
-            try {
-                source()
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (_: Exception) {
-                null
-            } ?: return
         try {
             when (event) {
-                is Scrobble.NowPlaying -> source.scrobble(event.songId, submission = false)
-                is Scrobble.Submission -> source.scrobble(event.songId, submission = true, time = event.time)
+                is Scrobble.NowPlaying -> sink.nowPlaying(event.songId)
+                is Scrobble.Submission -> sink.scrobble(event.songId, event.time)
             }
         } catch (cancellation: CancellationException) {
             throw cancellation

@@ -100,6 +100,21 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun scrobblingDefaultsOnAndRoundTrips() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(true, prefs.scrobbling().first())
+
+            prefs.setScrobbling(false)
+            assertEquals(false, prefs.scrobbling().first())
+
+            file.delete()
+        }
+
+    @Test
     fun lastSeedRoundTripsWithAndWithoutASecondary() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }

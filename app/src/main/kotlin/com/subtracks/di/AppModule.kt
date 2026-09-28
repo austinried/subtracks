@@ -13,13 +13,16 @@ import com.subtracks.data.download.DownloadNotifier
 import com.subtracks.data.download.OkHttpArtworkFetcher
 import com.subtracks.data.download.SystemDownloadEngine
 import com.subtracks.data.net.networkMode
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.createUserPreferences
 import com.subtracks.data.repo.ArtworkSeedRepository
 import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
+import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
@@ -51,7 +54,8 @@ fun appModule(
     single { http }
     single { createUserPreferences(context) }
     single { SourceRepository(get(), get(), get(), get(), networkMode = networkMode(context.applicationContext), showMessage = toast) }
-    single { LibraryRepository(get(), get(), toast) }
+    single<ServerActionSink> { NetworkServerActionSink(get()) }
+    single { LibraryRepository(get(), get(), get(), toast) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get()) }
     single { QueueRepository(get()) }
@@ -74,7 +78,7 @@ fun appModule(
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
     single(createdAtStart = true) {
         val playback = get<PlaybackController>()
-        Scrobbler(source = { get<SourceRepository>().activeMusicSource() }).also {
+        Scrobbler(sink = get(), enabled = get<UserPreferences>().scrobbling()).also {
             it.attach(playback.state, playback.positionMs)
         }
     }

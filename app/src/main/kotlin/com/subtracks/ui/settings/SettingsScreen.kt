@@ -73,6 +73,7 @@ fun SettingsRoute(
     val syncConcurrency by viewModel.syncConcurrency.collectAsStateWithLifecycle()
     val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
+    val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
@@ -81,6 +82,7 @@ fun SettingsRoute(
         syncConcurrency = syncConcurrency,
         downloadQuality = downloadQuality,
         downloadOverMetered = downloadOverMetered,
+        scrobbling = scrobbling,
         onSelectSource = viewModel::selectSource,
         onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
@@ -88,6 +90,7 @@ fun SettingsRoute(
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
         onDownloadQualityChange = viewModel::setDownloadQuality,
         onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
+        onScrobblingChange = viewModel::setScrobbling,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onBack = onBack,
@@ -104,6 +107,7 @@ fun SettingsScreen(
     syncConcurrency: Int,
     downloadQuality: StreamQuality,
     downloadOverMetered: Boolean,
+    scrobbling: Boolean,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -111,6 +115,7 @@ fun SettingsScreen(
     onSyncConcurrencyChange: (Int) -> Unit,
     onDownloadQualityChange: (StreamQuality) -> Unit,
     onDownloadOverMeteredChange: (Boolean) -> Unit,
+    onScrobblingChange: (Boolean) -> Unit,
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
@@ -194,6 +199,27 @@ fun SettingsScreen(
                     headlineContent = { Text("Sync concurrency") },
                     supportingContent = { Text(concurrencyLabel(syncConcurrency)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { SectionHeader("Playback") }
+            item {
+                ListItem(
+                    headlineContent = { Text("Scrobble to server") },
+                    supportingContent = { Text("Send now playing and play counts") },
+                    trailingContent = {
+                        Switch(
+                            checked = scrobbling,
+                            onCheckedChange = onScrobblingChange,
+                            colors =
+                                SwitchDefaults.colors(
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                                ),
+                        )
+                    },
+                    modifier = Modifier.clickable { onScrobblingChange(!scrobbling) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

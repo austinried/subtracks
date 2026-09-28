@@ -1,18 +1,13 @@
 package com.subtracks.playback
 
-import com.subtracks.data.model.Album
-import com.subtracks.data.model.Artist
-import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.PlaylistSong
-import com.subtracks.data.model.Song
-import com.subtracks.data.source.MusicSource
+import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,56 +15,52 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScrobblerTest {
-    private data class Call(
-        val songId: String,
-        val submission: Boolean,
-        val time: Long?,
-    )
+    private sealed interface Call {
+        data class NowPlaying(
+            val songId: String,
+        ) : Call
 
-    private class RecordingSource : MusicSource {
-        override val id: Long = 1
+        data class Scrobble(
+            val songId: String,
+            val time: Long,
+        ) : Call
+    }
+
+    private class RecordingSink : ServerActionSink {
         val calls = mutableListOf<Call>()
 
-        override suspend fun ping() = Unit
+        override suspend fun nowPlaying(songId: String) {
+            calls += Call.NowPlaying(songId)
+        }
+
+        override suspend fun scrobble(
+            songId: String,
+            time: Long,
+        ) {
+            calls += Call.Scrobble(songId, time)
+        }
 
         override suspend fun setStar(
             type: StarType,
             id: String,
             starred: Boolean,
         ) = Unit
-
-        override suspend fun scrobble(
-            songId: String,
-            submission: Boolean,
-            time: Long?,
-        ) {
-            calls += Call(songId, submission, time)
-        }
-
-        override fun artists(): Flow<List<Artist>> = emptyFlow()
-
-        override fun albums(): Flow<List<Album>> = emptyFlow()
-
-        override fun songs(): Flow<List<Song>> = emptyFlow()
-
-        override fun playlists(): Flow<List<Playlist>> = emptyFlow()
-
-        override fun playlistSongs(playlistIds: List<String>): Flow<List<PlaylistSong>> = emptyFlow()
     }
+
+    private fun TestScope.testScope() = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
 
     @Test
     fun sendsNowPlayingThenScrobbleOnce() =
         runTest {
-            val source = RecordingSource()
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())
-            val scrobbler = Scrobbler(source = { source }, scope = scope, policy = ScrobblePolicy(now = { 1_000L }))
+            val sink = RecordingSink()
+            val scrobbler = Scrobbler(sink = sink, enabled = flowOf(true), scope = testScope(), policy = ScrobblePolicy(now = { 1_000L }))
             val state = MutableStateFlow(PlaybackState())
             val position = MutableStateFlow(0L)
             scrobbler.attach(state, position)
             val item = QueueItem("s1", "Title", "Artist", "Album", null, durationMs = 30_000)
 
             state.value = PlaybackState(item = item, isPlaying = true)
-            assertEquals(listOf(Call("s1", submission = false, time = null)), source.calls)
+            assertEquals(listOf(Call.NowPlaying("s1")), sink.calls)
 
             var tick = 500L
             while (tick <= 15_000L) {
@@ -79,13 +70,36 @@ class ScrobblerTest {
 
             assertEquals(
                 listOf(
-                    Call("s1", submission = false, time = null),
-                    Call("s1", submission = true, time = 1_000L),
+                    Call.NowPlaying("s1"),
+                    Call.Scrobble("s1", 1_000L),
                 ),
-                source.calls,
+                sink.calls,
             )
 
             position.value = 25_000L
-            assertEquals(2, source.calls.size)
+            assertEquals(2, sink.calls.size)
+        }
+
+    @Test
+    fun disabledSendsNothing() =
+        runTest {
+            val sink = RecordingSink()
+            val enabled = MutableStateFlow(false)
+            val scrobbler = Scrobbler(sink = sink, enabled = enabled, scope = testScope(), policy = ScrobblePolicy(now = { 1_000L }))
+            val state = MutableStateFlow(PlaybackState())
+            val position = MutableStateFlow(0L)
+            scrobbler.attach(state, position)
+            val item = QueueItem("s1", "Title", "Artist", "Album", null, durationMs = 30_000)
+
+            state.value = PlaybackState(item = item, isPlaying = true)
+            var tick = 500L
+            while (tick <= 20_000L) {
+                position.value = tick
+                tick += 500
+            }
+            assertEquals(emptyList<Call>(), sink.calls)
+
+            enabled.value = true
+            assertEquals(listOf(Call.NowPlaying("s1")), sink.calls)
         }
 }

@@ -45,7 +45,7 @@ class LibraryRepositoryTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
-        repository = LibraryRepository(db, sourceRepository, showMessage = { messages += it })
+        repository = LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), showMessage = { messages += it })
     }
 
     @After

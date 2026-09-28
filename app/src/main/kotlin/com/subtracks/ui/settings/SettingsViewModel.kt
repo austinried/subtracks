@@ -48,6 +48,11 @@ class SettingsViewModel(
             .syncConcurrency()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_FETCH_CONCURRENCY)
 
+    val scrobbling: StateFlow<Boolean> =
+        userPreferences
+            .scrobbling()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
     fun selectSource(id: Long) {
         viewModelScope.launch { sourceRepository.selectSource(id) }
     }
@@ -70,5 +75,9 @@ class SettingsViewModel(
 
     fun setSyncConcurrency(value: Int) {
         viewModelScope.launch { userPreferences.setSyncConcurrency(value) }
+    }
+
+    fun setScrobbling(enabled: Boolean) {
+        viewModelScope.launch { userPreferences.setScrobbling(enabled) }
     }
 }

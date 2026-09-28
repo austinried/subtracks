@@ -105,6 +105,14 @@ class UserPreferences(
 
     private val syncConcurrencyKey = intPreferencesKey("sync_concurrency")
 
+    fun scrobbling(): Flow<Boolean> = store.data.map { prefs -> prefs[scrobblingKey] ?: true }
+
+    suspend fun setScrobbling(enabled: Boolean) {
+        store.edit { prefs -> prefs[scrobblingKey] = enabled }
+    }
+
+    private val scrobblingKey = booleanPreferencesKey("scrobbling")
+
     suspend fun lastSeed(): ArtworkSeedValue? {
         val prefs = store.data.first()
         val cacheKey = prefs[lastSeedKey] ?: return null

@@ -15,6 +15,7 @@ import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ import kotlinx.coroutines.withContext
 class LibraryRepository(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
+    private val serverActions: ServerActionSink,
     private val showMessage: (String) -> Unit = {},
 ) {
     val activeSourceId: Flow<Long?> = sourceRepository.activeSourceId()
@@ -239,14 +241,13 @@ class LibraryRepository(
         starred: Boolean,
     ): Result<Unit> {
         val sourceId = sourceRepository.activeSourceIdOnce()
-        val source = sourceRepository.activeMusicSource()
-        if (sourceId == null || source == null) {
+        if (sourceId == null) {
             return Result.failure(IllegalStateException("No active server"))
         }
         val previous = starredValue(sourceId, type, id)
         updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
         return try {
-            source.setStar(type, id, starred)
+            serverActions.setStar(type, id, starred)
             Result.success(Unit)
         } catch (cancellation: CancellationException) {
             throw cancellation
