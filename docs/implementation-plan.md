@@ -52,17 +52,19 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 - Signing, versioning and Fastlane metadata.
 - F-Droid submission. Their buildserver must have Gradle >= 9.6 and SDK 37, which this project targets; do not rely on the Gradle wrapper there (fdroidserver deletes `gradlew` and uses its own Gradle).
 
-## Scale hardening backlog
+## Scale hardening (done)
 
-Follow-up work for very large libraries, playlists and long sessions, grouped so each block can be one PR.
+Follow-up work for very large libraries, playlists and long sessions, grouped so each block could be one PR. All blocks have landed; the two residuals are noted at the end.
 
-- **Library read path.** Index the sort keys used by album/artist/playlist browsing (a denormalized `albumArtist` on `albums` plus `NOCASE` indices) and replace `LIMIT 1 OFFSET` with keyset/cursor seeks in `QueueRepository`/`QueueDao`. Shared dependency for the read-side fixes; can split into "indices" then "keyset" if too large for one review.
+- **Library read path.** Landed: the sort keys used by album/artist/playlist browsing are indexed (a denormalized `albumArtist` on `albums`, `NOCASE` text, one index per order). Row resolution seeks through a cached keyset cursor (`QueueRepository.keyedRows` over `QueueDao`'s `...From`/`...Before`/`...After` queries); the old offset query is kept only as the cold and far-jump fallback.
 - **Shuffle.** Landed: the permutation is derived from `(seed, size)` (a seekable Feistel in `Shuffle.kt`) and positions resolve through the same positional lookup, so `shuffle_order` and the retained whole-order/whole-id arrays are gone. The context is read-only while shuffled; manual ordering goes through the up-next block.
-- **Sync pipeline.** Prune with a memory-bounded id set, remove `fetchRanks` and the write-only rank columns, fetch playlists/albums with bounded concurrency and skip unchanged ones, and raise/make configurable the page cap with a clear "library too large" failure. Independent of the read path.
-- **Queue view and edits.** Bound the queue view's loaded rows (or page over the queue ordinal) and scope its ViewModel to the overlay; compact adjacent same-ref ranges after an edit and cache resolved entry lengths. The view half is independent; the edit half shares `QueueRepository` with the read-path PR.
-- **Artwork.** Give `artwork_seeds` a `sourceId` with `ON DELETE CASCADE` and an LRU/TTL (or drop the table and rely on Coil's disk cache); prefetch the thumbnail, not the original, on now-playing transitions. Independent.
+- **Sync pipeline.** Landed: the prune diffs against a memory-bounded set of primitive `long` id hashes and walks the local ids in keyset pages; `fetchRanks` and the write-only rank columns are gone; playlists and the album-song fallback are fetched with a bounded, user-configurable concurrency; the page cap is raised to 20k pages and overrun fails with a "Library is too large to sync" error; unchanged rows are not rewritten (`upsertChanged`'s changed-only `WHERE`).
+- **Queue view and edits.** Landed: the queue view loads a bounded window (`QUEUE_CHUNK * 3`) and extends and trims it as you scroll, its ViewModel is scoped to the overlay, adjacent same-ref ranges are compacted after an edit, and resolved entry lengths are cached.
+- **Artwork.** Landed: `artwork_seeds` carries a `sourceId` with `ON DELETE CASCADE` and an index, is pruned as an LRU by `storedAt`, and the seed prefetch requests the thumbnail.
 - **FTS5 search.** Landed: per-entity external-content trigram tables (`album_search`, `artist_search`, `playlist_search`) with Room-generated content-sync triggers, a three-character floor and an `instr` fallback below it.
-- **UI/flow overhead.** Subscribe only the active tab's paging flow; move the position ticker off the shared `PlaybackState`. Independent.
+- **UI/flow overhead.** Landed: only the active tab's paging flow is collected, and the position ticker updates its own `positionMs` flow instead of the shared `PlaybackState`.
+
+Two residuals remain, neither blocking: the sync does not skip unchanged albums or playlists on the fetch side (only unchanged writes are skipped), and the now-playing screen still prefetches the original artwork for the next track alongside the thumbnail.
 
 A `syncGen` column was considered for the sync prune and rejected: it is part of the upsert's update set, so its always-changing value defeats `upsertChanged`'s changed-only `WHERE` predicate and rewrites every row on every full sync. The prune should instead keep the two-phase diff with a memory-bounded id set (primitive long hashes) or diff a staging `seen` table in SQL.
 
