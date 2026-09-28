@@ -24,6 +24,7 @@ class DeleteDownloadsDialogTest {
         render(bytes = 1_500_000)
 
         composeRule.onNodeWithText("Kid A", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Deleting will free", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("MB", substring = true).assertIsDisplayed()
     }
 

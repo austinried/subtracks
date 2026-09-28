@@ -23,10 +23,11 @@ fun DeleteDownloadsDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val freed = formatBytes(LocalContext.current, bytes)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Delete downloads") },
-        text = { Text("Delete the downloaded songs of \"$name\"? This frees ${formatBytes(LocalContext.current, bytes)}.") },
+        text = { Text("$name\nDeleting will free $freed") },
         confirmButton = {
             TextButton(
                 onClick = {
