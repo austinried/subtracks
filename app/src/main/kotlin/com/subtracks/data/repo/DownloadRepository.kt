@@ -8,6 +8,7 @@ import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
+import com.subtracks.data.download.looksLikeAudio
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
@@ -425,7 +426,11 @@ class DownloadRepository(
     private suspend fun recover(row: SongDownload) {
         when (row.status) {
             DownloadStatus.Completed -> {
-                if (!file(row.sourceId, row.songId).exists()) markFailed(row, MISSING_FILE)
+                val file = file(row.sourceId, row.songId)
+                when {
+                    !file.exists() -> markFailed(row, MISSING_FILE)
+                    !file.looksLikeAudio() -> markFailed(row, SERVER_ERROR)
+                }
             }
 
             // Waiting rows have no engine id by design; the next promote hands them over.
@@ -510,20 +515,30 @@ class DownloadRepository(
         row: SongDownload,
         state: EngineDownload,
     ) {
+        val file = file(row.sourceId, row.songId)
+        // The engine reports success for any 200, including the XML error document a Subsonic server
+        // returns for a refused track; only the payload itself says whether it is audio.
+        val errorPage = state.status == EngineStatus.Completed && !file.looksLikeAudio()
         val status =
             when (state.status) {
                 EngineStatus.Pending -> DownloadStatus.Queued
                 EngineStatus.Running -> DownloadStatus.Running
-                EngineStatus.Completed -> if (file(row.sourceId, row.songId).exists()) DownloadStatus.Completed else DownloadStatus.Failed
+                EngineStatus.Completed -> if (errorPage) DownloadStatus.Failed else DownloadStatus.Completed
                 EngineStatus.Failed -> DownloadStatus.Failed
             }
-        if (status == DownloadStatus.Failed) file(row.sourceId, row.songId).delete()
+        if (status == DownloadStatus.Failed) file.delete()
         db.downloadDao().upsert(
             row.copy(
                 status = status,
                 bytes = state.bytes,
                 total = state.total,
-                error = state.error ?: if (status == DownloadStatus.Failed) "Download failed" else null,
+                error =
+                    when {
+                        state.error != null -> state.error
+                        errorPage -> SERVER_ERROR
+                        status == DownloadStatus.Failed -> "Download failed"
+                        else -> null
+                    },
             ),
         )
     }
@@ -603,6 +618,7 @@ class DownloadRepository(
         const val IN_FLIGHT_LIMIT = 8
         const val DELETE_CHUNK = 900
         const val MISSING_FILE = "The downloaded file is missing"
+        const val SERVER_ERROR = "The server sent an error instead of the track"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val EMPTY_LIST = "Nothing left to download from this list"
         const val STOPPED = "The download stopped unexpectedly"

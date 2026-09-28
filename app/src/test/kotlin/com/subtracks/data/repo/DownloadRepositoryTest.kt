@@ -920,6 +920,42 @@ class DownloadRepositoryTest {
             await { row(2, "o1")?.status == DownloadStatus.Completed }
         }
 
+    @Test
+    fun aServerErrorSavedAsThePayloadIsNotTreatedAsADownload() =
+        runTest {
+            seedLibrary()
+            repository.start()
+            runBlocking { repository.download(1, "s1") }
+            val id = engine.requests.single().first
+
+            engine.complete(id, total = 100)
+            writeFile(
+                1,
+                "s1",
+                "<?xml version=\"1.0\"?><subsonic-response status=\"failed\"><error code=\"70\"/></subsonic-response>",
+            )
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
+            assertEquals("The server sent an error instead of the track", row(1, "s1")?.error)
+            assertFalse(file(1, "s1").exists())
+            assertNull(repository.localUri("s1"))
+        }
+
+    @Test
+    fun aCompletedRowLeftAsAnErrorPageIsFailedOnReconcile() =
+        runTest {
+            seedLibrary()
+            runBlocking { db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, bytes = 10, total = 10)) }
+            writeFile(1, "s1", "<subsonic-response status=\"failed\"/>")
+
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
+            assertFalse(file(1, "s1").exists())
+            assertNull(repository.localUri("s1"))
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {
