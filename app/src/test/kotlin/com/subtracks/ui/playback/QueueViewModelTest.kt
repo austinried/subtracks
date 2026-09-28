@@ -10,8 +10,10 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.AlbumSongItem
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
@@ -24,10 +26,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -46,8 +50,9 @@ class QueueViewModelTest {
 
     private lateinit var db: SubtracksDatabase
     private lateinit var sources: SourceRepository
-    private lateinit var downloads: DownloadRepository
     private lateinit var queues: QueueRepository
+    private lateinit var downloads: DownloadRepository
+    private lateinit var downloadsDir: File
     private lateinit var controller: PlaybackController
     private lateinit var viewModel: QueueViewModel
 
@@ -63,17 +68,18 @@ class QueueViewModelTest {
         sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
         queues = QueueRepository(db)
         val artwork = ArtworkStore(File(context.cacheDir, "art"))
+        downloadsDir = File(context.cacheDir, "downloads-${System.nanoTime()}")
         downloads =
             DownloadRepository(
                 db,
                 sources,
                 FakeDownloadEngine(),
-                File(context.cacheDir, "downloads"),
+                downloadsDir,
                 artworkStore = artwork,
                 artworkFetcher = { ByteArray(0) },
-            )
+            ).also { it.start() }
         controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), downloads, dispatcher = dispatcher)
-        viewModel = QueueViewModel(queues, controller)
+        viewModel = QueueViewModel(queues, controller, sources, downloads)
     }
 
     @After
@@ -409,6 +415,46 @@ class QueueViewModelTest {
         extendTo(309, first = 130)
         extendTo(369, first = 190)
         extendTo(399, first = 220)
+    }
+
+    @Test
+    fun offlineHidesRowsThatAreNotDownloaded() {
+        runBlocking { seedSongs(6) }
+        markDownloaded(1, "s2")
+        markDownloaded(1, "s4")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        viewModel.open()
+        await { viewModel.ready }
+
+        assertEquals(listOf("s2", "s4"), rowsSnapshot().map { it.song.song.id })
+    }
+
+    private fun markDownloaded(
+        sourceId: Long,
+        songId: String,
+    ) {
+        val file = File(downloadsDir, "$sourceId/$songId")
+        runBlocking {
+            downloads.reconcile()
+            db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
+            file.parentFile?.mkdirs()
+            file.writeBytes(byteArrayOf(1))
+            downloads.reconcile()
+        }
+        await { downloads.localUri(songId) != null }
+    }
+
+    private fun setOffline() {
+        runBlocking {
+            sources.setOfflineMode(true)
+            withTimeout(5_000) { sources.offline.first { it } }
+        }
     }
 
     private fun row(position: Int) =

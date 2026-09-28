@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.SongItem
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QUEUE_CHUNK
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueWindowItem
@@ -90,6 +91,8 @@ internal fun QueueRow.isPlaying(
 class QueueViewModel(
     private val queueRepository: QueueRepository,
     private val playbackController: PlaybackController,
+    private val sourceRepository: SourceRepository,
+    private val downloads: DownloadRepository,
 ) : ViewModel() {
     val rows = mutableStateListOf<QueueRow>()
 
@@ -106,6 +109,8 @@ class QueueViewModel(
     private val mutex = Mutex()
 
     private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item, item.upNext)
+
+    private fun visible(item: QueueWindowItem): Boolean = !sourceRepository.offline.value || downloads.localUri(item.item.song.id) != null
 
     private fun reusedIds(): Map<String, MutableList<Long>> =
         rows.groupBy { it.song.song.id }.mapValues { entry -> entry.value.map { it.id }.toMutableList() }
@@ -132,7 +137,7 @@ class QueueViewModel(
                         }?.coerceIn(0, snapshot.size - 1) ?: 0L
                     val start = (cursor - OLDER_LOAD).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(snapshot.size - 1)
-                    rows.addAll(queueRepository.range(snapshot, start, end).map { rowFor(it, reused) })
+                    rows.addAll(queueRepository.range(snapshot, start, end).filter(::visible).map { rowFor(it, reused) })
                     initialIndex = rows.indexOfFirst { it.position == cursor }.coerceAtLeast(0)
                 }
                 ready = true
@@ -152,9 +157,9 @@ class QueueViewModel(
             rows.clear()
             return
         }
-        val start = (rows.firstOrNull()?.position ?: 0L).coerceIn(0, snapshot.size - 1)
-        val end = (start + rows.size.coerceAtLeast(QUEUE_CHUNK) - 1).coerceAtMost(snapshot.size - 1)
-        val loaded = queueRepository.range(snapshot, start, end)
+        val start = (rows.minOfOrNull { it.position } ?: 0L).coerceIn(0, snapshot.size - 1)
+        val end = (rows.maxOfOrNull { it.position } ?: (start + QUEUE_CHUNK - 1)).coerceIn(start, snapshot.size - 1)
+        val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
         val reused = reusedIds()
         val updated = loaded.map { rowFor(it, reused) }
         if (updated.size == rows.size) {
@@ -173,9 +178,15 @@ class QueueViewModel(
                 val first = rows.minOfOrNull { it.position } ?: return@withLock
                 if (first <= 0L) return@withLock
                 val snapshot = queueRepository.snapshot()
-                val loaded = queueRepository.range(snapshot, (first - QUEUE_CHUNK).coerceAtLeast(0), first - 1)
-                if (loaded.isEmpty()) return@withLock
-                rows.addAll(0, loaded.map(::newRow))
+                val collected = mutableListOf<QueueWindowItem>()
+                var end = first - 1
+                while (end >= 0L && collected.size < QUEUE_CHUNK) {
+                    val start = (end - QUEUE_CHUNK + 1).coerceAtLeast(0)
+                    collected.addAll(0, queueRepository.range(snapshot, start, end).filter(::visible))
+                    end = start - 1
+                }
+                if (collected.isEmpty()) return@withLock
+                rows.addAll(0, collected.map(::newRow))
                 while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(rows.size - 1)
             }
         }
@@ -188,10 +199,15 @@ class QueueViewModel(
                 val last = rows.maxOfOrNull { it.position } ?: return@withLock
                 val snapshot = queueRepository.snapshot()
                 if (last >= snapshot.size - 1) return@withLock
-                val to = (last + QUEUE_CHUNK).coerceAtMost(snapshot.size - 1)
-                val loaded = queueRepository.range(snapshot, last + 1, to)
-                if (loaded.isEmpty()) return@withLock
-                rows.addAll(loaded.map(::newRow))
+                val collected = mutableListOf<QueueWindowItem>()
+                var start = last + 1
+                while (start < snapshot.size && collected.size < QUEUE_CHUNK) {
+                    val to = (start + QUEUE_CHUNK - 1).coerceAtMost(snapshot.size - 1)
+                    collected.addAll(queueRepository.range(snapshot, start, to).filter(::visible))
+                    start = to + 1
+                }
+                if (collected.isEmpty()) return@withLock
+                rows.addAll(collected.map(::newRow))
                 while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(0)
             }
         }
@@ -218,17 +234,7 @@ class QueueViewModel(
         if (from == to) return
         viewModelScope.launch {
             playbackController.move(from, to)
-            mutex.withLock {
-                val base = rows.minOfOrNull { it.position } ?: return@withLock
-                // The loaded order already reflects the move, so only the positions need updating.
-                val updated =
-                    rows.mapIndexed { index, row ->
-                        val position = base + index
-                        if (row.position == position) row else row.copy(position = position)
-                    }
-                rows.clear()
-                rows.addAll(updated)
-            }
+            mutex.withLock { reconcileLocked() }
         }
     }
 
@@ -256,9 +262,9 @@ class QueueViewModel(
             rows.clear()
             return
         }
-        val start = (rows.firstOrNull()?.position ?: 0L).coerceIn(0, snapshot.size - 1)
-        val end = (start + rows.size.coerceAtLeast(QUEUE_CHUNK) - 1).coerceAtMost(snapshot.size - 1)
-        val loaded = queueRepository.range(snapshot, start, end)
+        val start = (rows.minOfOrNull { it.position } ?: 0L).coerceIn(0, snapshot.size - 1)
+        val end = (rows.maxOfOrNull { it.position } ?: (start + QUEUE_CHUNK - 1)).coerceIn(start, snapshot.size - 1)
+        val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
         val reused = reusedIds()
         val updated = loaded.map { rowFor(it, reused) }
         rows.clear()

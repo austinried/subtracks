@@ -2498,6 +2498,37 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlinePlayStartsAtTheNearestDownloadedWhenTheTargetIsNotDownloaded() {
+        seedAlbum(60, sourceId = 1)
+        markDownloaded(1, "s50")
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+
+        await {
+            controller.state.value.item
+                ?.id == "s50"
+        }
+        assertTrue(handle.items.isNotEmpty())
+    }
+
+    @Test
+    fun offlineShuffleStartsOnADownloadedTrack() {
+        seedAlbum(60, sourceId = 1)
+        markDownloaded(1, "s50")
+        markDownloaded(1, "s60")
+        setOffline()
+
+        controller.shuffleAlbum(1, "al1")
+
+        await {
+            controller.state.value.item
+                ?.id in listOf("s50", "s60")
+        }
+        assertTrue(handle.items.isNotEmpty())
+    }
+
+    @Test
     fun offlinePlayAlbumFiltersTheWindowToDownloadedSongs() {
         seedAlbum(4, sourceId = 1)
         markDownloaded(1, "s1")

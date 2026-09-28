@@ -1003,15 +1003,24 @@ class PlaybackController(
         val player = player ?: return
         val snapshot = snapshot ?: return
         downloads.awaitLoaded()
-        val raw = queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS)
+        val requested =
+            if (offline) {
+                downloadedAtOrAfter(snapshot, position) ?: downloadedAtOrBefore(snapshot, position - 1) ?: run {
+                    stopLocked()
+                    return
+                }
+            } else {
+                position
+            }
+        val raw = queueRepository.window(snapshot, requested, QUEUE_WINDOW_RADIUS)
         val window = if (offline) raw.filter { downloads.localUri(it.item.song.id) != null } else raw
         if (window.isEmpty()) {
             stopLocked()
             return
         }
-        var startIndex = window.indexOfFirst { it.position == position }
+        var startIndex = window.indexOfFirst { it.position == requested }
         if (startIndex < 0) {
-            startIndex = window.indexOfFirst { it.position > position }
+            startIndex = window.indexOfFirst { it.position > requested }
             if (startIndex < 0) startIndex = window.lastIndex
         }
         val actual = window[startIndex].position
@@ -1020,7 +1029,7 @@ class PlaybackController(
         windowStart = window.first().position
         windowEnd = window.last().position
         lastPosition = actual
-        if (actual != position) queueRepository.setCursor(actual)
+        if (actual != requested) queueRepository.setCursor(actual)
         updating = true
         player.setWindow(window.map { it.item.toQueueItem() }, startIndex, startPositionMs)
         updating = false
@@ -1045,7 +1054,7 @@ class PlaybackController(
                 val snapshot = snapshot ?: return@withLock
                 if (snapshot.size == 0L || player.isEnded) return@withLock
                 downloads.awaitLoaded()
-                val position = (windowStart + player.currentIndex).coerceIn(0, snapshot.size - 1)
+                val position = (currentPosition() ?: return@withLock).coerceIn(0, snapshot.size - 1)
                 val window = queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS)
                 val uris = player.itemUris()
                 if (window.size != player.itemCount || uris.size != window.size) {
