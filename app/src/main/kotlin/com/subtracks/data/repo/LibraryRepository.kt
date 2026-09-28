@@ -41,47 +41,49 @@ class LibraryRepository(
         descending: Boolean,
         starred: StarredFilter,
         search: String,
+        downloaded: Boolean,
     ): Flow<PagingData<Album>> =
         pager(40) {
             val dao = db.libraryDao()
+            val downloadedFilter = if (downloaded) 1 else 0
             when (sort) {
                 AlbumSort.Name -> {
                     if (descending) {
-                        dao.albumsByNameReversed(sourceId, starred.ordinal, search)
+                        dao.albumsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.albumsByName(sourceId, starred.ordinal, search)
+                        dao.albumsByName(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 AlbumSort.Artist -> {
                     if (descending) {
-                        dao.albumsByArtistReversed(sourceId, starred.ordinal, search)
+                        dao.albumsByArtistReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.albumsByArtist(sourceId, starred.ordinal, search)
+                        dao.albumsByArtist(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 AlbumSort.Year -> {
                     if (descending) {
-                        dao.albumsByYearReversed(sourceId, starred.ordinal, search)
+                        dao.albumsByYearReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.albumsByYear(sourceId, starred.ordinal, search)
+                        dao.albumsByYear(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 AlbumSort.Added -> {
                     if (descending) {
-                        dao.albumsByRecentlyAddedReversed(sourceId, starred.ordinal, search)
+                        dao.albumsByRecentlyAddedReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.albumsByRecentlyAdded(sourceId, starred.ordinal, search)
+                        dao.albumsByRecentlyAdded(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 AlbumSort.Starred -> {
                     if (descending) {
-                        dao.albumsByStarredReversed(sourceId, starred.ordinal, search)
+                        dao.albumsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.albumsByStarred(sourceId, starred.ordinal, search)
+                        dao.albumsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
             }
@@ -93,31 +95,33 @@ class LibraryRepository(
         descending: Boolean,
         starred: StarredFilter,
         search: String,
+        downloaded: Boolean,
     ): Flow<PagingData<Artist>> =
         pager(60) {
             val dao = db.libraryDao()
+            val downloadedFilter = if (downloaded) 1 else 0
             when (sort) {
                 ArtistSort.Name -> {
                     if (descending) {
-                        dao.artistsByNameReversed(sourceId, starred.ordinal, search)
+                        dao.artistsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.artistsByName(sourceId, starred.ordinal, search)
+                        dao.artistsByName(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 ArtistSort.AlbumCount -> {
                     if (descending) {
-                        dao.artistsByAlbumCountReversed(sourceId, starred.ordinal, search)
+                        dao.artistsByAlbumCountReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.artistsByAlbumCount(sourceId, starred.ordinal, search)
+                        dao.artistsByAlbumCount(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
 
                 ArtistSort.Starred -> {
                     if (descending) {
-                        dao.artistsByStarredReversed(sourceId, starred.ordinal, search)
+                        dao.artistsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
-                        dao.artistsByStarred(sourceId, starred.ordinal, search)
+                        dao.artistsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
             }
@@ -128,31 +132,33 @@ class LibraryRepository(
         sort: PlaylistSort,
         descending: Boolean,
         search: String,
+        downloaded: Boolean,
     ): Flow<PagingData<Playlist>> =
         pager(40) {
             val dao = db.libraryDao()
+            val downloadedFilter = if (downloaded) 1 else 0
             when (sort) {
                 PlaylistSort.Name -> {
                     if (descending) {
-                        dao.playlistsByNameReversed(sourceId, search)
+                        dao.playlistsByNameReversed(sourceId, search, downloadedFilter)
                     } else {
-                        dao.playlistsByName(sourceId, search)
+                        dao.playlistsByName(sourceId, search, downloadedFilter)
                     }
                 }
 
                 PlaylistSort.Added -> {
                     if (descending) {
-                        dao.playlistsByAddedReversed(sourceId, search)
+                        dao.playlistsByAddedReversed(sourceId, search, downloadedFilter)
                     } else {
-                        dao.playlistsByAdded(sourceId, search)
+                        dao.playlistsByAdded(sourceId, search, downloadedFilter)
                     }
                 }
 
                 PlaylistSort.Updated -> {
                     if (descending) {
-                        dao.playlistsByUpdatedReversed(sourceId, search)
+                        dao.playlistsByUpdatedReversed(sourceId, search, downloadedFilter)
                     } else {
-                        dao.playlistsByUpdated(sourceId, search)
+                        dao.playlistsByUpdated(sourceId, search, downloadedFilter)
                     }
                 }
             }

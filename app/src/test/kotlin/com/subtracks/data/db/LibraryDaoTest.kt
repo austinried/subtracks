@@ -9,8 +9,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -288,6 +291,53 @@ class LibraryDaoTest {
             val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY songCount, id LIMIT 20 OFFSET 0")
 
             assertTrue(plan, plan.contains("TEMP B-TREE"))
+        }
+
+    @Test
+    fun theDownloadedFilterKeepsOnlyEntitiesWithACompletedDownload() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Downloaded", year = 2000, starred = null),
+                    album(sourceId, "al-2", "Empty", year = 2001, starred = null),
+                ),
+            )
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 2)))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2"),
+                ),
+            )
+            dao.upsertPlaylists(
+                listOf(
+                    playlist(sourceId, "pl-1", "Has download", created = 0, changed = 0),
+                    playlist(sourceId, "pl-2", "No download", created = 1, changed = 1),
+                ),
+            )
+            dao.upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(sourceId, "pl-1", "s1", 0),
+                    PlaylistSong(sourceId, "pl-2", "s2", 0),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            assertEquals(
+                listOf("Downloaded"),
+                dao.albumsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.name },
+            )
+            assertEquals(
+                listOf("ar-1"),
+                dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.id },
+            )
+            assertEquals(
+                listOf("pl-1"),
+                dao.playlistsByName(sourceId, "", downloadedFilter = 1).page().map { it.id },
+            )
+            assertEquals(2, dao.albumsByName(sourceId, 0, "").page().size)
         }
 
     private suspend fun plan(sql: String): String =

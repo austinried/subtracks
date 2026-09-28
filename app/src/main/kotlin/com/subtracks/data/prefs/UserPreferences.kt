@@ -35,6 +35,7 @@ data class ListQuery(
     val sort: String,
     val descending: Boolean = false,
     val starred: StarredFilter = StarredFilter.Any,
+    val downloaded: Boolean = false,
 )
 
 data class StreamQuality(
@@ -107,7 +108,8 @@ class UserPreferences(
 
     private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
 
-    private fun encode(query: ListQuery) = "${query.sort}|${if (query.descending) 1 else 0}|${query.starred.ordinal}"
+    private fun encode(query: ListQuery) =
+        "${query.sort}|${if (query.descending) 1 else 0}|${query.starred.ordinal}|${if (query.downloaded) 1 else 0}"
 
     private fun encode(quality: StreamQuality) = "${quality.maxBitrate}|${quality.format.orEmpty()}"
 
@@ -130,11 +132,12 @@ class UserPreferences(
         defaultSort: String,
     ): ListQuery {
         val parts = stored?.split("|")
-        if (parts == null || parts.size != 3) return ListQuery(defaultSort)
+        if (parts == null || parts.size < 3) return ListQuery(defaultSort)
         return ListQuery(
             sort = parts[0].ifEmpty { defaultSort },
             descending = parts[1] == "1",
             starred = StarredFilter.entries.getOrElse(parts[2].toIntOrNull() ?: 0) { StarredFilter.Any },
+            downloaded = parts.getOrNull(3) == "1",
         )
     }
 }

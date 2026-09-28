@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.FilterAltOff
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
@@ -212,7 +213,7 @@ fun LibraryRoute(
         LibraryTab.entries.associateWith { tab ->
             val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
             val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
-            "${query.sort}|${query.descending}|${query.starred}|$term"
+            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded}|$term"
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
@@ -271,11 +272,12 @@ fun LibraryRoute(
             viewModel.setListQuery(listTab, listQuery.copy(starred = next))
         },
         onClearFilters = {
-            viewModel.setListQuery(listTab, listQuery.copy(starred = StarredFilter.Any))
+            viewModel.setListQuery(listTab, listQuery.copy(starred = StarredFilter.Any, downloaded = false))
             viewModel.setSearch(listTab, "")
         },
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
+        onToggleDownloaded = { viewModel.setListQuery(listTab, listQuery.copy(downloaded = !listQuery.downloaded)) },
         albumDownloads = downloads.takeIf { listTab == LibraryListTab.Albums }.orEmpty(),
         artistDownloads = downloads.takeIf { listTab == LibraryListTab.Artists }.orEmpty(),
         playlistDownloads = downloads.takeIf { listTab == LibraryListTab.Playlists }.orEmpty(),
@@ -315,6 +317,7 @@ fun LibraryScreen(
     onSortChange: (String) -> Unit = {},
     onToggleSortDirection: () -> Unit = {},
     onCycleStarred: () -> Unit = {},
+    onToggleDownloaded: () -> Unit = {},
     onClearFilters: () -> Unit = {},
     search: String = "",
     onSearchChange: (String) -> Unit = {},
@@ -355,7 +358,7 @@ fun LibraryScreen(
 
     val density = LocalDensity.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    val filtersActive = listQuery.starred != StarredFilter.Any || search.isNotEmpty()
+    val filtersActive = listQuery.starred != StarredFilter.Any || listQuery.downloaded || search.isNotEmpty()
     var tabBarHeightPx by remember { mutableFloatStateOf(with(density) { (TAB_BAR_CONTENT_HEIGHT + bottomInset).toPx() }) }
     val tabBarHeight = with(density) { tabBarHeightPx.toDp() }
     val listTopInset = statusBarTop
@@ -540,6 +543,7 @@ fun LibraryScreen(
                 onSortChange = onSortChange,
                 onToggleSortDirection = onToggleSortDirection,
                 onCycleStarred = onCycleStarred,
+                onToggleDownloaded = onToggleDownloaded,
                 onClearFilters = onClearFilters,
                 onSearch = {
                     showOptions = false
@@ -560,6 +564,7 @@ private fun ListOptionsSheet(
     onSortChange: (String) -> Unit,
     onToggleSortDirection: () -> Unit,
     onCycleStarred: () -> Unit,
+    onToggleDownloaded: () -> Unit,
     onClearFilters: () -> Unit,
     onSearch: () -> Unit,
 ) {
@@ -615,27 +620,44 @@ private fun ListOptionsSheet(
             }
         }
 
-        if (starredSupported) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp),
+        ) {
+            Text(
+                text = "Filters",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(
+                onClick = onClearFilters,
+                enabled = canClearFilters,
             ) {
-                Text(
-                    text = "Filters",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(
-                    onClick = onClearFilters,
-                    enabled = canClearFilters,
-                ) {
-                    Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
-                }
+                Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            ) {
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        ) {
+            FilterChip(
+                selected = listQuery.downloaded,
+                onClick = onToggleDownloaded,
+                label = { Text("Downloaded") },
+                leadingIcon =
+                    if (listQuery.downloaded) {
+                        {
+                            Icon(
+                                Icons.Rounded.DownloadDone,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize),
+                            )
+                        }
+                    } else {
+                        null
+                    },
+            )
+            if (starredSupported) {
                 FilterChip(
                     selected = listQuery.starred != StarredFilter.Any,
                     onClick = onCycleStarred,

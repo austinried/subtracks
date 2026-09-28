@@ -29,6 +29,9 @@ internal const val PLAYLIST_SONGS_SQL = PLAYLIST_SONGS_SELECT + PLAYLIST_SONGS_O
 internal const val ALBUMS_FILTER =
     "FROM albums WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
+        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed')) " +
         "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) "
 
 internal const val ALBUM_ORDER_BY_NAME = "name COLLATE NOCASE, id"
@@ -48,6 +51,10 @@ internal const val ALBUM_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, na
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
+        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs " +
+        "JOIN albums dl ON dl.sourceId = songs.sourceId AND dl.id = songs.albumId " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = artists.sourceId AND dl.artistId = artists.id AND sd.status = 'Completed')) " +
         "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
 
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
@@ -59,6 +66,9 @@ internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, n
 
 internal const val PLAYLISTS_FILTER =
     "FROM playlists WHERE sourceId = :sourceId " +
+        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM playlist_songs ps " +
+        "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId " +
+        "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed')) " +
         "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
 
 internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
@@ -205,6 +215,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_REVERSED")
@@ -212,6 +223,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST")
@@ -219,6 +231,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_REVERSED")
@@ -226,6 +239,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR")
@@ -233,6 +247,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR_REVERSED")
@@ -240,6 +255,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED")
@@ -247,6 +263,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED_REVERSED")
@@ -254,6 +271,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED")
@@ -261,6 +279,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED_REVERSED")
@@ -268,6 +287,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
@@ -275,6 +295,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_REVERSED")
@@ -282,6 +303,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
@@ -289,6 +311,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
@@ -296,6 +319,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED")
@@ -303,6 +327,7 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
@@ -310,42 +335,49 @@ interface LibraryDao {
         sourceId: Long,
         starredFilter: Int,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME")
     fun playlistsByName(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME_REVERSED")
     fun playlistsByNameReversed(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED")
     fun playlistsByAdded(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED_REVERSED")
     fun playlistsByAddedReversed(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED")
     fun playlistsByUpdated(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED_REVERSED")
     fun playlistsByUpdatedReversed(
         sourceId: Long,
         search: String,
+        downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
     @Query(PLAYLIST_SONGS_SQL)

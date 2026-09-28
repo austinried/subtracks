@@ -62,7 +62,7 @@ class LibraryViewModel(
                 combine(listQueries.getValue(LibraryListTab.Albums), searches.getValue(LibraryListTab.Albums)) { query, search ->
                     query to search
                 }.flatMapLatest { (query, search) ->
-                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starred, search)
+                    libraryRepository.albums(sourceId, query.albumSort(), query.descending, query.starred, search, query.downloaded)
                 }
             }.cachedIn(viewModelScope)
 
@@ -73,7 +73,7 @@ class LibraryViewModel(
                 combine(listQueries.getValue(LibraryListTab.Artists), searches.getValue(LibraryListTab.Artists)) { query, search ->
                     query to search
                 }.flatMapLatest { (query, search) ->
-                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starred, search)
+                    libraryRepository.artists(sourceId, query.artistSort(), query.descending, query.starred, search, query.downloaded)
                 }
             }.cachedIn(viewModelScope)
 
@@ -84,7 +84,7 @@ class LibraryViewModel(
                 combine(listQueries.getValue(LibraryListTab.Playlists), searches.getValue(LibraryListTab.Playlists)) { query, search ->
                     query to search
                 }.flatMapLatest { (query, search) ->
-                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending, search)
+                    libraryRepository.playlists(sourceId, query.playlistSort(), query.descending, search, query.downloaded)
                 }
             }.cachedIn(viewModelScope)
 
