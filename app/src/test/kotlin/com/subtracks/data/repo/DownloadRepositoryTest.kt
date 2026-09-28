@@ -791,6 +791,31 @@ class DownloadRepositoryTest {
             assertEquals(ListDownloadStatus(total = 2, downloaded = 1), playlists["pl1"])
         }
 
+    @Test
+    fun theManagementViewReportsFileSizesAndDeletesAWholeList() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, bytes = 10, total = 10))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Queued))
+            }
+            writeFile(1, "s1", "audio")
+            writeFile(1, "s2", "partial")
+
+            val songs = runBlocking { repository.downloadedSongs(1).first() }
+            assertEquals(setOf("s1", "s2"), songs.map { it.songId }.toSet())
+            val completed = songs.first { it.songId == "s1" }
+            assertEquals("Album", completed.albumName)
+            assertEquals("Artist", completed.artistName)
+            assertEquals(5L, completed.size)
+
+            runBlocking { repository.removeList(1, DownloadList.Album, "al1") }
+
+            assertTrue(allRows().isEmpty())
+            assertFalse(file(1, "s1").exists())
+            assertFalse(file(1, "s2").exists())
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {

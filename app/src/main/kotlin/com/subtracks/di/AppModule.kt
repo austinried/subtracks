@@ -24,6 +24,7 @@ import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlayerConnection
 import com.subtracks.ui.RootViewModel
+import com.subtracks.ui.downloads.DownloadsViewModel
 import com.subtracks.ui.library.AlbumDetailViewModel
 import com.subtracks.ui.library.ArtistDetailViewModel
 import com.subtracks.ui.library.LibraryViewModel
@@ -71,6 +72,7 @@ fun appModule(
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { DownloadsViewModel(get(), get(), get()) }
     viewModel { AddSourceViewModel(get(), get()) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> ArtistDetailViewModel(get(), get(), get(), get(), params.get()) }

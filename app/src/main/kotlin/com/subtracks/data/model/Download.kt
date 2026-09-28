@@ -61,6 +61,17 @@ data class EntityDownloadStatus(
     fun toListStatus(): ListDownloadStatus = ListDownloadStatus(total, downloaded, downloading)
 }
 
+data class DownloadedSong(
+    val songId: String,
+    val title: String,
+    val albumId: String?,
+    val albumName: String?,
+    val artistId: String?,
+    val artistName: String?,
+    val status: DownloadStatus,
+    val size: Long = 0,
+)
+
 data class DownloadArtwork(
     val sourceId: Long,
     val albumId: String?,

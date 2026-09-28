@@ -4,6 +4,7 @@ import androidx.room3.Dao
 import androidx.room3.Query
 import androidx.room3.Upsert
 import com.subtracks.data.model.DownloadArtwork
+import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.model.EntityDownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
@@ -95,6 +96,17 @@ interface DownloadDao {
             "GROUP BY playlist_songs.playlistId",
     )
     fun playlistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
+
+    @Query(
+        "SELECT d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
+            "s.artistId AS artistId, ar.name AS artistName, d.status AS status, d.total AS size " +
+            "FROM song_downloads d " +
+            "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
+            "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +
+            "LEFT JOIN artists ar ON ar.sourceId = s.sourceId AND ar.id = s.artistId " +
+            "WHERE d.sourceId = :sourceId",
+    )
+    fun downloadedSongs(sourceId: Long): Flow<List<DownloadedSong>>
 
     @Query(
         "SELECT d.sourceId AS sourceId, s.albumId AS albumId, s.artistId AS artistId, " +

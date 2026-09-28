@@ -59,6 +59,7 @@ private enum class SettingsDialog { WifiQuality, MobileQuality, SyncConcurrency 
 @Composable
 fun SettingsRoute(
     onAddServer: () -> Unit,
+    onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -79,6 +80,7 @@ fun SettingsRoute(
         onMobileQualityChange = viewModel::setMobileQuality,
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
         onAddServer = onAddServer,
+        onOpenDownloads = onOpenDownloads,
         onBack = onBack,
     )
 }
@@ -97,6 +99,7 @@ fun SettingsScreen(
     onMobileQualityChange: (StreamQuality) -> Unit,
     onSyncConcurrencyChange: (Int) -> Unit,
     onAddServer: () -> Unit,
+    onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -177,6 +180,15 @@ fun SettingsScreen(
                     headlineContent = { Text("Sync concurrency") },
                     supportingContent = { Text(concurrencyLabel(syncConcurrency)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { SectionHeader("Downloads") }
+            item {
+                ListItem(
+                    headlineContent = { Text("Manage downloads") },
+                    supportingContent = { Text("Sizes and deletion") },
+                    modifier = Modifier.clickable(onClick = onOpenDownloads),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

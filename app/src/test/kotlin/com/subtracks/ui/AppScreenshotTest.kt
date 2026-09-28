@@ -313,6 +313,7 @@ class AppScreenshotTest {
                     onMobileQualityChange = {},
                     onSyncConcurrencyChange = {},
                     onAddServer = {},
+                    onOpenDownloads = {},
                     onBack = {},
                 )
             }

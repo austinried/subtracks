@@ -11,6 +11,7 @@ import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.coverArtKey
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -195,6 +197,13 @@ class DownloadRepository(
             DownloadList.Artist -> db.downloadDao().artistStatuses(sourceId)
         }.map { rows -> rows.associate { it.id to it.toListStatus() } }
 
+    fun downloadedSongs(sourceId: Long): Flow<List<DownloadedSong>> =
+        db
+            .downloadDao()
+            .downloadedSongs(sourceId)
+            .map { rows -> rows.map { it.copy(size = file(sourceId, it.songId).length()) } }
+            .flowOn(dispatcher)
+
     suspend fun downloadAll(
         sourceId: Long,
         list: DownloadList,
@@ -291,6 +300,14 @@ class DownloadRepository(
         rows.forEach { file(sourceId, it.songId).delete() }
         rows.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
         sweep(db.downloadDao().all())
+    }
+
+    suspend fun removeList(
+        sourceId: Long,
+        list: DownloadList,
+        refId: String,
+    ) = withContext(dispatcher) {
+        mutex.withLock { removeListRows(sourceId, list, refId) { true } }
     }
 
     suspend fun removeSource(sourceId: Long) =

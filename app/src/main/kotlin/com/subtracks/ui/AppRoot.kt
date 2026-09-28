@@ -65,6 +65,7 @@ import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.statusBarScrim
+import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.library.AlbumDetailRoute
 import com.subtracks.ui.library.ArtistDetailRoute
 import com.subtracks.ui.library.LibraryRoute
@@ -105,6 +106,7 @@ private const val SCRIM_FADE_START = 0.85f
 private object Routes {
     const val LIBRARY = "library"
     const val SETTINGS = "settings"
+    const val DOWNLOADS = "downloads"
     const val ADD_SERVER = "add-server"
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
     const val ARTIST_DETAIL = "artist/{artistId}?coverArt={coverArt}"
@@ -305,8 +307,12 @@ private fun MainNavigation() {
                     composable(Routes.SETTINGS) {
                         SettingsRoute(
                             onAddServer = { navController.navigate(Routes.ADD_SERVER) },
+                            onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
                             onBack = { navController.popBackStack() },
                         )
+                    }
+                    composable(Routes.DOWNLOADS) {
+                        DownloadsRoute(onBack = { navController.popBackStack() })
                     }
                     composable(
                         route = Routes.ALBUM_DETAIL,
