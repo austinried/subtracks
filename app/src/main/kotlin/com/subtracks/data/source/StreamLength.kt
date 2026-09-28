@@ -10,12 +10,18 @@ private const val LOSSLESS_CEILING_BPS = 9_216_000L
 private const val OVERHEAD_BYTES = 256L * 1024L
 private val LOSSLESS_FORMATS = setOf("flac", "wav", "alac")
 
+// Ogg-based streams seek by binary-searching for the last page from the end of the file, so a
+// length estimate that overshoots makes the player read past the real data and the server answers
+// 416 (POSITION_OUT_OF_RANGE). These get no estimate and seek only within what is buffered.
+private val END_SEEKING_FORMATS = setOf("opus", "ogg", "vorbis")
+
 fun declaredStreamLength(
     durationMs: Long?,
     quality: StreamQuality,
 ): Long? {
     if (durationMs == null || durationMs <= 0) return null
     if (!quality.transcodes) return null
+    if (quality.format?.lowercase() in END_SEEKING_FORMATS) return null
     val bps =
         when {
             quality.format?.lowercase() in LOSSLESS_FORMATS -> LOSSLESS_CEILING_BPS
