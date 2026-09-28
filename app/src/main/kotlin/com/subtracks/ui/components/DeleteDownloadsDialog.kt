@@ -27,7 +27,7 @@ fun DeleteDownloadsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Delete downloads") },
-        text = { Text("$name\nDeleting will free $freed") },
+        text = { Text("$name\n\nDeleting will free $freed") },
         confirmButton = {
             TextButton(
                 onClick = {
