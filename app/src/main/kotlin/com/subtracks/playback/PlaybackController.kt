@@ -146,6 +146,7 @@ class PlaybackController(
     private val offline: Boolean get() = sourceRepository.offline.value
     private var windowPositions = LongArray(0)
     private var windowFiltered = false
+    private var contextOverride: QueueContext? = null
 
     init {
         scope.launch {
@@ -154,7 +155,7 @@ class PlaybackController(
             }
         }
         scope.launch {
-            sourceRepository.offline.drop(1).collect { reloadForOffline() }
+            sourceRepository.offline.collect { reloadForOffline() }
         }
         scope.launch {
             sourceRepository.quality.drop(1).collect {
@@ -243,6 +244,7 @@ class PlaybackController(
         disableShuffle: Boolean = false,
     ) {
         if (!offline) {
+            contextOverride = null
             play(listOf(entry), start, disableShuffle)
             return
         }
@@ -252,12 +254,14 @@ class PlaybackController(
                 showMessage("Nothing downloaded for offline playback")
                 return@launch
             }
+            contextOverride = QueueContext(entry.kind, entry.sourceId, entry.refId)
             play(entries, start, disableShuffle = true)
         }
     }
 
     private fun shuffleContext(entry: QueueEntry) {
         if (!offline) {
+            contextOverride = null
             shufflePlay(listOf(entry))
             return
         }
@@ -267,6 +271,7 @@ class PlaybackController(
                 showMessage("Nothing downloaded for offline playback")
                 return@launch
             }
+            contextOverride = QueueContext(entry.kind, entry.sourceId, entry.refId)
             shufflePlay(entries)
         }
     }
@@ -1019,6 +1024,7 @@ class PlaybackController(
         windowEnd = -1
         windowPositions = LongArray(0)
         windowFiltered = false
+        contextOverride = null
         lastPosition = null
         lastEdit = null
         player?.run {
@@ -1387,6 +1393,7 @@ class PlaybackController(
     }
 
     private fun contextAt(position: Long?): QueueContext? {
+        contextOverride?.let { return it }
         val snapshot = snapshot ?: return null
         val play = position?.let { snapshot.anchorContextPlay(it) } ?: return null
         val entry = snapshot.locateContext(play)?.first ?: return null

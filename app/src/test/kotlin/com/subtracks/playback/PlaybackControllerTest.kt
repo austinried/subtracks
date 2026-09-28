@@ -73,7 +73,7 @@ class PlaybackControllerTest {
         networkMode = MutableStateFlow(NetworkMode.Wifi)
         sources = SourceRepository(db, OkHttpClient(), prefs, ArtworkStore(File(context.cacheDir, "art")), networkMode = networkMode)
         queues = QueueRepository(db)
-        downloadsDir = File(context.cacheDir, "downloads")
+        downloadsDir = File(context.cacheDir, "downloads-${System.nanoTime()}")
         downloads =
             DownloadRepository(
                 db,
@@ -2488,6 +2488,69 @@ class PlaybackControllerTest {
         setOnline()
 
         await { handle.operations.any { it.startsWith("setWindow") } }
+        assertEquals(
+            "s5",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun offlinePlayAlbumKeepsTheAlbumAsThePlayingContext() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+
+        await {
+            controller.state.value.context
+                ?.kind == QueueKind.Album
+        }
+        assertEquals(
+            QueueKind.Album,
+            controller.state.value.context
+                ?.kind,
+        )
+        assertEquals(
+            "al1",
+            controller.state.value.context
+                ?.refId,
+        )
+    }
+
+    @Test
+    fun offlineUpNextPlaysAndIsConsumed() {
+        seedAlbum(8, sourceId = 1)
+        seedSong("x1", "al2")
+        (1..8).filter { it != 2 }.forEach { markDownloaded(1, "s$it") }
+        markDownloaded(1, "x1")
+
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        setOffline()
+        await { handle.items.map { it.id } == listOf("s1", "s3", "s4", "s5", "s6", "s7", "s8") }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { queues.snapshot().upNextSize } == 1L }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        controller.next()
+        await { runBlocking { queues.snapshot().upNextSize } == 0L }
+        await {
+            controller.state.value.item
+                ?.id == "s5"
+        }
         assertEquals(
             "s5",
             controller.state.value.item
