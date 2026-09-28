@@ -12,6 +12,7 @@ data class AudioEncoding(
                 null -> null
                 "audio/mpeg" -> "MP3"
                 "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac" -> "AAC"
+                "audio/mp4a-latm", "audio/aac-adts", "audio/aac-latm" -> "AAC"
                 "audio/alac" -> "ALAC"
                 "audio/flac", "audio/x-flac" -> "FLAC"
                 "audio/ogg" -> "Ogg"

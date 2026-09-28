@@ -43,6 +43,8 @@ fun SongInfoDialog(
         encoding = localFile?.let { readAudioEncoding(it) }
     }
     val shown = if (download?.status == DownloadStatus.Completed) encoding else streamEncoding
+    val sizeBytes = localFile?.length()?.takeIf { it > 0 }
+    val averageBps = sizeBytes?.let { bytes -> song.duration?.takeIf { it > 0 }?.let { seconds -> (bytes * 8 / seconds).toInt() } }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Info") },
@@ -57,15 +59,14 @@ fun SongInfoDialog(
                 InfoRow("Starred", if (song.starred != null) "Yes" else null)
                 if (download != null) {
                     InfoRow("Download", downloadStatus(download.status))
-                    InfoRow("Size", localFile?.length()?.takeIf { it > 0 }?.let { Formatter.formatFileSize(context, it) })
+                    InfoRow("Size", sizeBytes?.let { Formatter.formatFileSize(context, it) })
                     download.error?.let { InfoRow("Error", it) }
                 }
-                shown?.let { enc ->
-                    InfoRow("Format", enc.format)
-                    InfoRow("Bitrate", enc.bitrate?.takeIf { it > 0 }?.let { "${it / 1000} kbps" })
-                    InfoRow("Sample rate", enc.sampleRate?.takeIf { it > 0 }?.let { "$it Hz" })
-                    InfoRow("Channels", enc.channels?.takeIf { it > 0 }?.toString())
-                }
+                InfoRow("Format", shown?.format)
+                // A decoder often reports no bitrate; the file's own size over the track length does.
+                InfoRow("Bitrate", (shown?.bitrate?.takeIf { it > 0 } ?: averageBps)?.let { "${it / 1000} kbps" })
+                InfoRow("Sample rate", shown?.sampleRate?.takeIf { it > 0 }?.let { "$it Hz" })
+                InfoRow("Channels", shown?.channels?.takeIf { it > 0 }?.toString())
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },

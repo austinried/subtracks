@@ -10,6 +10,7 @@ class AudioEncodingTest {
         assertEquals("MP3", AudioEncoding("audio/mpeg").format)
         assertEquals("FLAC", AudioEncoding("audio/flac").format)
         assertEquals("AAC", AudioEncoding("audio/mp4").format)
+        assertEquals("AAC", AudioEncoding("audio/mp4a-latm").format)
         assertEquals("Opus", AudioEncoding("audio/opus").format)
     }
 
