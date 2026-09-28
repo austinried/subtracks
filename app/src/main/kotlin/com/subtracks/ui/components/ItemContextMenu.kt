@@ -1,6 +1,7 @@
 package com.subtracks.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +32,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -351,22 +353,54 @@ private fun BulkDownloadItem(
     dismiss: (() -> Unit) -> Unit,
 ) {
     val bulk = actions.bulkDownload ?: return
-    for (action in (target.listDownload() ?: ListDownloadStatus()).actions()) {
-        when (action) {
-            BulkDownloadAction.Delete -> {
-                MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { bulk(target, action) } }
-            }
+    val offered = (target.listDownload() ?: ListDownloadStatus()).actions()
+    if (offered.size > 1) {
+        SplitDownloadItem(offered, target, bulk, dismiss)
+        return
+    }
+    offered.singleOrNull()?.let { action ->
+        MenuItem(bulkIcon(action), bulkLabel(action)) { dismiss { bulk(target, action) } }
+    }
+}
 
-            BulkDownloadAction.Cancel -> {
-                MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { bulk(target, action) } }
+@Composable
+private fun SplitDownloadItem(
+    offered: List<BulkDownloadAction>,
+    target: MenuTarget,
+    bulk: (MenuTarget, BulkDownloadAction) -> Unit,
+    dismiss: (() -> Unit) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth().height(56.dp)) {
+        offered.forEachIndexed { index, action ->
+            if (index > 0) {
+                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
-
-            BulkDownloadAction.Download -> {
-                MenuItem(Icons.Rounded.Download, "Download") { dismiss { bulk(target, action) } }
+            Row(
+                modifier = Modifier.weight(1f).clickable { dismiss { bulk(target, action) } },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(bulkIcon(action), contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(bulkLabel(action))
             }
         }
     }
 }
+
+private fun bulkIcon(action: BulkDownloadAction): ImageVector =
+    when (action) {
+        BulkDownloadAction.Download -> Icons.Rounded.Download
+        BulkDownloadAction.Cancel -> Icons.Rounded.Cancel
+        BulkDownloadAction.Delete -> Icons.Rounded.Delete
+    }
+
+private fun bulkLabel(action: BulkDownloadAction): String =
+    when (action) {
+        BulkDownloadAction.Download -> "Download"
+        BulkDownloadAction.Cancel -> "Cancel downloads"
+        BulkDownloadAction.Delete -> "Delete downloads"
+    }
 
 @Composable
 private fun StarItem(
