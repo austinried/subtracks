@@ -56,13 +56,13 @@ class HeroDownloadTest {
     }
 
     @Test
-    fun longPressingAnUndownloadedListDoesNothing() {
+    fun longPressingAnUndownloadedListNeverDeletes() {
         val actions = mutableListOf<BulkDownloadAction>()
         render(ListDownloadStatus(total = 3)) { actions += it }
 
         composeRule.onNodeWithContentDescription("Download").performTouchInput { longClick() }
 
-        assertTrue(actions.isEmpty())
+        assertTrue("reported $actions", BulkDownloadAction.Delete !in actions)
     }
 
     @Test

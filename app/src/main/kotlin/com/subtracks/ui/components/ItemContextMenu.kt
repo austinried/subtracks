@@ -332,22 +332,24 @@ private fun BulkDownloadItem(
     actions: ItemActions,
     dismiss: (() -> Unit) -> Unit,
 ) {
-    when ((download ?: ListDownloadStatus()).action()) {
-        BulkDownloadAction.Delete -> {
-            actions.deleteArtistDownload?.let { delete ->
-                MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { delete(artist) } }
+    for (action in (download ?: ListDownloadStatus()).actions()) {
+        when (action) {
+            BulkDownloadAction.Delete -> {
+                actions.deleteArtistDownload?.let { delete ->
+                    MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { delete(artist) } }
+                }
             }
-        }
 
-        BulkDownloadAction.Cancel -> {
-            actions.cancelArtistDownload?.let { cancel ->
-                MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { cancel(artist) } }
+            BulkDownloadAction.Cancel -> {
+                actions.cancelArtistDownload?.let { cancel ->
+                    MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { cancel(artist) } }
+                }
             }
-        }
 
-        BulkDownloadAction.Download -> {
-            actions.downloadArtist?.let { start ->
-                MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(artist) } }
+            BulkDownloadAction.Download -> {
+                actions.downloadArtist?.let { start ->
+                    MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(artist) } }
+                }
             }
         }
     }

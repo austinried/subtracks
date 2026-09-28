@@ -133,7 +133,10 @@ class DownloadRepository(
      * without an engine id, and the next tick promotes it.
      */
     private suspend fun promote(): List<SongDownload> {
-        val rows = db.downloadDao().all()
+        // Only the active source is handed over: another source's rows cannot resolve a URL here,
+        // and counting them would fill the window and stall the source actually in use.
+        val sourceId = sourceRepository.activeSourceIdOnce() ?: return emptyList()
+        val rows = db.downloadDao().all().filter { it.sourceId == sourceId }
         val free = IN_FLIGHT_LIMIT - rows.count { it.status.isActive && it.engineId != null }
         if (free <= 0) return emptyList()
         val promoted = ArrayList<SongDownload>()
@@ -338,6 +341,11 @@ class DownloadRepository(
             storeArtwork(sourceId, cover, thumbnail = false)
             storeArtwork(sourceId, cover, thumbnail = true)
         }
+        song?.artistId?.let { artistId ->
+            db.libraryDao().artistOnce(sourceId, artistId)?.let { artist ->
+                sourceRepository.refreshArtistInfo(sourceId, artistId, artist.name, force = false)
+            }
+        }
     }
 
     private suspend fun storeArtwork(
@@ -509,9 +517,7 @@ class DownloadRepository(
                         }
                     // Fetching artwork here would hold up the next tick, and with it the progress
                     // the queue is mirrored from.
-                    promoted.groupBy { it.sourceId }.forEach { (sourceId, rows) ->
-                        scope.launch { fetchArtworkSafely(sourceId, rows.map { it.songId }) }
-                    }
+                    scope.launch { warmArtwork(promoted) }
                 }
             }
     }

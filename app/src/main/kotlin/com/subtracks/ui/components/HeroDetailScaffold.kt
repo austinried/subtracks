@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -297,6 +298,8 @@ fun HeroHeader(
             modifier = controlsModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val action = downloadStatus.action()
+            val canDelete = BulkDownloadAction.Delete in downloadStatus.actions()
             Box(
                 modifier =
                     Modifier
@@ -304,18 +307,15 @@ fun HeroHeader(
                         .clip(CircleShape)
                         .combinedClickable(
                             enabled = hasSongs,
-                            onClick = { onDownloadAction(downloadStatus.action()) },
-                            onClickLabel = downloadActionLabel(downloadStatus.action()),
-                            onLongClick = {
-                                if (BulkDownloadAction.Delete in downloadStatus.actions()) {
-                                    onDownloadAction(BulkDownloadAction.Delete)
-                                }
-                            },
-                            onLongClickLabel = "Delete download",
+                            role = Role.Button,
+                            onClick = { onDownloadAction(action) },
+                            onClickLabel = downloadActionLabel(action),
+                            onLongClick = if (canDelete) ({ onDownloadAction(BulkDownloadAction.Delete) }) else null,
+                            onLongClickLabel = if (canDelete) "Delete download" else null,
                         ),
                 contentAlignment = Alignment.Center,
             ) {
-                when (downloadStatus.action()) {
+                when (action) {
                     BulkDownloadAction.Delete -> {
                         Icon(
                             imageVector = Icons.Rounded.DownloadDone,

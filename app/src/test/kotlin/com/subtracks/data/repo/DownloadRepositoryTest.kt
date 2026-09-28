@@ -699,6 +699,38 @@ class DownloadRepositoryTest {
             assertTrue(allRows().isEmpty())
         }
 
+    @Test
+    fun anotherSourcesWaitingRowsDoNotStarveTheActiveOne() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(2, "other", "http://other/", isActive = false, createdAt = 0))
+                db.libraryDao().upsertSongs(
+                    (1..8).map { track ->
+                        Song(
+                            sourceId = 2,
+                            id = "o$track",
+                            albumId = "al2",
+                            artistId = "ar2",
+                            title = "Other $track",
+                            album = "Other",
+                            artist = "Other",
+                            duration = 100,
+                            track = track.toLong(),
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        )
+                    },
+                )
+                (1..8).forEach { track -> db.downloadDao().upsert(SongDownload(2, "o$track", DownloadStatus.Queued)) }
+            }
+
+            runBlocking { repository.downloadAll(1, DownloadList.Album, "al1") }
+
+            assertEquals(listOf("s1", "s2"), requestedSongIds())
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {
