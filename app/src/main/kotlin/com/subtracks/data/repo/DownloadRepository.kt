@@ -341,11 +341,6 @@ class DownloadRepository(
             storeArtwork(sourceId, cover, thumbnail = false)
             storeArtwork(sourceId, cover, thumbnail = true)
         }
-        song?.artistId?.let { artistId ->
-            db.libraryDao().artistOnce(sourceId, artistId)?.let { artist ->
-                sourceRepository.refreshArtistInfo(sourceId, artistId, artist.name, force = false)
-            }
-        }
     }
 
     private suspend fun storeArtwork(
