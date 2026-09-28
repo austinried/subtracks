@@ -293,12 +293,20 @@ class DownloadRepository(
         list: DownloadList,
         refId: String,
         selecting: (SongDownload) -> Boolean,
-    ) {
-        val rows = rowsFor(sourceId, list, refId).filter(selecting)
+    ) = removeRows(rowsFor(sourceId, list, refId).filter(selecting))
+
+    suspend fun cancelActive() =
+        withContext(dispatcher) {
+            mutex.withLock { removeRows(db.downloadDao().all().filter { it.status.isActive }) }
+        }
+
+    private suspend fun removeRows(rows: List<SongDownload>) {
         if (rows.isEmpty()) return
         engine.cancel(rows.mapNotNull { it.engineId })
-        rows.forEach { file(sourceId, it.songId).delete() }
-        rows.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
+        rows.groupBy { it.sourceId }.forEach { (sourceId, group) ->
+            group.forEach { file(sourceId, it.songId).delete() }
+            group.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
+        }
         sweep(db.downloadDao().all())
     }
 

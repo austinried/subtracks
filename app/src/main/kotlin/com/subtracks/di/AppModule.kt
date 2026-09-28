@@ -9,6 +9,7 @@ import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.DownloadEngine
+import com.subtracks.data.download.DownloadNotifier
 import com.subtracks.data.download.OkHttpArtworkFetcher
 import com.subtracks.data.download.SystemDownloadEngine
 import com.subtracks.data.net.networkMode
@@ -67,6 +68,7 @@ fun appModule(
             showMessage = toast,
         ).also { it.start() }
     }
+    single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get()).also { it.start() } }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
     viewModel { RootViewModel(get()) }
