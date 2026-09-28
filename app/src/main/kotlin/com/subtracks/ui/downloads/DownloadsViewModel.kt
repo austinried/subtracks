@@ -2,6 +2,8 @@ package com.subtracks.ui.downloads
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.subtracks.data.media.readAudioEncoding
+import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.repo.DownloadRepository
@@ -76,6 +78,9 @@ class DownloadsViewModel(
             playbackController.refreshMediaItems()
         }
     }
+
+    suspend fun encoding(song: DownloadedSong): AudioEncoding? =
+        downloadRepository.localFile(song.sourceId, song.songId)?.let { readAudioEncoding(it) }
 }
 
 internal fun buildTree(songs: List<DownloadedSong>): DownloadTree =

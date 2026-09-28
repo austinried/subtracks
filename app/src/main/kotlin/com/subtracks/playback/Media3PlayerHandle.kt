@@ -3,12 +3,15 @@ package com.subtracks.playback
 import android.os.Bundle
 import android.util.Log
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.ClippingConfiguration
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 
@@ -37,6 +40,24 @@ class Media3PlayerHandle(
     override val currentPositionMs: Long get() = controller.currentPosition.coerceAtLeast(0)
 
     override val currentItem: QueueItem? get() = controller.currentMediaItem?.let(::toQueueItem)
+
+    @get:UnstableApi
+    override val audioEncoding: AudioEncoding?
+        get() =
+            controller.currentTracks.groups
+                .firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }
+                ?.let { group ->
+                    (0 until group.length)
+                        .firstOrNull { group.isTrackSelected(it) }
+                        ?.let(group::getTrackFormat)
+                }?.let { format ->
+                    AudioEncoding(
+                        mimeType = format.sampleMimeType,
+                        bitrate = format.bitrate.takeIf { it != Format.NO_VALUE },
+                        sampleRate = format.sampleRate.takeIf { it != Format.NO_VALUE },
+                        channels = format.channelCount.takeIf { it != Format.NO_VALUE },
+                    )
+                }
 
     override fun setWindow(
         items: List<QueueItem>,

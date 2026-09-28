@@ -1,5 +1,7 @@
 package com.subtracks.playback
 
+import com.subtracks.data.model.AudioEncoding
+
 interface PlayerHandle {
     val itemCount: Int
     val currentIndex: Int
@@ -11,6 +13,9 @@ interface PlayerHandle {
     val durationMs: Long
     val currentPositionMs: Long
     val currentItem: QueueItem?
+
+    /** The encoding of the audio now being rendered, when the player knows it. */
+    val audioEncoding: AudioEncoding? get() = null
 
     fun setWindow(
         items: List<QueueItem>,

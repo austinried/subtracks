@@ -54,6 +54,7 @@ class DownloadTreeTest {
         size: Long,
     ) = DownloadedSong(
         songId = id,
+        sourceId = 1,
         title = title,
         albumId = albumId,
         albumName = albumName,

@@ -104,7 +104,7 @@ interface DownloadDao {
     fun playlistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 
     @Query(
-        "SELECT d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
+        "SELECT d.sourceId AS sourceId, d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
             "al.artistId AS artistId, ar.name AS artistName, d.status AS status, d.total AS size " +
             "FROM song_downloads d " +
             "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +

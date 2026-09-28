@@ -58,12 +58,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.subtracks.data.model.Song
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.SongInfoDialog
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.library.AlbumDetailRoute
@@ -175,7 +178,9 @@ private fun MainNavigation() {
     val tabBarVisible = currentRoute == Routes.LIBRARY
     val playbackController = koinInject<PlaybackController>()
     val libraryRepository = koinInject<LibraryRepository>()
+    val downloadRepository = koinInject<DownloadRepository>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
+    val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
@@ -184,6 +189,7 @@ private fun MainNavigation() {
     var settleJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val contextMenuHost = remember { ContextMenuHost() }
+    var infoSong by remember { mutableStateOf<Song?>(null) }
 
     fun settleNowPlaying(open: Boolean) {
         if (open) {
@@ -502,7 +508,22 @@ private fun MainNavigation() {
             }
 
             contextMenuHost.target?.let { target ->
-                ItemContextMenu(target = target, actions = contextMenuHost.actions, onDismiss = { contextMenuHost.dismiss() })
+                ItemContextMenu(
+                    target = target,
+                    actions = contextMenuHost.actions,
+                    onDismiss = { contextMenuHost.dismiss() },
+                    onInfo = { infoSong = it },
+                )
+            }
+
+            infoSong?.let { song ->
+                SongInfoDialog(
+                    song = song,
+                    download = downloads[song.id],
+                    localFile = downloadRepository.localFile(song.id),
+                    streamEncoding = playbackController.currentAudioEncoding().takeIf { playback.item?.id == song.id },
+                    onDismiss = { infoSong = null },
+                )
             }
         }
     }

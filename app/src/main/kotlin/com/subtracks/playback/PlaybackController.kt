@@ -1,5 +1,6 @@
 package com.subtracks.playback
 
+import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
@@ -117,6 +118,8 @@ class PlaybackController(
 
     private val _positionMs = MutableStateFlow(0L)
     val positionMs: StateFlow<Long> = _positionMs
+
+    fun currentAudioEncoding(): AudioEncoding? = player?.audioEncoding
 
     private var player: PlayerHandle? = null
     private var connecting = false

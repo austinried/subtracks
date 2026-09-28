@@ -93,12 +93,17 @@ class DownloadRepository(
         if (started) loaded.await()
     }
 
-    fun localUri(songId: String): String? =
+    fun localFile(songId: String): File? =
         statesFlow.value[songId]
             ?.takeIf { it.status == DownloadStatus.Completed }
-            ?.let { file(it.sourceId, it.songId) }
-            ?.takeIf { it.exists() }
-            ?.let { Uri.fromFile(it).toString() }
+            ?.let { localFile(it.sourceId, it.songId) }
+
+    fun localFile(
+        sourceId: Long,
+        songId: String,
+    ): File? = file(sourceId, songId).takeIf { it.exists() }
+
+    fun localUri(songId: String): String? = localFile(songId)?.let { Uri.fromFile(it).toString() }
 
     suspend fun download(
         sourceId: Long,

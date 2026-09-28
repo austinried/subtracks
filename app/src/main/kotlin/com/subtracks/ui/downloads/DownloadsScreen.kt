@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.DownloadedSong
@@ -68,6 +70,7 @@ fun DownloadsRoute(
     var pending by remember { mutableStateOf<DownloadDeleteTarget?>(null) }
     DownloadsScreen(
         tree = tree,
+        loadEncoding = viewModel::encoding,
         onBack = onBack,
         onDelete = { target ->
             when (target) {
@@ -105,6 +108,7 @@ fun DownloadsRoute(
 @Composable
 fun DownloadsScreen(
     tree: DownloadTree,
+    loadEncoding: suspend (DownloadedSong) -> AudioEncoding?,
     onBack: () -> Unit,
     onDelete: (DownloadDeleteTarget) -> Unit,
     modifier: Modifier = Modifier,
@@ -177,7 +181,7 @@ fun DownloadsScreen(
                         }
                         if (albumKey in expanded) {
                             items(album.songs, key = { "$albumKey:${it.songId}" }) { song ->
-                                SongRow(song) { onDelete(DownloadDeleteTarget.Songs(listOf(song.songId))) }
+                                SongRow(song, loadEncoding) { onDelete(DownloadDeleteTarget.Songs(listOf(song.songId))) }
                             }
                         }
                     }
@@ -239,11 +243,16 @@ private fun NodeRow(
 @Composable
 private fun SongRow(
     song: DownloadedSong,
+    loadEncoding: suspend (DownloadedSong) -> AudioEncoding?,
     onDelete: () -> Unit,
 ) {
+    var encoding by remember(song.songId) { mutableStateOf<AudioEncoding?>(null) }
+    LaunchedEffect(song.songId, song.status) {
+        encoding = if (song.status == DownloadStatus.Completed) loadEncoding(song) else null
+    }
     ListItem(
         headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(statusLabel(song), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = { Text(songSubtitle(song, encoding), maxLines = 1, overflow = TextOverflow.Ellipsis) },
         trailingContent = {
             IconButton(onClick = onDelete) {
                 Icon(Icons.Rounded.Delete, contentDescription = "Delete download")
@@ -255,13 +264,31 @@ private fun SongRow(
 }
 
 @Composable
-private fun statusLabel(song: DownloadedSong): String {
+private fun songSubtitle(
+    song: DownloadedSong,
+    encoding: AudioEncoding?,
+): String {
     val size = size(song.size)
     return when (song.status) {
-        DownloadStatus.Completed -> size
-        DownloadStatus.Queued -> "Queued · $size"
-        DownloadStatus.Running -> "Downloading · $size"
-        DownloadStatus.Failed -> "Failed · $size"
+        DownloadStatus.Completed -> {
+            listOfNotNull(
+                encoding?.format,
+                encoding?.bitrate?.takeIf { it > 0 }?.let { "${it / 1000} kbps" },
+                size,
+            ).joinToString(" · ")
+        }
+
+        DownloadStatus.Queued -> {
+            "Queued · $size"
+        }
+
+        DownloadStatus.Running -> {
+            "Downloading · $size"
+        }
+
+        DownloadStatus.Failed -> {
+            "Failed · $size"
+        }
     }
 }
 

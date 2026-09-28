@@ -63,6 +63,7 @@ data class EntityDownloadStatus(
 
 data class DownloadedSong(
     val songId: String,
+    val sourceId: Long,
     val title: String,
     val albumId: String?,
     val albumName: String?,

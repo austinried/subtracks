@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Star
@@ -164,6 +165,7 @@ fun ItemContextMenu(
     target: MenuTarget,
     actions: ItemActions,
     onDismiss: () -> Unit,
+    onInfo: ((SongModel) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -218,6 +220,9 @@ fun ItemContextMenu(
                             dismiss { view(artistId) }
                         }
                     }
+                }
+                onInfo?.let { info ->
+                    MenuItem(Icons.Rounded.Info, "Info") { dismiss { info(target.song) } }
                 }
             }
 
