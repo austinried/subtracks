@@ -12,8 +12,10 @@ data class AudioEncoding(
                 null -> null
                 "audio/mpeg" -> "MP3"
                 "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac" -> "AAC"
+                "audio/alac" -> "ALAC"
                 "audio/flac", "audio/x-flac" -> "FLAC"
                 "audio/ogg" -> "Ogg"
+                "audio/vorbis" -> "Vorbis"
                 "audio/opus" -> "Opus"
                 "audio/webm" -> "WebM"
                 "audio/wav", "audio/x-wav" -> "WAV"

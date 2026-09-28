@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -79,9 +80,9 @@ private fun InfoRow(
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(end = 16.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.width(INFO_LABEL_WIDTH),
         )
         Text(
             text = value,
@@ -90,6 +91,8 @@ private fun InfoRow(
         )
     }
 }
+
+private val INFO_LABEL_WIDTH = 104.dp
 
 private fun downloadStatus(status: DownloadStatus): String =
     when (status) {

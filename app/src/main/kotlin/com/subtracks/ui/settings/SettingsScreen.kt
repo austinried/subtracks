@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -210,7 +211,16 @@ fun SettingsScreen(
                     headlineContent = { Text("Download over mobile data") },
                     supportingContent = { Text(if (downloadOverMetered) "Wi-Fi and mobile" else "Wi-Fi only") },
                     trailingContent = {
-                        Switch(checked = downloadOverMetered, onCheckedChange = onDownloadOverMeteredChange)
+                        Switch(
+                            checked = downloadOverMetered,
+                            onCheckedChange = onDownloadOverMeteredChange,
+                            colors =
+                                SwitchDefaults.colors(
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                                ),
+                        )
                     },
                     modifier = Modifier.clickable { onDownloadOverMeteredChange(!downloadOverMetered) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -219,7 +229,6 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text("Manage downloads") },
-                    supportingContent = { Text("Space and deletion") },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
@@ -270,7 +279,7 @@ fun SettingsScreen(
     }
 }
 
-private fun qualityLabel(quality: StreamQuality): String = "${bitrateLabel(quality.maxBitrate)} · ${quality.format ?: "Server default"}"
+private fun qualityLabel(quality: StreamQuality): String = "${quality.format ?: "Server default"} · ${bitrateLabel(quality.maxBitrate)}"
 
 private fun bitrateLabel(kbps: Int): String = if (kbps == 0) "Unlimited" else "${kbps}kbps"
 
