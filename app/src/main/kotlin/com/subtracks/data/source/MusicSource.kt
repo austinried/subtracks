@@ -20,6 +20,12 @@ interface MusicSource {
         starred: Boolean,
     )
 
+    suspend fun scrobble(
+        songId: String,
+        submission: Boolean,
+        time: Long? = null,
+    )
+
     fun artists(): Flow<List<Artist>>
 
     fun albums(): Flow<List<Album>>

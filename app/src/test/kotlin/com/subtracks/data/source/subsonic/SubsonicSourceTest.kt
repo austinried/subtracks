@@ -15,6 +15,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -544,6 +545,33 @@ class SubsonicSourceTest {
         assertTrue(uri, uri.contains("format=opus"))
         assertFalse(uri, uri.contains("estimateContentLength"))
     }
+
+    @Test
+    fun scrobbleSubmitsTheSongWithItsTime() =
+        runBlocking {
+            server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\"/>"))
+
+            SubsonicSource(1, client()).scrobble("s1", submission = true, time = 1_700_000_000_000L)
+
+            val url = server.takeRequest().requestUrl!!
+            assertEquals("/rest/scrobble.view", url.encodedPath)
+            assertEquals("s1", url.queryParameter("id"))
+            assertEquals("true", url.queryParameter("submission"))
+            assertEquals("1700000000000", url.queryParameter("time"))
+        }
+
+    @Test
+    fun scrobbleSendsNowPlayingWithoutATime() =
+        runBlocking {
+            server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\"/>"))
+
+            SubsonicSource(1, client()).scrobble("s1", submission = false)
+
+            val url = server.takeRequest().requestUrl!!
+            assertEquals("s1", url.queryParameter("id"))
+            assertEquals("false", url.queryParameter("submission"))
+            assertNull(url.queryParameter("time"))
+        }
 
     private fun client() =
         SubsonicClient(

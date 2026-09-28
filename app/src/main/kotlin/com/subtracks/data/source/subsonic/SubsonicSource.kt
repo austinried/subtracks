@@ -63,6 +63,23 @@ class SubsonicSource(
         }
     }
 
+    override suspend fun scrobble(
+        songId: String,
+        submission: Boolean,
+        time: Long?,
+    ) {
+        withContext(Dispatchers.IO) {
+            client.check(
+                "scrobble",
+                buildMap {
+                    put("id", songId)
+                    put("submission", submission.toString())
+                    time?.let { put("time", it.toString()) }
+                },
+            )
+        }
+    }
+
     override fun artists(): Flow<List<Artist>> =
         entityBatches(
             method = "getArtists",

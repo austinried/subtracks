@@ -24,6 +24,7 @@ import com.subtracks.data.sync.SyncManager
 import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlayerConnection
+import com.subtracks.playback.Scrobbler
 import com.subtracks.ui.RootViewModel
 import com.subtracks.ui.downloads.DownloadsViewModel
 import com.subtracks.ui.library.AlbumDetailViewModel
@@ -71,6 +72,12 @@ fun appModule(
     single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get()).also { it.start() } }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
+    single(createdAtStart = true) {
+        val playback = get<PlaybackController>()
+        Scrobbler(source = { get<SourceRepository>().activeMusicSource() }).also {
+            it.attach(playback.state, playback.positionMs)
+        }
+    }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get()) }

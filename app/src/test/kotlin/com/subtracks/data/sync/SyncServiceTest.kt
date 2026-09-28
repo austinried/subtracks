@@ -730,6 +730,12 @@ private class FakeMusicSource(
         starred: Boolean,
     ) = Unit
 
+    override suspend fun scrobble(
+        songId: String,
+        submission: Boolean,
+        time: Long?,
+    ) = Unit
+
     override fun artists(): Flow<List<Artist>> = batches(artists)
 
     override fun albums(): Flow<List<Album>> = batches(albums)
