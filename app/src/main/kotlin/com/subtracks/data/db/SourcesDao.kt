@@ -20,9 +20,6 @@ interface SourcesDao {
     @Query("SELECT * FROM sources WHERE id = :id")
     suspend fun sourceOnce(id: Long): Source?
 
-    @Query("SELECT COUNT(*) FROM sources")
-    suspend fun sourceCount(): Int
-
     @Query("SELECT id FROM sources WHERE isActive = 1 LIMIT 1")
     fun activeSourceId(): Flow<Long?>
 
@@ -31,9 +28,6 @@ interface SourcesDao {
 
     @Query("SELECT id FROM sources WHERE isActive = 1 LIMIT 1")
     suspend fun activeSourceIdOnce(): Long?
-
-    @Query("SELECT id FROM sources ORDER BY createdAt LIMIT 1")
-    suspend fun firstSourceId(): Long?
 
     @Insert
     suspend fun insertSource(source: Source): Long

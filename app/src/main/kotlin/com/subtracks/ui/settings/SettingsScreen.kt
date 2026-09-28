@@ -19,8 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -140,9 +140,11 @@ fun SettingsScreen(
                         )
                     },
                     trailingContent = {
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                        IconButton(onClick = { onEditServer(source.id) }) {
+                            Icon(Icons.Rounded.Edit, contentDescription = "Edit ${source.name}")
+                        }
                     },
-                    modifier = Modifier.clickable(onClickLabel = "Edit ${source.name}") { onEditServer(source.id) },
+                    modifier = Modifier.clickable(onClickLabel = "Use ${source.name}") { onSelectSource(source.id) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

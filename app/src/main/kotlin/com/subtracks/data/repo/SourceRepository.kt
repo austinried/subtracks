@@ -175,13 +175,8 @@ class SourceRepository(
     }
 
     suspend fun deleteSource(id: Long): Boolean {
-        val dao = db.sourcesDao()
-        if (dao.sourceCount() <= 1) return false
-        val wasActive = dao.activeSourceIdOnce() == id
-        dao.deleteSource(id)
-        if (wasActive) {
-            dao.firstSourceId()?.let { dao.setActiveSource(it) }
-        }
+        if (db.sourcesDao().activeSourceIdOnce() == id) return false
+        db.sourcesDao().deleteSource(id)
         return true
     }
 

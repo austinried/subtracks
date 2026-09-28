@@ -173,7 +173,7 @@ fun AddSourceScreen(
             )
             if (state.isEditing && !state.canDelete) {
                 Text(
-                    "This is the only server. Add another before you can remove this one.",
+                    "This is the active server. Switch to another server before deleting it.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

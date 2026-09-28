@@ -59,7 +59,8 @@ class AddSourceViewModel(
         }
         viewModelScope.launch {
             sourceRepository.sources().collect { sources ->
-                _state.update { it.copy(canDelete = sources.size > 1) }
+                val active = sources.any { it.id == sourceId && it.isActive }
+                _state.update { it.copy(canDelete = !active) }
             }
         }
     }
@@ -145,7 +146,7 @@ class AddSourceViewModel(
         viewModelScope.launch {
             if (!sourceRepository.deleteSource(id)) {
                 _state.update {
-                    it.copy(busy = false, message = "At least one server is required", isError = true)
+                    it.copy(busy = false, message = "The active server can't be deleted; switch to another server first", isError = true)
                 }
                 return@launch
             }

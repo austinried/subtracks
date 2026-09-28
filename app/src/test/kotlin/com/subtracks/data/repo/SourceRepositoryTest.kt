@@ -105,19 +105,21 @@ class SourceRepositoryTest {
         }
 
     @Test
-    fun theLastSourceCannotBeDeleted() =
+    fun theActiveSourceCannotBeDeleted() =
         runTest {
-            repository.addSource("only", "http://a.example", "u", "p", true)
-            val id = repository.activeSourceId().first()!!
-
-            assertFalse("the last source must survive deletion", repository.deleteSource(id))
-            assertEquals(1, repository.sources().first().size)
-
+            repository.addSource("first", "http://a.example", "u", "p", true)
+            val firstId = repository.activeSourceId().first()!!
             repository.addSource("second", "http://b.example", "u", "p", true)
+            val secondId = repository.activeSourceId().first()!!
 
-            assertTrue(repository.deleteSource(id))
-            assertEquals(listOf("second"), repository.sources().first().map { it.name })
-            assertEquals("second", repository.activeConfig().first()?.name)
+            assertFalse("the active source must survive deletion", repository.deleteSource(secondId))
+            assertEquals(2, repository.sources().first().size)
+
+            repository.selectSource(firstId)
+
+            assertTrue(repository.deleteSource(secondId))
+            assertEquals(listOf("first"), repository.sources().first().map { it.name })
+            assertEquals("first", repository.activeConfig().first()?.name)
         }
 
     @Test
