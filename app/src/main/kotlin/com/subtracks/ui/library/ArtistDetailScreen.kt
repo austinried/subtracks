@@ -402,6 +402,7 @@ fun ArtistDetailScreen(
                                 ListDownloadIndicator(
                                     status = albumDownloads[album.id],
                                     modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+                                    scrim = true,
                                 )
                             }
                             Text(

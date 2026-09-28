@@ -109,6 +109,7 @@ fun AlbumsContent(
                             ListDownloadIndicator(
                                 status = downloadStatuses[album.id],
                                 modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+                                scrim = true,
                             )
                         }
                     }
