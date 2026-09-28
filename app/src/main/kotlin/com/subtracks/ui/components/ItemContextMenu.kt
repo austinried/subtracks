@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.QueueKind
@@ -77,6 +78,7 @@ sealed interface MenuTarget {
     data class Album(
         val album: AlbumModel,
         override val coverArt: CoverArtRef? = null,
+        val download: ListDownloadStatus? = null,
     ) : MenuTarget {
         override val title: String get() = album.name
 
@@ -96,6 +98,7 @@ sealed interface MenuTarget {
     data class Playlist(
         val playlist: PlaylistModel,
         override val coverArt: CoverArtRef? = null,
+        val download: ListDownloadStatus? = null,
     ) : MenuTarget {
         override val title: String get() = playlist.name
 
@@ -117,6 +120,22 @@ fun MenuTarget.queueRef(): QueueRef? =
         is MenuTarget.Artist -> null
     }
 
+fun MenuTarget.bulkRef(): Pair<DownloadList, String>? =
+    when (this) {
+        is MenuTarget.Album -> DownloadList.Album to album.id
+        is MenuTarget.Playlist -> DownloadList.Playlist to playlist.id
+        is MenuTarget.Artist -> DownloadList.Artist to artist.id
+        is MenuTarget.Song -> null
+    }
+
+fun MenuTarget.listDownload(): ListDownloadStatus? =
+    when (this) {
+        is MenuTarget.Album -> download
+        is MenuTarget.Playlist -> download
+        is MenuTarget.Artist -> download
+        is MenuTarget.Song -> null
+    }
+
 class ItemActions(
     val playSong: ((SongModel) -> Unit)? = null,
     val playAlbum: (AlbumModel) -> Unit = {},
@@ -128,9 +147,7 @@ class ItemActions(
     val download: ((SongModel) -> Unit)? = null,
     val cancelDownload: ((SongModel) -> Unit)? = null,
     val deleteDownload: ((SongModel) -> Unit)? = null,
-    val downloadArtist: ((ArtistModel) -> Unit)? = null,
-    val cancelArtistDownload: ((ArtistModel) -> Unit)? = null,
-    val deleteArtistDownload: ((ArtistModel) -> Unit)? = null,
+    val bulkDownload: ((MenuTarget, BulkDownloadAction) -> Unit)? = null,
     val setStar: (StarType, String, Boolean) -> Unit = { _, _, _ -> },
     val viewAlbum: ((String) -> Unit)? = null,
     val viewArtist: ((String) -> Unit)? = null,
@@ -226,6 +243,7 @@ fun ItemContextMenu(
                 MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playAlbum(target.album) } }
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shuffleAlbum(target.album) } }
                 queueItems()
+                BulkDownloadItem(target, actions, ::dismiss)
                 StarItem(
                     current = target.album.starred,
                     onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
@@ -241,7 +259,7 @@ fun ItemContextMenu(
             }
 
             is MenuTarget.Artist -> {
-                BulkDownloadItem(target.download, target.artist, actions, ::dismiss)
+                BulkDownloadItem(target, actions, ::dismiss)
                 StarItem(
                     current = target.artist.starred,
                     onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
@@ -253,6 +271,7 @@ fun ItemContextMenu(
                 MenuItem(Icons.Rounded.PlayArrow, "Play") { dismiss { actions.playPlaylist(target.playlist) } }
                 MenuItem(Icons.Rounded.Shuffle, "Shuffle") { dismiss { actions.shufflePlaylist(target.playlist) } }
                 queueItems()
+                BulkDownloadItem(target, actions, ::dismiss)
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -327,29 +346,23 @@ private fun DownloadItem(
 
 @Composable
 private fun BulkDownloadItem(
-    download: ListDownloadStatus?,
-    artist: ArtistModel,
+    target: MenuTarget,
     actions: ItemActions,
     dismiss: (() -> Unit) -> Unit,
 ) {
-    for (action in (download ?: ListDownloadStatus()).actions()) {
+    val bulk = actions.bulkDownload ?: return
+    for (action in (target.listDownload() ?: ListDownloadStatus()).actions()) {
         when (action) {
             BulkDownloadAction.Delete -> {
-                actions.deleteArtistDownload?.let { delete ->
-                    MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { delete(artist) } }
-                }
+                MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { bulk(target, action) } }
             }
 
             BulkDownloadAction.Cancel -> {
-                actions.cancelArtistDownload?.let { cancel ->
-                    MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { cancel(artist) } }
-                }
+                MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { bulk(target, action) } }
             }
 
             BulkDownloadAction.Download -> {
-                actions.downloadArtist?.let { start ->
-                    MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(artist) } }
-                }
+                MenuItem(Icons.Rounded.Download, "Download") { dismiss { bulk(target, action) } }
             }
         }
     }

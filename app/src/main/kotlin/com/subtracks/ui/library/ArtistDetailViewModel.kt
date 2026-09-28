@@ -44,11 +44,23 @@ class ArtistDetailViewModel(
             .flatMapLatest { downloadRepository.status(it, DownloadList.Artist, artistId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListDownloadStatus())
 
-    suspend fun downloadedBytes(): Long = downloadRepository.downloadedBytes(sourceId.first(), DownloadList.Artist, artistId)
+    val albumDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+        sourceId
+            .flatMapLatest { downloadRepository.statuses(it, DownloadList.Album) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    fun onDownloadAction(action: BulkDownloadAction) {
+    suspend fun downloadedBytes(
+        list: DownloadList,
+        refId: String,
+    ): Long = downloadRepository.downloadedBytes(sourceId.first(), list, refId)
+
+    fun onDownloadAction(
+        list: DownloadList,
+        refId: String,
+        action: BulkDownloadAction,
+    ) {
         viewModelScope.launch {
-            downloadRepository.applyAction(sourceId.first(), DownloadList.Artist, artistId, action)
+            downloadRepository.applyAction(sourceId.first(), list, refId, action)
             if (action == BulkDownloadAction.Delete) playbackController.refreshMediaItems()
         }
     }

@@ -7,6 +7,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.subtracks.data.model.DownloadList
+
+data class PendingDownloadDelete(
+    val name: String,
+    val list: DownloadList,
+    val refId: String,
+    val bytes: Long,
+)
 
 @Composable
 fun DeleteDownloadsDialog(

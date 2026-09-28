@@ -6,7 +6,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.DownloadList
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
@@ -14,6 +17,7 @@ import com.subtracks.data.prefs.LibraryListTab
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.UserPreferences
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
@@ -26,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -38,6 +43,7 @@ class LibraryViewModel(
     private val syncManager: SyncManager,
     private val playbackController: PlaybackController,
     private val userPreferences: UserPreferences,
+    private val downloadRepository: DownloadRepository,
 ) : ViewModel() {
     private val listQueries: Map<LibraryListTab, StateFlow<ListQuery>> =
         LibraryListTab.entries.associateWith { tab ->
@@ -86,6 +92,39 @@ class LibraryViewModel(
         syncManager.status
             .map { it == SyncStatus.Running }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    private val activeSourceId = libraryRepository.activeSourceId.filterNotNull()
+
+    val albumDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+        activeSourceId
+            .flatMapLatest { downloadRepository.statuses(it, DownloadList.Album) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val artistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+        activeSourceId
+            .flatMapLatest { downloadRepository.statuses(it, DownloadList.Artist) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val playlistDownloads: StateFlow<Map<String, ListDownloadStatus>> =
+        activeSourceId
+            .flatMapLatest { downloadRepository.statuses(it, DownloadList.Playlist) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    suspend fun downloadedBytes(
+        list: DownloadList,
+        refId: String,
+    ): Long = downloadRepository.downloadedBytes(activeSourceId.first(), list, refId)
+
+    fun onDownloadAction(
+        list: DownloadList,
+        refId: String,
+        action: BulkDownloadAction,
+    ) {
+        viewModelScope.launch {
+            downloadRepository.applyAction(activeSourceId.first(), list, refId, action)
+            if (action == BulkDownloadAction.Delete) playbackController.refreshMediaItems()
+        }
+    }
 
     fun listQuery(tab: LibraryListTab): StateFlow<ListQuery> = listQueries.getValue(tab)
 

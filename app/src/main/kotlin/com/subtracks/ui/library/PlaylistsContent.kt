@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,10 +24,12 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
+import com.subtracks.ui.components.ListDownloadIndicator
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
@@ -44,6 +47,7 @@ fun PlaylistsContent(
     resetKey: Any? = null,
     topInset: Dp = 0.dp,
     onSync: () -> Unit = {},
+    downloadStatuses: Map<String, ListDownloadStatus> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -93,10 +97,17 @@ fun PlaylistsContent(
                                     modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
                                 )
                             },
+                            trailingContent = {
+                                ListDownloadIndicator(downloadStatuses[playlist.id], Modifier.padding(end = 8.dp))
+                            },
                             modifier =
                                 Modifier.combinedClickable(
                                     onClick = { onPlaylistClick(playlist) },
-                                    onLongClick = { onLongClick(MenuTarget.Playlist(playlist, coverArt(playlist.coverArt, true))) },
+                                    onLongClick = {
+                                        onLongClick(
+                                            MenuTarget.Playlist(playlist, coverArt(playlist.coverArt, true), downloadStatuses[playlist.id]),
+                                        )
+                                    },
                                 ),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )

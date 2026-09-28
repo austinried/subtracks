@@ -78,13 +78,17 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.ListDownloadIndicator
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.PendingDownloadDelete
+import com.subtracks.ui.components.bulkRef
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
@@ -144,8 +148,9 @@ fun ArtistDetailRoute(
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
+    val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    var pendingDelete by remember { mutableStateOf<Long?>(null) }
+    var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
@@ -153,9 +158,18 @@ fun ArtistDetailRoute(
             shuffleAlbum = { viewModel.shuffleAlbum(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            downloadArtist = { viewModel.onDownloadAction(BulkDownloadAction.Download) },
-            cancelArtistDownload = { viewModel.onDownloadAction(BulkDownloadAction.Cancel) },
-            deleteArtistDownload = { scope.launch { pendingDelete = viewModel.downloadedBytes() } },
+            bulkDownload = { target, action ->
+                target.bulkRef()?.let { (list, refId) ->
+                    if (action == BulkDownloadAction.Delete) {
+                        scope.launch {
+                            pendingDelete =
+                                PendingDownloadDelete(target.title, list, refId, viewModel.downloadedBytes(list, refId))
+                        }
+                    } else {
+                        viewModel.onDownloadAction(list, refId, action)
+                    }
+                }
+            },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )
@@ -168,17 +182,18 @@ fun ArtistDetailRoute(
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
+        albumDownloads = albumDownloads,
         onAlbumLongClick = { contextMenuHost?.show(it, actions) },
         onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art, downloadStatus), actions) } },
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
     )
 
-    pendingDelete?.let { bytes ->
+    pendingDelete?.let { pending ->
         DeleteDownloadsDialog(
-            name = artist?.name.orEmpty(),
-            bytes = bytes,
-            onConfirm = { viewModel.onDownloadAction(BulkDownloadAction.Delete) },
+            name = pending.name,
+            bytes = pending.bytes,
+            onConfirm = { viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete) },
             onDismiss = { pendingDelete = null },
         )
     }
@@ -195,6 +210,7 @@ fun ArtistDetailScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
+    albumDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     onAlbumLongClick: (MenuTarget) -> Unit = {},
     onMore: () -> Unit = {},
     starred: Boolean = false,
@@ -372,16 +388,24 @@ fun ArtistDetailScreen(
                                         end = if (index % 2 == 1) 16.dp else 0.dp,
                                     ).combinedClickable(
                                         onClick = { onAlbumClick(album) },
-                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, thumbnail)) },
+                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, thumbnail, albumDownloads[album.id])) },
                                     ).onSizeChanged { albumHeightPx = it.height.toFloat() },
                         ) {
-                            CoverArt(
-                                ref = art,
-                                name = album.name,
-                                thumbnailRef = thumbnail,
-                                showPlaceholder = art == null,
+                            Box(
                                 modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                            )
+                            ) {
+                                CoverArt(
+                                    ref = art,
+                                    name = album.name,
+                                    thumbnailRef = thumbnail,
+                                    showPlaceholder = art == null,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                ListDownloadIndicator(
+                                    status = albumDownloads[album.id],
+                                    modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+                                )
+                            }
                             Text(
                                 text = album.name,
                                 style = MaterialTheme.typography.bodyMedium,

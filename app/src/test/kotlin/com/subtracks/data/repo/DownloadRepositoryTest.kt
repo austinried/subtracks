@@ -772,7 +772,9 @@ class DownloadRepositoryTest {
                         ),
                     ),
                 )
-                db.libraryDao().upsertArtists(listOf(Artist(sourceId = 1, id = "ar2", name = "Other", albumCount = 1, starred = null, coverArt = null)))
+                db.libraryDao().upsertArtists(
+                    listOf(Artist(sourceId = 1, id = "ar2", name = "Other", albumCount = 1, starred = null, coverArt = null)),
+                )
                 db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
                 db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Queued))
             }

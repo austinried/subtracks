@@ -62,6 +62,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -101,7 +102,10 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.DownloadList
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
@@ -112,14 +116,18 @@ import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
+import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.PendingDownloadDelete
+import com.subtracks.ui.components.bulkRef
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
@@ -208,6 +216,11 @@ fun LibraryRoute(
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
+    val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
+    val artistDownloads by viewModel.artistDownloads.collectAsStateWithLifecycle()
+    val playlistDownloads by viewModel.playlistDownloads.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
     val itemActions =
         ItemActions(
             playAlbum = { viewModel.playAlbum(it.id) },
@@ -216,6 +229,18 @@ fun LibraryRoute(
             shufflePlaylist = { viewModel.shufflePlaylist(it.id) },
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
+            bulkDownload = { target, action ->
+                target.bulkRef()?.let { (list, refId) ->
+                    if (action == BulkDownloadAction.Delete) {
+                        scope.launch {
+                            pendingDelete =
+                                PendingDownloadDelete(target.title, list, refId, viewModel.downloadedBytes(list, refId))
+                        }
+                    } else {
+                        viewModel.onDownloadAction(list, refId, action)
+                    }
+                }
+            },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
@@ -257,7 +282,19 @@ fun LibraryRoute(
         },
         search = search,
         onSearchChange = { viewModel.setSearch(listTab, it) },
+        albumDownloads = albumDownloads,
+        artistDownloads = artistDownloads,
+        playlistDownloads = playlistDownloads,
     )
+
+    pendingDelete?.let { pending ->
+        DeleteDownloadsDialog(
+            name = pending.name,
+            bytes = pending.bytes,
+            onConfirm = { viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete) },
+            onDismiss = { pendingDelete = null },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -288,6 +325,9 @@ fun LibraryScreen(
     search: String = "",
     onSearchChange: (String) -> Unit = {},
     artwork: ArtworkColors? = null,
+    albumDownloads: Map<String, ListDownloadStatus> = emptyMap(),
+    artistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
+    playlistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -373,6 +413,7 @@ fun LibraryScreen(
                             resetKey = resetKey,
                             topInset = listTopInset,
                             onSync = onSync,
+                            downloadStatuses = albumDownloads,
                         )
                     }
 
@@ -391,6 +432,7 @@ fun LibraryScreen(
                             resetKey = resetKey,
                             topInset = listTopInset,
                             onSync = onSync,
+                            downloadStatuses = artistDownloads,
                         )
                     }
 
@@ -409,6 +451,7 @@ fun LibraryScreen(
                             resetKey = resetKey,
                             topInset = listTopInset,
                             onSync = onSync,
+                            downloadStatuses = playlistDownloads,
                         )
                     }
                 }
