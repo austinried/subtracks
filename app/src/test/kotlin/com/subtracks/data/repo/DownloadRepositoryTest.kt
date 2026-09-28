@@ -324,6 +324,28 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun downloadingASongAlsoStoresTheArtworkOfPlaylistsThatContainIt() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertPlaylists(
+                    listOf(Playlist(1, "pl1", "Playlist", comment = null, coverArt = PLAYLIST_ART, songCount = 2, created = 0)),
+                )
+                db.libraryDao().upsertPlaylistSongs(listOf(PlaylistSong(1, "pl1", "s1", 0)))
+            }
+
+            runBlocking { repository.download(1, "s1") }
+
+            listOf(false, true).forEach { thumbnail ->
+                val key = coverArtKey(1, PLAYLIST_ART, thumbnail)
+                assertNotNull("expected stored playlist art for $key", artwork.uri(1, key))
+            }
+
+            runBlocking { repository.reconcile() }
+            assertNotNull(artwork.uri(1, coverArtKey(1, PLAYLIST_ART, false)))
+        }
+
+    @Test
     fun theDownloadStartsBeforeItsArtworkIsFetched() =
         runTest {
             seedLibrary()
@@ -1105,5 +1127,6 @@ class DownloadRepositoryTest {
     private companion object {
         const val ALBUM_ART = "art-al1"
         const val ARTIST_ART = "art-ar1"
+        const val PLAYLIST_ART = "art-pl1"
     }
 }

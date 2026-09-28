@@ -86,6 +86,11 @@ data class DownloadArtwork(
         get() = (albumId != null && albumRow == null) || (artistId != null && artistRow == null)
 }
 
+data class SourceCoverArt(
+    val sourceId: Long,
+    val coverArt: String,
+)
+
 class DownloadStatusConverter {
     @ColumnTypeConverter
     fun fromDownloadStatus(status: DownloadStatus): String = status.name

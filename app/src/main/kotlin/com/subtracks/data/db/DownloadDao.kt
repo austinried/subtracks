@@ -8,6 +8,7 @@ import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.model.EntityDownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
+import com.subtracks.data.model.SourceCoverArt
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -124,6 +125,25 @@ interface DownloadDao {
             "LEFT JOIN artists ar ON ar.sourceId = s.sourceId AND ar.id = s.artistId",
     )
     suspend fun artwork(): List<DownloadArtwork>
+
+    @Query(
+        "SELECT DISTINCT p.coverArt AS coverArt FROM playlist_songs ps " +
+            "JOIN playlists p ON p.sourceId = ps.sourceId AND p.id = ps.playlistId " +
+            "WHERE ps.sourceId = :sourceId AND ps.songId = :songId AND p.coverArt IS NOT NULL",
+    )
+    suspend fun playlistCoversForSong(
+        sourceId: Long,
+        songId: String,
+    ): List<String>
+
+    @Query(
+        "SELECT DISTINCT ps.sourceId AS sourceId, p.coverArt AS coverArt " +
+            "FROM playlist_songs ps " +
+            "JOIN playlists p ON p.sourceId = ps.sourceId AND p.id = ps.playlistId " +
+            "JOIN song_downloads d ON d.sourceId = ps.sourceId AND d.songId = ps.songId " +
+            "WHERE p.coverArt IS NOT NULL",
+    )
+    suspend fun downloadedPlaylistCovers(): List<SourceCoverArt>
 
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId AND songId = :songId")
     suspend fun find(

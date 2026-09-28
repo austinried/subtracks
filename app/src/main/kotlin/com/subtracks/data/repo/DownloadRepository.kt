@@ -388,9 +388,11 @@ class DownloadRepository(
     ) {
         val song = db.libraryDao().songOnce(sourceId, songId)
         val coverArt =
-            listOfNotNull(
-                song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it)?.coverArt },
-                song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it)?.coverArt },
+            (
+                listOfNotNull(
+                    song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it)?.coverArt },
+                    song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it)?.coverArt },
+                ) + db.downloadDao().playlistCoversForSong(sourceId, songId)
             ).distinct()
         coverArt.forEach { cover ->
             storeArtwork(sourceId, cover, thumbnail = false)
@@ -423,18 +425,22 @@ class DownloadRepository(
      * rows could not all be resolved against the library, in which case nothing is swept for it:
      * pruning an album or artist would otherwise delete artwork a download still holds.
      */
-    private suspend fun artworkToKeep(): Map<Long, Set<String>?> =
-        db
+    private suspend fun artworkToKeep(): Map<Long, Set<String>?> {
+        val playlistCovers = db.downloadDao().downloadedPlaylistCovers().groupBy({ it.sourceId }, { it.coverArt })
+        return db
             .downloadDao()
             .artwork()
             .groupBy { it.sourceId }
             .mapValues { (sourceId, rows) ->
                 if (rows.any { it.hasMissingLibraryRow }) return@mapValues null
-                rows
-                    .flatMap { row -> listOfNotNull(row.albumCoverArt, row.artistCoverArt) }
+                val covers =
+                    rows.flatMap { row -> listOfNotNull(row.albumCoverArt, row.artistCoverArt) } +
+                        playlistCovers[sourceId].orEmpty()
+                covers
                     .flatMap { cover -> listOf(false, true).map { thumbnail -> coverArtKey(sourceId, cover, thumbnail) } }
                     .toSet()
             }
+    }
 
     private suspend fun recover(row: SongDownload) {
         when (row.status) {
