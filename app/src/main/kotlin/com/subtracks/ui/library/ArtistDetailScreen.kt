@@ -269,7 +269,7 @@ fun ArtistDetailScreen(
                     state = listState,
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(bottom = 16.dp + navBarBottom),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ROW_GAP),
                     verticalArrangement = Arrangement.spacedBy(ROW_GAP),
                     modifier = Modifier.fillMaxSize(),
                 ) {
