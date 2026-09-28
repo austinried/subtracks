@@ -303,6 +303,7 @@ fun HeroHeader(
             Box(
                 modifier =
                     Modifier
+                        .padding(start = 8.dp)
                         .size(48.dp)
                         .clip(CircleShape)
                         .combinedClickable(
@@ -378,7 +379,7 @@ fun HeroHeader(
                     )
                 }
             }
-            IconButton(onClick = onMore, modifier = Modifier.padding(horizontal = 8.dp)) {
+            IconButton(onClick = onMore, modifier = Modifier.padding(end = 8.dp)) {
                 Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
             }
         }
