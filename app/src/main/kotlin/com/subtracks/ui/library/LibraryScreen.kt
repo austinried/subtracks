@@ -195,9 +195,8 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
-    var selectedTabName by rememberSaveable { mutableStateOf(LibraryTab.Albums.name) }
-    var previousTabName by rememberSaveable { mutableStateOf(LibraryTab.Albums.name) }
-    val selectedTab = LibraryTab.entries.firstOrNull { it.name == selectedTabName } ?: LibraryTab.Albums
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
+    var previousTabName by rememberSaveable { mutableStateOf(selectedTab.name) }
     val previousTab = LibraryTab.entries.firstOrNull { it.name == previousTabName } ?: LibraryTab.Albums
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
@@ -242,7 +241,7 @@ fun LibraryRoute(
         )
     LibraryScreen(
         selectedTab = selectedTab,
-        onTabSelected = { selectedTabName = it.name },
+        onTabSelected = { viewModel.selectTab(it) },
         syncing = syncing,
         bottomInset = bottomInset,
         artwork = artwork,

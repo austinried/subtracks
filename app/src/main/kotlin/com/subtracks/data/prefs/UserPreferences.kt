@@ -134,6 +134,14 @@ class UserPreferences(
 
     private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
 
+    fun libraryTab(): Flow<String> = store.data.map { prefs -> prefs[libraryTabKey] ?: LibraryListTab.Albums.name }
+
+    suspend fun setLibraryTab(tab: String) {
+        store.edit { prefs -> prefs[libraryTabKey] = tab }
+    }
+
+    private val libraryTabKey = stringPreferencesKey("library_tab")
+
     private fun encode(query: ListQuery) =
         "${query.sort}|${if (query.descending) 1 else 0}|${query.starred.ordinal}|${if (query.downloaded) 1 else 0}"
 

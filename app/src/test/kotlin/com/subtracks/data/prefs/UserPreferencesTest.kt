@@ -46,6 +46,22 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun theSelectedLibraryTabRoundTrips() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals("Albums", prefs.libraryTab().first())
+
+            prefs.setLibraryTab("Playlists")
+
+            assertEquals("Playlists", prefs.libraryTab().first())
+
+            file.delete()
+        }
+
+    @Test
     fun aListQueryStoredBeforeTheDownloadedFilterStillDecodes() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
