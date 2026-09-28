@@ -347,6 +347,106 @@ class LibraryDaoTest {
             assertEquals(3, dao.albumsByName(sourceId, 0, "").page().size)
         }
 
+    @Test
+    fun searchMatchesInfixCaseInsensitivelyAndFallsBackToAScanBelowThreeCharacters() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a", "Gamma", year = null, starred = null).copy(albumArtist = "The Artist"),
+                    album(sourceId, "b", "Alpha", year = null, starred = null).copy(albumArtist = "Someone Else"),
+                ),
+            )
+
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "amm").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "GAM").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "ga").page().map { it.name })
+            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, 0, "Else").page().map { it.name })
+            assertTrue(dao.albumsByName(sourceId, 0, "zzz").page().isEmpty())
+        }
+
+    @Test
+    fun searchIndexFollowsRenamesUpdatesAndDeletes() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "a", "Gamma", year = null, starred = null)))
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "gam").page().map { it.name })
+
+            dao.setAlbumStar(sourceId, "a", 7)
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "gam").page().map { it.name })
+
+            dao.upsertAlbums(listOf(album(sourceId, "a", "Delta", year = null, starred = null)))
+            assertTrue(dao.albumsByName(sourceId, 0, "gam").page().isEmpty())
+            assertEquals(listOf("Delta"), dao.albumsByName(sourceId, 0, "elt").page().map { it.name })
+
+            dao.deleteAlbums(sourceId, listOf("a"))
+            assertTrue(dao.albumsByName(sourceId, 0, "elt").page().isEmpty())
+        }
+
+    @Test
+    fun deletingASourceClearsItsSearchRows() =
+        runTest {
+            val first = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(first, "a", "Gamma", year = null, starred = null)))
+            db.sourcesDao().deleteSource(first)
+
+            val second = source()
+            dao.upsertAlbums(listOf(album(second, "a", "Beta", year = null, starred = null)))
+
+            assertEquals(listOf("Beta"), dao.albumsByName(second, 0, "eta").page().map { it.name })
+            assertTrue(dao.albumsByName(second, 0, "gam").page().isEmpty())
+        }
+
+    @Test
+    fun artistAndPlaylistSearchUseTheirOwnIndices() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "r1", "The Beatles", albumCount = 1)))
+            dao.upsertPlaylists(listOf(playlist(sourceId, "l1", "Road Trip", created = 0, changed = 0)))
+
+            assertEquals(listOf("r1"), dao.artistsByName(sourceId, 0, "eat").page().map { it.id })
+            assertEquals(listOf("l1"), dao.playlistsByName(sourceId, "rip").page().map { it.id })
+            assertTrue(dao.artistsByName(sourceId, 0, "rip").page().isEmpty())
+            assertTrue(dao.playlistsByName(sourceId, "eat").page().isEmpty())
+        }
+
+    @Test
+    fun aQuoteInTheSearchTermIsTreatedLiterally() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a", "Say \"Hello\"", year = null, starred = null),
+                    album(sourceId, "b", "Plain", year = null, starred = null),
+                ),
+            )
+
+            assertEquals(listOf("Say \"Hello\""), dao.albumsByName(sourceId, 0, "\"Hel").page().map { it.name })
+        }
+
+    @Test
+    fun searchHandlesANullAlbumArtist() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "a", "Gamma", year = null, starred = null).copy(albumArtist = null)))
+
+            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "amm").page().map { it.name })
+        }
+
+    @Test
+    fun searchRunsThroughTheTrigramIndex() =
+        runTest {
+            val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME LIMIT 20 OFFSET 0")
+
+            assertTrue(plan, plan.contains("album_search"))
+        }
+
     private suspend fun plan(sql: String): String =
         db.useReaderConnection { connection ->
             connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->

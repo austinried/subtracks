@@ -42,7 +42,7 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 
 ## Phase 4 - Search, playlists, offline
 
-- (done) Search: a substring filter on the library queries, scoped to the active tab, with a docked search field and per-tab sort/filter controls.
+- (done) Search: a substring filter on the library queries, scoped to the active tab, with a docked search field and per-tab sort/filter controls. Queries of three or more characters run through per-entity FTS5 trigram tables (external content, trigger-maintained), with the `instr` scan as the below-three-character fallback.
 - Playlist browsing and editing (create/add/remove), syncing changes back to the server.
 - Offline mode and downloads.
 
@@ -61,7 +61,7 @@ Follow-up work for very large libraries, playlists and long sessions, grouped so
 - **Sync pipeline.** Prune with a memory-bounded id set, remove `fetchRanks` and the write-only rank columns, fetch playlists/albums with bounded concurrency and skip unchanged ones, and raise/make configurable the page cap with a clear "library too large" failure. Independent of the read path.
 - **Queue view and edits.** Bound the queue view's loaded rows (or page over the queue ordinal) and scope its ViewModel to the overlay; compact adjacent same-ref ranges after an edit and cache resolved entry lengths. The view half is independent; the edit half shares `QueueRepository` with the read-path PR.
 - **Artwork.** Give `artwork_seeds` a `sourceId` with `ON DELETE CASCADE` and an LRU/TTL (or drop the table and rely on Coil's disk cache); prefetch the thumbnail, not the original, on now-playing transitions. Independent.
-- **FTS5 search.** Deferred; the revival requirements are recorded in `architecture.md` (per-entity trigram tables indexing every scanned field, incremental maintenance, three-character floor).
+- **FTS5 search.** Landed: per-entity external-content trigram tables (`album_search`, `artist_search`, `playlist_search`) with Room-generated content-sync triggers, a three-character floor and an `instr` fallback below it.
 - **UI/flow overhead.** Subscribe only the active tab's paging flow; move the position ticker off the shared `PlaybackState`. Independent.
 
 A `syncGen` column was considered for the sync prune and rejected: it is part of the upsert's update set, so its always-changing value defeats `upsertChanged`'s changed-only `WHERE` predicate and rewrites every row on every full sync. The prune should instead keep the two-phase diff with a memory-bounded id set (primitive long hashes) or diff a staging `seen` table in SQL.

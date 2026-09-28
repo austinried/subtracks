@@ -271,6 +271,47 @@ val MIGRATION_18_19 =
         }
     }
 
+val MIGRATION_19_20 =
+    object : Migration(19, 20) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            createSearchIndex(connection, "album_search", "albums", listOf("name", "albumArtist"))
+            createSearchIndex(connection, "artist_search", "artists", listOf("name"))
+            createSearchIndex(connection, "playlist_search", "playlists", listOf("name"))
+        }
+    }
+
+// Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
+private suspend fun createSearchIndex(
+    connection: SQLiteConnection,
+    table: String,
+    content: String,
+    columns: List<String>,
+) {
+    connection.execSQL(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS `$table` USING FTS5(" +
+            columns.joinToString(", ") { "`$it`" } + ", tokenize=`trigram`, content=`$content`)",
+    )
+    val inserted = (listOf("rowid") + columns).joinToString(", ") { "`$it`" }
+    val values = columns.joinToString(", ") { "NEW.`$it`" }
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_${table}_BEFORE_UPDATE BEFORE UPDATE ON `$content` " +
+            "BEGIN DELETE FROM `$table` WHERE `rowid`=OLD.`rowid`; END",
+    )
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_${table}_BEFORE_DELETE BEFORE DELETE ON `$content` " +
+            "BEGIN DELETE FROM `$table` WHERE `rowid`=OLD.`rowid`; END",
+    )
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_${table}_AFTER_UPDATE AFTER UPDATE ON `$content` " +
+            "BEGIN INSERT INTO `$table`($inserted) VALUES (NEW.`rowid`, $values); END",
+    )
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_${table}_AFTER_INSERT AFTER INSERT ON `$content` " +
+            "BEGIN INSERT INTO `$table`($inserted) VALUES (NEW.`rowid`, $values); END",
+    )
+    connection.execSQL("INSERT INTO `$table`(`$table`) VALUES('rebuild')")
+}
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -291,4 +332,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_16_17,
         MIGRATION_17_18,
         MIGRATION_18_19,
+        MIGRATION_19_20,
     )

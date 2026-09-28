@@ -5,6 +5,8 @@ import androidx.room3.ColumnTypeConverter
 import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
+import androidx.room3.Fts5
+import androidx.room3.FtsOptions
 import androidx.room3.Ignore
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
@@ -349,6 +351,28 @@ data class ArtworkSeed(
     val nameBusy: Boolean? = null,
     val sourceId: Long = 0,
     @ColumnInfo(defaultValue = "0") val storedAt: Long = 0,
+)
+
+@Entity(tableName = "album_search")
+@Fts5(contentEntity = Album::class, tokenizer = FtsOptions.TOKENIZER_TRIGRAM)
+data class AlbumSearch(
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
+    val name: String,
+    val albumArtist: String?,
+)
+
+@Entity(tableName = "artist_search")
+@Fts5(contentEntity = Artist::class, tokenizer = FtsOptions.TOKENIZER_TRIGRAM)
+data class ArtistSearch(
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
+    val name: String,
+)
+
+@Entity(tableName = "playlist_search")
+@Fts5(contentEntity = Playlist::class, tokenizer = FtsOptions.TOKENIZER_TRIGRAM)
+data class PlaylistSearch(
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
+    val name: String,
 )
 
 class QueueKindConverter {

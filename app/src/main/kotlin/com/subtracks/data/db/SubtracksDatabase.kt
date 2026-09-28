@@ -4,12 +4,15 @@ import androidx.room3.ColumnTypeConverters
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumSearch
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistSearch
 import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DownloadStatusConverter
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSearch
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKindConverter
@@ -24,9 +27,12 @@ import com.subtracks.data.model.UpNextEntry
         Source::class,
         SubsonicSource::class,
         Artist::class,
+        ArtistSearch::class,
         Album::class,
+        AlbumSearch::class,
         Disc::class,
         Playlist::class,
+        PlaylistSearch::class,
         PlaylistSong::class,
         Song::class,
         QueueEntry::class,
@@ -35,7 +41,7 @@ import com.subtracks.data.model.UpNextEntry
         ArtworkSeed::class,
         SongDownload::class,
     ],
-    version = 19,
+    version = 20,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class)

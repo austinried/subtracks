@@ -32,7 +32,11 @@ internal const val ALBUMS_FILTER =
         "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed')) " +
-        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0 OR instr(lower(albumArtist), lower(:search)) > 0) "
+        "AND (:search = '' " +
+        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
+        "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
+        "OR instr(lower(albumArtist), lower(:search)) > 0))) "
 
 internal const val ALBUM_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
@@ -55,7 +59,10 @@ internal const val ARTISTS_FILTER =
         "JOIN albums dl ON dl.sourceId = songs.sourceId AND dl.id = songs.albumId " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = artists.sourceId AND dl.artistId = artists.id AND sd.status = 'Completed')) " +
-        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
+        "AND (:search = '' " +
+        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
+        "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
 
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
@@ -69,7 +76,10 @@ internal const val PLAYLISTS_FILTER =
         "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM playlist_songs ps " +
         "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId " +
         "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed')) " +
-        "AND (:search = '' OR instr(lower(name), lower(:search)) > 0) "
+        "AND (:search = '' " +
+        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
+        "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
 
 internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
