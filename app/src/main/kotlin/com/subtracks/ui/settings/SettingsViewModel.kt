@@ -33,6 +33,11 @@ class SettingsViewModel(
             .streamQuality(NetworkMode.Mobile)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
 
+    val downloadQuality: StateFlow<StreamQuality> =
+        userPreferences
+            .downloadQuality()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
+
     val syncConcurrency: StateFlow<Int> =
         userPreferences
             .syncConcurrency()
@@ -48,6 +53,10 @@ class SettingsViewModel(
 
     fun setMobileQuality(quality: StreamQuality) {
         viewModelScope.launch { userPreferences.setStreamQuality(NetworkMode.Mobile, quality) }
+    }
+
+    fun setDownloadQuality(quality: StreamQuality) {
+        viewModelScope.launch { userPreferences.setDownloadQuality(quality) }
     }
 
     fun setSyncConcurrency(value: Int) {

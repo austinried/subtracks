@@ -54,7 +54,7 @@ import org.koin.compose.viewmodel.koinViewModel
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
 private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "flac")
 
-private enum class SettingsDialog { WifiQuality, MobileQuality, SyncConcurrency }
+private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality, SyncConcurrency }
 
 @Composable
 fun SettingsRoute(
@@ -69,17 +69,20 @@ fun SettingsRoute(
     val wifiQuality by viewModel.wifiQuality.collectAsStateWithLifecycle()
     val mobileQuality by viewModel.mobileQuality.collectAsStateWithLifecycle()
     val syncConcurrency by viewModel.syncConcurrency.collectAsStateWithLifecycle()
+    val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
         wifiQuality = wifiQuality,
         mobileQuality = mobileQuality,
         syncConcurrency = syncConcurrency,
+        downloadQuality = downloadQuality,
         onSelectSource = viewModel::selectSource,
         onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
         onMobileQualityChange = viewModel::setMobileQuality,
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
+        onDownloadQualityChange = viewModel::setDownloadQuality,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onBack = onBack,
@@ -94,11 +97,13 @@ fun SettingsScreen(
     wifiQuality: StreamQuality,
     mobileQuality: StreamQuality,
     syncConcurrency: Int,
+    downloadQuality: StreamQuality,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
     onMobileQualityChange: (StreamQuality) -> Unit,
     onSyncConcurrencyChange: (Int) -> Unit,
+    onDownloadQualityChange: (StreamQuality) -> Unit,
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
@@ -188,6 +193,14 @@ fun SettingsScreen(
             item { SectionHeader("Downloads") }
             item {
                 ListItem(
+                    headlineContent = { Text("Download quality") },
+                    supportingContent = { Text(qualityLabel(downloadQuality)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.DownloadQuality },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
                     headlineContent = { Text("Manage downloads") },
                     supportingContent = { Text("Space and deletion") },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
@@ -213,6 +226,15 @@ fun SettingsScreen(
                 title = "Stream quality: Mobile",
                 quality = mobileQuality,
                 onSelect = onMobileQualityChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
+        SettingsDialog.DownloadQuality -> {
+            QualityDialog(
+                title = "Download quality",
+                quality = downloadQuality,
+                onSelect = onDownloadQualityChange,
                 onDismiss = { dialog = null },
             )
         }

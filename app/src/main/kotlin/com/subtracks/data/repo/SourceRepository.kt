@@ -49,7 +49,13 @@ class SourceRepository(
     private val _quality = MutableStateFlow(StreamQuality())
     val quality: StateFlow<StreamQuality> = _quality
 
+    @Volatile
+    private var downloadQuality = StreamQuality()
+
     init {
+        scope.launch {
+            prefs.downloadQuality().collect { downloadQuality = it }
+        }
         scope.launch {
             combine(
                 db.sourcesDao().activeSubsonicConfig(),
@@ -120,7 +126,17 @@ class SourceRepository(
     fun downloadUri(
         sourceId: Long,
         songId: String,
-    ): String? = if (activeSourceId == sourceId) active?.downloadUri(songId)?.toString() else null
+    ): String? {
+        val source = active?.takeIf { activeSourceId == sourceId } ?: return null
+        // A transcode preference downloads the stream, so the saved file is already the wanted
+        // quality rather than the original that would then have to be transcoded on every play.
+        val quality = downloadQuality
+        return if (quality.transcodes) {
+            source.streamUri(songId, quality.maxBitrate, quality.format)?.toString()
+        } else {
+            source.downloadUri(songId)?.toString()
+        }
+    }
 
     suspend fun addSource(
         name: String,

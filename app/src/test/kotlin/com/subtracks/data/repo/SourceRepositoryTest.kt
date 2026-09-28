@@ -9,6 +9,7 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.coverArtKey
+import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +63,29 @@ class SourceRepositoryTest {
         repository.close()
         db.close()
     }
+
+    @Test
+    fun aTranscodedDownloadQualityDownloadsTheStreamInstead() =
+        runBlocking {
+            repository.addSource("nav", "http://a.example/", "u", "p", false)
+            val sourceId = repository.activeSourceId().first()!!
+            withTimeout(5_000) { while (repository.downloadUri(sourceId, "s1") == null) delay(10) }
+
+            assertTrue(repository.downloadUri(sourceId, "s1")!!.contains("/rest/download"))
+
+            prefs.setDownloadQuality(StreamQuality(maxBitrate = 128, format = "opus"))
+
+            var transcoded: String? = null
+            withTimeout(5_000) {
+                while (transcoded == null) {
+                    delay(10)
+                    transcoded = repository.downloadUri(sourceId, "s1")?.takeIf { it.contains("/rest/stream") }
+                }
+            }
+
+            assertTrue(transcoded!!.contains("maxBitRate=128"))
+            assertTrue(transcoded!!.contains("format=opus"))
+        }
 
     @Test
     fun addingASourceMakesItTheSingleActiveOne() =

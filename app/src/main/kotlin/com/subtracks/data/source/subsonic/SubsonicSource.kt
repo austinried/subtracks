@@ -137,15 +137,20 @@ class SubsonicSource(
             }
         }.flowOn(Dispatchers.IO).buffer(1)
 
-    fun streamUri(songId: String) =
-        client.uri(
-            "stream",
-            buildMap {
-                put("id", songId)
-                if (maxBitrate > 0) put("maxBitRate", maxBitrate.toString())
-                streamFormat?.takeIf { it.isNotEmpty() }?.let { put("format", it) }
-            },
-        )
+    fun streamUri(songId: String) = streamUri(songId, maxBitrate, streamFormat)
+
+    fun streamUri(
+        songId: String,
+        maxBitrate: Int,
+        format: String?,
+    ) = client.uri(
+        "stream",
+        buildMap {
+            put("id", songId)
+            if (maxBitrate > 0) put("maxBitRate", maxBitrate.toString())
+            format?.takeIf { it.isNotEmpty() }?.let { put("format", it) }
+        },
+    )
 
     fun downloadUri(songId: String) = client.uri("download", mapOf("id" to songId))
 

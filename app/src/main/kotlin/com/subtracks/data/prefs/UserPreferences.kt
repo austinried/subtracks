@@ -77,7 +77,16 @@ class UserPreferences(
         store.edit { prefs -> prefs[streamQualityKey(mode)] = encode(quality) }
     }
 
+    fun downloadQuality(): Flow<StreamQuality> =
+        store.data.map { prefs -> prefs[downloadQualityKey]?.let(::decodeStreamQuality) ?: StreamQuality() }
+
+    suspend fun setDownloadQuality(quality: StreamQuality) {
+        store.edit { prefs -> prefs[downloadQualityKey] = encode(quality) }
+    }
+
     private fun streamQualityKey(mode: NetworkMode) = stringPreferencesKey("stream_quality_${mode.key}")
+
+    private val downloadQualityKey = stringPreferencesKey("download_quality")
 
     fun syncConcurrency(): Flow<Int> = store.data.map { prefs -> (prefs[syncConcurrencyKey] ?: DEFAULT_FETCH_CONCURRENCY).coerceAtLeast(1) }
 
