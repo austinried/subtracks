@@ -5,11 +5,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 sealed interface Scrobble {
     val songId: String
@@ -28,6 +29,7 @@ class ScrobblePolicy(
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     private var songId: String? = null
+    private var lastItemId: String? = null
     private var durationMs = 0L
     private var startedAt = 0L
     private var playedMs = 0L
@@ -37,6 +39,7 @@ class ScrobblePolicy(
 
     fun reset() {
         songId = null
+        lastItemId = null
         playedMs = 0
         lastPositionMs = 0
         nowPlayingSent = false
@@ -45,13 +48,18 @@ class ScrobblePolicy(
 
     fun advance(
         item: QueueItem?,
+        durationMs: Long,
         isPlaying: Boolean,
         positionMs: Long,
     ): Scrobble? {
+        if (durationMs > 0) this.durationMs = durationMs
         val previousPosition = lastPositionMs
-        if (item?.id != songId || positionMs < previousPosition) {
+        val restarted =
+            item?.id != songId ||
+                (item != null && item.id == lastItemId && positionMs < previousPosition && positionMs <= RESTART_POSITION_MS)
+        if (restarted) {
             songId = item?.id
-            durationMs = item?.durationMs ?: 0L
+            lastItemId = null
             playedMs = 0
             lastPositionMs = positionMs
             nowPlayingSent = false
@@ -62,6 +70,7 @@ class ScrobblePolicy(
             return Scrobble.NowPlaying(item.id)
         }
         lastPositionMs = positionMs
+        lastItemId = item?.id
         val id = songId ?: return null
         if (!isPlaying) return null
         if (!nowPlayingSent) {
@@ -85,6 +94,7 @@ class ScrobblePolicy(
         const val MIN_DURATION_MS = 30_000L
         const val MAX_THRESHOLD_MS = 4 * 60_000L
         const val MAX_STEP_MS = 2_000L
+        const val RESTART_POSITION_MS = 3_000L
     }
 }
 
@@ -94,24 +104,25 @@ class Scrobbler(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val policy: ScrobblePolicy = ScrobblePolicy(),
 ) {
+    private val submitLock = Mutex()
+
     fun attach(
         state: StateFlow<PlaybackState>,
         positionMs: StateFlow<Long>,
     ) {
         scope.launch {
-            combine(state, positionMs, enabled) { current, position, on -> Triple(current, position, on) }
+            combine(state, positionMs, enabled, ::Triple)
                 .collect { (current, position, on) ->
                     if (!on) {
                         policy.reset()
                         return@collect
                     }
-                    val event = policy.advance(current.item, current.isPlaying, position) ?: return@collect
-                    submit(event)
+                    val durationMs = current.item?.durationMs?.takeIf { it > 0 } ?: current.durationMs
+                    val event = policy.advance(current.item, durationMs, current.isPlaying, position) ?: return@collect
+                    scope.launch { submitLock.withLock { submit(event) } }
                 }
         }
     }
-
-    fun close() = scope.cancel()
 
     private suspend fun submit(event: Scrobble) {
         try {

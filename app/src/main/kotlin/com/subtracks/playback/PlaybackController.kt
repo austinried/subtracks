@@ -1213,7 +1213,6 @@ class PlaybackController(
             player.durationMs.takeIf { it > 0 }
                 ?: player.currentItem?.durationMs?.takeIf { it > 0 }
                 ?: 0L
-        _positionMs.value = player.currentPositionMs
         _state.value =
             PlaybackState(
                 item = player.currentItem,
@@ -1228,6 +1227,7 @@ class PlaybackController(
                 repeat = repeatMode,
                 layout = layoutVersion,
             )
+        _positionMs.value = player.currentPositionMs
         if (player.isPlaying) startPositionTicker() else stopPositionTicker()
     }
 
@@ -1239,7 +1239,9 @@ class PlaybackController(
                     delay(POSITION_TICK_MS)
                     val player = player ?: break
                     val positionMs = player.currentPositionMs
-                    _positionMs.value = positionMs
+                    if (player.currentItem?.id == _state.value.item?.id) {
+                        _positionMs.value = positionMs
+                    }
                     if (positionMs - lastSavedPositionMs >= POSITION_SAVE_INTERVAL_MS || positionMs < lastSavedPositionMs) {
                         lastSavedPositionMs = positionMs
                         queueRepository.setPosition(positionMs)

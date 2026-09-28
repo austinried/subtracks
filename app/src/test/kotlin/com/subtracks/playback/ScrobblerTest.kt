@@ -81,6 +81,32 @@ class ScrobblerTest {
         }
 
     @Test
+    fun fallsBackToThePlayerDurationWhenTheQueueItemHasNone() =
+        runTest {
+            val sink = RecordingSink()
+            val scrobbler = Scrobbler(sink = sink, enabled = flowOf(true), scope = testScope(), policy = ScrobblePolicy(now = { 1_000L }))
+            val state = MutableStateFlow(PlaybackState())
+            val position = MutableStateFlow(0L)
+            scrobbler.attach(state, position)
+            val item = QueueItem("s1", "Title", "Artist", "Album", null, durationMs = null)
+
+            state.value = PlaybackState(item = item, isPlaying = true, durationMs = 30_000)
+            var tick = 500L
+            while (tick <= 15_000L) {
+                position.value = tick
+                tick += 500
+            }
+
+            assertEquals(
+                listOf(
+                    Call.NowPlaying("s1"),
+                    Call.Scrobble("s1", 1_000L),
+                ),
+                sink.calls,
+            )
+        }
+
+    @Test
     fun disabledSendsNothing() =
         runTest {
             val sink = RecordingSink()

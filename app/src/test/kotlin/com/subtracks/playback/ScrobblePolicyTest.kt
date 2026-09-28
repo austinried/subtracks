@@ -2,6 +2,7 @@ package com.subtracks.playback
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScrobblePolicyTest {
@@ -16,13 +17,14 @@ class ScrobblePolicyTest {
     private fun play(
         item: QueueItem?,
         toPositionMs: Long,
+        durationMs: Long = item?.durationMs ?: 0L,
         stepMs: Long = 500,
         playing: Boolean = true,
     ): List<Scrobble> {
         val events = mutableListOf<Scrobble>()
         var position = 0L
         while (position <= toPositionMs) {
-            policy.advance(item, playing, position)?.let(events::add)
+            policy.advance(item, durationMs, playing, position)?.let(events::add)
             position += stepMs
         }
         return events
@@ -37,9 +39,9 @@ class ScrobblePolicyTest {
     @Test
     fun waitsForPlaybackBeforeNowPlaying() {
         val item = track()
-        assertNull(policy.advance(item, isPlaying = false, positionMs = 0))
+        assertNull(policy.advance(item, 200_000, isPlaying = false, positionMs = 0))
         clock = 5_000L
-        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, isPlaying = true, positionMs = 0))
+        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, 200_000, isPlaying = true, positionMs = 0))
     }
 
     @Test
@@ -63,6 +65,18 @@ class ScrobblePolicyTest {
     }
 
     @Test
+    fun usesTheKnownDurationWhenTheQueueItemHasNone() {
+        val events = play(track(durationMs = 0), toPositionMs = 90_000, durationMs = 180_000)
+        assertEquals(Scrobble.Submission("s1", time = 1_000L), events.last())
+    }
+
+    @Test
+    fun anUnknownDurationSubmitsAtFourMinutes() {
+        val events = play(track(durationMs = 0), toPositionMs = 4 * 60_000, durationMs = 0)
+        assertEquals(Scrobble.Submission("s1", time = 1_000L), events.last())
+    }
+
+    @Test
     fun doesNotSubmitShortTracks() {
         val events = play(track(durationMs = 20_000), toPositionMs = 20_000)
         assertEquals(listOf<Scrobble>(Scrobble.NowPlaying("s1")), events)
@@ -77,17 +91,32 @@ class ScrobblePolicyTest {
     @Test
     fun seekingAheadDoesNotCountAsPlayback() {
         val item = track(durationMs = 200_000)
-        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, isPlaying = true, positionMs = 0))
-        assertNull(policy.advance(item, isPlaying = true, positionMs = 180_000))
-        assertNull(policy.advance(item, isPlaying = true, positionMs = 180_500))
+        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, 200_000, isPlaying = true, positionMs = 0))
+        assertNull(policy.advance(item, 200_000, isPlaying = true, positionMs = 180_000))
+        assertNull(policy.advance(item, 200_000, isPlaying = true, positionMs = 180_500))
+    }
+
+    @Test
+    fun seekingBackAfterASubmissionDoesNotSubmitAgain() {
+        val item = track(durationMs = 600_000)
+        assertTrue(play(item, toPositionMs = 240_000).any { it is Scrobble.Submission })
+
+        assertNull(policy.advance(item, 600_000, isPlaying = true, positionMs = 235_000))
+        var position = 235_500L
+        val after = mutableListOf<Scrobble>()
+        while (position <= 300_000) {
+            policy.advance(item, 600_000, isPlaying = true, positionMs = position)?.let(after::add)
+            position += 500
+        }
+        assertEquals(emptyList<Scrobble>(), after)
     }
 
     @Test
     fun pausedTimeIsNotCounted() {
         val item = track(durationMs = 200_000)
-        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, isPlaying = true, positionMs = 0))
-        assertNull(policy.advance(item, isPlaying = false, positionMs = 120_000))
-        assertNull(policy.advance(item, isPlaying = true, positionMs = 120_500))
+        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, 200_000, isPlaying = true, positionMs = 0))
+        assertNull(policy.advance(item, 200_000, isPlaying = false, positionMs = 120_000))
+        assertNull(policy.advance(item, 200_000, isPlaying = true, positionMs = 120_500))
     }
 
     @Test
@@ -108,5 +137,16 @@ class ScrobblePolicyTest {
         val repeat = play(item, toPositionMs = 100_000)
         assertEquals(Scrobble.NowPlaying("s1"), repeat.first())
         assertEquals(Scrobble.Submission("s1", 120_000L), repeat.last())
+    }
+
+    @Test
+    fun aTransitionDoesNotReannounceTheNewTrackOnAStaleLowPosition() {
+        val first = track(id = "s1")
+        val second = track(id = "s2")
+        policy.advance(first, 200_000, isPlaying = true, positionMs = 0)
+        policy.advance(first, 200_000, isPlaying = true, positionMs = 100_000)
+
+        assertEquals(Scrobble.NowPlaying("s2"), policy.advance(second, 200_000, isPlaying = true, positionMs = 199_000))
+        assertNull(policy.advance(second, 200_000, isPlaying = true, positionMs = 0))
     }
 }
