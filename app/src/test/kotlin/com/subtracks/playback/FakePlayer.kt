@@ -61,6 +61,20 @@ class FakePlayerHandle : PlayerHandle {
 
     override val currentItem: QueueItem? get() = items.getOrNull(index)
 
+    /** Overrides the URIs the window reports; defaults to a stream URI per item. */
+    @Volatile
+    var uris: List<String> = emptyList()
+
+    override fun itemUris(): List<String?> = uris.ifEmpty { items.map { "http://stream/${it.id}" } }
+
+    override fun replaceItem(
+        index: Int,
+        item: QueueItem,
+    ) {
+        operations += "replaceItem($index, ${item.id})"
+        if (index in items.indices) items[index] = item
+    }
+
     override fun setWindow(
         items: List<QueueItem>,
         startIndex: Int,

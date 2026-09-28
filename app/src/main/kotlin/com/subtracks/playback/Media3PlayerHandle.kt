@@ -95,6 +95,20 @@ class Media3PlayerHandle(
 
     override fun clear() = controller.clearMediaItems()
 
+    override fun itemUris(): List<String?> =
+        (0 until controller.mediaItemCount).map {
+            controller
+                .getMediaItemAt(it)
+                .localConfiguration
+                ?.uri
+                ?.toString()
+        }
+
+    override fun replaceItem(
+        index: Int,
+        item: QueueItem,
+    ) = controller.replaceMediaItem(index, toMediaItem(item))
+
     override fun seekToIndex(index: Int) {
         Log.d(TAG, "seekToIndex($index) playerDuration=${controller.duration} state=${controller.playbackState}")
         controller.seekTo(index, 0)

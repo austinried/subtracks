@@ -2300,7 +2300,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun refreshingMediaItemsRebuildsTheWindowAtTheSamePosition() {
+    fun refreshingMediaItemsLeavesAnUnaffectedQueueAlone() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 0)
         await { handle.operations.contains("play") }
@@ -2308,10 +2308,26 @@ class PlaybackControllerTest {
         val windows = handle.operations.count { it.startsWith("setWindow") }
 
         controller.refreshMediaItems()
+        Thread.sleep(200)
 
-        await { handle.operations.count { it.startsWith("setWindow") } > windows }
+        assertEquals(windows, handle.operations.count { it.startsWith("setWindow") })
         assertEquals("s1", handle.currentItem?.id)
         assertEquals(42_000L, handle.positionMs)
+    }
+
+    @Test
+    fun refreshingMediaItemsReplacesOnlyAnItemWhoseLocalFileIsGone() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await { handle.operations.contains("play") }
+        val windows = handle.operations.count { it.startsWith("setWindow") }
+        handle.uris = handle.items.mapIndexed { index, item -> if (index == 0) "file:///gone" else "http://stream/${item.id}" }
+
+        controller.refreshMediaItems()
+
+        await { handle.operations.any { it.startsWith("replaceItem(0,") } }
+        assertEquals(windows, handle.operations.count { it.startsWith("setWindow") })
+        assertEquals(0, handle.operations.count { it.startsWith("replaceItem(1,") })
     }
 
     @Test

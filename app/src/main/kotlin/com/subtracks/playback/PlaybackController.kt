@@ -959,7 +959,30 @@ class PlaybackController(
 
     fun refreshMediaItems() {
         scope.launch {
-            startLock.withLock { reloadWindowLocked() }
+            startLock.withLock {
+                val player = player ?: return@withLock
+                val snapshot = snapshot ?: return@withLock
+                if (snapshot.size == 0L || player.isEnded) return@withLock
+                downloads.awaitLoaded()
+                val position = (windowStart + player.currentIndex).coerceIn(0, snapshot.size - 1)
+                val window = queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS)
+                val uris = player.itemUris()
+                if (window.size != player.itemCount || uris.size != window.size) {
+                    reloadWindowLocked()
+                    return@withLock
+                }
+                // Only an item whose local file appeared or went away needs rebuilding. Re-setting
+                // the whole window would re-prepare the player and audibly pause playback.
+                var replaced = false
+                window.forEachIndexed { index, entry ->
+                    val local = downloads.localUri(entry.item.song.id) != null
+                    if (local != (uris[index]?.startsWith(FILE_SCHEME) == true)) {
+                        player.replaceItem(index, entry.item.toQueueItem())
+                        replaced = true
+                    }
+                }
+                if (replaced) refresh(position)
+            }
         }
     }
 
@@ -1249,5 +1272,6 @@ class PlaybackController(
         const val WINDOW_SHIFT_DELAY_MS = 400L
         const val RESTART_THRESHOLD_MS = 3_000L
         const val SEED_PIN_TRIES = 1_000_000
+        const val FILE_SCHEME = "file:"
     }
 }

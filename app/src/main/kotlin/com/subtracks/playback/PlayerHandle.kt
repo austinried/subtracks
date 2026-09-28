@@ -53,6 +53,15 @@ interface PlayerHandle {
 
     fun clear()
 
+    /** The resolved URI of each item in the current window, in window order. */
+    fun itemUris(): List<String?> = emptyList()
+
+    /** Rebuilds one window item in place, without re-preparing the playing one. */
+    fun replaceItem(
+        index: Int,
+        item: QueueItem,
+    ) = Unit
+
     fun seekToIndex(index: Int)
 
     fun seekTo(positionMs: Long)
