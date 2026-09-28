@@ -137,10 +137,10 @@ fun AlbumDetailScreen(
     artwork: ArtworkColors?,
     downloads: Map<String, SongDownload> = emptyMap(),
     onBack: () -> Unit,
-    onSongClick: (Int) -> Unit,
+    onSongClick: (String) -> Unit,
     onSongLongClick: (MenuTarget) -> Unit = {},
     onShuffle: () -> Unit = {},
-    onPlay: () -> Unit = { onSongClick(0) },
+    onPlay: () -> Unit = {},
     downloadStatus: ListDownloadStatus = ListDownloadStatus(),
     onDownloadAction: (BulkDownloadAction) -> Unit = {},
     onMore: () -> Unit = {},
@@ -204,7 +204,7 @@ fun AlbumDetailScreen(
         },
         content = { rowModifier ->
             var lastDisc: Long? = null
-            songs.forEachIndexed { index, song ->
+            songs.forEach { song ->
                 val disc = song.disc ?: 1L
                 val discLabel = discLabels[disc]
                 if (disc != lastDisc && (multiDisc || discLabel != null)) {
@@ -221,7 +221,7 @@ fun AlbumDetailScreen(
                         download = downloads[song.id],
                         modifier =
                             rowModifier.combinedClickable(
-                                onClick = { onSongClick(index) },
+                                onClick = { onSongClick(song.id) },
                                 onLongClick = {
                                     onSongLongClick(MenuTarget.Song(song, coverArt(album?.coverArt, true), downloads[song.id]))
                                 },

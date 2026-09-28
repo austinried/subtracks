@@ -113,10 +113,10 @@ fun PlaylistDetailScreen(
     downloadStatus: ListDownloadStatus = ListDownloadStatus(),
     onDownloadAction: (BulkDownloadAction) -> Unit = {},
     onBack: () -> Unit,
-    onSongClick: (Int) -> Unit,
+    onSongClick: (Long) -> Unit,
     onSongLongClick: (MenuTarget) -> Unit = {},
     onShuffle: () -> Unit = {},
-    onPlay: () -> Unit = { onSongClick(0) },
+    onPlay: () -> Unit = {},
     onMore: () -> Unit = {},
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
@@ -155,7 +155,7 @@ fun PlaylistDetailScreen(
                         download = downloads[item.song.id],
                         modifier =
                             rowModifier.combinedClickable(
-                                onClick = { onSongClick(index) },
+                                onClick = { onSongClick(item.position) },
                                 onLongClick = {
                                     onSongLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true), downloads[item.song.id]))
                                 },

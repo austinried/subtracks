@@ -130,6 +130,22 @@ class LibraryRepositoryTest {
             }
         }
 
+    @Test
+    fun albumSongOrdinalFollowsTheAlbumOrder() =
+        runBlocking {
+            val sourceId = sourceRepository.addSource("nav", "http://localhost/", "u", "p", false)
+            db.libraryDao().upsertSongs(
+                listOf(
+                    seedSong(sourceId).copy(id = "s3", track = 3),
+                    seedSong(sourceId).copy(id = "s1", track = 1),
+                    seedSong(sourceId).copy(id = "s2", track = 2),
+                ),
+            )
+
+            assertEquals(0L, repository.albumSongOrdinal(sourceId, "al1", "s1"))
+            assertEquals(2L, repository.albumSongOrdinal(sourceId, "al1", "s3"))
+        }
+
     private suspend fun withSource(block: suspend (MockWebServer) -> Unit) {
         val server = MockWebServer()
         server.start()

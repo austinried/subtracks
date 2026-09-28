@@ -208,6 +208,15 @@ class LibraryRepository(
             db.libraryDao().songsByAlbum(sourceId, albumId)
         }
 
+    suspend fun albumSongOrdinal(
+        sourceId: Long,
+        albumId: String,
+        songId: String,
+    ): Long {
+        val index = db.queueDao().albumSongIds(sourceId, albumId).indexOf(songId)
+        return if (index < 0) 0L else index.toLong()
+    }
+
     fun playlist(
         sourceId: Long,
         playlistId: String,

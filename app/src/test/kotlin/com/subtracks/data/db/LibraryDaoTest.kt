@@ -375,8 +375,6 @@ class LibraryDaoTest {
             db.downloadDao().upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed))
 
             assertEquals(listOf("s1", "s3"), dao.songsByAlbumDownloaded(sourceId, "al-1").first().map { it.id })
-            assertEquals(listOf("s1", "s3"), dao.downloadedAlbumSongIds(sourceId, "al-1"))
-            assertEquals(listOf("s1", "s3"), dao.downloadedPlaylistSongIds(sourceId, "pl-1"))
             assertEquals(
                 listOf("s1", "s3"),
                 dao.playlistSongsDownloaded(sourceId, "pl-1").page().map { it.song.id },

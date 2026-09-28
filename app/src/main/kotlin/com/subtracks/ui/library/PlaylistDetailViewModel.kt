@@ -81,9 +81,9 @@ class PlaylistDetailViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    fun play(startIndex: Int) {
+    fun play(position: Long) {
         viewModelScope.launch {
-            playbackController.playPlaylist(sourceId.first(), playlistId, startIndex.toLong())
+            playbackController.playPlaylist(sourceId.first(), playlistId, position)
         }
     }
 

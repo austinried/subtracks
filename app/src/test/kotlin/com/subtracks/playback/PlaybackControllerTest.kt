@@ -11,6 +11,8 @@ import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
@@ -2496,6 +2498,68 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlinePlayAlbumFiltersTheWindowToDownloadedSongs() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        setOffline()
+
+        controller.playAlbum(1, "al1", 0)
+
+        await { handle.items.map { it.id } == listOf("s1", "s3") }
+        assertEquals(listOf("s1", "s3"), handle.items.map { it.id })
+        assertEquals(listOf(QueueKind.Album), runBlocking { queues.snapshot().entries }.map { it.entry.kind })
+        assertEquals(1, runBlocking { queues.snapshot().entries }.size)
+    }
+
+    @Test
+    fun offlinePlaylistPlayKeepsASingleReferenceQueue() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking {
+            db.libraryDao().upsertPlaylists(
+                listOf(Playlist(1, "pl1", "Playlist", comment = null, coverArt = null, songCount = 3, created = 0)),
+            )
+            db.libraryDao().upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(1, "pl1", "s1", 0),
+                    PlaylistSong(1, "pl1", "s2", 1),
+                    PlaylistSong(1, "pl1", "s3", 2),
+                ),
+            )
+        }
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s2")
+        markDownloaded(1, "s3")
+        setOffline()
+
+        controller.playPlaylist(1, "pl1", 0)
+
+        await { handle.items.map { it.id } == listOf("s1", "s2", "s3") }
+        assertEquals(listOf(QueueKind.Playlist), runBlocking { queues.snapshot().entries }.map { it.entry.kind })
+        assertEquals(1, runBlocking { queues.snapshot().entries }.size)
+    }
+
+    @Test
+    fun offlinePlayAlbumStartsAtTheOrdinalItIsGiven() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s2")
+        markDownloaded(1, "s3")
+        setOffline()
+
+        controller.playAlbum(1, "al1", 2)
+
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
     fun offlinePlayAlbumKeepsTheAlbumAsThePlayingContext() {
         seedAlbum(4, sourceId = 1)
         markDownloaded(1, "s1")
@@ -2556,19 +2620,6 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id,
         )
-    }
-
-    @Test
-    fun offlinePlayAlbumBuildsADownloadedOnlyQueue() {
-        seedAlbum(4, sourceId = 1)
-        markDownloaded(1, "s1")
-        markDownloaded(1, "s3")
-        setOffline()
-
-        controller.playAlbum(1, "al1", 0)
-
-        await { handle.items.map { it.id } == listOf("s1", "s3") }
-        assertEquals(listOf("s1", "s3"), handle.items.map { it.id })
     }
 
     @Test
@@ -2682,17 +2733,14 @@ class PlaybackControllerTest {
         songId: String,
     ) {
         val file = File(downloadsDir, "$sourceId/$songId")
-        val deadline = System.nanoTime() + 5_000_000_000L
-        while (System.nanoTime() < deadline) {
-            runBlocking {
-                db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
-                file.parentFile?.mkdirs()
-                file.writeBytes(byteArrayOf(1))
-            }
-            if (downloads.localUri(songId) != null) return
-            Thread.sleep(10)
+        runBlocking {
+            downloads.reconcile()
+            db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
+            file.parentFile?.mkdirs()
+            file.writeBytes(byteArrayOf(1))
+            downloads.reconcile()
         }
-        assertTrue("Timed out marking $songId downloaded", downloads.localUri(songId) != null)
+        await { downloads.localUri(songId) != null }
     }
 
     private fun setOffline() {

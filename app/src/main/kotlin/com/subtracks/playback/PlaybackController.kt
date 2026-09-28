@@ -146,7 +146,6 @@ class PlaybackController(
     private val offline: Boolean get() = sourceRepository.offline.value
     private var windowPositions = LongArray(0)
     private var windowFiltered = false
-    private var contextOverride: QueueContext? = null
 
     init {
         scope.launch {
@@ -242,48 +241,9 @@ class PlaybackController(
         entry: QueueEntry,
         start: Long,
         disableShuffle: Boolean = false,
-    ) {
-        if (!offline) {
-            contextOverride = null
-            play(listOf(entry), start, disableShuffle)
-            return
-        }
-        scope.launch {
-            val entries = downloadedEntries(entry)
-            if (entries.isEmpty()) {
-                showMessage("Nothing downloaded for offline playback")
-                return@launch
-            }
-            contextOverride = QueueContext(entry.kind, entry.sourceId, entry.refId)
-            play(entries, start, disableShuffle = true)
-        }
-    }
+    ) = play(listOf(entry), start, disableShuffle)
 
-    private fun shuffleContext(entry: QueueEntry) {
-        if (!offline) {
-            contextOverride = null
-            shufflePlay(listOf(entry))
-            return
-        }
-        scope.launch {
-            val entries = downloadedEntries(entry)
-            if (entries.isEmpty()) {
-                showMessage("Nothing downloaded for offline playback")
-                return@launch
-            }
-            contextOverride = QueueContext(entry.kind, entry.sourceId, entry.refId)
-            shufflePlay(entries)
-        }
-    }
-
-    private suspend fun downloadedEntries(entry: QueueEntry): List<QueueEntry> {
-        if (entry.kind == QueueKind.Song) {
-            return if (downloads.localUri(entry.refId) != null) listOf(entry) else emptyList()
-        }
-        return queueRepository
-            .downloadedSongIds(entry.sourceId, entry.kind, entry.refId)
-            .map { QueueEntry(position = 0, sourceId = entry.sourceId, kind = QueueKind.Song, refId = it) }
-    }
+    private fun shuffleContext(entry: QueueEntry) = shufflePlay(listOf(entry))
 
     private fun shufflePlay(entries: List<QueueEntry>) {
         if (player == null) {
@@ -1024,7 +984,6 @@ class PlaybackController(
         windowEnd = -1
         windowPositions = LongArray(0)
         windowFiltered = false
-        contextOverride = null
         lastPosition = null
         lastEdit = null
         player?.run {
@@ -1393,7 +1352,6 @@ class PlaybackController(
     }
 
     private fun contextAt(position: Long?): QueueContext? {
-        contextOverride?.let { return it }
         val snapshot = snapshot ?: return null
         val play = position?.let { snapshot.anchorContextPlay(it) } ?: return null
         val entry = snapshot.locateContext(play)?.first ?: return null

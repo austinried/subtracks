@@ -79,9 +79,10 @@ class AlbumDetailViewModel(
         }
     }
 
-    fun play(startIndex: Int) {
+    fun play(songId: String) {
         viewModelScope.launch {
-            playbackController.playAlbum(sourceId.first(), albumId, startIndex.toLong())
+            val id = sourceId.first()
+            playbackController.playAlbum(id, albumId, libraryRepository.albumSongOrdinal(id, albumId, songId))
         }
     }
 
