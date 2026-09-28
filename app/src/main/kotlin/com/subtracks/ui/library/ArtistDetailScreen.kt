@@ -335,7 +335,7 @@ fun ArtistDetailScreen(
                             ) {
                                 Text(
                                     text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f),
                                 )
