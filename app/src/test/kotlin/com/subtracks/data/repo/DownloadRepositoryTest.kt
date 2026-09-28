@@ -816,6 +816,41 @@ class DownloadRepositoryTest {
             assertFalse(file(1, "s2").exists())
         }
 
+    @Test
+    fun theTreeGroupsAnAlbumUnderItsAlbumArtistNotEachTrackArtist() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s3",
+                            albumId = "al1",
+                            artistId = "ar-guest",
+                            title = "Song 3",
+                            album = "Album",
+                            artist = "Guest",
+                            duration = 100,
+                            track = 3,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.libraryDao().upsertArtists(
+                    listOf(Artist(sourceId = 1, id = "ar-guest", name = "Guest", albumCount = 0, starred = null, coverArt = null)),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+                db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed))
+            }
+
+            val songs = runBlocking { repository.downloadedSongs(1).first() }
+
+            assertEquals(setOf("ar1" to "Artist"), songs.map { it.artistId to it.artistName }.toSet())
+        }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {

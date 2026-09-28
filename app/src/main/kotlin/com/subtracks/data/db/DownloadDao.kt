@@ -99,11 +99,11 @@ interface DownloadDao {
 
     @Query(
         "SELECT d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
-            "s.artistId AS artistId, ar.name AS artistName, d.status AS status, d.total AS size " +
+            "al.artistId AS artistId, ar.name AS artistName, d.status AS status, d.total AS size " +
             "FROM song_downloads d " +
             "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
             "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +
-            "LEFT JOIN artists ar ON ar.sourceId = s.sourceId AND ar.id = s.artistId " +
+            "LEFT JOIN artists ar ON ar.sourceId = al.sourceId AND ar.id = al.artistId " +
             "WHERE d.sourceId = :sourceId",
     )
     fun downloadedSongs(sourceId: Long): Flow<List<DownloadedSong>>

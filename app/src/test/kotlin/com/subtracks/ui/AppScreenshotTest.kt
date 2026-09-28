@@ -32,6 +32,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
@@ -123,6 +124,37 @@ class AppScreenshotTest {
         composeRule.onRoot().performTouchInput { swipeUp(startY = centerY + 600f, endY = centerY - 600f, durationMillis = 400) }
         composeRule.waitForIdle()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/library_scrolled_under_header.png")
+    }
+
+    @Test
+    fun libraryAlbumsWithDownloads() {
+        val ids = Fixtures.albums.take(3).map { it.id }
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.from(Fixtures.albums)) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
+                    albumDownloads =
+                        mapOf(
+                            ids[0] to ListDownloadStatus(total = 10, downloaded = 10),
+                            ids[1] to ListDownloadStatus(total = 10, downloaded = 4, downloading = 1),
+                            ids[2] to ListDownloadStatus(total = 10, downloaded = 4),
+                        ),
+                )
+            }
+        }
+        awaitTag(ALBUM_COVER_TAG)
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/library_albums_downloads.png")
     }
 
     @Test

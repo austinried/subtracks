@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -38,36 +39,42 @@ fun ListDownloadIndicator(
     val current = status ?: return
     val kind = current.indicator()
     if (kind == DownloadIndicator.Hidden) return
-    Box(modifier = modifier.size(20.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.size(26.dp), contentAlignment = Alignment.Center) {
         when (kind) {
             DownloadIndicator.Complete -> {
                 Icon(
                     imageVector = Icons.Rounded.DownloadDone,
                     contentDescription = null,
-                    tint = ICON_SHADOW,
-                    modifier = Modifier.size(18.dp).blur(3.dp).offset(y = 1.dp),
+                    tint = Color.Black.copy(alpha = 0.5f),
+                    modifier = Modifier.size(22.dp).blur(4.dp).offset(y = 1.dp),
+                )
+                Icon(
+                    imageVector = Icons.Rounded.DownloadDone,
+                    contentDescription = null,
+                    tint = Color.Black.copy(alpha = 0.85f),
+                    modifier =
+                        Modifier
+                            .size(22.dp)
+                            .graphicsLayer {
+                                scaleX = 1.18f
+                                scaleY = 1.18f
+                            }.blur(1.dp),
                 )
                 Icon(
                     imageVector = Icons.Rounded.DownloadDone,
                     contentDescription = DOWNLOADED_INDICATOR_TAG,
                     tint = Color.White,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(22.dp),
                 )
             }
 
             DownloadIndicator.InProgress -> {
-                val progress = { current.downloaded.toFloat() / current.total }
                 CircularProgressIndicator(
-                    progress = progress,
-                    color = ICON_SHADOW,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(16.dp).blur(3.dp).offset(y = 1.dp),
-                )
-                CircularProgressIndicator(
-                    progress = progress,
+                    progress = { current.downloaded.toFloat() / current.total },
                     color = Color.White,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(16.dp).semantics { contentDescription = DOWNLOADING_INDICATOR_TAG },
+                    trackColor = Color.Black.copy(alpha = 0.45f),
+                    strokeWidth = 2.5.dp,
+                    modifier = Modifier.size(20.dp).semantics { contentDescription = DOWNLOADING_INDICATOR_TAG },
                 )
             }
 
@@ -77,5 +84,3 @@ fun ListDownloadIndicator(
         }
     }
 }
-
-private val ICON_SHADOW = Color.Black.copy(alpha = 0.45f)
