@@ -84,7 +84,7 @@ class SourceRepositoryTest {
             }
 
             assertTrue(transcoded!!.contains("maxBitRate=128"))
-            assertTrue(transcoded!!.contains("format=opus"))
+            assertTrue(transcoded.contains("format=opus"))
         }
 
     @Test

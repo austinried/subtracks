@@ -140,9 +140,9 @@ class SourceRepository(
         // quality rather than the original that would then have to be transcoded on every play.
         val quality = downloadQuality
         return if (quality.transcodes) {
-            source.streamUri(songId, quality.maxBitrate, quality.format)?.toString()
+            source.streamUri(songId, quality.maxBitrate, quality.format).toString()
         } else {
-            source.downloadUri(songId)?.toString()
+            source.downloadUri(songId).toString()
         }
     }
 
