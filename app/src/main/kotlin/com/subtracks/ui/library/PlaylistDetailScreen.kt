@@ -51,6 +51,7 @@ fun PlaylistDetailRoute(
     val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
     val playback by playbackController.state.collectAsStateWithLifecycle()
@@ -81,6 +82,7 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
         downloadStatus = downloadStatus,
+        offline = offline,
         onDownloadAction = requestDownloadAction,
         onBack = onBack,
         onSongClick = viewModel::play,
@@ -111,6 +113,7 @@ fun PlaylistDetailScreen(
     artwork: ArtworkColors?,
     downloads: Map<String, SongDownload> = emptyMap(),
     downloadStatus: ListDownloadStatus = ListDownloadStatus(),
+    offline: Boolean = false,
     onDownloadAction: (BulkDownloadAction) -> Unit = {},
     onBack: () -> Unit,
     onSongClick: (Long) -> Unit,
@@ -130,7 +133,7 @@ fun PlaylistDetailScreen(
                 art = coverArt(playlist?.coverArt, false),
                 thumbnailRef = coverArt(playlist?.coverArt, true),
                 name = playlist?.name.orEmpty(),
-                subtitle = playlistSummary(playlist),
+                subtitle = playlistSummary(playlist, offline, downloadStatus.downloaded),
                 comment = playlist?.comment,
                 hasSongs = songs.itemCount > 0,
                 onPlay = onPlay,
@@ -168,10 +171,15 @@ fun PlaylistDetailScreen(
     )
 }
 
-private fun playlistSummary(playlist: Playlist?): String {
+private fun playlistSummary(
+    playlist: Playlist?,
+    offline: Boolean,
+    downloadedSongs: Long,
+): String {
     playlist ?: return ""
+    val songs = if (offline) downloadedSongs else playlist.songCount
     return listOfNotNull(
-        "${playlist.songCount} ${if (playlist.songCount == 1L) "song" else "songs"}",
+        "$songs ${if (songs == 1L) "song" else "songs"}",
         formatDuration(playlist.duration),
     ).joinToString(" $DOT ")
 }

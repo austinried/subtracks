@@ -97,6 +97,17 @@ internal const val PLAYLISTS_FILTER =
         "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
         "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
 
+// With the Downloaded filter on, count the songs that actually have a download so the number under
+// a playlist matches the songs its detail screen lists.
+internal const val PLAYLISTS_SELECT =
+    "SELECT playlists.sourceId, playlists.id, playlists.name, playlists.comment, playlists.coverArt, " +
+        "CASE WHEN :downloadedFilter = 1 THEN (" +
+        "SELECT COUNT(DISTINCT ps.songId) FROM playlist_songs ps " +
+        "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId AND sd.status = 'Completed' " +
+        "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id " +
+        ") ELSE playlists.songCount END AS songCount, " +
+        "playlists.created, playlists.changed, playlists.duration "
+
 internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
 internal const val PLAYLIST_ORDER_BY_ADDED = "created DESC, name COLLATE NOCASE, id"
@@ -364,42 +375,42 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME")
     fun playlistsByName(
         sourceId: Long,
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME_REVERSED")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME_REVERSED")
     fun playlistsByNameReversed(
         sourceId: Long,
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED")
     fun playlistsByAdded(
         sourceId: Long,
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED_REVERSED")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED_REVERSED")
     fun playlistsByAddedReversed(
         sourceId: Long,
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED")
     fun playlistsByUpdated(
         sourceId: Long,
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED_REVERSED")
+    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED_REVERSED")
     fun playlistsByUpdatedReversed(
         sourceId: Long,
         search: String,

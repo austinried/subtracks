@@ -47,6 +47,8 @@ class PlaylistDetailViewModel(
     val downloads: StateFlow<Map<String, SongDownload>> =
         downloadRepository.states()
 
+    val offline: StateFlow<Boolean> = sourceRepository.offline
+
     val downloadStatus: StateFlow<ListDownloadStatus> =
         sourceId
             .flatMapLatest { downloadRepository.status(it, DownloadList.Playlist, playlistId) }
