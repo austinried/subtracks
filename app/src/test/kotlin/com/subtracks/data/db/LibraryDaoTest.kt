@@ -388,6 +388,40 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun downloadedFilterReportsTheDownloadedAlbumCount() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 5)))
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "One", year = null, starred = null),
+                    album(sourceId, "al-2", "Two", year = null, starred = null),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1"),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2"),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            val filtered = dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page()
+            assertEquals(1, filtered.size)
+            assertEquals(1L, filtered.first().albumCount)
+
+            assertEquals(
+                5L,
+                dao
+                    .artistsByName(sourceId, 0, "")
+                    .page()
+                    .first { it.id == "ar-1" }
+                    .albumCount,
+            )
+        }
+
+    @Test
     fun searchMatchesInfixCaseInsensitivelyAndFallsBackToAScanBelowThreeCharacters() =
         runTest {
             val sourceId = source()

@@ -68,6 +68,18 @@ internal const val ARTISTS_FILTER =
         "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
         "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
 
+// With the Downloaded filter on, count the albums that actually have a download so the number under
+// an artist matches the albums its detail screen lists.
+internal const val ARTISTS_SELECT =
+    "SELECT artists.sourceId, artists.id, artists.name, " +
+        "CASE WHEN :downloadedFilter = 1 THEN (" +
+        "SELECT COUNT(DISTINCT dl.id) FROM songs " +
+        "JOIN albums dl ON dl.sourceId = songs.sourceId AND dl.id = songs.albumId " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = artists.sourceId AND dl.artistId = artists.id AND sd.status = 'Completed' " +
+        ") ELSE artists.albumCount END AS albumCount, " +
+        "artists.starred, artists.coverArt "
+
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, name COLLATE NOCASE, id"
@@ -304,7 +316,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
     fun artistsByName(
         sourceId: Long,
         starredFilter: Int,
@@ -312,7 +324,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_REVERSED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_REVERSED")
     fun artistsByNameReversed(
         sourceId: Long,
         starredFilter: Int,
@@ -320,7 +332,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
     fun artistsByAlbumCount(
         sourceId: Long,
         starredFilter: Int,
@@ -328,7 +340,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
     fun artistsByAlbumCountReversed(
         sourceId: Long,
         starredFilter: Int,
@@ -336,7 +348,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED")
     fun artistsByStarred(
         sourceId: Long,
         starredFilter: Int,
@@ -344,7 +356,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
     fun artistsByStarredReversed(
         sourceId: Long,
         starredFilter: Int,
