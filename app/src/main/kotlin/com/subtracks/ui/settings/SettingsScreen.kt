@@ -323,15 +323,17 @@ private fun <T> ChoiceGroup(
     selected: T,
     onSelect: (T) -> Unit,
 ) {
-    Text(header, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-    options.forEach { (value, label) ->
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().clickable { onSelect(value) },
-        ) {
-            RadioButton(selected = value == selected, onClick = { onSelect(value) })
-            Spacer(Modifier.width(8.dp))
-            Text(label)
+    Column {
+        Text(header, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        options.forEach { (value, label) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { onSelect(value) },
+            ) {
+                RadioButton(selected = value == selected, onClick = { onSelect(value) })
+                Spacer(Modifier.width(8.dp))
+                Text(label)
+            }
         }
     }
 }
