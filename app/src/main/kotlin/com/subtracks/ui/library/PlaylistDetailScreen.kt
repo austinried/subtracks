@@ -55,6 +55,13 @@ fun PlaylistDetailRoute(
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
+    val requestDownloadAction: (BulkDownloadAction) -> Unit = { action ->
+        if (action == BulkDownloadAction.Delete) {
+            scope.launch { pendingDelete = viewModel.downloadedBytes() }
+        } else {
+            viewModel.onDownloadAction(action)
+        }
+    }
     val actions =
         ItemActions(
             playPlaylist = { viewModel.playAll() },
@@ -64,6 +71,7 @@ fun PlaylistDetailRoute(
             download = viewModel::download,
             cancelDownload = viewModel::cancelDownload,
             deleteDownload = viewModel::deleteDownload,
+            bulkDownload = { _, action -> requestDownloadAction(action) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
@@ -75,19 +83,15 @@ fun PlaylistDetailRoute(
         artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
         downloadStatus = downloadStatus,
-        onDownloadAction = { action ->
-            if (action == BulkDownloadAction.Delete) {
-                scope.launch { pendingDelete = viewModel.downloadedBytes() }
-            } else {
-                viewModel.onDownloadAction(action)
-            }
-        },
+        onDownloadAction = requestDownloadAction,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { playlist?.let { contextMenuHost?.show(MenuTarget.Playlist(it, viewModel.coverArt(it.coverArt, true)), actions) } },
+        onMore = {
+            playlist?.let { contextMenuHost?.show(MenuTarget.Playlist(it, viewModel.coverArt(it.coverArt, true), downloadStatus), actions) }
+        },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Playlist && context.refId == playlistId },
     )
 

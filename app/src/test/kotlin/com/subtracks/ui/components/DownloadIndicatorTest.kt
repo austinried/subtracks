@@ -21,8 +21,13 @@ class DownloadIndicatorTest {
     }
 
     @Test
-    fun aPartlyDownloadedListShowsProgress() {
-        assertEquals(DownloadIndicator.InProgress, ListDownloadStatus(total = 4, downloaded = 2).indicator())
+    fun aPartlyDownloadedIdleListShowsNothing() {
+        assertEquals(DownloadIndicator.Hidden, ListDownloadStatus(total = 4, downloaded = 2).indicator())
+    }
+
+    @Test
+    fun aPartlyDownloadedListWithSomethingInFlightShowsProgress() {
+        assertEquals(DownloadIndicator.InProgress, ListDownloadStatus(total = 4, downloaded = 2, downloading = 1).indicator())
     }
 
     @Test

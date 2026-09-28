@@ -70,6 +70,13 @@ fun AlbumDetailRoute(
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
+    val requestDownloadAction: (BulkDownloadAction) -> Unit = { action ->
+        if (action == BulkDownloadAction.Delete) {
+            scope.launch { pendingDelete = viewModel.downloadedBytes() }
+        } else {
+            viewModel.onDownloadAction(action)
+        }
+    }
     val actions =
         ItemActions(
             playSong = { song -> songs.indexOfFirst { it.id == song.id }.takeIf { it >= 0 }?.let(viewModel::play) },
@@ -80,6 +87,7 @@ fun AlbumDetailRoute(
             download = viewModel::download,
             cancelDownload = viewModel::cancelDownload,
             deleteDownload = viewModel::deleteDownload,
+            bulkDownload = { _, action -> requestDownloadAction(action) },
             setStar = setStar,
             viewArtist = onViewArtist,
         )
@@ -91,19 +99,20 @@ fun AlbumDetailRoute(
         artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
         downloads = downloads,
         downloadStatus = downloadStatus,
-        onDownloadAction = { action ->
-            if (action == BulkDownloadAction.Delete) {
-                scope.launch { pendingDelete = viewModel.downloadedBytes() }
-            } else {
-                viewModel.onDownloadAction(action)
-            }
-        },
+        onDownloadAction = requestDownloadAction,
         onBack = onBack,
         onSongClick = viewModel::play,
         onSongLongClick = { contextMenuHost?.show(it, actions) },
         onShuffle = viewModel::shuffle,
         onPlay = viewModel::playAll,
-        onMore = { album?.let { contextMenuHost?.show(MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true)), actions) } },
+        onMore = {
+            album?.let {
+                contextMenuHost?.show(
+                    MenuTarget.Album(it, viewModel.coverArt(it.coverArt, true), downloadStatus),
+                    actions,
+                )
+            }
+        },
         onArtistClick =
             album
                 ?.takeIf { !it.albumArtist.isNullOrBlank() }

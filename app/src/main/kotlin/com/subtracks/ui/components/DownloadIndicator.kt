@@ -24,9 +24,10 @@ enum class DownloadIndicator { Hidden, InProgress, Complete }
 
 fun ListDownloadStatus.indicator(): DownloadIndicator =
     when {
-        total == 0L || (downloaded == 0L && downloading == 0L) -> DownloadIndicator.Hidden
+        total == 0L -> DownloadIndicator.Hidden
         complete -> DownloadIndicator.Complete
-        else -> DownloadIndicator.InProgress
+        downloading > 0 -> DownloadIndicator.InProgress
+        else -> DownloadIndicator.Hidden
     }
 
 @Composable
