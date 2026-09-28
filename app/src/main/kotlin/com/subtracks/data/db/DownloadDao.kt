@@ -15,8 +15,8 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
     fun downloads(sourceId: Long): Flow<List<SongDownload>>
 
-    @Query("SELECT * FROM song_downloads WHERE status IN ('Queued', 'Running')")
-    fun activeDownloads(): Flow<List<SongDownload>>
+    @Query("SELECT * FROM song_downloads WHERE status IN ('Queued', 'Running') AND (engineId IS NOT NULL OR sourceId = :sourceId)")
+    fun activeDownloads(sourceId: Long): Flow<List<SongDownload>>
 
     @Query("SELECT * FROM song_downloads ORDER BY rowid")
     suspend fun all(): List<SongDownload>

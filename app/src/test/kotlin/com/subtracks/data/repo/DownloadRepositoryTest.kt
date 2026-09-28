@@ -852,7 +852,40 @@ class DownloadRepositoryTest {
         }
 
     @Test
-    fun activeDownloadsCoverEverySourceNotJustTheActiveOne() =
+    fun activeDownloadsCoverEngineWorkInAnySourceButNotStalledWaitingRows() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(2, "other", "http://other/", isActive = false, createdAt = 0))
+                val other =
+                    Song(
+                        sourceId = 2,
+                        id = "o1",
+                        albumId = "al2",
+                        artistId = "ar2",
+                        title = "Other",
+                        album = "Other",
+                        artist = "Other",
+                        duration = 100,
+                        track = 1,
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    )
+                db.libraryDao().upsertSongs(listOf(other, other.copy(id = "o2", track = 2)))
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Running, engineId = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Running, engineId = 2))
+                db.downloadDao().upsert(SongDownload(2, "o2", DownloadStatus.Queued))
+            }
+
+            val rows = runBlocking { repository.activeDownloads().first() }
+
+            assertEquals(setOf(1L to "s1", 2L to "o1"), rows.map { it.sourceId to it.songId }.toSet())
+        }
+
+    @Test
+    fun aDownloadInASourceThatIsNotActiveIsStillReconciled() =
         runTest {
             seedLibrary()
             runBlocking {
@@ -875,14 +908,16 @@ class DownloadRepositoryTest {
                         ),
                     ),
                 )
-                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Running, engineId = 1))
-                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
-                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Queued))
+                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Queued, engineId = 42))
             }
+            engine.running(42, bytes = 1, total = 2)
+            repository.start()
 
-            val rows = runBlocking { repository.activeDownloads().first() }
+            await { row(2, "o1")?.status == DownloadStatus.Running }
 
-            assertEquals(setOf(1L to "s1", 2L to "o1"), rows.map { it.sourceId to it.songId }.toSet())
+            writeFile(2, "o1", "audio")
+            engine.complete(42, total = 2)
+            await { row(2, "o1")?.status == DownloadStatus.Completed }
         }
 
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }

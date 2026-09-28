@@ -1,6 +1,8 @@
 package com.subtracks.data.prefs
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
@@ -25,16 +27,36 @@ class UserPreferencesTest {
             assertEquals(ListQuery("Name"), prefs.listQuery(LibraryListTab.Albums).first())
             assertEquals(ListQuery("Name"), prefs.listQuery(LibraryListTab.Artists).first())
 
-            prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, starred = StarredFilter.Starred))
+            prefs.setListQuery(
+                LibraryListTab.Albums,
+                ListQuery("Added", descending = true, starred = StarredFilter.Starred, downloaded = true),
+            )
             prefs.setListQuery(LibraryListTab.Artists, ListQuery("AlbumCount", descending = true))
 
             assertEquals(
-                ListQuery("Added", descending = true, starred = StarredFilter.Starred),
+                ListQuery("Added", descending = true, starred = StarredFilter.Starred, downloaded = true),
                 prefs.listQuery(LibraryListTab.Albums).first(),
             )
             assertEquals(
                 ListQuery("AlbumCount", descending = true),
                 prefs.listQuery(LibraryListTab.Artists).first(),
+            )
+
+            file.delete()
+        }
+
+    @Test
+    fun aListQueryStoredBeforeTheDownloadedFilterStillDecodes() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            store.edit { it[stringPreferencesKey("list_query_albums")] = "Added|1|1" }
+
+            assertEquals(
+                ListQuery("Added", descending = true, starred = StarredFilter.Starred),
+                prefs.listQuery(LibraryListTab.Albums).first(),
             )
 
             file.delete()

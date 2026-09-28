@@ -302,13 +302,20 @@ class LibraryDaoTest {
                 listOf(
                     album(sourceId, "al-1", "Downloaded", year = 2000, starred = null),
                     album(sourceId, "al-2", "Empty", year = 2001, starred = null),
+                    album(sourceId, "al-3", "Elsewhere", year = 2002, starred = null).copy(artistId = "ar-2"),
                 ),
             )
-            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 2)))
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Artist", albumCount = 2),
+                    artist(sourceId, "ar-2", "Other", albumCount = 1),
+                ),
+            )
             dao.upsertSongs(
                 listOf(
                     song(sourceId, "s1", "One", starred = null),
                     song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2"),
+                    song(sourceId, "s3", "Three", starred = null).copy(albumId = "al-3", artistId = "ar-2"),
                 ),
             )
             dao.upsertPlaylists(
@@ -337,7 +344,7 @@ class LibraryDaoTest {
                 listOf("pl-1"),
                 dao.playlistsByName(sourceId, "", downloadedFilter = 1).page().map { it.id },
             )
-            assertEquals(2, dao.albumsByName(sourceId, 0, "").page().size)
+            assertEquals(3, dao.albumsByName(sourceId, 0, "").page().size)
         }
 
     private suspend fun plan(sql: String): String =

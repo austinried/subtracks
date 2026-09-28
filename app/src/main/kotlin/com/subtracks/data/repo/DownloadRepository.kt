@@ -82,7 +82,11 @@ class DownloadRepository(
 
     fun states(): StateFlow<Map<String, SongDownload>> = statesFlow
 
-    fun activeDownloads(): Flow<List<SongDownload>> = db.downloadDao().activeDownloads()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun activeDownloads(): Flow<List<SongDownload>> =
+        sourceRepository.activeSourceId().flatMapLatest { sourceId ->
+            if (sourceId == null) flowOf(emptyList()) else db.downloadDao().activeDownloads(sourceId)
+        }
 
     suspend fun awaitLoaded() {
         if (started) loaded.await()
@@ -545,7 +549,12 @@ class DownloadRepository(
                             // engine reports status without a source, and a source switched away
                             // from keeps downloading, so its rows must not freeze as Running.
                             val active = db.downloadDao().all().filter { it.status.isActive }
-                            if (active.isEmpty()) return@launch
+                            val sourceId = sourceRepository.activeSourceIdOnce()
+                            // Tick only while something can move: a row the engine owns, or the
+                            // active source's waiting rows, which promote hands over. An inactive
+                            // source's waiting rows never move, and ticking for them would keep this
+                            // loop and its per-second queries alive for the life of the process.
+                            if (active.none { it.engineId != null || it.sourceId == sourceId }) return@launch
                             reconcileRows(active)
                             promote()
                         }
