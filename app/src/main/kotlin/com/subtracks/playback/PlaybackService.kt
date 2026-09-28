@@ -103,6 +103,7 @@ class PlaybackService : MediaSessionService() {
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(this)
                         .setEnableClippingInMediaPeriod(true)
+                        .setLoadErrorHandlingPolicy(RetryOutOfRangePolicy())
                         .setDataSourceFactory(mediaDataSourceFactory(this, OkHttpDataSource.Factory(streamingClient()))),
                 ).build()
         exoPlayer.addListener(
