@@ -416,7 +416,6 @@ class PlaybackController(
             if (offline) {
                 queueRepository.setCursor(target)
                 loadWindow(target, autoplay = playing, startPositionMs = 0)
-                refresh(target)
                 return@withLock
             }
             if (snapshot.upNextSize > 0L || updated.upNextSize > 0L || snapshot.shuffled) {
@@ -509,7 +508,6 @@ class PlaybackController(
         if (offline) {
             queueRepository.setCursor(target)
             loadWindow(target, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
-            refresh(target)
             return@withLock
         }
         when {
@@ -564,9 +562,8 @@ class PlaybackController(
             val restoredId = queueRepository.itemAt(restored, target)?.song?.id
             windowJob?.cancel()
             if (offline) {
-                loadWindow(target, autoplay = playing, startPositionMs = 0)
                 queueRepository.setCursor(target)
-                refresh(target)
+                loadWindow(target, autoplay = playing, startPositionMs = 0)
                 return@withLock
             }
             val canMirror =
@@ -1054,6 +1051,10 @@ class PlaybackController(
                 val snapshot = snapshot ?: return@withLock
                 if (snapshot.size == 0L || player.isEnded) return@withLock
                 downloads.awaitLoaded()
+                if (offline) {
+                    reloadWindowLocked()
+                    return@withLock
+                }
                 val position = (currentPosition() ?: return@withLock).coerceIn(0, snapshot.size - 1)
                 val window = queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS)
                 val uris = player.itemUris()

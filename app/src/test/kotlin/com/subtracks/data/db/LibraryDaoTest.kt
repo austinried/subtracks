@@ -420,6 +420,46 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun downloadedFilterSortsArtistsByTheirDownloadedAlbumCount() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "One", albumCount = 1),
+                    artist(sourceId, "ar-2", "Two", albumCount = 3),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a1", "A1", year = null, starred = null),
+                    album(sourceId, "a2", "A2", year = null, starred = null),
+                    album(sourceId, "b1", "B1", year = null, starred = null).copy(artistId = "ar-2"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s-a1", "A1", starred = null).copy(albumId = "a1"),
+                    song(sourceId, "s-a2", "A2", starred = null).copy(albumId = "a2"),
+                    song(sourceId, "s-b1", "B1", starred = null).copy(albumId = "b1", artistId = "ar-2"),
+                ),
+            )
+            listOf("s-a1", "s-a2", "s-b1").forEach {
+                db.downloadDao().upsert(SongDownload(sourceId, it, DownloadStatus.Completed))
+            }
+
+            // ar-1 has two downloaded albums, ar-2 one; by synced count ar-2 (3) leads ar-1 (1).
+            assertEquals(
+                listOf("ar-1", "ar-2"),
+                dao.artistsByAlbumCount(sourceId, 0, "", downloadedFilter = 1).page().map { it.id },
+            )
+            assertEquals(
+                listOf("ar-2", "ar-1"),
+                dao.artistsByAlbumCount(sourceId, 0, "").page().map { it.id },
+            )
+        }
+
+    @Test
     fun downloadedFilterReportsTheDownloadedSongCountForPlaylists() =
         runTest {
             val sourceId = source()

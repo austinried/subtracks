@@ -2498,6 +2498,74 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlineRemovingThePlayingTrackPlaysTheNextDownloaded() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        runBlocking { controller.removeAt(0) }
+
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(1L, controller.state.value.position)
+    }
+
+    @Test
+    fun offlineDeletingADownloadDropsItFromTheWindow() {
+        seedAlbum(3, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s2")
+        markDownloaded(1, "s3")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await { handle.items.map { it.id } == listOf("s1", "s2", "s3") }
+
+        runBlocking { downloads.remove(1, "s2") }
+        controller.refreshMediaItems()
+
+        await { handle.items.none { it.id == "s2" } }
+        assertEquals(listOf("s1", "s3"), handle.items.map { it.id })
+    }
+
+    @Test
+    fun offlinePreviousSkipsToThePreviousDownloaded() {
+        seedAlbum(5, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s4")
+        setOffline()
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        controller.previous()
+
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
     fun offlinePlayStartsAtTheNearestDownloadedWhenTheTargetIsNotDownloaded() {
         seedAlbum(60, sourceId = 1)
         markDownloaded(1, "s50")
@@ -2764,14 +2832,18 @@ class PlaybackControllerTest {
         songId: String,
     ) {
         val file = File(downloadsDir, "$sourceId/$songId")
-        runBlocking {
-            downloads.reconcile()
-            db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
-            file.parentFile?.mkdirs()
-            file.writeBytes(byteArrayOf(1))
-            downloads.reconcile()
+        val deadline = System.nanoTime() + 15_000_000_000L
+        while (System.nanoTime() < deadline) {
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
+                file.parentFile?.mkdirs()
+                file.writeBytes(byteArrayOf(1))
+                downloads.reconcile()
+            }
+            if (downloads.localUri(songId) != null) return
+            Thread.sleep(10)
         }
-        await { downloads.localUri(songId) != null }
+        assertTrue("Timed out marking $songId downloaded", downloads.localUri(songId) != null)
     }
 
     private fun setOffline() {

@@ -88,7 +88,7 @@ class SourceRepository(
                 _quality.value = quality
                 val sourceChanged = config?.id != activeSourceId
                 activeSourceId = config?.id
-                if (!_offline.value && sourceChanged && config != null && config.useTokenAuth) {
+                if (sourceChanged && config != null && config.useTokenAuth && !prefs.offlineMode().first()) {
                     scope.launch { runCatching { config.toClient().check("ping") } }
                 }
             }

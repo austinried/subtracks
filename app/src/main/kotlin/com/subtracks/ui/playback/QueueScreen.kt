@@ -252,23 +252,8 @@ class QueueViewModel(
     fun undo() {
         viewModelScope.launch {
             playbackController.undo()
-            mutex.withLock { reload() }
+            mutex.withLock { reconcileLocked() }
         }
-    }
-
-    private suspend fun reload() {
-        val snapshot = queueRepository.snapshot()
-        if (snapshot.size == 0L) {
-            rows.clear()
-            return
-        }
-        val start = (rows.minOfOrNull { it.position } ?: 0L).coerceIn(0, snapshot.size - 1)
-        val end = (rows.maxOfOrNull { it.position } ?: (start + QUEUE_CHUNK - 1)).coerceIn(start, snapshot.size - 1)
-        val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
-        val reused = reusedIds()
-        val updated = loaded.map { rowFor(it, reused) }
-        rows.clear()
-        rows.addAll(updated)
     }
 }
 
