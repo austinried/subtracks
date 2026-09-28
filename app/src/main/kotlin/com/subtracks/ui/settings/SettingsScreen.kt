@@ -187,7 +187,7 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text("Manage downloads") },
-                    supportingContent = { Text("Sizes and deletion") },
+                    supportingContent = { Text("Space and deletion") },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
