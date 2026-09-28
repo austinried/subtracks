@@ -31,6 +31,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -70,6 +71,7 @@ fun SettingsRoute(
     val mobileQuality by viewModel.mobileQuality.collectAsStateWithLifecycle()
     val syncConcurrency by viewModel.syncConcurrency.collectAsStateWithLifecycle()
     val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
+    val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
@@ -77,12 +79,14 @@ fun SettingsRoute(
         mobileQuality = mobileQuality,
         syncConcurrency = syncConcurrency,
         downloadQuality = downloadQuality,
+        downloadOverMetered = downloadOverMetered,
         onSelectSource = viewModel::selectSource,
         onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
         onMobileQualityChange = viewModel::setMobileQuality,
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
         onDownloadQualityChange = viewModel::setDownloadQuality,
+        onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onBack = onBack,
@@ -98,12 +102,14 @@ fun SettingsScreen(
     mobileQuality: StreamQuality,
     syncConcurrency: Int,
     downloadQuality: StreamQuality,
+    downloadOverMetered: Boolean,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
     onMobileQualityChange: (StreamQuality) -> Unit,
     onSyncConcurrencyChange: (Int) -> Unit,
     onDownloadQualityChange: (StreamQuality) -> Unit,
+    onDownloadOverMeteredChange: (Boolean) -> Unit,
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onBack: () -> Unit,
@@ -196,6 +202,17 @@ fun SettingsScreen(
                     headlineContent = { Text("Download quality") },
                     supportingContent = { Text(qualityLabel(downloadQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.DownloadQuality },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text("Download over mobile data") },
+                    supportingContent = { Text(if (downloadOverMetered) "Wi-Fi and mobile" else "Wi-Fi only") },
+                    trailingContent = {
+                        Switch(checked = downloadOverMetered, onCheckedChange = onDownloadOverMeteredChange)
+                    },
+                    modifier = Modifier.clickable { onDownloadOverMeteredChange(!downloadOverMetered) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

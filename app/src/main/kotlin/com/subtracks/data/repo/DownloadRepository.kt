@@ -163,7 +163,12 @@ class DownloadRepository(
                 val engineId =
                     try {
                         engine.enqueue(
-                            EngineRequest(uri = url, path = enginePath(row.sourceId, row.songId), title = title),
+                            EngineRequest(
+                                uri = url,
+                                path = enginePath(row.sourceId, row.songId),
+                                title = title,
+                                allowMetered = sourceRepository.downloadsAllowedOverMetered(),
+                            ),
                         )
                     } catch (e: CancellationException) {
                         throw e

@@ -38,6 +38,11 @@ class SettingsViewModel(
             .downloadQuality()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StreamQuality())
 
+    val downloadOverMetered: StateFlow<Boolean> =
+        userPreferences
+            .downloadOverMetered()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     val syncConcurrency: StateFlow<Int> =
         userPreferences
             .syncConcurrency()
@@ -57,6 +62,10 @@ class SettingsViewModel(
 
     fun setDownloadQuality(quality: StreamQuality) {
         viewModelScope.launch { userPreferences.setDownloadQuality(quality) }
+    }
+
+    fun setDownloadOverMetered(allowed: Boolean) {
+        viewModelScope.launch { userPreferences.setDownloadOverMetered(allowed) }
     }
 
     fun setSyncConcurrency(value: Int) {

@@ -15,8 +15,10 @@ class SystemDownloadEngine(
                 .setTitle(request.title)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MUSIC, request.path)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
-                // Downloads wait for an unmetered network until the preference for them exists.
-                .setAllowedOverMetered(false)
+                // Wi-Fi only unless the preference allows a metered network, and roaming counts as
+                // one of those; the platform otherwise permits it by default.
+                .setAllowedOverMetered(request.allowMetered)
+                .setAllowedOverRoaming(request.allowMetered)
         return manager().enqueue(download)
     }
 

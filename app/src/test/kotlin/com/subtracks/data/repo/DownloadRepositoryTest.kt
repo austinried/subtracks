@@ -52,6 +52,7 @@ class DownloadRepositoryTest {
     private lateinit var repository: DownloadRepository
     private lateinit var artwork: ArtworkStore
     private lateinit var dir: File
+    private val prefs = fakeUserPreferences()
     private val messages = CopyOnWriteArrayList<String>()
     private val requestedArt = CopyOnWriteArrayList<String>()
     private val artFetchedAfterTheEngineRequest = CopyOnWriteArrayList<Boolean>()
@@ -73,7 +74,7 @@ class DownloadRepositoryTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
-        sources = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork)
+        sources = SourceRepository(db, OkHttpClient(), prefs, artwork)
         engine = FakeDownloadEngine()
         dir = File(context.cacheDir, "downloads-${System.nanoTime()}")
         repository =
@@ -954,6 +955,29 @@ class DownloadRepositoryTest {
             assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
             assertFalse(file(1, "s1").exists())
             assertNull(repository.localUri("s1"))
+        }
+
+    @Test
+    fun downloadsAreWifiOnlyUntilThePreferenceAllowsMetered() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+            assertFalse(
+                engine.requests
+                    .single()
+                    .second.allowMetered,
+            )
+
+            prefs.setDownloadOverMetered(true)
+            await { sources.downloadsAllowedOverMetered() }
+
+            runBlocking { repository.download(1, "s2") }
+
+            assertTrue(
+                engine.requests
+                    .last()
+                    .second.allowMetered,
+            )
         }
 
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }

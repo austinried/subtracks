@@ -52,9 +52,17 @@ class SourceRepository(
     @Volatile
     private var downloadQuality = StreamQuality()
 
+    @Volatile
+    private var allowMeteredDownloads = false
+
+    fun downloadsAllowedOverMetered(): Boolean = allowMeteredDownloads
+
     init {
         scope.launch {
             prefs.downloadQuality().collect { downloadQuality = it }
+        }
+        scope.launch {
+            prefs.downloadOverMetered().collect { allowMeteredDownloads = it }
         }
         scope.launch {
             combine(

@@ -3,6 +3,7 @@ package com.subtracks.data.prefs
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -87,6 +88,14 @@ class UserPreferences(
     private fun streamQualityKey(mode: NetworkMode) = stringPreferencesKey("stream_quality_${mode.key}")
 
     private val downloadQualityKey = stringPreferencesKey("download_quality")
+
+    fun downloadOverMetered(): Flow<Boolean> = store.data.map { prefs -> prefs[downloadOverMeteredKey] ?: false }
+
+    suspend fun setDownloadOverMetered(allowed: Boolean) {
+        store.edit { prefs -> prefs[downloadOverMeteredKey] = allowed }
+    }
+
+    private val downloadOverMeteredKey = booleanPreferencesKey("download_over_metered")
 
     fun syncConcurrency(): Flow<Int> = store.data.map { prefs -> (prefs[syncConcurrencyKey] ?: DEFAULT_FETCH_CONCURRENCY).coerceAtLeast(1) }
 
