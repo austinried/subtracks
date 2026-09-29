@@ -87,7 +87,7 @@ fun ArtistsContent(
                             },
                             supportingContent = {
                                 Text(
-                                    text = "${artist.albumCount} albums",
+                                    text = "${artist.albumCount} ${if (artist.albumCount == 1L) "album" else "albums"}",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )

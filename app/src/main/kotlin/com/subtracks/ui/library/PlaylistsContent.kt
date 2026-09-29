@@ -85,7 +85,9 @@ fun PlaylistsContent(
                             },
                             supportingContent = {
                                 Text(
-                                    text = playlist.comment?.takeIf { it.isNotBlank() } ?: "${playlist.songCount} songs",
+                                    text =
+                                        playlist.comment?.takeIf { it.isNotBlank() }
+                                            ?: "${playlist.songCount} ${if (playlist.songCount == 1L) "song" else "songs"}",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
