@@ -1,0 +1,7 @@
+{
+  "uniqueId": "com.android.tools:desugar_jdk_libs",
+  "name": "Desugar JDK Libs",
+  "description": "Backports of newer java.* APIs, bundled into the app at build time by core library desugaring. It is not on the runtime classpath, so the license collector cannot discover it automatically.",
+  "website": "https://github.com/google/desugar_jdk_libs",
+  "licenses": ["GPL-2.0-with-classpath-exception"]
+}

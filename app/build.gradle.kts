@@ -76,6 +76,12 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+aboutLibraries {
+    collect {
+        configPath = file("config")
+    }
+}
+
 val integrationTestClasses =
     listOf(
         "com.subtracks.data.source.subsonic.SubsonicSourceIntegrationTest",
