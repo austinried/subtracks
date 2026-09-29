@@ -12,11 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.lerp
-import kotlin.math.roundToInt
 
 const val ARTWORK_THEME_TRANSITION_MS = 600
-
-private const val TRANSITION_STEPS = 24
 
 @Composable
 internal fun baseArtworkColors(): ArtworkColors {
@@ -61,7 +58,7 @@ fun rememberAnimatedArtworkColors(
     }
 
     if (from === to) return to
-    val fraction = (progress.value * TRANSITION_STEPS).roundToInt() / TRANSITION_STEPS.toFloat()
+    val fraction = progress.value
     return remember(from, to, fraction) { lerpArtworkColors(from, to, fraction) }
 }
 
