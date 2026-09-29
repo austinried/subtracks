@@ -346,6 +346,23 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun goingOfflineCancelsActiveDownloads() =
+        runTest {
+            seedLibrary()
+            repository.start()
+            val active: (SongDownload) -> Boolean = {
+                it.status == DownloadStatus.Queued || it.status == DownloadStatus.Running
+            }
+            runBlocking { repository.download(1, "s1") }
+            await { allRows().any(active) }
+
+            runBlocking { sources.setOfflineMode(true) }
+
+            await { allRows().none(active) }
+            assertTrue(engine.cancelled.isNotEmpty())
+        }
+
+    @Test
     fun theDownloadStartsBeforeItsArtworkIsFetched() =
         runTest {
             seedLibrary()

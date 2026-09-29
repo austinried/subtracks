@@ -76,6 +76,11 @@ class DownloadRepository(
         scope.launch {
             sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
         }
+        scope.launch {
+            sourceRepository.offline.collect { offline ->
+                if (offline) cancelActive()
+            }
+        }
     }
 
     fun close() {
