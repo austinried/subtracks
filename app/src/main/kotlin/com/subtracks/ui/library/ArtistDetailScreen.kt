@@ -276,7 +276,7 @@ fun ArtistDetailScreen(
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
-            BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
+            BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
                 val gradientScrollPx = scrollPx - imageHeightPx

@@ -231,7 +231,7 @@ fun NowPlayingScreen(
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
-            Box(modifier.fillMaxSize().background(Color.Black)) {
+            Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 HeroGradient(
                     colors = artwork,
                     scrollPx = { 0f },

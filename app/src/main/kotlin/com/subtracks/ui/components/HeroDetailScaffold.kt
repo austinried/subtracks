@@ -98,7 +98,7 @@ fun HeroDetailScaffold(
     val effectiveArtwork = artwork ?: baseArtworkColors()
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
-            BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {
+            BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 val listState = rememberLazyListState()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
