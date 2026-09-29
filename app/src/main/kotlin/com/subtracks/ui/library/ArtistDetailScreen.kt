@@ -92,6 +92,7 @@ import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PendingDownloadDelete
 import com.subtracks.ui.components.bulkRef
 import com.subtracks.ui.components.rememberViewportFill
+import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
@@ -436,12 +437,8 @@ fun ArtistDetailScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .fillMaxWidth()
-                            .height(barHeight + 24.dp)
                             .alpha(1f - barFraction)
-                            .background(
-                                Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent)),
-                            ),
+                            .statusBarScrim(),
                 )
 
                 TopAppBar(
