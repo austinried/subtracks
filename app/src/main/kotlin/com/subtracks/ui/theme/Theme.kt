@@ -1,40 +1,26 @@
 package com.subtracks.ui.theme
 
+import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
-
-internal val SubtracksColorScheme =
-    darkColorScheme(
-        primary = White,
-        onPrimary = Black,
-        primaryContainer = White,
-        onPrimaryContainer = Black,
-        secondary = White,
-        onSecondary = Black,
-        secondaryContainer = White,
-        onSecondaryContainer = Black,
-        tertiary = White,
-        onTertiary = Black,
-        background = Black,
-        onBackground = White,
-        surface = Black,
-        onSurface = White,
-        surfaceVariant = DarkGrey,
-        onSurfaceVariant = LightGrey,
-        surfaceContainerLowest = Black,
-        surfaceContainerLow = NearBlack,
-        surfaceContainer = NearBlack,
-        surfaceContainerHigh = DarkGrey,
-        surfaceContainerHighest = MidGrey,
-        outline = MidGrey,
-        outlineVariant = DarkGrey,
-    )
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun SubtracksTheme(content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val colorScheme =
+        remember(context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                dynamicDarkColorScheme(context)
+            } else {
+                darkColorScheme()
+            }
+        }
     MaterialTheme(
-        colorScheme = SubtracksColorScheme,
+        colorScheme = colorScheme,
         typography = SubtracksTypography,
         content = content,
     )

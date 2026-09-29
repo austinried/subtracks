@@ -272,7 +272,7 @@ fun ArtistDetailScreen(
         )
     val nameBusy = rememberOverlaidNameBusy(artThumbnail ?: art)
     val nameScrimAlpha by animateFloatAsState(if (nameBusy) 1f else 0f, tween(SCRIM_FADE_MS), label = "artistNameScrim")
-    val effectiveArtwork = artwork ?: baseArtworkColors
+    val effectiveArtwork = artwork ?: baseArtworkColors()
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {

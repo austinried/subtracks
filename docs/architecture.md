@@ -41,7 +41,7 @@ app/src/main/kotlin/com/subtracks
     playback/                        Mini player and Now Playing screen
     settings/                        Server list and add-server form
     components/                      Cover art and empty/loading states
-    theme/                           Material 3 theme (stark black/white)
+    theme/                           Material 3 theme (Material You dynamic colour)
   playback/
     PlaybackService.kt               MediaSessionService hosting ExoPlayer
     PlaybackController.kt            MediaController wrapper: state, queue, transport
@@ -74,7 +74,7 @@ The library is one `LibraryScreen` with a pinned top bar: the current section as
 
 The Albums tab is a three-column grid of covers only — a later preference will toggle captions, and sorting will hang off a FAB, so Settings only manages servers and neither shows sort nor sync controls.
 
-The theme is monochrome — black surface, white content and accent — with no colour extracted from cover art (that was a Flutter feature and is not ported yet).
+The default theme is Material You: on Android 12+ the root scheme is the wallpaper's dynamic dark palette, falling back to the Material 3 baseline dark scheme elsewhere. Screens that show cover art layer an artwork-derived palette (`ArtworkTheme`) on top, and when no art is available they fall back to the same theme colours rather than a fixed monochrome scheme.
 
 ## Playback
 

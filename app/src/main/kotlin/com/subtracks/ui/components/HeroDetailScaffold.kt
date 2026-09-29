@@ -95,7 +95,7 @@ fun HeroDetailScaffold(
     content: LazyListScope.(rowModifier: Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val effectiveArtwork = artwork ?: baseArtworkColors
+    val effectiveArtwork = artwork ?: baseArtworkColors()
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(Color.Black)) {

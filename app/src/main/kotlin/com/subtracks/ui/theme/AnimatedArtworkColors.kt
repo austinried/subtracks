@@ -3,6 +3,7 @@ package com.subtracks.ui.theme
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,29 +17,35 @@ const val ARTWORK_THEME_TRANSITION_MS = 600
 
 private const val TRANSITION_STEPS = 24
 
-internal val baseArtworkColors =
-    ArtworkColors(
-        scheme = SubtracksColorScheme,
-        gradientHigh = SubtracksColorScheme.surfaceContainerHigh,
-        gradientLow = SubtracksColorScheme.background,
-        accents = listOf(SubtracksColorScheme.surfaceContainerHighest, SubtracksColorScheme.surfaceContainerLow),
-        darkPrimary = SubtracksColorScheme.background,
-        blobSeed = 0,
-    )
+@Composable
+internal fun baseArtworkColors(): ArtworkColors {
+    val scheme = MaterialTheme.colorScheme
+    return remember(scheme) {
+        ArtworkColors(
+            scheme = scheme,
+            gradientHigh = scheme.surfaceContainerHigh,
+            gradientLow = scheme.background,
+            accents = listOf(scheme.surfaceContainerHighest, scheme.surfaceContainerLow),
+            darkPrimary = scheme.background,
+            blobSeed = 0,
+        )
+    }
+}
 
 @Composable
 fun rememberAnimatedArtworkColors(
     target: ArtworkColors?,
+    base: ArtworkColors,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
 ): ArtworkColors {
-    var from by remember { mutableStateOf(target ?: baseArtworkColors) }
-    var to by remember { mutableStateOf(target ?: baseArtworkColors) }
+    var from by remember { mutableStateOf(target ?: base) }
+    var to by remember { mutableStateOf(target ?: base) }
     val progress = remember { Animatable(1f) }
 
-    LaunchedEffect(target, durationMillis) {
-        val next = target ?: baseArtworkColors
+    LaunchedEffect(target, base, durationMillis) {
+        val next = target ?: base
         if (next !== to) {
-            if (to === baseArtworkColors) {
+            if (to === base) {
                 from = next
                 to = next
             } else {

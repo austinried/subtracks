@@ -68,7 +68,9 @@ class ArtworkExtractionTest {
         val ref = CoverArtRef(url = "art", cacheKey = "art")
         var colors: ArtworkColors? = null
         composeRule.setContent {
-            colors = rememberArtworkColors(ref)
+            SubtracksTheme {
+                colors = rememberArtworkColors(ref)
+            }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) { colors != null }
         assertNotNull(colors)
@@ -99,15 +101,18 @@ class ArtworkExtractionTest {
         val artwork = mutableStateOf<ArtworkColors?>(null)
         val seen = mutableListOf<androidx.compose.ui.graphics.Color>()
         composeRule.setContent {
-            val colors = rememberAnimatedArtworkColors(artwork.value)
-            SideEffect { seen += colors.scheme.background }
+            SubtracksTheme {
+                val colors = rememberAnimatedArtworkColors(artwork.value, baseArtworkColors())
+                SideEffect { seen += colors.scheme.background }
+            }
         }
         composeRule.waitForIdle()
+        val baseBackground = seen.first()
 
         composeRule.runOnIdle { artwork.value = target }
         composeRule.waitForIdle()
 
-        val firstPainting = seen.first { it != baseArtworkColors.scheme.background }
+        val firstPainting = seen.first { it != baseBackground }
         assertEquals(target.scheme.background, firstPainting)
     }
 

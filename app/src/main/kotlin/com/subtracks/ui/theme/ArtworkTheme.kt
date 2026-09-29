@@ -194,7 +194,8 @@ fun rememberArtworkColors(
         }
     }
     val target = remember(effective) { effective?.let { (primary, secondary) -> artworkColorsFromSeeds(primary, secondary) } }
-    val colors = rememberAnimatedArtworkColors(target, durationMillis)
+    val base = baseArtworkColors()
+    val colors = rememberAnimatedArtworkColors(target, base, durationMillis)
     return if (target == null) null else colors
 }
 
