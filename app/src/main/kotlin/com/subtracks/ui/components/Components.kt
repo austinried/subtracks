@@ -22,6 +22,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -305,6 +306,22 @@ fun FilteredEmptyState(
             Button(onClick = onClearFilters) {
                 Text("Clear filters")
             }
+        }
+    }
+}
+
+@Composable
+fun CloseWhenDownloadsGone(
+    downloaded: Long,
+    offline: Boolean,
+    onClose: () -> Unit,
+) {
+    var hadDownloads by remember { mutableStateOf(false) }
+    LaunchedEffect(downloaded, offline) {
+        if (downloaded > 0) {
+            hadDownloads = true
+        } else if (hadDownloads && offline) {
+            onClose()
         }
     }
 }

@@ -224,6 +224,7 @@ class SyncManagerTest {
                 "<song id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
                 "</searchResult3></subsonic-response>"
     }
+
     @Test
     fun aSyncRequestWhileOfflineIsRefusedWithoutTouchingTheNetwork() =
         runBlocking {

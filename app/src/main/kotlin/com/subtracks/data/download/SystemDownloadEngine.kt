@@ -43,6 +43,9 @@ class SystemDownloadEngine(
     }
 
     override fun cancel(ids: List<Long>) {
+        // DownloadManager.remove throws on an empty id list, and queued rows waiting for a slot
+        // have no engine id yet, so an offline cancel can legitimately select none.
+        if (ids.isEmpty()) return
         manager().remove(*ids.toLongArray())
     }
 

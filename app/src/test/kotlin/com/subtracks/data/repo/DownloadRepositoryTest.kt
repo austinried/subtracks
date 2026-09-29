@@ -363,6 +363,23 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun cancellingQueuedRowsWithoutEngineIdsLeavesTheEngineAlone() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Queued))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Queued))
+            }
+            // DownloadManager.remove throws on an empty id list; a queue of only waiting rows has
+            // no engine ids, so cancelling must not call the engine at all.
+            engine.failCancelOnEmpty = true
+
+            runBlocking { repository.cancelActive() }
+
+            assertTrue(allRows().isEmpty())
+        }
+
+    @Test
     fun theDownloadStartsBeforeItsArtworkIsFetched() =
         runTest {
             seedLibrary()

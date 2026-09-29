@@ -75,6 +75,9 @@ class SourceRepository(
             prefs.offlineMode().collect { _offline.value = it }
         }
         scope.launch {
+            // Read the persisted flag before the source config can build a source or probe it, so a
+            // cold start with offline on never touches the network.
+            _offline.value = prefs.offlineMode().first()
             combine(
                 db.sourcesDao().activeSubsonicConfig(),
                 networkMode,
@@ -88,7 +91,7 @@ class SourceRepository(
                 _quality.value = quality
                 val sourceChanged = config?.id != activeSourceId
                 activeSourceId = config?.id
-                if (sourceChanged && config != null && config.useTokenAuth && !prefs.offlineMode().first()) {
+                if (sourceChanged && config != null && config.useTokenAuth && !_offline.value) {
                     scope.launch { runCatching { config.toClient().check("ping") } }
                 }
             }

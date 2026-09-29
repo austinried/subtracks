@@ -22,6 +22,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.HeroDetailScaffold
@@ -53,14 +54,7 @@ fun PlaylistDetailRoute(
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
-    var hadDownloads by remember { mutableStateOf(false) }
-    LaunchedEffect(downloadStatus.downloaded, offline) {
-        if (downloadStatus.downloaded > 0) {
-            hadDownloads = true
-        } else if (hadDownloads && offline) {
-            onBack()
-        }
-    }
+    CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
     val playback by playbackController.state.collectAsStateWithLifecycle()

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 data class QueueItem(
@@ -1266,17 +1267,18 @@ class PlaybackController(
         snapshot: QueueSnapshot,
         from: Long,
         step: Long,
-    ): Long? {
-        var position = from
-        var scanned = 0L
-        while (position in 0 until snapshot.size && scanned < OFFLINE_SCAN_LIMIT) {
-            val songId = queueRepository.itemAt(snapshot, position)?.song?.id
-            if (songId != null && downloads.localUri(songId) != null) return position
-            position += step
-            scanned++
+    ): Long? =
+        withContext(Dispatchers.IO) {
+            var position = from
+            var scanned = 0L
+            while (position in 0 until snapshot.size && scanned < OFFLINE_SCAN_LIMIT) {
+                val songId = queueRepository.itemAt(snapshot, position)?.song?.id
+                if (songId != null && downloads.localUri(songId) != null) return@withContext position
+                position += step
+                scanned++
+            }
+            null
         }
-        return null
-    }
 
     private suspend fun reloadForOffline() =
         startLock.withLock {

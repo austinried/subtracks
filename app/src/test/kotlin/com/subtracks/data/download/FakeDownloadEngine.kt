@@ -9,6 +9,7 @@ class FakeDownloadEngine : DownloadEngine {
     var cancelCalls = 0
     var enqueueDelayMs = 0L
     var failEnqueueFor: String? = null
+    var failCancelOnEmpty = false
 
     override fun enqueue(request: EngineRequest): Long {
         if (enqueueDelayMs > 0) Thread.sleep(enqueueDelayMs)
@@ -23,6 +24,7 @@ class FakeDownloadEngine : DownloadEngine {
     override fun download(id: Long): EngineDownload? = downloads[id]
 
     override fun cancel(ids: List<Long>) {
+        if (ids.isEmpty() && failCancelOnEmpty) throw IllegalArgumentException("no ids")
         cancelCalls++
         cancelled += ids
     }

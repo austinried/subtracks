@@ -82,6 +82,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.DeleteDownloadsDialog
@@ -150,14 +151,7 @@ fun ArtistDetailRoute(
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
-    var hadDownloads by remember { mutableStateOf(false) }
-    LaunchedEffect(downloadStatus.downloaded, offline) {
-        if (downloadStatus.downloaded > 0) {
-            hadDownloads = true
-        } else if (hadDownloads && offline) {
-            onBack()
-        }
-    }
+    CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }

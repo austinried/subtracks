@@ -74,10 +74,9 @@ private const val POSITION_TIMEOUT_MS = 1_000L
 
 internal const val QUEUE_WINDOW_ROWS = QUEUE_CHUNK * 3
 
-// Offline the view hides non-downloaded rows, so resolving a contiguous position range can span far
-// more than it shows. Cap the positions resolved per load (and per reconcile) so a sparse large
-// playlist cannot make the view resolve the whole queue; online every position is shown, so the cap
-// is never reached.
+// Offline the view hides non-downloaded rows, so a displayed window can span far more positions than
+// it shows. Reconcile resolves only this many positions from the head and keeps the rest on screen,
+// so a sparse large playlist cannot make a layout change resolve the whole queue.
 private const val MAX_SCAN_POSITIONS = QUEUE_WINDOW_ROWS * 4
 
 data class QueueRow(
@@ -169,11 +168,21 @@ class QueueViewModel(
         val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
         val reused = reusedIds()
         val updated = loaded.map { rowFor(it, reused) }
-        if (updated.size == rows.size) {
-            updated.forEachIndexed { index, row -> if (rows[index] != row) rows[index] = row }
+        if (end >= rawEnd) {
+            if (updated.size == rows.size) {
+                updated.forEachIndexed { index, row -> if (rows[index] != row) rows[index] = row }
+            } else {
+                rows.clear()
+                rows.addAll(updated)
+            }
         } else {
+            // Only the head of a sparse offline window was resolved; keep the tail on screen,
+            // dropping any tail row whose id was reused for a head row.
+            val usedIds = updated.mapTo(HashSet()) { it.id }
+            val tail = rows.filter { it.position > end && it.id !in usedIds }
             rows.clear()
             rows.addAll(updated)
+            rows.addAll(tail)
         }
     }
 
@@ -187,11 +196,9 @@ class QueueViewModel(
                 val snapshot = queueRepository.snapshot()
                 val collected = mutableListOf<QueueWindowItem>()
                 var end = first - 1
-                var scanned = 0L
-                while (end >= 0L && collected.size < QUEUE_CHUNK && scanned < MAX_SCAN_POSITIONS) {
+                while (end >= 0L && collected.size < QUEUE_CHUNK) {
                     val start = (end - QUEUE_CHUNK + 1).coerceAtLeast(0)
                     collected.addAll(0, queueRepository.range(snapshot, start, end).filter(::visible))
-                    scanned += end - start + 1
                     end = start - 1
                 }
                 if (collected.isEmpty()) return@withLock
@@ -210,11 +217,9 @@ class QueueViewModel(
                 if (last >= snapshot.size - 1) return@withLock
                 val collected = mutableListOf<QueueWindowItem>()
                 var start = last + 1
-                var scanned = 0L
-                while (start < snapshot.size && collected.size < QUEUE_CHUNK && scanned < MAX_SCAN_POSITIONS) {
+                while (start < snapshot.size && collected.size < QUEUE_CHUNK) {
                     val to = (start + QUEUE_CHUNK - 1).coerceAtMost(snapshot.size - 1)
                     collected.addAll(queueRepository.range(snapshot, start, to).filter(::visible))
-                    scanned += to - start + 1
                     start = to + 1
                 }
                 if (collected.isEmpty()) return@withLock

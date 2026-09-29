@@ -327,7 +327,8 @@ class DownloadRepository(
 
     private suspend fun removeRows(rows: List<SongDownload>) {
         if (rows.isEmpty()) return
-        engine.cancel(rows.mapNotNull { it.engineId })
+        val engineIds = rows.mapNotNull { it.engineId }
+        if (engineIds.isNotEmpty()) engine.cancel(engineIds)
         rows.groupBy { it.sourceId }.forEach { (sourceId, group) ->
             group.forEach { file(sourceId, it.songId).delete() }
             group.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
