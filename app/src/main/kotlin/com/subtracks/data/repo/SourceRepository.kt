@@ -40,11 +40,13 @@ class SourceRepository(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    @Volatile
-    private var active: SubsonicMusicSource? = null
+    private data class ActiveSource(
+        val id: Long,
+        val source: SubsonicMusicSource,
+    )
 
     @Volatile
-    private var activeSourceId: Long? = null
+    private var active: ActiveSource? = null
 
     private val _quality = MutableStateFlow(StreamQuality())
     val quality: StateFlow<StreamQuality> = _quality
@@ -87,10 +89,9 @@ class SourceRepository(
             ) { config, mode, wifi, mobile, concurrency ->
                 Triple(config, if (mode == NetworkMode.Wifi) wifi else mobile, concurrency)
             }.collect { (config, quality, concurrency) ->
-                active = config?.toMusicSource(quality, concurrency)
+                val sourceChanged = config?.id != active?.id
+                active = config?.let { ActiveSource(it.id, it.toMusicSource(quality, concurrency)) }
                 _quality.value = quality
-                val sourceChanged = config?.id != activeSourceId
-                activeSourceId = config?.id
                 if (sourceChanged && config != null && config.useTokenAuth && !_offline.value) {
                     scope.launch { runCatching { config.toClient().check("ping") } }
                 }
@@ -116,12 +117,12 @@ class SourceRepository(
         coverArt: String?,
         thumbnail: Boolean = false,
     ): CoverArtRef? {
-        val source = active ?: return null
+        val current = active ?: return null
         if (coverArt == null) return null
-        val cacheKey = coverArtKey(source.id, coverArt, thumbnail)
-        artworkStore.uri(source.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
+        val cacheKey = coverArtKey(current.id, coverArt, thumbnail)
+        artworkStore.uri(current.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
         if (_offline.value) return null
-        val url = source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
+        val url = current.source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
         return CoverArtRef(url = url, cacheKey = cacheKey)
     }
 
@@ -131,9 +132,8 @@ class SourceRepository(
         thumbnail: Boolean,
     ): String? {
         if (_offline.value) return null
-        val source = active ?: return null
-        if (source.id != sourceId) return null
-        return source.coverArtUri(coverArt, thumbnail)?.toString()
+        val current = active?.takeIf { it.id == sourceId } ?: return null
+        return current.source.coverArtUri(coverArt, thumbnail)?.toString()
     }
 
     fun streamUri(
@@ -142,7 +142,7 @@ class SourceRepository(
         quality: StreamQuality,
     ): String? {
         if (_offline.value) return null
-        val uri = active?.streamUri(songId)?.toString() ?: return null
+        val uri = active?.source?.streamUri(songId)?.toString() ?: return null
         val length = declaredStreamLength(durationMs, quality) ?: return uri
         return uri + streamLengthSuffix(length)
     }
@@ -152,14 +152,14 @@ class SourceRepository(
         songId: String,
     ): String? {
         if (_offline.value) return null
-        val source = active?.takeIf { activeSourceId == sourceId } ?: return null
+        val current = active?.takeIf { it.id == sourceId } ?: return null
         // A transcode preference downloads the stream, so the saved file is already the wanted
         // quality rather than the original that would then have to be transcoded on every play.
         val quality = downloadQuality
         return if (quality.transcodes) {
-            source.streamUri(songId, quality.maxBitrate, quality.format).toString()
+            current.source.streamUri(songId, quality.maxBitrate, quality.format).toString()
         } else {
-            source.downloadUri(songId).toString()
+            current.source.downloadUri(songId).toString()
         }
     }
 

@@ -131,6 +131,23 @@ private object Routes {
     fun editServer(id: Long) = "edit-server/$id"
 }
 
+private val DETAIL_ROUTES =
+    setOf(Routes.ALBUM_DETAIL, Routes.ARTIST_DETAIL, Routes.PLAYLIST_DETAIL)
+
+internal fun resetOnSourceSwitch(
+    previousSourceId: Long?,
+    currentSourceId: Long?,
+    route: String?,
+    closeNowPlaying: () -> Unit,
+    closeQueue: () -> Unit,
+    popDetail: () -> Unit,
+) {
+    if (previousSourceId == null || currentSourceId == null || previousSourceId == currentSourceId) return
+    closeNowPlaying()
+    closeQueue()
+    if (route in DETAIL_ROUTES) popDetail()
+}
+
 internal data class BackStackKey(
     val route: String?,
     val argument: String?,
@@ -190,6 +207,25 @@ private fun MainNavigation() {
     val scope = rememberCoroutineScope()
     val contextMenuHost = remember { ContextMenuHost() }
     var infoSong by remember { mutableStateOf<Song?>(null) }
+
+    val activeSourceId by libraryRepository.activeSourceId.collectAsStateWithLifecycle(initialValue = null)
+    var previousSourceId by rememberSaveable { mutableStateOf<Long?>(null) }
+    LaunchedEffect(activeSourceId) {
+        val id = activeSourceId
+        resetOnSourceSwitch(
+            previousSourceId = previousSourceId,
+            currentSourceId = id,
+            route = currentRoute,
+            closeNowPlaying = {
+                settleJob?.cancel()
+                nowPlayingOpen = false
+                nowPlayingProgress = 0f
+            },
+            closeQueue = { showingQueue = false },
+            popDetail = { navController.popBackStack(Routes.LIBRARY, inclusive = false) },
+        )
+        if (id != null) previousSourceId = id
+    }
 
     fun settleNowPlaying(open: Boolean) {
         if (open) {
