@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -282,6 +283,8 @@ fun NowPlayingScreen(
                                     .fillMaxWidth()
                                     .padding(top = 2.dp)
                                     .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
                                         enabled = onAlbumClick != null,
                                         onClickLabel = "Open album",
                                     ) { onAlbumClick?.invoke() }
