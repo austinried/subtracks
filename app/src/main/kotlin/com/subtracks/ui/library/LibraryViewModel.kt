@@ -135,11 +135,11 @@ class LibraryViewModel(
 
     fun listQuery(tab: LibraryListTab): StateFlow<ListQuery> = listQueries.getValue(tab)
 
-    val selectedTab: StateFlow<LibraryTab> =
+    val selectedTab: StateFlow<LibraryTab?> =
         userPreferences
             .libraryTab()
-            .map { name -> LibraryTab.entries.firstOrNull { it.name == name } ?: LibraryTab.Albums }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, LibraryTab.Albums)
+            .map(::libraryTabFor)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun selectTab(tab: LibraryTab) {
         viewModelScope.launch { userPreferences.setLibraryTab(tab.name) }

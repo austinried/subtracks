@@ -134,7 +134,7 @@ class UserPreferences(
 
     private fun listQueryKey(tab: LibraryListTab) = stringPreferencesKey("list_query_${tab.key}")
 
-    fun libraryTab(): Flow<String> = store.data.map { prefs -> prefs[libraryTabKey] ?: LibraryListTab.Albums.name }
+    fun libraryTab(): Flow<String?> = store.data.map { prefs -> prefs[libraryTabKey] }
 
     suspend fun setLibraryTab(tab: String) {
         store.edit { prefs -> prefs[libraryTabKey] = tab }

@@ -151,6 +151,8 @@ data class SortOption(
 
 fun LibraryTab.listTab(): LibraryListTab = LibraryListTab.valueOf(name)
 
+internal fun libraryTabFor(name: String?): LibraryTab = LibraryTab.entries.firstOrNull { it.name == name } ?: LibraryTab.Albums
+
 fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
     when (tab) {
         LibraryTab.Albums -> {
@@ -195,8 +197,10 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
-    var previousTabName by rememberSaveable { mutableStateOf(selectedTab.name) }
+    // Wait for the stored tab before composing: the pager latches its initial page, so starting on
+    // the default and scrolling to the stored one would flash and, worse, report the default back.
+    val selectedTab = viewModel.selectedTab.collectAsStateWithLifecycle().value ?: return
+    var previousTabName by remember { mutableStateOf(selectedTab.name) }
     val previousTab = LibraryTab.entries.firstOrNull { it.name == previousTabName } ?: LibraryTab.Albums
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
@@ -241,7 +245,7 @@ fun LibraryRoute(
         )
     LibraryScreen(
         selectedTab = selectedTab,
-        onTabSelected = { viewModel.selectTab(it) },
+        onTabSelected = { tab -> if (viewModel.selectedTab.value != tab) viewModel.selectTab(tab) },
         syncing = syncing,
         bottomInset = bottomInset,
         artwork = artwork,

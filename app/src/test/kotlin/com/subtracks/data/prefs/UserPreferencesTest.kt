@@ -10,6 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -32,6 +33,7 @@ class UserPreferencesTest {
                 ListQuery("Added", descending = true, starred = StarredFilter.Starred, downloaded = true),
             )
             prefs.setListQuery(LibraryListTab.Artists, ListQuery("AlbumCount", descending = true))
+            prefs.setListQuery(LibraryListTab.Playlists, ListQuery("Updated", starred = StarredFilter.NotStarred))
 
             assertEquals(
                 ListQuery("Added", descending = true, starred = StarredFilter.Starred, downloaded = true),
@@ -41,30 +43,10 @@ class UserPreferencesTest {
                 ListQuery("AlbumCount", descending = true),
                 prefs.listQuery(LibraryListTab.Artists).first(),
             )
-
-            file.delete()
-        }
-
-    @Test
-    fun everyTabsListQueryIsKeptIndependently() =
-        runTest {
-            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
-            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
-            val prefs = UserPreferences(store)
-
-            prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, downloaded = true))
-            prefs.setListQuery(LibraryListTab.Artists, ListQuery("AlbumCount", starred = StarredFilter.NotStarred))
-            prefs.setListQuery(LibraryListTab.Playlists, ListQuery("Updated", descending = true))
-
             assertEquals(
-                ListQuery("Added", descending = true, downloaded = true),
-                prefs.listQuery(LibraryListTab.Albums).first(),
+                ListQuery("Updated", starred = StarredFilter.NotStarred),
+                prefs.listQuery(LibraryListTab.Playlists).first(),
             )
-            assertEquals(
-                ListQuery("AlbumCount", starred = StarredFilter.NotStarred),
-                prefs.listQuery(LibraryListTab.Artists).first(),
-            )
-            assertEquals(ListQuery("Updated", descending = true), prefs.listQuery(LibraryListTab.Playlists).first())
 
             file.delete()
         }
@@ -76,7 +58,7 @@ class UserPreferencesTest {
             val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
             val prefs = UserPreferences(store)
 
-            assertEquals("Albums", prefs.libraryTab().first())
+            assertNull(prefs.libraryTab().first())
 
             prefs.setLibraryTab("Playlists")
 
