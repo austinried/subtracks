@@ -238,6 +238,11 @@ class PlaybackController(
         playlistId: String,
     ) = shuffleContext(queueRepository.playlistEntry(sourceId, playlistId))
 
+    fun shuffleArtist(
+        sourceId: Long,
+        artistId: String,
+    ) = shuffleContext(queueRepository.artistEntry(sourceId, artistId))
+
     private fun playContext(
         entry: QueueEntry,
         start: Long,

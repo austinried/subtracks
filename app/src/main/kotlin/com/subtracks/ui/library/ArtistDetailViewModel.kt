@@ -104,4 +104,10 @@ class ArtistDetailViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
+
+    fun shuffle() {
+        viewModelScope.launch {
+            playbackController.shuffleArtist(sourceId.first(), artistId)
+        }
+    }
 }

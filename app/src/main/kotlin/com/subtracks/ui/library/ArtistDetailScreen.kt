@@ -190,6 +190,7 @@ fun ArtistDetailRoute(
         onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art, downloadStatus), actions) } },
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
+        onShuffle = viewModel::shuffle,
         offline = offline,
     )
 

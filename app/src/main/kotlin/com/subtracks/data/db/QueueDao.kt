@@ -19,6 +19,14 @@ private const val ALBUM_SONGS_ORDER = " ORDER BY songs.disc, songs.track, songs.
 
 private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 
+private const val ARTIST_SONGS_SELECT =
+    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND albums.artistId = :artistId"
+
+private const val ARTIST_SONGS_ORDER =
+    " ORDER BY albums.year DESC, albums.name COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
+
 private const val SONG_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
@@ -70,6 +78,16 @@ interface QueueDao {
     suspend fun songLength(
         sourceId: Long,
         songId: String,
+    ): Long
+
+    @Query(
+        "SELECT COUNT(*) FROM songs " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND albums.artistId = :artistId",
+    )
+    suspend fun artistLength(
+        sourceId: Long,
+        artistId: String,
     ): Long
 
     @Query("$PLAYLIST_SONGS_SQL LIMIT :limit OFFSET :offset")
@@ -142,6 +160,14 @@ interface QueueDao {
         track: Long,
         id: String,
         skip: Long,
+        limit: Int,
+    ): List<AlbumSongItem>
+
+    @Query("$ARTIST_SONGS_SELECT$ARTIST_SONGS_ORDER LIMIT :limit OFFSET :offset")
+    suspend fun artistSongs(
+        sourceId: Long,
+        artistId: String,
+        offset: Long,
         limit: Int,
     ): List<AlbumSongItem>
 

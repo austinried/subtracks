@@ -10,6 +10,7 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.Artist
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
@@ -2260,6 +2261,28 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun shuffleArtistPlaysAcrossAllOfTheArtistsAlbums() {
+        seedArtist()
+
+        controller.shuffleArtist(1, "ar1")
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertTrue(controller.state.value.shuffle)
+        assertEquals(
+            QueueKind.Artist,
+            controller.state.value.context
+                ?.kind,
+        )
+        assertEquals(
+            "ar1",
+            controller.state.value.context
+                ?.refId,
+        )
+        assertEquals("Artist", runBlocking { controller.sourceTitle(controller.state.value.context) })
+        assertEquals(setOf("a1", "a2", "a3", "b1", "b2"), handle.items.map { it.id }.toSet())
+    }
+
+    @Test
     fun restoringResumesFromTheSavedPosition() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 0)
@@ -2597,6 +2620,27 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlineShuffleArtistPlaysOnlyDownloadedTracks() {
+        seedArtist()
+        markDownloaded(1, "a1")
+        markDownloaded(1, "b2")
+        setOffline()
+
+        controller.shuffleArtist(1, "ar1")
+
+        await {
+            controller.state.value.item
+                ?.id in listOf("a1", "b2")
+        }
+        assertEquals(setOf("a1", "b2"), handle.items.map { it.id }.toSet())
+        assertEquals(
+            QueueKind.Artist,
+            controller.state.value.context
+                ?.kind,
+        )
+    }
+
+    @Test
     fun offlinePlayAlbumFiltersTheWindowToDownloadedSongs() {
         seedAlbum(4, sourceId = 1)
         markDownloaded(1, "s1")
@@ -2881,6 +2925,52 @@ class PlaybackControllerTest {
                         genre = null,
                     )
                 },
+            )
+        }
+    }
+
+    private fun seedArtist() {
+        runBlocking {
+            db.sourcesDao().upsertSource(Source(1, "source 1", "http://localhost:1", true, 1))
+            db.libraryDao().upsertArtists(listOf(Artist(sourceId = 1, id = "ar1", name = "Artist", albumCount = 2, starred = null)))
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    Album(
+                        sourceId = 1,
+                        id = "al1",
+                        artistId = "ar1",
+                        name = "First",
+                        albumArtist = "Artist",
+                        created = 0,
+                        coverArt = null,
+                        genre = null,
+                        year = 2001,
+                        starred = null,
+                        songCount = 3,
+                    ),
+                    Album(
+                        sourceId = 1,
+                        id = "al2",
+                        artistId = "ar1",
+                        name = "Second",
+                        albumArtist = "Artist",
+                        created = 0,
+                        coverArt = null,
+                        genre = null,
+                        year = 2002,
+                        starred = null,
+                        songCount = 2,
+                    ),
+                ),
+            )
+            db.libraryDao().upsertSongs(
+                listOf(
+                    Song(1, "a1", "al1", "ar1", "A1", "First", "Artist", 100, 1, 1, null, null),
+                    Song(1, "a2", "al1", "ar1", "A2", "First", "Artist", 100, 2, 1, null, null),
+                    Song(1, "a3", "al1", "ar1", "A3", "First", "Artist", 100, 3, 1, null, null),
+                    Song(1, "b1", "al2", "ar1", "B1", "Second", "Artist", 100, 1, 1, null, null),
+                    Song(1, "b2", "al2", "ar1", "B2", "Second", "Artist", 100, 2, 1, null, null),
+                ),
             )
         }
     }
