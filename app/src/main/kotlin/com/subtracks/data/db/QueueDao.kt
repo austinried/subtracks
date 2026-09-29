@@ -191,8 +191,8 @@ interface QueueDao {
     @Query(
         "SELECT songs.id FROM songs " +
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND albums.artistId = :artistId " +
-            "ORDER BY albums.year DESC, albums.name COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id",
+            "WHERE songs.sourceId = :sourceId AND albums.artistId = :artistId" +
+            ARTIST_SONGS_ORDER,
     )
     suspend fun artistSongIds(
         sourceId: Long,

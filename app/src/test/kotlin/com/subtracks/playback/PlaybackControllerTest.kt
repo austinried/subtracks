@@ -2283,6 +2283,19 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun artistQueueRowsFollowTheFlatShuffleIdOrder() {
+        seedArtist()
+        runBlocking { queues.replace(listOf(queues.artistEntry(1, "ar1"))) }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        val paged = (0 until snapshot.size).map { runBlocking { queues.itemAt(snapshot, it)?.song?.id } }
+        val flat = runBlocking { db.queueDao().artistSongIds(1, "ar1") }
+
+        assertEquals(listOf("b1", "b2", "a1", "a2", "a3"), flat)
+        assertEquals(flat, paged)
+    }
+
+    @Test
     fun restoringResumesFromTheSavedPosition() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 0)
