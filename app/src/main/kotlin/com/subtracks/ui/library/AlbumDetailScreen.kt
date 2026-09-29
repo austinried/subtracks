@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,15 @@ fun AlbumDetailRoute(
     val discs by viewModel.discs.collectAsStateWithLifecycle(initialValue = emptyList())
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
+    var hadDownloads by remember { mutableStateOf(false) }
+    LaunchedEffect(downloadStatus.downloaded, offline) {
+        if (downloadStatus.downloaded > 0) {
+            hadDownloads = true
+        } else if (hadDownloads && offline) {
+            onBack()
+        }
+    }
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
     val playback by playbackController.state.collectAsStateWithLifecycle()

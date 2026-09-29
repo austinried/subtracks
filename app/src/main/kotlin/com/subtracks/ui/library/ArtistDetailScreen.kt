@@ -47,6 +47,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -148,6 +149,15 @@ fun ArtistDetailRoute(
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
+    var hadDownloads by remember { mutableStateOf(false) }
+    LaunchedEffect(downloadStatus.downloaded, offline) {
+        if (downloadStatus.downloaded > 0) {
+            hadDownloads = true
+        } else if (hadDownloads && offline) {
+            onBack()
+        }
+    }
     val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
@@ -185,6 +195,7 @@ fun ArtistDetailRoute(
         onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art, downloadStatus), actions) } },
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
+        offline = offline,
     )
 
     pendingDelete?.let { pending ->
@@ -214,6 +225,7 @@ fun ArtistDetailScreen(
     starred: Boolean = false,
     onToggleStar: (() -> Unit)? = null,
     onShuffle: () -> Unit = {},
+    offline: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
@@ -227,6 +239,7 @@ fun ArtistDetailScreen(
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val navBarBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
+    val albumCount = if (offline) albums.size.toLong() else artist?.albumCount ?: 0L
     val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
@@ -348,7 +361,7 @@ fun ArtistDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = "${artist?.albumCount ?: 0} ${if (artist?.albumCount == 1L) "album" else "albums"}",
+                                    text = "$albumCount ${if (albumCount == 1L) "album" else "albums"}",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f),

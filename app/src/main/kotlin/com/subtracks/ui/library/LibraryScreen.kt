@@ -860,7 +860,7 @@ internal fun LibraryTabs(
                             Icon(
                                 imageVector = Icons.Rounded.CloudOff,
                                 contentDescription = "Offline mode; tap to go online",
-                                tint = MaterialTheme.colorScheme.error,
+                                tint = MaterialTheme.colorScheme.onBackground,
                             )
                         }
                     }
