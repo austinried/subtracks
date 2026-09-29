@@ -46,6 +46,30 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun everyTabsListQueryIsKeptIndependently() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            prefs.setListQuery(LibraryListTab.Albums, ListQuery("Added", descending = true, downloaded = true))
+            prefs.setListQuery(LibraryListTab.Artists, ListQuery("AlbumCount", starred = StarredFilter.NotStarred))
+            prefs.setListQuery(LibraryListTab.Playlists, ListQuery("Updated", descending = true))
+
+            assertEquals(
+                ListQuery("Added", descending = true, downloaded = true),
+                prefs.listQuery(LibraryListTab.Albums).first(),
+            )
+            assertEquals(
+                ListQuery("AlbumCount", starred = StarredFilter.NotStarred),
+                prefs.listQuery(LibraryListTab.Artists).first(),
+            )
+            assertEquals(ListQuery("Updated", descending = true), prefs.listQuery(LibraryListTab.Playlists).first())
+
+            file.delete()
+        }
+
+    @Test
     fun theSelectedLibraryTabRoundTrips() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
