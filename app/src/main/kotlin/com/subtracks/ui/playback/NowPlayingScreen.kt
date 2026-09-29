@@ -152,7 +152,7 @@ fun NowPlayingRoute(
         title = sourceTitle.value,
         coverArt = art,
         thumbnailRef = thumbnail,
-        artwork = rememberArtworkColors(thumbnail ?: art),
+        artwork = rememberArtworkColors(thumbnail ?: art, fallbackName = state.item?.title),
         onBack = onBack,
         onQueue = onQueue,
         onPlayPause = controller::togglePlayPause,

@@ -78,6 +78,18 @@ class ArtworkExtractionTest {
     }
 
     @Test
+    fun fallsBackToAPlaceholderColourWhenThereIsNoArt() {
+        var colors: ArtworkColors? = null
+        composeRule.setContent {
+            SubtracksTheme {
+                colors = rememberArtworkColors(null, fallbackName = "Kid A")
+            }
+        }
+        composeRule.waitForIdle()
+        assertEquals(artworkColorsFromSeed(placeholderSeed("Kid A")).scheme.primary, colors?.scheme?.primary)
+    }
+
+    @Test
     fun keepsContentStateWhenArtworkArrives() {
         val artwork = mutableStateOf<ArtworkColors?>(null)
         lateinit var state: MutableState<Int>

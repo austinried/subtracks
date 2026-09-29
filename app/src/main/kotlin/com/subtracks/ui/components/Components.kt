@@ -47,6 +47,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Dimension
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.ui.theme.artworkColorsFromSeed
+import com.subtracks.ui.theme.placeholderSeed
 
 private const val MAX_CACHED_RATIOS = 256
 
@@ -78,10 +80,16 @@ fun CoverArt(
     var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
     var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf(thumbnailRef?.cacheKey?.let(ArtworkRatioCache::get)) }
+    val letterScheme =
+        if (showPlaceholder || (failed && !thumbnailLoaded)) {
+            remember(name) { artworkColorsFromSeed(placeholderSeed(name)).scheme }
+        } else {
+            null
+        }
     val frameModifier =
         Modifier
             .shadow(elevation, RoundedCornerShape(2.dp), clip = elevation > 0.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(letterScheme?.primaryContainer ?: MaterialTheme.colorScheme.surfaceVariant)
 
     if (square) {
         val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
@@ -97,6 +105,7 @@ fun CoverArt(
                 onThumbnailRatio = { thumbnailRatio = it },
                 contentScale = ContentScale.Crop,
                 colorFilter = colorFilter,
+                placeholderContentColor = letterScheme?.onPrimaryContainer,
             ) {
                 if (ref != null) {
                     AsyncImage(
@@ -160,6 +169,7 @@ fun CoverArt(
                     onThumbnailRatio = { thumbnailRatio = it },
                     contentScale = ContentScale.Fit,
                     colorFilter = colorFilter,
+                    placeholderContentColor = letterScheme?.onPrimaryContainer,
                 ) {
                     if (ref != null) {
                         Image(
@@ -188,6 +198,7 @@ private fun BoxScope.CoverArtContent(
     onThumbnailRatio: (Float) -> Unit,
     contentScale: ContentScale,
     colorFilter: ColorFilter?,
+    placeholderContentColor: Color?,
     main: @Composable () -> Unit,
 ) {
     val context = LocalPlatformContext.current
@@ -195,7 +206,7 @@ private fun BoxScope.CoverArtContent(
         Text(
             text = name.trim().take(1).uppercase(),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = placeholderContentColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.Center),
         )
     }

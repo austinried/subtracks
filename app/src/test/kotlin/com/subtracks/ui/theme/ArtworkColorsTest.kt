@@ -3,6 +3,7 @@ package com.subtracks.ui.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -25,6 +26,14 @@ class ArtworkColorsTest {
             assertTrue("primary text for $seed", contrast(scheme.primary, scheme.onPrimary) >= 3f)
             assertTrue("onSurface for $seed", contrast(scheme.surface, scheme.onSurface) >= 4.5f)
         }
+    }
+
+    @Test
+    fun placeholderColourDependsOnTheNameAndIsNotGrey() {
+        assertEquals(0, placeholderSeed(""))
+        assertNotEquals(placeholderSeed("Kid A"), placeholderSeed("Amnesiac"))
+        val (_, saturation, _) = Color(placeholderSeed("Kid A")).toHsl()
+        assertTrue("placeholder should carry colour", saturation > 0f)
     }
 
     @Test

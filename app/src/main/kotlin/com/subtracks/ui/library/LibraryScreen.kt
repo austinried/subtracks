@@ -222,7 +222,7 @@ fun LibraryRoute(
             "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term"
         }
     val playback by playbackController.state.collectAsStateWithLifecycle()
-    val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true))
+    val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true), fallbackName = playback.item?.title)
     val downloads by viewModel.downloads(listTab).collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }

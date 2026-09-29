@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import coil3.compose.LocalPlatformContext
 import com.subtracks.data.model.CoverArtRef
 import kotlin.random.Random
@@ -179,15 +180,23 @@ private fun blendHue(
     return (from + delta * fraction + 360f) % 360f
 }
 
+internal fun placeholderSeed(name: String): Int {
+    val key = name.trim()
+    if (key.isEmpty()) return 0
+    val hue = (key.hashCode() and 0x7FFFFFFF) % 360
+    return Color.hsl(hue.toFloat(), 0.45f, 0.42f).toArgb()
+}
+
 @Composable
 fun rememberArtworkColors(
     ref: CoverArtRef?,
     durationMillis: Int = ARTWORK_THEME_TRANSITION_MS,
     markActive: Boolean = false,
+    fallbackName: String? = null,
 ): ArtworkColors? {
     val cached = remember(ref?.cacheKey) { ref?.cacheKey?.let(ArtworkSeedCache::cached) }
     val seeds by rememberArtworkSeed(ref)
-    val effective = seeds ?: cached
+    val effective = seeds ?: cached ?: fallbackName?.takeIf { it.isNotBlank() }?.let { placeholderSeed(it) to null }
     if (markActive) {
         LaunchedEffect(ref?.cacheKey, effective) {
             if (ref != null && effective != null) ArtworkSeedCache.markLast(ref)

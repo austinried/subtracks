@@ -82,7 +82,7 @@ fun PlaylistDetailRoute(
         playlist = playlist,
         songs = viewModel.songs.collectAsLazyPagingItems(),
         coverArt = viewModel::coverArt,
-        artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS),
+        artwork = rememberArtworkColors(viewModel.coverArt(playlist?.coverArt, true), THEME_TRANSITION_MS, fallbackName = playlist?.name),
         downloads = downloads,
         downloadStatus = downloadStatus,
         offline = offline,

@@ -180,7 +180,7 @@ fun ArtistDetailRoute(
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,
-        artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS),
+        artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artist?.name),
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,

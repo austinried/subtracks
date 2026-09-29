@@ -258,7 +258,12 @@ private fun MainNavigation() {
         label = "libraryBottomInset",
     )
 
-    val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true), markActive = true)
+    val artwork =
+        rememberArtworkColors(
+            playbackController.coverArt(playback.item, thumbnail = true),
+            markActive = true,
+            fallbackName = playback.item?.title,
+        )
     ArtworkTheme(artwork) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().imePadding()) {

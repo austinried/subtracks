@@ -97,7 +97,12 @@ fun AlbumDetailRoute(
         songs = songs,
         discs = discs,
         coverArt = viewModel::coverArt,
-        artwork = rememberArtworkColors(shortcutArt ?: viewModel.coverArt(album?.coverArt, true), THEME_TRANSITION_MS),
+        artwork =
+            rememberArtworkColors(
+                shortcutArt ?: viewModel.coverArt(album?.coverArt, true),
+                THEME_TRANSITION_MS,
+                fallbackName = album?.name,
+            ),
         downloads = downloads,
         downloadStatus = downloadStatus,
         onDownloadAction = requestDownloadAction,
