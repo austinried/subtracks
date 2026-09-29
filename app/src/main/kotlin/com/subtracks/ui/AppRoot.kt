@@ -77,6 +77,7 @@ import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
 import com.subtracks.ui.settings.AddSourceRoute
+import com.subtracks.ui.settings.LicensesRoute
 import com.subtracks.ui.settings.SettingsRoute
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.rememberArtworkColors
@@ -110,6 +111,7 @@ private object Routes {
     const val LIBRARY = "library"
     const val SETTINGS = "settings"
     const val DOWNLOADS = "downloads"
+    const val LICENSES = "licenses"
     const val ADD_SERVER = "add-server"
     const val EDIT_SERVER = "edit-server/{sourceId}"
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
@@ -358,12 +360,16 @@ private fun MainNavigation() {
                         SettingsRoute(
                             onAddServer = { navController.navigate(Routes.ADD_SERVER) },
                             onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
+                            onOpenLicenses = { navController.navigate(Routes.LICENSES) },
                             onEditServer = { id -> navController.navigate(Routes.editServer(id)) },
                             onBack = { navController.popBackStack() },
                         )
                     }
                     composable(Routes.DOWNLOADS) {
                         DownloadsRoute(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.LICENSES) {
+                        LicensesRoute(onBack = { navController.popBackStack() })
                     }
                     composable(
                         route = Routes.ALBUM_DETAIL,

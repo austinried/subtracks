@@ -361,6 +361,7 @@ class AppScreenshotTest {
                     onScrobblingChange = {},
                     onAddServer = {},
                     onOpenDownloads = {},
+                    onOpenLicenses = {},
                     onBack = {},
                 )
             }

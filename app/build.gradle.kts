@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.aboutLibraries)
 }
 
 ktlint {
@@ -131,6 +132,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
     ksp(libs.androidx.room3.compiler)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)

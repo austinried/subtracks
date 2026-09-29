@@ -62,6 +62,7 @@ private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality,
 fun SettingsRoute(
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
+    onOpenLicenses: () -> Unit,
     onEditServer: (Long) -> Unit,
     onBack: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
@@ -96,6 +97,7 @@ fun SettingsRoute(
         onOfflineChange = viewModel::setOfflineMode,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
+        onOpenLicenses = onOpenLicenses,
         onBack = onBack,
     )
 }
@@ -123,6 +125,7 @@ fun SettingsScreen(
     onOfflineChange: (Boolean) -> Unit = {},
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
+    onOpenLicenses: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -274,6 +277,14 @@ fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text("Manage downloads") },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { SectionHeader("About") }
+            item {
+                ListItem(
+                    headlineContent = { Text("Licenses") },
+                    modifier = Modifier.clickable(onClick = onOpenLicenses),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
