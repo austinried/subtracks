@@ -248,10 +248,9 @@ class DownloadRepository(
             return@withContext
         }
         // Under one lock, so a cancel that lands mid-loop waits for the queue to be complete and
-        // then removes all of it, rather than missing the songs enqueued after it looked.
-        // ponytail: the lock is held for the whole insert pass, so cancel latency scales with the
-        // list length; the promote below hands over at most IN_FLIGHT_LIMIT, which is what keeps
-        // the platform's queue (and our poll writes) bounded.
+        // then removes all of it, rather than missing the songs enqueued after it looked. Holding
+        // it for the whole insert pass makes cancel latency scale with the list length; the promote
+        // below hands over at most IN_FLIGHT_LIMIT, which bounds the platform's queue.
         val promoted =
             mutex.withLock {
                 songIds.forEach { songId ->

@@ -1465,8 +1465,8 @@ class PlaybackController(
         const val SEED_PIN_TRIES = 1_000_000
         const val FILE_SCHEME = "file:"
 
-        // ponytail: walks the queue one row at a time to find the next downloaded track; swap for a
-        // single query over the downloaded ids if a sparse queue ever makes the scan noticeable.
+        // The offline scan walks the queue one row at a time to find the next downloaded track, so
+        // this caps the work on a sparse queue.
         const val OFFLINE_SCAN_LIMIT = 10_000L
     }
 }
