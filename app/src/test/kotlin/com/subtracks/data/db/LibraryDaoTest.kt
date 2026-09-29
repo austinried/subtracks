@@ -420,7 +420,7 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun downloadedFilterSortsArtistsByTheirDownloadedAlbumCount() =
+    fun downloadedFilterShowsDownloadedAlbumCountsButSortsByTheSyncedCount() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
@@ -448,15 +448,11 @@ class LibraryDaoTest {
                 db.downloadDao().upsert(SongDownload(sourceId, it, DownloadStatus.Completed))
             }
 
-            // ar-1 has two downloaded albums, ar-2 one; by synced count ar-2 (3) leads ar-1 (1).
-            assertEquals(
-                listOf("ar-1", "ar-2"),
-                dao.artistsByAlbumCount(sourceId, 0, "", downloadedFilter = 1).page().map { it.id },
-            )
-            assertEquals(
-                listOf("ar-2", "ar-1"),
-                dao.artistsByAlbumCount(sourceId, 0, "").page().map { it.id },
-            )
+            // ar-1 has two downloaded albums, ar-2 one. The list still orders by the synced count
+            // (so the album-count index stays usable) but reports the downloaded count.
+            val filtered = dao.artistsByAlbumCount(sourceId, 0, "", downloadedFilter = 1).page()
+            assertEquals(listOf("ar-2", "ar-1"), filtered.map { it.id })
+            assertEquals(listOf(1L, 2L), filtered.map { it.albumCount })
         }
 
     @Test

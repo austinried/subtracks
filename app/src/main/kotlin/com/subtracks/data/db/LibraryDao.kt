@@ -82,8 +82,8 @@ internal const val ARTISTS_SELECT =
 
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "albumCount ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "artists.albumCount DESC, name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "artists.albumCount ASC, name COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
 
