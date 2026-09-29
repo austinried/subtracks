@@ -825,8 +825,7 @@ class QueueRepository(
             QueueKind.Song -> emptyList()
         }
 
-    // ponytail: artist songs span albums, so there is no single keyset to seek on; artist pages fall
-    // back to OFFSET. Add an artist keyset if artists routinely exceed a few thousand tracks.
+    // Artist songs span albums, so there is no single keyset to seek on; artist pages use OFFSET.
     private fun OrderKey.seekable(kind: QueueKind): Boolean =
         when (kind) {
             QueueKind.Playlist -> position != null
