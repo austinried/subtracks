@@ -7,8 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -87,6 +89,47 @@ class ArtworkExtractionTest {
         }
         composeRule.waitForIdle()
         assertEquals(artworkColorsFromSeed(placeholderSeed("Kid A")).scheme.primary, colors?.scheme?.primary)
+    }
+
+    @Test
+    fun fadesFromThePlaceholderToTheArtworkSeed() {
+        val placeholder = artworkColorsFromSeed(placeholderSeed("Kid A"))
+        val art = artworkColorsFromSeed(0xFF3A7BD5.toInt())
+        val artwork = mutableStateOf(placeholder)
+        val seen = mutableListOf<androidx.compose.ui.graphics.Color>()
+        composeRule.setContent {
+            SubtracksTheme {
+                val colors = rememberAnimatedArtworkColors(artwork.value, baseArtworkColors())
+                SideEffect { seen += colors.scheme.background }
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.runOnIdle { artwork.value = art }
+        composeRule.waitForIdle()
+        assertEquals(art.scheme.background, seen.last())
+    }
+
+    @Test
+    fun aChangingBaseSchemeDoesNotStrandTheArtworkTransition() {
+        val placeholder = artworkColorsFromSeed(placeholderSeed("Kid A"))
+        val art = artworkColorsFromSeed(0xFF3A7BD5.toInt())
+        val artwork = mutableStateOf(placeholder)
+        var baseTick by mutableStateOf(0)
+        val seen = mutableListOf<androidx.compose.ui.graphics.Color>()
+        composeRule.setContent {
+            SubtracksTheme {
+                val base = remember(baseTick) { artworkColorsFromSeed(baseTick) }
+                val colors = rememberAnimatedArtworkColors(artwork.value, base)
+                SideEffect {
+                    seen += colors.scheme.background
+                    if (artwork.value !== placeholder && baseTick < 20) baseTick++
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.runOnIdle { artwork.value = art }
+        composeRule.waitForIdle()
+        assertEquals(art.scheme.background, seen.last())
     }
 
     @Test

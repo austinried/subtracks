@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.lerp
 import kotlin.math.roundToInt
@@ -40,21 +41,23 @@ fun rememberAnimatedArtworkColors(
 ): ArtworkColors {
     var from by remember { mutableStateOf(target ?: base) }
     var to by remember { mutableStateOf(target ?: base) }
+    var onBase by remember { mutableStateOf(target == null) }
     val progress = remember { Animatable(1f) }
+    val currentBase by rememberUpdatedState(base)
 
-    LaunchedEffect(target, base, durationMillis) {
-        val next = target ?: base
-        if (next !== to) {
-            if (to === base) {
-                from = next
-                to = next
-            } else {
-                from = lerpArtworkColors(from, to, progress.value)
-                to = next
-                progress.snapTo(0f)
-                progress.animateTo(1f, tween(durationMillis = durationMillis))
-            }
+    LaunchedEffect(target, durationMillis) {
+        val next = target ?: currentBase
+        if (next === to) return@LaunchedEffect
+        if (onBase) {
+            from = next
+            to = next
+        } else {
+            from = lerpArtworkColors(from, to, progress.value)
+            to = next
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(durationMillis = durationMillis))
         }
+        onBase = target == null
     }
 
     if (from === to) return to
