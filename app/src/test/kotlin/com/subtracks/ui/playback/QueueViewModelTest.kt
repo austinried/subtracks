@@ -87,8 +87,10 @@ class QueueViewModelTest {
     fun tearDown() {
         runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
         controller.close()
+        runBlocking { controller.awaitStopped() }
         downloads.close()
         sources.close()
+        db.close()
         Dispatchers.resetMain()
         dispatcher.close()
     }

@@ -17,6 +17,7 @@ import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,6 +37,11 @@ class LibraryDaoTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
     }
 
     @Test

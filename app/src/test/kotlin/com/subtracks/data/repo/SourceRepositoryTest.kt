@@ -61,6 +61,7 @@ class SourceRepositoryTest {
     @After
     fun tearDown() {
         repository.close()
+        db.close()
     }
 
     @Test
@@ -267,15 +268,9 @@ class SourceRepositoryTest {
             repository.setOfflineMode(true)
             withTimeout(5_000) { repository.offline.first { it } }
 
-            var ref: CoverArtRef? = repository.coverArt("art-1")
-            withTimeout(5_000) {
-                while (ref?.url?.startsWith("file:") != true) {
-                    delay(10)
-                    ref = repository.coverArt("art-1")
-                }
-            }
+            val ref = awaitCoverArt("art-1")
 
-            assertTrue("expected the stored file, was ${ref?.url}", ref?.url?.startsWith("file:") == true)
+            assertTrue("expected the stored file, was ${ref.url}", ref.url.startsWith("file:"))
         }
 
     private suspend fun awaitActiveSourceId(): Long = withTimeout(5_000) { repository.activeSourceId().first { it != null }!! }

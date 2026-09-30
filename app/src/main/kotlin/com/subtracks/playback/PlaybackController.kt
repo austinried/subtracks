@@ -173,6 +173,10 @@ class PlaybackController(
         scope.cancel()
     }
 
+    internal suspend fun awaitStopped() {
+        scope.coroutineContext[Job]?.join()
+    }
+
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready
 

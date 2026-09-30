@@ -93,8 +93,10 @@ class DownloadsViewModelTest {
     fun tearDown() {
         runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
         controller.close()
+        runBlocking { controller.awaitStopped() }
         downloadRepository.close()
         sourceRepository.close()
+        db.close()
         Dispatchers.resetMain()
         dispatcher.close()
     }

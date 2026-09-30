@@ -101,8 +101,10 @@ class PlaybackControllerTest {
     @After
     fun tearDown() {
         controller.close()
+        runBlocking { controller.awaitStopped() }
         sources.close()
         downloads.close()
+        db.close()
         dispatcher.close()
     }
 

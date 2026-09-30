@@ -12,6 +12,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -32,6 +33,11 @@ class QueueKeysetTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         repository = QueueRepository(db)
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
     }
 
     @Test

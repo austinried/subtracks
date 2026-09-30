@@ -103,10 +103,6 @@ tasks.withType<Test>().configureEach {
     }
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
-        events("failed")
-        showStackTraces = true
-        showExceptions = true
-        showCauses = true
     }
 }
 

@@ -46,6 +46,7 @@ class AddSourceViewModelTest {
     private lateinit var downloadRepository: DownloadRepository
     private lateinit var server: MockWebServer
     private val createdViewModels = mutableListOf<AddSourceViewModel>()
+    private val syncManagers = mutableListOf<SyncManager>()
 
     @Before
     fun setUp() {
@@ -74,9 +75,11 @@ class AddSourceViewModelTest {
     @After
     fun tearDown() {
         createdViewModels.forEach { runBlocking { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } }
+        syncManagers.forEach { it.close() }
         server.shutdown()
         downloadRepository.close()
         sourceRepository.close()
+        db.close()
         Dispatchers.resetMain()
         dispatcher.close()
     }
@@ -133,9 +136,10 @@ class AddSourceViewModelTest {
             assertNotNull("the active source must survive the refused delete", db.sourcesDao().sourceOnce(sourceId))
         }
 
-    private fun viewModel(sourceId: Long? = null): AddSourceViewModel =
-        AddSourceViewModel(sourceRepository, SyncManager(db, sourceRepository, QueueRepository(db)), downloadRepository, sourceId)
-            .also { createdViewModels += it }
+    private fun viewModel(sourceId: Long? = null): AddSourceViewModel {
+        val syncManager = SyncManager(db, sourceRepository, QueueRepository(db)).also { syncManagers += it }
+        return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId).also { createdViewModels += it }
+    }
 
     private fun ok() = MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>")
 

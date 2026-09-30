@@ -51,6 +51,7 @@ class LibraryRepositoryTest {
     @After
     fun tearDown() {
         sourceRepository.close()
+        db.close()
     }
 
     @Test
