@@ -1,0 +1,7 @@
+{
+  "uniqueId": "org.publicsuffix:publicsuffix-list",
+  "name": "Public Suffix List",
+  "description": "Domain data bundled inside OkHttp's PublicSuffixDatabase, used to enforce cookie and hostname policy.",
+  "website": "https://publicsuffix.org/",
+  "licenses": ["MPL-2.0"]
+}

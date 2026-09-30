@@ -1,0 +1,7 @@
+{
+  "uniqueId": "com.subtracks:next",
+  "name": "Subtracks",
+  "description": "Subtracks itself, a client for Subsonic-compatible servers.",
+  "website": "https://github.com/austinried/subtracks",
+  "licenses": ["GPL-3.0-only"]
+}
