@@ -1,21 +1,14 @@
-# Thin Subsonic API client used to inspect and prepare the test servers.
-
-# Nextcloud's Music app reads repeated (array) parameters straight from the raw query string
-# without URL-decoding them, so ids must be sent with their unreserved characters intact.
-export def url-escape [value: string] {
+# Nextcloud reads repeated (array) params from the raw query string without URL-decoding, so ids
+# must keep their unreserved characters.
+def url-escape [value: string] {
     $value
         | url encode
         | str replace --all '%2D' '-'
-        | str replace --all '%2d' '-'
-        | str replace --all '%2E' '.'
-        | str replace --all '%2e' '.'
         | str replace --all '%5F' '_'
-        | str replace --all '%5f' '_'
         | str replace --all '%7E' '~'
-        | str replace --all '%7e' '~'
 }
 
-export def sub-url [base: string, user: string, pass: string, method: string, params: list<any>] {
+def sub-url [base: string, user: string, pass: string, method: string, params: list<any>] {
     let all = ([["u" $user] ["p" $pass] ["v" "1.16.1"] ["c" "subtracks-test"] ["f" "json"]] | append $params)
     let query = ($all | each {|p| $"($p.0)=(url-escape ($p.1 | into string))" } | str join "&")
     $"($base)rest/($method).view?($query)"

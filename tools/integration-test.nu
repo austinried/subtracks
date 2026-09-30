@@ -1,8 +1,6 @@
 #!/usr/bin/env nu
 
-# Starts the test servers, prepares the fixture data the Kotlin integration tests expect, runs
-# them, then tears everything down. Enter the integration shell first:
-#
+# Run inside the integration shell:
 #   nix develop .#integration --command nu tools/integration-test.nu
 
 use ./integration/util.nu [port-in-use]
@@ -21,15 +19,16 @@ def main [] {
 
     let work = (^mktemp -d | str trim)
 
-    print "starting navidrome"
-    let nav = (start-navidrome $work)
-    print "starting gonic"
-    let gonic = (start-gonic $work)
-
+    mut nav = -1
+    mut gonic = -1
     mut lms = -1
     mut nc = -1
     mut prune = -1
     let outcome = (try {
+        print "starting navidrome"
+        $nav = (start-navidrome $work)
+        print "starting gonic"
+        $gonic = (start-gonic $work)
         print "starting lms"
         $lms = (start-lms $work)
         print "starting nextcloud"
@@ -50,14 +49,9 @@ def main [] {
         ($env.LAST_EXIT_CODE? | default 1)
     })
 
-    let lms_id = $lms
-    let nc_id = $nc
-    let prune_id = $prune
-    do -i { job kill $nav }
-    do -i { job kill $gonic }
-    if $lms_id >= 0 { do -i { job kill $lms_id } }
-    if $nc_id >= 0 { do -i { job kill $nc_id } }
-    if $prune_id >= 0 { do -i { job kill $prune_id } }
+    for id in [$nav $gonic $lms $nc $prune] {
+        if $id >= 0 { do -i { job kill $id } }
+    }
     rm -rf $work
 
     exit $outcome

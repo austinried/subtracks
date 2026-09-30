@@ -1,5 +1,3 @@
-# Test servers: fixtures, lifecycle and the credentials the tests rely on.
-
 use ./util.nu *
 use ./subsonic.nu *
 
@@ -19,8 +17,7 @@ const MUSIC = [
     { id: 321, name: "Brad Sucks - I Don't Know What I'm Doing", songs: 12 }
 ]
 
-# The servers the Kotlin integration tests and the fixtures below share. Keep this in step with
-# TestServers.kt.
+# Keep in step with TestServers.kt.
 export def test-servers [] {
     [
         { name: "navidrome", base: $"http://localhost:($NAV_PORT)/", user: "admin", pass: "password" }
@@ -55,10 +52,14 @@ export def start-navidrome [work: string] {
     let data = ($work | path join "navidrome")
     mkdir $data
     let daemon = (job spawn { ^navidrome --address 127.0.0.1 --port $NAV_PORT --musicfolder $LIB --datafolder $data --loglevel warn out+err> ($work | path join "navidrome.log") })
-    poll "navidrome" {||
-        try { http get -m 5sec $"http://127.0.0.1:($NAV_PORT)/rest/ping.view?u=x&p=x&v=1.13.0&c=test" | ignore; true } catch { null }
-    }
-    http post -m 10sec -t application/json $"http://127.0.0.1:($NAV_PORT)/auth/createAdmin" { username: "admin", password: "password" } | ignore
+    let ready = (try {
+        poll "navidrome" {||
+            try { http get -m 5sec $"http://127.0.0.1:($NAV_PORT)/rest/ping.view?u=x&p=x&v=1.13.0&c=test" | ignore; true } catch { null }
+        }
+        http post -m 10sec -t application/json $"http://127.0.0.1:($NAV_PORT)/auth/createAdmin" { username: "admin", password: "password" } | ignore
+        true
+    } catch { false })
+    if not $ready { do -i { job kill $daemon }; error make { msg: "navidrome did not become ready" } }
     $daemon
 }
 
@@ -67,9 +68,13 @@ export def start-gonic [work: string] {
     let daemon = (job spawn {
         ^gonic -music-path $LIB -listen-addr $"127.0.0.1:($GONIC_PORT)" -db-path ($work | path join "gonic.db") -cache-path ($work | path join "gonic-cache") -playlists-path ($work | path join "gonic-playlists") -podcast-path ($work | path join "gonic-podcasts") -scan-at-start-enabled -http-log=false out+err> ($work | path join "gonic.log")
     })
-    poll "gonic" {||
-        try { http get -m 5sec $"http://127.0.0.1:($GONIC_PORT)/rest/ping.view?u=x&p=x&v=1.13.0&c=test" | ignore; true } catch { null }
-    }
+    let ready = (try {
+        poll "gonic" {||
+            try { http get -m 5sec $"http://127.0.0.1:($GONIC_PORT)/rest/ping.view?u=x&p=x&v=1.13.0&c=test" | ignore; true } catch { null }
+        }
+        true
+    } catch { false })
+    if not $ready { do -i { job kill $daemon }; error make { msg: "gonic did not become ready" } }
     $daemon
 }
 
@@ -84,7 +89,7 @@ export def start-lms [work: string] {
         | str replace --all 'listen-addr = "0.0.0.0"' 'listen-addr = "127.0.0.1"'
         | save -f $conf
 
-    # The first start creates and migrates the database; stop it before seeding, then run for real.
+    # Seed after the first start has migrated the schema, then run for real.
     let bootstrap = (job spawn { ^$lms_bin $conf out+err> ($dir | path join "bootstrap.log") })
     let ready = (try {
         poll -n 60 "lms database" {||
@@ -152,8 +157,7 @@ export def start-nextcloud [work: string] {
     $daemon
 }
 
-# A second, disposable navidrome over a private copy of two albums. The prune test deletes one
-# of them and rescans, so this must not share a library with the servers above.
+# The prune test deletes an album from this private copy and rescans, so it must not be shared.
 export def start-prune [work: string] {
     let dir = ($work | path join "prune")
     let music = ($dir | path join "music")
@@ -181,8 +185,7 @@ export def start-prune [work: string] {
     $daemon
 }
 
-# Wait for a server to index the fixture music, then star an album and artist and add a playlist
-# and scrobbles. The Kotlin integration tests assert against this state.
+# Wait for the library, then leave the star/playlist/scrobble state the Kotlin tests assert on.
 export def prepare-fixtures [server: record] {
     let base = $server.base
     let user = $server.user

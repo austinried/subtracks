@@ -1,5 +1,3 @@
-# Shared helpers for the integration harness: waiting and port checks.
-
 export def poll [label: string, check: closure, --attempts (-n): int = 120] {
     for attempt in 0..<$attempts {
         let value = (try { do $check } catch { null })

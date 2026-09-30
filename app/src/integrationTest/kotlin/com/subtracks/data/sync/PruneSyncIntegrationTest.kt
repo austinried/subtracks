@@ -82,10 +82,10 @@ class PruneSyncIntegrationTest {
 
         call("startScan")
         repeat(120) {
-            if (!call("getScanStatus").contains("\"scanning\":true")) return
+            if (!call("getAlbumList2", "&type=newest&size=500").contains(REMOVED_ALBUM_NAME)) return
             Thread.sleep(500)
         }
-        error("the prune server did not finish rescanning")
+        error("the prune server still lists $REMOVED_ALBUM_NAME after rescanning")
     }
 
     private fun requireProperty(name: String): String =
@@ -94,5 +94,6 @@ class PruneSyncIntegrationTest {
 
     private companion object {
         const val REMOVED_ALBUM_DIR = "197"
+        const val REMOVED_ALBUM_NAME = "Retroconnaissance EP"
     }
 }

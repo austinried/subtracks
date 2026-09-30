@@ -3,9 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # The integration shell runs real servers; pin them to a stable release. lms 3.80 (the
-    # version in unstable) segfaults at startup with wt 4.14.3, so the server packages come from
-    # here instead. The default shell never touches this input.
+    # lms 3.80 (unstable) segfaults at startup with wt 4.14.3; stable ships a working 3.78.
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
@@ -70,8 +68,6 @@
             inherit shellHook;
           };
 
-          # The integration harness starts real Subsonic servers, none of which the app build or
-          # unit tests need. Kept out of the default shell so those stay free of the server deps.
           integration = pkgs.mkShell {
             packages = basePackages ++ [
               servers.navidrome
