@@ -91,7 +91,9 @@ class SubsonicClient(
     }
 
     companion object {
-        const val API_VERSION = "1.13.0"
+        // Airsonic/Airsonic-Advanced cap at 1.15.0 and reject a newer client with error 30, so this
+        // stays at the highest minor they accept. OpenSubsonic fields do not depend on it.
+        const val API_VERSION = "1.15.0"
         const val CLIENT = "subtracks"
         const val TOKEN_AUTH_UNSUPPORTED = 41
 
