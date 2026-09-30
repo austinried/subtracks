@@ -179,14 +179,20 @@ interface LibraryDao {
         recomputeArtistPlayData(sourceId)
     }
 
-    @Query("UPDATE songs SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId AND id = :songId")
+    @Query(
+        "UPDATE songs SET playCount = playCount + 1, played = MAX(COALESCE(played, :at), :at) " +
+            "WHERE sourceId = :sourceId AND id = :songId",
+    )
     suspend fun bumpSongPlay(
         sourceId: Long,
         songId: String,
         at: Long,
     )
 
-    @Query("UPDATE albums SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId AND id = :albumId")
+    @Query(
+        "UPDATE albums SET playCount = playCount + 1, played = MAX(COALESCE(played, :at), :at) " +
+            "WHERE sourceId = :sourceId AND id = :albumId",
+    )
     suspend fun bumpAlbumPlay(
         sourceId: Long,
         albumId: String,
@@ -194,8 +200,8 @@ interface LibraryDao {
     )
 
     @Query(
-        "UPDATE artists SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId " +
-            "AND id = (SELECT artistId FROM albums WHERE sourceId = :sourceId AND id = :albumId)",
+        "UPDATE artists SET playCount = playCount + 1, played = MAX(COALESCE(played, :at), :at) " +
+            "WHERE sourceId = :sourceId AND id = (SELECT artistId FROM albums WHERE sourceId = :sourceId AND id = :albumId)",
     )
     suspend fun bumpArtistPlay(
         sourceId: Long,

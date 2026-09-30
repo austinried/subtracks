@@ -126,17 +126,21 @@ class Scrobbler(
     }
 
     private suspend fun submit(event: Scrobble) {
-        try {
-            when (event) {
-                is Scrobble.NowPlaying -> {
-                    sink.nowPlaying(event.songId)
-                }
-
-                is Scrobble.Submission -> {
-                    sink.scrobble(event.songId, event.time)
-                    recordPlay(event.songId, event.time / 1000)
-                }
+        when (event) {
+            is Scrobble.NowPlaying -> {
+                attempt { sink.nowPlaying(event.songId) }
             }
+
+            is Scrobble.Submission -> {
+                attempt { recordPlay(event.songId, event.time / 1000) }
+                attempt { sink.scrobble(event.songId, event.time) }
+            }
+        }
+    }
+
+    private suspend fun attempt(block: suspend () -> Unit) {
+        try {
+            block()
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {

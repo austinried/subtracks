@@ -230,6 +230,13 @@ class LibraryDaoTest {
             assertEquals(500L, dao.albumOnce(sourceId, "al-1")!!.played)
             assertEquals(1L, dao.artistOnce(sourceId, "ar-1")!!.playCount)
             assertEquals(500L, dao.artistOnce(sourceId, "ar-1")!!.played)
+
+            dao.recordPlay(sourceId, "s1", 100)
+
+            assertEquals(2L, dao.songOnce(sourceId, "s1")!!.playCount)
+            assertEquals(500L, dao.songOnce(sourceId, "s1")!!.played)
+            assertEquals(500L, dao.albumOnce(sourceId, "al-1")!!.played)
+            assertEquals(500L, dao.artistOnce(sourceId, "ar-1")!!.played)
         }
 
     @Test

@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScrobblerTest {
@@ -28,6 +29,7 @@ class ScrobblerTest {
 
     private class RecordingSink : ServerActionSink {
         val calls = mutableListOf<Call>()
+        var failScrobble = false
 
         override suspend fun nowPlaying(songId: String) {
             calls += Call.NowPlaying(songId)
@@ -37,6 +39,7 @@ class ScrobblerTest {
             songId: String,
             time: Long,
         ) {
+            if (failScrobble) throw IOException("scrobble failed")
             calls += Call.Scrobble(songId, time)
         }
 
@@ -133,6 +136,35 @@ class ScrobblerTest {
                 tick += 500
             }
 
+            assertEquals(listOf("s1" to 1L), recorded)
+        }
+
+    @Test
+    fun aFailedSubmissionStillRecordsThePlayLocally() =
+        runTest {
+            val sink = RecordingSink().apply { failScrobble = true }
+            val recorded = mutableListOf<Pair<String, Long>>()
+            val scrobbler =
+                Scrobbler(
+                    sink = sink,
+                    enabled = flowOf(true),
+                    scope = testScope(),
+                    policy = ScrobblePolicy(now = { 1_000L }),
+                    recordPlay = { songId, at -> recorded += songId to at },
+                )
+            val state = MutableStateFlow(PlaybackState())
+            val position = MutableStateFlow(0L)
+            scrobbler.attach(state, position)
+            val item = QueueItem("s1", "Title", "Artist", "Album", null, durationMs = 30_000)
+
+            state.value = PlaybackState(item = item, isPlaying = true)
+            var tick = 500L
+            while (tick <= 15_000L) {
+                position.value = tick
+                tick += 500
+            }
+
+            assertEquals(emptyList<Call>(), sink.calls.filterIsInstance<Call.Scrobble>())
             assertEquals(listOf("s1" to 1L), recorded)
         }
 
