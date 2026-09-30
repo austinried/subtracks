@@ -78,7 +78,11 @@ fun appModule(
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
     single(createdAtStart = true) {
         val playback = get<PlaybackController>()
-        Scrobbler(sink = get(), enabled = get<UserPreferences>().scrobbling()).also {
+        Scrobbler(
+            sink = get(),
+            enabled = get<UserPreferences>().scrobbling(),
+            recordPlay = get<LibraryRepository>()::recordPlay,
+        ).also {
             it.attach(playback.state, playback.positionMs)
         }
     }

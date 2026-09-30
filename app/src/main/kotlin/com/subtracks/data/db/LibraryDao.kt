@@ -179,6 +179,50 @@ interface LibraryDao {
         recomputeArtistPlayData(sourceId)
     }
 
+    @Query("UPDATE songs SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId AND id = :songId")
+    suspend fun bumpSongPlay(
+        sourceId: Long,
+        songId: String,
+        at: Long,
+    )
+
+    @Query("UPDATE albums SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId AND id = :albumId")
+    suspend fun bumpAlbumPlay(
+        sourceId: Long,
+        albumId: String,
+        at: Long,
+    )
+
+    @Query(
+        "UPDATE artists SET playCount = playCount + 1, played = :at WHERE sourceId = :sourceId " +
+            "AND id = (SELECT artistId FROM albums WHERE sourceId = :sourceId AND id = :albumId)",
+    )
+    suspend fun bumpArtistPlay(
+        sourceId: Long,
+        albumId: String,
+        at: Long,
+    )
+
+    @Query("SELECT albumId FROM songs WHERE sourceId = :sourceId AND id = :songId")
+    suspend fun albumIdForSong(
+        sourceId: Long,
+        songId: String,
+    ): String?
+
+    // Counted locally when a scrobble is submitted, so the play sorts move before the next sync; the
+    // sync then overwrites with the server's own number.
+    @Transaction
+    suspend fun recordPlay(
+        sourceId: Long,
+        songId: String,
+        at: Long,
+    ) {
+        bumpSongPlay(sourceId, songId, at)
+        val albumId = albumIdForSong(sourceId, songId) ?: return
+        bumpAlbumPlay(sourceId, albumId, at)
+        bumpArtistPlay(sourceId, albumId, at)
+    }
+
     // Albums, not songs: these flows re-run on every write to their table, and songs are written
     // one batch at a time during a sync.
     @Query("SELECT EXISTS(SELECT 1 FROM albums WHERE sourceId = :sourceId AND playCount > 0)")

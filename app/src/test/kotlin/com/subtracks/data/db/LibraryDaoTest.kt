@@ -214,6 +214,25 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun aRecordedPlayBumpsTheSongAlbumAndArtist() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 1)))
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Album", year = null, starred = null)))
+            dao.upsertSongs(listOf(song(sourceId, "s1", "One", starred = null)))
+
+            dao.recordPlay(sourceId, "s1", 500)
+
+            assertEquals(1L, dao.songOnce(sourceId, "s1")!!.playCount)
+            assertEquals(500L, dao.songOnce(sourceId, "s1")!!.played)
+            assertEquals(1L, dao.albumOnce(sourceId, "al-1")!!.playCount)
+            assertEquals(500L, dao.albumOnce(sourceId, "al-1")!!.played)
+            assertEquals(1L, dao.artistOnce(sourceId, "ar-1")!!.playCount)
+            assertEquals(500L, dao.artistOnce(sourceId, "ar-1")!!.played)
+        }
+
+    @Test
     fun reversedAlbumSortsReverseEveryTiebreaker() =
         runTest {
             val sourceId = source()

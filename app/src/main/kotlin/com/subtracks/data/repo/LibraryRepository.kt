@@ -217,6 +217,14 @@ class LibraryRepository(
         songId: String,
     ): Flow<Song?> = db.libraryDao().song(sourceId, songId)
 
+    suspend fun recordPlay(
+        songId: String,
+        at: Long,
+    ) {
+        val sourceId = sourceRepository.activeSourceIdOnce() ?: return
+        db.libraryDao().recordPlay(sourceId, songId, at)
+    }
+
     fun artistAlbums(
         sourceId: Long,
         artistId: String,

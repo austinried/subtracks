@@ -103,6 +103,7 @@ class Scrobbler(
     private val enabled: Flow<Boolean>,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val policy: ScrobblePolicy = ScrobblePolicy(),
+    private val recordPlay: suspend (songId: String, at: Long) -> Unit = { _, _ -> },
 ) {
     private val submitLock = Mutex()
 
@@ -127,8 +128,14 @@ class Scrobbler(
     private suspend fun submit(event: Scrobble) {
         try {
             when (event) {
-                is Scrobble.NowPlaying -> sink.nowPlaying(event.songId)
-                is Scrobble.Submission -> sink.scrobble(event.songId, event.time)
+                is Scrobble.NowPlaying -> {
+                    sink.nowPlaying(event.songId)
+                }
+
+                is Scrobble.Submission -> {
+                    sink.scrobble(event.songId, event.time)
+                    recordPlay(event.songId, event.time / 1000)
+                }
             }
         } catch (cancellation: CancellationException) {
             throw cancellation

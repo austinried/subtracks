@@ -107,6 +107,36 @@ class ScrobblerTest {
         }
 
     @Test
+    fun aSubmissionRecordsThePlayLocally() =
+        runTest {
+            val sink = RecordingSink()
+            val recorded = mutableListOf<Pair<String, Long>>()
+            val scrobbler =
+                Scrobbler(
+                    sink = sink,
+                    enabled = flowOf(true),
+                    scope = testScope(),
+                    policy = ScrobblePolicy(now = { 1_000L }),
+                    recordPlay = { songId, at -> recorded += songId to at },
+                )
+            val state = MutableStateFlow(PlaybackState())
+            val position = MutableStateFlow(0L)
+            scrobbler.attach(state, position)
+            val item = QueueItem("s1", "Title", "Artist", "Album", null, durationMs = 30_000)
+
+            state.value = PlaybackState(item = item, isPlaying = true)
+            assertEquals(emptyList<Pair<String, Long>>(), recorded)
+
+            var tick = 500L
+            while (tick <= 15_000L) {
+                position.value = tick
+                tick += 500
+            }
+
+            assertEquals(listOf("s1" to 1L), recorded)
+        }
+
+    @Test
     fun disabledSendsNothing() =
         runTest {
             val sink = RecordingSink()
