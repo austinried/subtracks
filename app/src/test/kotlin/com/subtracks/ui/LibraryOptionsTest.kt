@@ -22,6 +22,7 @@ import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
+import com.subtracks.ui.library.PlaySortAvailability
 import com.subtracks.ui.library.sortOptionsFor
 import com.subtracks.ui.theme.SubtracksTheme
 import kotlinx.coroutines.flow.flowOf
@@ -94,6 +95,26 @@ class LibraryOptionsTest {
         composeRule.onNodeWithContentDescription("Clear filters").performClick()
         composeRule.waitForIdle()
         assertEquals(StarredFilter.Any, query.starred)
+    }
+
+    @Test
+    fun playSortsAreHiddenUntilTheServerReturnsPlayData() {
+        assertEquals(
+            listOf("Name", "Artist", "Year", "Added", "Starred"),
+            sortOptionsFor(LibraryTab.Albums).map { it.label },
+        )
+        assertEquals(
+            listOf("Name", "Artist", "Year", "Added", "Starred", "Frequently played", "Recently played"),
+            sortOptionsFor(LibraryTab.Albums, PlaySortAvailability(frequent = true, recent = true)).map { it.label },
+        )
+        assertEquals(
+            listOf("Name", "Albums", "Starred"),
+            sortOptionsFor(LibraryTab.Artists).map { it.label },
+        )
+        assertEquals(
+            listOf("Name", "Albums", "Starred", "Frequently played", "Recently played"),
+            sortOptionsFor(LibraryTab.Artists, PlaySortAvailability(frequent = true, recent = true)).map { it.label },
+        )
     }
 
     private fun albums() =

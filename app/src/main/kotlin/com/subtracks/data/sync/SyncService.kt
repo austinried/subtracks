@@ -23,6 +23,7 @@ class SyncService(
         syncArtists()
         syncAlbums()
         syncSongs()
+        aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
     }
@@ -67,6 +68,10 @@ class SyncService(
             batch.forEach { seen.add(idHash(it.id)) }
         }
         pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
+    }
+
+    private suspend fun aggregatePlayData() {
+        db.libraryDao().recomputePlayData(source.id)
     }
 
     private suspend fun syncPlaylists() {
@@ -249,6 +254,8 @@ private val songColumns =
         "starred",
         "genre",
         "created",
+        "playCount",
+        "played",
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
@@ -264,7 +271,23 @@ private fun Album.values() = listOf<Any?>(sourceId, id, artistId, name, albumArt
 private fun Disc.values() = listOf<Any?>(sourceId, albumId, disc, title)
 
 private fun Song.values() =
-    listOf<Any?>(sourceId, id, albumId, artistId, title, album, artist, duration, track, disc, starred, genre, created)
+    listOf<Any?>(
+        sourceId,
+        id,
+        albumId,
+        artistId,
+        title,
+        album,
+        artist,
+        duration,
+        track,
+        disc,
+        starred,
+        genre,
+        created,
+        playCount,
+        played,
+    )
 
 private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration)
 

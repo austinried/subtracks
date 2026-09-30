@@ -67,6 +67,8 @@ object SubsonicXml {
             starred = attrs.dateAttr("starred"),
             genre = attrs.attr("genre").ifEmpty { null },
             created = attrs.dateAttr("created") ?: 0L,
+            playCount = attrs.longAttr("playCount") ?: 0L,
+            played = attrs.dateAttr("played"),
         )
 
     internal fun playlist(

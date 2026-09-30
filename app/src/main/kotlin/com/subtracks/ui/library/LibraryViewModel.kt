@@ -122,6 +122,19 @@ class LibraryViewModel(
 
     private val activeSourceId = libraryRepository.activeSourceId.filterNotNull()
 
+    val playSortAvailability: StateFlow<PlaySortAvailability> =
+        activeSourceId
+            .flatMapLatest { sourceId ->
+                combine(
+                    libraryRepository.hasAlbumPlayCount(sourceId),
+                    libraryRepository.hasAlbumPlayed(sourceId),
+                ) { frequent, recent -> PlaySortAvailability(frequent, recent) }
+            }.stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                PlaySortAvailability(frequent = false, recent = false),
+            )
+
     private val albumDownloads: StateFlow<Map<String, ListDownloadStatus>> =
         activeSourceId
             .flatMapLatest { downloadRepository.statuses(it, DownloadList.Album) }
@@ -201,3 +214,8 @@ internal fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { 
 internal fun ListQuery.artistSort(): ArtistSort = ArtistSort.entries.firstOrNull { it.name == sort } ?: ArtistSort.Name
 
 internal fun ListQuery.playlistSort(): PlaylistSort = PlaylistSort.entries.firstOrNull { it.name == sort } ?: PlaylistSort.Name
+
+data class PlaySortAvailability(
+    val frequent: Boolean,
+    val recent: Boolean,
+)

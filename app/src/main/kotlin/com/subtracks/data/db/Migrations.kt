@@ -280,6 +280,34 @@ val MIGRATION_19_20 =
         }
     }
 
+val MIGRATION_20_21 =
+    object : Migration(20, 21) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `playCount` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `played` INTEGER")
+            connection.execSQL("ALTER TABLE `albums` ADD COLUMN `playCount` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("ALTER TABLE `albums` ADD COLUMN `played` INTEGER")
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `playCount` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `played` INTEGER")
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_albums_frequent` ON `albums` " +
+                    "(`sourceId` ASC, `playCount` DESC, `name` ASC, `id` ASC)",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_albums_recent` ON `albums` " +
+                    "(`sourceId` ASC, `played` DESC, `name` ASC, `id` ASC)",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_artists_frequent` ON `artists` " +
+                    "(`sourceId` ASC, `playCount` DESC, `name` ASC, `id` ASC)",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_artists_recent` ON `artists` " +
+                    "(`sourceId` ASC, `played` DESC, `name` ASC, `id` ASC)",
+            )
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -333,4 +361,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_17_18,
         MIGRATION_18_19,
         MIGRATION_19_20,
+        MIGRATION_20_21,
     )

@@ -157,16 +157,77 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun playRanksAreAggregatedFromSongsIntoAlbumsAndArtists() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Few", albumCount = 2),
+                    artist(sourceId, "ar-2", "Many", albumCount = 1),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "One", year = null, starred = null),
+                    album(sourceId, "al-2", "Two", year = null, starred = null).copy(artistId = "ar-2"),
+                    album(sourceId, "al-3", "Three", year = null, starred = null),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1", playCount = 3, played = 100),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2", playCount = 4, played = 200),
+                    song(sourceId, "s3", "Three", starred = null).copy(albumId = "al-2", playCount = 5, played = 400),
+                ),
+            )
+
+            dao.recomputeAlbumPlayData(sourceId)
+            dao.recomputeArtistPlayData(sourceId)
+
+            assertEquals(3L, dao.albumOnce(sourceId, "al-1")!!.playCount)
+            assertEquals(100L, dao.albumOnce(sourceId, "al-1")!!.played)
+            assertEquals(9L, dao.albumOnce(sourceId, "al-2")!!.playCount)
+            assertEquals(400L, dao.albumOnce(sourceId, "al-2")!!.played)
+            assertEquals(0L, dao.albumOnce(sourceId, "al-3")!!.playCount)
+            assertEquals(null, dao.albumOnce(sourceId, "al-3")!!.played)
+            assertEquals(3L, dao.artistOnce(sourceId, "ar-1")!!.playCount)
+            assertEquals(9L, dao.artistOnce(sourceId, "ar-2")!!.playCount)
+            assertEquals(400L, dao.artistOnce(sourceId, "ar-2")!!.played)
+
+            assertEquals(
+                listOf("Two", "One", "Three"),
+                dao.albumsByFrequent(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Two", "One", "Three"),
+                dao.albumsByRecent(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Many", "Few"),
+                dao.artistsByFrequent(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Many", "Few"),
+                dao.artistsByRecent(sourceId, 0, "").page().map { it.name },
+            )
+        }
+
+    @Test
     fun reversedAlbumSortsReverseEveryTiebreaker() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertAlbums(
                 listOf(
-                    album(sourceId, "a1", "Same", year = 2000, starred = null, created = 100).copy(albumArtist = "Zed"),
-                    album(sourceId, "a2", "Same", year = 2000, starred = null, created = 100).copy(albumArtist = "Amy"),
-                    album(sourceId, "a3", "Same", year = 1990, starred = null, created = 200).copy(albumArtist = "Amy"),
-                    album(sourceId, "a4", "Other", year = 2000, starred = null, created = 100).copy(albumArtist = "Amy"),
+                    album(sourceId, "a1", "Same", year = 2000, starred = null, created = 100)
+                        .copy(albumArtist = "Zed", playCount = 1, played = 100),
+                    album(sourceId, "a2", "Same", year = 2000, starred = null, created = 100)
+                        .copy(albumArtist = "Amy", playCount = 2, played = 200),
+                    album(sourceId, "a3", "Same", year = 1990, starred = null, created = 200)
+                        .copy(albumArtist = "Amy", playCount = 1, played = 300),
+                    album(sourceId, "a4", "Other", year = 2000, starred = null, created = 100)
+                        .copy(albumArtist = "Amy", playCount = 3, played = 100),
                 ),
             )
 
@@ -176,6 +237,8 @@ class LibraryDaoTest {
                     dao.albumsByArtist(sourceId, 0, "") to dao.albumsByArtistReversed(sourceId, 0, ""),
                     dao.albumsByYear(sourceId, 0, "") to dao.albumsByYearReversed(sourceId, 0, ""),
                     dao.albumsByRecentlyAdded(sourceId, 0, "") to dao.albumsByRecentlyAddedReversed(sourceId, 0, ""),
+                    dao.albumsByFrequent(sourceId, 0, "") to dao.albumsByFrequentReversed(sourceId, 0, ""),
+                    dao.albumsByRecent(sourceId, 0, "") to dao.albumsByRecentReversed(sourceId, 0, ""),
                 )
             for ((base, reversed) in pairs) {
                 val ids = base.page().map { it.id }
@@ -190,9 +253,9 @@ class LibraryDaoTest {
             val dao = db.libraryDao()
             dao.upsertArtists(
                 listOf(
-                    artist(sourceId, "r1", "Same", albumCount = 2),
-                    artist(sourceId, "r2", "Other", albumCount = 1),
-                    artist(sourceId, "r3", "Same", albumCount = 1),
+                    artist(sourceId, "r1", "Same", albumCount = 2).copy(playCount = 1, played = 100),
+                    artist(sourceId, "r2", "Other", albumCount = 1).copy(playCount = 2, played = 200),
+                    artist(sourceId, "r3", "Same", albumCount = 1).copy(playCount = 1, played = 300),
                 ),
             )
             dao.upsertPlaylists(
@@ -209,6 +272,10 @@ class LibraryDaoTest {
                         dao.artistsByNameReversed(sourceId, 0, "").page().map { it.id },
                     dao.artistsByAlbumCount(sourceId, 0, "").page().map { it.id } to
                         dao.artistsByAlbumCountReversed(sourceId, 0, "").page().map { it.id },
+                    dao.artistsByFrequent(sourceId, 0, "").page().map { it.id } to
+                        dao.artistsByFrequentReversed(sourceId, 0, "").page().map { it.id },
+                    dao.artistsByRecent(sourceId, 0, "").page().map { it.id } to
+                        dao.artistsByRecentReversed(sourceId, 0, "").page().map { it.id },
                 )
             val playlistPairs =
                 listOf(
@@ -241,6 +308,10 @@ class LibraryDaoTest {
                     ALBUM_ORDER_BY_ADDED_REVERSED to "index_albums_added",
                     ALBUM_ORDER_BY_STARRED to "index_albums_starred",
                     ALBUM_ORDER_BY_STARRED_REVERSED to "index_albums_starred",
+                    ALBUM_ORDER_BY_FREQUENT to "index_albums_frequent",
+                    ALBUM_ORDER_BY_FREQUENT_REVERSED to "index_albums_frequent",
+                    ALBUM_ORDER_BY_RECENT to "index_albums_recent",
+                    ALBUM_ORDER_BY_RECENT_REVERSED to "index_albums_recent",
                 )
             for ((order, index) in orders) {
                 val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
@@ -260,6 +331,10 @@ class LibraryDaoTest {
                     ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED to "index_artists_albumCount",
                     ARTIST_ORDER_BY_STARRED to "index_artists_starred",
                     ARTIST_ORDER_BY_STARRED_REVERSED to "index_artists_starred",
+                    ARTIST_ORDER_BY_FREQUENT to "index_artists_frequent",
+                    ARTIST_ORDER_BY_FREQUENT_REVERSED to "index_artists_frequent",
+                    ARTIST_ORDER_BY_RECENT to "index_artists_recent",
+                    ARTIST_ORDER_BY_RECENT_REVERSED to "index_artists_recent",
                 )
             for ((order, index) in orders) {
                 val plan = plan("SELECT * $ARTISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")

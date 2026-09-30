@@ -63,6 +63,16 @@ data class SubsonicSource(
             value = ["sourceId", "starred", "name", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
+        Index(
+            name = "index_artists_frequent",
+            value = ["sourceId", "playCount", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_artists_recent",
+            value = ["sourceId", "played", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
     ],
 )
 data class Artist(
@@ -72,6 +82,8 @@ data class Artist(
     val albumCount: Long,
     val starred: Long?,
     val coverArt: String? = null,
+    @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
+    val played: Long? = null,
 )
 
 @Entity(
@@ -105,6 +117,16 @@ data class Artist(
             value = ["sourceId", "starred", "name", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
+        Index(
+            name = "index_albums_frequent",
+            value = ["sourceId", "playCount", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_albums_recent",
+            value = ["sourceId", "played", "name", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
+        ),
     ],
 )
 data class Album(
@@ -120,6 +142,8 @@ data class Album(
     val starred: Long?,
     val songCount: Long,
     @Ignore val discTitles: Map<Long, String> = emptyMap(),
+    @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
+    val played: Long? = null,
 )
 
 @Entity(
@@ -233,6 +257,8 @@ data class Song(
     val starred: Long?,
     val genre: String?,
     @ColumnInfo(defaultValue = "0") val created: Long = 0,
+    @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
+    val played: Long? = null,
 )
 
 sealed interface SongItem {

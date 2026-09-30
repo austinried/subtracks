@@ -612,6 +612,59 @@ class SyncServiceTest {
         }
 
     @Test
+    fun albumAndArtistPlayRanksAreDerivedFromTheSongRows() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1")),
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(playCount = 5, played = 100),
+                            song("s2").copy(playCount = 2, played = 300),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(7L, db.libraryDao().albumOnce(1, "al1")!!.playCount)
+            assertEquals(300L, db.libraryDao().albumOnce(1, "al1")!!.played)
+            assertEquals(7L, db.libraryDao().artistOnce(1, "a1")!!.playCount)
+            assertEquals(300L, db.libraryDao().artistOnce(1, "a1")!!.played)
+
+            source.songs = listOf(song("s1").copy(playCount = 0, played = null))
+
+            SyncService(db, source).sync()
+
+            assertEquals(0L, db.libraryDao().albumOnce(1, "al1")!!.playCount)
+            assertEquals(null, db.libraryDao().albumOnce(1, "al1")!!.played)
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a1")!!.playCount)
+            assertEquals(null, db.libraryDao().artistOnce(1, "a1")!!.played)
+        }
+
+    @Test
+    fun anUnchangedSyncWithPlayDataDoesNotRewriteTheRanks() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(playCount = 5, played = 100)),
+                )
+
+            SyncService(db, source).sync()
+            val before = totalChanges()
+
+            SyncService(db, source).sync()
+
+            assertEquals(before, totalChanges())
+            assertEquals(5L, db.libraryDao().albumOnce(1, "al1")!!.playCount)
+            assertEquals(5L, db.libraryDao().artistOnce(1, "a1")!!.playCount)
+        }
+
+    @Test
     fun anIdenticalSyncDoesNotRewriteRows() =
         runTest {
             insertSource()

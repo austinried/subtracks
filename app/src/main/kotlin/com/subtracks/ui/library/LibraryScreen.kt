@@ -154,24 +154,31 @@ fun LibraryTab.listTab(): LibraryListTab = LibraryListTab.valueOf(name)
 
 internal fun libraryTabFor(name: String?): LibraryTab = LibraryTab.entries.firstOrNull { it.name == name } ?: LibraryTab.Albums
 
-fun sortOptionsFor(tab: LibraryTab): List<SortOption> =
+fun sortOptionsFor(
+    tab: LibraryTab,
+    play: PlaySortAvailability = PlaySortAvailability(frequent = false, recent = false),
+): List<SortOption> =
     when (tab) {
         LibraryTab.Albums -> {
-            listOf(
-                SortOption(AlbumSort.Name.name, "Name"),
-                SortOption(AlbumSort.Artist.name, "Artist"),
-                SortOption(AlbumSort.Year.name, "Year", descendingByDefault = true),
-                SortOption(AlbumSort.Added.name, "Added", descendingByDefault = true),
-                SortOption(AlbumSort.Starred.name, "Starred", descendingByDefault = true),
-            )
+            buildList {
+                add(SortOption(AlbumSort.Name.name, "Name"))
+                add(SortOption(AlbumSort.Artist.name, "Artist"))
+                add(SortOption(AlbumSort.Year.name, "Year", descendingByDefault = true))
+                add(SortOption(AlbumSort.Added.name, "Added", descendingByDefault = true))
+                add(SortOption(AlbumSort.Starred.name, "Starred", descendingByDefault = true))
+                if (play.frequent) add(SortOption(AlbumSort.Frequent.name, "Frequently played", descendingByDefault = true))
+                if (play.recent) add(SortOption(AlbumSort.Recent.name, "Recently played", descendingByDefault = true))
+            }
         }
 
         LibraryTab.Artists -> {
-            listOf(
-                SortOption(ArtistSort.Name.name, "Name"),
-                SortOption(ArtistSort.AlbumCount.name, "Albums", descendingByDefault = true),
-                SortOption(ArtistSort.Starred.name, "Starred", descendingByDefault = true),
-            )
+            buildList {
+                add(SortOption(ArtistSort.Name.name, "Name"))
+                add(SortOption(ArtistSort.AlbumCount.name, "Albums", descendingByDefault = true))
+                add(SortOption(ArtistSort.Starred.name, "Starred", descendingByDefault = true))
+                if (play.frequent) add(SortOption(ArtistSort.Frequent.name, "Frequently played", descendingByDefault = true))
+                if (play.recent) add(SortOption(ArtistSort.Recent.name, "Recently played", descendingByDefault = true))
+            }
         }
 
         LibraryTab.Playlists -> {
@@ -213,8 +220,14 @@ fun LibraryRoute(
     }
     val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val playSort by viewModel.playSortAvailability.collectAsStateWithLifecycle()
     val displayQuery = if (offline) listQuery.copy(downloaded = true) else listQuery
     val search by viewModel.search(listTab).collectAsStateWithLifecycle()
+    LaunchedEffect(listTab, playSort, listQuery.sort) {
+        if (sortOptionsFor(selectedTab, playSort).none { it.value == listQuery.sort }) {
+            viewModel.setListQuery(listTab, listQuery.copy(sort = listTab.defaultSort))
+        }
+    }
     val resetKeys =
         LibraryTab.entries.associateWith { tab ->
             val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
@@ -266,7 +279,7 @@ fun LibraryRoute(
         resetKeys = resetKeys,
         offline = offline,
         onExitOffline = { viewModel.setOffline(false) },
-        sortOptions = sortOptionsFor(selectedTab),
+        sortOptions = sortOptionsFor(selectedTab, playSort),
         starredSupported = listTab.supportsStarred,
         onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
         onToggleSortDirection = { viewModel.setListQuery(listTab, listQuery.copy(descending = !listQuery.descending)) },

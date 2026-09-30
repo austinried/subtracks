@@ -37,6 +37,10 @@ class LibraryRepository(
 ) {
     val activeSourceId: Flow<Long?> = sourceRepository.activeSourceId()
 
+    fun hasAlbumPlayCount(sourceId: Long): Flow<Boolean> = db.libraryDao().hasAlbumPlayCount(sourceId)
+
+    fun hasAlbumPlayed(sourceId: Long): Flow<Boolean> = db.libraryDao().hasAlbumPlayed(sourceId)
+
     fun albums(
         sourceId: Long,
         sort: AlbumSort,
@@ -88,6 +92,22 @@ class LibraryRepository(
                         dao.albumsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
+
+                AlbumSort.Frequent -> {
+                    if (descending) {
+                        dao.albumsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                    } else {
+                        dao.albumsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                    }
+                }
+
+                AlbumSort.Recent -> {
+                    if (descending) {
+                        dao.albumsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                    } else {
+                        dao.albumsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
+                    }
+                }
             }
         }
 
@@ -124,6 +144,22 @@ class LibraryRepository(
                         dao.artistsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
                     } else {
                         dao.artistsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
+                    }
+                }
+
+                ArtistSort.Frequent -> {
+                    if (descending) {
+                        dao.artistsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                    } else {
+                        dao.artistsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                    }
+                }
+
+                ArtistSort.Recent -> {
+                    if (descending) {
+                        dao.artistsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                    } else {
+                        dao.artistsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
                     }
                 }
             }

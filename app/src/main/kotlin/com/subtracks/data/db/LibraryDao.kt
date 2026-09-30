@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.room3.Dao
 import androidx.room3.DaoReturnTypeConverters
 import androidx.room3.Query
+import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
@@ -56,6 +57,11 @@ internal const val ALBUM_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE NO
 internal const val ALBUM_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
 
+internal const val ALBUM_ORDER_BY_FREQUENT = "playCount DESC, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, name COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
@@ -78,7 +84,7 @@ internal const val ARTISTS_SELECT =
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = artists.sourceId AND dl.artistId = artists.id AND sd.status = 'Completed' " +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt "
+        "artists.starred, artists.coverArt, artists.playCount, artists.played "
 
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
@@ -86,6 +92,10 @@ internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "artists.albumCount DESC, name 
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "artists.albumCount ASC, name COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_FREQUENT = "artists.playCount DESC, name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_FREQUENT_REVERSED = "artists.playCount ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_RECENT = "artists.played DESC NULLS LAST, name COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_RECENT_REVERSED = "artists.played ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
 
 internal const val PLAYLISTS_FILTER =
     "FROM playlists WHERE sourceId = :sourceId " +
@@ -132,6 +142,50 @@ interface LibraryDao {
 
     @Upsert
     suspend fun upsertPlaylistSongs(items: List<PlaylistSong>)
+
+    @Query(
+        "UPDATE albums SET " +
+            "playCount = COALESCE((SELECT SUM(s.playCount) FROM songs s " +
+            "WHERE s.sourceId = albums.sourceId AND s.albumId = albums.id), 0), " +
+            "played = (SELECT MAX(s.played) FROM songs s " +
+            "WHERE s.sourceId = albums.sourceId AND s.albumId = albums.id) " +
+            "WHERE sourceId = :sourceId AND (" +
+            "playCount IS NOT COALESCE((SELECT SUM(s.playCount) FROM songs s " +
+            "WHERE s.sourceId = albums.sourceId AND s.albumId = albums.id), 0) " +
+            "OR played IS NOT (SELECT MAX(s.played) FROM songs s " +
+            "WHERE s.sourceId = albums.sourceId AND s.albumId = albums.id))",
+    )
+    suspend fun recomputeAlbumPlayData(sourceId: Long)
+
+    // INDEXED BY is required: the planner otherwise answers MAX(played) from index_albums_recent
+    // (sourceId, played), which cannot apply the artistId equality.
+    @Query(
+        "UPDATE artists SET " +
+            "playCount = COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
+            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id), 0), " +
+            "played = (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
+            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id) " +
+            "WHERE sourceId = :sourceId AND (" +
+            "playCount IS NOT COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
+            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id), 0) " +
+            "OR played IS NOT (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
+            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id))",
+    )
+    suspend fun recomputeArtistPlayData(sourceId: Long)
+
+    @Transaction
+    suspend fun recomputePlayData(sourceId: Long) {
+        recomputeAlbumPlayData(sourceId)
+        recomputeArtistPlayData(sourceId)
+    }
+
+    // Albums, not songs: these flows re-run on every write to their table, and songs are written
+    // one batch at a time during a sync.
+    @Query("SELECT EXISTS(SELECT 1 FROM albums WHERE sourceId = :sourceId AND playCount > 0)")
+    fun hasAlbumPlayCount(sourceId: Long): Flow<Boolean>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL)")
+    fun hasAlbumPlayed(sourceId: Long): Flow<Boolean>
 
     @Query("UPDATE artists SET starred = :starred WHERE sourceId = :sourceId AND id = :id")
     suspend fun setArtistStar(
@@ -327,6 +381,38 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_FREQUENT")
+    fun albumsByFrequent(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Album>
+
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_FREQUENT_REVERSED")
+    fun albumsByFrequentReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Album>
+
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_RECENT")
+    fun albumsByRecent(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Album>
+
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_RECENT_REVERSED")
+    fun albumsByRecentReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Album>
+
     @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
     fun artistsByName(
         sourceId: Long,
@@ -369,6 +455,38 @@ interface LibraryDao {
 
     @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
     fun artistsByStarredReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Artist>
+
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_FREQUENT")
+    fun artistsByFrequent(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Artist>
+
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_FREQUENT_REVERSED")
+    fun artistsByFrequentReversed(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Artist>
+
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_RECENT")
+    fun artistsByRecent(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Artist>
+
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_RECENT_REVERSED")
+    fun artistsByRecentReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,

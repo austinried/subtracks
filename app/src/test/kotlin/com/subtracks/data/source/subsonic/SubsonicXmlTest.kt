@@ -135,6 +135,26 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsSongPlayData() {
+        val xml =
+            """
+            <subsonic-response status="ok">
+              <searchResult3>
+                <song id="s1" title="Played" playCount="12" played="2023-03-26T22:27:46Z"/>
+                <song id="s2" title="Never"/>
+              </searchResult3>
+            </subsonic-response>
+            """.trimIndent()
+
+        val songs = parse(xml, tag = "song", create = { SubsonicXml.song(1, it) })
+
+        assertEquals(12L, songs[0].playCount)
+        assertEquals(1679869666L, songs[0].played)
+        assertEquals(0L, songs[1].playCount)
+        assertEquals(null, songs[1].played)
+    }
+
+    @Test
     fun statusOnlyReadRejectsAnHtmlLoginPage() {
         val failure =
             runCatching {

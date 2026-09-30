@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-enum class AlbumSort { Name, Artist, Year, Added, Starred }
+enum class AlbumSort { Name, Artist, Year, Added, Starred, Frequent, Recent }
 
-enum class ArtistSort { Name, AlbumCount, Starred }
+enum class ArtistSort { Name, AlbumCount, Starred, Frequent, Recent }
 
 enum class PlaylistSort { Name, Added, Updated }
 
