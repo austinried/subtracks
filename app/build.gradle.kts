@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -99,6 +100,13 @@ tasks.withType<Test>().configureEach {
         filter {
             integrationTestClasses.forEach { excludeTestsMatching(it) }
         }
+    }
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+        events("failed")
+        showStackTraces = true
+        showExceptions = true
+        showCauses = true
     }
 }
 

@@ -16,8 +16,9 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -72,11 +73,10 @@ class AddSourceViewModelTest {
 
     @After
     fun tearDown() {
-        createdViewModels.forEach { it.viewModelScope.cancel() }
+        createdViewModels.forEach { runBlocking { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } }
         server.shutdown()
         downloadRepository.close()
         sourceRepository.close()
-        db.close()
         Dispatchers.resetMain()
         dispatcher.close()
     }

@@ -103,7 +103,6 @@ class PlaybackControllerTest {
         controller.close()
         sources.close()
         downloads.close()
-        db.close()
         dispatcher.close()
     }
 

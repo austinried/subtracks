@@ -15,7 +15,6 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -37,11 +36,6 @@ class QueueRepositoryTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         repository = QueueRepository(db)
-    }
-
-    @After
-    fun tearDown() {
-        db.close()
     }
 
     @Test

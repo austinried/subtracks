@@ -57,8 +57,8 @@ class SyncManagerTest {
 
     @After
     fun tearDown() {
+        manager.close()
         sourceRepository.close()
-        db.close()
         server.shutdown()
     }
 

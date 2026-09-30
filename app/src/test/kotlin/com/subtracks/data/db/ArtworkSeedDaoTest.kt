@@ -9,7 +9,6 @@ import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Source
 import com.subtracks.data.repo.ArtworkSeedRepository
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -28,11 +27,6 @@ class ArtworkSeedDaoTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-    }
-
-    @After
-    fun tearDown() {
-        db.close()
     }
 
     @Test

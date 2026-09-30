@@ -24,8 +24,9 @@ import com.subtracks.playback.FakePlayerHandle
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -84,11 +85,10 @@ class QueueViewModelTest {
 
     @After
     fun tearDown() {
-        viewModel.viewModelScope.cancel()
+        runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
         controller.close()
         downloads.close()
         sources.close()
-        db.close()
         Dispatchers.resetMain()
         dispatcher.close()
     }

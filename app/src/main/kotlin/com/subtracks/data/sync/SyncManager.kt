@@ -7,11 +7,14 @@ import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 sealed interface SyncStatus {
     data object Idle : SyncStatus
@@ -44,6 +47,12 @@ class SyncManager(
 
     fun requestSync() {
         requests.trySend(Unit)
+    }
+
+    fun close() {
+        val job = scope.coroutineContext[Job]
+        scope.cancel()
+        runBlocking { job?.join() }
     }
 
     private suspend fun runSync() {

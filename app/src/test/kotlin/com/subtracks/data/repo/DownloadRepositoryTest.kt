@@ -93,7 +93,6 @@ class DownloadRepositoryTest {
     fun tearDown() {
         repository.close()
         sources.close()
-        db.close()
         dir.deleteRecursively()
     }
 

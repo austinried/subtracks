@@ -16,6 +16,7 @@ import com.subtracks.data.source.streamLengthSuffix
 import com.subtracks.data.source.subsonic.SubsonicClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -100,7 +102,9 @@ class SourceRepository(
     }
 
     fun close() {
+        val job = scope.coroutineContext[Job]
         scope.cancel()
+        runBlocking { job?.join() }
     }
 
     fun sources(): Flow<List<Source>> = db.sourcesDao().sources()
