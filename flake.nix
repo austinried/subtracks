@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # lms 3.80 (unstable) segfaults at startup with wt 4.14.3; stable ships a working 3.78.
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
