@@ -223,11 +223,6 @@ fun LibraryRoute(
     val playSort by viewModel.playSortAvailability.collectAsStateWithLifecycle()
     val displayQuery = if (offline) listQuery.copy(downloaded = true) else listQuery
     val search by viewModel.search(listTab).collectAsStateWithLifecycle()
-    LaunchedEffect(listTab, playSort, listQuery.sort) {
-        if (sortOptionsFor(selectedTab, playSort).none { it.value == listQuery.sort }) {
-            viewModel.setListQuery(listTab, listQuery.copy(sort = listTab.defaultSort))
-        }
-    }
     val resetKeys =
         LibraryTab.entries.associateWith { tab ->
             val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
