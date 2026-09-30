@@ -11,7 +11,8 @@ A native Android rewrite of Subtracks, a client for Subsonic-compatible servers 
 Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 - Enter it with `nix develop`, or let direnv load it into your shell (`.envrc` runs `use flake`).
-- The devshell provides JDK 21, Gradle 9, the Android SDK (platform 37, build-tools 37.0.0, platform-tools 37.0.1), nushell, navidrome and gonic.
+- The default devshell provides JDK 21, Gradle 9, the Android SDK (platform 37, build-tools 37.0.0, platform-tools 37.0.1) and nushell.
+- The integration harness needs real servers, so it lives in a separate `nix develop .#integration` shell (navidrome, gonic, lms, php, Nextcloud with the Music app, sqlite). Keeping them out of the default shell avoids pulling that closure into everyday builds.
 - Build with the devshell `gradle`, not `./gradlew`. CI uses the nix Gradle pinned by `flake.lock`; the wrapper is kept only for people without Nix.
 
 ## Commands
@@ -21,7 +22,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Unit tests: `gradle :app:testDebugUnitTest`
 - Lint: `gradle :app:ktlintCheck :app:lintDebug`
 - Format: `gradle :app:ktlintFormat`
-- Integration tests: `./tools/integration-test.nu` (starts navidrome and gonic, then runs `:app:integrationTest`)
+- Integration tests: `nix develop .#integration --command nu tools/integration-test.nu` (starts navidrome, gonic, lms and a Nextcloud Music instance, then runs `:app:integrationTest`)
 - Screenshots: `gradle :app:recordRoborazziDebug` renders the `*Screen` composables to `app/src/test/screenshots/` (gitignored) plus an HTML report in `app/build/reports/roborazzi/`, for local review. No golden images are committed and `verifyRoborazziDebug` is not part of CI.
 
 ## Testing layout
@@ -57,5 +58,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Robolectric creates a fresh `Application` per test in one JVM, so `SubtracksApp.onCreate` stops any running Koin before `startKoin`.
 - `applicationId` is `com.subtracks.next` for the beta; change it to `com.subtracks` before any store release.
 - The CI image provides `nix-ld`, `jq`, `sqlite`, `node`, `zstd` and a `runner` user that `cache-nix-action` expects. None of that is needed locally beyond the devshell.
-- Integration servers: navidrome on 4533 (`admin`/`password`), gonic on 4747 (`admin`/`admin`). The test music is cached in `.integration/music` (gitignored).
+- Integration servers: navidrome on 4533 (`admin`/`password`), gonic on 4747 (`admin`/`admin`), lms on 5082 (`admin`/`subtracks-lms`), Nextcloud Music on 8090 (`admin`/`subtracks-nextcloud`, base URL `http://localhost:8090/index.php/apps/music/subsonic/`). The test music is cached in `.integration/music` (gitignored).
+- lms and Nextcloud Music authenticate the Subsonic API with per-user **API keys**, not passwords or the `t`/`s` token scheme (both reject token auth with error 41). The harness seeds an API key and the integration tests use `useTokenAuth = false`, so the app's token-auth fallback is currently not exercised by integration tests.
+- The integration shell takes its server packages from a pinned stable nixpkgs (`nixpkgs-stable`), because lms 3.80 in nixpkgs-unstable segfaults at startup with wt 4.14.3.
 - `nix develop` does not source your shell rc files (so tools like atuin are not active); use direnv if you want your normal interactive shell.

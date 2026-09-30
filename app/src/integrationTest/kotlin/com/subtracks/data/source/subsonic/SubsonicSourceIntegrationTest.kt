@@ -3,8 +3,6 @@ package com.subtracks.data.source.subsonic
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -16,21 +14,13 @@ import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 class SubsonicSourceIntegrationTest(
-    private val server: Server,
+    private val server: TestServer,
 ) {
     private lateinit var source: SubsonicSource
 
     @Before
     fun setUp() {
-        val client =
-            SubsonicClient(
-                baseUrl = server.baseUrl.toHttpUrl(),
-                username = server.username,
-                password = server.password,
-                useTokenAuth = false,
-                http = OkHttpClient(),
-            )
-        source = SubsonicSource(1, client)
+        source = TestServers.source(server)
     }
 
     @Test
@@ -107,20 +97,9 @@ class SubsonicSourceIntegrationTest(
 
     private suspend fun <T> Flow<List<T>>.collectAll(): List<T> = toList().flatten()
 
-    data class Server(
-        val name: String,
-        val baseUrl: String,
-        val username: String,
-        val password: String,
-    )
-
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
-        fun servers(): List<Array<Any>> =
-            listOf(
-                arrayOf(Server("navidrome", "http://localhost:4533/", "admin", "password")),
-                arrayOf(Server("gonic", "http://localhost:4747/", "admin", "admin")),
-            )
+        fun servers(): List<Array<Any>> = TestServers.all.map { arrayOf<Any>(it) }
     }
 }

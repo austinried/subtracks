@@ -149,6 +149,21 @@ class SubsonicClientTest {
     }
 
     @Test
+    fun openSubsonicAuthUnsupportedCodeAlsoRetriesWithPassword() {
+        server.enqueue(MockResponse().setBody(failed(42, "Provided authentication mechanism not supported.")))
+        server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))
+        var notified = 0
+
+        client(tokenAuth = true, onTokenAuthUnsupported = { notified++ }).check("ping")
+
+        val first = server.takeRequest().requestUrl!!
+        assertNotNull(first.queryParameter("t"))
+        val second = server.takeRequest().requestUrl!!
+        assertEquals("secret", second.queryParameter("p"))
+        assertEquals(1, notified)
+    }
+
+    @Test
     fun tokenAuthUnsupportedIsNotifiedOnceAndNotRetriedAgain() {
         server.enqueue(MockResponse().setBody(failed(41, "Token authentication not supported for LDAP users.")))
         server.enqueue(MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>"))

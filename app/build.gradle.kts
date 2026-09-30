@@ -84,7 +84,13 @@ aboutLibraries {
 
 val integrationTestClasses =
     listOf(
+        "com.subtracks.data.source.subsonic.SubsonicAuthIntegrationTest",
+        "com.subtracks.data.source.subsonic.SubsonicErrorIntegrationTest",
+        "com.subtracks.data.source.subsonic.SubsonicMediaIntegrationTest",
         "com.subtracks.data.source.subsonic.SubsonicSourceIntegrationTest",
+        "com.subtracks.data.source.subsonic.SubsonicWriteIntegrationTest",
+        "com.subtracks.data.sync.MultiSourceSyncIntegrationTest",
+        "com.subtracks.data.sync.PruneSyncIntegrationTest",
         "com.subtracks.data.sync.SyncServiceIntegrationTest",
     )
 
@@ -106,6 +112,8 @@ tasks.register<Test>("integrationTest") {
     filter {
         integrationTestClasses.forEach { includeTestsMatching(it) }
     }
+    systemProperty("prune.baseUrl", providers.gradleProperty("pruneBaseUrl").getOrElse(""))
+    systemProperty("prune.musicDir", providers.gradleProperty("pruneMusicDir").getOrElse(""))
 }
 
 dependencies {

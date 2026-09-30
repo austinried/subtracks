@@ -58,7 +58,7 @@ class SubsonicClient(
         return try {
             execute(method, params, body)
         } catch (failure: SubsonicException) {
-            if (failure.code != TOKEN_AUTH_UNSUPPORTED || !usedTokenAuth) throw failure
+            if (failure.code !in TOKEN_AUTH_UNSUPPORTED_CODES || !usedTokenAuth) throw failure
             disableTokenAuth()
             execute(method, params, body)
         }
@@ -95,7 +95,10 @@ class SubsonicClient(
         // stays at the highest minor they accept. OpenSubsonic fields do not depend on it.
         const val API_VERSION = "1.15.0"
         const val CLIENT = "subtracks"
-        const val TOKEN_AUTH_UNSUPPORTED = 41
+
+        // 41 is the classic Subsonic code for "token authentication not supported"; OpenSubsonic
+        // servers (lms) answer 42 instead, so both must disable token auth and retry.
+        val TOKEN_AUTH_UNSUPPORTED_CODES = setOf(41, 42)
 
         private fun randomSalt(): String = (1..4).map { ('a'..'z').random() }.joinToString("")
 

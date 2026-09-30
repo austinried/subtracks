@@ -7,11 +7,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Source
-import com.subtracks.data.source.subsonic.SubsonicClient
-import com.subtracks.data.source.subsonic.SubsonicSource
+import com.subtracks.data.source.subsonic.TestServers
 import kotlinx.coroutines.runBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,20 +29,7 @@ class SyncServiceIntegrationTest {
                     db.sourcesDao().upsertSource(
                         Source(id = 1, name = server.name, address = server.baseUrl, isActive = true, createdAt = 0),
                     )
-                    val source =
-                        SubsonicSource(
-                            id = 1,
-                            client =
-                                SubsonicClient(
-                                    baseUrl = server.baseUrl.toHttpUrl(),
-                                    username = server.username,
-                                    password = server.password,
-                                    useTokenAuth = false,
-                                    http = OkHttpClient(),
-                                ),
-                        )
-
-                    SyncService(db, source).sync()
+                    SyncService(db, TestServers.source(server)).sync()
 
                     val library = db.libraryDao()
                     assertEquals(server.name, 2, library.artistIds(1).size)
@@ -58,18 +42,7 @@ class SyncServiceIntegrationTest {
             }
         }
 
-    private data class Server(
-        val name: String,
-        val baseUrl: String,
-        val username: String,
-        val password: String,
-    )
-
     private companion object {
-        val servers =
-            listOf(
-                Server("navidrome", "http://localhost:4533/", "admin", "password"),
-                Server("gonic", "http://localhost:4747/", "admin", "admin"),
-            )
+        val servers = TestServers.all
     }
 }
