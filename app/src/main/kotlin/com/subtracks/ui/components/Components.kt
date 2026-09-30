@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -49,8 +50,11 @@ import coil3.size.Dimension
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.theme.artworkColorsFromSeed
 import com.subtracks.ui.theme.placeholderSeed
+import java.lang.Character.UnicodeScript
 
 private const val MAX_CACHED_RATIOS = 256
+private const val COVER_ART_FADE_MILLIS = 100
+private const val IDEOGRAPHIC_INITIAL_LIFT = 0.05f
 
 private object ArtworkRatioCache {
     private val ratios = LruCache<String, Float>(MAX_CACHED_RATIOS)
@@ -92,7 +96,7 @@ fun CoverArt(
             .background(letterScheme?.primaryContainer ?: MaterialTheme.colorScheme.surfaceVariant)
 
     if (square) {
-        val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = thumbnailRef != null) } }
+        val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = true) } }
         Box(modifier.then(frameModifier)) {
             CoverArtContent(
                 ref = ref,
@@ -203,11 +207,20 @@ private fun BoxScope.CoverArtContent(
 ) {
     val context = LocalPlatformContext.current
     if (showPlaceholder || (failed && !thumbnailLoaded)) {
+        val trimmed = name.trim()
+        val letter = if (trimmed.isEmpty()) "" else trimmed.substring(0, trimmed.offsetByCodePoints(0, 1)).uppercase()
+        val lift =
+            with(LocalDensity.current) {
+                (MaterialTheme.typography.headlineMedium.fontSize * IDEOGRAPHIC_INITIAL_LIFT).toDp()
+            }
         Text(
-            text = name.trim().take(1).uppercase(),
+            text = letter,
             style = MaterialTheme.typography.headlineMedium,
             color = placeholderContentColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.Center),
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .offset(y = if (letter.isIdeographicInitial()) -lift else 0.dp),
         )
     }
     if (thumbnailRef != null && thumbnailRef != ref) {
@@ -233,6 +246,14 @@ private fun BoxScope.CoverArtContent(
 
 private fun Size.ratioOrNull(): Float? = if (width > 0f && height > 0f && width.isFinite() && height.isFinite()) width / height else null
 
+internal fun String.isIdeographicInitial(): Boolean {
+    if (isEmpty()) return false
+    return when (UnicodeScript.of(codePointAt(0))) {
+        UnicodeScript.HAN, UnicodeScript.HIRAGANA, UnicodeScript.KATAKANA, UnicodeScript.HANGUL -> true
+        else -> false
+    }
+}
+
 internal fun imageRequest(
     context: Context,
     ref: CoverArtRef,
@@ -245,7 +266,7 @@ internal fun imageRequest(
             .Builder(context)
             .data(ref.url)
             .diskCacheKey(ref.cacheKey)
-            .crossfade(crossfade)
+            .crossfade(if (crossfade) COVER_ART_FADE_MILLIS else 0)
     if (width == null && height == null) {
         builder.memoryCacheKey(ref.cacheKey)
     } else {
