@@ -627,6 +627,29 @@ interface LibraryDao {
         songId: String,
     ): Song?
 
+    @Query("SELECT genre FROM song_genres WHERE sourceId = :sourceId AND songId = :songId ORDER BY position")
+    fun songGenres(
+        sourceId: Long,
+        songId: String,
+    ): Flow<List<String>>
+
+    @Query(
+        "SELECT genre FROM (" +
+            "SELECT song_genres.genre AS genre FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
+            "UNION " +
+            "SELECT songs.genre AS genre FROM songs " +
+            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId AND songs.genre IS NOT NULL " +
+            "AND NOT EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id)" +
+            ") ORDER BY genre COLLATE NOCASE",
+    )
+    fun albumGenres(
+        sourceId: Long,
+        albumId: String,
+    ): Flow<List<String>>
+
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE, id")
     fun albumsForArtist(
         sourceId: Long,

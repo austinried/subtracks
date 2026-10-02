@@ -63,7 +63,14 @@ class SubsonicSourceIntegrationTest(
     @Test
     fun songs() =
         runBlocking {
-            assertEquals(20, source.songs().collectAll().size)
+            val songs = source.songs().collectAll()
+
+            assertEquals(20, songs.size)
+            assertTrue(songs.all { song -> song.genre == null || song.genres.isEmpty() || song.genres.contains(song.genre) })
+            // Nextcloud Music does not populate the OpenSubsonic genres array.
+            if (server.name != "nextcloud") {
+                assertTrue(songs.any { it.genres.isNotEmpty() })
+            }
         }
 
     @Test

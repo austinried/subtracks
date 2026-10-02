@@ -194,6 +194,69 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun songsKeepTheOpenSubsonicGenresArray() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/search3.view") return MockResponse().setResponseCode(404)
+                        return MockResponse().setBody(
+                            "<subsonic-response status=\"ok\"><searchResult3>" +
+                                "<song id=\"s1\" title=\"Multi\" genre=\"Rock\">" +
+                                "<genres name=\"Rock\"/><genres name=\"Electronic\"/>" +
+                                "</song></searchResult3></subsonic-response>",
+                        )
+                    }
+                }
+
+            val songs = SubsonicSource(1, client()).songs().toList().flatten()
+
+            assertEquals(listOf("Rock", "Electronic"), songs.single().genres)
+        }
+
+    @Test
+    fun albumSongsKeepTheOpenSubsonicGenresArray() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        return when (url.encodedPath) {
+                            "/rest/search3.view" -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            "/rest/getAlbumList2.view" -> {
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><albumList2>" +
+                                        "<album id=\"al1\" name=\"Album\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>" +
+                                        "</albumList2></subsonic-response>",
+                                )
+                            }
+
+                            "/rest/getAlbum.view" -> {
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><album id=\"al1\">" +
+                                        "<song id=\"s1\" title=\"Multi\" genre=\"Rock\">" +
+                                        "<genres name=\"Rock\"/><genres name=\"Electronic\"/>" +
+                                        "</song></album></subsonic-response>",
+                                )
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                    }
+                }
+
+            val songs = SubsonicSource(1, client()).songs().toList().flatten()
+
+            assertEquals(listOf("Rock", "Electronic"), songs.single().genres)
+        }
+
+    @Test
     fun entitiesWithEmptyIdsAreDropped() =
         runBlocking {
             server.enqueue(

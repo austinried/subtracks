@@ -155,6 +155,57 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsSongGenresAndIgnoresEmptyOnes() {
+        val xml =
+            """
+            <subsonic-response status="ok">
+              <searchResult3>
+                <song id="s1" title="Multi">
+                  <genres name="Rock"/>
+                  <genres name="Electronic"/>
+                  <genres name=""/>
+                  <genres name="   "/>
+                </song>
+              </searchResult3>
+            </subsonic-response>
+            """.trimIndent()
+
+        val songs =
+            parse(
+                xml,
+                tag = "song",
+                create = { SubsonicXml.songDraft(1, it) },
+                onChild = { draft, name, attrs -> if (name == "genres") draft.addGenre(attrs) },
+            ).map { it.toSong() }
+
+        assertEquals(listOf("Rock", "Electronic"), songs.single().genres)
+    }
+
+    @Test
+    fun ignoresSongGenresThatAreNotDirectChildren() {
+        val xml =
+            """
+            <subsonic-response status="ok">
+              <searchResult3>
+                <song id="s1" title="Nested">
+                  <wrapper><genres name="Rock"/></wrapper>
+                </song>
+              </searchResult3>
+            </subsonic-response>
+            """.trimIndent()
+
+        val songs =
+            parse(
+                xml,
+                tag = "song",
+                create = { SubsonicXml.songDraft(1, it) },
+                onChild = { draft, name, attrs -> if (name == "genres") draft.addGenre(attrs) },
+            ).map { it.toSong() }
+
+        assertEquals(emptyList<String>(), songs.single().genres)
+    }
+
+    @Test
     fun statusOnlyReadRejectsAnHtmlLoginPage() {
         val failure =
             runCatching {

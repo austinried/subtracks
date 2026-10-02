@@ -249,6 +249,103 @@ class SyncServiceTest {
         }
 
     @Test
+    fun syncStoresSongGenresInOrder() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(genres = listOf("Rock", "Electronic"))),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("Rock", "Electronic"), db.libraryDao().songGenres(1, "s1").first())
+        }
+
+    @Test
+    fun genresShrinkAndClearWithTheSong() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(genres = listOf("Rock", "Electronic", "Pop"))),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(listOf("Rock", "Electronic", "Pop"), db.libraryDao().songGenres(1, "s1").first())
+
+            source.songs = listOf(song("s1").copy(genres = listOf("Rock")))
+
+            SyncService(db, source).sync()
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s1").first())
+
+            source.songs = listOf(song("s1"))
+
+            SyncService(db, source).sync()
+            assertEquals(emptyList<String>(), db.libraryDao().songGenres(1, "s1").first())
+        }
+
+    @Test
+    fun anIdenticalSyncDoesNotRewriteGenreRows() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(genres = listOf("Rock", "Electronic"))),
+                )
+
+            SyncService(db, source).sync()
+            val before = totalChanges()
+
+            SyncService(db, source).sync()
+
+            assertEquals(before, totalChanges())
+            assertEquals(listOf("Rock", "Electronic"), db.libraryDao().songGenres(1, "s1").first())
+        }
+
+    @Test
+    fun removingASongRemovesItsGenres() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(genres = listOf("Rock"))),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s1").first())
+
+            source.songs = emptyList()
+
+            SyncService(db, source).sync()
+            assertEquals(emptyList<String>(), db.libraryDao().songGenres(1, "s1").first())
+        }
+
+    @Test
+    fun albumGenresUnionsSongGenresAndFallsBackToTheSingleValue() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genres = listOf("Rock", "Pop")),
+                            song("s2").copy(genre = "Jazz"),
+                            song("s3").copy(genre = "Rock"),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("Jazz", "Pop", "Rock"), db.libraryDao().albumGenres(1, "al1").first())
+        }
+
+    @Test
     fun syncStoresAlbumDiscTitles() =
         runTest {
             insertSource()

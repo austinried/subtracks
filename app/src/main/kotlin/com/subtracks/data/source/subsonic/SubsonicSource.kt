@@ -202,10 +202,11 @@ class SubsonicSource(
                             "albumCount" to "0",
                         ),
                     tag = "song",
-                    create = { SubsonicXml.song(id, it) },
+                    create = { SubsonicXml.songDraft(id, it) },
+                    onChild = { song, name, attrs -> if (name == "genres") song.addGenre(attrs) },
                 ).collect { batch ->
                     raw += batch.size
-                    val accepted = batch.filter { it.id.isNotEmpty() }
+                    val accepted = batch.map { it.toSong() }.filter { it.id.isNotEmpty() }
                     if (accepted.isNotEmpty()) emit(accepted)
                 }
                 if (raw < PAGE_SIZE) {
@@ -244,9 +245,10 @@ class SubsonicSource(
                                         method = "getAlbum",
                                         params = mapOf("id" to albumId),
                                         tag = "song",
-                                        create = { SubsonicXml.song(id, it) },
+                                        create = { SubsonicXml.songDraft(id, it) },
+                                        onChild = { song, name, attrs -> if (name == "genres") song.addGenre(attrs) },
                                     ).collect { batch ->
-                                        val accepted = batch.filter { it.id.isNotEmpty() }
+                                        val accepted = batch.map { it.toSong() }.filter { it.id.isNotEmpty() }
                                         if (accepted.isNotEmpty()) send(accepted)
                                     }
                                 }

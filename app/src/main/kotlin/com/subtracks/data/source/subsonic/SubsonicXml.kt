@@ -52,8 +52,13 @@ object SubsonicXml {
     internal fun song(
         sourceId: Long,
         attrs: Attributes,
-    ): Song =
-        Song(
+    ): Song = songDraft(sourceId, attrs).toSong()
+
+    internal fun songDraft(
+        sourceId: Long,
+        attrs: Attributes,
+    ): SongDraft =
+        SongDraft(
             sourceId = sourceId,
             id = attrs.attr("id"),
             albumId = attrs.attr("albumId").ifEmpty { null },
@@ -158,6 +163,53 @@ internal class AlbumDraft(
             starred = starred,
             songCount = songCount,
             discTitles = discTitles.toMap(),
+        )
+}
+
+internal class SongDraft(
+    private val sourceId: Long,
+    private val id: String = "",
+    private val albumId: String? = null,
+    private val artistId: String? = null,
+    private val title: String = "",
+    private val album: String? = null,
+    private val artist: String? = null,
+    private val duration: Long? = null,
+    private val track: Long? = null,
+    private val disc: Long? = null,
+    private val starred: Long? = null,
+    private val genre: String? = null,
+    private val created: Long = 0L,
+    private val playCount: Long = 0L,
+    private val played: Long? = null,
+    private val genres: MutableList<String> = mutableListOf(),
+) {
+    fun addGenre(attrs: Attributes) {
+        attrs
+            .attr("name")
+            .trim()
+            .takeIf { it.isNotEmpty() }
+            ?.let { genres += it }
+    }
+
+    fun toSong(): Song =
+        Song(
+            sourceId = sourceId,
+            id = id,
+            albumId = albumId,
+            artistId = artistId,
+            title = title,
+            album = album,
+            artist = artist,
+            duration = duration,
+            track = track,
+            disc = disc,
+            starred = starred,
+            genre = genre,
+            created = created,
+            playCount = playCount,
+            played = played,
+            genres = genres.toList(),
         )
 }
 

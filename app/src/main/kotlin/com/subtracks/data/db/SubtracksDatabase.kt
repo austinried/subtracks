@@ -18,6 +18,7 @@ import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKindConverter
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
+import com.subtracks.data.model.SongGenre
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.UpNextEntry
@@ -35,13 +36,14 @@ import com.subtracks.data.model.UpNextEntry
         PlaylistSearch::class,
         PlaylistSong::class,
         Song::class,
+        SongGenre::class,
         QueueEntry::class,
         UpNextEntry::class,
         PlaybackCursor::class,
         ArtworkSeed::class,
         SongDownload::class,
     ],
-    version = 21,
+    version = 22,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class)

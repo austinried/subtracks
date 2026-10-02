@@ -12,6 +12,7 @@ import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongGenre
 import com.subtracks.data.source.MusicSource
 import java.util.Arrays
 
@@ -64,10 +65,33 @@ class SyncService(
         val seen = HashedIds()
         source.songs().collect { batch ->
             if (batch.isEmpty()) return@collect
-            write("songs", songColumns, primaryKey, batch) { it.values() }
+            writeSongs(batch)
             batch.forEach { seen.add(idHash(it.id)) }
         }
         pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
+    }
+
+    private suspend fun writeSongs(batch: List<Song>) {
+        val genres =
+            batch.flatMap { song ->
+                song.genres.mapIndexed { index, genre -> SongGenre(song.sourceId, song.id, index.toLong(), genre) }
+            }
+        db.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                connection.upsertChanged("songs", songColumns, primaryKey, batch) { it.values() }
+                connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
+                    batch.forEach { song ->
+                        statement.bind(1, song.sourceId)
+                        statement.bind(2, song.id)
+                        statement.bind(3, song.genres.size.toLong())
+                        statement.step()
+                        statement.reset()
+                        statement.clearBindings()
+                    }
+                }
+                connection.upsertChanged("song_genres", songGenreColumns, songGenreKey, genres) { it.values() }
+            }
+        }
     }
 
     private suspend fun aggregatePlayData() {
@@ -260,6 +284,10 @@ private val songColumns =
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
 
+private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
+
+private val songGenreKey = listOf("sourceId", "songId", "position")
+
 private val playlistSongColumns = listOf("sourceId", "playlistId", "songId", "position")
 
 private val playlistSongKey = listOf("sourceId", "playlistId", "position")
@@ -288,6 +316,8 @@ private fun Song.values() =
         playCount,
         played,
     )
+
+private fun SongGenre.values() = listOf<Any?>(sourceId, songId, position, genre)
 
 private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration)
 

@@ -259,6 +259,27 @@ data class Song(
     @ColumnInfo(defaultValue = "0") val created: Long = 0,
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
+    @Ignore val genres: List<String> = emptyList(),
+)
+
+@Entity(
+    tableName = "song_genres",
+    primaryKeys = ["sourceId", "songId", "position"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Song::class,
+            parentColumns = ["sourceId", "id"],
+            childColumns = ["sourceId", "songId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId", "genre")],
+)
+data class SongGenre(
+    val sourceId: Long,
+    val songId: String,
+    val position: Long,
+    val genre: String,
 )
 
 sealed interface SongItem {
