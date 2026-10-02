@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.FilterAltOff
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
@@ -124,6 +125,8 @@ import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PendingDownloadDelete
 import com.subtracks.ui.components.bulkRef
 import com.subtracks.ui.components.statusBarScrim
+import com.subtracks.ui.home.HomeRoute
+import com.subtracks.ui.home.HomeSection
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
@@ -139,6 +142,7 @@ enum class LibraryTab(
     val label: String,
     val icon: ImageVector,
 ) {
+    Home("Home", Icons.Rounded.Home),
     Albums("Albums", Icons.Rounded.Album),
     Artists("Artists", Icons.Rounded.Person),
     Playlists("Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay),
@@ -150,9 +154,9 @@ data class SortOption(
     val descendingByDefault: Boolean = false,
 )
 
-fun LibraryTab.listTab(): LibraryListTab = LibraryListTab.valueOf(name)
+fun LibraryTab.listTab(): LibraryListTab? = LibraryListTab.entries.firstOrNull { it.name == name }
 
-internal fun libraryTabFor(name: String?): LibraryTab = LibraryTab.entries.firstOrNull { it.name == name } ?: LibraryTab.Albums
+internal fun libraryTabFor(name: String?): LibraryTab = LibraryTab.entries.firstOrNull { it.name == name } ?: LibraryTab.Home
 
 fun sortOptionsFor(
     tab: LibraryTab,
@@ -188,6 +192,10 @@ fun sortOptionsFor(
                 SortOption(PlaylistSort.Updated.name, "Updated", descendingByDefault = true),
             )
         }
+
+        LibraryTab.Home -> {
+            emptyList()
+        }
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -199,6 +207,9 @@ fun LibraryRoute(
     onOpenSettings: () -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
+    onHomeMore: (HomeSection) -> Unit = {},
+    onGenreClick: (String) -> Unit = {},
+    onDecadeClick: (Long) -> Unit = {},
     contextMenuHost: ContextMenuHost? = null,
     setStar: (StarType, String, Boolean) -> Unit,
     bottomInset: Dp,
@@ -214,24 +225,29 @@ fun LibraryRoute(
     val listTab = selectedTab.listTab()
     LaunchedEffect(selectedTab) {
         if (previousTab != selectedTab) {
-            viewModel.setSearch(previousTab.listTab(), "")
+            previousTab.listTab()?.let { viewModel.setSearch(it, "") }
             previousTabName = selectedTab.name
         }
     }
-    val listQuery by viewModel.listQuery(listTab).collectAsStateWithLifecycle()
+    val listQueryState = listTab?.let { viewModel.listQuery(it).collectAsStateWithLifecycle() }
+    val listQuery = listQueryState?.value ?: ListQuery("")
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     val playSort by viewModel.playSortAvailability.collectAsStateWithLifecycle()
     val displayQuery = if (offline) listQuery.copy(downloaded = true) else listQuery
-    val search by viewModel.search(listTab).collectAsStateWithLifecycle()
+    val searchState = listTab?.let { viewModel.search(it).collectAsStateWithLifecycle() }
+    val search = searchState?.value.orEmpty()
     val resetKeys =
-        LibraryTab.entries.associateWith { tab ->
-            val query by viewModel.listQuery(tab.listTab()).collectAsStateWithLifecycle()
-            val term by viewModel.search(tab.listTab()).collectAsStateWithLifecycle()
-            "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term"
-        }
+        LibraryTab.entries
+            .mapNotNull { tab ->
+                val tabList = tab.listTab() ?: return@mapNotNull null
+                val query by viewModel.listQuery(tabList).collectAsStateWithLifecycle()
+                val term by viewModel.search(tabList).collectAsStateWithLifecycle()
+                tab to "${query.sort}|${query.descending}|${query.starred}|${query.downloaded || offline}|$term"
+            }.toMap()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true), fallbackName = playback.item?.title)
-    val downloads by viewModel.downloads(listTab).collectAsStateWithLifecycle()
+    val downloadsState = listTab?.let { viewModel.downloads(it).collectAsStateWithLifecycle() }
+    val downloads = downloadsState?.value ?: emptyMap()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
     val itemActions =
@@ -275,9 +291,11 @@ fun LibraryRoute(
         offline = offline,
         onExitOffline = { viewModel.setOffline(false) },
         sortOptions = sortOptionsFor(selectedTab, playSort),
-        starredSupported = listTab.supportsStarred,
-        onSortChange = { viewModel.setListQuery(listTab, listQuery.copy(sort = it)) },
-        onToggleSortDirection = { viewModel.setListQuery(listTab, listQuery.copy(descending = !listQuery.descending)) },
+        starredSupported = listTab?.supportsStarred == true,
+        onSortChange = { sort -> listTab?.let { viewModel.setListQuery(it, listQuery.copy(sort = sort)) } },
+        onToggleSortDirection = {
+            listTab?.let { viewModel.setListQuery(it, listQuery.copy(descending = !listQuery.descending)) }
+        },
         onCycleStarred = {
             val next =
                 when (listQuery.starred) {
@@ -285,18 +303,37 @@ fun LibraryRoute(
                     StarredFilter.Starred -> StarredFilter.NotStarred
                     StarredFilter.NotStarred -> StarredFilter.Any
                 }
-            viewModel.setListQuery(listTab, listQuery.copy(starred = next))
+            listTab?.let { viewModel.setListQuery(it, listQuery.copy(starred = next)) }
         },
         onClearFilters = {
-            viewModel.setListQuery(listTab, listQuery.copy(starred = StarredFilter.Any, downloaded = false))
-            viewModel.setSearch(listTab, "")
+            listTab?.let {
+                viewModel.setListQuery(it, listQuery.copy(starred = StarredFilter.Any, downloaded = false))
+                viewModel.setSearch(it, "")
+            }
         },
         search = search,
-        onSearchChange = { viewModel.setSearch(listTab, it) },
-        onToggleDownloaded = { viewModel.setListQuery(listTab, listQuery.copy(downloaded = !listQuery.downloaded)) },
+        onSearchChange = { value -> listTab?.let { viewModel.setSearch(it, value) } },
+        onToggleDownloaded = {
+            listTab?.let { viewModel.setListQuery(it, listQuery.copy(downloaded = !listQuery.downloaded)) }
+        },
         albumDownloads = downloads.takeIf { listTab == LibraryListTab.Albums }.orEmpty(),
         artistDownloads = downloads.takeIf { listTab == LibraryListTab.Artists }.orEmpty(),
         playlistDownloads = downloads.takeIf { listTab == LibraryListTab.Playlists }.orEmpty(),
+        homeContent = { topInset, bottomInset ->
+            HomeRoute(
+                onAlbumClick = onAlbumClick,
+                onArtistClick = onArtistClick,
+                onViewAlbum = onViewAlbum,
+                onViewArtist = onViewArtist,
+                onMore = onHomeMore,
+                onGenreClick = onGenreClick,
+                onDecadeClick = onDecadeClick,
+                contextMenuHost = contextMenuHost,
+                setStar = setStar,
+                topInset = topInset,
+                bottomInset = bottomInset,
+            )
+        },
     )
 
     pendingDelete?.let { pending ->
@@ -343,6 +380,7 @@ fun LibraryScreen(
     albumDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     artistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     playlistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
+    homeContent: @Composable (topInset: Dp, bottomInset: Dp) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val pagerState =
@@ -413,6 +451,10 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 when (pageTab) {
+                    LibraryTab.Home -> {
+                        homeContent(listTopInset, listBottomInset)
+                    }
+
                     LibraryTab.Albums -> {
                         AlbumsContent(
                             albums.collectAsLazyPagingItems(),
@@ -518,7 +560,7 @@ fun LibraryScreen(
             )
         }
 
-        if (!searchActive) {
+        if (!searchActive && selectedTab != LibraryTab.Home) {
             FloatingActionButton(
                 onClick = { showOptions = true },
                 containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,

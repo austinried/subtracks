@@ -241,6 +241,16 @@ data class PlaylistSong(
             name = "index_songs_sourceId_albumId_order",
             value = ["sourceId", "albumId", "disc", "track", "id"],
         ),
+        Index(
+            name = "index_songs_starred",
+            value = ["sourceId", "starred", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC],
+        ),
+        Index(
+            name = "index_songs_genre",
+            value = ["sourceId", "genre", "played"],
+            orders = [Index.Order.ASC, Index.Order.ASC, Index.Order.DESC],
+        ),
     ],
 )
 data class Song(
@@ -420,6 +430,14 @@ data class ArtistSearch(
 data class PlaylistSearch(
     @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
     val name: String,
+)
+
+@Entity(tableName = "song_search")
+@Fts5(contentEntity = Song::class, tokenizer = FtsOptions.TOKENIZER_TRIGRAM)
+data class SongSearch(
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
+    val title: String,
+    val artist: String?,
 )
 
 class QueueKindConverter {

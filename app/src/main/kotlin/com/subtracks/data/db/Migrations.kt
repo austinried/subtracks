@@ -324,6 +324,21 @@ val MIGRATION_21_22 =
         }
     }
 
+val MIGRATION_22_23 =
+    object : Migration(22, 23) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_songs_starred` ON `songs` " +
+                    "(`sourceId` ASC, `starred` DESC, `id` ASC)",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_songs_genre` ON `songs` " +
+                    "(`sourceId` ASC, `genre` ASC, `played` DESC)",
+            )
+            createSearchIndex(connection, "song_search", "songs", listOf("title", "artist"))
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -379,4 +394,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_19_20,
         MIGRATION_20_21,
         MIGRATION_21_22,
+        MIGRATION_22_23,
     )

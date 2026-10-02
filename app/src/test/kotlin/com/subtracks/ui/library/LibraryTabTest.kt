@@ -8,9 +8,9 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LibraryTabTest {
     @Test
-    fun theStoredNameMapsToItsTabAndAnythingElseToAlbums() {
+    fun theStoredNameMapsToItsTabAndAnythingElseToHome() {
         assertEquals(LibraryTab.Playlists, libraryTabFor("Playlists"))
-        assertEquals(LibraryTab.Albums, libraryTabFor(null))
-        assertEquals(LibraryTab.Albums, libraryTabFor("Books"))
+        assertEquals(LibraryTab.Home, libraryTabFor(null))
+        assertEquals(LibraryTab.Home, libraryTabFor("Books"))
     }
 }

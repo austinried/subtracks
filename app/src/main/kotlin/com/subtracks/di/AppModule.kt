@@ -30,6 +30,8 @@ import com.subtracks.playback.PlayerConnection
 import com.subtracks.playback.Scrobbler
 import com.subtracks.ui.RootViewModel
 import com.subtracks.ui.downloads.DownloadsViewModel
+import com.subtracks.ui.home.HomeListViewModel
+import com.subtracks.ui.home.HomeViewModel
 import com.subtracks.ui.library.AlbumDetailViewModel
 import com.subtracks.ui.library.ArtistDetailViewModel
 import com.subtracks.ui.library.LibraryViewModel
@@ -108,6 +110,8 @@ fun appModule(
     }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { params -> HomeListViewModel(get(), get(), get(), params.get()) }
     viewModel { SettingsViewModel(get(), get()) }
     viewModel { DownloadsViewModel(get(), get(), get()) }
     viewModel { params -> AddSourceViewModel(get(), get(), get(), params.getOrNull()) }

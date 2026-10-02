@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
@@ -41,6 +42,72 @@ class LibraryRepository(
     fun hasAlbumPlayCount(sourceId: Long): Flow<Boolean> = db.libraryDao().hasAlbumPlayCount(sourceId)
 
     fun hasAlbumPlayed(sourceId: Long): Flow<Boolean> = db.libraryDao().hasAlbumPlayed(sourceId)
+
+    fun recentlyPlayedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>> = db.libraryDao().recentlyPlayedAlbums(sourceId, limit)
+
+    fun recentlyPlayedArtists(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Artist>> = db.libraryDao().recentlyPlayedArtists(sourceId, limit)
+
+    fun mostPlayedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>> = db.libraryDao().mostPlayedAlbums(sourceId, limit)
+
+    fun mostPlayedArtists(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Artist>> = db.libraryDao().mostPlayedArtists(sourceId, limit)
+
+    fun recentlyAddedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>> = db.libraryDao().recentlyAddedAlbums(sourceId, limit)
+
+    fun rediscoverAlbums(
+        sourceId: Long,
+        cutoff: Long,
+        limit: Int,
+    ): Flow<List<Album>> = db.libraryDao().rediscoverAlbums(sourceId, cutoff, limit)
+
+    fun recentlyStarredSongs(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>> = db.libraryDao().recentlyStarredSongs(sourceId, limit)
+
+    fun genresByRecentPlay(sourceId: Long): Flow<List<String>> = db.libraryDao().genresByRecentPlay(sourceId)
+
+    fun decades(sourceId: Long): Flow<List<Long>> = db.libraryDao().decades(sourceId)
+
+    fun rediscoverAlbumsPage(sourceId: Long): Flow<PagingData<Album>> =
+        pager(40) { db.libraryDao().albumsByRediscover(sourceId, starredFilter = 0, search = "", cutoff = rediscoverCutoff()) }
+
+    fun starredSongs(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().starredSongs(sourceId) }
+
+    fun songsByGenre(
+        sourceId: Long,
+        genre: String,
+    ): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().songsByGenre(sourceId, genre) }
+
+    fun albumsByDecade(
+        sourceId: Long,
+        decade: Long,
+    ): Flow<PagingData<Album>> = pager(40) { db.libraryDao().albumsByDecade(sourceId, decade, decade + 10) }
+
+    fun homeRecentlyPlayedAlbums(sourceId: Long): Flow<PagingData<Album>> = pager(40) { db.libraryDao().homeRecentlyPlayedAlbums(sourceId) }
+
+    fun homeMostPlayedAlbums(sourceId: Long): Flow<PagingData<Album>> = pager(40) { db.libraryDao().homeMostPlayedAlbums(sourceId) }
+
+    fun homeRecentlyAddedAlbums(sourceId: Long): Flow<PagingData<Album>> = pager(40) { db.libraryDao().homeRecentlyAddedAlbums(sourceId) }
+
+    fun homeRecentlyPlayedArtists(sourceId: Long): Flow<PagingData<Artist>> =
+        pager(60) { db.libraryDao().homeRecentlyPlayedArtists(sourceId) }
+
+    fun homeMostPlayedArtists(sourceId: Long): Flow<PagingData<Artist>> = pager(60) { db.libraryDao().homeMostPlayedArtists(sourceId) }
 
     fun albums(
         sourceId: Long,
@@ -365,3 +432,7 @@ class LibraryRepository(
             pagingSourceFactory = source,
         ).flow
 }
+
+const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
+
+fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS

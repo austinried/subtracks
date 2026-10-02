@@ -8,6 +8,7 @@ import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DiscKey
@@ -236,6 +237,92 @@ interface LibraryDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL)")
     fun hasAlbumPlayed(sourceId: Long): Flow<Boolean>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL " +
+            "ORDER BY played DESC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun recentlyPlayedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>>
+
+    @Query(
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL " +
+            "ORDER BY played DESC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun recentlyPlayedArtists(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Artist>>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND playCount > 0 " +
+            "ORDER BY playCount DESC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun mostPlayedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>>
+
+    @Query(
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 " +
+            "ORDER BY playCount DESC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun mostPlayedArtists(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Artist>>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId " +
+            "ORDER BY created DESC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun recentlyAddedAlbums(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<Album>>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL AND played < :cutoff " +
+            "ORDER BY played ASC, name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun rediscoverAlbums(
+        sourceId: Long,
+        cutoff: Long,
+        limit: Int,
+    ): Flow<List<Album>>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
+            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+    )
+    fun recentlyStarredSongs(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>>
+
+    @Query(
+        "SELECT genre FROM (" +
+            "SELECT song_genres.genre AS genre, songs.played AS played FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE song_genres.sourceId = :sourceId " +
+            "UNION ALL " +
+            "SELECT songs.genre AS genre, songs.played AS played FROM songs " +
+            "WHERE songs.sourceId = :sourceId AND songs.genre IS NOT NULL AND songs.genre != '' " +
+            "AND NOT EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id)" +
+            ") GROUP BY genre ORDER BY MAX(played) DESC NULLS LAST, genre COLLATE NOCASE",
+    )
+    fun genresByRecentPlay(sourceId: Long): Flow<List<String>>
+
+    @Query(
+        "SELECT DISTINCT (year / 10) * 10 AS decade FROM albums " +
+            "WHERE sourceId = :sourceId AND year IS NOT NULL AND year > 0 ORDER BY decade ASC",
+    )
+    fun decades(sourceId: Long): Flow<List<Long>>
 
     @Query("UPDATE artists SET starred = :starred WHERE sourceId = :sourceId AND id = :id")
     suspend fun setArtistStar(
@@ -584,6 +671,64 @@ interface LibraryDao {
         search: String,
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
+
+    @Query("SELECT * $ALBUMS_FILTER AND played IS NOT NULL AND played < :cutoff ORDER BY played ASC, name COLLATE NOCASE, id")
+    fun albumsByRediscover(
+        sourceId: Long,
+        starredFilter: Int,
+        search: String,
+        cutoff: Long,
+        downloadedFilter: Int = 0,
+    ): PagingSource<Int, Album>
+
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, name COLLATE NOCASE, id")
+    fun homeRecentlyPlayedAlbums(sourceId: Long): PagingSource<Int, Album>
+
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, name COLLATE NOCASE, id")
+    fun homeMostPlayedAlbums(sourceId: Long): PagingSource<Int, Album>
+
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId ORDER BY created DESC, name COLLATE NOCASE, id")
+    fun homeRecentlyAddedAlbums(sourceId: Long): PagingSource<Int, Album>
+
+    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, name COLLATE NOCASE, id")
+    fun homeRecentlyPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
+
+    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, name COLLATE NOCASE, id")
+    fun homeMostPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
+            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id",
+    )
+    fun starredSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND (" +
+            "EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +
+            "AND song_genres.genre = :genre) " +
+            "OR (songs.genre = :genre AND NOT EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id))) " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    fun songsByGenre(
+        sourceId: Long,
+        genre: String,
+    ): PagingSource<Int, AlbumSongItem>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND year >= :start AND year < :end " +
+            "ORDER BY year DESC, name COLLATE NOCASE, id",
+    )
+    fun albumsByDecade(
+        sourceId: Long,
+        start: Long,
+        end: Long,
+    ): PagingSource<Int, Album>
 
     @Query(PLAYLIST_SONGS_SQL)
     fun playlistSongs(

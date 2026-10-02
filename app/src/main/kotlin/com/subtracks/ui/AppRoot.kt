@@ -69,6 +69,9 @@ import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.SongInfoDialog
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
+import com.subtracks.ui.home.HomeListRequest
+import com.subtracks.ui.home.HomeListRoute
+import com.subtracks.ui.home.HomeSection
 import com.subtracks.ui.library.AlbumDetailRoute
 import com.subtracks.ui.library.ArtistDetailRoute
 import com.subtracks.ui.library.LibraryRoute
@@ -117,6 +120,9 @@ private object Routes {
     const val ALBUM_DETAIL = "album/{albumId}?coverArt={coverArt}"
     const val ARTIST_DETAIL = "artist/{artistId}?coverArt={coverArt}"
     const val PLAYLIST_DETAIL = "playlist/{playlistId}"
+    const val HOME_SECTION = "home/more/{section}"
+    const val HOME_GENRE = "home/genre/{genre}"
+    const val HOME_DECADE = "home/decade/{decade}"
 
     fun album(
         id: String,
@@ -131,6 +137,12 @@ private object Routes {
     fun playlist(id: String) = "playlist/${Uri.encode(id)}"
 
     fun editServer(id: Long) = "edit-server/$id"
+
+    fun homeSection(section: HomeSection) = "home/more/${section.name}"
+
+    fun homeGenre(genre: String) = "home/genre/${Uri.encode(genre)}"
+
+    fun homeDecade(decade: Long) = "home/decade/$decade"
 }
 
 private val DETAIL_ROUTES =
@@ -351,6 +363,9 @@ private fun MainNavigation() {
                             onViewArtist = { artistId ->
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
+                            onHomeMore = { section -> navController.navigate(Routes.homeSection(section)) },
+                            onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
+                            onDecadeClick = { decade -> navController.navigate(Routes.homeDecade(decade)) },
                             contextMenuHost = contextMenuHost,
                             setStar = libraryRepository::star,
                             bottomInset = bottomInset,
@@ -435,6 +450,78 @@ private fun MainNavigation() {
                             onViewArtist = { artistId ->
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
+                            contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::star,
+                        )
+                    }
+                    composable(
+                        route = Routes.HOME_SECTION,
+                        arguments = listOf(navArgument("section") { type = NavType.StringType }),
+                    ) { entry ->
+                        val section = HomeSection.fromRoute(entry.arguments?.getString("section")) ?: return@composable
+                        HomeListRoute(
+                            request = HomeListRequest(title = section.title, section = section),
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
+                            onDecadeClick = { decade -> navController.navigate(Routes.homeDecade(decade)) },
+                            contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::star,
+                        )
+                    }
+                    composable(
+                        route = Routes.HOME_GENRE,
+                        arguments = listOf(navArgument("genre") { type = NavType.StringType }),
+                    ) { entry ->
+                        val genre = entry.arguments?.getString("genre").orEmpty()
+                        HomeListRoute(
+                            request = HomeListRequest(title = genre, genre = genre),
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            onGenreClick = { value -> navController.navigate(Routes.homeGenre(value)) },
+                            onDecadeClick = { decade -> navController.navigate(Routes.homeDecade(decade)) },
+                            contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::star,
+                        )
+                    }
+                    composable(
+                        route = Routes.HOME_DECADE,
+                        arguments = listOf(navArgument("decade") { type = NavType.LongType }),
+                    ) { entry ->
+                        val decade = entry.arguments?.getLong("decade") ?: return@composable
+                        HomeListRoute(
+                            request = HomeListRequest(title = "${decade}s", decade = decade),
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
+                            onDecadeClick = { value -> navController.navigate(Routes.homeDecade(value)) },
                             contextMenuHost = contextMenuHost,
                             setStar = libraryRepository::star,
                         )

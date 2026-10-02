@@ -205,6 +205,11 @@ class PlaybackController(
         startOrdinal: Long,
     ) = playContext(queueRepository.albumEntry(sourceId, albumId), startOrdinal)
 
+    fun playSong(
+        sourceId: Long,
+        songId: String,
+    ) = playContext(queueRepository.songEntry(sourceId, songId), 0)
+
     fun playPlaylist(
         sourceId: Long,
         playlistId: String,
