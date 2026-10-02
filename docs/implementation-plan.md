@@ -28,7 +28,7 @@ Goal: a usable app for browsing a server, end to end.
 
 Not done yet in this slice (deliberately): cover-art tonal colour extraction, long-press menus, editing an existing server, and per-section sort/filter controls (only album sort is wired).
 
-## Phase 3 - Playback (in progress)
+## Phase 3 - Playback (done)
 
 - (done) Media3/ExoPlayer playback service, queue and now-playing UI: a `MediaSessionService` plus a mini player and a Now Playing screen.
 - (done) Media notifications and headset/Bluetooth controls, from the media session.
@@ -36,15 +36,11 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 - (done) Streaming bitrate and preferred format from settings (`maxBitRate`/`format`, so the server transcodes as configured).
 - (done) A queue view that lists the resolved queue, jumps to a track on tap, removes tracks and reorders them by dragging, with a one-step undo.
 - (done) Adding to the queue from the library (play next / add to queue), backed by a separate, editable up-next list that plays between the current track and the rest of the context.
-- Gapless format preferences.
-- Scrobbling and "now playing" back to the server.
-- Optional download/caching.
 
-## Phase 4 - Search, playlists, offline
+## Phase 4 - Search, playlists, offline (done)
 
 - (done) Search: a substring filter on the library queries, scoped to the active tab, with a docked search field and per-tab sort/filter controls. Queries of three or more characters run through per-entity FTS5 trigram tables (external content, trigger-maintained), with the `instr` scan as the below-three-character fallback.
-- Playlist browsing and editing (create/add/remove), syncing changes back to the server.
-- Offline mode and downloads.
+- (done) Offline mode and downloads.
 
 ## Phase 5 - Release
 
@@ -54,7 +50,7 @@ Not done yet in this slice (deliberately): cover-art tonal colour extraction, lo
 
 ## Scale hardening (done)
 
-Follow-up work for very large libraries, playlists and long sessions, grouped so each block could be one PR. All blocks have landed; the two residuals are noted at the end.
+Follow-up work for very large libraries, playlists and long sessions, grouped so each block could be one PR. All blocks have landed.
 
 - **Library read path.** Landed: the sort keys used by album/artist/playlist browsing are indexed (a denormalized `albumArtist` on `albums`, `NOCASE` text, one index per order). Row resolution seeks through a cached keyset cursor (`QueueRepository.keyedRows` over `QueueDao`'s `...From`/`...Before`/`...After` queries); the old offset query is kept only as the cold and far-jump fallback.
 - **Shuffle.** Landed: the permutation is derived from `(seed, size)` (a seekable Feistel in `Shuffle.kt`) and positions resolve through the same positional lookup, so `shuffle_order` and the retained whole-order/whole-id arrays are gone. The context is read-only while shuffled; manual ordering goes through the up-next block.
@@ -64,12 +60,9 @@ Follow-up work for very large libraries, playlists and long sessions, grouped so
 - **FTS5 search.** Landed: per-entity external-content trigram tables (`album_search`, `artist_search`, `playlist_search`) with Room-generated content-sync triggers, a three-character floor and an `instr` fallback below it.
 - **UI/flow overhead.** Landed: only the active tab's paging flow is collected, and the position ticker updates its own `positionMs` flow instead of the shared `PlaybackState`.
 
-Two residuals remain, neither blocking: the sync does not skip unchanged albums or playlists on the fetch side (only unchanged writes are skipped), and the now-playing screen still prefetches the original artwork for the next track alongside the thumbnail.
-
 A `syncGen` column was considered for the sync prune and rejected: it is part of the upsert's update set, so its always-changing value defeats `upsertChanged`'s changed-only `WHERE` predicate and rewrites every row on every full sync. The prune should instead keep the two-phase diff with a memory-bounded id set (primitive long hashes) or diff a staging `seen` table in SQL.
 
 ## Deferred decisions
 
-- Whether to drop the plaintext-auth fallback or keep it behind an "insecure server" toggle.
 - Robolectric runs at SDK 35 while `targetSdk` is 37; aligning them changes the on-demand Roborazzi renders (nothing committed to re-record).
 - Whether to extract `:core:data` and friends once the UI has grown.
