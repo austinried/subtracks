@@ -6,6 +6,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
@@ -14,9 +16,11 @@ import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
@@ -45,8 +49,8 @@ class AddSourceViewModelTest {
     private lateinit var sourceRepository: SourceRepository
     private lateinit var downloadRepository: DownloadRepository
     private lateinit var server: MockWebServer
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val createdViewModels = mutableListOf<AddSourceViewModel>()
-    private val syncManagers = mutableListOf<SyncManager>()
 
     @Before
     fun setUp() {
@@ -58,7 +62,7 @@ class AddSourceViewModelTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         val artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork)
+        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork, scope = repoScope)
         downloadRepository =
             DownloadRepository(
                 db,
@@ -67,6 +71,7 @@ class AddSourceViewModelTest {
                 File(context.cacheDir, "downloads-${System.nanoTime()}"),
                 artworkStore = artwork,
                 artworkFetcher = { ByteArray(0) },
+                scope = repoScope,
             )
         server = MockWebServer()
         server.start()
@@ -75,10 +80,8 @@ class AddSourceViewModelTest {
     @After
     fun tearDown() {
         createdViewModels.forEach { runBlocking { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } }
-        syncManagers.forEach { it.close() }
+        cancelAndJoinBlocking(repoScope)
         server.shutdown()
-        downloadRepository.close()
-        sourceRepository.close()
         db.close()
         Dispatchers.resetMain()
         dispatcher.close()
@@ -137,7 +140,7 @@ class AddSourceViewModelTest {
         }
 
     private fun viewModel(sourceId: Long? = null): AddSourceViewModel {
-        val syncManager = SyncManager(db, sourceRepository, QueueRepository(db)).also { syncManagers += it }
+        val syncManager = SyncManager(db, sourceRepository, QueueRepository(db), scope = repoScope)
         return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId).also { createdViewModels += it }
     }
 
@@ -149,8 +152,8 @@ class AddSourceViewModelTest {
         )
 
     private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + 5_000_000_000L
+        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Timed out waiting for the expected state", predicate())
+        assertTrue("Timed out after ${TEST_TIMEOUT_MS}ms waiting for the expected state", predicate())
     }
 }

@@ -16,9 +16,7 @@ import com.subtracks.data.source.streamLengthSuffix
 import com.subtracks.data.source.subsonic.SubsonicClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +24,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -39,9 +36,8 @@ class SourceRepository(
     private val artworkStore: ArtworkStore,
     networkMode: Flow<NetworkMode> = flowOf(NetworkMode.Wifi),
     private val showMessage: (String) -> Unit = {},
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     private data class ActiveSource(
         val id: Long,
         val source: SubsonicMusicSource,
@@ -99,12 +95,6 @@ class SourceRepository(
                 }
             }
         }
-    }
-
-    fun close() {
-        val job = scope.coroutineContext[Job]
-        scope.cancel()
-        runBlocking { job?.join() }
     }
 
     fun sources(): Flow<List<Source>> = db.sourcesDao().sources()

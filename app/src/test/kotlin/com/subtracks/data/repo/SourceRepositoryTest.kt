@@ -5,6 +5,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.TEST_TIMEOUT_MS
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
@@ -12,8 +13,12 @@ import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -43,6 +48,7 @@ class SourceRepositoryTest {
     private lateinit var prefs: UserPreferences
     private lateinit var repository: SourceRepository
     private lateinit var artwork: ArtworkStore
+    private lateinit var scope: CoroutineScope
     private val messages = ArrayList<String>()
 
     @Before
@@ -55,12 +61,13 @@ class SourceRepositoryTest {
                 .build()
         artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
         prefs = fakeUserPreferences()
-        repository = SourceRepository(db, OkHttpClient(), prefs, artwork, showMessage = { messages += it })
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        repository = SourceRepository(db, OkHttpClient(), prefs, artwork, showMessage = { messages += it }, scope = scope)
     }
 
     @After
     fun tearDown() {
-        repository.close()
+        runBlocking { scope.coroutineContext[Job]?.cancelAndJoin() }
         db.close()
     }
 
@@ -69,14 +76,14 @@ class SourceRepositoryTest {
         runBlocking {
             repository.addSource("nav", "http://a.example/", "u", "p", false)
             val sourceId = repository.activeSourceId().first()!!
-            withTimeout(5_000) { while (repository.downloadUri(sourceId, "s1") == null) delay(10) }
+            withTimeout(TEST_TIMEOUT_MS) { while (repository.downloadUri(sourceId, "s1") == null) delay(10) }
 
             assertTrue(repository.downloadUri(sourceId, "s1")!!.contains("/rest/download"))
 
             prefs.setDownloadQuality(StreamQuality(maxBitrate = 128, format = "opus"))
 
             var transcoded: String? = null
-            withTimeout(5_000) {
+            withTimeout(TEST_TIMEOUT_MS) {
                 while (transcoded == null) {
                     delay(10)
                     transcoded = repository.downloadUri(sourceId, "s1")?.takeIf { it.contains("/rest/stream") }
@@ -155,9 +162,9 @@ class SourceRepositoryTest {
 
                 repository.addSource("nav", server.url("/").toString(), "u", "s3cret", true)
 
-                val config = withTimeout(5_000) { repository.activeConfig().first { it != null && !it.useTokenAuth } }
+                val config = withTimeout(TEST_TIMEOUT_MS) { repository.activeConfig().first { it != null && !it.useTokenAuth } }
                 assertFalse(config!!.useTokenAuth)
-                withTimeout(5_000) { while (messages.isEmpty()) delay(10) }
+                withTimeout(TEST_TIMEOUT_MS) { while (messages.isEmpty()) delay(10) }
                 assertEquals(1, messages.size)
             }
         }
@@ -250,7 +257,7 @@ class SourceRepositoryTest {
             repository.addSource("server", "http://a.example/", "u", "p", true)
             val sourceId = awaitActiveSourceId()
             repository.setOfflineMode(true)
-            withTimeout(5_000) { repository.offline.first { it } }
+            withTimeout(TEST_TIMEOUT_MS) { repository.offline.first { it } }
 
             assertEquals(null, repository.streamUri("s1", 1_000L, StreamQuality()))
             assertEquals(null, repository.networkCoverArt(sourceId, "art-1", false))
@@ -266,17 +273,17 @@ class SourceRepositoryTest {
             val sourceId = awaitActiveSourceId()
             artwork.write(sourceId, coverArtKey(sourceId, "art-1", false), byteArrayOf(1, 2, 3))
             repository.setOfflineMode(true)
-            withTimeout(5_000) { repository.offline.first { it } }
+            withTimeout(TEST_TIMEOUT_MS) { repository.offline.first { it } }
 
             val ref = awaitCoverArt("art-1")
 
             assertTrue("expected the stored file, was ${ref.url}", ref.url.startsWith("file:"))
         }
 
-    private suspend fun awaitActiveSourceId(): Long = withTimeout(5_000) { repository.activeSourceId().first { it != null }!! }
+    private suspend fun awaitActiveSourceId(): Long = withTimeout(TEST_TIMEOUT_MS) { repository.activeSourceId().first { it != null }!! }
 
     private suspend fun awaitCoverArt(coverArt: String): CoverArtRef =
-        withTimeout(5_000) {
+        withTimeout(TEST_TIMEOUT_MS) {
             var ref = repository.coverArt(coverArt)
             while (ref == null) {
                 delay(10)

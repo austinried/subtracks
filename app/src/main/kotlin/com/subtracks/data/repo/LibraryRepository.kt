@@ -34,6 +34,7 @@ class LibraryRepository(
     private val sourceRepository: SourceRepository,
     private val serverActions: ServerActionSink,
     private val showMessage: (String) -> Unit = {},
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
     val activeSourceId: Flow<Long?> = sourceRepository.activeSourceId()
 
@@ -280,21 +281,20 @@ class LibraryRepository(
         }
 
     private val starLock = Mutex()
-    private val starScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun star(
         type: StarType,
         id: String,
         starred: Boolean,
     ) {
-        starScope.launch { setStar(type, id, starred) }
+        scope.launch { setStar(type, id, starred) }
     }
 
     fun toggleStar(
         type: StarType,
         id: String,
     ) {
-        starScope.launch {
+        scope.launch {
             starLock.withLock {
                 val sourceId = sourceRepository.activeSourceIdOnce() ?: return@withLock
                 setStarLocked(type, id, starredValue(sourceId, type, id) == null)

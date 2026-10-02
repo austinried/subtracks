@@ -11,12 +11,10 @@ import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.Shuffle
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -111,9 +109,8 @@ class PlaybackController(
     private val connection: PlayerConnection,
     private val downloads: DownloadRepository,
     private val showMessage: (String) -> Unit = {},
-    dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
 
@@ -167,14 +164,6 @@ class PlaybackController(
                 }
             }
         }
-    }
-
-    fun close() {
-        scope.cancel()
-    }
-
-    internal suspend fun awaitStopped() {
-        scope.coroutineContext[Job]?.join()
     }
 
     private val _ready = MutableStateFlow(false)
@@ -879,11 +868,12 @@ class PlaybackController(
         thumbnail: Boolean = false,
     ): CoverArtRef? = sourceRepository.coverArt(item?.coverArtId, thumbnail)
 
-    suspend fun upcomingItem(): QueueItem? {
-        val snap = snapshot ?: return null
-        val position = currentPosition() ?: return null
-        return queueRepository.itemAt(snap, position + 1)?.toQueueItem()
-    }
+    suspend fun upcomingItem(): QueueItem? =
+        startLock.withLock {
+            val snap = snapshot ?: return@withLock null
+            val position = currentPosition() ?: return@withLock null
+            queueRepository.itemAt(snap, position + 1)?.toQueueItem()
+        }
 
     private fun play(
         entries: List<QueueEntry>,

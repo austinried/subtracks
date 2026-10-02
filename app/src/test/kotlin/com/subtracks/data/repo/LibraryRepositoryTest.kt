@@ -10,6 +10,11 @@ import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Song
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.source.StarType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -34,6 +39,7 @@ class LibraryRepositoryTest {
     private lateinit var db: SubtracksDatabase
     private lateinit var sourceRepository: SourceRepository
     private lateinit var repository: LibraryRepository
+    private lateinit var scope: CoroutineScope
     private val messages = ArrayList<String>()
 
     @Before
@@ -44,13 +50,22 @@ class LibraryRepositoryTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
-        repository = LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), showMessage = { messages += it })
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        sourceRepository =
+            SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
+        repository =
+            LibraryRepository(
+                db,
+                sourceRepository,
+                NetworkServerActionSink(sourceRepository),
+                showMessage = { messages += it },
+                scope = scope,
+            )
     }
 
     @After
     fun tearDown() {
-        sourceRepository.close()
+        runBlocking { scope.coroutineContext[Job]?.cancelAndJoin() }
         db.close()
     }
 

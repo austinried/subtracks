@@ -37,8 +37,12 @@ import com.subtracks.ui.library.PlaylistDetailViewModel
 import com.subtracks.ui.playback.QueueViewModel
 import com.subtracks.ui.settings.AddSourceViewModel
 import com.subtracks.ui.settings.SettingsViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import java.io.File
 
@@ -53,11 +57,24 @@ fun appModule(
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
-    single { SourceRepository(get(), get(), get(), get(), networkMode = networkMode(context.applicationContext), showMessage = toast) }
+    single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    single(named("io")) { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+    single(named("playback")) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
+    single {
+        SourceRepository(
+            get(),
+            get(),
+            get(),
+            get(),
+            networkMode = networkMode(context.applicationContext),
+            showMessage = toast,
+            scope = get(),
+        )
+    }
     single<ServerActionSink> { NetworkServerActionSink(get()) }
-    single { LibraryRepository(get(), get(), get(), toast) }
+    single { LibraryRepository(get(), get(), get(), toast, scope = get(named("io"))) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
-    single { SyncManager(get(), get(), get(), showMessage = toast) }
+    single { SyncManager(get(), get(), get(), showMessage = toast, scope = get()) }
     single { QueueRepository(get()) }
     single { ArtworkStore(downloadsRoot(context)) }
     single<ArtworkFetcher> { OkHttpArtworkFetcher(get()) }
@@ -71,16 +88,19 @@ fun appModule(
             artworkStore = get(),
             artworkFetcher = get(),
             showMessage = toast,
+            dispatcher = Dispatchers.IO,
+            scope = get(named("io")),
         ).also { it.start() }
     }
-    single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get()).also { it.start() } }
+    single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get(), scope = get()).also { it.start() } }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
-    single { PlaybackController(get(), get(), get(), get(), showMessage = toast) }
+    single { PlaybackController(get(), get(), get(), get(), showMessage = toast, scope = get(named("playback"))) }
     single(createdAtStart = true) {
         val playback = get<PlaybackController>()
         Scrobbler(
             sink = get(),
             enabled = get<UserPreferences>().scrobbling(),
+            scope = get(),
             recordPlay = get<LibraryRepository>()::recordPlay,
         ).also {
             it.attach(playback.state, playback.positionMs)

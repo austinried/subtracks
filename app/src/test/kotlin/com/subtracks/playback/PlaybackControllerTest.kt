@@ -6,6 +6,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
@@ -26,7 +28,10 @@ import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +57,9 @@ import java.util.concurrent.Executors
 @RunWith(AndroidJUnit4::class)
 class PlaybackControllerTest {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val controllerScope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val extraScopes = mutableListOf<CoroutineScope>()
 
     private lateinit var db: SubtracksDatabase
     private lateinit var prefs: UserPreferences
@@ -74,7 +82,15 @@ class PlaybackControllerTest {
                 .build()
         prefs = fakeUserPreferences()
         networkMode = MutableStateFlow(NetworkMode.Wifi)
-        sources = SourceRepository(db, OkHttpClient(), prefs, ArtworkStore(File(context.cacheDir, "art")), networkMode = networkMode)
+        sources =
+            SourceRepository(
+                db,
+                OkHttpClient(),
+                prefs,
+                ArtworkStore(File(context.cacheDir, "art")),
+                networkMode = networkMode,
+                scope = repoScope,
+            )
         queues = QueueRepository(db)
         downloadsDir = File(context.cacheDir, "downloads-${System.nanoTime()}")
         downloads =
@@ -85,6 +101,7 @@ class PlaybackControllerTest {
                 downloadsDir,
                 artworkStore = ArtworkStore(File(context.cacheDir, "art")),
                 artworkFetcher = { ByteArray(0) },
+                scope = repoScope,
             ).also { it.start() }
         handle = FakePlayerHandle()
         controller =
@@ -94,16 +111,13 @@ class PlaybackControllerTest {
                 FakePlayerConnection(handle),
                 downloads,
                 showMessage = { messages += it },
-                dispatcher = dispatcher,
+                scope = controllerScope,
             )
     }
 
     @After
     fun tearDown() {
-        controller.close()
-        runBlocking { controller.awaitStopped() }
-        sources.close()
-        downloads.close()
+        cancelAndJoinBlocking(controllerScope, repoScope, *extraScopes.toTypedArray())
         db.close()
         dispatcher.close()
     }
@@ -649,7 +663,7 @@ class PlaybackControllerTest {
         runBlocking { queues.setPosition(12_000L) }
 
         val restoredHandle = FakePlayerHandle()
-        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), downloads, dispatcher = dispatcher)
+        val restored = controllerOn(dispatcher, restoredHandle)
         restored.connect()
         await {
             restored.state.value.item
@@ -657,7 +671,6 @@ class PlaybackControllerTest {
         }
 
         assertEquals(12_000L, restored.positionMs.value)
-        restored.close()
     }
 
     @Test
@@ -757,7 +770,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = controllerOn(inline, eagerHandle)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -787,7 +800,6 @@ class PlaybackControllerTest {
                 ?.id,
         )
         assertEquals("q2", runBlocking { eager.upcomingItem()?.id })
-        eager.close()
     }
 
     @Test
@@ -804,7 +816,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = controllerOn(inline, eagerHandle)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -830,7 +842,6 @@ class PlaybackControllerTest {
                 ?.id,
         )
         assertEquals(3, runBlocking { queues.snapshot().upNext.size })
-        eager.close()
     }
 
     @Test
@@ -847,7 +858,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = controllerOn(inline, eagerHandle)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -873,7 +884,6 @@ class PlaybackControllerTest {
                 ?.id,
         )
         assertEquals(3L, runBlocking { queues.snapshot().upNextSize })
-        eager.close()
     }
 
     @Test
@@ -890,7 +900,7 @@ class PlaybackControllerTest {
                     block: Runnable,
                 ) = block.run()
             }
-        val eager = PlaybackController(sources, queues, FakePlayerConnection(eagerHandle), downloads, dispatcher = inline)
+        val eager = controllerOn(inline, eagerHandle)
 
         eager.playAlbum(1, "al1", 0)
         await {
@@ -920,7 +930,6 @@ class PlaybackControllerTest {
 
         val queued = runBlocking { queues.snapshot().upNext.map { it.entry.refId } }
         assertTrue("c1" in queued)
-        eager.close()
     }
 
     @Test
@@ -2308,7 +2317,7 @@ class PlaybackControllerTest {
         runBlocking { queues.setPosition(12_000L) }
 
         val restoredHandle = FakePlayerHandle()
-        val restored = PlaybackController(sources, queues, FakePlayerConnection(restoredHandle), downloads, dispatcher = dispatcher)
+        val restored = controllerOn(dispatcher, restoredHandle)
         restored.connect()
         await {
             restored.state.value.item
@@ -2321,7 +2330,6 @@ class PlaybackControllerTest {
             "setWindow(size=3, start=0, position=12000)",
             restoredHandle.operations.first { it.startsWith("setWindow") },
         )
-        restored.close()
     }
 
     @Test
@@ -2890,7 +2898,7 @@ class PlaybackControllerTest {
         songId: String,
     ) {
         val file = File(downloadsDir, "$sourceId/$songId")
-        val deadline = System.nanoTime() + 15_000_000_000L
+        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (System.nanoTime() < deadline) {
             runBlocking {
                 db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
@@ -2906,12 +2914,12 @@ class PlaybackControllerTest {
 
     private fun setOffline() {
         sources.setOfflineMode(true)
-        runBlocking { withTimeout(5_000) { sources.offline.first { it } } }
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { sources.offline.first { it } } }
     }
 
     private fun setOnline() {
         sources.setOfflineMode(false)
-        runBlocking { withTimeout(5_000) { sources.offline.first { !it } } }
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { sources.offline.first { !it } } }
     }
 
     private fun seedAlbum(
@@ -3063,9 +3071,17 @@ class PlaybackControllerTest {
             (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
         }
 
+    private fun controllerOn(
+        dispatcher: CoroutineDispatcher,
+        handle: FakePlayerHandle,
+    ): PlaybackController {
+        val scope = CoroutineScope(SupervisorJob() + dispatcher).also { extraScopes += it }
+        return PlaybackController(sources, queues, FakePlayerConnection(handle), downloads, scope = scope)
+    }
+
     private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + 5_000_000_000L
+        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Timed out waiting for the expected playback state", predicate())
+        assertTrue("Timed out after ${TEST_TIMEOUT_MS}ms waiting for the expected playback state", predicate())
     }
 }

@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -51,8 +49,8 @@ class DownloadRepository(
     private val artworkFetcher: ArtworkFetcher,
     private val showMessage: (String) -> Unit = {},
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val mutex = Mutex()
     private val loaded = CompletableDeferred<Unit>()
     private var pollJob: Job? = null
@@ -81,12 +79,6 @@ class DownloadRepository(
                 if (offline) cancelActive()
             }
         }
-    }
-
-    fun close() {
-        val job = scope.coroutineContext[Job]
-        scope.cancel()
-        runBlocking { job?.join() }
     }
 
     fun states(): StateFlow<Map<String, SongDownload>> = statesFlow

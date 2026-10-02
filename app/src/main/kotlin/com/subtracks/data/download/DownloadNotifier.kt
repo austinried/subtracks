@@ -13,11 +13,8 @@ import com.subtracks.R
 import com.subtracks.data.repo.DownloadRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /**
  * Our own aggregated progress notification for the downloads the platform engine runs. The engine's
@@ -27,8 +24,8 @@ import kotlinx.coroutines.runBlocking
 class DownloadNotifier(
     private val context: Context,
     private val repository: DownloadRepository,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val manager = NotificationManagerCompat.from(context)
 
     fun start() {
@@ -43,12 +40,6 @@ class DownloadNotifier(
                 }
             }
         }
-    }
-
-    internal fun close() {
-        val job = scope.coroutineContext[Job]
-        scope.cancel()
-        runBlocking { job?.join() }
     }
 
     private fun build(content: DownloadNotification): Notification =

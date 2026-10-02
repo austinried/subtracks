@@ -5,11 +5,17 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.TEST_TIMEOUT_MS
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -37,6 +43,7 @@ class SyncManagerTest {
     private lateinit var sourceRepository: SourceRepository
     private lateinit var queueRepository: QueueRepository
     private lateinit var manager: SyncManager
+    private lateinit var scope: CoroutineScope
     private val messages = CopyOnWriteArrayList<String>()
     private lateinit var server: MockWebServer
 
@@ -48,17 +55,18 @@ class SyncManagerTest {
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
                 .setDriver(BundledSQLiteDriver())
                 .build()
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")))
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        sourceRepository =
+            SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
         queueRepository = QueueRepository(db)
-        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it })
+        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it }, scope = scope)
         server = MockWebServer()
         server.start()
     }
 
     @After
     fun tearDown() {
-        manager.close()
-        sourceRepository.close()
+        runBlocking { scope.coroutineContext[Job]?.cancelAndJoin() }
         db.close()
         server.shutdown()
     }
@@ -67,7 +75,7 @@ class SyncManagerTest {
     fun aFailedSyncTellsTheUser() =
         runBlocking {
             manager.requestSync()
-            withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertEquals(listOf("Sync failed: No server configured"), messages)
         }
@@ -78,7 +86,7 @@ class SyncManagerTest {
             val before = queueRepository.snapshot().version
 
             manager.requestSync()
-            val status = withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+            val status = withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertTrue(status is SyncStatus.Failed)
             assertEquals(before + 1, queueRepository.snapshot().version)
@@ -91,7 +99,7 @@ class SyncManagerTest {
             sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
 
             manager.requestSync()
-            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
 
             assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
             assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
@@ -128,13 +136,13 @@ class SyncManagerTest {
             sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
 
             manager.requestSync()
-            withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
 
             server.dispatcher = healthyDispatcher()
             manager.requestSync()
-            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
 
             assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
             assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
@@ -173,7 +181,7 @@ class SyncManagerTest {
             manager.requestSync()
             releaseFirst.countDown()
 
-            withTimeout(10_000) { manager.status.first { it is SyncStatus.Success } }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
             assertTrue("the coalesced sync should start", secondArtistStarted.await(10, TimeUnit.SECONDS))
             assertEquals(2, artistRequests.get())
         }
@@ -230,10 +238,10 @@ class SyncManagerTest {
     fun aSyncRequestWhileOfflineIsRefusedWithoutTouchingTheNetwork() =
         runBlocking {
             sourceRepository.setOfflineMode(true)
-            withTimeout(5_000) { sourceRepository.offline.first { it } }
+            withTimeout(TEST_TIMEOUT_MS) { sourceRepository.offline.first { it } }
 
             manager.requestSync()
-            val status = withTimeout(10_000) { manager.status.first { it is SyncStatus.Failed } }
+            val status = withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertEquals("Offline mode is on", (status as SyncStatus.Failed).message)
         }

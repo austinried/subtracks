@@ -6,6 +6,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
@@ -22,9 +24,11 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.FakePlayerConnection
 import com.subtracks.playback.FakePlayerHandle
 import com.subtracks.playback.PlaybackController
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
@@ -51,6 +55,8 @@ class DownloadsViewModelTest {
     private lateinit var downloadRepository: DownloadRepository
     private lateinit var controller: PlaybackController
     private lateinit var viewModel: DownloadsViewModel
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val controllerScope = CoroutineScope(SupervisorJob() + dispatcher)
     private var sourceId: Long = 0
 
     @Before
@@ -63,7 +69,7 @@ class DownloadsViewModelTest {
                 .setDriver(BundledSQLiteDriver())
                 .build()
         val artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork)
+        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork, scope = repoScope)
         downloadRepository =
             DownloadRepository(
                 db,
@@ -72,6 +78,7 @@ class DownloadsViewModelTest {
                 File(context.cacheDir, "downloads-${System.nanoTime()}"),
                 artworkStore = artwork,
                 artworkFetcher = { ByteArray(0) },
+                scope = repoScope,
             )
         controller =
             PlaybackController(
@@ -79,11 +86,11 @@ class DownloadsViewModelTest {
                 QueueRepository(db),
                 FakePlayerConnection(FakePlayerHandle()),
                 downloadRepository,
-                dispatcher = dispatcher,
+                scope = controllerScope,
             )
         viewModel =
             DownloadsViewModel(
-                LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository)),
+                LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), scope = repoScope),
                 downloadRepository,
                 controller,
             )
@@ -92,10 +99,7 @@ class DownloadsViewModelTest {
     @After
     fun tearDown() {
         runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
-        controller.close()
-        runBlocking { controller.awaitStopped() }
-        downloadRepository.close()
-        sourceRepository.close()
+        cancelAndJoinBlocking(controllerScope, repoScope)
         db.close()
         Dispatchers.resetMain()
         dispatcher.close()
@@ -174,8 +178,8 @@ class DownloadsViewModelTest {
     private fun allRows(): List<SongDownload> = runBlocking { db.downloadDao().all() }
 
     private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + 5_000_000_000L
+        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Timed out waiting for the expected state", predicate())
+        assertTrue("Timed out after ${TEST_TIMEOUT_MS}ms waiting for the expected state", predicate())
     }
 }
