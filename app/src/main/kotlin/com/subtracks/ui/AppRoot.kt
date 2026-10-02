@@ -166,6 +166,12 @@ internal fun resetOnSourceSwitch(
     if (route in DETAIL_ROUTES) popDetail()
 }
 
+internal fun shouldOpenNowPlaying(
+    request: Int,
+    handled: Int,
+    playerVisible: Boolean,
+): Boolean = playerVisible && request > handled
+
 internal data class BackStackKey(
     val route: String?,
     val argument: String?,
@@ -181,7 +187,10 @@ internal fun focusPops(
 }
 
 @Composable
-fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
+fun SubtracksRoot(
+    root: RootViewModel = koinViewModel(),
+    nowPlayingRequest: Int = 0,
+) {
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
         null -> {
             LoadingState()
@@ -195,14 +204,14 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
             val playbackController = koinInject<PlaybackController>()
             LaunchedEffect(Unit) { playbackController.connect() }
             val playbackReady by playbackController.ready.collectAsStateWithLifecycle()
-            if (playbackReady) MainNavigation() else LoadingState()
+            if (playbackReady) MainNavigation(nowPlayingRequest) else LoadingState()
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MainNavigation() {
+private fun MainNavigation(nowPlayingRequest: Int) {
     val navController = rememberNavController()
     val currentRoute =
         navController
@@ -218,6 +227,7 @@ private fun MainNavigation() {
     val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
+    var handledNowPlayingRequest by rememberSaveable { mutableStateOf(0) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
     var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
     var nowPlayingFadeOut by remember { mutableStateOf(false) }
@@ -300,6 +310,12 @@ private fun MainNavigation() {
             settleJob?.cancel()
             nowPlayingOpen = false
             nowPlayingProgress = 0f
+        }
+    }
+    LaunchedEffect(nowPlayingRequest, playerVisible) {
+        if (shouldOpenNowPlaying(nowPlayingRequest, handledNowPlayingRequest, playerVisible)) {
+            handledNowPlayingRequest = nowPlayingRequest
+            settleNowPlaying(true)
         }
     }
     val density = LocalDensity.current
