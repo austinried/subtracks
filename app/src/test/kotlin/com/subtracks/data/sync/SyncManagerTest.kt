@@ -6,6 +6,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.prefs.fakeUserPreferences
@@ -13,9 +14,7 @@ import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -66,7 +65,7 @@ class SyncManagerTest {
 
     @After
     fun tearDown() {
-        runBlocking { scope.coroutineContext[Job]?.cancelAndJoin() }
+        cancelAndJoinBlocking(scope)
         db.close()
         server.shutdown()
     }

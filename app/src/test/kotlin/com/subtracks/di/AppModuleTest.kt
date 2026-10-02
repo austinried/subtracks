@@ -3,14 +3,12 @@ package com.subtracks.di
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -39,15 +37,18 @@ class AppModuleTest {
 
     @After
     fun tearDown() {
-        if (::koin.isInitialized) {
-            runBlocking {
-                koin.get<CoroutineScope>().coroutineContext[Job]?.cancelAndJoin()
-                koin.get<CoroutineScope>(named("io")).coroutineContext[Job]?.cancelAndJoin()
-                koin.get<CoroutineScope>(named("playback")).coroutineContext[Job]?.cancelAndJoin()
+        try {
+            if (::koin.isInitialized) {
+                cancelAndJoinBlocking(
+                    koin.get<CoroutineScope>(),
+                    koin.get<CoroutineScope>(named("io")),
+                    koin.get<CoroutineScope>(named("playback")),
+                )
             }
+        } finally {
+            stopKoin()
+            Dispatchers.resetMain()
         }
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     @Test

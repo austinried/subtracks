@@ -6,7 +6,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.awaitUntil
+import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
@@ -27,9 +28,7 @@ import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -99,7 +98,7 @@ class DownloadRepositoryTest {
 
     @After
     fun tearDown() {
-        runBlocking { scope.coroutineContext[Job]?.cancelAndJoin() }
+        cancelAndJoinBlocking(scope)
         db.close()
         dir.deleteRecursively()
     }
@@ -1159,11 +1158,7 @@ class DownloadRepositoryTest {
         file.writeText(contents)
     }
 
-    private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
-        while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Timed out after ${TEST_TIMEOUT_MS}ms waiting for the expected download state", predicate())
-    }
+    private fun await(predicate: () -> Boolean) = awaitUntil("waiting for the expected download state", predicate)
 
     private companion object {
         const val ALBUM_ART = "art-al1"

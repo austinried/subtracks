@@ -6,7 +6,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
@@ -177,9 +177,5 @@ class DownloadsViewModelTest {
 
     private fun allRows(): List<SongDownload> = runBlocking { db.downloadDao().all() }
 
-    private fun await(predicate: () -> Boolean) {
-        val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
-        while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Timed out after ${TEST_TIMEOUT_MS}ms waiting for the expected state", predicate())
-    }
+    private fun await(predicate: () -> Boolean) = awaitUntil("waiting for the expected state", predicate)
 }

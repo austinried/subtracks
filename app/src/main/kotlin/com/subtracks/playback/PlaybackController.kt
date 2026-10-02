@@ -868,12 +868,17 @@ class PlaybackController(
         thumbnail: Boolean = false,
     ): CoverArtRef? = sourceRepository.coverArt(item?.coverArtId, thumbnail)
 
-    suspend fun upcomingItem(): QueueItem? =
+    suspend fun upcomingItem(): QueueItem? {
+        var current: QueueSnapshot? = null
+        var position: Long? = null
         startLock.withLock {
-            val snap = snapshot ?: return@withLock null
-            val position = currentPosition() ?: return@withLock null
-            queueRepository.itemAt(snap, position + 1)?.toQueueItem()
+            current = snapshot
+            position = currentPosition()
         }
+        val snapshot = current ?: return null
+        val at = position ?: return null
+        return queueRepository.itemAt(snapshot, at + 1)?.toQueueItem()
+    }
 
     private fun play(
         entries: List<QueueEntry>,
