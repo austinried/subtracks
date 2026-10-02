@@ -67,8 +67,7 @@ class SubsonicSourceIntegrationTest(
 
             assertEquals(20, songs.size)
             assertTrue(songs.all { song -> song.genre == null || song.genres.isEmpty() || song.genres.contains(song.genre) })
-            // Nextcloud Music does not populate the OpenSubsonic genres array.
-            if (server.name != "nextcloud") {
+            if (server.supportsGenres) {
                 assertTrue(songs.any { it.genres.isNotEmpty() })
             }
         }

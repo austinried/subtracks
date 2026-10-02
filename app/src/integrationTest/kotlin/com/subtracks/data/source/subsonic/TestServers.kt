@@ -9,6 +9,7 @@ data class TestServer(
     val username: String,
     val password: String,
     val supportsTokenAuth: Boolean,
+    val supportsGenres: Boolean,
 ) {
     override fun toString(): String = name
 }
@@ -16,15 +17,16 @@ data class TestServer(
 object TestServers {
     val all =
         listOf(
-            TestServer("navidrome", "http://localhost:4533/", "admin", "password", supportsTokenAuth = true),
-            TestServer("gonic", "http://localhost:4747/", "admin", "admin", supportsTokenAuth = true),
-            TestServer("lms", "http://localhost:5082/", "admin", "subtracks-lms", supportsTokenAuth = false),
+            TestServer("navidrome", "http://localhost:4533/", "admin", "password", supportsTokenAuth = true, supportsGenres = true),
+            TestServer("gonic", "http://localhost:4747/", "admin", "admin", supportsTokenAuth = true, supportsGenres = true),
+            TestServer("lms", "http://localhost:5082/", "admin", "subtracks-lms", supportsTokenAuth = false, supportsGenres = true),
             TestServer(
                 "nextcloud",
                 "http://localhost:8090/index.php/apps/music/subsonic/",
                 "admin",
                 "subtracks-nextcloud",
                 supportsTokenAuth = false,
+                supportsGenres = false,
             ),
         )
 
