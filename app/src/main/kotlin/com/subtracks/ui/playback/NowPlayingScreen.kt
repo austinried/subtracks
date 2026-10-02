@@ -1,6 +1,5 @@
 package com.subtracks.ui.playback
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -63,10 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
@@ -141,10 +137,8 @@ fun NowPlayingRoute(
     }
     LaunchedEffect(state.item?.id, state.hasNext) {
         if (!state.hasNext) return@LaunchedEffect
-        controller.upcomingItem()?.let { next ->
-            controller.coverArt(next, thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
-            controller.coverArt(next)?.let { prefetchImage(context, it) }
-        }
+        val next = controller.upcomingItem() ?: return@LaunchedEffect
+        controller.coverArt(next, thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
     }
     NowPlayingScreen(
         state = state,
@@ -168,28 +162,6 @@ fun NowPlayingRoute(
         onSeek = controller::seekTo,
         modifier = modifier,
     )
-}
-
-internal fun prefetchImage(
-    context: Context,
-    ref: CoverArtRef,
-) {
-    SingletonImageLoader.get(context).enqueue(prefetchImageRequest(context, ref))
-}
-
-internal fun prefetchImageRequest(
-    context: Context,
-    ref: CoverArtRef,
-): ImageRequest {
-    val metrics = context.resources.displayMetrics
-    val maxDimension = maxOf(metrics.widthPixels, metrics.heightPixels)
-    return ImageRequest
-        .Builder(context)
-        .data(ref.url)
-        .diskCacheKey(ref.cacheKey)
-        .memoryCachePolicy(CachePolicy.DISABLED)
-        .size(maxDimension)
-        .build()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
