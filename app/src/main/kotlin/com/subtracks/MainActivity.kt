@@ -24,7 +24,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
         enableEdgeToEdge()
-        if (intent?.action == ACTION_OPEN_NOW_PLAYING) nowPlayingRequest.intValue++
+        if (shouldRecordNowPlayingLaunch(intent?.action, restoringState = savedInstanceState != null)) {
+            nowPlayingRequest.intValue++
+        }
         setContent {
             SubtracksTheme {
                 SubtracksRoot(nowPlayingRequest = nowPlayingRequest.intValue)
@@ -50,3 +52,8 @@ class MainActivity : ComponentActivity() {
         const val ACTION_OPEN_NOW_PLAYING = "com.subtracks.action.OPEN_NOW_PLAYING"
     }
 }
+
+internal fun shouldRecordNowPlayingLaunch(
+    action: String?,
+    restoringState: Boolean,
+): Boolean = action == MainActivity.ACTION_OPEN_NOW_PLAYING && !restoringState

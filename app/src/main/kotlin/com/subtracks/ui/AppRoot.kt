@@ -166,12 +166,6 @@ internal fun resetOnSourceSwitch(
     if (route in DETAIL_ROUTES) popDetail()
 }
 
-internal fun shouldOpenNowPlaying(
-    request: Int,
-    handled: Int,
-    playerVisible: Boolean,
-): Boolean = playerVisible && request > handled
-
 internal data class BackStackKey(
     val route: String?,
     val argument: String?,
@@ -227,7 +221,7 @@ private fun MainNavigation(nowPlayingRequest: Int) {
     val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
-    var handledNowPlayingRequest by rememberSaveable { mutableStateOf(0) }
+    var handledNowPlayingRequest by remember { mutableStateOf(0) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
     var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
     var nowPlayingFadeOut by remember { mutableStateOf(false) }
@@ -313,8 +307,11 @@ private fun MainNavigation(nowPlayingRequest: Int) {
         }
     }
     LaunchedEffect(nowPlayingRequest, playerVisible) {
-        if (shouldOpenNowPlaying(nowPlayingRequest, handledNowPlayingRequest, playerVisible)) {
+        if (playerVisible && nowPlayingRequest > handledNowPlayingRequest) {
             handledNowPlayingRequest = nowPlayingRequest
+            if (navController.currentDestination?.route in DETAIL_ROUTES) {
+                navController.popBackStack(Routes.LIBRARY, inclusive = false)
+            }
             settleNowPlaying(true)
         }
     }
