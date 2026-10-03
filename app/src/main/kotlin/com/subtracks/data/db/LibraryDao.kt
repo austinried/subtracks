@@ -730,6 +730,15 @@ interface LibraryDao {
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
+            "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    fun homeDownloadedSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND (" +
             "EXISTS (SELECT 1 FROM song_genres " +
             "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +

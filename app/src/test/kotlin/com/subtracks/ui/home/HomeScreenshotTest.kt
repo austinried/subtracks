@@ -96,6 +96,7 @@ class HomeScreenshotTest {
                     albums = remember { flowOf(PagingData.from(albums)) }.collectAsLazyPagingItems(),
                     artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
                     songs = remember { flowOf(PagingData.empty<AlbumSongItem>()) }.collectAsLazyPagingItems(),
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
                     coverArt = { _, _ -> null },
                 )
             }
@@ -121,6 +122,7 @@ class HomeScreenshotTest {
                     albums = remember { flowOf(PagingData.empty<Album>()) }.collectAsLazyPagingItems(),
                     artists = remember { flowOf(PagingData.from(artists)) }.collectAsLazyPagingItems(),
                     songs = remember { flowOf(PagingData.empty<AlbumSongItem>()) }.collectAsLazyPagingItems(),
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
                     coverArt = { _, _ -> null },
                 )
             }

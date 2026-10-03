@@ -8,7 +8,12 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.ArtistSort
+import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
@@ -26,7 +31,17 @@ data class HomeListRequest(
     val section: HomeSection? = null,
     val genre: String? = null,
     val decade: Long? = null,
+    val downloaded: OfflineListKind? = null,
 )
+
+enum class OfflineListKind(
+    val title: String,
+) {
+    Albums("Downloaded albums"),
+    Artists("Downloaded artists"),
+    Songs("Downloaded songs"),
+    Playlists("Downloaded playlists"),
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeListViewModel(
@@ -41,6 +56,17 @@ class HomeListViewModel(
         sourceId
             .flatMapLatest { id ->
                 when {
+                    request.downloaded == OfflineListKind.Albums -> {
+                        libraryRepository.albums(
+                            sourceId = id,
+                            sort = AlbumSort.Added,
+                            descending = false,
+                            starred = StarredFilter.Any,
+                            search = "",
+                            downloaded = true,
+                        )
+                    }
+
                     request.decade != null -> {
                         libraryRepository.albumsByDecade(id, request.decade)
                     }
@@ -80,8 +106,35 @@ class HomeListViewModel(
                     }
 
                     else -> {
-                        flowOf(PagingData.empty<Artist>())
+                        if (request.downloaded == OfflineListKind.Artists) {
+                            libraryRepository.artists(
+                                sourceId = id,
+                                sort = ArtistSort.Name,
+                                descending = false,
+                                starred = StarredFilter.Any,
+                                search = "",
+                                downloaded = true,
+                            )
+                        } else {
+                            flowOf(PagingData.empty<Artist>())
+                        }
                     }
+                }
+            }.cachedIn(viewModelScope)
+
+    val playlists: Flow<PagingData<Playlist>> =
+        sourceId
+            .flatMapLatest { id ->
+                if (request.downloaded == OfflineListKind.Playlists) {
+                    libraryRepository.playlists(
+                        sourceId = id,
+                        sort = PlaylistSort.Name,
+                        descending = false,
+                        search = "",
+                        downloaded = true,
+                    )
+                } else {
+                    flowOf(PagingData.empty<Playlist>())
                 }
             }.cachedIn(viewModelScope)
 
@@ -89,6 +142,7 @@ class HomeListViewModel(
         sourceId
             .flatMapLatest { id ->
                 when {
+                    request.downloaded == OfflineListKind.Songs -> libraryRepository.downloadedSongsPage(id)
                     request.genre != null -> libraryRepository.songsByGenre(id, request.genre)
                     request.section == HomeSection.RecentlyStarredSongs -> libraryRepository.starredSongs(id)
                     else -> flowOf(PagingData.empty<AlbumSongItem>())
@@ -115,6 +169,10 @@ class HomeListViewModel(
         when {
             genre != null -> {
                 viewModelScope.playGenreList(libraryRepository, playbackController, genre, song)
+            }
+
+            request.downloaded == OfflineListKind.Songs -> {
+                viewModelScope.playDownloadedList(libraryRepository, playbackController, song)
             }
 
             request.section == HomeSection.RecentlyStarredSongs -> {

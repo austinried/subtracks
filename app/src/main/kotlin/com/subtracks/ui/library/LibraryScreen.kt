@@ -127,6 +127,7 @@ import com.subtracks.ui.components.bulkRef
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.home.HomeRoute
 import com.subtracks.ui.home.HomeSection
+import com.subtracks.ui.home.OfflineListKind
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
@@ -208,6 +209,7 @@ fun LibraryRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     onHomeMore: (HomeSection) -> Unit = {},
+    onHomeDownloaded: (OfflineListKind) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
     onDecadeClick: (Long) -> Unit = {},
     contextMenuHost: ContextMenuHost? = null,
@@ -327,6 +329,7 @@ fun LibraryRoute(
                 onViewAlbum = onViewAlbum,
                 onViewArtist = onViewArtist,
                 onMore = onHomeMore,
+                onDownloadedMore = onHomeDownloaded,
                 onGenreClick = onGenreClick,
                 onDecadeClick = onDecadeClick,
                 contextMenuHost = contextMenuHost,

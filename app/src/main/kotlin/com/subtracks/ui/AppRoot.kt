@@ -72,6 +72,7 @@ import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.home.HomeListRequest
 import com.subtracks.ui.home.HomeListRoute
 import com.subtracks.ui.home.HomeSection
+import com.subtracks.ui.home.OfflineListKind
 import com.subtracks.ui.library.AlbumDetailRoute
 import com.subtracks.ui.library.ArtistDetailRoute
 import com.subtracks.ui.library.LibraryRoute
@@ -123,6 +124,7 @@ private object Routes {
     const val HOME_SECTION = "home/more/{section}"
     const val HOME_GENRE = "home/genre/{genre}"
     const val HOME_DECADE = "home/decade/{decade}"
+    const val HOME_DOWNLOADED = "home/downloaded/{kind}"
 
     fun album(
         id: String,
@@ -143,6 +145,8 @@ private object Routes {
     fun homeGenre(genre: String) = "home/genre/${Uri.encode(genre)}"
 
     fun homeDecade(decade: Long) = "home/decade/$decade"
+
+    fun homeDownloaded(kind: OfflineListKind) = "home/downloaded/${kind.name}"
 }
 
 private val DETAIL_ROUTES =
@@ -364,6 +368,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
                             },
                             onHomeMore = { section -> navController.navigate(Routes.homeSection(section)) },
+                            onHomeDownloaded = { kind -> navController.navigate(Routes.homeDownloaded(kind)) },
                             onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
                             onDecadeClick = { decade -> navController.navigate(Routes.homeDecade(decade)) },
                             contextMenuHost = contextMenuHost,
@@ -522,6 +527,35 @@ private fun MainNavigation() {
                             },
                             onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
                             onDecadeClick = { value -> navController.navigate(Routes.homeDecade(value)) },
+                            contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::star,
+                        )
+                    }
+                    composable(
+                        route = Routes.HOME_DOWNLOADED,
+                        arguments = listOf(navArgument("kind") { type = NavType.StringType }),
+                    ) { entry ->
+                        val kind =
+                            OfflineListKind.entries.firstOrNull { it.name == entry.arguments?.getString("kind") }
+                                ?: return@composable
+                        HomeListRoute(
+                            request = HomeListRequest(title = kind.title, downloaded = kind),
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onPlaylistClick = { playlist ->
+                                navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            onGenreClick = { genre -> navController.navigate(Routes.homeGenre(genre)) },
+                            onDecadeClick = { decade -> navController.navigate(Routes.homeDecade(decade)) },
                             contextMenuHost = contextMenuHost,
                             setStar = libraryRepository::star,
                         )

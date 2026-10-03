@@ -86,6 +86,7 @@ fun HomeRoute(
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     onMore: (HomeSection) -> Unit,
+    onDownloadedMore: (OfflineListKind) -> Unit,
     onGenreClick: (String) -> Unit,
     onDecadeClick: (Long) -> Unit,
     contextMenuHost: ContextMenuHost? = null,
@@ -121,6 +122,7 @@ fun HomeRoute(
             onPlaylistClick = onPlaylistClick,
             onSongPlay = viewModel::playDownloaded,
             onLongClick = onLongClick,
+            onMore = onDownloadedMore,
         )
     } else {
         val feed by viewModel.feed.collectAsStateWithLifecycle()
@@ -277,6 +279,7 @@ fun OfflineHomeScreen(
     onPlaylistClick: (Playlist) -> Unit = {},
     onSongPlay: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
+    onMore: (OfflineListKind) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
@@ -285,9 +288,9 @@ fun OfflineHomeScreen(
             contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
         ) {
             homeTitle()
-            downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick)
-            downloadedArtistRow(artists, coverArt, onArtistClick, onLongClick)
-            downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick)
+            downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick) { onMore(OfflineListKind.Albums) }
+            downloadedArtistRow(artists, coverArt, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
+            downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick) { onMore(OfflineListKind.Playlists) }
             songList(
                 key = "downloaded-songs",
                 title = "Downloaded songs",
@@ -296,7 +299,7 @@ fun OfflineHomeScreen(
                 playingSongId = playingSongId,
                 onSongPlay = onSongPlay,
                 onLongClick = onLongClick,
-                onMore = null,
+                onMore = { onMore(OfflineListKind.Songs) },
             )
         }
     }
@@ -307,10 +310,11 @@ private fun LazyListScope.downloadedAlbumRow(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onAlbumClick: (Album) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
+    onMore: () -> Unit,
 ) {
     if (albums.itemCount == 0) return
     item(key = "downloaded-albums-header") {
-        HomeSectionHeader("Downloaded albums", null)
+        HomeSectionHeader("Downloaded albums") { onMore() }
     }
     item(key = "downloaded-albums-row") {
         LazyRow(
@@ -339,10 +343,11 @@ private fun LazyListScope.downloadedArtistRow(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
+    onMore: () -> Unit,
 ) {
     if (artists.itemCount == 0) return
     item(key = "downloaded-artists-header") {
-        HomeSectionHeader("Downloaded artists", null)
+        HomeSectionHeader("Downloaded artists") { onMore() }
     }
     item(key = "downloaded-artists-row") {
         LazyRow(
@@ -371,10 +376,11 @@ private fun LazyListScope.downloadedPlaylistRow(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onPlaylistClick: (Playlist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
+    onMore: () -> Unit,
 ) {
     if (playlists.itemCount == 0) return
     item(key = "downloaded-playlists-header") {
-        HomeSectionHeader("Downloaded playlists", null)
+        HomeSectionHeader("Downloaded playlists") { onMore() }
     }
     item(key = "downloaded-playlists-row") {
         LazyRow(

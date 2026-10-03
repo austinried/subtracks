@@ -45,6 +45,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -53,6 +54,7 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.library.PlaylistsContent
 import com.subtracks.ui.library.SongRow
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,6 +66,7 @@ fun HomeListRoute(
     onBack: () -> Unit,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
+    onPlaylistClick: (Playlist) -> Unit = {},
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     onGenreClick: (String) -> Unit,
@@ -91,6 +94,7 @@ fun HomeListRoute(
         albums = viewModel.albums.collectAsLazyPagingItems(),
         artists = viewModel.artists.collectAsLazyPagingItems(),
         songs = viewModel.songs.collectAsLazyPagingItems(),
+        playlists = viewModel.playlists.collectAsLazyPagingItems(),
         genres = genres,
         decades = decades,
         coverArt = viewModel::coverArt,
@@ -98,6 +102,7 @@ fun HomeListRoute(
         onBack = onBack,
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
+        onPlaylistClick = onPlaylistClick,
         onSongClick = viewModel::play,
         onLongClick = { contextMenuHost?.show(it, actions) },
         onGenreClick = onGenreClick,
@@ -112,6 +117,7 @@ fun HomeListScreen(
     albums: LazyPagingItems<Album>,
     artists: LazyPagingItems<Artist>,
     songs: LazyPagingItems<AlbumSongItem>,
+    playlists: LazyPagingItems<Playlist>,
     genres: List<String> = emptyList(),
     decades: List<Long> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
@@ -119,6 +125,7 @@ fun HomeListScreen(
     onBack: () -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
+    onPlaylistClick: (Playlist) -> Unit = {},
     onSongClick: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
@@ -139,63 +146,10 @@ fun HomeListScreen(
             )
         },
     ) { padding ->
-        when (request.section) {
-            HomeSection.Genres -> {
-                PlainList(
-                    items = genres,
-                    label = { it },
-                    onClick = onGenreClick,
-                    modifier = Modifier.padding(padding),
-                )
-            }
-
-            HomeSection.Decades -> {
-                PlainList(
-                    items = decades,
-                    label = { "${it}s" },
-                    onClick = onDecadeClick,
-                    modifier = Modifier.padding(padding),
-                )
-            }
-
-            HomeSection.RecentlyPlayedArtists, HomeSection.MostPlayedArtists -> {
-                ArtistsList(
-                    artists = artists,
-                    coverArt = coverArt,
-                    info = { artistListInfo(request, it, now) },
-                    onArtistClick = onArtistClick,
-                    onLongClick = onLongClick,
-                    modifier = Modifier.padding(padding),
-                )
-            }
-
-            HomeSection.RecentlyStarredSongs -> {
-                SongsList(
-                    songs = songs,
-                    coverArt = coverArt,
-                    playingSongId = playingSongId,
-                    onSongClick = onSongClick,
-                    onLongClick = onLongClick,
-                    modifier = Modifier.padding(padding),
-                )
-            }
-
-            HomeSection.RecentlyPlayedAlbums,
-            HomeSection.MostPlayedAlbums,
-            HomeSection.RecentlyAddedAlbums,
-            HomeSection.Rediscover,
-            null,
-            -> {
-                if (request.genre != null) {
-                    SongsList(
-                        songs = songs,
-                        coverArt = coverArt,
-                        playingSongId = playingSongId,
-                        onSongClick = onSongClick,
-                        onLongClick = onLongClick,
-                        modifier = Modifier.padding(padding),
-                    )
-                } else {
+        val downloaded = request.downloaded
+        if (downloaded != null) {
+            when (downloaded) {
+                OfflineListKind.Albums -> {
                     AlbumsList(
                         albums = albums,
                         coverArt = coverArt,
@@ -204,6 +158,108 @@ fun HomeListScreen(
                         onLongClick = onLongClick,
                         modifier = Modifier.padding(padding),
                     )
+                }
+
+                OfflineListKind.Artists -> {
+                    ArtistsList(
+                        artists = artists,
+                        coverArt = coverArt,
+                        info = { artistListInfo(request, it, now) },
+                        onArtistClick = onArtistClick,
+                        onLongClick = onLongClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                OfflineListKind.Songs -> {
+                    SongsList(
+                        songs = songs,
+                        coverArt = coverArt,
+                        playingSongId = playingSongId,
+                        onSongClick = onSongClick,
+                        onLongClick = onLongClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                OfflineListKind.Playlists -> {
+                    PlaylistsContent(
+                        items = playlists,
+                        coverArt = coverArt,
+                        bottomInset = 0.dp,
+                        onPlaylistClick = onPlaylistClick,
+                        onLongClick = onLongClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+            }
+        } else {
+            when (request.section) {
+                HomeSection.Genres -> {
+                    PlainList(
+                        items = genres,
+                        label = { it },
+                        onClick = onGenreClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                HomeSection.Decades -> {
+                    PlainList(
+                        items = decades,
+                        label = { "${it}s" },
+                        onClick = onDecadeClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                HomeSection.RecentlyPlayedArtists, HomeSection.MostPlayedArtists -> {
+                    ArtistsList(
+                        artists = artists,
+                        coverArt = coverArt,
+                        info = { artistListInfo(request, it, now) },
+                        onArtistClick = onArtistClick,
+                        onLongClick = onLongClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                HomeSection.RecentlyStarredSongs -> {
+                    SongsList(
+                        songs = songs,
+                        coverArt = coverArt,
+                        playingSongId = playingSongId,
+                        onSongClick = onSongClick,
+                        onLongClick = onLongClick,
+                        modifier = Modifier.padding(padding),
+                    )
+                }
+
+                HomeSection.RecentlyPlayedAlbums,
+                HomeSection.MostPlayedAlbums,
+                HomeSection.RecentlyAddedAlbums,
+                HomeSection.Rediscover,
+                null,
+                -> {
+                    if (request.genre != null) {
+                        SongsList(
+                            songs = songs,
+                            coverArt = coverArt,
+                            playingSongId = playingSongId,
+                            onSongClick = onSongClick,
+                            onLongClick = onLongClick,
+                            modifier = Modifier.padding(padding),
+                        )
+                    } else {
+                        AlbumsList(
+                            albums = albums,
+                            coverArt = coverArt,
+                            info = { albumListInfo(request, it, now) },
+                            onAlbumClick = onAlbumClick,
+                            onLongClick = onLongClick,
+                            modifier = Modifier.padding(padding),
+                        )
+                    }
                 }
             }
         }

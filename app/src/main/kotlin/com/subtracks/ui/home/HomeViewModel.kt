@@ -104,7 +104,9 @@ class HomeViewModel(
             }.cachedIn(viewModelScope)
 
     val downloadedSongs: Flow<List<AlbumSongItem>> =
-        activeSource.flatMapLatest { libraryRepository.downloadedSongs(it) }
+        activeSource
+            .flatMapLatest { libraryRepository.downloadedSongs(it) }
+            .map { it.take(HOME_STARRED_LIMIT) }
 
     val feed: StateFlow<HomeFeed> =
         libraryRepository.activeSourceId
