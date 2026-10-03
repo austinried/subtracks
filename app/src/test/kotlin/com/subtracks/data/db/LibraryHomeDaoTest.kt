@@ -132,12 +132,16 @@ class LibraryHomeDaoTest {
             val dao = db.libraryDao()
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "One", genre = "Rock", playCount = 5),
-                    song(sourceId, "s2", "Two", genre = "Jazz", playCount = 2),
-                    song(sourceId, "s3", "Three", genre = "Rock", playCount = 4),
-                    song(sourceId, "s4", "Four", genre = "Classical", playCount = 0),
+                    song(sourceId, "s1", "One", playCount = 5),
+                    song(sourceId, "s2", "Two", playCount = 2),
+                    song(sourceId, "s3", "Three", playCount = 4),
+                    song(sourceId, "s4", "Four", playCount = 0),
                 ),
             )
+            insertGenre(sourceId, "s1", 0, "Rock")
+            insertGenre(sourceId, "s3", 0, "Rock")
+            insertGenre(sourceId, "s2", 0, "Jazz")
+            insertGenre(sourceId, "s4", 0, "Classical")
 
             assertEquals(
                 listOf("Rock", "Jazz", "Classical"),
@@ -146,16 +150,17 @@ class LibraryHomeDaoTest {
         }
 
     @Test
-    fun genresComeFromTheGenreRelationsAndFallBackPerSong() =
+    fun genresComeFromTheStoredRelations() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "One", genre = "Legacy", playCount = 1),
-                    song(sourceId, "s2", "Two", genre = "Legacy", playCount = 3),
+                    song(sourceId, "s1", "One", playCount = 1),
+                    song(sourceId, "s2", "Two", playCount = 3),
                 ),
             )
+            insertGenre(sourceId, "s1", 0, "Legacy")
             insertGenre(sourceId, "s2", 0, "Rock")
             insertGenre(sourceId, "s2", 1, "Electronic")
 
@@ -190,18 +195,19 @@ class LibraryHomeDaoTest {
         }
 
     @Test
-    fun songsByGenreMatchesTheGenreRelationsWithFallback() =
+    fun songsByGenreReturnsSongsWithTheGenreRelation() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertAlbums(listOf(album(sourceId, "al1", "Album", coverArt = "cover-1")))
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "Fallback", genre = "Rock"),
-                    song(sourceId, "s2", "Relation", genre = "Jazz"),
-                    song(sourceId, "s3", "NotRock", genre = "Rock"),
+                    song(sourceId, "s1", "Fallback"),
+                    song(sourceId, "s2", "Relation"),
+                    song(sourceId, "s3", "NotRock"),
                 ),
             )
+            insertGenre(sourceId, "s1", 0, "Rock")
             insertGenre(sourceId, "s2", 0, "Rock")
             insertGenre(sourceId, "s3", 0, "Jazz")
 
@@ -370,11 +376,14 @@ class LibraryHomeDaoTest {
             dao.upsertAlbums(listOf(album(sourceId, "al1", "Album", coverArt = "cover-1")))
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "Rock One", genre = "Rock"),
-                    song(sourceId, "s2", "Jazz One", genre = "Jazz"),
-                    song(sourceId, "s3", "Rock Two", genre = "Rock"),
+                    song(sourceId, "s1", "Rock One"),
+                    song(sourceId, "s2", "Jazz One"),
+                    song(sourceId, "s3", "Rock Two"),
                 ),
             )
+            insertGenre(sourceId, "s1", 0, "Rock")
+            insertGenre(sourceId, "s2", 0, "Jazz")
+            insertGenre(sourceId, "s3", 0, "Rock")
 
             val page = dao.songsByGenre(sourceId, "Rock").page()
             assertEquals(listOf("s1", "s3"), page.map { it.song.id })

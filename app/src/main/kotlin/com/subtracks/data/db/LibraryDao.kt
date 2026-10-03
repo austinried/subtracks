@@ -305,16 +305,10 @@ interface LibraryDao {
     ): Flow<List<AlbumSongItem>>
 
     @Query(
-        "SELECT genre FROM (" +
-            "SELECT song_genres.genre AS genre, songs.playCount AS plays FROM song_genres " +
+        "SELECT song_genres.genre FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE song_genres.sourceId = :sourceId " +
-            "UNION ALL " +
-            "SELECT songs.genre AS genre, songs.playCount AS plays FROM songs " +
-            "WHERE songs.sourceId = :sourceId AND songs.genre IS NOT NULL AND songs.genre != '' " +
-            "AND NOT EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id)" +
-            ") GROUP BY genre ORDER BY SUM(plays) DESC, genre COLLATE NOCASE",
+            "GROUP BY song_genres.genre ORDER BY SUM(songs.playCount) DESC, song_genres.genre COLLATE NOCASE",
     )
     fun genresByMostPlayed(sourceId: Long): Flow<List<String>>
 
@@ -737,14 +731,10 @@ interface LibraryDao {
     fun homeDownloadedSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
 
     @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+        "SELECT songs.*, albums.coverArt AS coverArt FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND (" +
-            "EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +
-            "AND song_genres.genre = :genre) " +
-            "OR (songs.genre = :genre AND NOT EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id))) " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
             "ORDER BY songs.title COLLATE NOCASE, songs.id",
     )
     fun songsByGenre(
@@ -753,13 +743,9 @@ interface LibraryDao {
     ): PagingSource<Int, AlbumSongItem>
 
     @Query(
-        "SELECT songs.id FROM songs " +
-            "WHERE songs.sourceId = :sourceId AND (" +
-            "EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +
-            "AND song_genres.genre = :genre) " +
-            "OR (songs.genre = :genre AND NOT EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id))) " +
+        "SELECT songs.id FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
             "ORDER BY songs.title COLLATE NOCASE, songs.id",
     )
     suspend fun songsByGenreIds(
@@ -826,16 +812,10 @@ interface LibraryDao {
     ): Flow<List<String>>
 
     @Query(
-        "SELECT genre FROM (" +
-            "SELECT song_genres.genre AS genre FROM song_genres " +
+        "SELECT DISTINCT song_genres.genre FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
-            "UNION " +
-            "SELECT songs.genre AS genre FROM songs " +
-            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId AND songs.genre IS NOT NULL " +
-            "AND NOT EXISTS (SELECT 1 FROM song_genres " +
-            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id)" +
-            ") ORDER BY genre COLLATE NOCASE",
+            "ORDER BY song_genres.genre COLLATE NOCASE",
     )
     fun albumGenres(
         sourceId: Long,

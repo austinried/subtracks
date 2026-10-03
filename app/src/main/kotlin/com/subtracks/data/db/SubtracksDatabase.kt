@@ -45,7 +45,7 @@ import com.subtracks.data.model.UpNextEntry
         ArtworkSeed::class,
         SongDownload::class,
     ],
-    version = 23,
+    version = 24,
     exportSchema = true,
 )
 @ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class)

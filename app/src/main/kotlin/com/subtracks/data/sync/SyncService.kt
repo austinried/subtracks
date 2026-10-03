@@ -72,9 +72,10 @@ class SyncService(
     }
 
     private suspend fun writeSongs(batch: List<Song>) {
+        val names = batch.associate { it.id to it.genreNames() }
         val genres =
             batch.flatMap { song ->
-                song.genres.mapIndexed { index, genre -> SongGenre(song.sourceId, song.id, index.toLong(), genre) }
+                names.getValue(song.id).mapIndexed { index, genre -> SongGenre(song.sourceId, song.id, index.toLong(), genre) }
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
@@ -83,7 +84,7 @@ class SyncService(
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
                         statement.bind(2, song.id)
-                        statement.bind(3, song.genres.size.toLong())
+                        statement.bind(3, names.getValue(song.id).size.toLong())
                         statement.step()
                         statement.reset()
                         statement.clearBindings()
@@ -283,6 +284,8 @@ private val songColumns =
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
+
+private fun Song.genreNames(): List<String> = genres.ifEmpty { listOfNotNull(genre?.trim()?.takeIf { it.isNotEmpty() }) }
 
 private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
 
