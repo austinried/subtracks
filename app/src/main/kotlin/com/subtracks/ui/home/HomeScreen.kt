@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Category
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -491,7 +491,7 @@ private val HomeSection.icon: ImageVector
         when (this) {
             HomeSection.RecentlyPlayedAlbums -> Icons.Rounded.History
             HomeSection.RecentlyPlayedArtists -> Icons.Rounded.Groups
-            HomeSection.MostPlayedAlbums -> Icons.Rounded.TrendingUp
+            HomeSection.MostPlayedAlbums -> Icons.AutoMirrored.Rounded.TrendingUp
             HomeSection.MostPlayedArtists -> Icons.Rounded.LocalFireDepartment
             HomeSection.Genres -> Icons.Rounded.Category
             HomeSection.Decades -> Icons.Rounded.CalendarMonth
