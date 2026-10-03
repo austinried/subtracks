@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -98,7 +99,10 @@ fun SearchRoute(
         onQueryChange = viewModel::setQuery,
         results = results,
         filters = maskToFilters(filterMask),
-        onToggleFilter = { filterMask = filterMask xor (1 shl it.ordinal) },
+        onToggleFilter = { filter ->
+            val next = filterMask xor (1 shl filter.ordinal)
+            if (next != 0) filterMask = next
+        },
         coverArt = viewModel::coverArt,
         playingSongId = playback.item?.id,
         onBack = onBack,
@@ -110,9 +114,10 @@ fun SearchRoute(
     )
 }
 
-private fun allFilterMask(): Int = SearchFilter.entries.fold(0) { mask, filter -> mask or (1 shl filter.ordinal) }
+internal fun allFilterMask(): Int = SearchFilter.entries.fold(0) { mask, filter -> mask or (1 shl filter.ordinal) }
 
-private fun maskToFilters(mask: Int): Set<SearchFilter> = SearchFilter.entries.filterTo(mutableSetOf()) { mask and (1 shl it.ordinal) != 0 }
+internal fun maskToFilters(mask: Int): Set<SearchFilter> =
+    SearchFilter.entries.filterTo(mutableSetOf()) { mask and (1 shl it.ordinal) != 0 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,6 +163,7 @@ fun SearchScreen(
                         onValueChange = onQueryChange,
                         onClose = { onQueryChange("") },
                         focusRequester = focusRequester,
+                        showClose = query.isNotEmpty(),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     )
                 },
@@ -191,10 +197,10 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
-                    if (showSongs) songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
-                    if (showAlbums) albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
-                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
                     if (showPlaylists) playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
+                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
+                    if (showAlbums) albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
+                    if (showSongs) songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
                 }
             }
         }
@@ -205,12 +211,12 @@ fun SearchScreen(
 private fun SearchFilterBar(
     filters: Set<SearchFilter>,
     onToggle: (SearchFilter) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
-            modifier
+            Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),

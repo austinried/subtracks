@@ -14,6 +14,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.ui.theme.SubtracksTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -145,6 +146,59 @@ class SearchScreenTest {
         composeRule.onNodeWithText("Playlists").performClick()
 
         assertEquals(SearchFilter.Playlists, toggled)
+    }
+
+    @Test
+    fun smallerGroupsAreListedFirst() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SearchScreen(
+                    query = "road",
+                    onQueryChange = {},
+                    results =
+                        SearchResults(
+                            albums = listOf(album("al-1", "Road Album")),
+                            artists = listOf(artist("ar-1", "Road Artist")),
+                            playlists = listOf(playlist("pl-1", "Road Trip")),
+                            songs = listOf(AlbumSongItem(song("s1", "Road Song"), coverArt = null)),
+                        ),
+                )
+            }
+        }
+
+        val playlistTop =
+            composeRule
+                .onNodeWithText("Road Trip")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+        val artistTop =
+            composeRule
+                .onNodeWithText("Road Artist")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+        val albumTop =
+            composeRule
+                .onNodeWithText("Road Album")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+        val songTop =
+            composeRule
+                .onNodeWithText("Road Song")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+
+        assertTrue("playlists should come first", playlistTop < artistTop)
+        assertTrue("artists should come before albums", artistTop < albumTop)
+        assertTrue("albums should come before songs", albumTop < songTop)
+    }
+
+    @Test
+    fun filterMaskRoundTrips() {
+        assertEquals(SearchFilter.entries.toSet(), maskToFilters(allFilterMask()))
+
+        val withoutSongs = allFilterMask() and (1 shl SearchFilter.Songs.ordinal).inv()
+
+        assertEquals(SearchFilter.entries.toSet() - SearchFilter.Songs, maskToFilters(withoutSongs))
     }
 
     private fun album(

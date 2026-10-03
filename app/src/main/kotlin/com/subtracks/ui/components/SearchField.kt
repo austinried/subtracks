@@ -39,11 +39,11 @@ fun SearchField(
     onClose: () -> Unit,
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
-    autoFocus: Boolean = true,
+    showClose: Boolean = true,
 ) {
     val hint = stringResource(R.string.search_input_placeholder)
     val closeLabel = stringResource(R.string.close_search)
-    LaunchedEffect(autoFocus) { if (autoFocus) focusRequester.requestFocus() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -85,12 +85,14 @@ fun SearchField(
                     inner()
                 },
             )
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = closeLabel,
-                    modifier = Modifier.size(20.dp),
-                )
+            if (showClose) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = closeLabel,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
     }
