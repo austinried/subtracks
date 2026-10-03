@@ -386,46 +386,25 @@ class DemoScreenshotTest {
                     SyncService(db, source).sync()
 
                     val dao = db.libraryDao()
-                    val albums = dao.recentlyAddedAlbums(1, 500).first().sortedBy { it.name.lowercase() }
-                    val artists = dao.artistIds(1).mapNotNull { dao.artist(1, it).first() }
+                    val allAlbums = dao.recentlyAddedAlbums(1, 500).first()
+                    val allArtists = dao.artistIds(1).mapNotNull { dao.artist(1, it).first() }
                     val playlists = dao.playlistIds(1).mapNotNull { dao.playlist(1, it).first() }
 
-                    val nowPlayingAlbum = albums.firstOrNull { it.name == "Chillhop Essentials - Winter 2016" } ?: albums.first()
+                    val nowPlayingAlbum = allAlbums.firstOrNull { it.name == "Chillhop Essentials - Winter 2016" } ?: allAlbums.first()
                     val nowPlayingSongs = dao.songsByAlbum(1, nowPlayingAlbum.id).first()
                     val nowPlayingSong = nowPlayingSongs.getOrNull(1) ?: nowPlayingSongs.first()
-                    val album = albums.firstOrNull { it.name == "My latin way" } ?: albums.first()
+                    val album = allAlbums.firstOrNull { it.name == "My latin way" } ?: allAlbums.first()
                     val albumSongs = dao.songsByAlbum(1, album.id).first()
-                    val homePlayingAlbum = albums.firstOrNull { it.name == "Shaking The Habitual" } ?: albums.last()
+                    val homePlayingAlbum = allAlbums.firstOrNull { it.name == "Shaking The Habitual" } ?: allAlbums.last()
                     val homePlayingSong = dao.songsByAlbum(1, homePlayingAlbum.id).first().first()
                     val artist =
-                        artists.firstOrNull { it.name == "Ugress" }
-                            ?: artists.maxByOrNull { it.albumCount }
-                            ?: artists.first()
+                        allArtists.firstOrNull { it.name == "Ugress" }
+                            ?: allArtists.maxByOrNull { it.albumCount }
+                            ?: allArtists.first()
                     val artistAlbums = dao.albumsForArtist(1, artist.id).first()
 
-                    fun namedArtists(artists: List<Artist>) = artists.filterNot { it.name.equals("Various Artists", ignoreCase = true) }
-                    val feed =
-                        HomeFeed(
-                            recentlyPlayedAlbums = dao.recentlyPlayedAlbums(1, 10).first(),
-                            recentlyPlayedArtists = namedArtists(dao.recentlyPlayedArtists(1, 10).first()),
-                            mostPlayedAlbums = dao.mostPlayedAlbums(1, 10).first(),
-                            mostPlayedArtists = namedArtists(dao.mostPlayedArtists(1, 10).first()),
-                            genres = dao.genresByMostPlayed(1).first(),
-                            decades = dao.decades(1).first(),
-                            recentlyStarredSongs = dao.recentlyStarredSongs(1, 10).first(),
-                            recentlyAddedAlbums = albums.take(10),
-                            rediscoverAlbums = dao.rediscoverAlbums(1, System.currentTimeMillis() / 1000, 10).first(),
-                        )
-
-                    val searchAlbums =
-                        albums
-                            .filter {
-                                it.name.contains(DEMO_SEARCH, ignoreCase = true) ||
-                                    (it.albumArtist ?: "").contains(DEMO_SEARCH, ignoreCase = true)
-                            }.ifEmpty { albums.take(4) }
-
                     val coverArtIds =
-                        (albums.map { it.coverArt } + artists.map { it.coverArt } + playlists.map { it.coverArt })
+                        (allAlbums.map { it.coverArt } + allArtists.map { it.coverArt } + playlists.map { it.coverArt })
                             .filterNotNull()
                             .distinct()
 
@@ -451,6 +430,34 @@ class DemoScreenshotTest {
                             }
                         source.coverArtUri(id, false)?.let { builder.intercept(it.toString(), image.asImage()) }
                     }
+
+                    val albums = allAlbums.sortedBy { it.name.lowercase() }.filter { it.coverArt != null }
+                    val artists = allArtists.filter { it.coverArt != null }
+
+                    fun namedArtists(list: List<Artist>) =
+                        list.filter { it.coverArt != null && !it.name.equals("Various Artists", ignoreCase = true) }
+
+                    fun coveredAlbums(list: List<Album>) = list.filter { it.coverArt != null }
+
+                    val feed =
+                        HomeFeed(
+                            recentlyPlayedAlbums = coveredAlbums(dao.recentlyPlayedAlbums(1, 10).first()),
+                            recentlyPlayedArtists = namedArtists(dao.recentlyPlayedArtists(1, 10).first()),
+                            mostPlayedAlbums = coveredAlbums(dao.mostPlayedAlbums(1, 10).first()),
+                            mostPlayedArtists = namedArtists(dao.mostPlayedArtists(1, 10).first()),
+                            genres = dao.genresByMostPlayed(1).first(),
+                            decades = dao.decades(1).first(),
+                            recentlyStarredSongs = dao.recentlyStarredSongs(1, 10).first().filter { it.coverArt != null },
+                            recentlyAddedAlbums = albums.take(10),
+                            rediscoverAlbums = coveredAlbums(dao.rediscoverAlbums(1, System.currentTimeMillis() / 1000, 10).first()),
+                        )
+
+                    val searchAlbums =
+                        albums
+                            .filter {
+                                it.name.contains(DEMO_SEARCH, ignoreCase = true) ||
+                                    (it.albumArtist ?: "").contains(DEMO_SEARCH, ignoreCase = true)
+                            }.ifEmpty { albums.take(4) }
                     val fallback =
                         Bitmap
                             .createBitmap(1, 1, Bitmap.Config.ARGB_8888)
@@ -478,7 +485,7 @@ class DemoScreenshotTest {
                         homePlayingAlbum = homePlayingAlbum,
                         homePlayingSong = homePlayingSong,
                         artist = artist,
-                        artistAlbums = artistAlbums,
+                        artistAlbums = artistAlbums.filter { it.coverArt != null },
                         searchAlbums = searchAlbums,
                         coverArt = coverArt,
                         engine = engine,
