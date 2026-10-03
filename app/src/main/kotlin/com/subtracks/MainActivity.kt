@@ -9,13 +9,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.content.ContextCompat
+import com.subtracks.ui.NowPlayingLauncher
 import com.subtracks.ui.SubtracksRoot
 import com.subtracks.ui.theme.SubtracksTheme
+import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
-    private val nowPlayingRequest = mutableIntStateOf(0)
+    private val nowPlayingLauncher: NowPlayingLauncher by lazy { GlobalContext.get().get() }
 
     private val requestNotifications =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -25,11 +26,11 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
         enableEdgeToEdge()
         if (shouldRecordNowPlayingLaunch(intent?.action, restoringState = savedInstanceState != null)) {
-            nowPlayingRequest.intValue++
+            nowPlayingLauncher.request()
         }
         setContent {
             SubtracksTheme {
-                SubtracksRoot(nowPlayingRequest = nowPlayingRequest.intValue)
+                SubtracksRoot()
             }
         }
     }
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.action == ACTION_OPEN_NOW_PLAYING) nowPlayingRequest.intValue++
+        if (intent.action == ACTION_OPEN_NOW_PLAYING) nowPlayingLauncher.request()
     }
 
     private fun requestNotificationPermission() {

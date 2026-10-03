@@ -181,10 +181,7 @@ internal fun focusPops(
 }
 
 @Composable
-fun SubtracksRoot(
-    root: RootViewModel = koinViewModel(),
-    nowPlayingRequest: Int = 0,
-) {
+fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
         null -> {
             LoadingState()
@@ -198,14 +195,14 @@ fun SubtracksRoot(
             val playbackController = koinInject<PlaybackController>()
             LaunchedEffect(Unit) { playbackController.connect() }
             val playbackReady by playbackController.ready.collectAsStateWithLifecycle()
-            if (playbackReady) MainNavigation(nowPlayingRequest) else LoadingState()
+            if (playbackReady) MainNavigation() else LoadingState()
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MainNavigation(nowPlayingRequest: Int) {
+private fun MainNavigation() {
     val navController = rememberNavController()
     val currentRoute =
         navController
@@ -215,13 +212,13 @@ private fun MainNavigation(nowPlayingRequest: Int) {
             ?.route
     val tabBarVisible = currentRoute == Routes.LIBRARY
     val playbackController = koinInject<PlaybackController>()
+    val nowPlayingLauncher = koinInject<NowPlayingLauncher>()
     val libraryRepository = koinInject<LibraryRepository>()
     val downloadRepository = koinInject<DownloadRepository>()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     var showingQueue by rememberSaveable { mutableStateOf(false) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
-    var handledNowPlayingRequest by remember { mutableStateOf(0) }
     var nowPlayingProgress by remember { mutableFloatStateOf(0f) }
     var miniPlayerTopPx by remember { mutableFloatStateOf(0f) }
     var nowPlayingFadeOut by remember { mutableStateOf(false) }
@@ -306,9 +303,9 @@ private fun MainNavigation(nowPlayingRequest: Int) {
             nowPlayingProgress = 0f
         }
     }
-    LaunchedEffect(nowPlayingRequest, playerVisible) {
-        if (playerVisible && nowPlayingRequest > handledNowPlayingRequest) {
-            handledNowPlayingRequest = nowPlayingRequest
+    LaunchedEffect(playerVisible) {
+        if (!playerVisible) return@LaunchedEffect
+        nowPlayingLauncher.openNowPlaying.collect {
             if (navController.currentDestination?.route in DETAIL_ROUTES) {
                 navController.popBackStack(Routes.LIBRARY, inclusive = false)
             }

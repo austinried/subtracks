@@ -28,6 +28,7 @@ import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlayerConnection
 import com.subtracks.playback.Scrobbler
+import com.subtracks.ui.NowPlayingLauncher
 import com.subtracks.ui.RootViewModel
 import com.subtracks.ui.downloads.DownloadsViewModel
 import com.subtracks.ui.home.HomeListViewModel
@@ -108,6 +109,7 @@ fun appModule(
             it.attach(playback.state, playback.positionMs)
         }
     }
+    single { NowPlayingLauncher() }
     viewModel { RootViewModel(get()) }
     viewModel { LibraryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get(), get()) }
