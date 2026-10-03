@@ -16,7 +16,6 @@
     <string name="resources_filter_artist">歌手</string>
     <string name="resources_filter_genre">根據類型</string>
     <string name="resources_filter_starred">已收藏</string>
-    <string name="resources_filter_year">年份</string>
     <plurals name="resources_song_count">
         <item quantity="other">%1$d 首歌曲</item>
     </plurals>

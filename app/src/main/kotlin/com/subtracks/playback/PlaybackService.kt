@@ -28,6 +28,7 @@ import coil3.SingletonImageLoader
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.subtracks.MainActivity
+import com.subtracks.R
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.StarType
@@ -176,7 +177,7 @@ class PlaybackService : MediaSessionService() {
         CommandButton
             .Builder(if (isStarred) CommandButton.ICON_STAR_FILLED else CommandButton.ICON_STAR_UNFILLED)
             .setSessionCommand(STAR_COMMAND)
-            .setDisplayName(if (isStarred) "Unstar" else "Star")
+            .setDisplayName(getString(if (isStarred) R.string.actions_unstar else R.string.actions_star))
             .build()
 
     private fun streamingClient(): OkHttpClient =

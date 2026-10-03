@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Artista</string>
     <string name="resources_filter_genre">Gênero</string>
     <string name="resources_filter_starred">Estrelado por</string>
-    <string name="resources_filter_year">Ano</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>

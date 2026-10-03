@@ -24,6 +24,12 @@ class StringResourcesTest {
         val default = parse(defaultFile)
         assertTrue("default strings.xml should not be empty", default.isNotEmpty())
 
+        default.forEach { (name, resource) ->
+            if (resource.kind == "plurals") {
+                assertTrue("$name in values/strings.xml is missing the required 'other' quantity", "other" in resource.quantities)
+            }
+        }
+
         localeFiles().forEach { file ->
             val locale = parse(file)
             locale.forEach { (name, resource) ->
@@ -35,12 +41,12 @@ class StringResourcesTest {
                         "$name has an invalid quantity in ${file.parentFile.name}",
                         resource.quantities.all { it in validQuantities },
                     )
+                    assertTrue("$name in ${file.parentFile.name} is missing the required 'other' quantity", "other" in resource.quantities)
                 }
-                val baseArgs = placeholderIndices(base.text)
-                val localeArgs = placeholderIndices(resource.text)
-                assertTrue(
-                    "$name in ${file.parentFile.name} uses placeholders $localeArgs not present in the default $baseArgs",
-                    baseArgs.containsAll(localeArgs),
+                assertEquals(
+                    "$name placeholders differ in ${file.parentFile.name}",
+                    placeholders(base.text),
+                    placeholders(resource.text),
                 )
             }
         }
@@ -84,6 +90,6 @@ class StringResourcesTest {
         return (0 until items.length).joinToString(" ") { items.item(it).textContent }
     }
 
-    private fun placeholderIndices(text: String): Set<Int> =
-        Regex("""%(\d+)\$""").findAll(text).mapTo(mutableSetOf()) { it.groupValues[1].toInt() }
+    private fun placeholders(text: String): Map<Int, Char> =
+        Regex("""%(\d+)\$([a-zA-Z])""").findAll(text).associate { it.groupValues[1].toInt() to it.groupValues[2][0] }
 }

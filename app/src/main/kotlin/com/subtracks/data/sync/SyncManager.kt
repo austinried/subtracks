@@ -2,7 +2,6 @@ package com.subtracks.data.sync
 
 import android.util.Log
 import com.subtracks.R
-import com.subtracks.UiException
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.repo.QueueRepository
@@ -71,10 +70,6 @@ class SyncManager(
                     when (failure) {
                         is NoServerException -> {
                             UiMessage(R.string.error_no_server)
-                        }
-
-                        is UiException -> {
-                            failure.uiMessage
                         }
 
                         else -> {

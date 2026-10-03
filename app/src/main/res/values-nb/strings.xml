@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Artist</string>
     <string name="resources_filter_genre">Etter sjanger</string>
     <string name="resources_filter_starred">Stjernemerket</string>
-    <string name="resources_filter_year">År</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d sang</item>
         <item quantity="other">%1$d sanger</item>

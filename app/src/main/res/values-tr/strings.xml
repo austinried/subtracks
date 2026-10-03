@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Sanatçı</string>
     <string name="resources_filter_genre">Türe göre</string>
     <string name="resources_filter_starred">Yıldızlı</string>
-    <string name="resources_filter_year">Yıl</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d şarkı</item>
         <item quantity="other">%1$d şarkı</item>

@@ -16,7 +16,6 @@
     <string name="resources_filter_artist">아티스트</string>
     <string name="resources_filter_genre">장르</string>
     <string name="resources_filter_starred">평가됨</string>
-    <string name="resources_filter_year">년</string>
     <plurals name="resources_song_count">
         <item quantity="other">%1$d 노래</item>
     </plurals>

@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Musikaria</string>
     <string name="resources_filter_genre">Generoa</string>
     <string name="resources_filter_starred">Gogokoak</string>
-    <string name="resources_filter_year">Urtea</string>
     <plurals name="resources_song_count">
         <item quantity="one">Kanta bat</item>
         <item quantity="other">%1$d kanta</item>

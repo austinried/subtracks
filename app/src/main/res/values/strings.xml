@@ -27,12 +27,10 @@
     <string name="resources_album_name">Albums</string>
     <string name="resources_artist_name">Artists</string>
     <string name="resources_playlist_name">Playlists</string>
-    <string name="resources_queue_name">Queue</string>
     <string name="resources_filter_album">Album</string>
     <string name="resources_filter_artist">Artist</string>
     <string name="resources_filter_genre">Genre</string>
     <string name="resources_filter_starred">Starred</string>
-    <string name="resources_filter_year">Year</string>
     <string name="resources_song_list_delete_all_content">%1$s\n\nDeleting will free %2$s</string>
     <string name="resources_song_list_delete_all_title">Delete downloads</string>
     <string name="resources_sort_by_added">Added</string>
@@ -222,7 +220,6 @@
     <string name="star_update_failed">Could not update star</string>
     <string name="sync_offline">Offline mode is on</string>
     <string name="error_no_server">No server configured</string>
-    <string name="sync_failed">Sync failed</string>
     <string name="sync_failed_detail">Sync failed: %1$s</string>
 
     <string name="error_download_no_space">Not enough space to download</string>
@@ -286,13 +283,4 @@
         <item quantity="other">%1$d plays</item>
     </plurals>
 
-    <string name="codec_mp3" translatable="false">MP3</string>
-    <string name="codec_aac" translatable="false">AAC</string>
-    <string name="codec_alac" translatable="false">ALAC</string>
-    <string name="codec_flac" translatable="false">FLAC</string>
-    <string name="codec_ogg" translatable="false">Ogg</string>
-    <string name="codec_vorbis" translatable="false">Vorbis</string>
-    <string name="codec_opus" translatable="false">Opus</string>
-    <string name="codec_webm" translatable="false">WebM</string>
-    <string name="codec_wav" translatable="false">WAV</string>
 </resources>

@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">По исполнителю</string>
     <string name="resources_filter_genre">По жанру</string>
     <string name="resources_filter_starred">Избранные</string>
-    <string name="resources_filter_year">По годам</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d трек</item>
         <item quantity="few">%1$d треков</item>

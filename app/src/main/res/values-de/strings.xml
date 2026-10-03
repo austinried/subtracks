@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Künstler</string>
     <string name="resources_filter_genre">Nach Genre</string>
     <string name="resources_filter_starred">Favoriten</string>
-    <string name="resources_filter_year">Jahr</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d Song</item>
         <item quantity="other">%1$d Songs</item>

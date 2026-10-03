@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Theo nghệ sĩ</string>
     <string name="resources_filter_genre">Theo thể loại</string>
     <string name="resources_filter_starred">Theo yêu thích</string>
-    <string name="resources_filter_year">Theo năm</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d bài hát</item>
         <item quantity="other">%1$d bài hát</item>

@@ -16,7 +16,6 @@
     <string name="resources_filter_artist">Előadó</string>
     <string name="resources_filter_genre">Stílus</string>
     <string name="resources_filter_starred">Kedvencek között</string>
-    <string name="resources_filter_year">Év</string>
     <string name="resources_sort_by_artist">Előadó</string>
     <string name="resources_sort_by_frequently_played">Gyakran játszott</string>
     <string name="resources_sort_by_name">Név</string>

@@ -17,6 +17,8 @@ class DownloadTreeTest {
                     song("s3", "Three", "ar1", "Artist", "al2", "Second", size = 5),
                     song("s4", "Four", "ar2", "Other", "al3", "Third", size = 1),
                 ),
+                "Unknown artist",
+                "Unknown album",
             )
 
         assertEquals(listOf("Artist", "Other"), tree.artists.map { it.name })
@@ -37,7 +39,7 @@ class DownloadTreeTest {
 
     @Test
     fun aSongWithNoArtistOrAlbumIsStillShown() {
-        val tree = buildTree(listOf(song("s1", "One", null, null, null, null, size = 3)))
+        val tree = buildTree(listOf(song("s1", "One", null, null, null, null, size = 3)), "Unknown artist", "Unknown album")
 
         val artist = tree.artists.single()
         assertEquals("Unknown artist", artist.name)

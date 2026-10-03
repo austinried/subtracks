@@ -130,5 +130,25 @@ class DownloadErrorConverter {
     fun fromDownloadError(error: DownloadError): String = error.name
 
     @ColumnTypeConverter
-    fun toDownloadError(value: String): DownloadError = DownloadError.entries.firstOrNull { it.name == value } ?: DownloadError.Failed
+    fun toDownloadError(value: String): DownloadError =
+        DownloadError.entries.firstOrNull { it.name == value }
+            ?: LEGACY_DOWNLOAD_ERRORS[value]
+            ?: DownloadError.Failed
 }
+
+private val LEGACY_DOWNLOAD_ERRORS =
+    mapOf(
+        "Not enough space to download" to DownloadError.NoSpace,
+        "Storage is unavailable" to DownloadError.StorageUnavailable,
+        "Could not write the download" to DownloadError.WriteFailed,
+        "The server refused to send this track" to DownloadError.ServerRefused,
+        "The server redirected too many times" to DownloadError.TooManyRedirects,
+        "The download could not be resumed" to DownloadError.ResumeFailed,
+        "Download failed" to DownloadError.Failed,
+        "The downloaded file is missing" to DownloadError.FileMissing,
+        "The server sent an error instead of the track" to DownloadError.ServerError,
+        "Can't download: the server address is unavailable" to DownloadError.NoAddress,
+        "Nothing left to download from this list" to DownloadError.NothingLeft,
+        "The download stopped unexpectedly" to DownloadError.Stopped,
+        "Can't download from a source that isn't active" to DownloadError.InactiveSource,
+    )

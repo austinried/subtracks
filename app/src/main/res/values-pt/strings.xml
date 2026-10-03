@@ -13,7 +13,6 @@
     <string name="resources_filter_artist">Artista</string>
     <string name="resources_filter_genre">Por Género</string>
     <string name="resources_filter_starred">Favoritos</string>
-    <string name="resources_filter_year">Ano</string>
     <string name="resources_sort_by_artist">Por Artista</string>
     <string name="resources_sort_by_frequently_played">Mais Tocado</string>
     <string name="resources_sort_by_name">Por Nome</string>

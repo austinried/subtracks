@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Виконавець</string>
     <string name="resources_filter_genre">Жанр</string>
     <string name="resources_filter_starred">Улюблене</string>
-    <string name="resources_filter_year">Рік</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d пісня</item>
         <item quantity="other">%1$d пісні</item>

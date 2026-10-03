@@ -105,6 +105,20 @@ class AddSourceViewModelTest {
     }
 
     @Test
+    fun aMalformedResponseIsReportedWithTheLocalizedMessage() {
+        val viewModel = viewModel()
+        viewModel.setAddress(server.url("/").toString())
+        viewModel.setUsername("u")
+        viewModel.setPassword("p")
+        server.enqueue(MockResponse().setBody("not an xml document"))
+
+        viewModel.testConnection()
+        await { !viewModel.state.value.busy && viewModel.state.value.isError }
+
+        assertEquals("Malformed response from the server", viewModel.state.value.message)
+    }
+
+    @Test
     fun aSuccessfulPingClearsAnEarlierError() {
         val viewModel = viewModel()
         viewModel.setAddress(server.url("/").toString())

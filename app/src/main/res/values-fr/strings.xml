@@ -17,7 +17,6 @@
     <string name="resources_filter_artist">Artiste</string>
     <string name="resources_filter_genre">Par Genre</string>
     <string name="resources_filter_starred">Favoris</string>
-    <string name="resources_filter_year">Année</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d chanson</item>
         <item quantity="other">%1$d chansons</item>

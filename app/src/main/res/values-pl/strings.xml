@@ -13,7 +13,6 @@
     <string name="resources_filter_artist">Artysta</string>
     <string name="resources_filter_genre">Wg gatunku</string>
     <string name="resources_filter_starred">Ulubione</string>
-    <string name="resources_filter_year">Rok</string>
     <string name="resources_sort_by_artist">Wg wykonawcy</string>
     <string name="resources_sort_by_frequently_played">Często odtwarzane</string>
     <string name="resources_sort_by_name">Wg nazwy</string>

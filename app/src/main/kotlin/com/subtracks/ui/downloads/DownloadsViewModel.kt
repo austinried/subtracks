@@ -93,8 +93,8 @@ class DownloadsViewModel(
 
 internal fun buildTree(
     songs: List<DownloadedSong>,
-    unknownArtist: String = "Unknown artist",
-    unknownAlbum: String = "Unknown album",
+    unknownArtist: String,
+    unknownAlbum: String,
 ): DownloadTree =
     DownloadTree(
         artists =

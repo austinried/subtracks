@@ -7,6 +7,7 @@ import com.subtracks.R
 import com.subtracks.UiException
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.subsonic.SubsonicException
 import com.subtracks.data.sync.SyncManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -101,8 +102,8 @@ class AddSourceViewModel(
                                 }
                             },
                             { error ->
-                                (error as? UiException)?.uiMessage?.resolve(resources)
-                                    ?: resources.getString(R.string.connection_failed, error.message)
+                                val ui = (error as? UiException)?.uiMessage ?: (error as? SubsonicException)?.uiMessage
+                                ui?.resolve(resources) ?: resources.getString(R.string.connection_failed, error.message)
                             },
                         ),
                     isError = result.isFailure,

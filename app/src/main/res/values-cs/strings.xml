@@ -13,7 +13,6 @@
     <string name="resources_filter_artist">Umělec</string>
     <string name="resources_filter_genre">Podle žánru</string>
     <string name="resources_filter_starred">Ohodnocené</string>
-    <string name="resources_filter_year">Rok</string>
     <string name="resources_sort_by_artist">Umělce</string>
     <string name="resources_sort_by_frequently_played">Často přehrávané</string>
     <string name="resources_sort_by_name">Názvu</string>

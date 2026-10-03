@@ -16,7 +16,6 @@
     <string name="resources_filter_artist">ศิลปิน</string>
     <string name="resources_filter_genre">ประเภท</string>
     <string name="resources_filter_starred">ให้ดาว</string>
-    <string name="resources_filter_year">ปี</string>
     <plurals name="resources_song_count">
         <item quantity="one">%1$d เพลง</item>
         <item quantity="other">%1$d เพลง</item>
