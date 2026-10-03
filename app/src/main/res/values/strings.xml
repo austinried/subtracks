@@ -121,6 +121,9 @@
     <string name="list_options">List options</string>
     <string name="search">Search</string>
     <string name="search_this_list">Search this list</string>
+    <string name="search_songs">Songs</string>
+    <string name="search_min_length">Type at least %1$d characters to search.</string>
+    <string name="search_no_results">No results for “%1$s”.</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_ascending">Sort ascending</string>
     <string name="sort_descending">Sort descending</string>

@@ -29,10 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.db.SEARCH_MIN_LENGTH
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
@@ -111,13 +113,21 @@ fun SearchScreen(
 ) {
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    val backLabel = stringResource(R.string.navigation_back)
+    val clearLabel = stringResource(R.string.close_search)
+    val hint = stringResource(R.string.search_input_placeholder)
+    val minLength = stringResource(R.string.search_min_length, SEARCH_MIN_LENGTH)
+    val songsLabel = stringResource(R.string.search_songs)
+    val albumsLabel = stringResource(R.string.resources_album_name)
+    val artistsLabel = stringResource(R.string.resources_artist_name)
+    val playlistsLabel = stringResource(R.string.resources_playlist_name)
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = backLabel)
                     }
                 },
                 title = {
@@ -125,11 +135,11 @@ fun SearchScreen(
                         value = query,
                         onValueChange = onQueryChange,
                         singleLine = true,
-                        placeholder = { Text("Search your library") },
+                        placeholder = { Text(hint) },
                         trailingIcon = {
                             if (query.isNotEmpty()) {
                                 IconButton(onClick = { onQueryChange("") }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Clear search")
+                                    Icon(Icons.Rounded.Close, contentDescription = clearLabel)
                                 }
                             }
                         },
@@ -145,7 +155,7 @@ fun SearchScreen(
                             Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester)
-                                .semantics { contentDescription = "Search your library" },
+                                .semantics { contentDescription = hint },
                     )
                 },
             )
@@ -154,7 +164,7 @@ fun SearchScreen(
         when {
             !searchReady(query) -> {
                 EmptyState(
-                    text = "Type at least $SEARCH_MIN_LENGTH characters to search.",
+                    text = minLength,
                     modifier = Modifier.padding(padding),
                 )
             }
@@ -165,7 +175,7 @@ fun SearchScreen(
 
             results.isEmpty -> {
                 EmptyState(
-                    text = "No results for \u201C$query\u201D.",
+                    text = stringResource(R.string.search_no_results, query),
                     modifier = Modifier.padding(padding),
                 )
             }
@@ -175,10 +185,10 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
-                    songResults(results.songs, coverArt, playingSongId, onSongClick, onLongClick)
-                    albumResults(results.albums, coverArt, onAlbumClick, onLongClick)
-                    artistResults(results.artists, coverArt, onArtistClick, onLongClick)
-                    playlistResults(results.playlists, coverArt, onPlaylistClick, onLongClick)
+                    songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
+                    albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
+                    artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
+                    playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
                 }
             }
         }
@@ -198,13 +208,14 @@ private fun LazyListScope.resultHeader(title: String) {
 
 private fun LazyListScope.songResults(
     songs: List<AlbumSongItem>,
+    header: String,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
     onClick: (Song) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
     if (songs.isEmpty()) return
-    resultHeader("Songs")
+    resultHeader(header)
     items(songs, key = { "song-${it.song.id}" }) { item ->
         SongRow(
             song = item.song,
@@ -223,12 +234,13 @@ private fun LazyListScope.songResults(
 
 private fun LazyListScope.albumResults(
     albums: List<Album>,
+    header: String,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onClick: (Album) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
     if (albums.isEmpty()) return
-    resultHeader("Albums")
+    resultHeader(header)
     items(albums, key = { "album-${it.id}" }) { album ->
         AlbumListRow(
             album = album,
@@ -242,12 +254,13 @@ private fun LazyListScope.albumResults(
 
 private fun LazyListScope.artistResults(
     artists: List<Artist>,
+    header: String,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
     if (artists.isEmpty()) return
-    resultHeader("Artists")
+    resultHeader(header)
     items(artists, key = { "artist-${it.id}" }) { artist ->
         ArtistListRow(
             artist = artist,
@@ -261,12 +274,13 @@ private fun LazyListScope.artistResults(
 
 private fun LazyListScope.playlistResults(
     playlists: List<Playlist>,
+    header: String,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onClick: (Playlist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
     if (playlists.isEmpty()) return
-    resultHeader("Playlists")
+    resultHeader(header)
     items(playlists, key = { "playlist-${it.id}" }) { playlist ->
         PlaylistRow(
             playlist = playlist,
