@@ -912,26 +912,39 @@ class PlaybackController(
     suspend fun upcomingItem(): QueueItem? {
         var current: QueueSnapshot? = null
         var position: Long? = null
+        var isOffline = false
         startLock.withLock {
             current = snapshot
             position = currentPosition()
+            isOffline = offline
         }
         val snapshot = current ?: return null
         val at = position ?: return null
-        return queueRepository.itemAt(snapshot, at + 1)?.toQueueItem()
+        if (!isOffline) return queueRepository.itemAt(snapshot, at + 1)?.toQueueItem()
+        downloads.awaitLoaded()
+        val target =
+            downloadedAtOrAfter(snapshot, at + 1)
+                ?: if (repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0L) else null
+        return target?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
     }
 
     suspend fun previousItem(): QueueItem? {
         var current: QueueSnapshot? = null
         var position: Long? = null
+        var isOffline = false
         startLock.withLock {
             current = snapshot
             position = currentPosition()
+            isOffline = offline
         }
         val snapshot = current ?: return null
         val at = position ?: return null
-        if (at <= 0) return null
-        return queueRepository.itemAt(snapshot, at - 1)?.toQueueItem()
+        if (!isOffline) return if (at <= 0) null else queueRepository.itemAt(snapshot, at - 1)?.toQueueItem()
+        downloads.awaitLoaded()
+        val target =
+            downloadedAtOrBefore(snapshot, at - 1)
+                ?: if (repeatMode == RepeatMode.All) downloadedAtOrBefore(snapshot, snapshot.size - 1) else null
+        return target?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
     }
 
     private fun play(

@@ -231,6 +231,36 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlinePreviousItemMatchesTheTrackPreviousSkipsTo() {
+        seedAlbum(5, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s4")
+        setOffline()
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4"
+        }
+
+        assertEquals("s1", runBlocking { controller.previousItem()?.id })
+    }
+
+    @Test
+    fun offlineUpcomingItemMatchesTheTrackNextPlays() {
+        seedAlbum(4, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        assertEquals("s3", runBlocking { controller.upcomingItem()?.id })
+    }
+
+    @Test
     fun advancingShiftsTheWindowAndKeepsItBounded() {
         seedAlbum(100, sourceId = 1)
 

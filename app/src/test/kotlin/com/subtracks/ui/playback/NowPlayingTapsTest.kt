@@ -232,6 +232,30 @@ class NowPlayingTapsTest {
     }
 
     @Test
+    fun theSwipeActionPrefersTheDraggedDirectionOverAnOppositeFling() {
+        assertEquals(
+            SwipeAction.CommitPrevious,
+            swipeAction(offsetX = 300f, velocity = -2_000f, width = 1_000f, canGoNext = true, canGoPrevious = true),
+        )
+        assertEquals(
+            SwipeAction.CommitNext,
+            swipeAction(offsetX = -300f, velocity = 2_000f, width = 1_000f, canGoNext = true, canGoPrevious = true),
+        )
+    }
+
+    @Test
+    fun swipingLeftWithANeighbourRotatesTheStrip() {
+        render(nextArt = adjacentArt("s-next"))
+
+        composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(NOW_PLAYING_PREVIOUS_TAG, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
     fun rotatingTheStripMovesTheNeighbourIntoTheCentre() {
         val a = adjacentArt("a")
         val b = adjacentArt("b")

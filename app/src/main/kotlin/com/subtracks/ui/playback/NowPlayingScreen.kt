@@ -131,9 +131,15 @@ internal fun swipeAction(
 ): SwipeAction {
     if (width <= 0f) return SwipeAction.None
     val threshold = width * SWIPE_THRESHOLD_FRACTION
-    val wantsNext = offsetX <= -threshold || velocity <= -SWIPE_FLING_VELOCITY
-    val wantsPrevious = offsetX >= threshold || velocity >= SWIPE_FLING_VELOCITY
+    val pastNext = offsetX <= -threshold
+    val pastPrevious = offsetX >= threshold
+    val wantsNext = pastNext || velocity <= -SWIPE_FLING_VELOCITY
+    val wantsPrevious = pastPrevious || velocity >= SWIPE_FLING_VELOCITY
     return when {
+        pastNext && canGoNext -> SwipeAction.CommitNext
+        pastPrevious && canGoPrevious -> SwipeAction.CommitPrevious
+        pastNext -> SwipeAction.Next
+        pastPrevious -> SwipeAction.Previous
         wantsNext && canGoNext -> SwipeAction.CommitNext
         wantsPrevious && canGoPrevious -> SwipeAction.CommitPrevious
         wantsNext -> SwipeAction.Next
@@ -346,7 +352,7 @@ fun NowPlayingScreen(
             frozenStrip = null
         } else {
             delay(HAND_BACK_TIMEOUT_MS)
-            if (frozenStrip === pending) frozenStrip = null
+            frozenStrip = null
         }
     }
 
@@ -433,11 +439,13 @@ fun NowPlayingScreen(
                                                 }
 
                                                 SwipeAction.Next -> {
+                                                    frozenStrip = null
                                                     onNext()
                                                     animateSwipe(0f)
                                                 }
 
                                                 SwipeAction.Previous -> {
+                                                    frozenStrip = null
                                                     onSkipPrevious()
                                                     animateSwipe(0f)
                                                 }
@@ -545,17 +553,17 @@ fun NowPlayingScreen(
                                 )
                             }
                         }
-                        var dragging by remember { mutableStateOf(false) }
+                        var sliderDragging by remember { mutableStateOf(false) }
                         var dragPosition by remember { mutableFloatStateOf(0f) }
                         Slider(
-                            value = if (dragging) dragPosition else positionMs.toFloat(),
+                            value = if (sliderDragging) dragPosition else positionMs.toFloat(),
                             onValueChange = {
-                                dragging = true
+                                sliderDragging = true
                                 dragPosition = it
                             },
                             onValueChangeFinished = {
                                 onSeek(dragPosition.toLong())
-                                dragging = false
+                                sliderDragging = false
                             },
                             valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
                             enabled = state.durationMs > 0,

@@ -256,12 +256,13 @@ internal suspend fun prefetchArtworkRatio(
 ) {
     if (ArtworkRatioCache.get(ref.cacheKey) != null) return
     val request =
-        ImageRequest
-            .Builder(context)
-            .data(ref.url)
-            .diskCacheKey(ref.cacheKey)
-            .size(COVER_RATIO_PREFETCH_PX)
-            .build()
+        imageRequest(
+            context,
+            ref,
+            crossfade = false,
+            width = COVER_RATIO_PREFETCH_PX,
+            height = COVER_RATIO_PREFETCH_PX,
+        )
     val image =
         try {
             (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
