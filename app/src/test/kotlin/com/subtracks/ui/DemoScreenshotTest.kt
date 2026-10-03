@@ -52,6 +52,7 @@ import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.sortOptionsFor
 import com.subtracks.ui.playback.NowPlayingScreen
 import com.subtracks.ui.theme.ArtworkColors
+import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.SubtracksTheme
 import com.subtracks.ui.theme.artworkColorsFromSeeds
 import kotlinx.coroutines.flow.first
@@ -108,12 +109,14 @@ class DemoScreenshotTest {
                 Surface(Modifier.fillMaxSize()) {
                     when (screen) {
                         Screen.Home -> {
-                            HomeScreen(
-                                feed = demo.feed,
-                                coverArt = demo.coverArt,
-                                playingSongId = demo.song.id,
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            ArtworkTheme(demo.artwork(demo.homePlayingAlbum.coverArt)) {
+                                HomeScreen(
+                                    feed = demo.feed,
+                                    coverArt = demo.coverArt,
+                                    playingSongId = demo.homePlayingSong.id,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         }
 
                         Screen.NowPlaying -> {
@@ -265,6 +268,8 @@ class DemoScreenshotTest {
         val song: Song,
         val album: Album,
         val albumSongs: List<Song>,
+        val homePlayingAlbum: Album,
+        val homePlayingSong: Song,
         val artist: Artist,
         val artistAlbums: List<Album>,
         val searchAlbums: List<Album>,
@@ -336,9 +341,11 @@ class DemoScreenshotTest {
                     val artists = dao.artistIds(1).mapNotNull { dao.artist(1, it).first() }
                     val playlists = dao.playlistIds(1).mapNotNull { dao.playlist(1, it).first() }
 
-                    val album = albums.firstOrNull { it.name == "First Words" } ?: albums.first()
+                    val album = albums.firstOrNull { it.name == "Future, Sex, Computers" } ?: albums.first()
                     val albumSongs = dao.songsByAlbum(1, album.id).first()
                     val song = albumSongs.getOrNull(1) ?: albumSongs.first()
+                    val homePlayingAlbum = albums.firstOrNull { it.name == "Shaking The Habitual" } ?: albums.last()
+                    val homePlayingSong = dao.songsByAlbum(1, homePlayingAlbum.id).first().first()
                     val artist =
                         artists.maxByOrNull { it.albumCount }
                             ?: artists.first()
@@ -402,6 +409,8 @@ class DemoScreenshotTest {
                         song = song,
                         album = album,
                         albumSongs = albumSongs,
+                        homePlayingAlbum = homePlayingAlbum,
+                        homePlayingSong = homePlayingSong,
                         artist = artist,
                         artistAlbums = artistAlbums,
                         searchAlbums = searchAlbums,
@@ -427,4 +436,4 @@ class DemoScreenshotTest {
     }
 }
 
-private const val DEMO_SEARCH = "the"
+private const val DEMO_SEARCH = "chill"
