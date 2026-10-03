@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
@@ -141,14 +140,19 @@ class DemoScreenshotTest {
                         }
 
                         Screen.Albums -> {
-                            Box(Modifier.fillMaxSize()) {
-                                AlbumsScreen(demo.albums, demo.coverArt, demo.artwork(demo.albums.first().coverArt))
-                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                            Column(Modifier.fillMaxSize()) {
+                                AlbumsScreen(
+                                    demo.albums,
+                                    demo.coverArt,
+                                    demo.artwork(demo.albums.first().coverArt),
+                                    modifier = Modifier.weight(1f),
+                                )
+                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
                             }
                         }
 
                         Screen.AlbumDetail -> {
-                            Box(Modifier.fillMaxSize()) {
+                            Column(Modifier.fillMaxSize()) {
                                 AlbumDetailScreen(
                                     album = demo.album,
                                     songs = demo.albumSongs,
@@ -156,10 +160,10 @@ class DemoScreenshotTest {
                                     artwork = demo.artwork(demo.album.coverArt),
                                     onBack = {},
                                     onSongClick = {},
-                                    playingSongId = demo.nowPlayingSong.id,
-                                    modifier = Modifier.fillMaxSize(),
+                                    playingSongId = demo.albumSongs.first().id,
+                                    modifier = Modifier.weight(1f),
                                 )
-                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                                demo.MiniPlayerOverlay(demo.albumSongs.first(), demo.album)
                             }
                         }
 
@@ -178,7 +182,7 @@ class DemoScreenshotTest {
                         }
 
                         Screen.Artists -> {
-                            Box(Modifier.fillMaxSize()) {
+                            Column(Modifier.fillMaxSize()) {
                                 LibraryScreen(
                                     selectedTab = LibraryTab.Artists,
                                     onTabSelected = {},
@@ -192,14 +196,14 @@ class DemoScreenshotTest {
                                     onSync = {},
                                     onOpenSettings = {},
                                     artwork = demo.artwork(demo.artists.first().coverArt),
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.weight(1f),
                                 )
-                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
                             }
                         }
 
                         Screen.Search -> {
-                            Box(Modifier.fillMaxSize()) {
+                            Column(Modifier.fillMaxSize()) {
                                 LibraryScreen(
                                     selectedTab = LibraryTab.Albums,
                                     onTabSelected = {},
@@ -218,9 +222,9 @@ class DemoScreenshotTest {
                                     search = DEMO_SEARCH,
                                     onSearchChange = {},
                                     artwork = demo.artwork(demo.searchAlbums.first().coverArt),
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.weight(1f),
                                 )
-                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
                             }
                         }
                     }
@@ -242,6 +246,7 @@ class DemoScreenshotTest {
         albums: List<Album>,
         coverArt: (String?, Boolean) -> CoverArtRef?,
         artwork: ArtworkColors,
+        modifier: Modifier = Modifier,
     ) {
         LibraryScreen(
             selectedTab = LibraryTab.Albums,
@@ -259,7 +264,7 @@ class DemoScreenshotTest {
             sortOptions = sortOptionsFor(LibraryTab.Albums),
             starredSupported = true,
             artwork = artwork,
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier,
         )
     }
 
@@ -276,12 +281,16 @@ class DemoScreenshotTest {
     }
 
     @Composable
-    private fun DemoData.MiniPlayerOverlay(modifier: Modifier = Modifier) {
+    private fun DemoData.MiniPlayerOverlay(
+        song: Song,
+        album: Album,
+        modifier: Modifier = Modifier,
+    ) {
         MiniPlayer(
-            state = playbackState,
-            positionMs = positionMs,
-            coverArt = coverArt(nowPlayingAlbum.coverArt, true),
-            artwork = artwork(nowPlayingAlbum.coverArt),
+            state = playbackFor(song, album),
+            positionMs = positionFor(song),
+            coverArt = coverArt(album.coverArt, true),
+            artwork = artwork(album.coverArt),
             onExpand = {},
             onPlayPause = {},
             onNext = {},
@@ -308,23 +317,29 @@ class DemoScreenshotTest {
         val engine: FakeImageLoaderEngine,
         private val bitmaps: Map<String, Bitmap>,
     ) {
-        val playbackState =
+        val playbackState = playbackFor(nowPlayingSong, nowPlayingAlbum)
+        val positionMs: Long = positionFor(nowPlayingSong)
+
+        fun playbackFor(
+            song: Song,
+            album: Album,
+        ): PlaybackState =
             PlaybackState(
                 item =
                     QueueItem(
-                        id = nowPlayingSong.id,
-                        title = nowPlayingSong.title,
-                        artist = nowPlayingSong.artist,
-                        album = nowPlayingSong.album,
-                        coverArtId = nowPlayingAlbum.coverArt,
+                        id = song.id,
+                        title = song.title,
+                        artist = song.artist,
+                        album = song.album,
+                        coverArtId = album.coverArt,
                     ),
                 isPlaying = true,
-                durationMs = (nowPlayingSong.duration ?: 0) * 1000,
+                durationMs = (song.duration ?: 0) * 1000,
                 hasNext = true,
                 hasPrevious = false,
             )
 
-        val positionMs: Long = (nowPlayingSong.duration ?: 0) * 1000 * 35 / 100
+        fun positionFor(song: Song): Long = (song.duration ?: 0) * 1000 * 35 / 100
 
         fun artwork(coverArtId: String?): ArtworkColors {
             val bitmap = coverArtId?.let(bitmaps::get) ?: return artworkColorsFromSeeds(FALLBACK_SEED, null)
@@ -381,16 +396,18 @@ class DemoScreenshotTest {
                     val homePlayingAlbum = albums.firstOrNull { it.name == "Shaking The Habitual" } ?: albums.last()
                     val homePlayingSong = dao.songsByAlbum(1, homePlayingAlbum.id).first().first()
                     val artist =
-                        artists.maxByOrNull { it.albumCount }
+                        artists.firstOrNull { it.name == "Ugress" }
+                            ?: artists.maxByOrNull { it.albumCount }
                             ?: artists.first()
                     val artistAlbums = dao.albumsForArtist(1, artist.id).first()
 
+                    fun namedArtists(artists: List<Artist>) = artists.filterNot { it.name.equals("Various Artists", ignoreCase = true) }
                     val feed =
                         HomeFeed(
                             recentlyPlayedAlbums = dao.recentlyPlayedAlbums(1, 10).first(),
-                            recentlyPlayedArtists = dao.recentlyPlayedArtists(1, 10).first(),
+                            recentlyPlayedArtists = namedArtists(dao.recentlyPlayedArtists(1, 10).first()),
                             mostPlayedAlbums = dao.mostPlayedAlbums(1, 10).first(),
-                            mostPlayedArtists = dao.mostPlayedArtists(1, 10).first(),
+                            mostPlayedArtists = namedArtists(dao.mostPlayedArtists(1, 10).first()),
                             genres = dao.genresByMostPlayed(1).first(),
                             decades = dao.decades(1).first(),
                             recentlyStarredSongs = dao.recentlyStarredSongs(1, 10).first(),
