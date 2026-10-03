@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
@@ -55,8 +56,8 @@ fun appModule(
     http: OkHttpClient,
 ) = module {
     val mainHandler = Handler(Looper.getMainLooper())
-    val toast: (String) -> Unit = { message ->
-        mainHandler.post { Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
+    val toast: (UiMessage) -> Unit = { message ->
+        mainHandler.post { Toast.makeText(context, message.resolve(context), Toast.LENGTH_SHORT).show() }
     }
     single { createAndroidDatabase(context) }
     single { http }

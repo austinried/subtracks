@@ -1,5 +1,6 @@
 package com.subtracks.playback
 
+import com.subtracks.UiMessage
 import com.subtracks.data.model.AudioEncoding
 
 interface PlayerHandle {
@@ -75,7 +76,7 @@ interface PlayerHandle {
 
         fun onEvents()
 
-        fun onError(message: String) {
+        fun onError(message: UiMessage) {
         }
     }
 }

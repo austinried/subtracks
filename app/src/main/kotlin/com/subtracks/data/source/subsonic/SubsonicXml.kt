@@ -1,5 +1,7 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
@@ -224,6 +226,7 @@ private const val ROOT_TAG = "subsonic-response"
 private class XmlFailure(
     val code: Int,
     message: String,
+    val uiMessage: UiMessage? = null,
 ) : RuntimeException(message)
 
 private class StopReading : RuntimeException()
@@ -240,7 +243,7 @@ private open class SubsonicResponseHandler : DefaultHandler() {
     ) {
         depth++
         if (depth == 1) {
-            if (qName != ROOT_TAG) throw XmlFailure(-1, "Unexpected response from the server")
+            if (qName != ROOT_TAG) throw XmlFailure(-1, "Unexpected response from the server", UiMessage(R.string.error_server_unexpected))
             if (attributes.getValue("status") == "failed") statusFailed = true
         }
         if (qName == "error") {
@@ -262,7 +265,7 @@ private open class SubsonicResponseHandler : DefaultHandler() {
     }
 
     override fun endDocument() {
-        if (statusFailed) throw XmlFailure(-1, "Unknown error")
+        if (statusFailed) throw XmlFailure(-1, "Unknown error", UiMessage(R.string.error_server_unknown))
     }
 
     protected open fun onElementStart(
@@ -328,12 +331,12 @@ private fun parse(
     try {
         secureParserFactory().newSAXParser().parse(input, handler)
     } catch (failure: XmlFailure) {
-        throw SubsonicException(failure.code, failure.message ?: "Unknown error")
+        throw SubsonicException(failure.code, failure.message ?: "Unknown error", failure.uiMessage)
     } catch (_: StopReading) {
     } catch (failure: SAXException) {
-        throw SubsonicException(-1, failure.message ?: "Malformed response from the server")
+        throw SubsonicException(-1, failure.message ?: "Malformed response from the server", UiMessage(R.string.error_server_malformed))
     } catch (failure: IOException) {
-        throw SubsonicException(-1, failure.message ?: "Truncated response from the server")
+        throw SubsonicException(-1, failure.message ?: "Truncated response from the server", UiMessage(R.string.error_server_truncated))
     }
 }
 

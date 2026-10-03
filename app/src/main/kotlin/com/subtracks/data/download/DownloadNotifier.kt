@@ -32,7 +32,7 @@ class DownloadNotifier(
         createChannel()
         scope.launch {
             repository.activeDownloads().collect { rows ->
-                val content = downloadNotification(rows)
+                val content = downloadNotification(context.resources, rows)
                 if (content == null) {
                     manager.cancel(ID)
                 } else if (manager.areNotificationsEnabled()) {

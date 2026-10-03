@@ -218,8 +218,10 @@
     <string name="download_notification_in_progress">In progress</string>
     <string name="playback_error_network">Can\'t reach the server. Check your connection.</string>
     <string name="playback_error_refused">The server refused to stream this track.</string>
+    <string name="playback_error">Playback error: %1$s</string>
     <string name="star_update_failed">Could not update star</string>
     <string name="sync_offline">Offline mode is on</string>
+    <string name="error_no_server">No server configured</string>
     <string name="sync_failed">Sync failed</string>
     <string name="sync_failed_detail">Sync failed: %1$s</string>
 

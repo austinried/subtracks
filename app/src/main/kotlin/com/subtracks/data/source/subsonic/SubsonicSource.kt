@@ -1,5 +1,7 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
@@ -282,7 +284,13 @@ class SubsonicSource(
         return supported
     }
 
-    private fun pageCapExceeded() = PageCapExceeded("Library is too large to sync: it exceeds ${maxPages.toLong() * PAGE_SIZE} rows")
+    private fun pageCapExceeded(): PageCapExceeded {
+        val rows = maxPages.toLong() * PAGE_SIZE
+        return PageCapExceeded(
+            "Library is too large to sync: it exceeds $rows rows",
+            UiMessage(R.string.error_library_too_large, listOf(rows)),
+        )
+    }
 
     private fun <T> entityBatches(
         method: String,
@@ -336,4 +344,5 @@ class SubsonicSource(
 
 private class PageCapExceeded(
     message: String,
-) : SubsonicException(-1, message)
+    uiMessage: UiMessage,
+) : SubsonicException(-1, message, uiMessage)

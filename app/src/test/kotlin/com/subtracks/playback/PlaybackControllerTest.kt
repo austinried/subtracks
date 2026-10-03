@@ -1,12 +1,15 @@
 package com.subtracks.playback
 
 import android.content.Context
+import android.content.res.Resources
 import androidx.media3.common.PlaybackException
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.R
 import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.UiMessage
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
@@ -73,10 +76,12 @@ class PlaybackControllerTest {
     private lateinit var handle: FakePlayerHandle
     private lateinit var controller: PlaybackController
     private val messages = CopyOnWriteArrayList<String>()
+    private lateinit var resources: Resources
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        resources = context.resources
         db =
             Room
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
@@ -112,7 +117,7 @@ class PlaybackControllerTest {
                 queues,
                 FakePlayerConnection(handle),
                 downloads,
-                showMessage = { messages += it },
+                showMessage = { messages += it.resolve(resources) },
                 scope = controllerScope,
             )
     }
@@ -1365,7 +1370,7 @@ class PlaybackControllerTest {
         controller.playAlbum(1, "al1", 0)
         await { handle.operations.contains("play") }
 
-        handle.fail("Can't reach the server. Check your connection.")
+        handle.fail(UiMessage(R.string.playback_error_network))
         await { messages.isNotEmpty() }
 
         assertEquals(listOf("Can't reach the server. Check your connection."), messages.toList())
@@ -1377,9 +1382,9 @@ class PlaybackControllerTest {
         val timeout = PlaybackException("net", null, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
         val refused = PlaybackException("http", null, PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS)
 
-        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(failed))
-        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(timeout))
-        assertEquals("The server refused to stream this track.", playbackErrorMessage(refused))
+        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(failed).resolve(resources))
+        assertEquals("Can't reach the server. Check your connection.", playbackErrorMessage(timeout).resolve(resources))
+        assertEquals("The server refused to stream this track.", playbackErrorMessage(refused).resolve(resources))
     }
 
     @Test

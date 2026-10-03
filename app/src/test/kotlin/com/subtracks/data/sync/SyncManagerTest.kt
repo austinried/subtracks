@@ -1,6 +1,7 @@
 package com.subtracks.data.sync
 
 import android.content.Context
+import android.content.res.Resources
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -45,10 +46,12 @@ class SyncManagerTest {
     private lateinit var scope: CoroutineScope
     private val messages = CopyOnWriteArrayList<String>()
     private lateinit var server: MockWebServer
+    private lateinit var resources: Resources
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        resources = context.resources
         db =
             Room
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
@@ -58,7 +61,7 @@ class SyncManagerTest {
         sourceRepository =
             SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
         queueRepository = QueueRepository(db)
-        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it }, scope = scope)
+        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it.resolve(resources) }, scope = scope)
         server = MockWebServer()
         server.start()
     }
@@ -76,7 +79,7 @@ class SyncManagerTest {
             manager.requestSync()
             withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
-            assertEquals(listOf("Sync failed: No server configured"), messages)
+            assertEquals(listOf("No server configured"), messages)
         }
 
     @Test
@@ -242,6 +245,6 @@ class SyncManagerTest {
             manager.requestSync()
             val status = withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
-            assertEquals("Offline mode is on", (status as SyncStatus.Failed).message)
+            assertEquals("Offline mode is on", (status as SyncStatus.Failed).message.resolve(resources))
         }
 }

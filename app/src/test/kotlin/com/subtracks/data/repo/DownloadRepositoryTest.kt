@@ -1,6 +1,7 @@
 package com.subtracks.data.repo
 
 import android.content.Context
+import android.content.res.Resources
 import android.net.Uri
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
@@ -60,6 +61,7 @@ class DownloadRepositoryTest {
     private lateinit var scope: CoroutineScope
     private val prefs = fakeUserPreferences()
     private val messages = CopyOnWriteArrayList<String>()
+    private lateinit var resources: Resources
     private val requestedArt = CopyOnWriteArrayList<String>()
     private val artFetchedAfterTheEngineRequest = CopyOnWriteArrayList<Boolean>()
     private var failArtworkFetch = false
@@ -74,6 +76,7 @@ class DownloadRepositoryTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        resources = context.resources
         db =
             Room
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
@@ -92,7 +95,7 @@ class DownloadRepositoryTest {
                 dir,
                 artworkStore = artwork,
                 artworkFetcher = fetcher,
-                showMessage = { messages += it },
+                showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )
     }

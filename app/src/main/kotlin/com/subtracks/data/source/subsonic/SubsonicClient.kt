@@ -1,5 +1,7 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.R
+import com.subtracks.UiMessage
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -9,6 +11,7 @@ import java.security.MessageDigest
 open class SubsonicException(
     val code: Int,
     message: String,
+    val uiMessage: UiMessage? = null,
 ) : Exception(message)
 
 class SubsonicClient(
@@ -77,7 +80,7 @@ class SubsonicClient(
                 .build()
         http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw SubsonicException(-1, "HTTP ${response.code}")
+                throw SubsonicException(-1, "HTTP ${response.code}", UiMessage(R.string.error_http, listOf(response.code)))
             }
             return body(response.body.byteStream())
         }

@@ -1,9 +1,13 @@
 package com.subtracks.data.sync
 
 import android.util.Log
+import com.subtracks.R
+import com.subtracks.UiException
+import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.subsonic.SubsonicException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +25,7 @@ sealed interface SyncStatus {
     data object Success : SyncStatus
 
     data class Failed(
-        val message: String,
+        val message: UiMessage,
     ) : SyncStatus
 }
 
@@ -29,7 +33,7 @@ class SyncManager(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
-    private val showMessage: (String) -> Unit = {},
+    private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
     private val requests = Channel<Unit>(Channel.CONFLATED)
@@ -48,22 +52,37 @@ class SyncManager(
 
     private suspend fun runSync() {
         if (sourceRepository.offline.value) {
-            showMessage("Offline mode is on")
-            _status.value = SyncStatus.Failed("Offline mode is on")
+            val offline = UiMessage(R.string.sync_offline)
+            showMessage(offline)
+            _status.value = SyncStatus.Failed(offline)
             return
         }
         _status.value = SyncStatus.Running
         val result =
             try {
-                val source = sourceRepository.activeMusicSource() ?: error("No server configured")
+                val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
                 SyncService(db, source).sync()
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
                 Log.w(TAG, "Sync failed", failure)
-                val message = failure.message ?: "unknown error"
-                showMessage("Sync failed: $message")
+                val message =
+                    when (failure) {
+                        is NoServerException -> {
+                            UiMessage(R.string.error_no_server)
+                        }
+
+                        is UiException -> {
+                            failure.uiMessage
+                        }
+
+                        else -> {
+                            (failure as? SubsonicException)?.uiMessage
+                                ?: UiMessage(R.string.sync_failed_detail, listOf(failure.message ?: ""))
+                        }
+                    }
+                showMessage(message)
                 SyncStatus.Failed(message)
             }
         queueRepository.invalidateLibraryCache()
@@ -74,3 +93,5 @@ class SyncManager(
         const val TAG = "SubtracksSync"
     }
 }
+
+private class NoServerException : IllegalStateException()

@@ -1,5 +1,6 @@
 package com.subtracks.playback
 
+import com.subtracks.UiMessage
 import java.util.concurrent.CopyOnWriteArrayList
 
 class FakePlayerConnection(
@@ -232,7 +233,7 @@ class FakePlayerHandle : PlayerHandle {
         notifyEvents()
     }
 
-    fun fail(message: String) = listeners.forEach { it.onError(message) }
+    fun fail(message: UiMessage) = listeners.forEach { it.onError(message) }
 
     fun startBuffering() {
         idle = false

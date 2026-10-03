@@ -1,6 +1,8 @@
 package com.subtracks.data.repo
 
 import android.net.Uri
+import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
@@ -48,7 +50,7 @@ class DownloadRepository(
     private val downloadsDir: File,
     private val artworkStore: ArtworkStore,
     private val artworkFetcher: ArtworkFetcher,
-    private val showMessage: (String) -> Unit = {},
+    private val showMessage: (UiMessage) -> Unit = {},
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher),
 ) {
@@ -111,11 +113,11 @@ class DownloadRepository(
         songId: String,
     ) = withContext(dispatcher) {
         if (sourceRepository.activeSourceIdOnce() != sourceId) {
-            showMessage(NOT_ACTIVE)
+            showMessage(UiMessage(R.string.error_download_inactive_source))
             return@withContext
         }
         if (sourceRepository.downloadUri(sourceId, songId) == null) {
-            showMessage(NO_ADDRESS)
+            showMessage(UiMessage(R.string.error_download_no_address))
             return@withContext
         }
         val promoted =
@@ -243,16 +245,16 @@ class DownloadRepository(
         refId: String,
     ) = withContext(dispatcher) {
         if (sourceRepository.activeSourceIdOnce() != sourceId) {
-            showMessage(NOT_ACTIVE)
+            showMessage(UiMessage(R.string.error_download_inactive_source))
             return@withContext
         }
         val songIds = songIds(sourceId, list, refId)
         if (songIds.isEmpty()) {
-            showMessage(EMPTY_LIST)
+            showMessage(UiMessage(R.string.error_download_nothing_left))
             return@withContext
         }
         if (sourceRepository.downloadUri(sourceId, songIds.first()) == null) {
-            showMessage(NO_ADDRESS)
+            showMessage(UiMessage(R.string.error_download_no_address))
             return@withContext
         }
         // Under one lock, so a cancel that lands mid-loop waits for the queue to be complete and
@@ -655,10 +657,6 @@ class DownloadRepository(
         const val POLL_MS = 1_000L
         const val IN_FLIGHT_LIMIT = 8
         const val DELETE_CHUNK = 900
-        const val NO_ADDRESS = "Can't download: the server address is unavailable"
-        const val EMPTY_LIST = "Nothing left to download from this list"
-        const val STOPPED = "The download stopped unexpectedly"
-        const val NOT_ACTIVE = "Can't download from a source that isn't active"
         const val ART_TIMEOUT_MS = 60_000L
     }
 }

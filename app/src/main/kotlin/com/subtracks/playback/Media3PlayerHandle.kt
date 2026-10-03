@@ -11,6 +11,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
@@ -235,13 +237,13 @@ internal fun queueMediaItem(
     return builder.build()
 }
 
-internal fun playbackErrorMessage(error: PlaybackException): String =
+internal fun playbackErrorMessage(error: PlaybackException): UiMessage =
     when (error.errorCode) {
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
-        -> "Can't reach the server. Check your connection."
+        -> UiMessage(R.string.playback_error_network)
 
-        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "The server refused to stream this track."
+        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> UiMessage(R.string.playback_error_refused)
 
-        else -> error.errorCodeName
+        else -> UiMessage(R.string.playback_error, listOf(error.errorCodeName))
     }

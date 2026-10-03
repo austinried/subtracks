@@ -1,21 +1,29 @@
 package com.subtracks.data.download
 
+import android.content.Context
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.SongDownload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class DownloadNotificationTest {
+    private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
+
     @Test
     fun nothingInFlightMeansNoNotification() {
-        assertNull(downloadNotification(emptyList()))
-        assertNull(downloadNotification(listOf(row("s1", DownloadStatus.Completed), row("s2", DownloadStatus.Failed))))
+        assertNull(downloadNotification(resources, emptyList()))
+        assertNull(downloadNotification(resources, listOf(row("s1", DownloadStatus.Completed), row("s2", DownloadStatus.Failed))))
     }
 
     @Test
     fun oneRunningDownloadReportsItsShare() {
-        val notification = downloadNotification(listOf(row("s1", DownloadStatus.Running, bytes = 50, total = 100)))
+        val notification = downloadNotification(resources, listOf(row("s1", DownloadStatus.Running, bytes = 50, total = 100)))
 
         assertEquals("Downloading 1 song", notification?.title)
         assertEquals("50%", notification?.text)
@@ -26,6 +34,7 @@ class DownloadNotificationTest {
     fun theProgressIsTheShareOfEveryActiveDownload() {
         val notification =
             downloadNotification(
+                resources,
                 listOf(
                     row("s1", DownloadStatus.Running, bytes = 50, total = 100),
                     row("s2", DownloadStatus.Queued, bytes = 150, total = 300),
@@ -39,7 +48,7 @@ class DownloadNotificationTest {
 
     @Test
     fun anUnknownTotalLeavesTheProgressIndeterminate() {
-        val notification = downloadNotification(listOf(row("s1", DownloadStatus.Running)))
+        val notification = downloadNotification(resources, listOf(row("s1", DownloadStatus.Running)))
 
         assertEquals("In progress", notification?.text)
         assertNull(notification?.progress)

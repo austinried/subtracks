@@ -4,6 +4,7 @@ import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.R
+import com.subtracks.UiException
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
@@ -99,7 +100,10 @@ class AddSourceViewModel(
                                     resources.getString(R.string.connection_ok)
                                 }
                             },
-                            { error -> resources.getString(R.string.connection_failed, error.message) },
+                            { error ->
+                                (error as? UiException)?.uiMessage?.resolve(resources)
+                                    ?: resources.getString(R.string.connection_failed, error.message)
+                            },
                         ),
                     isError = result.isFailure,
                 )

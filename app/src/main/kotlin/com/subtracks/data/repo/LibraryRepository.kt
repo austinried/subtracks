@@ -4,6 +4,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
+import com.subtracks.R
+import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.albumsDefaultQuery
 import com.subtracks.data.db.artistsDefaultQuery
@@ -38,7 +40,7 @@ class LibraryRepository(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
     private val serverActions: ServerActionSink,
-    private val showMessage: (String) -> Unit = {},
+    private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
     val activeSourceId: Flow<Long?> = sourceRepository.activeSourceId()
@@ -444,7 +446,7 @@ class LibraryRepository(
             throw cancellation
         } catch (failure: Exception) {
             withContext(NonCancellable) { updateStarred(sourceId, type, id, previous) }
-            showMessage("Could not update star")
+            showMessage(UiMessage(R.string.star_update_failed))
             Result.failure(failure)
         }
     }

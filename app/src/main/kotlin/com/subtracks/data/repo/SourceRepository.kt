@@ -1,5 +1,8 @@
 package com.subtracks.data.repo
 
+import com.subtracks.R
+import com.subtracks.UiException
+import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
@@ -35,7 +38,7 @@ class SourceRepository(
     private val prefs: UserPreferences,
     private val artworkStore: ArtworkStore,
     networkMode: Flow<NetworkMode> = flowOf(NetworkMode.Wifi),
-    private val showMessage: (String) -> Unit = {},
+    private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
     private data class ActiveSource(
@@ -222,7 +225,7 @@ class SourceRepository(
         useTokenAuth: Boolean,
     ): Result<Boolean> =
         if (_offline.value) {
-            Result.failure(IllegalStateException("Offline mode is on"))
+            Result.failure(UiException(UiMessage(R.string.sync_offline), "Offline mode is on"))
         } else {
             withContext(Dispatchers.IO) {
                 var fellBack = false
@@ -262,7 +265,7 @@ class SourceRepository(
     private fun disableTokenAuth(sourceId: Long) {
         scope.launch {
             db.sourcesDao().disableTokenAuth(sourceId)
-            showMessage("Server does not support token auth; using the password instead")
+            showMessage(UiMessage(R.string.connection_token_fallback))
         }
     }
 

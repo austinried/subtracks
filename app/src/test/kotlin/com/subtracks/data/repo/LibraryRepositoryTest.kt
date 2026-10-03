@@ -1,6 +1,7 @@
 package com.subtracks.data.repo
 
 import android.content.Context
+import android.content.res.Resources
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -40,10 +41,12 @@ class LibraryRepositoryTest {
     private lateinit var repository: LibraryRepository
     private lateinit var scope: CoroutineScope
     private val messages = ArrayList<String>()
+    private lateinit var resources: Resources
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        resources = context.resources
         db =
             Room
                 .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
@@ -57,7 +60,7 @@ class LibraryRepositoryTest {
                 db,
                 sourceRepository,
                 NetworkServerActionSink(sourceRepository),
-                showMessage = { messages += it },
+                showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )
     }

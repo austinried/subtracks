@@ -1,5 +1,6 @@
 package com.subtracks.playback
 
+import com.subtracks.UiMessage
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueEntry
@@ -108,7 +109,7 @@ class PlaybackController(
     private val queueRepository: QueueRepository,
     private val connection: PlayerConnection,
     private val downloads: DownloadRepository,
-    private val showMessage: (String) -> Unit = {},
+    private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 ) {
     private val _state = MutableStateFlow(PlaybackState())
@@ -1414,7 +1415,7 @@ class PlaybackController(
                 refresh()
             }
 
-            override fun onError(message: String) {
+            override fun onError(message: UiMessage) {
                 showMessage(message)
                 refresh()
             }
