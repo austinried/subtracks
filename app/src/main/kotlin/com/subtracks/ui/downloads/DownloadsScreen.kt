@@ -262,11 +262,11 @@ private fun NodeRow(
         trailingContent = {
             if (progress != null) {
                 IconButton(onClick = onCancel) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download")
+                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download of $name")
                 }
             } else {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete downloads")
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete downloads of $name")
                 }
             }
         },
@@ -280,7 +280,7 @@ private fun activeDownloads(songs: List<DownloadedSong>): List<DownloadedSong> =
 
 internal fun nodeProgress(songs: List<DownloadedSong>): Float? {
     val active = activeDownloads(songs)
-    if (active.isEmpty() || songs.isEmpty()) return null
+    if (active.isEmpty()) return null
     val completed = songs.count { it.status == DownloadStatus.Completed }
     val partial = active.sumOf { (it.progress ?: 0f).toDouble() }
     return ((completed + partial) / songs.size).toFloat().coerceIn(0f, 1f)
@@ -298,27 +298,30 @@ private fun SongRow(
         encoding = if (song.status == DownloadStatus.Completed) loadEncoding(song) else null
     }
     val active = song.status == DownloadStatus.Queued || song.status == DownloadStatus.Running
+    val barModifier = Modifier.fillMaxWidth().padding(top = 4.dp)
     ListItem(
         headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
             Column {
                 Text(songSubtitle(song, encoding), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (active) {
-                    LinearProgressIndicator(
-                        progress = { song.progress ?: 0f },
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    )
+                    val progress = song.progress
+                    if (progress == null) {
+                        LinearProgressIndicator(modifier = barModifier)
+                    } else {
+                        LinearProgressIndicator(progress = { progress }, modifier = barModifier)
+                    }
                 }
             }
         },
         trailingContent = {
             if (active) {
                 IconButton(onClick = onCancel) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download")
+                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download of ${song.title}")
                 }
             } else {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete download")
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete download of ${song.title}")
                 }
             }
         },

@@ -58,6 +58,20 @@ class DownloadTreeTest {
         assertNull(nodeProgress(listOf(song("s3", "Three", "ar1", "Artist", "al1", "Album", size = 1))))
     }
 
+    @Test
+    fun nodeProgressCountsAFailedTrackInTheDenominator() {
+        val songs =
+            listOf(
+                song("s1", "One", "ar1", "Artist", "al1", "Album", size = 100),
+                song("s2", "Two", "ar1", "Artist", "al1", "Album", size = 100)
+                    .copy(status = DownloadStatus.Failed),
+                song("s3", "Three", "ar1", "Artist", "al1", "Album", size = 100)
+                    .copy(status = DownloadStatus.Running, bytes = 50, total = 100),
+            )
+
+        assertEquals(0.5f, nodeProgress(songs)!!, 0.0001f)
+    }
+
     private fun song(
         id: String,
         title: String,

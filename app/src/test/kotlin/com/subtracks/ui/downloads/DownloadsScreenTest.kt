@@ -53,10 +53,10 @@ class DownloadsScreenTest {
             onCancel = { cancelled = it },
         )
 
-        composeRule.onAllNodesWithContentDescription("Cancel download").assertCountEquals(1)
-        composeRule.onAllNodesWithContentDescription("Delete downloads").assertCountEquals(1)
+        composeRule.onAllNodesWithContentDescription("Cancel download", substring = true).assertCountEquals(1)
+        composeRule.onAllNodesWithContentDescription("Delete downloads", substring = true).assertCountEquals(1)
 
-        composeRule.onNodeWithContentDescription("Cancel download").performClick()
+        composeRule.onNodeWithContentDescription("Cancel download of Active").performClick()
         assertEquals(listOf("s1"), cancelled)
     }
 
@@ -66,8 +66,8 @@ class DownloadsScreenTest {
 
         expandArtistAndAlbum()
 
-        composeRule.onAllNodesWithContentDescription("Cancel download").assertCountEquals(3)
-        composeRule.onAllNodesWithContentDescription("Delete download").assertCountEquals(1)
+        composeRule.onAllNodesWithContentDescription("Cancel download", substring = true).assertCountEquals(3)
+        composeRule.onAllNodesWithContentDescription("Delete download of Done").assertCountEquals(1)
     }
 
     private fun artist(

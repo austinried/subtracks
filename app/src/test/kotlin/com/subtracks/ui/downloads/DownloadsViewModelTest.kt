@@ -150,6 +150,17 @@ class DownloadsViewModelTest {
         assertNotNull("a completed download should survive a cancel", row("s2"))
     }
 
+    @Test
+    fun cancelSongsRemovesAQueuedDownloadWithoutAnEngineId() {
+        seedDownloads()
+        runBlocking { db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Queued, engineId = null)) }
+
+        viewModel.cancelSongs(listOf("s1"))
+        await { row("s1") == null }
+
+        assertNull(row("s1"))
+    }
+
     private fun seedDownloads() {
         sourceId =
             runBlocking {

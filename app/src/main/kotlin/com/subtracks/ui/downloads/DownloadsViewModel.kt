@@ -82,7 +82,6 @@ class DownloadsViewModel(
     fun cancelSongs(songIds: List<String>) {
         viewModelScope.launch {
             downloadRepository.cancel(sourceId.first(), songIds)
-            playbackController.refreshMediaItems()
         }
     }
 
