@@ -7,6 +7,7 @@ import androidx.room3.useReaderConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.awaitUntil
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.DownloadStatus
@@ -15,6 +16,9 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.ArtistSort
+import com.subtracks.data.prefs.PlaylistSort
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -24,6 +28,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(AndroidJUnit4::class)
 class LibraryDaoTest {
@@ -701,6 +706,117 @@ class LibraryDaoTest {
                 while (statement.step()) details += statement.getText(3)
                 details.joinToString("\n")
             }
+        }
+
+    @Test
+    fun defaultPagingQueriesMatchTheDownloadFreeFilters() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a", "Beta", year = 2000, starred = null).copy(albumArtist = "Zed"),
+                    album(sourceId, "b", "Alpha", year = 2010, starred = 5).copy(albumArtist = "Zed"),
+                    album(sourceId, "c", "Gamma", year = 1990, starred = null).copy(albumArtist = "Ann"),
+                ),
+            )
+
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Gamma", "Beta", "Alpha"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, true)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta", "Gamma"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Year, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Gamma", "Beta", "Alpha"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Artist, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "alp", AlbumSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Gamma"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "am", AlbumSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 1, "", AlbumSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beta", "Gamma"),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 2, "", AlbumSort.Name, false)).page().map { it.name },
+            )
+        }
+
+    @Test
+    fun defaultArtistAndPlaylistPagingQueriesMatchTheDownloadFreeFilters() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Beta", albumCount = 3),
+                    artist(sourceId, "ar-2", "Alpha", albumCount = 1),
+                ),
+            )
+            dao.upsertPlaylists(
+                listOf(
+                    playlist(sourceId, "p1", "Beta", created = 0, changed = 5),
+                    playlist(sourceId, "p2", "Alpha", created = 1, changed = 0),
+                ),
+            )
+
+            assertEquals(
+                listOf("Alpha", "Beta"),
+                dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "a", ArtistSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beta", "Alpha"),
+                dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.AlbumCount, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta"),
+                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "a", PlaylistSort.Name, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Alpha", "Beta"),
+                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "", PlaylistSort.Added, false)).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beta", "Alpha"),
+                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "", PlaylistSort.Updated, false)).page().map { it.name },
+            )
+        }
+
+    @Test
+    fun downloadWritesDoNotInvalidateTheDefaultPagingSource() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "a", "Alpha", year = null, starred = null)))
+            dao.upsertSongs(listOf(song(sourceId, "s1", "One", starred = null).copy(albumId = "a")))
+
+            val defaultInvalidated = AtomicBoolean(false)
+            val default = dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false))
+            default.registerInvalidatedCallback { defaultInvalidated.set(true) }
+            default.page()
+
+            val downloadedInvalidated = AtomicBoolean(false)
+            val downloaded = dao.albumsByName(sourceId, 0, "", downloadedFilter = 1)
+            downloaded.registerInvalidatedCallback { downloadedInvalidated.set(true) }
+            downloaded.page()
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            awaitUntil("the downloaded list observes download writes") { downloadedInvalidated.get() }
+            assertFalse("the default list must not observe download writes", defaultInvalidated.get())
         }
 
     private suspend fun source(): Long =

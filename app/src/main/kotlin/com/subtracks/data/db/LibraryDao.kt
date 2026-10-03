@@ -4,6 +4,8 @@ import androidx.paging.PagingSource
 import androidx.room3.Dao
 import androidx.room3.DaoReturnTypeConverters
 import androidx.room3.Query
+import androidx.room3.RawQuery
+import androidx.room3.RoomRawQuery
 import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
@@ -431,6 +433,15 @@ interface LibraryDao {
             "AND playlistId NOT IN (SELECT id FROM playlists WHERE sourceId = :sourceId)",
     )
     suspend fun deleteOrphanPlaylistSongs(sourceId: Long)
+
+    @RawQuery(observedEntities = [Album::class])
+    fun albumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
+
+    @RawQuery(observedEntities = [Artist::class])
+    fun artistsPaging(query: RoomRawQuery): PagingSource<Int, Artist>
+
+    @RawQuery(observedEntities = [Playlist::class])
+    fun playlistsPaging(query: RoomRawQuery): PagingSource<Int, Playlist>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME")
     fun albumsByName(
