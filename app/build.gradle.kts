@@ -100,10 +100,12 @@ val integrationTestClasses =
         "com.subtracks.data.sync.SyncServiceIntegrationTest",
     )
 
+val demoScreenshotClass = "com.subtracks.ui.DemoScreenshotTest"
+
 tasks.withType<Test>().configureEach {
     if (name.endsWith("UnitTest")) {
         filter {
-            integrationTestClasses.forEach { excludeTestsMatching(it) }
+            (integrationTestClasses + demoScreenshotClass).forEach { excludeTestsMatching(it) }
         }
     }
     testLogging {
@@ -123,6 +125,20 @@ tasks.register<Test>("integrationTest") {
     }
     systemProperty("prune.baseUrl", providers.gradleProperty("pruneBaseUrl").getOrElse(""))
     systemProperty("prune.musicDir", providers.gradleProperty("pruneMusicDir").getOrElse(""))
+}
+
+tasks.register<Test>("demoScreenshots") {
+    description = "Records the store screenshots from a real sync of the public Navidrome demo library"
+    group = "verification"
+    val unitTest = tasks.named<Test>("testDebugUnitTest")
+    dependsOn("compileDebugUnitTestKotlin")
+    testClassesDirs = files(provider { unitTest.get().testClassesDirs })
+    classpath = files(provider { unitTest.get().classpath })
+    filter {
+        includeTestsMatching(demoScreenshotClass)
+    }
+    systemProperty("roborazzi.test.record", "true")
+    outputs.upToDateWhen { false }
 }
 
 dependencies {

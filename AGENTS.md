@@ -24,6 +24,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Format: `gradle :app:ktlintFormat`
 - Integration tests: `nix develop .#integration --command nu tools/integration-test.nu` (starts navidrome, gonic, lms and a Nextcloud Music instance, then runs `:app:integrationTest`)
 - Screenshots: `gradle :app:recordRoborazziDebug` renders the `*Screen` composables to `app/src/test/screenshots/` (gitignored) plus an HTML report in `app/build/reports/roborazzi/`, for local review. No golden images are committed and `verifyRoborazziDebug` is not part of CI.
+- Demo screenshots: `gradle :app:demoScreenshots` does a real sync of the public Navidrome demo (`https://demo.navidrome.org`, `demo`/`demo`) and renders the store screenshots with that library's art and names into `app/src/test/screenshots/demo/` (gitignored). Needs network; not part of CI or the integration suite.
 
 ## Testing layout
 
