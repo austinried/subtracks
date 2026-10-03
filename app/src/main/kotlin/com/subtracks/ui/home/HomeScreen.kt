@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,7 +44,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -505,8 +511,51 @@ private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
 private val SECTION_CONTENT_TOP = 4.dp
-private val GENRE_ROW_SPACING = 4.dp
+private val GENRE_ROW_SPACING = 2.dp
 private const val GENRE_ROWS = 3
+private const val GENRE_CHIP_WIDTH = 6
+
+internal fun brickRows(
+    genres: List<String>,
+    rows: Int,
+): List<List<String>> {
+    if (rows < 2) return listOf(genres)
+    val balanced = List(rows) { mutableListOf<String>() }
+    val widths = LongArray(rows)
+    genres.forEach { genre ->
+        val shortest = widths.indices.minBy { widths[it] }
+        balanced[shortest] += genre
+        widths[shortest] += genre.length + GENRE_CHIP_WIDTH
+    }
+    return balanced
+}
+
+private const val REVEAL_NEAR_FRONT = 1
+
+internal fun shouldRevealNewFront(
+    previousKey: Any?,
+    firstKey: Any?,
+    firstVisibleItemIndex: Int,
+): Boolean = firstKey != null && previousKey != null && previousKey != firstKey && firstVisibleItemIndex <= REVEAL_NEAR_FRONT
+
+/**
+ * Scrolls a row back to the front when a new first item appears while it is already at/near the
+ * start. The lazy layout anchors to the previously visible key, so an item that moves to the front
+ * after a play lands left of the viewport and is not revealed.
+ */
+@Composable
+internal fun <T> RevealNewFrontItem(
+    items: List<T>,
+    state: LazyListState,
+    key: (T) -> Any?,
+) {
+    val firstKey = items.firstOrNull()?.let(key)
+    var previous by remember { mutableStateOf<Any?>(null) }
+    LaunchedEffect(firstKey) {
+        if (shouldRevealNewFront(previous, firstKey, state.firstVisibleItemIndex)) state.animateScrollToItem(0)
+        if (firstKey != null) previous = firstKey
+    }
+}
 
 private fun LazyListScope.albumRow(
     section: HomeSection,
@@ -521,7 +570,10 @@ private fun LazyListScope.albumRow(
         HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
+        val rowState = rememberLazyListState()
+        RevealNewFrontItem(albums, rowState) { it.id }
         LazyRow(
+            state = rowState,
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
             modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
@@ -552,7 +604,10 @@ private fun LazyListScope.artistRow(
         HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
+        val rowState = rememberLazyListState()
+        RevealNewFrontItem(artists, rowState) { it.id }
         LazyRow(
+            state = rowState,
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(ARTIST_SPACING),
             modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
@@ -588,13 +643,13 @@ private fun LazyListScope.genreBlock(
                     .horizontalScroll(rememberScrollState())
                     .padding(start = 16.dp, end = 16.dp, top = SECTION_CONTENT_TOP),
         ) {
+            val rows = remember(genres) { brickRows(genres, GENRE_ROWS) }
             Column(verticalArrangement = Arrangement.spacedBy(GENRE_ROW_SPACING)) {
-                repeat(GENRE_ROWS) { row ->
+                rows.forEach { rowGenres ->
+                    if (rowGenres.isEmpty()) return@forEach
                     Row(horizontalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
-                        genres.forEachIndexed { index, genre ->
-                            if (index % GENRE_ROWS == row) {
-                                AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
-                            }
+                        rowGenres.forEach { genre ->
+                            AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
                         }
                     }
                 }
