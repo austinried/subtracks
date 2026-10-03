@@ -1,6 +1,9 @@
 package com.subtracks.ui.home
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
@@ -30,11 +33,13 @@ class HomeScreenshotTest {
     fun home() {
         composeRule.setContent {
             SubtracksTheme {
-                HomeScreen(
-                    feed = feed(),
-                    coverArt = { _, _ -> null },
-                    playingSongId = null,
-                )
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    HomeScreen(
+                        feed = feed(),
+                        coverArt = { _, _ -> null },
+                        playingSongId = null,
+                    )
+                }
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {

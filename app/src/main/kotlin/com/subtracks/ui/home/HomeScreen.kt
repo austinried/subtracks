@@ -19,10 +19,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -127,74 +129,84 @@ fun HomeScreen(
     onSync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    if (feed.loading) {
-        LoadingState(modifier)
-        return
-    }
-    if (feed.isEmpty()) {
-        EmptyState(
-            text = "Nothing to show yet.\nSync with your server to fill your library.",
-            modifier = modifier,
-            actionLabel = "Sync",
-            onAction = onSync,
-        )
-        return
-    }
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
-    ) {
-        albumRow(
-            HomeSection.RecentlyPlayedAlbums,
-            feed.recentlyPlayedAlbums,
-            coverArt,
-            onAlbumClick,
-            onLongClick,
-            onMore,
-        )
-        artistRow(
-            HomeSection.RecentlyPlayedArtists,
-            feed.recentlyPlayedArtists,
-            coverArt,
-            onArtistClick,
-            onLongClick,
-            onMore,
-        )
-        albumRow(
-            HomeSection.MostPlayedAlbums,
-            feed.mostPlayedAlbums,
-            coverArt,
-            onAlbumClick,
-            onLongClick,
-            onMore,
-        )
-        artistRow(
-            HomeSection.MostPlayedArtists,
-            feed.mostPlayedArtists,
-            coverArt,
-            onArtistClick,
-            onLongClick,
-            onMore,
-        )
-        genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
-        decadeRow(HomeSection.Decades, feed.decades, onDecadeClick, onMore)
-        starredSongs(HomeSection.RecentlyStarredSongs, feed.recentlyStarredSongs, coverArt, playingSongId, onSongClick, onLongClick, onMore)
-        albumRow(
-            HomeSection.RecentlyAddedAlbums,
-            feed.recentlyAddedAlbums,
-            coverArt,
-            onAlbumClick,
-            onLongClick,
-            onMore,
-        )
-        albumRow(
-            HomeSection.Rediscover,
-            feed.rediscoverAlbums,
-            coverArt,
-            onAlbumClick,
-            onLongClick,
-            onMore,
-        )
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        if (feed.loading) {
+            LoadingState(modifier)
+            return@CompositionLocalProvider
+        }
+        if (feed.isEmpty()) {
+            EmptyState(
+                text = "Nothing to show yet.\nSync with your server to fill your library.",
+                modifier = modifier,
+                actionLabel = "Sync",
+                onAction = onSync,
+            )
+            return@CompositionLocalProvider
+        }
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
+        ) {
+            albumRow(
+                HomeSection.RecentlyPlayedAlbums,
+                feed.recentlyPlayedAlbums,
+                coverArt,
+                onAlbumClick,
+                onLongClick,
+                onMore,
+            )
+            artistRow(
+                HomeSection.RecentlyPlayedArtists,
+                feed.recentlyPlayedArtists,
+                coverArt,
+                onArtistClick,
+                onLongClick,
+                onMore,
+            )
+            albumRow(
+                HomeSection.MostPlayedAlbums,
+                feed.mostPlayedAlbums,
+                coverArt,
+                onAlbumClick,
+                onLongClick,
+                onMore,
+            )
+            artistRow(
+                HomeSection.MostPlayedArtists,
+                feed.mostPlayedArtists,
+                coverArt,
+                onArtistClick,
+                onLongClick,
+                onMore,
+            )
+            genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
+            decadeRow(HomeSection.Decades, feed.decades, onDecadeClick, onMore)
+            starredSongs(
+                HomeSection.RecentlyStarredSongs,
+                feed.recentlyStarredSongs,
+                coverArt,
+                playingSongId,
+                onSongClick,
+                onLongClick,
+                onMore,
+            )
+            albumRow(
+                HomeSection.RecentlyAddedAlbums,
+                feed.recentlyAddedAlbums,
+                coverArt,
+                onAlbumClick,
+                onLongClick,
+                onMore,
+            )
+            albumRow(
+                HomeSection.Rediscover,
+                feed.rediscoverAlbums,
+                coverArt,
+                onAlbumClick,
+                onLongClick,
+                onMore,
+            )
+        }
     }
 }
 
