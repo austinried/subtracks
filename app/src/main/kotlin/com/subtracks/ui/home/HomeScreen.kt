@@ -271,6 +271,7 @@ private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
 private val SECTION_CONTENT_TOP = 4.dp
+private val GENRE_ROW_SPACING = 4.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
@@ -353,7 +354,7 @@ private fun LazyListScope.genreBlock(
                     .horizontalScroll(rememberScrollState())
                     .padding(start = 16.dp, end = 16.dp, top = SECTION_CONTENT_TOP),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GENRE_ROW_SPACING)) {
                 repeat(GENRE_ROWS) { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
                         genres.forEachIndexed { index, genre ->
