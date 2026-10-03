@@ -1,14 +1,16 @@
-subtracks is an open source Android client for Subsonic-compatible servers, including Navidrome, gonic, Airsonic, Nextcloud Music and Subsonic itself. It is built natively with Kotlin and Jetpack Compose, and gives you clean, convenient access to your music library in the style of a modern media player.
+subtracks is an open source Android client for Subsonic-compatible servers, including Navidrome, gonic, LMS, Nextcloud Music and more. It is built natively with Kotlin and Jetpack Compose, and gives you clean, convenient access to your music library in the style of a modern media player.
 
 Features
-- Home tab with recently played, most played, recently added and rediscover rows, plus genre and decade shortcuts
+- Home screen to browse your library over many categories, genres, and more
 - Album and artist artwork, shown full-resolution in the detail and now playing views
-- Offline downloads, with per-album, artist and playlist progress, download quality and a metered-connection toggle
+- Downloads with album, artist and playlist bulk downloads, download quality and a metered-connection toggle
 - Search across albums, artists, playlists and songs, with per-list sort and filter controls
 - Gapless playback, an editable queue you can reorder and jump through, and loop and shuffle modes
+- Up next queue to add items into the currently playing queue without rewriting it
 - Multiple server support with quick switching
-- Stream quality (bitrate and format) settings for Wi-Fi and mobile
-- Scrobbling, starred items and long-press context menus
+- Stream quality (bitrate and format) settings for Wi-Fi and mobile and automatic switching
+- Scrobbling and starred items, cached while offline and sent back to the server when online
 - Media notification and headset/Bluetooth controls
+- Adaptive theming from the current song's artwork
 
-The full library is mirrored at sync, so browsing, searching, sorting and filtering work offline. subtracks is free software (GPL-3.0), has no ads and no telemetry, and uses only free/libre dependencies.
+The full library is mirrored at sync, so browsing, searching, sorting and filtering work offline. Only media and artwork are fetched on demand, and not even that when they're already downloaded. subtracks is free software (GPL-3.0), has no ads and no telemetry, and uses only free/libre dependencies.
