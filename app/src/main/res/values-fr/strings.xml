@@ -42,4 +42,7 @@
     <string name="settings_servers_fields_password">Mot de passe</string>
     <string name="settings_servers_fields_username">Nom d\'utilisateur</string>
     <string name="navigation_tabs_home">Accueil</string>
+    <string name="resources_album_name">Albums</string>
+    <string name="resources_artist_name">Artistes</string>
+    <string name="resources_playlist_name">Playlists</string>
 </resources>

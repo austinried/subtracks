@@ -39,4 +39,7 @@
     <string name="settings_servers_fields_password">비밀번호</string>
     <string name="settings_servers_fields_username">사용자 이름</string>
     <string name="navigation_tabs_home">홈</string>
+    <string name="resources_album_name">앨범</string>
+    <string name="resources_artist_name">아티스트</string>
+    <string name="resources_playlist_name">재생목록</string>
 </resources>

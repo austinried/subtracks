@@ -20,4 +20,7 @@
     <string name="settings_servers_fields_password">Adgangskode</string>
     <string name="settings_servers_fields_username">Brugernavn</string>
     <string name="navigation_tabs_home">Hjem</string>
+    <string name="resources_album_name">Albums</string>
+    <string name="resources_artist_name">Kunstnere</string>
+    <string name="resources_playlist_name">Spillelister</string>
 </resources>

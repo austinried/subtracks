@@ -21,4 +21,6 @@
     <string name="settings_servers_fields_password">كلمة المرور</string>
     <string name="settings_servers_fields_username">إسم المستخدم</string>
     <string name="navigation_tabs_home">الرئيسية</string>
+    <string name="resources_artist_name">فنانان</string>
+    <string name="resources_playlist_name">قائمتان تشغيل</string>
 </resources>

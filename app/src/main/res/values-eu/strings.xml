@@ -31,4 +31,7 @@
     <string name="settings_about_name">Honi buruz</string>
     <string name="settings_network_name">Sarea</string>
     <string name="navigation_tabs_home">Hasiera</string>
+    <string name="resources_album_name">Albumak</string>
+    <string name="resources_artist_name">Musikariak</string>
+    <string name="resources_playlist_name">Zerrendak</string>
 </resources>

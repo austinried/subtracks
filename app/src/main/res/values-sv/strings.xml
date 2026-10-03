@@ -42,4 +42,7 @@
     <string name="settings_servers_fields_password">Lösenord</string>
     <string name="settings_servers_fields_username">Användarnamn</string>
     <string name="navigation_tabs_home">Hem</string>
+    <string name="resources_album_name">Album</string>
+    <string name="resources_artist_name">Artister</string>
+    <string name="resources_playlist_name">Spellistor</string>
 </resources>

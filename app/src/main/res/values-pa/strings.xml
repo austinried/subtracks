@@ -21,4 +21,7 @@
     <string name="settings_servers_fields_password">ਪਾਸਵਰਡ</string>
     <string name="settings_servers_fields_username">ਯੂਜ਼ਰਨੇਮ</string>
     <string name="navigation_tabs_home">ਘਰ</string>
+    <string name="resources_album_name">ਐਲਬਮਾਂ</string>
+    <string name="resources_artist_name">ਕਲਾਕਾਰਾਂ</string>
+    <string name="resources_playlist_name">ਪਲੇਲਿਸਟਸ</string>
 </resources>

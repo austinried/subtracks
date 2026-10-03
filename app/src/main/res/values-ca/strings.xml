@@ -21,4 +21,7 @@
     <string name="settings_servers_fields_password">Contrasenya</string>
     <string name="settings_servers_fields_username">Nom d’usuari</string>
     <string name="navigation_tabs_home">Inici</string>
+    <string name="resources_album_name">Àlbums</string>
+    <string name="resources_artist_name">Artistes</string>
+    <string name="resources_playlist_name">Llistes de reproducció</string>
 </resources>

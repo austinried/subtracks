@@ -44,4 +44,7 @@
     <string name="settings_servers_fields_password">Пароль</string>
     <string name="settings_servers_fields_username">Имя пользователя</string>
     <string name="navigation_tabs_home">Главная</string>
+    <string name="resources_album_name">Альбомы</string>
+    <string name="resources_artist_name">Исполнители</string>
+    <string name="resources_playlist_name">Плейлисты</string>
 </resources>

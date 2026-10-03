@@ -16,4 +16,7 @@
     <string name="settings_servers_fields_password">パスワルド</string>
     <string name="settings_servers_fields_username">ウーザ名</string>
     <string name="navigation_tabs_home">ホーム</string>
+    <string name="resources_album_name">アルバム</string>
+    <string name="resources_artist_name">アーティスト</string>
+    <string name="resources_playlist_name">プレイリスト</string>
 </resources>

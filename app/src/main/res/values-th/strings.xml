@@ -41,4 +41,7 @@
     <string name="settings_servers_fields_password">รหัสผ่าน</string>
     <string name="settings_servers_fields_username">ชื่อผู้ใช้</string>
     <string name="navigation_tabs_home">หน้าหลัก</string>
+    <string name="resources_album_name">อัลบั้ม</string>
+    <string name="resources_artist_name">ศิลปิน</string>
+    <string name="resources_playlist_name">เพลย์ลิส</string>
 </resources>

@@ -40,4 +40,7 @@
     <string name="settings_servers_fields_password">密碼</string>
     <string name="settings_servers_fields_username">用戶名稱</string>
     <string name="navigation_tabs_home">首頁</string>
+    <string name="resources_album_name">專輯</string>
+    <string name="resources_artist_name">歌手</string>
+    <string name="resources_playlist_name">播放清單</string>
 </resources>

@@ -35,4 +35,6 @@
     <string name="settings_servers_fields_password">Jelszó</string>
     <string name="settings_servers_fields_username">Felhasználónév</string>
     <string name="navigation_tabs_home">Kezdőoldal</string>
+    <string name="resources_album_name">Album</string>
+    <string name="resources_artist_name">Előadó</string>
 </resources>

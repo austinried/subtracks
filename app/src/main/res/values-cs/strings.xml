@@ -31,4 +31,7 @@
     <string name="settings_servers_fields_password">Heslo</string>
     <string name="settings_servers_fields_username">Uživ. jméno</string>
     <string name="navigation_tabs_home">Domů</string>
+    <string name="resources_album_name">Alba</string>
+    <string name="resources_artist_name">Umělci</string>
+    <string name="resources_playlist_name">Seznamy skladeb</string>
 </resources>

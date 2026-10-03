@@ -42,4 +42,7 @@
     <string name="settings_servers_fields_password">Mật khẩu</string>
     <string name="settings_servers_fields_username">Tên đăng nhập</string>
     <string name="navigation_tabs_home">Trang chủ</string>
+    <string name="resources_album_name">album</string>
+    <string name="resources_artist_name">Nghệ sĩ</string>
+    <string name="resources_playlist_name">Playlist</string>
 </resources>

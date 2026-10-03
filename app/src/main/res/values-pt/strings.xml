@@ -32,4 +32,7 @@
     <string name="settings_servers_fields_password">Senha</string>
     <string name="settings_servers_fields_username">Nome de utilizador</string>
     <string name="navigation_tabs_home">Início</string>
+    <string name="resources_album_name">Álbuns</string>
+    <string name="resources_artist_name">Artistas</string>
+    <string name="resources_playlist_name">Listas</string>
 </resources>
