@@ -543,7 +543,7 @@ class DownloadRepository(
                 EngineStatus.Failed -> DownloadStatus.Failed
             }
         if (status == DownloadStatus.Failed) file.delete()
-        db.downloadDao().upsert(
+        val updated =
             row.copy(
                 status = status,
                 bytes = state.bytes,
@@ -561,8 +561,8 @@ class DownloadRepository(
                     } else {
                         row.downloadedAt
                     },
-            ),
-        )
+            )
+        if (updated != row) db.downloadDao().upsert(updated)
     }
 
     private suspend fun markFailed(
