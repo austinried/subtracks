@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 
 const val HOME_ROW_LIMIT = 10
 const val HOME_STARRED_LIMIT = 5
+const val HOME_DOWNLOADED_LIMIT = 5
 
 data class HomeFeed(
     val recentlyPlayedAlbums: List<Album> = emptyList(),
@@ -81,9 +82,7 @@ class HomeViewModel(
             }.cachedIn(viewModelScope)
 
     val downloadedSongs: Flow<List<AlbumSongItem>> =
-        activeSource
-            .flatMapLatest { libraryRepository.downloadedSongs(it) }
-            .map { it.take(HOME_STARRED_LIMIT) }
+        activeSource.flatMapLatest { libraryRepository.downloadedSongs(it, HOME_DOWNLOADED_LIMIT) }
 
     val feed: StateFlow<HomeFeed> =
         libraryRepository.activeSourceId

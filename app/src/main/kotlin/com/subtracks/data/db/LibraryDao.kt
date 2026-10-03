@@ -709,9 +709,12 @@ interface LibraryDao {
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit",
     )
-    fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>>
+    fun downloadedSongs(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>>
 
     @Query(
         "SELECT songs.id FROM songs " +

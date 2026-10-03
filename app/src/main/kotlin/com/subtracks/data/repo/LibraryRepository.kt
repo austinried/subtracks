@@ -88,7 +88,10 @@ class LibraryRepository(
 
     fun starredSongs(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().starredSongs(sourceId) }
 
-    fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>> = db.libraryDao().downloadedSongs(sourceId)
+    fun downloadedSongs(
+        sourceId: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>> = db.libraryDao().downloadedSongs(sourceId, limit)
 
     fun downloadedSongsPage(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().homeDownloadedSongs(sourceId) }
 

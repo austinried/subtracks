@@ -188,7 +188,7 @@ class LibraryHomeDaoTest {
             downloads.upsert(SongDownload(sourceId, "s2", DownloadStatus.Queued))
             downloads.upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed))
 
-            val downloaded = dao.downloadedSongs(sourceId).first()
+            val downloaded = dao.downloadedSongs(sourceId, limit = 5).first()
             assertEquals(listOf("s1", "s3"), downloaded.map { it.song.id })
             assertEquals("cover-1", downloaded.first().coverArt)
             assertEquals(listOf("s1", "s3"), dao.downloadedSongIds(sourceId))
@@ -256,7 +256,8 @@ class LibraryHomeDaoTest {
             downloads.upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed, downloadedAt = 300))
             downloads.upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed, downloadedAt = 200))
 
-            assertEquals(listOf("s3", "s2", "s1"), dao.downloadedSongs(sourceId).first().map { it.song.id })
+            assertEquals(listOf("s3", "s2", "s1"), dao.downloadedSongs(sourceId, limit = 5).first().map { it.song.id })
+            assertEquals(listOf("s3", "s2"), dao.downloadedSongs(sourceId, limit = 2).first().map { it.song.id })
             assertEquals(listOf("s3", "s2", "s1"), dao.downloadedSongIds(sourceId))
             assertEquals(2L, dao.downloadedSongOrdinal(sourceId, "s1"))
         }
