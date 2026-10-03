@@ -20,6 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -276,6 +278,7 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text("Manage downloads") },
+                    leadingContent = { Icon(Icons.Rounded.Download, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
@@ -284,6 +287,7 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text("Licenses") },
+                    leadingContent = { Icon(Icons.Rounded.Description, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onOpenLicenses),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
