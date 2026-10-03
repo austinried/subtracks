@@ -27,9 +27,9 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Star
@@ -496,7 +496,7 @@ private val HomeSection.icon: ImageVector
             HomeSection.Genres -> Icons.Rounded.Category
             HomeSection.Decades -> Icons.Rounded.CalendarMonth
             HomeSection.RecentlyStarredSongs -> Icons.Rounded.Star
-            HomeSection.RecentlyAddedAlbums -> Icons.Rounded.NewReleases
+            HomeSection.RecentlyAddedAlbums -> Icons.Rounded.LibraryAdd
             HomeSection.Rediscover -> Icons.Rounded.Replay
         }
 

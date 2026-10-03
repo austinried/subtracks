@@ -2535,7 +2535,8 @@ class PlaybackControllerTest {
         handle.operations.clear()
         setOnline()
 
-        await { handle.operations.any { it.startsWith("setWindow") } }
+        await { handle.operations.any { it.startsWith("add") } }
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
         assertEquals(
             "s5",
             controller.state.value.item
@@ -2801,7 +2802,8 @@ class PlaybackControllerTest {
 
         setOffline()
 
-        await { handle.operations.any { it.startsWith("setWindow") } }
+        await { handle.operations.any { it.startsWith("remove") || it.startsWith("add") } }
+        assertFalse(handle.operations.any { it.startsWith("setWindow") })
         assertEquals(
             "s2",
             controller.state.value.item

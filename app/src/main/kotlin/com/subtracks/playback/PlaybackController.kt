@@ -1321,8 +1321,7 @@ class PlaybackController(
             if (snapshot.size == 0L) return@withLock
             downloads.awaitLoaded()
             val current = currentPosition() ?: return@withLock
-            val positionMs = player.currentPositionMs
-            val autoplay = player.playWhenReady
+            windowJob?.cancel()
             val target =
                 if (offline) {
                     downloadedAtOrAfter(snapshot, current) ?: run {
@@ -1332,9 +1331,15 @@ class PlaybackController(
                 } else {
                     current
                 }
-            windowJob?.cancel()
             queueRepository.setCursor(target)
-            loadWindow(target, autoplay = autoplay, startPositionMs = if (target == current) positionMs else 0)
+            if (target == current) {
+                // Keep the playing item in place and only add/remove its neighbours, so a downloaded
+                // track does not re-prepare (and audibly gap) when offline mode is toggled.
+                rebuildWindow(queueRepository.window(snapshot, target, QUEUE_WINDOW_RADIUS), target)
+                refresh(target)
+            } else {
+                loadWindow(target, autoplay = player.playWhenReady, startPositionMs = 0)
+            }
         }
 
     private fun movedCursor(
