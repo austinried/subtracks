@@ -510,6 +510,4 @@ const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
 
 const val SEARCH_RESULT_LIMIT = 50
 
-const val SEARCH_MIN_LENGTH = 3
-
 fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS

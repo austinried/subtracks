@@ -1,6 +1,7 @@
 package com.subtracks.ui.search
 
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -27,8 +28,10 @@ import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -37,6 +40,7 @@ import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -94,6 +98,7 @@ class SearchViewModelTest {
 
     @After
     fun tearDown() {
+        runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
         cancelAndJoinBlocking(controllerScope, repoScope)
         db.close()
         Dispatchers.resetMain()
@@ -127,6 +132,13 @@ class SearchViewModelTest {
         val blank = runBlocking { withTimeout(5_000) { viewModel.results.first { it.isEmpty } } }
 
         assertTrue(blank.isEmpty)
+    }
+
+    @Test
+    fun searchReadyCountsCodePointsRatherThanUtf16Units() {
+        assertTrue(searchReady("road"))
+        assertFalse(searchReady("ro"))
+        assertFalse(searchReady("a\uD83D\uDE00"))
     }
 
     @Test

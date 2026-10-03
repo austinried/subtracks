@@ -29,20 +29,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.data.db.SEARCH_MIN_LENGTH
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
-import com.subtracks.data.repo.SEARCH_MIN_LENGTH
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.ItemActions
+import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.home.AlbumListRow
 import com.subtracks.ui.home.ArtistListRow
@@ -138,18 +141,26 @@ fun SearchScreen(
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
                             ),
-                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                                .semantics { contentDescription = "Search your library" },
                     )
                 },
             )
         },
     ) { padding ->
         when {
-            query.length < SEARCH_MIN_LENGTH -> {
+            !searchReady(query) -> {
                 EmptyState(
                     text = "Type at least $SEARCH_MIN_LENGTH characters to search.",
                     modifier = Modifier.padding(padding),
                 )
+            }
+
+            results.loading -> {
+                LoadingState(Modifier.padding(padding))
             }
 
             results.isEmpty -> {
@@ -194,7 +205,7 @@ private fun LazyListScope.songResults(
 ) {
     if (songs.isEmpty()) return
     resultHeader("Songs")
-    items(songs, key = { it.song.id }) { item ->
+    items(songs, key = { "song-${it.song.id}" }) { item ->
         SongRow(
             song = item.song,
             coverArtId = item.coverArt,
@@ -218,7 +229,7 @@ private fun LazyListScope.albumResults(
 ) {
     if (albums.isEmpty()) return
     resultHeader("Albums")
-    items(albums, key = { it.id }) { album ->
+    items(albums, key = { "album-${it.id}" }) { album ->
         AlbumListRow(
             album = album,
             coverArt = coverArt,
@@ -237,7 +248,7 @@ private fun LazyListScope.artistResults(
 ) {
     if (artists.isEmpty()) return
     resultHeader("Artists")
-    items(artists, key = { it.id }) { artist ->
+    items(artists, key = { "artist-${it.id}" }) { artist ->
         ArtistListRow(
             artist = artist,
             coverArt = coverArt,
@@ -256,7 +267,7 @@ private fun LazyListScope.playlistResults(
 ) {
     if (playlists.isEmpty()) return
     resultHeader("Playlists")
-    items(playlists, key = { it.id }) { playlist ->
+    items(playlists, key = { "playlist-${it.id}" }) { playlist ->
         PlaylistRow(
             playlist = playlist,
             coverArt = coverArt,

@@ -130,20 +130,22 @@ internal const val PLAYLIST_ORDER_BY_UPDATED_REVERSED = "changed ASC, name COLLA
 
 // Cross-type search only runs from three characters, since a shorter term cannot use the trigram
 // index and scanning the whole library for it is not worth it.
+const val SEARCH_MIN_LENGTH = 3
+
 internal const val ALBUM_SEARCH_FILTER =
-    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
+    "(length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM album_search " +
         "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val ARTIST_SEARCH_FILTER =
-    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
+    "(length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM artist_search " +
         "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val PLAYLIST_SEARCH_FILTER =
-    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
+    "(length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM playlist_search " +
         "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val SONG_SEARCH_FILTER =
-    "(length(:search) >= 3 AND songs.rowid IN (SELECT rowid FROM song_search " +
+    "(length(:search) >= $SEARCH_MIN_LENGTH AND songs.rowid IN (SELECT rowid FROM song_search " +
         "WHERE song_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 @Dao

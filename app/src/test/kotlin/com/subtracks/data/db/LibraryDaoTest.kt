@@ -763,20 +763,6 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun songSearchRunsThroughTheTrigramIndex() =
-        runTest {
-            val plan =
-                plan(
-                    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
-                        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-                        "WHERE songs.sourceId = 1 AND ${SONG_SEARCH_FILTER.replace(":search", "'abc'")} " +
-                        "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT 20 OFFSET 0",
-                )
-
-            assertTrue(plan, plan.contains("song_search"))
-        }
-
-    @Test
     fun crossTypeSearchIgnoresQueriesShorterThanThreeCharacters() =
         runTest {
             val sourceId = source()

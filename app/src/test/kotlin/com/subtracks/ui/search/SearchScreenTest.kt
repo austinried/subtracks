@@ -83,6 +83,30 @@ class SearchScreenTest {
         composeRule.onNodeWithText("No results", substring = true).assertIsDisplayed()
     }
 
+    @Test
+    fun idsSharedAcrossTypesDoNotCollide() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SearchScreen(
+                    query = "road",
+                    onQueryChange = {},
+                    results =
+                        SearchResults(
+                            albums = listOf(album("1", "Road Album")),
+                            artists = listOf(artist("1", "Road Artist")),
+                            playlists = listOf(playlist("1", "Road Trip")),
+                            songs = listOf(AlbumSongItem(song("1", "Road Song"), coverArt = null)),
+                        ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Road Song").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Album").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Artist").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Trip").assertIsDisplayed()
+    }
+
     private fun album(
         id: String,
         name: String,
