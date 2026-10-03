@@ -44,7 +44,7 @@ def main [
         error make { msg: "GL_TOKEN is unset; it needs a GitLab token with the 'api' scope" }
     }
     let headers = { "PRIVATE-TOKEN": $token }
-    let upstream_id = (http get $"($api)/projects/($upstream)" --headers $headers | get id)
+    let upstream_id = (http get $"($api)/projects/($upstream)" | get id)
 
     let branch_exists = (try { http get $"($api)/projects/($fork)/repository/branches/($branch)" --headers $headers } catch { null }) | is-not-empty
     if not $branch_exists {
