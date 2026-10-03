@@ -668,7 +668,7 @@ private fun ListOptionsSheet(
         val descending = if (naturalDescending) !listQuery.descending else listQuery.descending
         Surface(
             onClick = onSearch,
-            shape = RoundedCornerShape(4.dp),
+            shape = RoundedCornerShape(8.dp),
             color = Color.Transparent,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 12.dp),
