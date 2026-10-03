@@ -1,5 +1,6 @@
 package com.subtracks.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,6 +47,7 @@ fun SearchField(
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = modifier.height(48.dp),
     ) {
         Row(
