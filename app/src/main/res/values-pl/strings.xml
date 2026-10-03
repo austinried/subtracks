@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Anuluj</string>
+    <string name="actions_delete">Usuń</string>
+    <string name="actions_download">Pobierz</string>
+    <string name="actions_download_cancel">Anuluj pobieranie</string>
+    <string name="actions_star">Ulubione</string>
+    <string name="actions_unstar">Usuń ulubione</string>
+    <string name="controls_shuffle">Losowo</string>
+    <string name="navigation_tabs_library">Kolekcja</string>
+    <string name="navigation_tabs_settings">Ustawienia</string>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Artysta</string>
+    <string name="resources_filter_genre">Wg gatunku</string>
+    <string name="resources_filter_starred">Ulubione</string>
+    <string name="resources_filter_year">Rok</string>
+    <string name="resources_sort_by_artist">Wg wykonawcy</string>
+    <string name="resources_sort_by_frequently_played">Często odtwarzane</string>
+    <string name="resources_sort_by_name">Wg nazwy</string>
+    <string name="resources_sort_by_recently_played">Ostatnio odtwarzane</string>
+    <string name="resources_sort_by_title">Tytuł</string>
+    <string name="resources_sort_by_year">Wg roku</string>
+    <string name="search_input_placeholder">Szukaj</string>
+    <string name="settings_about_actions_licenses">Licencje</string>
+    <string name="settings_about_name">Informacje o projekcie</string>
+    <string name="settings_network_name">Sieć</string>
+    <string name="settings_network_options_offline_mode">Tryb offline</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Bez ograniczeń</string>
+    <string name="settings_servers_actions_test_connection">Przetestuj połączenie</string>
+    <string name="settings_servers_fields_name">Nazwa</string>
+    <string name="settings_servers_fields_password">Hasło</string>
+    <string name="settings_servers_fields_username">Nazwa użytkownika</string>
+    <string name="navigation_tabs_home">Strona główna</string>
+</resources>

@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.model.DownloadError
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -40,10 +41,10 @@ class SystemDownloadEngineTest {
     }
 
     @Test
-    fun failureReasonsReadAsSentences() {
-        assertEquals("Not enough space to download", failureMessage(DownloadManager.ERROR_INSUFFICIENT_SPACE))
-        assertEquals("Storage is unavailable", failureMessage(DownloadManager.ERROR_DEVICE_NOT_FOUND))
-        assertEquals("Download failed", failureMessage(DownloadManager.ERROR_UNKNOWN))
+    fun failureReasonsMapToErrors() {
+        assertEquals(DownloadError.NoSpace, failureMessage(DownloadManager.ERROR_INSUFFICIENT_SPACE))
+        assertEquals(DownloadError.StorageUnavailable, failureMessage(DownloadManager.ERROR_DEVICE_NOT_FOUND))
+        assertEquals(DownloadError.Failed, failureMessage(DownloadManager.ERROR_UNKNOWN))
     }
 
     @Test

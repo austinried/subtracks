@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Hủy</string>
+    <string name="actions_delete">Xóa</string>
+    <string name="actions_download">Tải xuống</string>
+    <string name="actions_download_cancel">Hủy tải xuống</string>
+    <string name="actions_star">Yêu thích</string>
+    <string name="actions_unstar">Bỏ yêu thích</string>
+    <string name="controls_shuffle">Phát ngẫu nhiên</string>
+    <string name="navigation_tabs_library">Thư viện</string>
+    <string name="navigation_tabs_settings">Cài đặt</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <string name="resources_filter_album">Theo album</string>
+    <string name="resources_filter_artist">Theo nghệ sĩ</string>
+    <string name="resources_filter_genre">Theo thể loại</string>
+    <string name="resources_filter_starred">Theo yêu thích</string>
+    <string name="resources_filter_year">Theo năm</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d bài hát</item>
+        <item quantity="other">%1$d bài hát</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Nghệ sĩ</string>
+    <string name="resources_sort_by_frequently_played">Thường nghe</string>
+    <string name="resources_sort_by_name">Tên</string>
+    <string name="resources_sort_by_recently_played">Đã phát gần đây</string>
+    <string name="resources_sort_by_title">Tiêu đề</string>
+    <string name="resources_sort_by_year">Năm</string>
+    <string name="search_input_placeholder">Tìm kiếm</string>
+    <string name="settings_about_actions_licenses">Bản quyền</string>
+    <string name="settings_about_name">Về ứng dụng</string>
+    <string name="settings_network_name">Mạng</string>
+    <string name="settings_network_options_offline_mode">Chế độ ngoại tuyến</string>
+    <string name="settings_network_options_offline_mode_off">Đồng bộ nhạc qua mạng.</string>
+    <string name="settings_network_options_offline_mode_on">Không dùng internet để đồng bô hoặc phát nhạc.</string>
+    <string name="settings_network_options_stream_format_server_default">Theo mặc định máy chủ</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Vô giới hạn</string>
+    <string name="settings_servers_actions_test_connection">Kiểm tra kết nối</string>
+    <string name="settings_servers_fields_name">Tên</string>
+    <string name="settings_servers_fields_password">Mật khẩu</string>
+    <string name="settings_servers_fields_username">Tên đăng nhập</string>
+    <string name="navigation_tabs_home">Trang chủ</string>
+</resources>

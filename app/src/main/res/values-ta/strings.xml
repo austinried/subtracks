@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">ரத்துசெய்</string>
+    <string name="actions_delete">நீக்கு</string>
+    <string name="actions_download">பதிவிறக்கம்</string>
+    <string name="actions_download_cancel">பதிவிறக்கத்தை ரத்துசெய்</string>
+    <string name="actions_star">விண்மீன்</string>
+    <string name="actions_unstar">ச்டார்</string>
+    <string name="controls_shuffle">கலக்கு</string>
+    <string name="navigation_tabs_library">நூலகம்</string>
+    <string name="navigation_tabs_settings">அமைப்புகள்</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d செருகேடு</item>
+        <item quantity="other">%1$d செருகேடுகள்</item>
+    </plurals>
+    <string name="resources_filter_album">ஆல்பம்</string>
+    <string name="resources_filter_artist">கலைஞர்</string>
+    <string name="resources_filter_genre">வகை</string>
+    <string name="resources_filter_starred">நடித்தார்</string>
+    <string name="resources_filter_year">ஆண்டு</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d பாடல்</item>
+        <item quantity="other">%1$d பாடல்கள்</item>
+    </plurals>
+    <string name="resources_sort_by_artist">கலைஞர்</string>
+    <string name="resources_sort_by_frequently_played">அடிக்கடி விளையாடியது</string>
+    <string name="resources_sort_by_name">பெயர்</string>
+    <string name="resources_sort_by_recently_played">அண்மைக் காலத்தில் விளையாடியது</string>
+    <string name="resources_sort_by_title">தலைப்பு</string>
+    <string name="resources_sort_by_year">ஆண்டு</string>
+    <string name="search_input_placeholder">தேடல்</string>
+    <string name="settings_about_actions_licenses">உரிமங்கள்</string>
+    <string name="settings_about_name">பற்றி</string>
+    <string name="settings_network_name">பிணையம்</string>
+    <string name="settings_network_options_offline_mode">இணைப்பில்லாத பயன்முறை</string>
+    <string name="settings_network_options_offline_mode_off">இசையை ஒத்திசைக்க இணையத்தைப் பயன்படுத்தவும்.</string>
+    <string name="settings_network_options_offline_mode_on">இசையை ஒத்திசைக்க அல்லது இசைக்க இணையத்தைப் பயன்படுத்த வேண்டாம்.</string>
+    <string name="settings_network_options_stream_format_server_default">சேவையக இயல்புநிலையைப் பயன்படுத்தவும்</string>
+    <string name="settings_network_values_kbps">%1$s kbps</string>
+    <string name="settings_network_values_unlimited_kbps">வரம்பற்றது</string>
+    <string name="settings_servers_actions_test_connection">சோதனை இணைப்பு</string>
+    <string name="settings_servers_fields_name">பெயர்</string>
+    <string name="settings_servers_fields_password">கடவுச்சொல்</string>
+    <string name="settings_servers_fields_username">பயனர்பெயர்</string>
+    <string name="navigation_tabs_home">வீடு</string>
+</resources>

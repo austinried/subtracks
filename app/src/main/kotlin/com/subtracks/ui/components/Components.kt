@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
 import coil3.size.Dimension
+import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.theme.artworkColorsFromSeed
 import com.subtracks.ui.theme.placeholderSeed
@@ -360,13 +362,13 @@ fun FilteredEmptyState(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "Filters are hiding everything.",
+                text = stringResource(R.string.components_filters_hiding),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             Button(onClick = onClearFilters) {
-                Text("Clear filters")
+                Text(stringResource(R.string.components_clear_filters))
             }
         }
     }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Avbryt</string>
+    <string name="actions_delete">Radera</string>
+    <string name="actions_download">Ladda ned</string>
+    <string name="actions_download_cancel">Avbryt Nedladdning</string>
+    <string name="actions_star">Markera</string>
+    <string name="actions_unstar">Omarkera</string>
+    <string name="controls_shuffle">Blanda</string>
+    <string name="navigation_tabs_library">Bibliotek</string>
+    <string name="navigation_tabs_settings">Inställningar</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Artist</string>
+    <string name="resources_filter_genre">Genre</string>
+    <string name="resources_filter_starred">Markerad</string>
+    <string name="resources_filter_year">År</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d låt</item>
+        <item quantity="other">%1$d låtar</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Konstnär</string>
+    <string name="resources_sort_by_frequently_played">Spelas oftast</string>
+    <string name="resources_sort_by_name">Namn</string>
+    <string name="resources_sort_by_recently_played">Senast spelade</string>
+    <string name="resources_sort_by_title">Titel</string>
+    <string name="resources_sort_by_year">Efter år</string>
+    <string name="search_input_placeholder">Sök</string>
+    <string name="settings_about_actions_licenses">Licenser</string>
+    <string name="settings_about_name">Om</string>
+    <string name="settings_network_name">Nätverk</string>
+    <string name="settings_network_options_offline_mode">Offline-läge</string>
+    <string name="settings_network_options_offline_mode_off">Använd internet för att uppdatera musik.</string>
+    <string name="settings_network_options_offline_mode_on">Använd inte internet för att uppdatera eller spela upp musik.</string>
+    <string name="settings_network_options_stream_format_server_default">Använd serverns standardinställning</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Obegränsad</string>
+    <string name="settings_servers_actions_test_connection">Testanslutning</string>
+    <string name="settings_servers_fields_name">Namn</string>
+    <string name="settings_servers_fields_password">Lösenord</string>
+    <string name="settings_servers_fields_username">Användarnamn</string>
+    <string name="navigation_tabs_home">Hem</string>
+</resources>

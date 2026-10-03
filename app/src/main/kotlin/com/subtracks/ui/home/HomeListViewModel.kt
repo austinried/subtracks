@@ -1,9 +1,11 @@
 package com.subtracks.ui.home
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
@@ -32,12 +34,12 @@ data class HomeListRequest(
 )
 
 enum class OfflineListKind(
-    val title: String,
+    @param:StringRes val title: Int,
 ) {
-    Albums("Downloaded albums"),
-    Artists("Downloaded artists"),
-    Songs("Downloaded songs"),
-    Playlists("Downloaded playlists"),
+    Albums(R.string.home_downloaded_albums),
+    Artists(R.string.home_downloaded_artists),
+    Songs(R.string.home_downloaded_songs),
+    Playlists(R.string.home_downloaded_playlists),
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

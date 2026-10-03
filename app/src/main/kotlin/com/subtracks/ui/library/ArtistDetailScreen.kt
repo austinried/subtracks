@@ -67,6 +67,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -75,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
@@ -346,7 +349,7 @@ fun ArtistDetailScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.Shuffle,
-                                            contentDescription = "Shuffle artist",
+                                            contentDescription = stringResource(R.string.shuffle_artist),
                                             modifier = Modifier.size(SHUFFLE_ICON),
                                         )
                                     }
@@ -357,7 +360,7 @@ fun ArtistDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = "$albumCount ${if (albumCount == 1L) "album" else "albums"}",
+                                    text = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f),
@@ -368,7 +371,10 @@ fun ArtistDetailScreen(
                                 ) {
                                     Icon(
                                         imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                                        contentDescription = if (starred) "Unstar" else "Star",
+                                        contentDescription =
+                                            stringResource(
+                                                if (starred) R.string.actions_unstar else R.string.actions_star,
+                                            ),
                                         tint =
                                             if (starred) {
                                                 MaterialTheme.colorScheme.primary
@@ -378,7 +384,7 @@ fun ArtistDetailScreen(
                                     )
                                 }
                                 IconButton(onClick = onMore) {
-                                    Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
+                                    Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
                                 }
                             }
                         }
@@ -453,7 +459,7 @@ fun ArtistDetailScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Отменить</string>
+    <string name="actions_delete">Удалить</string>
+    <string name="actions_download">Скачать</string>
+    <string name="actions_download_cancel">Отменить загрузку</string>
+    <string name="actions_star">Избранное</string>
+    <string name="actions_unstar">Убрать из избранного</string>
+    <string name="controls_shuffle">Перемешать</string>
+    <string name="navigation_tabs_library">Библиотека</string>
+    <string name="navigation_tabs_settings">Настройки</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d альбом</item>
+        <item quantity="other">%1$d альбомы</item>
+    </plurals>
+    <string name="resources_filter_album">По альбомам</string>
+    <string name="resources_filter_artist">По исполнителю</string>
+    <string name="resources_filter_genre">По жанру</string>
+    <string name="resources_filter_starred">Избранные</string>
+    <string name="resources_filter_year">По годам</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d трек</item>
+        <item quantity="few">%1$d треков</item>
+        <item quantity="many">%1$d треков</item>
+        <item quantity="other">%1$d треки</item>
+    </plurals>
+    <string name="resources_sort_by_artist">По исполнителям</string>
+    <string name="resources_sort_by_frequently_played">Часто проигрываемые</string>
+    <string name="resources_sort_by_name">По имени</string>
+    <string name="resources_sort_by_recently_played">Недавно проигранные</string>
+    <string name="resources_sort_by_title">По заголовку</string>
+    <string name="resources_sort_by_year">По году</string>
+    <string name="search_input_placeholder">Поиск</string>
+    <string name="settings_about_actions_licenses">Лицензии</string>
+    <string name="settings_about_name">О Subtracks</string>
+    <string name="settings_network_name">Сеть</string>
+    <string name="settings_network_options_offline_mode">Автономный режим</string>
+    <string name="settings_network_options_offline_mode_off">Использовать интернет для синхронизации музыки.</string>
+    <string name="settings_network_options_offline_mode_on">Не использовать интернет для синхронизации или воспроизведения музыки.</string>
+    <string name="settings_network_options_stream_format_server_default">Использовать сервер по умолчанию</string>
+    <string name="settings_network_values_kbps">%1$s кбит/с</string>
+    <string name="settings_network_values_unlimited_kbps">Без ограничений</string>
+    <string name="settings_servers_actions_test_connection">Проверить подключение</string>
+    <string name="settings_servers_fields_name">Имя</string>
+    <string name="settings_servers_fields_password">Пароль</string>
+    <string name="settings_servers_fields_username">Имя пользователя</string>
+    <string name="navigation_tabs_home">Главная</string>
+</resources>

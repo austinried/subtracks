@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">İptal</string>
+    <string name="actions_delete">Sil</string>
+    <string name="actions_download">İndir</string>
+    <string name="actions_download_cancel">İndirmeyi iptal et</string>
+    <string name="actions_star">Yıldızla</string>
+    <string name="actions_unstar">Yıldızı Kaldır</string>
+    <string name="controls_shuffle">Karıştır</string>
+    <string name="navigation_tabs_library">Kütüphane</string>
+    <string name="navigation_tabs_settings">Ayarlar</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <string name="resources_filter_album">Albüm</string>
+    <string name="resources_filter_artist">Sanatçı</string>
+    <string name="resources_filter_genre">Türe göre</string>
+    <string name="resources_filter_starred">Yıldızlı</string>
+    <string name="resources_filter_year">Yıl</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d şarkı</item>
+        <item quantity="other">%1$d şarkı</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Sanatçıya Göre</string>
+    <string name="resources_sort_by_frequently_played">Sık Dinlenenler</string>
+    <string name="resources_sort_by_name">İsme göre</string>
+    <string name="resources_sort_by_recently_played">Yeni Dinleneler</string>
+    <string name="resources_sort_by_title">Başlık</string>
+    <string name="resources_sort_by_year">Yıla göre</string>
+    <string name="search_input_placeholder">Ara</string>
+    <string name="settings_about_actions_licenses">Lisanslar</string>
+    <string name="settings_about_name">Hakkında</string>
+    <string name="settings_network_name">Ağ</string>
+    <string name="settings_network_options_offline_mode">Çevrim dışı mod</string>
+    <string name="settings_network_options_offline_mode_off">İnterneti kullanarak müzikleri eşzamanla.</string>
+    <string name="settings_network_options_offline_mode_on">İnterneti müzikleri eşzamanlamak veya çalmak için kullanma.</string>
+    <string name="settings_network_options_stream_format_server_default">Sunucu öntanımlı değerini kullan</string>
+    <string name="settings_network_values_kbps">%1$skb/sn</string>
+    <string name="settings_network_values_unlimited_kbps">Sınırsız</string>
+    <string name="settings_servers_actions_test_connection">Bağlantıyı Sına</string>
+    <string name="settings_servers_fields_name">Ad</string>
+    <string name="settings_servers_fields_password">Şifre</string>
+    <string name="settings_servers_fields_username">Kullanıcı Adı</string>
+    <string name="navigation_tabs_home">Giriş</string>
+</resources>

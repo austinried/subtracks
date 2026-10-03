@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">取消</string>
+    <string name="actions_delete">刪除</string>
+    <string name="actions_download">下載</string>
+    <string name="actions_download_cancel">取消下載</string>
+    <string name="actions_star">收藏</string>
+    <string name="actions_unstar">移除收藏</string>
+    <string name="controls_shuffle">隨機播放</string>
+    <string name="navigation_tabs_library">所有</string>
+    <string name="navigation_tabs_settings">設定</string>
+    <plurals name="resources_album_count">
+        <item quantity="other">%1$d 張專輯</item>
+    </plurals>
+    <string name="resources_filter_album">專輯</string>
+    <string name="resources_filter_artist">歌手</string>
+    <string name="resources_filter_genre">根據類型</string>
+    <string name="resources_filter_starred">已收藏</string>
+    <string name="resources_filter_year">年份</string>
+    <plurals name="resources_song_count">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
+    <string name="resources_sort_by_artist">根據歌手</string>
+    <string name="resources_sort_by_frequently_played">最常播放</string>
+    <string name="resources_sort_by_name">根據名稱</string>
+    <string name="resources_sort_by_recently_played">最近播放</string>
+    <string name="resources_sort_by_title">標題</string>
+    <string name="resources_sort_by_year">根據年份</string>
+    <string name="search_input_placeholder">搜尋</string>
+    <string name="settings_about_actions_licenses">許可</string>
+    <string name="settings_about_name">關於</string>
+    <string name="settings_network_name">網路</string>
+    <string name="settings_network_options_offline_mode">離線模式</string>
+    <string name="settings_network_options_offline_mode_off">使用網際網路同步音樂。</string>
+    <string name="settings_network_options_offline_mode_on">不使用網際網路同步或播放音樂。</string>
+    <string name="settings_network_options_stream_format_server_default">使用伺服器預設設定</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">不限制</string>
+    <string name="settings_servers_actions_test_connection">測試連線</string>
+    <string name="settings_servers_fields_name">名稱</string>
+    <string name="settings_servers_fields_password">密碼</string>
+    <string name="settings_servers_fields_username">用戶名稱</string>
+    <string name="navigation_tabs_home">首頁</string>
+</resources>

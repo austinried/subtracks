@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_star">Afegir als favorits</string>
+    <string name="actions_unstar">Retirar estrella</string>
+    <string name="navigation_tabs_library">Biblioteca</string>
+    <string name="navigation_tabs_settings">Paràmetres</string>
+    <string name="resources_filter_genre">Per gènere</string>
+    <string name="resources_filter_starred">Favorits</string>
+    <string name="resources_sort_by_artist">Per artista</string>
+    <string name="resources_sort_by_frequently_played">Escoltat freqüentment</string>
+    <string name="resources_sort_by_name">Pel nom</string>
+    <string name="resources_sort_by_recently_played">Reproduït recentment</string>
+    <string name="resources_sort_by_year">Per any</string>
+    <string name="search_input_placeholder">Cercar</string>
+    <string name="settings_about_actions_licenses">Llicències</string>
+    <string name="settings_about_name">Quant a</string>
+    <string name="settings_network_name">Xarxa</string>
+    <string name="settings_network_values_kbps">%1$s kbps</string>
+    <string name="settings_network_values_unlimited_kbps">Il·limitat</string>
+    <string name="settings_servers_actions_test_connection">Comprovar la connexió</string>
+    <string name="settings_servers_fields_password">Contrasenya</string>
+    <string name="settings_servers_fields_username">Nom d’usuari</string>
+    <string name="navigation_tabs_home">Inici</string>
+</resources>

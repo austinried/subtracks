@@ -41,10 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -98,11 +100,22 @@ fun AddSourceScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditing) "Edit server" else "Add server") },
+                title = {
+                    Text(
+                        if (state.isEditing) {
+                            stringResource(R.string.settings_servers_actions_edit)
+                        } else {
+                            stringResource(R.string.settings_servers_actions_add)
+                        },
+                    )
+                },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.navigation_back),
+                            )
                         }
                     }
                 },
@@ -113,7 +126,7 @@ fun AddSourceScreen(
                             enabled = state.canDelete && !state.busy,
                             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         ) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete server")
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.settings_servers_actions_delete))
                         }
                     }
                 },
@@ -144,10 +157,10 @@ fun AddSourceScreen(
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     }
                     OutlinedButton(onClick = onTest, enabled = !state.busy) {
-                        Text("Test connection")
+                        Text(stringResource(R.string.settings_servers_actions_test_connection))
                     }
                     Button(onClick = onSave, enabled = !state.busy) {
-                        Text("Save and sync")
+                        Text(stringResource(R.string.settings_servers_actions_save))
                     }
                 }
             }
@@ -164,16 +177,16 @@ fun AddSourceScreen(
         ) {
             Text(
                 if (state.isEditing) {
-                    "Update this server's connection details."
+                    stringResource(R.string.edit_server_intro)
                 } else {
-                    "Connect a Subsonic-compatible server such as Navidrome, gonic or Airsonic."
+                    stringResource(R.string.add_server_intro)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (state.isEditing && !state.canDelete) {
                 Text(
-                    "This is the active server. Switch to another server before deleting it.",
+                    stringResource(R.string.active_server_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -181,34 +194,34 @@ fun AddSourceScreen(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = onNameChange,
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.settings_servers_fields_name)) },
                 singleLine = true,
                 isError = state.nameError,
-                supportingText = if (state.nameError) ({ Text("Required") }) else null,
+                supportingText = if (state.nameError) ({ Text(stringResource(R.string.required)) }) else null,
                 modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
             )
             OutlinedTextField(
                 value = state.address,
                 onValueChange = onAddressChange,
-                label = { Text("Server address") },
-                placeholder = { Text("https://music.example.com") },
+                label = { Text(stringResource(R.string.settings_servers_fields_address)) },
+                placeholder = { Text(stringResource(R.string.server_address_placeholder)) },
                 singleLine = true,
                 isError = state.addressError,
-                supportingText = if (state.addressError) ({ Text("Required") }) else null,
+                supportingText = if (state.addressError) ({ Text(stringResource(R.string.required)) }) else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.fillMaxWidth().focusRequester(addressFocus),
             )
             OutlinedTextField(
                 value = state.username,
                 onValueChange = onUsernameChange,
-                label = { Text("Username") },
+                label = { Text(stringResource(R.string.settings_servers_fields_username)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
                 value = state.password,
                 onValueChange = onPasswordChange,
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.settings_servers_fields_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -219,9 +232,9 @@ fun AddSourceScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Token authentication")
+                    Text(stringResource(R.string.token_authentication))
                     Text(
-                        "Recommended. Disable only for servers that reject the salted token scheme.",
+                        stringResource(R.string.token_authentication_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -243,18 +256,18 @@ fun AddSourceScreen(
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
-            title = { Text("Delete server?") },
-            text = { Text("${state.name} and its downloaded songs will be removed from this device.") },
+            title = { Text(stringResource(R.string.delete_server_title)) },
+            text = { Text(stringResource(R.string.delete_server_body, state.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         confirmingDelete = false
                         onDelete()
                     },
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.actions_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") }
+                TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.actions_cancel)) }
             },
         )
     }

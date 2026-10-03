@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">取消</string>
+    <string name="actions_delete">删除</string>
+    <string name="actions_download">下载</string>
+    <string name="actions_download_cancel">取消下载</string>
+    <string name="actions_star">收藏</string>
+    <string name="actions_unstar">移除收藏</string>
+    <string name="controls_shuffle">随机播放</string>
+    <string name="navigation_tabs_library">所有</string>
+    <string name="navigation_tabs_settings">设置</string>
+    <plurals name="resources_album_count">
+        <item quantity="other">%1$d 张专辑</item>
+    </plurals>
+    <string name="resources_filter_album">专辑</string>
+    <string name="resources_filter_artist">歌手</string>
+    <string name="resources_filter_genre">根据类型</string>
+    <string name="resources_filter_starred">已收藏</string>
+    <string name="resources_filter_year">年份</string>
+    <plurals name="resources_song_count">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
+    <string name="resources_sort_by_artist">根据歌手</string>
+    <string name="resources_sort_by_frequently_played">播放最多</string>
+    <string name="resources_sort_by_name">根据名称</string>
+    <string name="resources_sort_by_recently_played">最近播放</string>
+    <string name="resources_sort_by_title">标题</string>
+    <string name="resources_sort_by_year">根据年份</string>
+    <string name="search_input_placeholder">搜索</string>
+    <string name="settings_about_actions_licenses">许可</string>
+    <string name="settings_about_name">关于</string>
+    <string name="settings_network_name">网络</string>
+    <string name="settings_network_options_offline_mode">离线模式</string>
+    <string name="settings_network_options_offline_mode_off">使用互联网同步音乐。</string>
+    <string name="settings_network_options_offline_mode_on">不使用互联网同步或播放音乐。</string>
+    <string name="settings_network_options_stream_format_server_default">使用服务器默认设置</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">不限制</string>
+    <string name="settings_servers_actions_test_connection">测试连接</string>
+    <string name="settings_servers_fields_name">名称</string>
+    <string name="settings_servers_fields_password">密码</string>
+    <string name="settings_servers_fields_username">用户名</string>
+    <string name="navigation_tabs_home">首页</string>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">キャンセル</string>
+    <string name="actions_delete">削除</string>
+    <string name="actions_download">ダウンロード</string>
+    <string name="actions_download_cancel">ダウンロードをキャンセル</string>
+    <string name="navigation_tabs_library">ライブラリ</string>
+    <string name="navigation_tabs_settings">設定</string>
+    <string name="resources_filter_album">アルブム</string>
+    <string name="resources_filter_starred">星付きアルバム</string>
+    <string name="resources_filter_year">年</string>
+    <string name="resources_sort_by_frequently_played">よく聴くアルバム</string>
+    <string name="resources_sort_by_recently_played">最近再生した</string>
+    <string name="search_input_placeholder">検索</string>
+    <string name="settings_network_name">ネット</string>
+    <string name="settings_servers_fields_name">名前</string>
+    <string name="settings_servers_fields_password">パスワルド</string>
+    <string name="settings_servers_fields_username">ウーザ名</string>
+    <string name="navigation_tabs_home">ホーム</string>
+</resources>

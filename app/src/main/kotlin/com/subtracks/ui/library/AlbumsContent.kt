@@ -20,11 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
@@ -65,9 +67,9 @@ fun AlbumsContent(
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
                 EmptyState(
-                    text = "No albums yet.\nSync with your server to fill your library.",
+                    text = stringResource(R.string.albums_empty),
                     modifier = modifier,
-                    actionLabel = "Sync",
+                    actionLabel = stringResource(R.string.sync),
                     onAction = onSync,
                 )
             }

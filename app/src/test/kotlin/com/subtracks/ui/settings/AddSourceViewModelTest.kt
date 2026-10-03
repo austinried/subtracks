@@ -141,7 +141,8 @@ class AddSourceViewModelTest {
 
     private fun viewModel(sourceId: Long? = null): AddSourceViewModel {
         val syncManager = SyncManager(db, sourceRepository, QueueRepository(db), scope = repoScope)
-        return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId).also { createdViewModels += it }
+        val resources = ApplicationProvider.getApplicationContext<Context>().resources
+        return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId, resources).also { createdViewModels += it }
     }
 
     private fun ok() = MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>")

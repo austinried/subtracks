@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">ยกเลิก</string>
+    <string name="actions_delete">ลบ</string>
+    <string name="actions_download">ดาวน์โหลด</string>
+    <string name="actions_download_cancel">ยกเลิกการดาวน์โหลด</string>
+    <string name="actions_star">ดาว</string>
+    <string name="actions_unstar">ยกเลิกดาว</string>
+    <string name="controls_shuffle">เล่นแบบสุ่ม</string>
+    <string name="navigation_tabs_library">ห้องสมุด</string>
+    <string name="navigation_tabs_settings">การตั้งค่า</string>
+    <plurals name="resources_album_count">
+        <item quantity="other">%1$d อัลบั้ม</item>
+    </plurals>
+    <string name="resources_filter_album">อัลบั้ม</string>
+    <string name="resources_filter_artist">ศิลปิน</string>
+    <string name="resources_filter_genre">ประเภท</string>
+    <string name="resources_filter_starred">ให้ดาว</string>
+    <string name="resources_filter_year">ปี</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d เพลง</item>
+        <item quantity="other">%1$d เพลง</item>
+    </plurals>
+    <string name="resources_sort_by_artist">ศิลปิน</string>
+    <string name="resources_sort_by_frequently_played">เพลงที่เล่นบ่อย</string>
+    <string name="resources_sort_by_name">ชื่อเพลง</string>
+    <string name="resources_sort_by_recently_played">เล่นล่าสุด</string>
+    <string name="resources_sort_by_title">ชื่อเพลง</string>
+    <string name="resources_sort_by_year">ปี</string>
+    <string name="search_input_placeholder">ค้นหา</string>
+    <string name="settings_about_actions_licenses">ใบอนุญาต</string>
+    <string name="settings_about_name">เกี่ยวกับ</string>
+    <string name="settings_network_name">เคลือข่าย</string>
+    <string name="settings_network_options_offline_mode">โหมดอ๊อฟไลน์</string>
+    <string name="settings_network_options_offline_mode_off">เปิดใช้อินเตอร์เน็ตเพื่อให้ข้อมูลเพลงเหมือนกัน</string>
+    <string name="settings_network_options_offline_mode_on">ปิดใช้อินเตอร์เน็ตเพื่อให้ข้อมูลเพลงเหมือนกันหรือเล่นเพลง</string>
+    <string name="settings_network_options_stream_format_server_default">ใช้ค่าเริ่มต้นของเซิร์ฟเวอร์</string>
+    <string name="settings_network_values_kbps">%1$sกิโลบิตต่อวินาที (kbps)</string>
+    <string name="settings_network_values_unlimited_kbps">ไม่จำกัด</string>
+    <string name="settings_servers_actions_test_connection">ทดสอบการเชื่อมต่อ</string>
+    <string name="settings_servers_fields_name">ชื่อ</string>
+    <string name="settings_servers_fields_password">รหัสผ่าน</string>
+    <string name="settings_servers_fields_username">ชื่อผู้ใช้</string>
+    <string name="navigation_tabs_home">หน้าหลัก</string>
+</resources>

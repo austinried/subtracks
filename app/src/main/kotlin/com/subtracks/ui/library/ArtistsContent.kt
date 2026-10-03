@@ -17,12 +17,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.subtracks.R
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
@@ -60,7 +63,7 @@ fun ArtistsContent(
             if (filtered) {
                 FilteredEmptyState(onClearFilters, modifier)
             } else {
-                EmptyState("No artists yet.", modifier, actionLabel = "Sync", onAction = onSync)
+                EmptyState(stringResource(R.string.artists_empty), modifier, actionLabel = stringResource(R.string.sync), onAction = onSync)
             }
         }
 
@@ -87,7 +90,12 @@ fun ArtistsContent(
                             },
                             supportingContent = {
                                 Text(
-                                    text = "${artist.albumCount} ${if (artist.albumCount == 1L) "album" else "albums"}",
+                                    text =
+                                        pluralStringResource(
+                                            R.plurals.resources_album_count,
+                                            artist.albumCount.toInt(),
+                                            artist.albumCount,
+                                        ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )

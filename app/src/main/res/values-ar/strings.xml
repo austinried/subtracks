@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_star">مميز</string>
+    <string name="actions_unstar">ازل التمييز</string>
+    <string name="navigation_tabs_library">المكتبة</string>
+    <string name="navigation_tabs_settings">الإعدادات</string>
+    <string name="resources_filter_genre">حسب النوع</string>
+    <string name="resources_filter_starred">موسوم</string>
+    <string name="resources_sort_by_artist">حسب الفنان/ة</string>
+    <string name="resources_sort_by_frequently_played">مشغل كثيرا</string>
+    <string name="resources_sort_by_name">حسب الاسم</string>
+    <string name="resources_sort_by_recently_played">شغل حديثا</string>
+    <string name="resources_sort_by_year">حسب السنة</string>
+    <string name="search_input_placeholder">بحث</string>
+    <string name="settings_about_actions_licenses">الرخص</string>
+    <string name="settings_about_name">حول</string>
+    <string name="settings_network_name">الشبكة</string>
+    <string name="settings_network_values_kbps">%1$s كيلو بايت في الثانية</string>
+    <string name="settings_network_values_unlimited_kbps">غير محدود</string>
+    <string name="settings_servers_actions_test_connection">أخبر الأتصال</string>
+    <string name="settings_servers_fields_password">كلمة المرور</string>
+    <string name="settings_servers_fields_username">إسم المستخدم</string>
+    <string name="navigation_tabs_home">الرئيسية</string>
+</resources>

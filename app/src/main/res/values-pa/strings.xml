@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_star">ਤਾਰਾ</string>
+    <string name="actions_unstar">ਤਾਰਾ ਹਟਾਓ</string>
+    <string name="navigation_tabs_library">ਲਾਇਬ੍ਰੇਰੀ</string>
+    <string name="navigation_tabs_settings">ਸੈਟਿੰਗਾਂ</string>
+    <string name="resources_filter_genre">ਸ਼ੈਲੀ ਦੁਆਰਾ</string>
+    <string name="resources_filter_starred">ਸਟਾਰ ਕੀਤੇ ਗਏ</string>
+    <string name="resources_sort_by_artist">ਕਲਾਕਾਰ ਦੁਆਰਾ</string>
+    <string name="resources_sort_by_frequently_played">ਅਕਸਰ ਚਲਾਏ ਗਏ</string>
+    <string name="resources_sort_by_name">ਨਾਮ ਦੁਆਰਾ</string>
+    <string name="resources_sort_by_recently_played">ਹਾਲ ਹੀ ਵਿੱਚ ਚਲਾਏ ਗਏ</string>
+    <string name="resources_sort_by_year">ਸਾਲ ਦੁਆਰਾ</string>
+    <string name="search_input_placeholder">ਖੋਜੋ</string>
+    <string name="settings_about_actions_licenses">ਲਾਇਸੰਸ</string>
+    <string name="settings_about_name">ਬਾਰੇ</string>
+    <string name="settings_network_name">ਨੈੱਟਵਰਕ</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">ਅਸੀਮਿਤ</string>
+    <string name="settings_servers_actions_test_connection">ਟੈਸਟ ਕਨੈਕਸ਼ਨ</string>
+    <string name="settings_servers_fields_password">ਪਾਸਵਰਡ</string>
+    <string name="settings_servers_fields_username">ਯੂਜ਼ਰਨੇਮ</string>
+    <string name="navigation_tabs_home">ਘਰ</string>
+</resources>

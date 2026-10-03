@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Utzi</string>
+    <string name="actions_delete">Ezabatu</string>
+    <string name="actions_download">Deskargatu</string>
+    <string name="actions_download_cancel">Utzi deskargatzeari</string>
+    <string name="actions_star">Gogokoetan sartu</string>
+    <string name="actions_unstar">Gogokoetatik kendu</string>
+    <string name="controls_shuffle">Nahastu</string>
+    <string name="navigation_tabs_library">Liburutegia</string>
+    <string name="navigation_tabs_settings">Ezarpenak</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">Album bat</item>
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <string name="resources_filter_album">Albuma</string>
+    <string name="resources_filter_artist">Musikaria</string>
+    <string name="resources_filter_genre">Generoa</string>
+    <string name="resources_filter_starred">Gogokoak</string>
+    <string name="resources_filter_year">Urtea</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">Kanta bat</item>
+        <item quantity="other">%1$d kanta</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Musikaria</string>
+    <string name="resources_sort_by_frequently_played">Askotan jarritakoak</string>
+    <string name="resources_sort_by_name">Alfabetikoki</string>
+    <string name="resources_sort_by_recently_played">Duela gutxi jarritakoak</string>
+    <string name="resources_sort_by_year">Urtearen arabera</string>
+    <string name="search_input_placeholder">Bilatu</string>
+    <string name="settings_about_actions_licenses">Lizentziak</string>
+    <string name="settings_about_name">Honi buruz</string>
+    <string name="settings_network_name">Sarea</string>
+    <string name="navigation_tabs_home">Hasiera</string>
+</resources>

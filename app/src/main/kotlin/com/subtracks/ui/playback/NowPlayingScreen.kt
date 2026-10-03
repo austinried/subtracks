@@ -1,5 +1,6 @@
 package com.subtracks.ui.playback
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -63,6 +64,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -71,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.LocalPlatformContext
+import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
@@ -217,7 +220,7 @@ fun NowPlayingRoute(
     val art = controller.coverArt(state.item)
     val thumbnail = controller.coverArt(state.item, thumbnail = true)
     val queueContext = state.context
-    val fallbackTitle = state.item?.album?.takeIf { it.isNotBlank() } ?: "Library"
+    val fallbackTitle = state.item?.album?.takeIf { it.isNotBlank() } ?: stringResource(R.string.navigation_tabs_library)
     val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
@@ -355,6 +358,7 @@ fun NowPlayingScreen(
             frozenStrip = null
         }
     }
+    val kindLabel = stringResource(state.context?.kind?.label() ?: R.string.context_kind_library)
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
@@ -372,7 +376,7 @@ fun NowPlayingScreen(
                             title = {
                                 Column {
                                     Text(
-                                        text = "Now playing: ${state.context?.kind?.label() ?: "library"}".uppercase(),
+                                        text = stringResource(R.string.now_playing_header, kindLabel).uppercase(),
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.SemiBold,
                                         letterSpacing = 1.sp,
@@ -388,7 +392,10 @@ fun NowPlayingScreen(
                             },
                             navigationIcon = {
                                 IconButton(onClick = onBack) {
-                                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = stringResource(R.string.navigation_back),
+                                    )
                                 }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -459,7 +466,7 @@ fun NowPlayingScreen(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
                                         enabled = onAlbumClick != null,
-                                        onClickLabel = "Open album",
+                                        onClickLabel = stringResource(R.string.open_album),
                                     ) { onAlbumClick?.invoke() }
                                     .testTag(NOW_PLAYING_COVER_TAG),
                             contentAlignment = Alignment.Center,
@@ -518,7 +525,7 @@ fun NowPlayingScreen(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
                                             enabled = onArtistClick != null,
-                                            onClickLabel = "Open artist",
+                                            onClickLabel = stringResource(R.string.open_artist),
                                         ) { onArtistClick?.invoke() },
                             ) {
                                 Box(Modifier.height(titleHeight), contentAlignment = Alignment.CenterStart) {
@@ -542,7 +549,7 @@ fun NowPlayingScreen(
                             IconButton(onClick = { onToggleStar?.invoke() }, enabled = onToggleStar != null) {
                                 Icon(
                                     imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                                    contentDescription = if (starred) "Unstar" else "Star",
+                                    contentDescription = stringResource(if (starred) R.string.actions_unstar else R.string.actions_star),
                                     tint =
                                         if (starred) {
                                             MaterialTheme.colorScheme.primary
@@ -590,11 +597,13 @@ fun NowPlayingScreen(
                                             RepeatMode.One -> Icons.Rounded.RepeatOneOn
                                         },
                                     contentDescription =
-                                        when (state.repeat) {
-                                            RepeatMode.Off -> "Repeat off"
-                                            RepeatMode.All -> "Repeat all"
-                                            RepeatMode.One -> "Repeat one"
-                                        },
+                                        stringResource(
+                                            when (state.repeat) {
+                                                RepeatMode.Off -> R.string.repeat_off
+                                                RepeatMode.All -> R.string.repeat_all
+                                                RepeatMode.One -> R.string.repeat_one
+                                            },
+                                        ),
                                     tint =
                                         if (state.repeat == RepeatMode.Off) {
                                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -607,7 +616,7 @@ fun NowPlayingScreen(
                             IconButton(onClick = onPrevious, modifier = Modifier.size(72.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.SkipPrevious,
-                                    contentDescription = "Previous",
+                                    contentDescription = stringResource(R.string.controls_previous),
                                     modifier = Modifier.size(60.dp),
                                 )
                             }
@@ -629,7 +638,14 @@ fun NowPlayingScreen(
                                 } else {
                                     Icon(
                                         imageVector = if (state.isPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
-                                        contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                        contentDescription =
+                                            if (state.isPlaying) {
+                                                stringResource(
+                                                    R.string.controls_pause,
+                                                )
+                                            } else {
+                                                stringResource(R.string.controls_play)
+                                            },
                                         modifier = Modifier.size(playButtonSize),
                                     )
                                 }
@@ -637,14 +653,14 @@ fun NowPlayingScreen(
                             IconButton(onClick = onNext, modifier = Modifier.size(72.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.SkipNext,
-                                    contentDescription = "Next",
+                                    contentDescription = stringResource(R.string.controls_next),
                                     modifier = Modifier.size(60.dp),
                                 )
                             }
                             IconButton(onClick = onShuffle, modifier = Modifier.size(48.dp)) {
                                 Icon(
                                     imageVector = if (state.shuffle) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
-                                    contentDescription = "Shuffle",
+                                    contentDescription = stringResource(R.string.controls_shuffle),
                                     tint =
                                         if (state.shuffle) {
                                             MaterialTheme.colorScheme.onBackground
@@ -663,14 +679,14 @@ fun NowPlayingScreen(
                             IconButton(onClick = onQueue, modifier = Modifier.size(40.dp)) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                                    contentDescription = "Queue",
+                                    contentDescription = stringResource(R.string.controls_queue),
                                     modifier = Modifier.size(30.dp),
                                 )
                             }
                             IconButton(onClick = onMore, modifier = Modifier.size(40.dp)) {
                                 Icon(
                                     imageVector = Icons.Rounded.MoreHoriz,
-                                    contentDescription = "More",
+                                    contentDescription = stringResource(R.string.controls_more),
                                     modifier = Modifier.size(30.dp),
                                 )
                             }
@@ -682,15 +698,16 @@ fun NowPlayingScreen(
     }
 }
 
-private fun QueueKind.label(): String =
+@StringRes
+private fun QueueKind.label(): Int =
     when (this) {
-        QueueKind.Album -> "album"
-        QueueKind.Playlist -> "playlist"
-        QueueKind.Song -> "song"
-        QueueKind.Artist -> "artist"
-        QueueKind.Genre -> "genre"
-        QueueKind.Downloaded -> "downloads"
-        QueueKind.Starred -> "starred"
+        QueueKind.Album -> R.string.context_kind_album
+        QueueKind.Playlist -> R.string.context_kind_playlist
+        QueueKind.Song -> R.string.context_kind_song
+        QueueKind.Artist -> R.string.context_kind_artist
+        QueueKind.Genre -> R.string.context_kind_genre
+        QueueKind.Downloaded -> R.string.context_kind_downloads
+        QueueKind.Starred -> R.string.context_kind_starred
     }
 
 private fun formatTime(milliseconds: Long): String {

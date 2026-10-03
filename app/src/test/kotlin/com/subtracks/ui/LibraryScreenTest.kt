@@ -225,7 +225,7 @@ class LibraryScreenTest {
                 composeRule.runOnIdle { pagerState.requestScrollToPage(1, step * 0.05f) }
                 composeRule.waitForIdle()
                 composeRule
-                    .onNodeWithContentDescription(LibraryTab.Playlists.label)
+                    .onNodeWithContentDescription(composeRule.activity.getString(LibraryTab.Playlists.label))
                     .fetchSemanticsNode()
                     .boundsInRoot.left
             }

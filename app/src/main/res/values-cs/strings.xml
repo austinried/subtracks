@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Zrušit</string>
+    <string name="actions_delete">Smazat</string>
+    <string name="actions_download">Stáhnout</string>
+    <string name="actions_download_cancel">Zrušit stahování</string>
+    <string name="actions_star">Ohodnotit</string>
+    <string name="actions_unstar">Zrušit hodnocení</string>
+    <string name="controls_shuffle">Náhodně</string>
+    <string name="navigation_tabs_library">Knihovna</string>
+    <string name="navigation_tabs_settings">Nastavení</string>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Umělec</string>
+    <string name="resources_filter_genre">Podle žánru</string>
+    <string name="resources_filter_starred">Ohodnocené</string>
+    <string name="resources_filter_year">Rok</string>
+    <string name="resources_sort_by_artist">Umělce</string>
+    <string name="resources_sort_by_frequently_played">Často přehrávané</string>
+    <string name="resources_sort_by_name">Názvu</string>
+    <string name="resources_sort_by_recently_played">Často přehrávané</string>
+    <string name="resources_sort_by_title">Názvu</string>
+    <string name="resources_sort_by_year">Roku</string>
+    <string name="search_input_placeholder">Hledat</string>
+    <string name="settings_about_actions_licenses">Licence</string>
+    <string name="settings_about_name">O aplikaci</string>
+    <string name="settings_network_name">Síť</string>
+    <string name="settings_network_options_stream_format_server_default">Použít nastavení serveru</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Neomezeno</string>
+    <string name="settings_servers_actions_test_connection">Otestovat spojení</string>
+    <string name="settings_servers_fields_name">Jméno</string>
+    <string name="settings_servers_fields_password">Heslo</string>
+    <string name="settings_servers_fields_username">Uživ. jméno</string>
+    <string name="navigation_tabs_home">Domů</string>
+</resources>

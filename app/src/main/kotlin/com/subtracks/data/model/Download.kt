@@ -1,12 +1,32 @@
 package com.subtracks.data.model
 
+import androidx.annotation.StringRes
 import androidx.room3.ColumnInfo
 import androidx.room3.ColumnTypeConverter
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
+import com.subtracks.R
 
 enum class DownloadStatus { Queued, Running, Completed, Failed }
+
+enum class DownloadError(
+    @param:StringRes val messageRes: Int,
+) {
+    NoSpace(R.string.error_download_no_space),
+    StorageUnavailable(R.string.error_download_storage_unavailable),
+    WriteFailed(R.string.error_download_write_failed),
+    ServerRefused(R.string.error_download_server_refused),
+    TooManyRedirects(R.string.error_download_too_many_redirects),
+    ResumeFailed(R.string.error_download_resume_failed),
+    Failed(R.string.error_download_failed),
+    FileMissing(R.string.error_download_file_missing),
+    ServerError(R.string.error_download_server_error),
+    NoAddress(R.string.error_download_no_address),
+    NothingLeft(R.string.error_download_nothing_left),
+    Stopped(R.string.error_download_stopped),
+    InactiveSource(R.string.error_download_inactive_source),
+}
 
 @Entity(
     tableName = "song_downloads",
@@ -34,7 +54,7 @@ data class SongDownload(
     val engineId: Long? = null,
     @ColumnInfo(defaultValue = "0") val bytes: Long = 0,
     @ColumnInfo(defaultValue = "0") val total: Long = 0,
-    val error: String? = null,
+    val error: DownloadError? = null,
     @ColumnInfo(defaultValue = "0") val downloadedAt: Long = 0,
 ) {
     val progress: Float?
@@ -103,4 +123,12 @@ class DownloadStatusConverter {
 
     @ColumnTypeConverter
     fun toDownloadStatus(value: String): DownloadStatus = DownloadStatus.entries.firstOrNull { it.name == value } ?: DownloadStatus.Failed
+}
+
+class DownloadErrorConverter {
+    @ColumnTypeConverter
+    fun fromDownloadError(error: DownloadError): String = error.name
+
+    @ColumnTypeConverter
+    fun toDownloadError(value: String): DownloadError = DownloadError.entries.firstOrNull { it.name == value } ?: DownloadError.Failed
 }

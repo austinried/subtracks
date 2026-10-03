@@ -1,5 +1,7 @@
 package com.subtracks.data.download
 
+import com.subtracks.data.model.DownloadError
+
 class FakeDownloadEngine : DownloadEngine {
     private val downloads = mutableMapOf<Long, EngineDownload>()
     private var nextId = 1L
@@ -45,7 +47,7 @@ class FakeDownloadEngine : DownloadEngine {
     }
 
     fun fail(id: Long) {
-        downloads[id] = EngineDownload(EngineStatus.Failed, error = "Download failed")
+        downloads[id] = EngineDownload(EngineStatus.Failed, error = DownloadError.Failed)
     }
 
     fun forget(id: Long) {

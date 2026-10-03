@@ -21,7 +21,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.subtracks.R
 import com.subtracks.data.media.readAudioEncoding
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.DownloadStatus
@@ -48,29 +50,45 @@ fun SongInfoDialog(
     val averageBps = sizeBytes?.let { bytes -> song.duration?.takeIf { it > 0 }?.let { seconds -> (bytes * 8 / seconds).toInt() } }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Info") },
+        title = { Text(stringResource(R.string.info)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                InfoRow("Title", song.title)
-                InfoRow("Artist", song.artist)
-                InfoRow("Album", song.album)
-                InfoRow("Duration", song.duration?.let(DateUtils::formatElapsedTime))
-                InfoRow("Track", song.track?.let { track -> song.disc?.let { "$it.$track" } ?: track.toString() })
-                InfoRow("Genre", genres.joinToString(", ").ifBlank { null })
-                InfoRow("Starred", if (song.starred != null) "Yes" else null)
+                InfoRow(stringResource(R.string.resources_sort_by_title), song.title)
+                InfoRow(stringResource(R.string.resources_filter_artist), song.artist)
+                InfoRow(stringResource(R.string.resources_filter_album), song.album)
+                InfoRow(stringResource(R.string.info_duration), song.duration?.let(DateUtils::formatElapsedTime))
+                InfoRow(
+                    stringResource(R.string.info_track),
+                    song.track?.let { track ->
+                        song.disc?.let { disc -> stringResource(R.string.info_track_number, disc, track) }
+                            ?: track.toString()
+                    },
+                )
+                InfoRow(stringResource(R.string.resources_filter_genre), genres.joinToString(", ").ifBlank { null })
+                InfoRow(stringResource(R.string.info_starred), if (song.starred != null) stringResource(R.string.info_yes) else null)
                 if (download != null) {
-                    InfoRow("Download", downloadStatus(download.status))
-                    InfoRow("Size", sizeBytes?.let { Formatter.formatFileSize(context, it) })
-                    download.error?.let { InfoRow("Error", it) }
+                    InfoRow(stringResource(R.string.actions_download), downloadStatus(download.status))
+                    InfoRow(stringResource(R.string.info_size), sizeBytes?.let { Formatter.formatFileSize(context, it) })
+                    download.error?.let { InfoRow(stringResource(R.string.info_error), stringResource(it.messageRes)) }
                 }
-                InfoRow("Format", shown?.format)
+                InfoRow(stringResource(R.string.info_format), shown?.format)
                 // A decoder often reports no bitrate; the file's own size over the track length does.
-                InfoRow("Bitrate", (shown?.bitrate?.takeIf { it > 0 } ?: averageBps)?.let { "${it / 1000} kbps" })
-                InfoRow("Sample rate", shown?.sampleRate?.takeIf { it > 0 }?.let { "$it Hz" })
-                InfoRow("Channels", shown?.channels?.takeIf { it > 0 }?.toString())
+                InfoRow(
+                    stringResource(R.string.info_bitrate),
+                    (shown?.bitrate?.takeIf { it > 0 } ?: averageBps)?.let { stringResource(R.string.bitrate_value, it / 1000) },
+                )
+                InfoRow(
+                    stringResource(R.string.info_sample_rate),
+                    shown
+                        ?.sampleRate
+                        ?.takeIf {
+                            it > 0
+                        }?.let { stringResource(R.string.info_sample_rate_value, it) },
+                )
+                InfoRow(stringResource(R.string.info_channels), shown?.channels?.takeIf { it > 0 }?.toString())
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.info_close)) } },
     )
 }
 
@@ -100,10 +118,11 @@ private fun InfoRow(
 
 private val INFO_LABEL_WIDTH = 80.dp
 
+@Composable
 private fun downloadStatus(status: DownloadStatus): String =
     when (status) {
-        DownloadStatus.Completed -> "Downloaded"
-        DownloadStatus.Queued -> "Queued"
-        DownloadStatus.Running -> "Downloading"
-        DownloadStatus.Failed -> "Failed"
+        DownloadStatus.Completed -> stringResource(R.string.status_downloaded)
+        DownloadStatus.Queued -> stringResource(R.string.status_queued)
+        DownloadStatus.Running -> stringResource(R.string.status_downloading)
+        DownloadStatus.Failed -> stringResource(R.string.status_failed)
     }

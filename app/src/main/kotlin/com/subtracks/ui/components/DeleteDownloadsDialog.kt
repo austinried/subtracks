@@ -7,6 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.subtracks.R
 import com.subtracks.data.model.DownloadList
 
 data class PendingDownloadDelete(
@@ -26,17 +28,17 @@ fun DeleteDownloadsDialog(
     val freed = formatBytes(LocalContext.current, bytes)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete downloads") },
-        text = { Text("$name\n\nDeleting will free $freed") },
+        title = { Text(stringResource(R.string.resources_song_list_delete_all_title)) },
+        text = { Text(stringResource(R.string.resources_song_list_delete_all_content, name, freed)) },
         confirmButton = {
             TextButton(
                 onClick = {
                     onConfirm()
                     onDismiss()
                 },
-            ) { Text("Delete") }
+            ) { Text(stringResource(R.string.actions_delete)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) } },
     )
 }
 

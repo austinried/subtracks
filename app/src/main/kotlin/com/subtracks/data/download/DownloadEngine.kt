@@ -1,5 +1,7 @@
 package com.subtracks.data.download
 
+import com.subtracks.data.model.DownloadError
+
 data class EngineRequest(
     val uri: String,
     val path: String,
@@ -13,7 +15,7 @@ data class EngineDownload(
     val status: EngineStatus,
     val bytes: Long = 0,
     val total: Long = 0,
-    val error: String? = null,
+    val error: DownloadError? = null,
 )
 
 interface DownloadEngine {

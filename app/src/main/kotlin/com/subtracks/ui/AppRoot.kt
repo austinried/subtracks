@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
@@ -58,6 +59,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.subtracks.R
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
@@ -474,7 +476,7 @@ private fun MainNavigation() {
                     ) { entry ->
                         val section = HomeSection.fromRoute(entry.arguments?.getString("section")) ?: return@composable
                         HomeListRoute(
-                            request = HomeListRequest(title = section.title, section = section),
+                            request = HomeListRequest(title = stringResource(section.title), section = section),
                             onBack = { navController.popBackStack() },
                             onAlbumClick = { album ->
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
@@ -522,7 +524,7 @@ private fun MainNavigation() {
                     ) { entry ->
                         val decade = entry.arguments?.getLong("decade") ?: return@composable
                         HomeListRoute(
-                            request = HomeListRequest(title = "${decade}s", decade = decade),
+                            request = HomeListRequest(title = stringResource(R.string.home_decade, decade), decade = decade),
                             onBack = { navController.popBackStack() },
                             onAlbumClick = { album ->
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
@@ -548,7 +550,7 @@ private fun MainNavigation() {
                             OfflineListKind.entries.firstOrNull { it.name == entry.arguments?.getString("kind") }
                                 ?: return@composable
                         HomeListRoute(
-                            request = HomeListRequest(title = kind.title, downloaded = kind),
+                            request = HomeListRequest(title = stringResource(kind.title), downloaded = kind),
                             onBack = { navController.popBackStack() },
                             onAlbumClick = { album ->
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))

@@ -15,6 +15,7 @@ import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
+import com.subtracks.data.model.DownloadError
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
@@ -208,7 +209,7 @@ class DownloadRepositoryTest {
     fun aFailedDownloadCanBeStartedAgain() =
         runTest {
             seedLibrary()
-            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Failed, engineId = 3, error = "boom"))
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Failed, engineId = 3, error = DownloadError.Failed))
 
             runBlocking { repository.download(1, "s1") }
 
@@ -220,14 +221,14 @@ class DownloadRepositoryTest {
     fun aFailedDownloadIsNotRestartedByReconcile() =
         runTest {
             seedLibrary()
-            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Failed, engineId = null, error = "boom"))
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Failed, engineId = null, error = DownloadError.Failed))
 
             runBlocking { repository.reconcile() }
             runBlocking { repository.reconcile() }
 
             assertTrue(engine.requests.isEmpty())
             assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
-            assertEquals("boom", row(1, "s1")?.error)
+            assertEquals(DownloadError.Failed, row(1, "s1")?.error)
         }
 
     @Test
@@ -242,7 +243,7 @@ class DownloadRepositoryTest {
             runBlocking { repository.reconcile() }
 
             assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
-            assertEquals("Download failed", row(1, "s1")?.error)
+            assertEquals(DownloadError.Failed, row(1, "s1")?.error)
             assertFalse(file(1, "s1").exists())
         }
 
@@ -1000,7 +1001,7 @@ class DownloadRepositoryTest {
             runBlocking { repository.reconcile() }
 
             assertEquals(DownloadStatus.Failed, row(1, "s1")?.status)
-            assertEquals("The server sent an error instead of the track", row(1, "s1")?.error)
+            assertEquals(DownloadError.ServerError, row(1, "s1")?.error)
             assertFalse(file(1, "s1").exists())
             assertNull(repository.localUri("s1"))
         }

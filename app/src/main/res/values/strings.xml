@@ -1,7 +1,296 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Subtracks</string>
-    <string name="download_cancel">Cancel</string>
-    <string name="download_channel">Downloads</string>
     <string name="download_channel_description">Progress while songs download</string>
+
+    <string name="actions_cancel">Cancel</string>
+    <string name="actions_delete">Delete</string>
+    <string name="actions_download">Download</string>
+    <string name="actions_download_cancel">Cancel download</string>
+    <string name="actions_star">Star</string>
+    <string name="actions_unstar">Unstar</string>
+
+    <string name="controls_shuffle">Shuffle</string>
+    <string name="controls_shuffle_play">Shuffle play</string>
+    <string name="controls_play">Play</string>
+    <string name="controls_pause">Pause</string>
+    <string name="controls_next">Next</string>
+    <string name="controls_previous">Previous</string>
+    <string name="controls_queue">Queue</string>
+    <string name="controls_more">More</string>
+
+    <string name="navigation_back">Back</string>
+    <string name="navigation_tabs_home">Home</string>
+    <string name="navigation_tabs_library">Library</string>
+    <string name="navigation_tabs_settings">Settings</string>
+
+    <string name="resources_album_name">Albums</string>
+    <string name="resources_artist_name">Artists</string>
+    <string name="resources_playlist_name">Playlists</string>
+    <string name="resources_queue_name">Queue</string>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Artist</string>
+    <string name="resources_filter_genre">Genre</string>
+    <string name="resources_filter_starred">Starred</string>
+    <string name="resources_filter_year">Year</string>
+    <string name="resources_song_list_delete_all_content">%1$s\n\nDeleting will free %2$s</string>
+    <string name="resources_song_list_delete_all_title">Delete downloads</string>
+    <string name="resources_sort_by_added">Added</string>
+    <string name="resources_sort_by_artist">Artist</string>
+    <string name="resources_sort_by_frequently_played">Frequently played</string>
+    <string name="resources_sort_by_name">Name</string>
+    <string name="resources_sort_by_recently_played">Recently played</string>
+    <string name="resources_sort_by_title">Title</string>
+    <string name="resources_sort_by_updated">Updated</string>
+    <string name="resources_sort_by_year">Year</string>
+
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d albums</item>
+    </plurals>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
+
+    <string name="search_input_placeholder">Search</string>
+
+    <string name="settings_about_actions_licenses">Licenses</string>
+    <string name="settings_about_name">About</string>
+    <string name="settings_music_name">Playback</string>
+    <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
+    <string name="settings_music_options_scrobble_title">Scrobble to server</string>
+    <string name="settings_network_name">Network</string>
+    <string name="settings_network_options_max_bitrate_mobile_title">Stream quality: Mobile</string>
+    <string name="settings_network_options_max_bitrate_wifi_title">Stream quality: Wi-Fi</string>
+    <string name="settings_network_options_offline_mode">Offline mode</string>
+    <string name="settings_network_options_offline_mode_off">Use the internet to sync music.</string>
+    <string name="settings_network_options_offline_mode_on">Don\'t use the internet to sync or play music.</string>
+    <string name="settings_network_options_stream_format">Preferred format</string>
+    <string name="settings_network_options_stream_format_server_default">Use server default</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Unlimited</string>
+    <string name="settings_servers_actions_add">Add server</string>
+    <string name="settings_servers_actions_delete">Delete server</string>
+    <string name="settings_servers_actions_edit">Edit server</string>
+    <string name="settings_servers_actions_save">Save and sync</string>
+    <string name="settings_servers_actions_test_connection">Test connection</string>
+    <string name="settings_servers_fields_address">Server address</string>
+    <string name="settings_servers_fields_name">Name</string>
+    <string name="settings_servers_fields_password">Password</string>
+    <string name="settings_servers_fields_username">Username</string>
+    <string name="settings_servers_name">Servers</string>
+
+    <string name="components_filters_hiding">Filters are hiding everything.</string>
+    <string name="components_clear_filters">Clear filters</string>
+
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_empty">No downloads yet.</string>
+    <string name="downloads_all">all downloads</string>
+    <string name="delete_all">Delete all</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+    <string name="delete_download">Delete download</string>
+    <string name="cancel_downloads">Cancel downloads</string>
+    <string name="retry_download">Retry download</string>
+    <string name="download_cancel_of">Cancel download of %1$s</string>
+    <string name="download_delete_of">Delete download of %1$s</string>
+    <string name="download_delete_all_of">Delete downloads of %1$s</string>
+    <plurals name="downloads_albums_size">
+        <item quantity="one">%1$d album · %2$s</item>
+        <item quantity="other">%1$d albums · %2$s</item>
+    </plurals>
+    <plurals name="downloads_songs_size">
+        <item quantity="one">%1$d song · %2$s</item>
+        <item quantity="other">%1$d songs · %2$s</item>
+    </plurals>
+    <string name="download_status_summary">%1$s · %2$s</string>
+    <string name="bitrate_value">%1$d kbps</string>
+
+    <string name="play_next">Play next</string>
+    <string name="add_to_queue">Add to queue</string>
+    <string name="info">Info</string>
+    <string name="more_options">More options</string>
+    <string name="open_album">Open album</string>
+    <string name="open_artist">Open artist</string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="unknown_album">Unknown album</string>
+
+    <string name="albums_empty">No albums yet.\nSync with your server to fill your library.</string>
+    <string name="artists_empty">No artists yet.</string>
+    <string name="playlists_empty">No playlists yet.</string>
+    <string name="sync">Sync</string>
+    <string name="list_options">List options</string>
+    <string name="search_this_list">Search this list</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_ascending">Sort ascending</string>
+    <string name="sort_descending">Sort descending</string>
+    <string name="filters">Filters</string>
+    <string name="filter_downloaded">Downloaded</string>
+    <string name="close_search">Close search</string>
+    <string name="offline_mode_status">Offline mode; tap to go online</string>
+    <string name="shuffle_artist">Shuffle artist</string>
+
+    <string name="status_playing">Playing</string>
+    <string name="status_downloaded">Downloaded</string>
+    <string name="status_queued">Queued</string>
+    <string name="status_downloading">Downloading</string>
+    <string name="status_failed">Failed</string>
+
+    <string name="info_duration">Duration</string>
+    <string name="info_track">Track</string>
+    <string name="info_track_number">%1$d.%2$s</string>
+    <string name="info_starred">Starred</string>
+    <string name="info_yes">Yes</string>
+    <string name="info_size">Size</string>
+    <string name="info_error">Error</string>
+    <string name="info_format">Format</string>
+    <string name="info_bitrate">Bitrate</string>
+    <string name="info_sample_rate">Sample rate</string>
+    <string name="info_sample_rate_value">%1$d Hz</string>
+    <string name="info_channels">Channels</string>
+    <string name="info_close">Close</string>
+
+    <string name="disc_header">Disc %1$d</string>
+    <string name="disc_track">%1$s: Disc %2$d</string>
+    <string name="playlist_duration_minutes">%1$d min</string>
+    <string name="playlist_duration_hours">%1$d hr</string>
+    <string name="playlist_duration_hours_minutes">%1$d hr %2$d min</string>
+
+    <string name="now_playing_header">Now playing: %1$s</string>
+    <string name="context_kind_library">library</string>
+    <string name="context_kind_album">album</string>
+    <string name="context_kind_playlist">playlist</string>
+    <string name="context_kind_song">song</string>
+    <string name="context_kind_artist">artist</string>
+    <string name="context_kind_genre">genre</string>
+    <string name="context_kind_downloads">downloads</string>
+    <string name="context_kind_starred">starred</string>
+    <string name="repeat_off">Repeat off</string>
+    <string name="repeat_all">Repeat all</string>
+    <string name="repeat_one">Repeat one</string>
+
+    <string name="queue_title">Queue</string>
+    <string name="queue_empty">The queue is empty.</string>
+    <string name="queue_up_next">Up next</string>
+    <string name="queue_next_up">Next up</string>
+    <string name="queue_next_from_here">Next from here</string>
+    <string name="queue_reordered">Queue reordered</string>
+    <string name="queue_removed">Removed from queue</string>
+    <string name="queue_clear_up_next">Clear up next</string>
+    <string name="queue_remove">Remove from queue</string>
+    <string name="queue_reorder">Reorder</string>
+    <string name="undo">Undo</string>
+
+    <string name="action_done">Done</string>
+    <string name="sync_concurrency">Sync concurrency</string>
+    <string name="sync_concurrency_parallel">Parallel server requests while syncing</string>
+    <string name="sync_concurrency_sequential">1 (sequential)</string>
+    <string name="download_quality">Download quality</string>
+    <string name="download_over_mobile">Download over mobile data</string>
+    <string name="download_network_wifi_and_mobile">Wi-Fi and mobile</string>
+    <string name="download_network_wifi_only">Wi-Fi only</string>
+    <string name="manage_downloads">Manage downloads</string>
+    <string name="maximum_bitrate">Maximum bitrate</string>
+    <string name="stream_quality_server_default">Server default</string>
+    <string name="required">Required</string>
+    <string name="server_address_placeholder">https://music.example.com</string>
+    <string name="token_authentication">Token authentication</string>
+    <string name="token_authentication_hint">Recommended. Disable only for servers that reject the salted token scheme.</string>
+    <string name="add_server_intro">Connect a Subsonic-compatible server such as Navidrome, gonic or Airsonic.</string>
+    <string name="edit_server_intro">Update this server\'s connection details.</string>
+    <string name="active_server_hint">This is the active server. Switch to another server before deleting it.</string>
+    <string name="delete_server_title">Delete server?</string>
+    <string name="delete_server_body">%1$s and its downloaded songs will be removed from this device.</string>
+    <string name="connection_ok">Connection OK</string>
+    <string name="connection_token_fallback">Server does not support token auth; using the password instead</string>
+    <string name="connection_failed">Failed: %1$s</string>
+    <string name="save_failed">Could not save: %1$s</string>
+    <string name="active_server_delete_error">The active server can\'t be deleted; switch to another server first</string>
+    <string name="edit_source_description">Edit %1$s</string>
+    <string name="use_source_description">Use %1$s</string>
+
+    <plurals name="download_notification_title">
+        <item quantity="one">Downloading %1$d song</item>
+        <item quantity="other">Downloading %1$d songs</item>
+    </plurals>
+    <string name="download_notification_progress">%1$d%%</string>
+    <string name="download_notification_in_progress">In progress</string>
+    <string name="playback_error_network">Can\'t reach the server. Check your connection.</string>
+    <string name="playback_error_refused">The server refused to stream this track.</string>
+    <string name="star_update_failed">Could not update star</string>
+    <string name="sync_offline">Offline mode is on</string>
+    <string name="sync_failed">Sync failed</string>
+    <string name="sync_failed_detail">Sync failed: %1$s</string>
+
+    <string name="error_download_no_space">Not enough space to download</string>
+    <string name="error_download_storage_unavailable">Storage is unavailable</string>
+    <string name="error_download_write_failed">Could not write the download</string>
+    <string name="error_download_server_refused">The server refused to send this track</string>
+    <string name="error_download_too_many_redirects">The server redirected too many times</string>
+    <string name="error_download_resume_failed">The download could not be resumed</string>
+    <string name="error_download_failed">Download failed</string>
+    <string name="error_download_file_missing">The downloaded file is missing</string>
+    <string name="error_download_server_error">The server sent an error instead of the track</string>
+    <string name="error_download_no_address">Can\'t download: the server address is unavailable</string>
+    <string name="error_download_nothing_left">Nothing left to download from this list</string>
+    <string name="error_download_stopped">The download stopped unexpectedly</string>
+    <string name="error_download_inactive_source">Can\'t download from a source that isn\'t active</string>
+    <string name="error_server_unexpected">Unexpected response from the server</string>
+    <string name="error_server_unknown">Unknown error</string>
+    <string name="error_server_malformed">Malformed response from the server</string>
+    <string name="error_server_truncated">Truncated response from the server</string>
+    <string name="error_library_too_large">Library is too large to sync: it exceeds %1$d rows</string>
+    <string name="error_http">HTTP %1$d</string>
+
+    <string name="home_section_recently_played_artists">Recently played artists</string>
+    <string name="home_section_most_played">Most played</string>
+    <string name="home_section_most_played_artists">Most played artists</string>
+    <string name="home_section_genres">Genres</string>
+    <string name="home_section_decades">Decades</string>
+    <string name="home_section_recently_starred">Recently starred</string>
+    <string name="home_section_recently_added">Recently added</string>
+    <string name="home_section_rediscover">Rediscover</string>
+    <string name="home_downloaded_songs">Downloaded songs</string>
+    <string name="home_downloaded_albums">Downloaded albums</string>
+    <string name="home_downloaded_artists">Downloaded artists</string>
+    <string name="home_downloaded_playlists">Downloaded playlists</string>
+    <string name="home_empty">Nothing to show yet.\nSync with your server to fill your library.</string>
+    <string name="home_decade">%1$ds</string>
+    <string name="home_time_just_now">Just now</string>
+    <string name="home_time_today">Today</string>
+    <string name="home_time_yesterday">Yesterday</string>
+    <string name="home_time_last_week">Last week</string>
+    <string name="home_time_last_month">Last month</string>
+    <string name="home_time_last_year">Last year</string>
+    <plurals name="home_time_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="home_time_weeks_ago">
+        <item quantity="one">%1$d week ago</item>
+        <item quantity="other">%1$d weeks ago</item>
+    </plurals>
+    <plurals name="home_time_months_ago">
+        <item quantity="one">%1$d month ago</item>
+        <item quantity="other">%1$d months ago</item>
+    </plurals>
+    <plurals name="home_time_years_ago">
+        <item quantity="one">%1$d year ago</item>
+        <item quantity="other">%1$d years ago</item>
+    </plurals>
+    <plurals name="home_play_count">
+        <item quantity="one">%1$d play</item>
+        <item quantity="other">%1$d plays</item>
+    </plurals>
+
+    <string name="codec_mp3" translatable="false">MP3</string>
+    <string name="codec_aac" translatable="false">AAC</string>
+    <string name="codec_alac" translatable="false">ALAC</string>
+    <string name="codec_flac" translatable="false">FLAC</string>
+    <string name="codec_ogg" translatable="false">Ogg</string>
+    <string name="codec_vorbis" translatable="false">Vorbis</string>
+    <string name="codec_opus" translatable="false">Opus</string>
+    <string name="codec_webm" translatable="false">WebM</string>
+    <string name="codec_wav" translatable="false">WAV</string>
 </resources>

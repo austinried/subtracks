@@ -53,7 +53,7 @@ class DownloadNotifier(
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setProgress(PROGRESS_MAX, ((content.progress ?: 0f) * PROGRESS_MAX).toInt(), content.progress == null)
-            .addAction(0, context.getString(R.string.download_cancel), cancelIntent())
+            .addAction(0, context.getString(R.string.actions_cancel), cancelIntent())
             .setContentIntent(launchIntent())
             .build()
 
@@ -75,7 +75,7 @@ class DownloadNotifier(
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, context.getString(R.string.download_channel), NotificationManager.IMPORTANCE_LOW).apply {
+            NotificationChannel(CHANNEL_ID, context.getString(R.string.downloads_title), NotificationManager.IMPORTANCE_LOW).apply {
                 description = context.getString(R.string.download_channel_description)
                 setShowBadge(false)
             },

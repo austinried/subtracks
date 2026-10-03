@@ -38,7 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
@@ -155,7 +157,14 @@ fun MiniPlayer(
                             } else {
                                 Icon(
                                     imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                    contentDescription =
+                                        if (state.isPlaying) {
+                                            stringResource(
+                                                R.string.controls_pause,
+                                            )
+                                        } else {
+                                            stringResource(R.string.controls_play)
+                                        },
                                     tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(36.dp),
                                 )
@@ -164,7 +173,7 @@ fun MiniPlayer(
                         IconButton(onClick = onNext, enabled = state.hasNext, modifier = Modifier.size(48.dp)) {
                             Icon(
                                 imageVector = Icons.Rounded.SkipNext,
-                                contentDescription = "Next",
+                                contentDescription = stringResource(R.string.controls_next),
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(36.dp),
                             )

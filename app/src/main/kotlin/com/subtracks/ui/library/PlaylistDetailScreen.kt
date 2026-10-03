@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import android.content.Context
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,10 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.subtracks.R
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
@@ -127,6 +130,7 @@ fun PlaylistDetailScreen(
     playingSongId: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     HeroDetailScaffold(
         artwork = artwork,
         title = playlist?.name.orEmpty(),
@@ -136,7 +140,7 @@ fun PlaylistDetailScreen(
                 art = coverArt(playlist?.coverArt, false),
                 thumbnailRef = coverArt(playlist?.coverArt, true),
                 name = playlist?.name.orEmpty(),
-                subtitle = playlistSummary(playlist, offline, downloadStatus.downloaded),
+                subtitle = playlistSummary(context, playlist, offline, downloadStatus.downloaded),
                 comment = playlist?.comment,
                 hasSongs = songs.itemCount > 0,
                 onPlay = onPlay,
@@ -175,6 +179,7 @@ fun PlaylistDetailScreen(
 }
 
 private fun playlistSummary(
+    context: Context,
     playlist: Playlist?,
     offline: Boolean,
     downloadedSongs: Long,
@@ -182,19 +187,22 @@ private fun playlistSummary(
     playlist ?: return ""
     val songs = if (offline) downloadedSongs else playlist.songCount
     return listOfNotNull(
-        "$songs ${if (songs == 1L) "song" else "songs"}",
-        formatDuration(playlist.duration),
+        context.resources.getQuantityString(R.plurals.resources_song_count, songs.toInt(), songs),
+        formatDuration(context, playlist.duration),
     ).joinToString(" $DOT ")
 }
 
-private fun formatDuration(seconds: Long): String? {
+private fun formatDuration(
+    context: Context,
+    seconds: Long,
+): String? {
     if (seconds < 60) return null
     val totalMinutes = seconds / 60
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
     return when {
-        hours == 0L -> "$totalMinutes min"
-        minutes == 0L -> "$hours hr"
-        else -> "$hours hr $minutes min"
+        hours == 0L -> context.getString(R.string.playlist_duration_minutes, totalMinutes)
+        minutes == 0L -> context.getString(R.string.playlist_duration_hours, hours)
+        else -> context.getString(R.string.playlist_duration_hours_minutes, hours, minutes)
     }
 }

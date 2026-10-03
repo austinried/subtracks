@@ -5,6 +5,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import com.subtracks.R
 import com.subtracks.data.db.createAndroidDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
@@ -115,8 +116,16 @@ fun appModule(
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { params -> HomeListViewModel(get(), get(), get(), params.get()) }
     viewModel { SettingsViewModel(get(), get()) }
-    viewModel { DownloadsViewModel(get(), get(), get()) }
-    viewModel { params -> AddSourceViewModel(get(), get(), get(), params.getOrNull()) }
+    viewModel {
+        DownloadsViewModel(
+            get(),
+            get(),
+            get(),
+            context.getString(R.string.unknown_artist),
+            context.getString(R.string.unknown_album),
+        )
+    }
+    viewModel { params -> AddSourceViewModel(get(), get(), get(), params.getOrNull(), context.resources) }
     viewModel { params -> AlbumDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> ArtistDetailViewModel(get(), get(), get(), get(), params.get()) }
     viewModel { params -> PlaylistDetailViewModel(get(), get(), get(), get(), params.get()) }

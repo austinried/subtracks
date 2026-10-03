@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Mégsem</string>
+    <string name="actions_delete">Törlés</string>
+    <string name="actions_download">Letöltés</string>
+    <string name="actions_download_cancel">Letöltés visszavonása</string>
+    <string name="actions_star">Kedvencekhez adás</string>
+    <string name="actions_unstar">Kedvencekből törlés</string>
+    <string name="controls_shuffle">Véletlen sorrend</string>
+    <string name="navigation_tabs_settings">Beállítások</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d album</item>
+        <item quantity="other">%1$d album</item>
+    </plurals>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Előadó</string>
+    <string name="resources_filter_genre">Stílus</string>
+    <string name="resources_filter_starred">Kedvencek között</string>
+    <string name="resources_filter_year">Év</string>
+    <string name="resources_sort_by_artist">Előadó</string>
+    <string name="resources_sort_by_frequently_played">Gyakran játszott</string>
+    <string name="resources_sort_by_name">Név</string>
+    <string name="resources_sort_by_recently_played">Legutóbb játszott</string>
+    <string name="resources_sort_by_title">Cím</string>
+    <string name="resources_sort_by_year">Év</string>
+    <string name="search_input_placeholder">Keresés</string>
+    <string name="settings_about_actions_licenses">Licenszek</string>
+    <string name="settings_about_name">Az alkalmazásról</string>
+    <string name="settings_network_name">Hálózat</string>
+    <string name="settings_network_options_offline_mode">Offline mód</string>
+    <string name="settings_network_options_stream_format_server_default">Szerver alapértelmezés használata</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Korlátlan</string>
+    <string name="settings_servers_actions_test_connection">Kapcsolat tesztelése</string>
+    <string name="settings_servers_fields_name">Név</string>
+    <string name="settings_servers_fields_password">Jelszó</string>
+    <string name="settings_servers_fields_username">Felhasználónév</string>
+    <string name="navigation_tabs_home">Kezdőoldal</string>
+</resources>

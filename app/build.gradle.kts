@@ -31,6 +31,10 @@ android {
         compose = true
     }
 
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -39,6 +43,7 @@ android {
 
     lint {
         checkReleaseBuilds = false
+        disable += setOf("MissingTranslation", "MissingQuantity")
     }
 
     testOptions {

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Cancelar</string>
+    <string name="actions_delete">Eliminar</string>
+    <string name="actions_download">Descargar</string>
+    <string name="actions_download_cancel">Cancelar a descarga</string>
+    <string name="actions_star">Estrela</string>
+    <string name="actions_unstar">Retirar</string>
+    <string name="controls_shuffle">Barallar</string>
+    <string name="navigation_tabs_library">Biblioteca</string>
+    <string name="navigation_tabs_settings">Axustes</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d álbum</item>
+        <item quantity="other">%1$d álbums</item>
+    </plurals>
+    <string name="resources_filter_album">Álbum</string>
+    <string name="resources_filter_artist">Artista</string>
+    <string name="resources_filter_genre">Por xénero</string>
+    <string name="resources_filter_starred">Favoritas</string>
+    <string name="resources_filter_year">Ano</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d canción</item>
+        <item quantity="other">%1$d cancións</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Por artista</string>
+    <string name="resources_sort_by_frequently_played">Reproducidas a miúdo</string>
+    <string name="resources_sort_by_name">Por nome</string>
+    <string name="resources_sort_by_recently_played">Reproducidas recente</string>
+    <string name="resources_sort_by_title">Título</string>
+    <string name="resources_sort_by_year">Por ano</string>
+    <string name="search_input_placeholder">Buscar</string>
+    <string name="settings_about_actions_licenses">Licenzas</string>
+    <string name="settings_about_name">Acerca de</string>
+    <string name="settings_network_name">Rede</string>
+    <string name="settings_network_options_offline_mode">Modo sen conexión</string>
+    <string name="settings_network_options_offline_mode_off">Usa internet para sincr. música.</string>
+    <string name="settings_network_options_offline_mode_on">Non usar internet para sincr. ou reproducir música.</string>
+    <string name="settings_network_options_stream_format_server_default">Usar por defecto do servidor</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Sen límite</string>
+    <string name="settings_servers_actions_test_connection">Comprobar Conexión</string>
+    <string name="settings_servers_fields_name">Nome</string>
+    <string name="settings_servers_fields_password">Contrasinal</string>
+    <string name="settings_servers_fields_username">Identificador</string>
+    <string name="navigation_tabs_home">Inicio</string>
+</resources>

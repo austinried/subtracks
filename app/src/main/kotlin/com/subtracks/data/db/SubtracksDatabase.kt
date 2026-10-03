@@ -9,6 +9,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistSearch
 import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Disc
+import com.subtracks.data.model.DownloadErrorConverter
 import com.subtracks.data.model.DownloadStatusConverter
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
@@ -48,7 +49,7 @@ import com.subtracks.data.model.UpNextEntry
     version = 26,
     exportSchema = true,
 )
-@ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class)
+@ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class, DownloadErrorConverter::class)
 abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
 

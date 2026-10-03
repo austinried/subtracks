@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Скасувати</string>
+    <string name="actions_delete">Видалити</string>
+    <string name="actions_download">Завантажити</string>
+    <string name="actions_download_cancel">Скасувати завантаження</string>
+    <string name="actions_star">Зірка</string>
+    <string name="actions_unstar">Зняти зірку</string>
+    <string name="controls_shuffle">Перемішати</string>
+    <string name="navigation_tabs_library">Бібліотека</string>
+    <string name="navigation_tabs_settings">Налаштування</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d альбом</item>
+        <item quantity="other">%1$d альбоми</item>
+    </plurals>
+    <string name="resources_filter_album">Альбом</string>
+    <string name="resources_filter_artist">Виконавець</string>
+    <string name="resources_filter_genre">Жанр</string>
+    <string name="resources_filter_starred">Улюблене</string>
+    <string name="resources_filter_year">Рік</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d пісня</item>
+        <item quantity="other">%1$d пісні</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Виконавець</string>
+    <string name="resources_sort_by_frequently_played">Часто відтворювані</string>
+    <string name="resources_sort_by_name">Ім\'я</string>
+    <string name="resources_sort_by_recently_played">Нещодавно відворені</string>
+    <string name="resources_sort_by_title">Назва</string>
+    <string name="resources_sort_by_year">Рік</string>
+    <string name="search_input_placeholder">Введіть заголовок/опис</string>
+    <string name="settings_about_actions_licenses">Ліцензії</string>
+    <string name="settings_about_name">Про застосунок</string>
+    <string name="settings_network_name">Мережа</string>
+    <string name="settings_network_options_offline_mode">Автономний режим</string>
+    <string name="settings_network_options_offline_mode_off">Використовувати інтернет для синхронізації музики.</string>
+    <string name="settings_network_options_offline_mode_on">Не використовувати інтернет для синхронізації або відтворення музики.</string>
+    <string name="settings_network_options_stream_format_server_default">Використовувати сервер за замовчуванням</string>
+    <string name="settings_network_values_kbps">%1$sкбіт/с</string>
+    <string name="settings_network_values_unlimited_kbps">Необмежено</string>
+    <string name="settings_servers_actions_test_connection">Тестове підключення</string>
+    <string name="settings_servers_fields_name">Ім\'я</string>
+    <string name="settings_servers_fields_password">Пароль</string>
+    <string name="settings_servers_fields_username">Ім\'я користувача</string>
+    <string name="navigation_tabs_home">Головна</string>
+</resources>

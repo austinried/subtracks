@@ -38,9 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
@@ -86,7 +89,7 @@ fun DownloadsRoute(
     when (val dialog = pending) {
         is DownloadDeleteTarget.All -> {
             DeleteDownloadsDialog(
-                name = "all downloads",
+                name = stringResource(R.string.downloads_all),
                 bytes = tree.bytes,
                 onConfirm = viewModel::deleteAll,
                 onDismiss = { pending = null },
@@ -123,17 +126,17 @@ fun DownloadsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Downloads") },
+                title = { Text(stringResource(R.string.downloads_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                     }
                 },
             )
         },
     ) { padding ->
         if (tree.songs == 0) {
-            EmptyState("No downloads yet.", Modifier.padding(padding))
+            EmptyState(stringResource(R.string.downloads_empty), Modifier.padding(padding))
             return@Scaffold
         }
         LazyColumn(
@@ -150,7 +153,13 @@ fun DownloadsScreen(
                     val active = activeDownloads(songs)
                     NodeRow(
                         name = artist.name,
-                        subtitle = "${artist.albums.size} albums · ${size(artist.bytes)}",
+                        subtitle =
+                            pluralStringResource(
+                                R.plurals.downloads_albums_size,
+                                artist.albums.size,
+                                artist.albums.size,
+                                size(artist.bytes),
+                            ),
                         expanded = artistKey in expanded,
                         indent = 0,
                         progress = nodeProgress(songs),
@@ -174,7 +183,13 @@ fun DownloadsScreen(
                             val active = activeDownloads(album.songs)
                             NodeRow(
                                 name = album.name,
-                                subtitle = "${album.songs.size} songs · ${size(album.bytes)}",
+                                subtitle =
+                                    pluralStringResource(
+                                        R.plurals.downloads_songs_size,
+                                        album.songs.size,
+                                        album.songs.size,
+                                        size(album.bytes),
+                                    ),
                                 expanded = albumKey in expanded,
                                 indent = 1,
                                 progress = nodeProgress(album.songs),
@@ -219,11 +234,11 @@ private fun SummaryRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "${tree.songs} songs · ${size(tree.bytes)}",
+            text = pluralStringResource(R.plurals.downloads_songs_size, tree.songs, tree.songs, size(tree.bytes)),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        TextButton(onClick = { onDelete(DownloadDeleteTarget.All) }) { Text("Delete all") }
+        TextButton(onClick = { onDelete(DownloadDeleteTarget.All) }) { Text(stringResource(R.string.delete_all)) }
     }
 }
 
@@ -255,18 +270,18 @@ private fun NodeRow(
             IconButton(onClick = onToggle) {
                 Icon(
                     imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    contentDescription = if (expanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
                 )
             }
         },
         trailingContent = {
             if (progress != null) {
                 IconButton(onClick = onCancel) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download of $name")
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.download_cancel_of, name))
                 }
             } else {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete downloads of $name")
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.download_delete_all_of, name))
                 }
             }
         },
@@ -317,11 +332,11 @@ private fun SongRow(
         trailingContent = {
             if (active) {
                 IconButton(onClick = onCancel) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download of ${song.title}")
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.download_cancel_of, song.title))
                 }
             } else {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete download of ${song.title}")
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.download_delete_of, song.title))
                 }
             }
         },
@@ -336,25 +351,27 @@ private fun songSubtitle(
     encoding: AudioEncoding?,
 ): String {
     val size = size(song.size)
+    val bitrate = encoding?.bitrate?.takeIf { it > 0 }
+    val bitrateText = if (bitrate != null) stringResource(R.string.bitrate_value, bitrate / 1000) else null
     return when (song.status) {
         DownloadStatus.Completed -> {
             listOfNotNull(
                 encoding?.format,
-                encoding?.bitrate?.takeIf { it > 0 }?.let { "${it / 1000} kbps" },
+                bitrateText,
                 size,
             ).joinToString(" · ")
         }
 
         DownloadStatus.Queued -> {
-            "Queued · $size"
+            stringResource(R.string.download_status_summary, stringResource(R.string.status_queued), size)
         }
 
         DownloadStatus.Running -> {
-            "Downloading · $size"
+            stringResource(R.string.download_status_summary, stringResource(R.string.status_downloading), size)
         }
 
         DownloadStatus.Failed -> {
-            "Failed · $size"
+            stringResource(R.string.download_status_summary, stringResource(R.string.status_failed), size)
         }
     }
 }

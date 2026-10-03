@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Afbryd</string>
+    <string name="actions_delete">Slet</string>
+    <string name="actions_download">Hent</string>
+    <string name="actions_download_cancel">Afbryd download</string>
+    <string name="navigation_tabs_library">Bibliotek</string>
+    <string name="navigation_tabs_settings">Indstillinger</string>
+    <string name="resources_filter_genre">Efter genre</string>
+    <string name="resources_sort_by_artist">Efter kunstner</string>
+    <string name="resources_sort_by_name">Efter navn</string>
+    <string name="resources_sort_by_year">Efter år</string>
+    <string name="search_input_placeholder">Søg</string>
+    <string name="settings_about_actions_licenses">Licenser</string>
+    <string name="settings_about_name">Omkring</string>
+    <string name="settings_network_name">Netværk</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Ubegrænset</string>
+    <string name="settings_servers_actions_test_connection">Test forbindelse</string>
+    <string name="settings_servers_fields_password">Adgangskode</string>
+    <string name="settings_servers_fields_username">Brugernavn</string>
+    <string name="navigation_tabs_home">Hjem</string>
+</resources>

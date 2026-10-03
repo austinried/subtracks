@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.graphics.vector.VectorGroup
 import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
@@ -224,9 +226,10 @@ private fun PlayIndicator(
     modifier: Modifier = Modifier,
 ) {
     val tint = MaterialTheme.colorScheme.primary
+    val playingDescription = stringResource(R.string.status_playing)
     if (shadow) {
         val radius = with(LocalDensity.current) { PLAY_SHADOW_RADIUS.toPx() }
-        Canvas(modifier.semantics { contentDescription = "Playing" }) {
+        Canvas(modifier.semantics { contentDescription = playingDescription }) {
             val scale = minOf(size.width / PLAY_ARROW.viewportWidth, size.height / PLAY_ARROW.viewportHeight)
             withTransform({ scale(scale, scale, pivot = Offset.Zero) }) {
                 drawIntoCanvas { canvas ->
@@ -257,7 +260,7 @@ private fun PlayIndicator(
     } else {
         Icon(
             imageVector = PLAY_ARROW,
-            contentDescription = "Playing",
+            contentDescription = playingDescription,
             tint = tint,
             modifier = modifier,
         )
@@ -325,11 +328,13 @@ internal fun formatTrackTime(seconds: Long): String {
 
 @Composable
 private fun DownloadBadge(download: SongDownload?) {
+    val downloadedDescription = stringResource(R.string.status_downloaded)
+    val downloadingDescription = stringResource(R.string.status_downloading)
     when (download?.status) {
         DownloadStatus.Completed -> {
             Icon(
                 imageVector = Icons.Rounded.DownloadDone,
-                contentDescription = "Downloaded",
+                contentDescription = downloadedDescription,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp),
             )
@@ -339,13 +344,13 @@ private fun DownloadBadge(download: SongDownload?) {
             val progress = download.progress
             if (progress == null) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
+                    modifier = Modifier.size(14.dp).semantics { contentDescription = downloadingDescription },
                     strokeWidth = 2.dp,
                 )
             } else {
                 CircularProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.size(14.dp).semantics { contentDescription = "Downloading" },
+                    modifier = Modifier.size(14.dp).semantics { contentDescription = downloadingDescription },
                     strokeWidth = 2.dp,
                 )
             }

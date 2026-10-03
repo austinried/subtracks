@@ -1,7 +1,9 @@
 package com.subtracks.ui.settings
 
+import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.subtracks.R
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
@@ -38,6 +40,7 @@ class AddSourceViewModel(
     private val syncManager: SyncManager,
     private val downloadRepository: DownloadRepository,
     private val sourceId: Long? = null,
+    private val resources: Resources,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AddSourceState(isEditing = sourceId != null))
     val state: StateFlow<AddSourceState> = _state
@@ -87,8 +90,16 @@ class AddSourceViewModel(
                     useTokenAuth = if (fellBack) false else state.useTokenAuth,
                     message =
                         result.fold(
-                            { if (fellBack) "Server does not support token auth; using the password instead" else "Connection OK" },
-                            { error -> "Failed: ${error.message}" },
+                            {
+                                if (fellBack) {
+                                    resources.getString(
+                                        R.string.connection_token_fallback,
+                                    )
+                                } else {
+                                    resources.getString(R.string.connection_ok)
+                                }
+                            },
+                            { error -> resources.getString(R.string.connection_failed, error.message) },
                         ),
                     isError = result.isFailure,
                 )
@@ -133,7 +144,7 @@ class AddSourceViewModel(
                 },
                 onFailure = { error ->
                     _state.update {
-                        it.copy(busy = false, message = "Could not save: ${error.message}", isError = true)
+                        it.copy(busy = false, message = resources.getString(R.string.save_failed, error.message), isError = true)
                     }
                 },
             )
@@ -146,7 +157,7 @@ class AddSourceViewModel(
         viewModelScope.launch {
             if (!sourceRepository.deleteSource(id)) {
                 _state.update {
-                    it.copy(busy = false, message = "The active server can't be deleted; switch to another server first", isError = true)
+                    it.copy(busy = false, message = resources.getString(R.string.active_server_delete_error), isError = true)
                 }
                 return@launch
             }

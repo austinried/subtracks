@@ -1,5 +1,6 @@
 package com.subtracks.ui.home
 
+import android.content.res.Resources
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,6 +45,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
@@ -133,6 +138,7 @@ fun HomeListScreen(
     modifier: Modifier = Modifier,
 ) {
     val now = remember { System.currentTimeMillis() }
+    val resources = LocalContext.current.resources
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -140,7 +146,7 @@ fun HomeListScreen(
                 title = { Text(request.title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                     }
                 },
             )
@@ -153,7 +159,7 @@ fun HomeListScreen(
                     AlbumsList(
                         albums = albums,
                         coverArt = coverArt,
-                        info = { albumListInfo(request, it, now) },
+                        info = { albumListInfo(request, it, now, resources) },
                         onAlbumClick = onAlbumClick,
                         onLongClick = onLongClick,
                         modifier = Modifier.padding(padding),
@@ -164,7 +170,7 @@ fun HomeListScreen(
                     ArtistsList(
                         artists = artists,
                         coverArt = coverArt,
-                        info = { artistListInfo(request, it, now) },
+                        info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
                         modifier = Modifier.padding(padding),
@@ -207,7 +213,7 @@ fun HomeListScreen(
                 HomeSection.Decades -> {
                     PlainList(
                         items = decades,
-                        label = { "${it}s" },
+                        label = { stringResource(R.string.home_decade, it) },
                         onClick = onDecadeClick,
                         modifier = Modifier.padding(padding),
                     )
@@ -217,7 +223,7 @@ fun HomeListScreen(
                     ArtistsList(
                         artists = artists,
                         coverArt = coverArt,
-                        info = { artistListInfo(request, it, now) },
+                        info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
                         modifier = Modifier.padding(padding),
@@ -254,7 +260,7 @@ fun HomeListScreen(
                         AlbumsList(
                             albums = albums,
                             coverArt = coverArt,
-                            info = { albumListInfo(request, it, now) },
+                            info = { albumListInfo(request, it, now, resources) },
                             onAlbumClick = onAlbumClick,
                             onLongClick = onLongClick,
                             modifier = Modifier.padding(padding),
@@ -269,7 +275,7 @@ fun HomeListScreen(
 @Composable
 private fun <T> PlainList(
     items: List<T>,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onClick: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -470,7 +476,7 @@ private fun ArtistListRow(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${artist.albumCount} ${if (artist.albumCount == 1L) "album" else "albums"}",
+                    text = pluralStringResource(R.plurals.resources_album_count, artist.albumCount.toInt(), artist.albumCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -494,10 +500,11 @@ internal fun artistListInfo(
     request: HomeListRequest,
     artist: Artist,
     now: Long,
+    resources: Resources,
 ): String? =
     when (request.section) {
-        HomeSection.RecentlyPlayedArtists -> artist.played?.let { relativeTimeLabel(it, now) }
-        HomeSection.MostPlayedArtists -> playCountLabel(artist.playCount)
+        HomeSection.RecentlyPlayedArtists -> artist.played?.let { relativeTimeLabel(it, now, resources) }
+        HomeSection.MostPlayedArtists -> playCountLabel(resources, artist.playCount)
         else -> null
     }
 
@@ -505,18 +512,19 @@ internal fun albumListInfo(
     request: HomeListRequest,
     album: Album,
     now: Long,
+    resources: Resources,
 ): String? =
     when {
         request.section == HomeSection.RecentlyAddedAlbums -> {
-            relativeTimeLabel(album.created, now)
+            relativeTimeLabel(album.created, now, resources)
         }
 
         request.section == HomeSection.RecentlyPlayedAlbums || request.section == HomeSection.Rediscover -> {
-            album.played?.let { relativeTimeLabel(it, now) }
+            album.played?.let { relativeTimeLabel(it, now, resources) }
         }
 
         request.section == HomeSection.MostPlayedAlbums -> {
-            playCountLabel(album.playCount)
+            playCountLabel(resources, album.playCount)
         }
 
         request.decade != null -> {
@@ -528,26 +536,30 @@ internal fun albumListInfo(
         }
     }
 
-private fun playCountLabel(count: Long): String? = if (count <= 0L) null else "$count ${if (count == 1L) "play" else "plays"}"
+private fun playCountLabel(
+    resources: Resources,
+    count: Long,
+): String? = if (count <= 0L) null else resources.getQuantityString(R.plurals.home_play_count, count.toInt(), count)
 
 internal fun relativeTimeLabel(
     epochSeconds: Long,
     nowMillis: Long,
+    resources: Resources,
 ): String? {
     if (epochSeconds <= 0L) return null
     val elapsedMillis = nowMillis - epochSeconds * 1000L
-    if (elapsedMillis < 0L) return "Just now"
+    if (elapsedMillis < 0L) return resources.getString(R.string.home_time_just_now)
     val days = elapsedMillis / 86_400_000L
     return when {
-        elapsedMillis < 60_000L -> "Just now"
-        days == 0L -> "Today"
-        days == 1L -> "Yesterday"
-        days < 7L -> "$days days ago"
-        days < 14L -> "Last week"
-        days < 30L -> "${days / 7L} weeks ago"
-        days < 60L -> "Last month"
-        days < 365L -> "${days / 30L} months ago"
-        days < 730L -> "Last year"
-        else -> "${days / 365L} years ago"
+        elapsedMillis < 60_000L -> resources.getString(R.string.home_time_just_now)
+        days == 0L -> resources.getString(R.string.home_time_today)
+        days == 1L -> resources.getString(R.string.home_time_yesterday)
+        days < 7L -> resources.getQuantityString(R.plurals.home_time_days_ago, days.toInt(), days)
+        days < 14L -> resources.getString(R.string.home_time_last_week)
+        days < 30L -> resources.getQuantityString(R.plurals.home_time_weeks_ago, (days / 7L).toInt(), days / 7L)
+        days < 60L -> resources.getString(R.string.home_time_last_month)
+        days < 365L -> resources.getQuantityString(R.plurals.home_time_months_ago, (days / 30L).toInt(), days / 30L)
+        days < 730L -> resources.getString(R.string.home_time_last_year)
+        else -> resources.getQuantityString(R.plurals.home_time_years_ago, (days / 365L).toInt(), days / 365L)
     }
 }

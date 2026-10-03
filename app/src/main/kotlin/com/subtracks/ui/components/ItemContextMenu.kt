@@ -42,8 +42,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.subtracks.R
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
@@ -184,10 +186,10 @@ fun ItemContextMenu(
     fun queueItems() {
         if (queueRef == null) return
         actions.playNext?.let { next ->
-            MenuItem(Icons.Rounded.SkipNext, "Play next") { dismiss { next(queueRef) } }
+            MenuItem(Icons.Rounded.SkipNext, stringResource(R.string.play_next)) { dismiss { next(queueRef) } }
         }
         actions.addToQueue?.let { add ->
-            MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") { dismiss { add(queueRef) } }
+            MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) { dismiss { add(queueRef) } }
         }
     }
 
@@ -209,20 +211,26 @@ fun ItemContextMenu(
                 )
                 target.song.albumId?.let { albumId ->
                     actions.viewAlbum?.let { view ->
-                        MenuItem(Icons.Rounded.Album, target.song.album?.takeIf { it.isNotBlank() } ?: "Album") {
+                        MenuItem(
+                            Icons.Rounded.Album,
+                            target.song.album?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_album),
+                        ) {
                             dismiss { view(albumId) }
                         }
                     }
                 }
                 target.song.artistId?.let { artistId ->
                     actions.viewArtist?.let { view ->
-                        MenuItem(Icons.Rounded.Person, target.song.artist?.takeIf { it.isNotBlank() } ?: "Artist") {
+                        MenuItem(
+                            Icons.Rounded.Person,
+                            target.song.artist?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                        ) {
                             dismiss { view(artistId) }
                         }
                     }
                 }
                 onInfo?.let { info ->
-                    MenuItem(Icons.Rounded.Info, "Info") { dismiss { info(target.song) } }
+                    MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target.song) } }
                 }
             }
 
@@ -236,7 +244,10 @@ fun ItemContextMenu(
                 )
                 target.album.artistId?.let { artistId ->
                     actions.viewArtist?.let { view ->
-                        MenuItem(Icons.Rounded.Person, target.album.albumArtist?.takeIf { it.isNotBlank() } ?: "Artist") {
+                        MenuItem(
+                            Icons.Rounded.Person,
+                            target.album.albumArtist?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                        ) {
                             dismiss { view(artistId) }
                         }
                     }
@@ -303,25 +314,25 @@ private fun DownloadItem(
     when (download?.status) {
         DownloadStatus.Completed -> {
             actions.deleteDownload?.let { delete ->
-                MenuItem(Icons.Rounded.Delete, "Delete download") { dismiss { delete(song) } }
+                MenuItem(Icons.Rounded.Delete, stringResource(R.string.delete_download)) { dismiss { delete(song) } }
             }
         }
 
         DownloadStatus.Queued, DownloadStatus.Running -> {
             actions.cancelDownload?.let { cancel ->
-                MenuItem(Icons.Rounded.Cancel, "Cancel download") { dismiss { cancel(song) } }
+                MenuItem(Icons.Rounded.Cancel, stringResource(R.string.actions_download_cancel)) { dismiss { cancel(song) } }
             }
         }
 
         DownloadStatus.Failed -> {
             actions.download?.let { start ->
-                MenuItem(Icons.Rounded.Download, "Retry download") { dismiss { start(song) } }
+                MenuItem(Icons.Rounded.Download, stringResource(R.string.retry_download)) { dismiss { start(song) } }
             }
         }
 
         null -> {
             actions.download?.let { start ->
-                MenuItem(Icons.Rounded.Download, "Download") { dismiss { start(song) } }
+                MenuItem(Icons.Rounded.Download, stringResource(R.string.actions_download)) { dismiss { start(song) } }
             }
         }
     }
@@ -343,9 +354,21 @@ private fun BulkDownloadItem(
         }
     for (action in (status ?: ListDownloadStatus()).actions()) {
         when (action) {
-            BulkDownloadAction.Delete -> MenuItem(Icons.Rounded.Delete, "Delete downloads") { dismiss { bulk(target, action) } }
-            BulkDownloadAction.Cancel -> MenuItem(Icons.Rounded.Cancel, "Cancel downloads") { dismiss { bulk(target, action) } }
-            BulkDownloadAction.Download -> MenuItem(Icons.Rounded.Download, "Download") { dismiss { bulk(target, action) } }
+            BulkDownloadAction.Delete -> {
+                MenuItem(Icons.Rounded.Delete, stringResource(R.string.resources_song_list_delete_all_title)) {
+                    dismiss { bulk(target, action) }
+                }
+            }
+
+            BulkDownloadAction.Cancel -> {
+                MenuItem(Icons.Rounded.Cancel, stringResource(R.string.cancel_downloads)) { dismiss { bulk(target, action) } }
+            }
+
+            BulkDownloadAction.Download -> {
+                MenuItem(Icons.Rounded.Download, stringResource(R.string.actions_download)) {
+                    dismiss { bulk(target, action) }
+                }
+            }
         }
     }
 }
@@ -390,6 +413,8 @@ private fun MenuItem(
 
 private fun starIcon(starred: Long?): ImageVector = if (starred == null) Icons.Rounded.StarBorder else Icons.Rounded.Star
 
-private fun starLabel(starred: Long?): String = if (starred == null) "Star" else "Unstar"
+@Composable
+private fun starLabel(starred: Long?): String =
+    if (starred == null) stringResource(R.string.actions_star) else stringResource(R.string.actions_unstar)
 
 private const val STAR_DISMISS_DELAY_MS = 200L

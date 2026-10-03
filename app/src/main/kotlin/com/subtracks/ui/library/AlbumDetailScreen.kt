@@ -20,10 +20,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
@@ -158,8 +160,9 @@ fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val multiDisc = songs.map { it.disc ?: 1L }.distinct().size > 1
+    val resources = LocalResources.current
     val discLabels =
-        remember(discs) {
+        remember(discs, resources) {
             val repeated =
                 discs
                     .map { it.title }
@@ -171,7 +174,7 @@ fun AlbumDetailScreen(
             discs.associate { disc ->
                 disc.disc to
                     disc.title.takeIf { it.isNotBlank() }?.let { title ->
-                        if (title in repeated) "$title: Disc ${disc.disc}" else title
+                        if (title in repeated) resources.getString(R.string.disc_track, title, disc.disc) else title
                     }
             }
         }
@@ -218,7 +221,9 @@ fun AlbumDetailScreen(
                 val discLabel = discLabels[disc]
                 if (disc != lastDisc && (multiDisc || discLabel != null)) {
                     val isFirst = lastDisc == null
-                    item(key = "disc:$disc") { DiscHeader(discLabel ?: "Disc $disc", first = isFirst) }
+                    item(
+                        key = "disc:$disc",
+                    ) { DiscHeader(discLabel ?: resources.getString(R.string.disc_header, disc), first = isFirst) }
                 }
                 lastDisc = disc
                 item(key = song.id) {

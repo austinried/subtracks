@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -94,6 +95,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -103,6 +105,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
@@ -140,18 +143,18 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 enum class LibraryTab(
-    val label: String,
+    @param:StringRes val label: Int,
     val icon: ImageVector,
 ) {
-    Home("Home", Icons.Rounded.Home),
-    Albums("Albums", Icons.Rounded.Album),
-    Artists("Artists", Icons.Rounded.Person),
-    Playlists("Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay),
+    Home(R.string.navigation_tabs_home, Icons.Rounded.Home),
+    Albums(R.string.resources_album_name, Icons.Rounded.Album),
+    Artists(R.string.resources_artist_name, Icons.Rounded.Person),
+    Playlists(R.string.resources_playlist_name, Icons.AutoMirrored.Rounded.PlaylistPlay),
 }
 
 data class SortOption(
     val value: String,
-    val label: String,
+    @param:StringRes val label: Int,
     val descendingByDefault: Boolean = false,
 )
 
@@ -166,31 +169,47 @@ fun sortOptionsFor(
     when (tab) {
         LibraryTab.Albums -> {
             buildList {
-                add(SortOption(AlbumSort.Name.name, "Name"))
-                add(SortOption(AlbumSort.Artist.name, "Artist"))
-                add(SortOption(AlbumSort.Year.name, "Year", descendingByDefault = true))
-                add(SortOption(AlbumSort.Added.name, "Added", descendingByDefault = true))
-                add(SortOption(AlbumSort.Starred.name, "Starred", descendingByDefault = true))
-                if (play.frequent) add(SortOption(AlbumSort.Frequent.name, "Frequently played", descendingByDefault = true))
-                if (play.recent) add(SortOption(AlbumSort.Recent.name, "Recently played", descendingByDefault = true))
+                add(SortOption(AlbumSort.Name.name, R.string.resources_sort_by_name))
+                add(SortOption(AlbumSort.Artist.name, R.string.resources_sort_by_artist))
+                add(SortOption(AlbumSort.Year.name, R.string.resources_sort_by_year, descendingByDefault = true))
+                add(SortOption(AlbumSort.Added.name, R.string.resources_sort_by_added, descendingByDefault = true))
+                add(SortOption(AlbumSort.Starred.name, R.string.resources_filter_starred, descendingByDefault = true))
+                if (play.frequent) {
+                    add(
+                        SortOption(AlbumSort.Frequent.name, R.string.resources_sort_by_frequently_played, descendingByDefault = true),
+                    )
+                }
+                if (play.recent) {
+                    add(
+                        SortOption(AlbumSort.Recent.name, R.string.resources_sort_by_recently_played, descendingByDefault = true),
+                    )
+                }
             }
         }
 
         LibraryTab.Artists -> {
             buildList {
-                add(SortOption(ArtistSort.Name.name, "Name"))
-                add(SortOption(ArtistSort.AlbumCount.name, "Albums", descendingByDefault = true))
-                add(SortOption(ArtistSort.Starred.name, "Starred", descendingByDefault = true))
-                if (play.frequent) add(SortOption(ArtistSort.Frequent.name, "Frequently played", descendingByDefault = true))
-                if (play.recent) add(SortOption(ArtistSort.Recent.name, "Recently played", descendingByDefault = true))
+                add(SortOption(ArtistSort.Name.name, R.string.resources_sort_by_name))
+                add(SortOption(ArtistSort.AlbumCount.name, R.string.resources_album_name, descendingByDefault = true))
+                add(SortOption(ArtistSort.Starred.name, R.string.resources_filter_starred, descendingByDefault = true))
+                if (play.frequent) {
+                    add(
+                        SortOption(ArtistSort.Frequent.name, R.string.resources_sort_by_frequently_played, descendingByDefault = true),
+                    )
+                }
+                if (play.recent) {
+                    add(
+                        SortOption(ArtistSort.Recent.name, R.string.resources_sort_by_recently_played, descendingByDefault = true),
+                    )
+                }
             }
         }
 
         LibraryTab.Playlists -> {
             listOf(
-                SortOption(PlaylistSort.Name.name, "Name"),
-                SortOption(PlaylistSort.Added.name, "Added", descendingByDefault = true),
-                SortOption(PlaylistSort.Updated.name, "Updated", descendingByDefault = true),
+                SortOption(PlaylistSort.Name.name, R.string.resources_sort_by_name),
+                SortOption(PlaylistSort.Added.name, R.string.resources_sort_by_added, descendingByDefault = true),
+                SortOption(PlaylistSort.Updated.name, R.string.resources_sort_by_updated, descendingByDefault = true),
             )
         }
 
@@ -428,6 +447,7 @@ fun LibraryScreen(
     val listTopInset = statusBarTop
     val listBottomInset = tabBarHeight + BOTTOM_CLEARANCE
     val headerColor = artwork?.let(::playerSurfaceColor) ?: MaterialTheme.colorScheme.background
+    val listOptionsLabel = stringResource(R.string.list_options)
 
     Box(
         modifier =
@@ -581,7 +601,7 @@ fun LibraryScreen(
                         modifier =
                             Modifier
                                 .size(24.dp)
-                                .semantics { contentDescription = "List options" },
+                                .semantics { contentDescription = listOptionsLabel },
                     )
                     if (filtersActive) {
                         Box(
@@ -654,7 +674,7 @@ private fun ListOptionsSheet(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             ) {
                 Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Search this list", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.search_this_list), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
@@ -663,14 +683,21 @@ private fun ListOptionsSheet(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp),
         ) {
             Text(
-                text = "Sort by",
+                text = stringResource(R.string.sort_by),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
             IconButton(onClick = onToggleSortDirection) {
                 Icon(
                     imageVector = if (descending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
-                    contentDescription = if (descending) "Sort descending" else "Sort ascending",
+                    contentDescription =
+                        if (descending) {
+                            stringResource(
+                                R.string.sort_descending,
+                            )
+                        } else {
+                            stringResource(R.string.sort_ascending)
+                        },
                 )
             }
         }
@@ -685,7 +712,7 @@ private fun ListOptionsSheet(
                     onClick = {
                         if (listQuery.sort == option.value) onToggleSortDirection() else onSortChange(option.value)
                     },
-                    label = { Text(option.label) },
+                    label = { Text(stringResource(option.label)) },
                 )
             }
         }
@@ -695,7 +722,7 @@ private fun ListOptionsSheet(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp),
         ) {
             Text(
-                text = "Filters",
+                text = stringResource(R.string.filters),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
@@ -703,7 +730,7 @@ private fun ListOptionsSheet(
                 onClick = onClearFilters,
                 enabled = canClearFilters,
             ) {
-                Icon(Icons.Rounded.FilterAltOff, contentDescription = "Clear filters")
+                Icon(Icons.Rounded.FilterAltOff, contentDescription = stringResource(R.string.components_clear_filters))
             }
         }
         FlowRow(
@@ -713,7 +740,7 @@ private fun ListOptionsSheet(
             FilterChip(
                 selected = listQuery.downloaded,
                 onClick = onToggleDownloaded,
-                label = { Text("Downloaded") },
+                label = { Text(stringResource(R.string.filter_downloaded)) },
                 leadingIcon =
                     if (listQuery.downloaded) {
                         {
@@ -731,7 +758,7 @@ private fun ListOptionsSheet(
                 FilterChip(
                     selected = listQuery.starred != StarredFilter.Any,
                     onClick = onCycleStarred,
-                    label = { Text("Starred") },
+                    label = { Text(stringResource(R.string.resources_filter_starred)) },
                     leadingIcon =
                         when (listQuery.starred) {
                             StarredFilter.Any -> {
@@ -785,11 +812,11 @@ private fun SearchField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        placeholder = { Text("Search") },
+        placeholder = { Text(stringResource(R.string.search_input_placeholder)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = onClose) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close search")
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close_search))
             }
         },
         shape = RoundedCornerShape(4.dp),
@@ -917,7 +944,7 @@ internal fun LibraryTabs(
                         IconButton(onClick = onExitOffline) {
                             Icon(
                                 imageVector = Icons.Rounded.CloudOff,
-                                contentDescription = "Offline mode; tap to go online",
+                                contentDescription = stringResource(R.string.offline_mode_status),
                                 tint = MaterialTheme.colorScheme.onBackground,
                             )
                         }
@@ -925,7 +952,7 @@ internal fun LibraryTabs(
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.navigation_tabs_settings),
                             tint = MaterialTheme.colorScheme.onBackground,
                         )
                     }
@@ -1005,7 +1032,7 @@ private fun TabContent(
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = tab.icon,
-            contentDescription = tab.label,
+            contentDescription = stringResource(tab.label),
             tint = color,
             modifier =
                 Modifier.size(TAB_ICON_SIZE).graphicsLayer {
@@ -1032,7 +1059,7 @@ private fun TabContent(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = tab.label,
+                    text = stringResource(tab.label),
                     style = MaterialTheme.typography.titleSmall,
                     color = color,
                     maxLines = 1,

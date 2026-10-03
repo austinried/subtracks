@@ -1,5 +1,6 @@
 package com.subtracks.ui.settings
 
+import android.content.res.Resources
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,9 +48,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.ui.components.rememberViewportFill
@@ -139,10 +143,10 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.navigation_tabs_settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                     }
                 },
             )
@@ -152,7 +156,7 @@ fun SettingsScreen(
             state = listState,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
-            item { SectionHeader("Servers") }
+            item { SectionHeader(stringResource(R.string.settings_servers_name)) }
             items(sources.size, key = { sources[it].id }) { index ->
                 val source = sources[index]
                 ListItem(
@@ -168,10 +172,13 @@ fun SettingsScreen(
                     },
                     trailingContent = {
                         IconButton(onClick = { onEditServer(source.id) }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = "Edit ${source.name}")
+                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_source_description, source.name))
                         }
                     },
-                    modifier = Modifier.clickable(onClickLabel = "Use ${source.name}") { onSelectSource(source.id) },
+                    modifier =
+                        Modifier.clickable(
+                            onClickLabel = stringResource(R.string.use_source_description, source.name),
+                        ) { onSelectSource(source.id) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -183,16 +190,22 @@ fun SettingsScreen(
                     Button(onClick = onAddServer) {
                         Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Add server")
+                        Text(stringResource(R.string.settings_servers_actions_add))
                     }
                 }
             }
-            item { SectionHeader("Network") }
+            item { SectionHeader(stringResource(R.string.settings_network_name)) }
             item {
                 ListItem(
-                    headlineContent = { Text("Offline mode") },
+                    headlineContent = { Text(stringResource(R.string.settings_network_options_offline_mode)) },
                     supportingContent = {
-                        Text(if (offline) "Don't use the internet to sync or play music." else "Use the internet to sync music.")
+                        Text(
+                            if (offline) {
+                                stringResource(R.string.settings_network_options_offline_mode_on)
+                            } else {
+                                stringResource(R.string.settings_network_options_offline_mode_off)
+                            },
+                        )
                     },
                     trailingContent = {
                         Switch(checked = offline, onCheckedChange = onOfflineChange)
@@ -203,7 +216,7 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Stream quality: Wi-Fi") },
+                    headlineContent = { Text(stringResource(R.string.settings_network_options_max_bitrate_wifi_title)) },
                     supportingContent = { Text(qualityLabel(wifiQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.WifiQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -211,7 +224,7 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Stream quality: Mobile") },
+                    headlineContent = { Text(stringResource(R.string.settings_network_options_max_bitrate_mobile_title)) },
                     supportingContent = { Text(qualityLabel(mobileQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.MobileQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -219,17 +232,17 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Sync concurrency") },
-                    supportingContent = { Text(concurrencyLabel(syncConcurrency)) },
+                    headlineContent = { Text(stringResource(R.string.sync_concurrency)) },
+                    supportingContent = { Text(concurrencyLabel(LocalResources.current, syncConcurrency)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
-            item { SectionHeader("Playback") }
+            item { SectionHeader(stringResource(R.string.settings_music_name)) }
             item {
                 ListItem(
-                    headlineContent = { Text("Scrobble to server") },
-                    supportingContent = { Text("Send now playing and play counts") },
+                    headlineContent = { Text(stringResource(R.string.settings_music_options_scrobble_title)) },
+                    supportingContent = { Text(stringResource(R.string.settings_music_options_scrobble_description_on)) },
                     trailingContent = {
                         Switch(
                             checked = scrobbling,
@@ -246,10 +259,10 @@ fun SettingsScreen(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
-            item { SectionHeader("Downloads") }
+            item { SectionHeader(stringResource(R.string.downloads_title)) }
             item {
                 ListItem(
-                    headlineContent = { Text("Download quality") },
+                    headlineContent = { Text(stringResource(R.string.download_quality)) },
                     supportingContent = { Text(qualityLabel(downloadQuality)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.DownloadQuality },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -257,8 +270,16 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Download over mobile data") },
-                    supportingContent = { Text(if (downloadOverMetered) "Wi-Fi and mobile" else "Wi-Fi only") },
+                    headlineContent = { Text(stringResource(R.string.download_over_mobile)) },
+                    supportingContent = {
+                        Text(
+                            if (downloadOverMetered) {
+                                stringResource(R.string.download_network_wifi_and_mobile)
+                            } else {
+                                stringResource(R.string.download_network_wifi_only)
+                            },
+                        )
+                    },
                     trailingContent = {
                         Switch(
                             checked = downloadOverMetered,
@@ -277,16 +298,16 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text("Manage downloads") },
+                    headlineContent = { Text(stringResource(R.string.manage_downloads)) },
                     leadingContent = { Icon(Icons.Rounded.Download, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onOpenDownloads),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
-            item { SectionHeader("About") }
+            item { SectionHeader(stringResource(R.string.settings_about_name)) }
             item {
                 ListItem(
-                    headlineContent = { Text("Licenses") },
+                    headlineContent = { Text(stringResource(R.string.settings_about_actions_licenses)) },
                     leadingContent = { Icon(Icons.Rounded.Description, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onOpenLicenses),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -299,7 +320,7 @@ fun SettingsScreen(
     when (dialog) {
         SettingsDialog.WifiQuality -> {
             QualityDialog(
-                title = "Stream quality: Wi-Fi",
+                title = stringResource(R.string.settings_network_options_max_bitrate_wifi_title),
                 quality = wifiQuality,
                 onSelect = onWifiQualityChange,
                 onDismiss = { dialog = null },
@@ -308,7 +329,7 @@ fun SettingsScreen(
 
         SettingsDialog.MobileQuality -> {
             QualityDialog(
-                title = "Stream quality: Mobile",
+                title = stringResource(R.string.settings_network_options_max_bitrate_mobile_title),
                 quality = mobileQuality,
                 onSelect = onMobileQualityChange,
                 onDismiss = { dialog = null },
@@ -317,7 +338,7 @@ fun SettingsScreen(
 
         SettingsDialog.DownloadQuality -> {
             QualityDialog(
-                title = "Download quality",
+                title = stringResource(R.string.download_quality),
                 quality = downloadQuality,
                 onSelect = onDownloadQualityChange,
                 onDismiss = { dialog = null },
@@ -338,13 +359,29 @@ fun SettingsScreen(
     }
 }
 
-private fun qualityLabel(quality: StreamQuality): String = "${quality.format ?: "Server default"} · ${bitrateLabel(quality.maxBitrate)}"
+@Composable
+private fun qualityLabel(quality: StreamQuality): String {
+    val resources = LocalResources.current
+    val format = quality.format ?: stringResource(R.string.stream_quality_server_default)
+    return stringResource(R.string.download_status_summary, format, bitrateLabel(resources, quality.maxBitrate))
+}
 
-private fun bitrateLabel(kbps: Int): String = if (kbps == 0) "Unlimited" else "${kbps}kbps"
+private fun bitrateLabel(
+    resources: Resources,
+    kbps: Int,
+): String =
+    if (kbps == 0) {
+        resources.getString(R.string.settings_network_values_unlimited_kbps)
+    } else {
+        resources.getString(R.string.settings_network_values_kbps, kbps.toString())
+    }
 
 private val syncConcurrencyOptions = listOf(1, 2, 4, 8, 16)
 
-private fun concurrencyLabel(value: Int): String = if (value <= 1) "1 (sequential)" else value.toString()
+private fun concurrencyLabel(
+    resources: Resources,
+    value: Int,
+): String = if (value <= 1) resources.getString(R.string.sync_concurrency_sequential) else value.toString()
 
 @Composable
 private fun ConcurrencyDialog(
@@ -352,14 +389,15 @@ private fun ConcurrencyDialog(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val resources = LocalResources.current
     var draft by remember(selected) { mutableStateOf(selected) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Sync concurrency") },
+        title = { Text(stringResource(R.string.sync_concurrency)) },
         text = {
             ChoiceGroup(
-                header = "Parallel server requests while syncing",
-                options = syncConcurrencyOptions.map { it to concurrencyLabel(it) },
+                header = stringResource(R.string.sync_concurrency_parallel),
+                options = syncConcurrencyOptions.map { it to concurrencyLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )
@@ -370,10 +408,10 @@ private fun ConcurrencyDialog(
                     onSelect(draft)
                     onDismiss()
                 },
-            ) { Text("Done") }
+            ) { Text(stringResource(R.string.action_done)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
         },
     )
 }
@@ -385,6 +423,7 @@ private fun QualityDialog(
     onSelect: (StreamQuality) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val resources = LocalResources.current
     var draft by remember(quality) { mutableStateOf(quality) }
     val scrollState = rememberScrollState()
     AlertDialog(
@@ -394,15 +433,19 @@ private fun QualityDialog(
             Box {
                 Column(modifier = Modifier.verticalScroll(scrollState)) {
                     ChoiceGroup(
-                        header = "Maximum bitrate",
-                        options = bitrateOptions.map { it to bitrateLabel(it) },
+                        header = stringResource(R.string.maximum_bitrate),
+                        options = bitrateOptions.map { it to bitrateLabel(resources, it) },
                         selected = draft.maxBitrate,
                         onSelect = { draft = draft.copy(maxBitrate = it) },
                     )
                     Spacer(Modifier.height(16.dp))
                     ChoiceGroup(
-                        header = "Preferred format",
-                        options = streamFormats.map { it to (it ?: "Use server default") },
+                        header = stringResource(R.string.settings_network_options_stream_format),
+                        options =
+                            streamFormats.map {
+                                it to
+                                    (it ?: resources.getString(R.string.settings_network_options_stream_format_server_default))
+                            },
                         selected = draft.format,
                         onSelect = { draft = draft.copy(format = it) },
                     )
@@ -429,10 +472,10 @@ private fun QualityDialog(
                     onSelect(draft)
                     onDismiss()
                 },
-            ) { Text("Done") }
+            ) { Text(stringResource(R.string.action_done)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
         },
     )
 }

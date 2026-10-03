@@ -42,10 +42,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.SongItem
 import com.subtracks.data.repo.DownloadRepository
@@ -286,7 +288,7 @@ fun QueueRoute(
     val queueContext = playback.context
     // The item's album keeps the header stable while the async name lookup runs, so it does not
     // flash the fallback when tapping between context and manually queued tracks.
-    val fallbackTitle = playback.item?.album?.takeIf { it.isNotBlank() } ?: "Next from here"
+    val fallbackTitle = playback.item?.album?.takeIf { it.isNotBlank() } ?: stringResource(R.string.queue_next_from_here)
     val sourceTitle = remember(queueContext) { mutableStateOf(fallbackTitle) }
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
@@ -345,6 +347,9 @@ fun QueueScreen(
     val scope = rememberCoroutineScope()
     var dragId by remember { mutableStateOf<Long?>(null) }
     var dragFrom by remember { mutableStateOf<Long?>(null) }
+    val undoLabel = stringResource(R.string.undo)
+    val queueReordered = stringResource(R.string.queue_reordered)
+    val queueRemoved = stringResource(R.string.queue_removed)
 
     // One reorder state per run of rows: sh.calvin.reorderable only targets keys registered with
     // the state that started the drag, so a drag can never reach a row in another run. The context
@@ -383,7 +388,7 @@ fun QueueScreen(
     val showUndo: (String) -> Unit = { message ->
         scope.launch {
             snackbarHostState.currentSnackbarData?.dismiss()
-            val result = snackbarHostState.showSnackbar(message, actionLabel = "Undo", duration = SnackbarDuration.Short)
+            val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel, duration = SnackbarDuration.Short)
             if (result == SnackbarResult.ActionPerformed) onUndo()
         }
     }
@@ -392,10 +397,10 @@ fun QueueScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Queue") },
+                title = { Text(stringResource(R.string.queue_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                     }
                 },
             )
@@ -408,7 +413,7 @@ fun QueueScreen(
             }
 
             rows.isEmpty() -> {
-                EmptyState("The queue is empty.", Modifier.padding(padding))
+                EmptyState(stringResource(R.string.queue_empty), Modifier.padding(padding))
             }
 
             else -> {
@@ -424,7 +429,13 @@ fun QueueScreen(
                             // block, so a section-based key would duplicate.
                             item(key = "header-$index") {
                                 QueueSectionHeader(
-                                    label = if (row.upNext) "Up next" else contextTitle ?: "Next up",
+                                    label =
+                                        if (row.upNext) {
+                                            stringResource(R.string.queue_up_next)
+                                        } else {
+                                            contextTitle
+                                                ?: stringResource(R.string.queue_next_up)
+                                        },
                                     onClear = if (row.upNext) onClearUpNext else null,
                                 )
                             }
@@ -475,7 +486,7 @@ fun QueueScreen(
                                                             }
                                                         if (to != from) {
                                                             onMove(from, to)
-                                                            showUndo("Queue reordered")
+                                                            showUndo(queueReordered)
                                                         }
                                                     }
                                                     dragId = null
@@ -486,7 +497,7 @@ fun QueueScreen(
                                     onClick = { onPlay(row.position) },
                                     onRemove = {
                                         onRemove(row.position)
-                                        showUndo("Removed from queue")
+                                        showUndo(queueRemoved)
                                     },
                                 )
                             }
@@ -516,7 +527,11 @@ private fun QueueSectionHeader(
         )
         if (onClear != null) {
             IconButton(onClick = onClear) {
-                Icon(Icons.Rounded.DeleteSweep, contentDescription = "Clear up next", modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Rounded.DeleteSweep,
+                    contentDescription = stringResource(R.string.queue_clear_up_next),
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }
@@ -567,13 +582,13 @@ private fun QueueRowItem(
                 IconButton(onClick = onRemove) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
-                        contentDescription = "Remove from queue",
+                        contentDescription = stringResource(R.string.queue_remove),
                         modifier = Modifier.size(20.dp),
                     )
                 }
                 if (dragHandle != null) {
                     Box(modifier = Modifier.size(40.dp).then(dragHandle), contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = "Reorder")
+                        Icon(imageVector = Icons.Rounded.DragHandle, contentDescription = stringResource(R.string.queue_reorder))
                     }
                 }
             }

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.paging.PagingData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
@@ -100,19 +101,43 @@ class LibraryOptionsTest {
     @Test
     fun playSortsAreHiddenUntilTheServerReturnsPlayData() {
         assertEquals(
-            listOf("Name", "Artist", "Year", "Added", "Starred"),
+            listOf(
+                R.string.resources_sort_by_name,
+                R.string.resources_sort_by_artist,
+                R.string.resources_sort_by_year,
+                R.string.resources_sort_by_added,
+                R.string.resources_filter_starred,
+            ),
             sortOptionsFor(LibraryTab.Albums).map { it.label },
         )
         assertEquals(
-            listOf("Name", "Artist", "Year", "Added", "Starred", "Frequently played", "Recently played"),
+            listOf(
+                R.string.resources_sort_by_name,
+                R.string.resources_sort_by_artist,
+                R.string.resources_sort_by_year,
+                R.string.resources_sort_by_added,
+                R.string.resources_filter_starred,
+                R.string.resources_sort_by_frequently_played,
+                R.string.resources_sort_by_recently_played,
+            ),
             sortOptionsFor(LibraryTab.Albums, PlaySortAvailability(frequent = true, recent = true)).map { it.label },
         )
         assertEquals(
-            listOf("Name", "Albums", "Starred"),
+            listOf(
+                R.string.resources_sort_by_name,
+                R.string.resources_album_name,
+                R.string.resources_filter_starred,
+            ),
             sortOptionsFor(LibraryTab.Artists).map { it.label },
         )
         assertEquals(
-            listOf("Name", "Albums", "Starred", "Frequently played", "Recently played"),
+            listOf(
+                R.string.resources_sort_by_name,
+                R.string.resources_album_name,
+                R.string.resources_filter_starred,
+                R.string.resources_sort_by_frequently_played,
+                R.string.resources_sort_by_recently_played,
+            ),
             sortOptionsFor(LibraryTab.Artists, PlaySortAvailability(frequent = true, recent = true)).map { it.label },
         )
     }

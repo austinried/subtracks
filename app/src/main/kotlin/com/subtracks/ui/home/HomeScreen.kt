@@ -1,5 +1,6 @@
 package com.subtracks.ui.home
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,17 +83,17 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class HomeSection(
-    val title: String,
+    @param:StringRes val title: Int,
 ) {
-    RecentlyPlayedAlbums("Recently played"),
-    RecentlyPlayedArtists("Recently played artists"),
-    MostPlayedAlbums("Most played"),
-    MostPlayedArtists("Most played artists"),
-    Genres("Genres"),
-    Decades("Decades"),
-    RecentlyStarredSongs("Recently starred"),
-    RecentlyAddedAlbums("Recently added"),
-    Rediscover("Rediscover"),
+    RecentlyPlayedAlbums(R.string.resources_sort_by_recently_played),
+    RecentlyPlayedArtists(R.string.home_section_recently_played_artists),
+    MostPlayedAlbums(R.string.home_section_most_played),
+    MostPlayedArtists(R.string.home_section_most_played_artists),
+    Genres(R.string.home_section_genres),
+    Decades(R.string.home_section_decades),
+    RecentlyStarredSongs(R.string.home_section_recently_starred),
+    RecentlyAddedAlbums(R.string.home_section_recently_added),
+    Rediscover(R.string.home_section_rediscover),
     ;
 
     companion object {
@@ -189,9 +191,9 @@ fun HomeScreen(
         }
         if (feed.isEmpty()) {
             EmptyState(
-                text = "Nothing to show yet.\nSync with your server to fill your library.",
+                text = stringResource(R.string.home_empty),
                 modifier = modifier,
-                actionLabel = "Sync",
+                actionLabel = stringResource(R.string.sync),
                 onAction = onSync,
             )
             return@CompositionLocalProvider
@@ -314,7 +316,7 @@ fun OfflineHomeScreen(
             downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick) { onMore(OfflineListKind.Playlists) }
             songList(
                 key = "downloaded-songs",
-                title = "Downloaded songs",
+                title = R.string.home_downloaded_songs,
                 icon = Icons.Rounded.MusicNote,
                 songs = songs,
                 coverArt = coverArt,
@@ -336,7 +338,7 @@ private fun LazyListScope.downloadedAlbumRow(
 ) {
     if (albums.itemCount == 0) return
     item(key = "downloaded-albums-header") {
-        HomeSectionHeader("Downloaded albums", Icons.Rounded.Album) { onMore() }
+        HomeSectionHeader(R.string.home_downloaded_albums, Icons.Rounded.Album) { onMore() }
     }
     item(key = "downloaded-albums-row") {
         LazyRow(
@@ -369,7 +371,7 @@ private fun LazyListScope.downloadedArtistRow(
 ) {
     if (artists.itemCount == 0) return
     item(key = "downloaded-artists-header") {
-        HomeSectionHeader("Downloaded artists", Icons.Rounded.Person) { onMore() }
+        HomeSectionHeader(R.string.home_downloaded_artists, Icons.Rounded.Person) { onMore() }
     }
     item(key = "downloaded-artists-row") {
         LazyRow(
@@ -402,7 +404,7 @@ private fun LazyListScope.downloadedPlaylistRow(
 ) {
     if (playlists.itemCount == 0) return
     item(key = "downloaded-playlists-header") {
-        HomeSectionHeader("Downloaded playlists", Icons.AutoMirrored.Rounded.PlaylistPlay) { onMore() }
+        HomeSectionHeader(R.string.home_downloaded_playlists, Icons.AutoMirrored.Rounded.PlaylistPlay) { onMore() }
     }
     item(key = "downloaded-playlists-row") {
         LazyRow(
@@ -464,7 +466,7 @@ private fun HomeFeed.isEmpty(): Boolean =
 
 @Composable
 private fun HomeSectionHeader(
-    title: String,
+    @StringRes title: Int,
     icon: ImageVector,
     onMore: (() -> Unit)?,
 ) {
@@ -480,13 +482,13 @@ private fun HomeSectionHeader(
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = title,
+            text = stringResource(title),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
         if (onMore != null) {
             TextButton(onClick = onMore) {
-                Text("More")
+                Text(stringResource(R.string.controls_more))
             }
         }
     }
@@ -685,7 +687,7 @@ private fun LazyListScope.decadeRow(
             modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(decades, key = { it }) { decade ->
-                AssistChip(onClick = { onDecadeClick(decade) }, label = { Text("${decade}s") })
+                AssistChip(onClick = { onDecadeClick(decade) }, label = { Text(stringResource(R.string.home_decade, decade)) })
             }
         }
     }
@@ -713,7 +715,7 @@ private fun LazyListScope.homeSongs(
 
 private fun LazyListScope.songList(
     key: String,
-    title: String,
+    @StringRes title: Int,
     icon: ImageVector,
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,

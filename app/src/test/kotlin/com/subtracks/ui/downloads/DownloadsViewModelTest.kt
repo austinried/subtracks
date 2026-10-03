@@ -93,6 +93,8 @@ class DownloadsViewModelTest {
                 LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), scope = repoScope),
                 downloadRepository,
                 controller,
+                "Unknown artist",
+                "Unknown album",
             )
     }
 

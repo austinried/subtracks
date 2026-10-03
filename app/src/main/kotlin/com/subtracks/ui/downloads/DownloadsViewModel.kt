@@ -45,13 +45,15 @@ class DownloadsViewModel(
     private val libraryRepository: LibraryRepository,
     private val downloadRepository: DownloadRepository,
     private val playbackController: PlaybackController,
+    private val unknownArtist: String,
+    private val unknownAlbum: String,
 ) : ViewModel() {
     private val sourceId = libraryRepository.activeSourceId.filterNotNull()
 
     val tree: StateFlow<DownloadTree> =
         sourceId
             .flatMapLatest { downloadRepository.downloadedSongs(it) }
-            .map(::buildTree)
+            .map { buildTree(it, unknownArtist, unknownAlbum) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DownloadTree())
 
     fun deleteAll() {
@@ -89,7 +91,11 @@ class DownloadsViewModel(
         downloadRepository.localFile(song.sourceId, song.songId)?.let { readAudioEncoding(it) }
 }
 
-internal fun buildTree(songs: List<DownloadedSong>): DownloadTree =
+internal fun buildTree(
+    songs: List<DownloadedSong>,
+    unknownArtist: String = "Unknown artist",
+    unknownAlbum: String = "Unknown album",
+): DownloadTree =
     DownloadTree(
         artists =
             songs
@@ -97,7 +103,7 @@ internal fun buildTree(songs: List<DownloadedSong>): DownloadTree =
                 .map { (artistKey, artistSongs) ->
                     DownloadArtistNode(
                         id = artistKey.first,
-                        name = artistKey.second.ifBlank { "Unknown artist" },
+                        name = artistKey.second.ifBlank { unknownArtist },
                         bytes = artistSongs.sumOf { it.size },
                         albums =
                             artistSongs
@@ -105,7 +111,7 @@ internal fun buildTree(songs: List<DownloadedSong>): DownloadTree =
                                 .map { (albumKey, albumSongs) ->
                                     DownloadAlbumNode(
                                         id = albumKey.first,
-                                        name = albumKey.second.ifBlank { "Unknown album" },
+                                        name = albumKey.second.ifBlank { unknownAlbum },
                                         bytes = albumSongs.sumOf { it.size },
                                         songs = albumSongs.sortedBy { it.title.lowercase() },
                                     )

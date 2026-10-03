@@ -10,6 +10,7 @@ import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.download.looksLikeAudio
 import com.subtracks.data.model.BulkDownloadAction
+import com.subtracks.data.model.DownloadError
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.DownloadedSong
@@ -174,7 +175,7 @@ class DownloadRepository(
                         throw e
                     } catch (_: Exception) {
                         // Leave it failed rather than waiting, or the next tick would retry it forever.
-                        markFailed(row, STOPPED)
+                        markFailed(row, DownloadError.Stopped)
                         return@forEach
                     }
                 db.downloadDao().upsert(row.copy(engineId = engineId))
@@ -459,8 +460,8 @@ class DownloadRepository(
             DownloadStatus.Completed -> {
                 val file = file(row.sourceId, row.songId)
                 when {
-                    !file.exists() -> markFailed(row, MISSING_FILE)
-                    !file.looksLikeAudio() -> markFailed(row, SERVER_ERROR)
+                    !file.exists() -> markFailed(row, DownloadError.FileMissing)
+                    !file.looksLikeAudio() -> markFailed(row, DownloadError.ServerError)
                 }
             }
 
@@ -470,7 +471,7 @@ class DownloadRepository(
             }
 
             DownloadStatus.Running -> {
-                markFailed(row, STOPPED)
+                markFailed(row, DownloadError.Stopped)
             }
 
             DownloadStatus.Failed -> {
@@ -566,8 +567,8 @@ class DownloadRepository(
                 error =
                     when {
                         state.error != null -> state.error
-                        errorPage -> SERVER_ERROR
-                        status == DownloadStatus.Failed -> "Download failed"
+                        errorPage -> DownloadError.ServerError
+                        status == DownloadStatus.Failed -> DownloadError.Failed
                         else -> null
                     },
                 downloadedAt =
@@ -582,11 +583,11 @@ class DownloadRepository(
 
     private suspend fun markFailed(
         row: SongDownload,
-        message: String,
+        error: DownloadError,
     ) {
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(row.sourceId, row.songId).delete()
-        db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = message))
+        db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = error))
     }
 
     private fun ensurePolling() {
@@ -654,8 +655,6 @@ class DownloadRepository(
         const val POLL_MS = 1_000L
         const val IN_FLIGHT_LIMIT = 8
         const val DELETE_CHUNK = 900
-        const val MISSING_FILE = "The downloaded file is missing"
-        const val SERVER_ERROR = "The server sent an error instead of the track"
         const val NO_ADDRESS = "Can't download: the server address is unavailable"
         const val EMPTY_LIST = "Nothing left to download from this list"
         const val STOPPED = "The download stopped unexpectedly"

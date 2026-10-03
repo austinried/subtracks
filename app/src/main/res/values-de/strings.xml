@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="actions_cancel">Abbrechen</string>
+    <string name="actions_delete">Löschen</string>
+    <string name="actions_download">Herunterladen</string>
+    <string name="actions_download_cancel">Download abbrechen</string>
+    <string name="actions_star">Markieren</string>
+    <string name="actions_unstar">Markierung entfernen</string>
+    <string name="controls_shuffle">Zufall</string>
+    <string name="navigation_tabs_library">Bibliothek</string>
+    <string name="navigation_tabs_settings">Einstellungen</string>
+    <plurals name="resources_album_count">
+        <item quantity="one">%1$d Album</item>
+        <item quantity="other">%1$d Alben</item>
+    </plurals>
+    <string name="resources_filter_album">Album</string>
+    <string name="resources_filter_artist">Künstler</string>
+    <string name="resources_filter_genre">Nach Genre</string>
+    <string name="resources_filter_starred">Favoriten</string>
+    <string name="resources_filter_year">Jahr</string>
+    <plurals name="resources_song_count">
+        <item quantity="one">%1$d Song</item>
+        <item quantity="other">%1$d Songs</item>
+    </plurals>
+    <string name="resources_sort_by_artist">Nach Interpreten</string>
+    <string name="resources_sort_by_frequently_played">Häufig abgespielt</string>
+    <string name="resources_sort_by_name">Nach Name</string>
+    <string name="resources_sort_by_recently_played">Kürzlich abgespielt</string>
+    <string name="resources_sort_by_title">Titel</string>
+    <string name="resources_sort_by_year">Nach Jahr</string>
+    <string name="search_input_placeholder">Suche</string>
+    <string name="settings_about_actions_licenses">Lizenzen</string>
+    <string name="settings_about_name">Über</string>
+    <string name="settings_network_name">Netzwerk</string>
+    <string name="settings_network_options_offline_mode">Offline Modus</string>
+    <string name="settings_network_options_offline_mode_off">Nutze das Internet um Musik zu synchronisieren.</string>
+    <string name="settings_network_options_offline_mode_on">Nutze nicht das Internet um Musik zu synchronisieren.</string>
+    <string name="settings_network_options_stream_format_server_default">Standardserver verwenden</string>
+    <string name="settings_network_values_kbps">%1$skbps</string>
+    <string name="settings_network_values_unlimited_kbps">Unbegrenzt</string>
+    <string name="settings_servers_actions_test_connection">Verbindung testen</string>
+    <string name="settings_servers_fields_name">Name</string>
+    <string name="settings_servers_fields_password">Passwort</string>
+    <string name="settings_servers_fields_username">Nutzername</string>
+    <string name="navigation_tabs_home">Startseite</string>
+</resources>

@@ -62,11 +62,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.subtracks.R
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
@@ -179,7 +181,10 @@ fun HeroDetailScaffold(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack, modifier = Modifier.graphicsLayer { alpha = barFraction }) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.navigation_back),
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -223,11 +228,12 @@ fun ListDownloadStatus.actions(): List<BulkDownloadAction> =
 
 fun ListDownloadStatus.action(): BulkDownloadAction = actions().first()
 
+@Composable
 private fun downloadActionLabel(action: BulkDownloadAction): String =
     when (action) {
-        BulkDownloadAction.Download -> "Download"
-        BulkDownloadAction.Cancel -> "Cancel download"
-        BulkDownloadAction.Delete -> "Delete download"
+        BulkDownloadAction.Download -> stringResource(R.string.actions_download)
+        BulkDownloadAction.Cancel -> stringResource(R.string.actions_download_cancel)
+        BulkDownloadAction.Delete -> stringResource(R.string.delete_download)
     }
 
 @Composable
@@ -280,7 +286,7 @@ fun HeroHeader(
                 modifier =
                     Modifier
                         .heightIn(min = 32.dp)
-                        .clickable(onClickLabel = "Open artist") { onSubtitleClick() },
+                        .clickable(onClickLabel = stringResource(R.string.open_artist)) { onSubtitleClick() },
                 contentAlignment = Alignment.TopCenter,
             ) {
                 HeroSubtitle(subtitle, Modifier.padding(top = 4.dp))
@@ -312,7 +318,7 @@ fun HeroHeader(
                             onClick = { onDownloadAction(action) },
                             onClickLabel = downloadActionLabel(action),
                             onLongClick = if (canDelete) ({ onDownloadAction(BulkDownloadAction.Delete) }) else null,
-                            onLongClickLabel = if (canDelete) "Delete download" else null,
+                            onLongClickLabel = if (canDelete) stringResource(R.string.delete_download) else null,
                         ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -320,7 +326,7 @@ fun HeroHeader(
                     BulkDownloadAction.Delete -> {
                         Icon(
                             imageVector = Icons.Rounded.DownloadDone,
-                            contentDescription = "Delete download",
+                            contentDescription = stringResource(R.string.delete_download),
                             modifier = Modifier.size(28.dp),
                         )
                     }
@@ -332,12 +338,20 @@ fun HeroHeader(
                                 modifier = Modifier.size(26.dp),
                                 strokeWidth = 2.dp,
                             )
-                            Icon(Icons.Rounded.Close, contentDescription = "Cancel download", modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Rounded.Close,
+                                contentDescription = stringResource(R.string.actions_download_cancel),
+                                modifier = Modifier.size(16.dp),
+                            )
                         }
                     }
 
                     BulkDownloadAction.Download -> {
-                        Icon(Icons.Rounded.Download, contentDescription = "Download", modifier = Modifier.size(24.dp))
+                        Icon(
+                            Icons.Rounded.Download,
+                            contentDescription = stringResource(R.string.actions_download),
+                            modifier = Modifier.size(24.dp),
+                        )
                     }
                 }
             }
@@ -360,7 +374,11 @@ fun HeroHeader(
                             shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
                             modifier = Modifier.width(68.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", modifier = Modifier.size(30.dp))
+                            Icon(
+                                Icons.Rounded.PlayArrow,
+                                contentDescription = stringResource(R.string.controls_play),
+                                modifier = Modifier.size(30.dp),
+                            )
                         }
                         FilledIconButton(
                             onClick = onShuffle,
@@ -368,7 +386,11 @@ fun HeroHeader(
                             shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
                             modifier = Modifier.width(68.dp).height(48.dp),
                         ) {
-                            Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle play", modifier = Modifier.size(30.dp))
+                            Icon(
+                                Icons.Rounded.Shuffle,
+                                contentDescription = stringResource(R.string.controls_shuffle_play),
+                                modifier = Modifier.size(30.dp),
+                            )
                         }
                     }
                     Box(
@@ -380,7 +402,7 @@ fun HeroHeader(
                 }
             }
             IconButton(onClick = onMore, modifier = Modifier.padding(end = 8.dp)) {
-                Icon(Icons.Rounded.MoreHoriz, contentDescription = "More options")
+                Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
             }
         }
     }
