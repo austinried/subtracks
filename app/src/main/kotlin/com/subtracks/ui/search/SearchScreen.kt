@@ -1,37 +1,37 @@
 package com.subtracks.ui.search
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
@@ -49,12 +49,24 @@ import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.SearchField
 import com.subtracks.ui.home.AlbumListRow
 import com.subtracks.ui.home.ArtistListRow
 import com.subtracks.ui.library.PlaylistRow
 import com.subtracks.ui.library.SongRow
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+
+enum class SearchFilter(
+    @StringRes val label: Int,
+) {
+    Songs(R.string.search_songs),
+    Albums(R.string.resources_album_name),
+    Artists(R.string.resources_artist_name),
+    Playlists(R.string.resources_playlist_name),
+}
+
+private val ALL_FILTERS = SearchFilter.entries.toSet()
 
 @Composable
 fun SearchRoute(
@@ -72,6 +84,7 @@ fun SearchRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.results.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
+    var filterMask by rememberSaveable { mutableIntStateOf(allFilterMask()) }
     val actions =
         ItemActions(
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
@@ -84,6 +97,8 @@ fun SearchRoute(
         query = query,
         onQueryChange = viewModel::setQuery,
         results = results,
+        filters = maskToFilters(filterMask),
+        onToggleFilter = { filterMask = filterMask xor (1 shl it.ordinal) },
         coverArt = viewModel::coverArt,
         playingSongId = playback.item?.id,
         onBack = onBack,
@@ -95,12 +110,18 @@ fun SearchRoute(
     )
 }
 
+private fun allFilterMask(): Int = SearchFilter.entries.fold(0) { mask, filter -> mask or (1 shl filter.ordinal) }
+
+private fun maskToFilters(mask: Int): Set<SearchFilter> = SearchFilter.entries.filterTo(mutableSetOf()) { mask and (1 shl it.ordinal) != 0 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     results: SearchResults,
+    filters: Set<SearchFilter> = ALL_FILTERS,
+    onToggleFilter: (SearchFilter) -> Unit = {},
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
     playingSongId: String? = null,
     onBack: () -> Unit = {},
@@ -112,15 +133,16 @@ fun SearchScreen(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     val backLabel = stringResource(R.string.navigation_back)
-    val clearLabel = stringResource(R.string.close_search)
-    val hint = stringResource(R.string.search_input_placeholder)
     val minLength = stringResource(R.string.search_min_length, SEARCH_MIN_LENGTH)
     val songsLabel = stringResource(R.string.search_songs)
     val albumsLabel = stringResource(R.string.resources_album_name)
     val artistsLabel = stringResource(R.string.resources_artist_name)
     val playlistsLabel = stringResource(R.string.resources_playlist_name)
+    val showSongs = SearchFilter.Songs in filters && results.songs.isNotEmpty()
+    val showAlbums = SearchFilter.Albums in filters && results.albums.isNotEmpty()
+    val showArtists = SearchFilter.Artists in filters && results.artists.isNotEmpty()
+    val showPlaylists = SearchFilter.Playlists in filters && results.playlists.isNotEmpty()
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -131,34 +153,18 @@ fun SearchScreen(
                     }
                 },
                 title = {
-                    TextField(
+                    SearchField(
                         value = query,
                         onValueChange = onQueryChange,
-                        singleLine = true,
-                        placeholder = { Text(hint) },
-                        trailingIcon = {
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { onQueryChange("") }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = clearLabel)
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors =
-                            TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester)
-                                .semantics { contentDescription = hint },
+                        onClose = { onQueryChange("") },
+                        focusRequester = focusRequester,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     )
                 },
             )
+        },
+        bottomBar = {
+            SearchFilterBar(filters = filters, onToggle = onToggleFilter)
         },
     ) { padding ->
         when {
@@ -173,7 +179,7 @@ fun SearchScreen(
                 LoadingState(Modifier.padding(padding))
             }
 
-            results.isEmpty -> {
+            !showSongs && !showAlbums && !showArtists && !showPlaylists -> {
                 EmptyState(
                     text = stringResource(R.string.search_no_results, query),
                     modifier = Modifier.padding(padding),
@@ -185,12 +191,36 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
-                    songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
-                    albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
-                    artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
-                    playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
+                    if (showSongs) songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
+                    if (showAlbums) albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
+                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
+                    if (showPlaylists) playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchFilterBar(
+    filters: Set<SearchFilter>,
+    onToggle: (SearchFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SearchFilter.entries.forEach { filter ->
+            FilterChip(
+                selected = filter in filters,
+                onClick = { onToggle(filter) },
+                label = { Text(stringResource(filter.label)) },
+            )
         }
     }
 }

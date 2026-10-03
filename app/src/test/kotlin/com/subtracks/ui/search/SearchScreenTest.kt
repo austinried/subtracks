@@ -49,10 +49,10 @@ class SearchScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Songs").assertIsDisplayed()
-        composeRule.onNodeWithText("Albums").assertIsDisplayed()
-        composeRule.onNodeWithText("Artists").assertIsDisplayed()
-        composeRule.onNodeWithText("Playlists").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Song").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Album").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Artist").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Trip").assertIsDisplayed()
 
         composeRule.onNodeWithText("Road Song").performClick()
         composeRule.onNodeWithText("Road Album").performClick()
@@ -105,6 +105,46 @@ class SearchScreenTest {
         composeRule.onNodeWithText("Road Album").assertIsDisplayed()
         composeRule.onNodeWithText("Road Artist").assertIsDisplayed()
         composeRule.onNodeWithText("Road Trip").assertIsDisplayed()
+    }
+
+    @Test
+    fun disablingATypeHidesItsSection() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SearchScreen(
+                    query = "road",
+                    onQueryChange = {},
+                    results =
+                        SearchResults(
+                            albums = listOf(album("al-1", "Road Album")),
+                            songs = listOf(AlbumSongItem(song("s1", "Road Song"), coverArt = null)),
+                        ),
+                    filters = setOf(SearchFilter.Albums),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Road Album").assertIsDisplayed()
+        composeRule.onNodeWithText("Road Song").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingAFilterChipTogglesIt() {
+        var toggled: SearchFilter? = null
+        composeRule.setContent {
+            SubtracksTheme {
+                SearchScreen(
+                    query = "ro",
+                    onQueryChange = {},
+                    results = SearchResults(),
+                    onToggleFilter = { toggled = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Playlists").performClick()
+
+        assertEquals(SearchFilter.Playlists, toggled)
     }
 
     private fun album(
