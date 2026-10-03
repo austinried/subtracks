@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
@@ -61,7 +62,7 @@ enum class HomeSection(
     Decades("Decades"),
     RecentlyStarredSongs("Recently starred"),
     RecentlyAddedAlbums("Recently added"),
-    Rediscover("On repeat"),
+    Rediscover("Rediscover"),
     ;
 
     companion object {
@@ -103,7 +104,7 @@ fun HomeRoute(
         bottomInset = bottomInset,
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
-        onSongClick = viewModel::play,
+        onPlayStarred = viewModel::playStarred,
         onLongClick = { contextMenuHost?.show(it, actions) },
         onMore = onMore,
         onGenreClick = onGenreClick,
@@ -121,7 +122,7 @@ fun HomeScreen(
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
-    onSongClick: (Song) -> Unit = {},
+    onPlayStarred: (List<Song>, Int) -> Unit = { _, _ -> },
     onLongClick: (MenuTarget) -> Unit = {},
     onMore: (HomeSection) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
@@ -148,8 +149,8 @@ fun HomeScreen(
             contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
         ) {
             albumRow(
-                HomeSection.RecentlyPlayedAlbums,
-                feed.recentlyPlayedAlbums,
+                HomeSection.RecentlyAddedAlbums,
+                feed.recentlyAddedAlbums,
                 coverArt,
                 onAlbumClick,
                 onLongClick,
@@ -163,6 +164,15 @@ fun HomeScreen(
                 onLongClick,
                 onMore,
             )
+            starredSongs(
+                HomeSection.RecentlyStarredSongs,
+                feed.recentlyStarredSongs,
+                coverArt,
+                playingSongId,
+                onPlayStarred,
+                onLongClick,
+                onMore,
+            )
             albumRow(
                 HomeSection.MostPlayedAlbums,
                 feed.mostPlayedAlbums,
@@ -171,6 +181,7 @@ fun HomeScreen(
                 onLongClick,
                 onMore,
             )
+            genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
             artistRow(
                 HomeSection.MostPlayedArtists,
                 feed.mostPlayedArtists,
@@ -179,28 +190,18 @@ fun HomeScreen(
                 onLongClick,
                 onMore,
             )
-            genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
             decadeRow(HomeSection.Decades, feed.decades, onDecadeClick, onMore)
-            starredSongs(
-                HomeSection.RecentlyStarredSongs,
-                feed.recentlyStarredSongs,
-                coverArt,
-                playingSongId,
-                onSongClick,
-                onLongClick,
-                onMore,
-            )
             albumRow(
-                HomeSection.RecentlyAddedAlbums,
-                feed.recentlyAddedAlbums,
+                HomeSection.Rediscover,
+                feed.rediscoverAlbums,
                 coverArt,
                 onAlbumClick,
                 onLongClick,
                 onMore,
             )
             albumRow(
-                HomeSection.Rediscover,
-                feed.rediscoverAlbums,
+                HomeSection.RecentlyPlayedAlbums,
+                feed.recentlyPlayedAlbums,
                 coverArt,
                 onAlbumClick,
                 onLongClick,
@@ -360,7 +361,7 @@ private fun LazyListScope.starredSongs(
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
-    onSongClick: (Song) -> Unit,
+    onPlayStarred: (List<Song>, Int) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
 ) {
@@ -368,7 +369,7 @@ private fun LazyListScope.starredSongs(
     item(key = "${section.name}-header") {
         HomeSectionHeader(section.title) { onMore(section) }
     }
-    items(songs, key = { it.song.id }) { item ->
+    itemsIndexed(songs, key = { _, item -> item.song.id }) { index, item ->
         SongRow(
             song = item.song,
             coverArtId = item.coverArt,
@@ -377,7 +378,7 @@ private fun LazyListScope.starredSongs(
             durationSeconds = item.song.duration,
             modifier =
                 Modifier.combinedClickable(
-                    onClick = { onSongClick(item.song) },
+                    onClick = { onPlayStarred(songs.map { it.song }, index) },
                     onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                 ),
         )

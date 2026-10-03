@@ -210,6 +210,16 @@ class PlaybackController(
         songId: String,
     ) = playContext(queueRepository.songEntry(sourceId, songId), 0)
 
+    fun playSongs(
+        sourceId: Long,
+        songIds: List<String>,
+        startIndex: Int,
+    ) {
+        if (songIds.isEmpty()) return
+        val entries = songIds.map { id -> QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = id) }
+        play(entries, startIndex.toLong().coerceIn(0L, songIds.lastIndex.toLong()))
+    }
+
     fun playPlaylist(
         sourceId: Long,
         playlistId: String,

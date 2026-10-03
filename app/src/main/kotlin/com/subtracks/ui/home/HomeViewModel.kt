@@ -101,8 +101,12 @@ class HomeViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    fun play(song: Song) {
-        viewModelScope.playSongInContext(libraryRepository, playbackController, song)
+    fun playStarred(
+        songs: List<Song>,
+        startIndex: Int,
+    ) {
+        val sourceId = songs.getOrNull(startIndex)?.sourceId ?: return
+        playbackController.playSongs(sourceId, songs.map { it.id }, startIndex)
     }
 
     fun sync() = syncManager.requestSync()

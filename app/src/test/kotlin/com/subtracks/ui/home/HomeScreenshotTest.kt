@@ -43,7 +43,7 @@ class HomeScreenshotTest {
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Recently played").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Recently added").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/home.png")
     }
