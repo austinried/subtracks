@@ -1,6 +1,7 @@
 package com.subtracks.ui.home
 
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.Artist
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -49,6 +50,15 @@ class HomeListInfoTest {
         assertEquals("1999", albumListInfo(HomeListRequest(title = "1990s", decade = 1990), album, now))
     }
 
+    @Test
+    fun artistInfoMatchesTheSection() {
+        val artist = artist(played = secondsAgo(3), playCount = 7)
+
+        assertEquals("3 days ago", artistListInfo(request(HomeSection.RecentlyPlayedArtists), artist, now))
+        assertEquals("7 plays", artistListInfo(request(HomeSection.MostPlayedArtists), artist, now))
+        assertNull(artistListInfo(request(HomeSection.MostPlayedArtists), artist.copy(playCount = 0, played = null), now))
+    }
+
     private fun secondsAgo(days: Long): Long = (now - days * 86_400_000L) / 1000L
 
     private fun request(section: HomeSection) = HomeListRequest(title = section.title, section = section)
@@ -70,6 +80,20 @@ class HomeListInfoTest {
         year = year,
         starred = null,
         songCount = 1,
+        playCount = playCount,
+        played = played,
+    )
+
+    private fun artist(
+        played: Long?,
+        playCount: Long,
+    ) = Artist(
+        sourceId = 1,
+        id = "ar",
+        name = "Artist",
+        albumCount = 1,
+        starred = null,
+        coverArt = null,
         playCount = playCount,
         played = played,
     )

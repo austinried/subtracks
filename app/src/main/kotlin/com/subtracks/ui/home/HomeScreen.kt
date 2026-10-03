@@ -65,7 +65,6 @@ enum class HomeSection(
     Genres("Genres"),
     Decades("Decades"),
     RecentlyStarredSongs("Recently starred"),
-    OnRepeatSongs("On repeat"),
     RecentlyAddedAlbums("Recently added"),
     Rediscover("Rediscover"),
     ;
@@ -110,7 +109,6 @@ fun HomeRoute(
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onPlayStarred = viewModel::playStarred,
-        onPlayOnRepeat = viewModel::playOnRepeat,
         onLongClick = { contextMenuHost?.show(it, actions) },
         onMore = onMore,
         onGenreClick = onGenreClick,
@@ -129,7 +127,6 @@ fun HomeScreen(
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
     onPlayStarred: (Song) -> Unit = {},
-    onPlayOnRepeat: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
     onMore: (HomeSection) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
@@ -190,11 +187,11 @@ fun HomeScreen(
                 onMore,
             )
             homeSongs(
-                HomeSection.OnRepeatSongs,
-                feed.onRepeatSongs,
+                HomeSection.RecentlyStarredSongs,
+                feed.recentlyStarredSongs,
                 coverArt,
                 playingSongId,
-                onPlayOnRepeat,
+                onPlayStarred,
                 onLongClick,
                 onMore,
             )
@@ -207,12 +204,11 @@ fun HomeScreen(
                 onMore,
             )
             genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
-            homeSongs(
-                HomeSection.RecentlyStarredSongs,
-                feed.recentlyStarredSongs,
+            albumRow(
+                HomeSection.RecentlyPlayedAlbums,
+                feed.recentlyPlayedAlbums,
                 coverArt,
-                playingSongId,
-                onPlayStarred,
+                onAlbumClick,
                 onLongClick,
                 onMore,
             )
@@ -228,14 +224,6 @@ fun HomeScreen(
             albumRow(
                 HomeSection.Rediscover,
                 feed.rediscoverAlbums,
-                coverArt,
-                onAlbumClick,
-                onLongClick,
-                onMore,
-            )
-            albumRow(
-                HomeSection.RecentlyPlayedAlbums,
-                feed.recentlyPlayedAlbums,
                 coverArt,
                 onAlbumClick,
                 onLongClick,

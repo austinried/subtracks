@@ -90,16 +90,6 @@ class LibraryRepository(
 
     suspend fun starredSongIds(sourceId: Long): List<String> = db.libraryDao().starredSongIds(sourceId)
 
-    fun onRepeatSongs(
-        sourceId: Long,
-        limit: Int,
-    ): Flow<List<AlbumSongItem>> = db.libraryDao().onRepeatSongs(sourceId, weekAgoCutoff(), limit)
-
-    fun onRepeatSongsPage(sourceId: Long): Flow<PagingData<AlbumSongItem>> =
-        pager(60) { db.libraryDao().homeOnRepeatSongs(sourceId, weekAgoCutoff()) }
-
-    suspend fun onRepeatSongIds(sourceId: Long): List<String> = db.libraryDao().onRepeatSongIds(sourceId, weekAgoCutoff())
-
     fun songsByGenre(
         sourceId: Long,
         genre: String,
@@ -448,5 +438,3 @@ class LibraryRepository(
 const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
 
 fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS
-
-fun weekAgoCutoff(): Long = System.currentTimeMillis() / 1000 - 7L * 24 * 60 * 60

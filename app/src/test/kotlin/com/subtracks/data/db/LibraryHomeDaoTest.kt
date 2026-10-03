@@ -336,24 +336,6 @@ class LibraryHomeDaoTest {
         }
 
     @Test
-    fun onRepeatKeepsSongsPlayedThisWeekAndOrdersByPlayCount() =
-        runTest {
-            val sourceId = source()
-            val dao = db.libraryDao()
-            dao.upsertSongs(
-                listOf(
-                    song(sourceId, "s1", "One", playCount = 3, played = 900),
-                    song(sourceId, "s2", "Two", playCount = 9, played = 950),
-                    song(sourceId, "s3", "Three", playCount = 100, played = 100),
-                ),
-            )
-
-            val onRepeat = dao.onRepeatSongs(sourceId, cutoff = 500, limit = 5).first()
-            assertEquals(listOf("s2", "s1"), onRepeat.map { it.song.id })
-            assertEquals(listOf("s2", "s1"), dao.onRepeatSongIds(sourceId, cutoff = 500))
-        }
-
-    @Test
     fun songsByGenrePagingFiltersAndJoinsAlbumCoverArt() =
         runTest {
             val sourceId = source()

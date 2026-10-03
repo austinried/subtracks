@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -52,7 +53,6 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
-import com.subtracks.ui.library.ArtistsContent
 import com.subtracks.ui.library.SongRow
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -159,17 +159,17 @@ fun HomeListScreen(
             }
 
             HomeSection.RecentlyPlayedArtists, HomeSection.MostPlayedArtists -> {
-                ArtistsContent(
-                    items = artists,
+                ArtistsList(
+                    artists = artists,
                     coverArt = coverArt,
-                    bottomInset = 0.dp,
+                    info = { artistListInfo(request, it, now) },
                     onArtistClick = onArtistClick,
                     onLongClick = onLongClick,
                     modifier = Modifier.padding(padding),
                 )
             }
 
-            HomeSection.RecentlyStarredSongs, HomeSection.OnRepeatSongs -> {
+            HomeSection.RecentlyStarredSongs -> {
                 SongsList(
                     songs = songs,
                     coverArt = coverArt,
@@ -350,6 +350,100 @@ private fun AlbumListRow(
         }
     }
 }
+
+@Composable
+private fun ArtistsList(
+    artists: LazyPagingItems<Artist>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    info: (Artist) -> String?,
+    onArtistClick: (Artist) -> Unit,
+    onLongClick: (MenuTarget) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (artists.itemCount == 0 && artists.loadState.refresh is LoadState.Loading) {
+        LoadingState(modifier)
+        return
+    }
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 24.dp),
+    ) {
+        items(count = artists.itemCount, key = artists.itemKey { it.id }) { index ->
+            val artist = artists[index]
+            if (artist != null) {
+                ArtistListRow(
+                    artist = artist,
+                    coverArt = coverArt,
+                    info = info(artist),
+                    onClick = { onArtistClick(artist) },
+                    onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtistListRow(
+    artist: Artist,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    info: String?,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CoverArt(
+            ref = coverArt(artist.coverArt, true),
+            name = artist.name,
+            modifier = Modifier.size(ALBUM_ROW_COVER).clip(CircleShape),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = artist.name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${artist.albumCount} ${if (artist.albumCount == 1L) "album" else "albums"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+                if (info != null) {
+                    Text(
+                        text = info,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+internal fun artistListInfo(
+    request: HomeListRequest,
+    artist: Artist,
+    now: Long,
+): String? =
+    when (request.section) {
+        HomeSection.RecentlyPlayedArtists -> artist.played?.let { relativeTimeLabel(it, now) }
+        HomeSection.MostPlayedArtists -> playCountLabel(artist.playCount)
+        else -> null
+    }
 
 internal fun albumListInfo(
     request: HomeListRequest,

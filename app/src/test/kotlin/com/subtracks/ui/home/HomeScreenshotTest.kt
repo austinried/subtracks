@@ -105,6 +105,44 @@ class HomeScreenshotTest {
         composeRule.onRoot().captureRoboImage("src/test/screenshots/home_album_list.png")
     }
 
+    @Test
+    fun homeRecentlyPlayedArtistsList() {
+        val now = System.currentTimeMillis()
+        val artists =
+            listOf(
+                listArtist("Artist Yesterday", (now - 86_400_000L) / 1000L),
+                listArtist("Artist This Week", (now - 3 * 86_400_000L) / 1000L),
+            )
+        composeRule.setContent {
+            SubtracksTheme {
+                HomeListScreen(
+                    request = HomeListRequest(title = "Recently played artists", section = HomeSection.RecentlyPlayedArtists),
+                    albums = remember { flowOf(PagingData.empty<Album>()) }.collectAsLazyPagingItems(),
+                    artists = remember { flowOf(PagingData.from(artists)) }.collectAsLazyPagingItems(),
+                    songs = remember { flowOf(PagingData.empty<AlbumSongItem>()) }.collectAsLazyPagingItems(),
+                    coverArt = { _, _ -> null },
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Artist Yesterday").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/home_artist_list.png")
+    }
+
+    private fun listArtist(
+        name: String,
+        played: Long,
+    ) = Artist(
+        sourceId = 1,
+        id = name,
+        name = name,
+        albumCount = 4,
+        starred = null,
+        coverArt = null,
+        played = played,
+    )
+
     private fun listAlbum(
         name: String,
         created: Long,
@@ -131,7 +169,6 @@ class HomeScreenshotTest {
             genres = listOf("Rock", "Jazz", "Classical", "Electronic", "Pop", "Folk", "Blues"),
             decades = listOf(1960L, 1970L, 1980L, 1990L, 2000L, 2010L),
             recentlyStarredSongs = songs(),
-            onRepeatSongs = songs(),
             recentlyAddedAlbums = albums("Added"),
             rediscoverAlbums = albums("Repeat"),
         )
