@@ -713,6 +713,23 @@ interface LibraryDao {
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
+            "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>>
+
+    @Query(
+        "SELECT songs.id FROM songs " +
+            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
+            "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun downloadedSongIds(sourceId: Long): List<String>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND (" +
             "EXISTS (SELECT 1 FROM song_genres " +
             "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +

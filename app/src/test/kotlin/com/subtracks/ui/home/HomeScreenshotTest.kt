@@ -18,6 +18,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.ui.theme.SubtracksTheme
 import kotlinx.coroutines.flow.flowOf
@@ -142,6 +143,28 @@ class HomeScreenshotTest {
         coverArt = null,
         played = played,
     )
+
+    @Test
+    fun homeOffline() {
+        composeRule.setContent {
+            SubtracksTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    OfflineHomeScreen(
+                        albums = remember { flowOf(PagingData.from(listOf(listAlbum("Offline Album", 0)))) }.collectAsLazyPagingItems(),
+                        artists = remember { flowOf(PagingData.from(listOf(listArtist("Offline Artist", 0)))) }.collectAsLazyPagingItems(),
+                        playlists = remember { flowOf(PagingData.empty<Playlist>()) }.collectAsLazyPagingItems(),
+                        songs = songs(),
+                        coverArt = { _, _ -> null },
+                        playingSongId = null,
+                    )
+                }
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Downloaded albums").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/home_offline.png")
+    }
 
     private fun listAlbum(
         name: String,

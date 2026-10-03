@@ -323,6 +323,7 @@ fun LibraryRoute(
             HomeRoute(
                 onAlbumClick = onAlbumClick,
                 onArtistClick = onArtistClick,
+                onPlaylistClick = onPlaylistClick,
                 onViewAlbum = onViewAlbum,
                 onViewArtist = onViewArtist,
                 onMore = onHomeMore,

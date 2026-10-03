@@ -9,7 +9,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -161,6 +163,30 @@ class LibraryHomeDaoTest {
                 listOf("Electronic", "Rock", "Legacy"),
                 dao.genresByMostPlayed(sourceId).first(),
             )
+        }
+
+    @Test
+    fun downloadedSongsOnlyIncludeCompletedDownloadsWithCoverArt() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al1", "Album", coverArt = "cover-1")))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One"),
+                    song(sourceId, "s2", "Two"),
+                    song(sourceId, "s3", "Three"),
+                ),
+            )
+            val downloads = db.downloadDao()
+            downloads.upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            downloads.upsert(SongDownload(sourceId, "s2", DownloadStatus.Queued))
+            downloads.upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed))
+
+            val downloaded = dao.downloadedSongs(sourceId).first()
+            assertEquals(listOf("s1", "s3"), downloaded.map { it.song.id })
+            assertEquals("cover-1", downloaded.first().coverArt)
+            assertEquals(listOf("s1", "s3"), dao.downloadedSongIds(sourceId))
         }
 
     @Test

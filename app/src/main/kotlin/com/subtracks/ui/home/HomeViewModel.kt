@@ -2,11 +2,18 @@ package com.subtracks.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.ArtistSort
+import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.repo.rediscoverCutoff
@@ -15,6 +22,7 @@ import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -51,6 +59,52 @@ class HomeViewModel(
         syncManager.status
             .map { it == SyncStatus.Running }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val offline: StateFlow<Boolean> =
+        sourceRepository.offline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    private val activeSource = libraryRepository.activeSourceId.filterNotNull()
+
+    val downloadedAlbums: Flow<PagingData<Album>> =
+        activeSource
+            .flatMapLatest { id ->
+                libraryRepository.albums(
+                    sourceId = id,
+                    sort = AlbumSort.Added,
+                    descending = false,
+                    starred = StarredFilter.Any,
+                    search = "",
+                    downloaded = true,
+                )
+            }.cachedIn(viewModelScope)
+
+    val downloadedArtists: Flow<PagingData<Artist>> =
+        activeSource
+            .flatMapLatest { id ->
+                libraryRepository.artists(
+                    sourceId = id,
+                    sort = ArtistSort.Name,
+                    descending = false,
+                    starred = StarredFilter.Any,
+                    search = "",
+                    downloaded = true,
+                )
+            }.cachedIn(viewModelScope)
+
+    val downloadedPlaylists: Flow<PagingData<Playlist>> =
+        activeSource
+            .flatMapLatest { id ->
+                libraryRepository.playlists(
+                    sourceId = id,
+                    sort = PlaylistSort.Name,
+                    descending = false,
+                    search = "",
+                    downloaded = true,
+                )
+            }.cachedIn(viewModelScope)
+
+    val downloadedSongs: Flow<List<AlbumSongItem>> =
+        activeSource.flatMapLatest { libraryRepository.downloadedSongs(it) }
 
     val feed: StateFlow<HomeFeed> =
         libraryRepository.activeSourceId
@@ -103,6 +157,10 @@ class HomeViewModel(
 
     fun playStarred(song: Song) {
         viewModelScope.playStarredList(libraryRepository, playbackController, song)
+    }
+
+    fun playDownloaded(song: Song) {
+        viewModelScope.playDownloadedList(libraryRepository, playbackController, song)
     }
 
     fun sync() = syncManager.requestSync()
@@ -182,6 +240,17 @@ internal fun CoroutineScope.playGenreList(
 ) {
     launch {
         val ids = libraryRepository.genreSongIds(song.sourceId, genre)
+        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+    }
+}
+
+internal fun CoroutineScope.playDownloadedList(
+    libraryRepository: LibraryRepository,
+    playbackController: PlaybackController,
+    song: Song,
+) {
+    launch {
+        val ids = libraryRepository.downloadedSongIds(song.sourceId)
         playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
     }
 }

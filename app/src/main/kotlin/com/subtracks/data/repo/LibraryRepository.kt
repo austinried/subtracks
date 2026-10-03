@@ -90,6 +90,10 @@ class LibraryRepository(
 
     suspend fun starredSongIds(sourceId: Long): List<String> = db.libraryDao().starredSongIds(sourceId)
 
+    fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>> = db.libraryDao().downloadedSongs(sourceId)
+
+    suspend fun downloadedSongIds(sourceId: Long): List<String> = db.libraryDao().downloadedSongIds(sourceId)
+
     fun songsByGenre(
         sourceId: Long,
         genre: String,

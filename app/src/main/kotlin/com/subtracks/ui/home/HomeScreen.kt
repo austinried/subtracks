@@ -37,11 +37,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
@@ -78,6 +82,7 @@ enum class HomeSection(
 fun HomeRoute(
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
+    onPlaylistClick: (Playlist) -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     onMore: (HomeSection) -> Unit,
@@ -90,7 +95,7 @@ fun HomeRoute(
     viewModel: HomeViewModel = koinViewModel(),
     playbackController: PlaybackController = koinInject(),
 ) {
-    val feed by viewModel.feed.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val actions =
         ItemActions(
@@ -100,21 +105,41 @@ fun HomeRoute(
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
         )
-    HomeScreen(
-        feed = feed,
-        coverArt = viewModel::coverArt,
-        playingSongId = playback.item?.id,
-        topInset = topInset,
-        bottomInset = bottomInset,
-        onAlbumClick = onAlbumClick,
-        onArtistClick = onArtistClick,
-        onPlayStarred = viewModel::playStarred,
-        onLongClick = { contextMenuHost?.show(it, actions) },
-        onMore = onMore,
-        onGenreClick = onGenreClick,
-        onDecadeClick = onDecadeClick,
-        onSync = viewModel::sync,
-    )
+    val onLongClick: (MenuTarget) -> Unit = { contextMenuHost?.show(it, actions) }
+    if (offline) {
+        OfflineHomeScreen(
+            albums = viewModel.downloadedAlbums.collectAsLazyPagingItems(),
+            artists = viewModel.downloadedArtists.collectAsLazyPagingItems(),
+            playlists = viewModel.downloadedPlaylists.collectAsLazyPagingItems(),
+            songs = viewModel.downloadedSongs.collectAsStateWithLifecycle(initialValue = emptyList()).value,
+            coverArt = viewModel::coverArt,
+            playingSongId = playback.item?.id,
+            topInset = topInset,
+            bottomInset = bottomInset,
+            onAlbumClick = onAlbumClick,
+            onArtistClick = onArtistClick,
+            onPlaylistClick = onPlaylistClick,
+            onSongPlay = viewModel::playDownloaded,
+            onLongClick = onLongClick,
+        )
+    } else {
+        val feed by viewModel.feed.collectAsStateWithLifecycle()
+        HomeScreen(
+            feed = feed,
+            coverArt = viewModel::coverArt,
+            playingSongId = playback.item?.id,
+            topInset = topInset,
+            bottomInset = bottomInset,
+            onAlbumClick = onAlbumClick,
+            onArtistClick = onArtistClick,
+            onPlayStarred = viewModel::playStarred,
+            onLongClick = onLongClick,
+            onMore = onMore,
+            onGenreClick = onGenreClick,
+            onDecadeClick = onDecadeClick,
+            onSync = viewModel::sync,
+        )
+    }
 }
 
 @Composable
@@ -152,24 +177,7 @@ fun HomeScreen(
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
         ) {
-            item(key = "home-title") {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_subtracks_logo),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(width = 34.dp, height = 25.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(text = "subtracks", style = MaterialTheme.typography.headlineMedium)
-                }
-            }
+            homeTitle()
             albumRow(
                 HomeSection.RecentlyAddedAlbums,
                 feed.recentlyAddedAlbums,
@@ -230,6 +238,188 @@ fun HomeScreen(
                 onMore,
             )
         }
+    }
+}
+
+private fun LazyListScope.homeTitle() {
+    item(key = "home-title") {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 0.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_subtracks_logo),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(width = 34.dp, height = 25.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(text = "subtracks", style = MaterialTheme.typography.headlineMedium)
+        }
+    }
+}
+
+@Composable
+fun OfflineHomeScreen(
+    albums: LazyPagingItems<Album>,
+    artists: LazyPagingItems<Artist>,
+    playlists: LazyPagingItems<Playlist>,
+    songs: List<AlbumSongItem>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    playingSongId: String?,
+    topInset: Dp = 0.dp,
+    bottomInset: Dp = 0.dp,
+    onAlbumClick: (Album) -> Unit = {},
+    onArtistClick: (Artist) -> Unit = {},
+    onPlaylistClick: (Playlist) -> Unit = {},
+    onSongPlay: (Song) -> Unit = {},
+    onLongClick: (MenuTarget) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
+        ) {
+            homeTitle()
+            downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick)
+            downloadedArtistRow(artists, coverArt, onArtistClick, onLongClick)
+            downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick)
+            songList(
+                key = "downloaded-songs",
+                title = "Downloaded songs",
+                songs = songs,
+                coverArt = coverArt,
+                playingSongId = playingSongId,
+                onSongPlay = onSongPlay,
+                onLongClick = onLongClick,
+                onMore = null,
+            )
+        }
+    }
+}
+
+private fun LazyListScope.downloadedAlbumRow(
+    albums: LazyPagingItems<Album>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    onAlbumClick: (Album) -> Unit,
+    onLongClick: (MenuTarget) -> Unit,
+) {
+    if (albums.itemCount == 0) return
+    item(key = "downloaded-albums-header") {
+        HomeSectionHeader("Downloaded albums", null)
+    }
+    item(key = "downloaded-albums-row") {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
+        ) {
+            items(count = albums.itemCount, key = albums.itemKey { it.id }) { index ->
+                val album = albums[index]
+                if (album != null) {
+                    val ref = coverArt(album.coverArt, true)
+                    AlbumTile(
+                        album = album,
+                        ref = ref,
+                        onClick = { onAlbumClick(album) },
+                        onLongClick = { onLongClick(MenuTarget.Album(album, ref)) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.downloadedArtistRow(
+    artists: LazyPagingItems<Artist>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    onArtistClick: (Artist) -> Unit,
+    onLongClick: (MenuTarget) -> Unit,
+) {
+    if (artists.itemCount == 0) return
+    item(key = "downloaded-artists-header") {
+        HomeSectionHeader("Downloaded artists", null)
+    }
+    item(key = "downloaded-artists-row") {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(ARTIST_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
+        ) {
+            items(count = artists.itemCount, key = artists.itemKey { it.id }) { index ->
+                val artist = artists[index]
+                if (artist != null) {
+                    val ref = coverArt(artist.coverArt, true)
+                    ArtistTile(
+                        artist = artist,
+                        ref = ref,
+                        onClick = { onArtistClick(artist) },
+                        onLongClick = { onLongClick(MenuTarget.Artist(artist, ref)) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.downloadedPlaylistRow(
+    playlists: LazyPagingItems<Playlist>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    onPlaylistClick: (Playlist) -> Unit,
+    onLongClick: (MenuTarget) -> Unit,
+) {
+    if (playlists.itemCount == 0) return
+    item(key = "downloaded-playlists-header") {
+        HomeSectionHeader("Downloaded playlists", null)
+    }
+    item(key = "downloaded-playlists-row") {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
+        ) {
+            items(count = playlists.itemCount, key = playlists.itemKey { it.id }) { index ->
+                val playlist = playlists[index]
+                if (playlist != null) {
+                    val ref = coverArt(playlist.coverArt, true)
+                    PlaylistTile(
+                        playlist = playlist,
+                        ref = ref,
+                        onClick = { onPlaylistClick(playlist) },
+                        onLongClick = { onLongClick(MenuTarget.Playlist(playlist, ref)) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistTile(
+    playlist: Playlist,
+    ref: CoverArtRef?,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.width(TILE_SIZE).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        CoverArt(
+            ref = ref,
+            name = playlist.name,
+            modifier = Modifier.size(TILE_SIZE).clip(RoundedCornerShape(2.dp)),
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = playlist.name,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -400,10 +590,30 @@ private fun LazyListScope.homeSongs(
     onSongPlay: (Song) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
+) = songList(
+    key = section.name,
+    title = section.title,
+    songs = songs,
+    coverArt = coverArt,
+    playingSongId = playingSongId,
+    onSongPlay = onSongPlay,
+    onLongClick = onLongClick,
+    onMore = { onMore(section) },
+)
+
+private fun LazyListScope.songList(
+    key: String,
+    title: String,
+    songs: List<AlbumSongItem>,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    playingSongId: String?,
+    onSongPlay: (Song) -> Unit,
+    onLongClick: (MenuTarget) -> Unit,
+    onMore: (() -> Unit)?,
 ) {
     if (songs.isEmpty()) return
-    item(key = "${section.name}-header") {
-        HomeSectionHeader(section.title) { onMore(section) }
+    item(key = "$key-header") {
+        HomeSectionHeader(title, onMore)
     }
     items(songs, key = { it.song.id }) { item ->
         SongRow(
