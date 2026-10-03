@@ -709,7 +709,7 @@ interface LibraryDao {
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
     )
     fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>>
 
@@ -717,7 +717,7 @@ interface LibraryDao {
         "SELECT songs.id FROM songs " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
     )
     suspend fun downloadedSongIds(sourceId: Long): List<String>
 
@@ -726,9 +726,30 @@ interface LibraryDao {
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
     )
     fun homeDownloadedSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
+
+    @Query(
+        "SELECT albums.* FROM albums " +
+            "JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
+            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id AND d.status = 'Completed' " +
+            "WHERE albums.sourceId = :sourceId " +
+            "GROUP BY albums.sourceId, albums.id " +
+            "ORDER BY MAX(d.downloadedAt) DESC, albums.name COLLATE NOCASE, albums.id",
+    )
+    fun downloadedAlbums(sourceId: Long): PagingSource<Int, Album>
+
+    @Query(
+        "SELECT artists.* FROM artists " +
+            "JOIN albums ON albums.sourceId = artists.sourceId AND albums.artistId = artists.id " +
+            "JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
+            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id AND d.status = 'Completed' " +
+            "WHERE artists.sourceId = :sourceId " +
+            "GROUP BY artists.sourceId, artists.id " +
+            "ORDER BY MAX(d.downloadedAt) DESC, artists.name COLLATE NOCASE, artists.id",
+    )
+    fun downloadedArtists(sourceId: Long): PagingSource<Int, Artist>
 
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM song_genres " +
@@ -768,13 +789,15 @@ interface LibraryDao {
 
     @Query(
         "SELECT COUNT(*) FROM song_downloads d " +
-            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "AND (songs.title COLLATE NOCASE < :title OR (songs.title COLLATE NOCASE = :title AND songs.id < :id))",
+            "AND (d.downloadedAt > (SELECT downloadedAt FROM song_downloads WHERE sourceId = :sourceId AND songId = :id) " +
+            "OR (d.downloadedAt = (SELECT downloadedAt FROM song_downloads WHERE sourceId = :sourceId AND songId = :id) " +
+            "AND (s.title COLLATE NOCASE < (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "OR (s.title COLLATE NOCASE = (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
     )
     suspend fun downloadedSongOrdinal(
         sourceId: Long,
-        title: String,
         id: String,
     ): Long
 

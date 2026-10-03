@@ -10,10 +10,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
-import com.subtracks.data.prefs.AlbumSort
-import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
-import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.repo.rediscoverCutoff
@@ -66,30 +63,10 @@ class HomeViewModel(
     private val activeSource = libraryRepository.activeSourceId.filterNotNull()
 
     val downloadedAlbums: Flow<PagingData<Album>> =
-        activeSource
-            .flatMapLatest { id ->
-                libraryRepository.albums(
-                    sourceId = id,
-                    sort = AlbumSort.Added,
-                    descending = false,
-                    starred = StarredFilter.Any,
-                    search = "",
-                    downloaded = true,
-                )
-            }.cachedIn(viewModelScope)
+        activeSource.flatMapLatest { libraryRepository.downloadedAlbumsPage(it) }.cachedIn(viewModelScope)
 
     val downloadedArtists: Flow<PagingData<Artist>> =
-        activeSource
-            .flatMapLatest { id ->
-                libraryRepository.artists(
-                    sourceId = id,
-                    sort = ArtistSort.Name,
-                    descending = false,
-                    starred = StarredFilter.Any,
-                    search = "",
-                    downloaded = true,
-                )
-            }.cachedIn(viewModelScope)
+        activeSource.flatMapLatest { libraryRepository.downloadedArtistsPage(it) }.cachedIn(viewModelScope)
 
     val downloadedPlaylists: Flow<PagingData<Playlist>> =
         activeSource
@@ -252,7 +229,7 @@ internal fun CoroutineScope.playDownloadedList(
     song: Song,
 ) {
     launch {
-        val ordinal = libraryRepository.downloadedSongOrdinal(song.sourceId, song.title, song.id)
+        val ordinal = libraryRepository.downloadedSongOrdinal(song.sourceId, song.id)
         playbackController.playDownloaded(song.sourceId, ordinal)
     }
 }

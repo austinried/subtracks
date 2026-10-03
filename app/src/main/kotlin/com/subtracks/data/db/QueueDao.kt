@@ -259,7 +259,7 @@ interface QueueDao {
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
     )
     suspend fun downloadedSongs(
         sourceId: Long,
@@ -271,7 +271,7 @@ interface QueueDao {
         "SELECT songs.id FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
     )
     suspend fun downloadedSongIds(sourceId: Long): List<String>
 }

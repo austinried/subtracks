@@ -10,10 +10,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
-import com.subtracks.data.prefs.AlbumSort
-import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
-import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
@@ -57,14 +54,7 @@ class HomeListViewModel(
             .flatMapLatest { id ->
                 when {
                     request.downloaded == OfflineListKind.Albums -> {
-                        libraryRepository.albums(
-                            sourceId = id,
-                            sort = AlbumSort.Added,
-                            descending = false,
-                            starred = StarredFilter.Any,
-                            search = "",
-                            downloaded = true,
-                        )
+                        libraryRepository.downloadedAlbumsPage(id)
                     }
 
                     request.decade != null -> {
@@ -107,14 +97,7 @@ class HomeListViewModel(
 
                     else -> {
                         if (request.downloaded == OfflineListKind.Artists) {
-                            libraryRepository.artists(
-                                sourceId = id,
-                                sort = ArtistSort.Name,
-                                descending = false,
-                                starred = StarredFilter.Any,
-                                search = "",
-                                downloaded = true,
-                            )
+                            libraryRepository.downloadedArtistsPage(id)
                         } else {
                             flowOf(PagingData.empty<Artist>())
                         }

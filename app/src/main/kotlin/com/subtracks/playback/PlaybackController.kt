@@ -1241,25 +1241,29 @@ class PlaybackController(
         window: List<QueueWindowItem>,
         position: Long,
     ) {
-        if (offline) {
-            loadWindow(position, autoplay = player?.playWhenReady == true, startPositionMs = player?.currentPositionMs ?: 0)
+        val player = player ?: return
+        downloads.awaitLoaded()
+        val ordered =
+            if (offline) window.filter { downloads.localUri(it.item.song.id) != null } else window
+        val index = ordered.indexOfFirst { it.position == position }
+        if (index < 0) {
+            loadWindow(position, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
             return
         }
-        val player = player ?: return
-        val index = window.indexOfFirst { it.position == position }
-        if (index < 0) return
+        windowPositions = LongArray(ordered.size) { ordered[it].position }
+        windowFiltered = offline
+        windowStart = ordered.first().position
+        windowEnd = ordered.last().position
+        lastPosition = position
         updating = true
         try {
             repeat(player.currentIndex) { player.removeFirst() }
             while (player.itemCount > 1) player.removeLast()
-            for (i in index - 1 downTo 0) player.addFirst(window[i].item.toQueueItem())
-            for (i in index + 1 until window.size) player.addLast(window[i].item.toQueueItem())
+            for (i in index - 1 downTo 0) player.addFirst(ordered[i].item.toQueueItem())
+            for (i in index + 1 until ordered.size) player.addLast(ordered[i].item.toQueueItem())
         } finally {
             updating = false
         }
-        windowStart = window.first().position
-        windowEnd = window.last().position
-        lastPosition = position
     }
 
     private fun currentPosition(): Long? {

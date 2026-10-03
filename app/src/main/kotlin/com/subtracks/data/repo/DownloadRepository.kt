@@ -555,6 +555,12 @@ class DownloadRepository(
                         status == DownloadStatus.Failed -> "Download failed"
                         else -> null
                     },
+                downloadedAt =
+                    if (status == DownloadStatus.Completed && row.downloadedAt == 0L) {
+                        System.currentTimeMillis()
+                    } else {
+                        row.downloadedAt
+                    },
             ),
         )
     }

@@ -217,6 +217,29 @@ class LibraryHomeDaoTest {
             assertEquals(page.map { it.song.id }, dao.songsByGenreIds(sourceId, "Rock"))
         }
 
+    @Test
+    fun downloadedSongsOrderByNewestDownload() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al1", "Album", coverArt = "cover-1")))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One"),
+                    song(sourceId, "s2", "Two"),
+                    song(sourceId, "s3", "Three"),
+                ),
+            )
+            val downloads = db.downloadDao()
+            downloads.upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed, downloadedAt = 100))
+            downloads.upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed, downloadedAt = 300))
+            downloads.upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed, downloadedAt = 200))
+
+            assertEquals(listOf("s3", "s2", "s1"), dao.downloadedSongs(sourceId).first().map { it.song.id })
+            assertEquals(listOf("s3", "s2", "s1"), dao.downloadedSongIds(sourceId))
+            assertEquals(2L, dao.downloadedSongOrdinal(sourceId, "s1"))
+        }
+
     private suspend fun insertGenre(
         sourceId: Long,
         songId: String,
