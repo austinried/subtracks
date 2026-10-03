@@ -6,7 +6,7 @@
 #
 # Reads a recipe from tools/fdroid/<appid>.yml, pushes it to a branch on the
 # fork and opens a merge request against fdroid/fdroiddata. Needs a GitLab
-# personal access token with the 'api' scope in GITLAB_TOKEN.
+# personal access token with the 'api' scope in GL_TOKEN.
 
 const FORK = "austinried/fdroiddata"
 const UPSTREAM = "fdroid/fdroiddata"
@@ -37,9 +37,9 @@ def main [
         return
     }
 
-    let token = ($env.GITLAB_TOKEN? | default "")
+    let token = ($env.GL_TOKEN? | default "")
     if ($token | is-empty) {
-        error make { msg: "GITLAB_TOKEN is unset; it needs a GitLab token with the 'api' scope" }
+        error make { msg: "GL_TOKEN is unset; it needs a GitLab token with the 'api' scope" }
     }
     let headers = { "PRIVATE-TOKEN": $token }
     let fork_id = (http get $"($api)/projects/($fork)" --headers $headers | get id)
