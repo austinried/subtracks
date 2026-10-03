@@ -84,6 +84,7 @@ fun appModule(
             db = get(),
             activeSourceId = get<SourceRepository>()::activeSourceIdOnce,
             offline = get<SourceRepository>().offline,
+            offlinePreferences = get<UserPreferences>().offlineMode(),
             scope = get(),
         )
     }

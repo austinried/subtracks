@@ -25,6 +25,4 @@ class NetworkServerActionSink(
         val source = sources.activeMusicSource() ?: throw IllegalStateException("No active server")
         source.setStar(type, id, starred)
     }
-
-    override suspend fun flush() = Unit
 }

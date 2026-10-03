@@ -8,58 +8,54 @@ import com.subtracks.data.source.StarType
 import com.subtracks.data.source.subsonic.SubsonicException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.IOException
 
 class PendingServerActionSink(
     private val delegate: ServerActionSink,
     private val db: SubtracksDatabase,
     private val activeSourceId: suspend () -> Long?,
     private val offline: StateFlow<Boolean>,
+    offlinePreferences: Flow<Boolean>,
     scope: CoroutineScope,
 ) : ServerActionSink {
-    private val flushLock = Mutex()
+    private val lock = Mutex()
 
     init {
         scope.launch {
-            // The first emission is the StateFlow's default, not necessarily the persisted value, and
-            // replaying onto the network must not race a cold start with offline mode on.
-            offline
-                .drop(1)
-                .collect { isOffline -> if (!isOffline) flush() }
+            offlinePreferences.collect { isOffline ->
+                // The persisted value is authoritative, unlike the process flag's default at cold
+                // start, so wait for that flag to agree before replaying.
+                if (!isOffline) {
+                    offline.first { !it }
+                    flush()
+                }
+            }
         }
     }
 
     override suspend fun nowPlaying(songId: String) {
         if (offline.value) return
-        try {
-            delegate.nowPlaying(songId)
-            flush()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-        }
+        if (attempt { delegate.nowPlaying(songId) } == null) flush()
     }
 
     override suspend fun scrobble(
         songId: String,
         time: Long,
     ) {
-        if (offline.value) {
-            queue(PendingActionKind.Scrobble, songId, null, time)
-            return
-        }
-        try {
-            delegate.scrobble(songId, time)
-            flush()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            queue(PendingActionKind.Scrobble, songId, null, time)
+        lock.withLock {
+            if (offline.value) {
+                enqueueLocked(PendingActionKind.Scrobble, songId, null, time)
+                return
+            }
+            when (val failure = attempt { delegate.scrobble(songId, time) }) {
+                null -> drainSafelyLocked()
+                else -> if (isRetryable(failure)) enqueueLocked(PendingActionKind.Scrobble, songId, null, time)
+            }
         }
     }
 
@@ -69,41 +65,58 @@ class PendingServerActionSink(
         starred: Boolean,
     ) {
         val kind = if (starred) PendingActionKind.Star else PendingActionKind.Unstar
-        if (offline.value) {
-            if (!queue(kind, id, type.name, 0)) throw IllegalStateException("No active server")
-            return
-        }
-        try {
-            delegate.setStar(type, id, starred)
-            flush()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (rejected: SubsonicException) {
-            // The server answered and refused; retrying the same request will not help.
-            throw rejected
-        } catch (failure: Exception) {
-            if (!queue(kind, id, type.name, 0)) throw failure
+        lock.withLock {
+            if (offline.value) {
+                if (!enqueueLocked(kind, id, type.name, 0)) throw IllegalStateException("No active server")
+                return
+            }
+            when (val failure = attempt { delegate.setStar(type, id, starred) }) {
+                null -> {
+                    // The absolute state just sent wins; a queued star for the same item is older.
+                    clearStarLocked(type.name, id)
+                    drainSafelyLocked()
+                }
+
+                else -> {
+                    if (!isRetryable(failure) || !enqueueLocked(kind, id, type.name, 0)) throw failure
+                }
+            }
         }
     }
 
     override suspend fun flush() {
-        flushLock.withLock {
-            if (offline.value) return
-            val sourceId = activeSourceId() ?: return
-            val dao = db.pendingActionDao()
-            for (action in dao.pending(sourceId)) {
-                try {
-                    deliver(action)
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (_: IOException) {
-                    // Still unreachable: keep this and the remaining actions for the next attempt.
-                    return
-                } catch (_: Exception) {
-                    // The server answered and refused; drop the action rather than block the queue.
-                }
-                dao.delete(action.id)
+        try {
+            lock.withLock { drainLocked() }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+        }
+    }
+
+    private suspend fun drainLocked() {
+        if (offline.value) return
+        val sourceId = activeSourceId() ?: return
+        val dao = db.pendingActionDao()
+        for (action in dao.pending(sourceId)) {
+            try {
+                deliver(action)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Exception) {
+                // Still unreachable: keep this and the remaining actions for the next attempt.
+                if (isRetryable(failure)) return
+                // The server answered and refused; drop the action rather than block the queue.
             }
+            dao.delete(action.id)
+        }
+    }
+
+    private suspend fun drainSafelyLocked() {
+        try {
+            drainLocked()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
         }
     }
 
@@ -120,16 +133,38 @@ class PendingServerActionSink(
         }
     }
 
-    private suspend fun queue(
+    private suspend fun enqueueLocked(
         kind: PendingActionKind,
         targetId: String,
         starType: String?,
         time: Long,
     ): Boolean {
         val sourceId = activeSourceId() ?: return false
-        val dao = db.pendingActionDao()
-        if (starType != null) dao.clearStar(sourceId, starType, targetId)
-        dao.insert(PendingAction(sourceId = sourceId, kind = kind, targetId = targetId, starType = starType, time = time))
+        db.pendingActionDao().replace(
+            PendingAction(sourceId = sourceId, kind = kind, targetId = targetId, starType = starType, time = time),
+        )
         return true
     }
+
+    private suspend fun clearStarLocked(
+        starType: String,
+        targetId: String,
+    ) {
+        val sourceId = activeSourceId() ?: return
+        db.pendingActionDao().clearStar(sourceId, starType, targetId)
+    }
+
+    private suspend fun attempt(block: suspend () -> Unit): Exception? =
+        try {
+            block()
+            null
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            failure
+        }
+
+    // A SubsonicException with a negative code is a transport or protocol failure (HTTP non-2xx,
+    // malformed body), not a refusal, so it is still worth retrying.
+    private fun isRetryable(failure: Exception): Boolean = failure !is SubsonicException || failure.code < 0
 }

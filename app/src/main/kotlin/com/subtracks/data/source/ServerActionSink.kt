@@ -18,5 +18,5 @@ interface ServerActionSink {
         starred: Boolean,
     )
 
-    suspend fun flush()
+    suspend fun flush() = Unit
 }

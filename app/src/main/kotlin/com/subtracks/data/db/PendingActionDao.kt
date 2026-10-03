@@ -3,6 +3,7 @@ package com.subtracks.data.db
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
+import androidx.room3.Transaction
 import com.subtracks.data.model.PendingAction
 
 @Dao
@@ -25,4 +26,10 @@ interface PendingActionDao {
         starType: String,
         targetId: String,
     )
+
+    @Transaction
+    suspend fun replace(action: PendingAction) {
+        if (action.starType != null) clearStar(action.sourceId, action.starType, action.targetId)
+        insert(action)
+    }
 }

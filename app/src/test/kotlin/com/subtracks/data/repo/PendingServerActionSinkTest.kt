@@ -5,6 +5,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.PendingActionKind
@@ -64,8 +65,6 @@ class PendingServerActionSinkTest {
             starFailure?.let { throw it }
             calls += Call.Star(type, id, starred)
         }
-
-        override suspend fun flush() = Unit
     }
 
     private lateinit var db: SubtracksDatabase
@@ -73,6 +72,7 @@ class PendingServerActionSinkTest {
     private lateinit var delegate: RecordingSink
     private lateinit var sink: PendingServerActionSink
     private val offline = MutableStateFlow(true)
+    private val offlinePreferences = MutableStateFlow(true)
     private var sourceId = 0L
 
     @Before
@@ -86,7 +86,15 @@ class PendingServerActionSinkTest {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         sourceId = runBlocking { db.sourcesDao().insertSource(Source(name = "server", address = "http://x/", createdAt = 0)) }
         delegate = RecordingSink()
-        sink = PendingServerActionSink(delegate, db, activeSourceId = { sourceId }, offline = offline, scope = scope)
+        sink =
+            PendingServerActionSink(
+                delegate = delegate,
+                db = db,
+                activeSourceId = { sourceId },
+                offline = offline,
+                offlinePreferences = offlinePreferences,
+                scope = scope,
+            )
     }
 
     @After
@@ -111,6 +119,19 @@ class PendingServerActionSinkTest {
         }
 
     @Test
+    fun turningOfflineOffReplaysThroughTheCollector() =
+        runBlocking {
+            sink.setStar(StarType.Song, "s1", true)
+
+            offline.value = false
+            offlinePreferences.value = false
+
+            awaitUntil("the queued star to replay") { delegate.calls.isNotEmpty() }
+            assertEquals(listOf(Call.Star(StarType.Song, "s1", true)), delegate.calls)
+            assertEquals(0, db.pendingActionDao().pending(sourceId).size)
+        }
+
+    @Test
     fun anOfflineUnstarCoalescesAwayAnEarlierStar() =
         runBlocking {
             sink.setStar(StarType.Song, "s1", true)
@@ -124,6 +145,21 @@ class PendingServerActionSinkTest {
             sink.flush()
 
             assertEquals(listOf(Call.Star(StarType.Song, "s1", false)), delegate.calls)
+        }
+
+    @Test
+    fun aQueuedStarCannotOverwriteANewerOnlineUnstar() =
+        runBlocking {
+            offline.value = false
+            delegate.starFailure = IOException("down")
+            sink.setStar(StarType.Song, "s1", true)
+            assertEquals(1, db.pendingActionDao().pending(sourceId).size)
+
+            delegate.starFailure = null
+            sink.setStar(StarType.Song, "s1", false)
+
+            assertEquals(listOf(Call.Star(StarType.Song, "s1", false)), delegate.calls)
+            assertEquals(0, db.pendingActionDao().pending(sourceId).size)
         }
 
     @Test
@@ -170,6 +206,17 @@ class PendingServerActionSinkTest {
         }
 
     @Test
+    fun aTransportFailureIsQueuedRatherThanRejected() =
+        runBlocking {
+            offline.value = false
+            delegate.starFailure = SubsonicException(-1, "HTTP 503")
+
+            sink.setStar(StarType.Song, "s1", true)
+
+            assertEquals(1, db.pendingActionDao().pending(sourceId).size)
+        }
+
+    @Test
     fun flushKeepsQueuedActionsWhileTheServerIsStillUnreachable() =
         runBlocking {
             sink.setStar(StarType.Song, "s1", true)
@@ -184,6 +231,24 @@ class PendingServerActionSinkTest {
             sink.flush()
 
             assertEquals(listOf(Call.Star(StarType.Song, "s1", true)), delegate.calls)
+            assertEquals(0, db.pendingActionDao().pending(sourceId).size)
+        }
+
+    @Test
+    fun flushKeepsQueuedActionsOnATransportFailure() =
+        runBlocking {
+            sink.scrobble("s1", 1_000)
+
+            offline.value = false
+            delegate.scrobbleFailure = SubsonicException(-1, "HTTP 503")
+            sink.flush()
+
+            assertEquals(1, db.pendingActionDao().pending(sourceId).size)
+
+            delegate.scrobbleFailure = null
+            sink.flush()
+
+            assertEquals(listOf(Call.Scrobble("s1", 1_000)), delegate.calls)
             assertEquals(0, db.pendingActionDao().pending(sourceId).size)
         }
 }
