@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -251,7 +250,7 @@ private fun HomeSectionHeader(
     onMore: (() -> Unit)?,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 20.dp, bottom = 0.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 28.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -271,7 +270,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
-private val STARRED_ROW_PULL = 4.dp
+private val SECTION_CONTENT_TOP = 4.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
@@ -290,6 +289,7 @@ private fun LazyListScope.albumRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(albums, key = { it.id }) { album ->
                 val ref = coverArt(album.coverArt, true)
@@ -320,6 +320,7 @@ private fun LazyListScope.artistRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(ARTIST_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(artists, key = { it.id }) { artist ->
                 val ref = coverArt(artist.coverArt, true)
@@ -350,7 +351,7 @@ private fun LazyListScope.genreBlock(
                 Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = SECTION_CONTENT_TOP),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
                 repeat(GENRE_ROWS) { row ->
@@ -381,6 +382,7 @@ private fun LazyListScope.decadeRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(decades, key = { it }) { decade ->
                 AssistChip(onClick = { onDecadeClick(decade) }, label = { Text("${decade}s") })
@@ -410,14 +412,10 @@ private fun LazyListScope.starredSongs(
             isPlaying = item.song.id == playingSongId,
             durationSeconds = item.song.duration,
             modifier =
-                Modifier
-                    // ListItem centres its content inside a 72dp minimum height; pull the row up so
-                    // the cover aligns with the flush album and artist rows above it.
-                    .offset(y = -STARRED_ROW_PULL)
-                    .combinedClickable(
-                        onClick = { onPlayStarred(item.song) },
-                        onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
-                    ),
+                Modifier.combinedClickable(
+                    onClick = { onPlayStarred(item.song) },
+                    onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
+                ),
         )
     }
 }
