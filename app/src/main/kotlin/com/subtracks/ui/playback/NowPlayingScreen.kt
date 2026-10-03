@@ -1,8 +1,13 @@
 package com.subtracks.ui.playback
 
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +58,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.PlatformTextStyle
@@ -81,10 +88,15 @@ import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 const val NOW_PLAYING_COVER_TAG = "now-playing-cover"
+
+private const val SWIPE_THRESHOLD_FRACTION = 0.25f
+private const val SWIPE_FLING_VELOCITY = 1000f
+private const val SWIPE_SETTLE_MS = 180
 
 @Composable
 fun NowPlayingRoute(
@@ -200,6 +212,18 @@ fun NowPlayingScreen(
             platformStyle = PlatformTextStyle(includeFontPadding = false),
             lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
         )
+    var swipeOffsetX by remember { mutableFloatStateOf(0f) }
+    var coverWidthPx by remember { mutableFloatStateOf(0f) }
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+    val scope = rememberCoroutineScope()
+
+    fun settleSwipe() {
+        settleJob?.cancel()
+        settleJob =
+            scope.launch {
+                animate(swipeOffsetX, 0f, animationSpec = tween(SWIPE_SETTLE_MS)) { value, _ -> swipeOffsetX = value }
+            }
+    }
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
@@ -254,7 +278,21 @@ fun NowPlayingScreen(
                                     .weight(1f)
                                     .fillMaxWidth()
                                     .padding(top = 2.dp)
-                                    .clickable(
+                                    .onSizeChanged { coverWidthPx = it.width.toFloat() }
+                                    .graphicsLayer { translationX = swipeOffsetX }
+                                    .draggable(
+                                        orientation = Orientation.Horizontal,
+                                        state = rememberDraggableState { delta -> swipeOffsetX += delta },
+                                        onDragStarted = { settleJob?.cancel() },
+                                        onDragStopped = { velocity ->
+                                            val threshold = coverWidthPx * SWIPE_THRESHOLD_FRACTION
+                                            when {
+                                                swipeOffsetX <= -threshold || velocity <= -SWIPE_FLING_VELOCITY -> onNext()
+                                                swipeOffsetX >= threshold || velocity >= SWIPE_FLING_VELOCITY -> onPrevious()
+                                            }
+                                            settleSwipe()
+                                        },
+                                    ).clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
                                         enabled = onAlbumClick != null,
@@ -299,6 +337,8 @@ fun NowPlayingScreen(
                                     Modifier
                                         .weight(1f)
                                         .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
                                             enabled = onArtistClick != null,
                                             onClickLabel = "Open artist",
                                         ) { onArtistClick?.invoke() },

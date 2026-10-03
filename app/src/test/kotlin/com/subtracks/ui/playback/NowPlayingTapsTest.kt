@@ -1,6 +1,7 @@
 package com.subtracks.ui.playback
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -10,6 +11,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.CoverArtRef
@@ -48,6 +53,8 @@ class NowPlayingTapsTest {
     private fun render(
         onAlbumClick: (() -> Unit)? = null,
         onArtistClick: (() -> Unit)? = null,
+        onNext: () -> Unit = {},
+        onPrevious: () -> Unit = {},
     ) {
         composeRule.setContent {
             SubtracksTheme {
@@ -60,8 +67,8 @@ class NowPlayingTapsTest {
                     onBack = {},
                     onQueue = {},
                     onPlayPause = {},
-                    onNext = {},
-                    onPrevious = {},
+                    onNext = onNext,
+                    onPrevious = onPrevious,
                     onAlbumClick = onAlbumClick,
                     onArtistClick = onArtistClick,
                     onSeek = {},
@@ -125,5 +132,53 @@ class NowPlayingTapsTest {
 
         composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).assertIsNotEnabled()
         composeRule.onNodeWithText("Radiohead").assertIsNotEnabled()
+    }
+
+    @Test
+    fun swipingLeftOnTheCoverSkipsToTheNextTrack() {
+        var next = false
+        var previous = false
+        render(onNext = { next = true }, onPrevious = { previous = true })
+
+        composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).performTouchInput { swipeLeft() }
+
+        assertTrue("a left swipe should skip to the next track", next)
+        assertTrue("a left swipe should not go to the previous track", !previous)
+    }
+
+    @Test
+    fun swipingRightOnTheCoverGoesToThePreviousTrack() {
+        var next = false
+        var previous = false
+        render(onNext = { next = true }, onPrevious = { previous = true })
+
+        composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).performTouchInput { swipeRight() }
+
+        assertTrue("a right swipe should go to the previous track", previous)
+        assertTrue("a right swipe should not skip to the next track", !next)
+    }
+
+    @Test
+    fun aShortSlowDragOnTheCoverDoesNotSkip() {
+        var next = false
+        var previous = false
+        render(onNext = { next = true }, onPrevious = { previous = true })
+
+        val cover = composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG)
+        val width =
+            cover
+                .fetchSemanticsNode()
+                .size.width
+                .toFloat()
+        cover.performTouchInput {
+            swipe(
+                start = Offset(width * 0.9f, centerY),
+                end = Offset(width * 0.7f, centerY),
+                durationMillis = 600,
+            )
+        }
+
+        assertTrue("a drag below the threshold should not skip", !next)
+        assertTrue("a drag below the threshold should not go to the previous track", !previous)
     }
 }
