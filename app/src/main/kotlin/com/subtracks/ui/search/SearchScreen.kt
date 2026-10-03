@@ -218,7 +218,7 @@ private fun SearchFilterBar(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SearchFilter.entries.forEach { filter ->
