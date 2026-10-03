@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -250,12 +251,13 @@ private fun HomeSectionHeader(
     onMore: (() -> Unit)?,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 20.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 20.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f),
         )
         if (onMore != null) {
@@ -270,7 +272,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
-private val SECTION_CONTENT_TOP = 12.dp
+private val SECTION_CONTENT_TOP = 8.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
