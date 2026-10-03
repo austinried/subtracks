@@ -361,6 +361,14 @@ val MIGRATION_24_25 =
         }
     }
 
+val MIGRATION_25_26 =
+    object : Migration(25, 26) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("DROP INDEX IF EXISTS `index_songs_genre`")
+            connection.execSQL("ALTER TABLE `songs` DROP COLUMN `genre`")
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -419,4 +427,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_22_23,
         MIGRATION_23_24,
         MIGRATION_24_25,
+        MIGRATION_25_26,
     )

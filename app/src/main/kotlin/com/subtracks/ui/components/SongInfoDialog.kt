@@ -36,6 +36,7 @@ fun SongInfoDialog(
     localFile: File?,
     streamEncoding: AudioEncoding?,
     onDismiss: () -> Unit,
+    genres: List<String> = emptyList(),
 ) {
     val context = LocalContext.current
     var encoding by remember(song.id, localFile) { mutableStateOf<AudioEncoding?>(null) }
@@ -55,7 +56,7 @@ fun SongInfoDialog(
                 InfoRow("Album", song.album)
                 InfoRow("Duration", song.duration?.let(DateUtils::formatElapsedTime))
                 InfoRow("Track", song.track?.let { track -> song.disc?.let { "$it.$track" } ?: track.toString() })
-                InfoRow("Genre", song.genre)
+                InfoRow("Genre", genres.joinToString(", ").ifBlank { null })
                 InfoRow("Starred", if (song.starred != null) "Yes" else null)
                 if (download != null) {
                     InfoRow("Download", downloadStatus(download.status))

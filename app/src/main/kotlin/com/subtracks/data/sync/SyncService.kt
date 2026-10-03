@@ -277,7 +277,6 @@ private val songColumns =
         "track",
         "disc",
         "starred",
-        "genre",
         "created",
         "playCount",
         "played",
@@ -285,7 +284,15 @@ private val songColumns =
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
 
-private fun Song.genreNames(): List<String> = genres.distinct().ifEmpty { listOfNotNull(genre?.trim()?.takeIf { it.isNotEmpty() }) }
+private fun Song.genreNames(): List<String> =
+    genres
+        .flatMap { it.genreParts() }
+        .ifEmpty { genre?.genreParts().orEmpty() }
+        .map { part -> id3v1Genre(part) ?: part }
+        .distinct()
+
+// Navidrome's default genre tag split (resources/mappings.yaml): semicolon, slash, comma.
+private fun String.genreParts(): List<String> = split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }
 
 private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
 
@@ -314,7 +321,6 @@ private fun Song.values() =
         track,
         disc,
         starred,
-        genre,
         created,
         playCount,
         played,

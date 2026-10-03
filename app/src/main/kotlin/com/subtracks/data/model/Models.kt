@@ -246,11 +246,6 @@ data class PlaylistSong(
             value = ["sourceId", "starred", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC],
         ),
-        Index(
-            name = "index_songs_genre",
-            value = ["sourceId", "genre", "played"],
-            orders = [Index.Order.ASC, Index.Order.ASC, Index.Order.DESC],
-        ),
     ],
 )
 data class Song(
@@ -265,7 +260,7 @@ data class Song(
     val track: Long?,
     val disc: Long?,
     val starred: Long?,
-    val genre: String?,
+    @Ignore val genre: String? = null,
     @ColumnInfo(defaultValue = "0") val created: Long = 0,
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,

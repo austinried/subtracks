@@ -694,12 +694,16 @@ private fun MainNavigation() {
             }
 
             infoSong?.let { song ->
+                val genres by
+                    remember(song.sourceId, song.id) { libraryRepository.songGenres(song.sourceId, song.id) }
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
                 SongInfoDialog(
                     song = song,
                     download = downloads[song.id],
                     localFile = downloadRepository.localFile(song.id),
                     streamEncoding = playbackController.currentAudioEncoding().takeIf { playback.item?.id == song.id },
                     onDismiss = { infoSong = null },
+                    genres = genres,
                 )
             }
         }

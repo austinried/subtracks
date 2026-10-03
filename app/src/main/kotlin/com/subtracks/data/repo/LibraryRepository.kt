@@ -331,6 +331,11 @@ class LibraryRepository(
         songId: String,
     ): Flow<Song?> = db.libraryDao().song(sourceId, songId)
 
+    fun songGenres(
+        sourceId: Long,
+        songId: String,
+    ): Flow<List<String>> = db.libraryDao().songGenres(sourceId, songId)
+
     suspend fun recordPlay(
         songId: String,
         at: Long,

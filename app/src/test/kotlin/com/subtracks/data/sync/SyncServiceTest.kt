@@ -348,6 +348,94 @@ class SyncServiceTest {
         }
 
     @Test
+    fun genresSplitOnEveryNavidromeSeparator() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genre = "Classical;Minimal/Rock,Pop"),
+                            song("s2").copy(genres = listOf("Jazz/Blues", "Soul, Funk")),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                listOf("Classical", "Minimal", "Rock", "Pop"),
+                db.libraryDao().songGenres(1, "s1").first(),
+            )
+            assertEquals(listOf("Jazz", "Blues", "Soul", "Funk"), db.libraryDao().songGenres(1, "s2").first())
+        }
+
+    @Test
+    fun numericGenresMapToId3v1Names() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genre = "17"),
+                            song("s2").copy(genre = "(52)"),
+                            song("s3").copy(genre = "999"),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s1").first())
+            assertEquals(listOf("Electronic"), db.libraryDao().songGenres(1, "s2").first())
+            assertEquals(listOf("999"), db.libraryDao().songGenres(1, "s3").first())
+        }
+
+    @Test
+    fun genresThatMapToTheSameNameCollapse() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genre = "17;Rock"),
+                            song("s2").copy(genres = listOf("17", "Rock")),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s1").first())
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s2").first())
+        }
+
+    @Test
+    fun concatenatedAndIndividualGenresCollapseOnTheHomeFeed() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genre = "Classical;Minimal"),
+                            song("s2").copy(genre = "Classical"),
+                            song("s3").copy(genre = "Minimal"),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                listOf("Classical", "Minimal"),
+                db.libraryDao().genresByMostPlayed(1).first(),
+            )
+        }
+
+    @Test
     fun thePluralGenresWinOverTheSingularAttribute() =
         runTest {
             insertSource()
