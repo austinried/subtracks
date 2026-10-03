@@ -88,6 +88,8 @@ class LibraryRepository(
 
     fun starredSongs(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().starredSongs(sourceId) }
 
+    suspend fun starredSongIds(sourceId: Long): List<String> = db.libraryDao().starredSongIds(sourceId)
+
     fun songsByGenre(
         sourceId: Long,
         genre: String,

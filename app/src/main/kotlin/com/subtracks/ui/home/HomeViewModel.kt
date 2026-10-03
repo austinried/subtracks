@@ -101,12 +101,8 @@ class HomeViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    fun playStarred(
-        songs: List<Song>,
-        startIndex: Int,
-    ) {
-        val sourceId = songs.getOrNull(startIndex)?.sourceId ?: return
-        playbackController.playSongs(sourceId, songs.map { it.id }, startIndex)
+    fun playStarred(song: Song) {
+        viewModelScope.playStarredList(libraryRepository, playbackController, song)
     }
 
     fun sync() = syncManager.requestSync()
@@ -164,5 +160,16 @@ internal fun CoroutineScope.playSongInContext(
             val ordinal = libraryRepository.albumSongOrdinal(song.sourceId, albumId, song.id)
             playbackController.playAlbum(song.sourceId, albumId, ordinal)
         }
+    }
+}
+
+internal fun CoroutineScope.playStarredList(
+    libraryRepository: LibraryRepository,
+    playbackController: PlaybackController,
+    song: Song,
+) {
+    launch {
+        val ids = libraryRepository.starredSongIds(song.sourceId)
+        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
     }
 }

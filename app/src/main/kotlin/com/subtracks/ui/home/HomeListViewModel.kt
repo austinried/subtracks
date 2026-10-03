@@ -111,6 +111,10 @@ class HomeListViewModel(
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
     fun play(song: Song) {
-        viewModelScope.playSongInContext(libraryRepository, playbackController, song)
+        if (request.section == HomeSection.RecentlyStarredSongs) {
+            viewModelScope.playStarredList(libraryRepository, playbackController, song)
+        } else {
+            viewModelScope.playSongInContext(libraryRepository, playbackController, song)
+        }
     }
 }

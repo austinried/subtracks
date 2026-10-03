@@ -317,6 +317,25 @@ class LibraryHomeDaoTest {
         }
 
     @Test
+    fun starredSongIdsMatchTheDisplayedOrderSoTheStartTrackIsRight() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "First", starred = 100),
+                    song(sourceId, "s2", "Second", starred = 300),
+                    song(sourceId, "s3", "Third", starred = null),
+                    song(sourceId, "s4", "Fourth", starred = 200),
+                ),
+            )
+
+            val displayed = dao.starredSongs(sourceId).page().map { it.song.id }
+            assertEquals(listOf("s2", "s4", "s1"), displayed)
+            assertEquals(displayed, dao.starredSongIds(sourceId))
+        }
+
+    @Test
     fun songsByGenrePagingFiltersAndJoinsAlbumCoverArt() =
         runTest {
             val sourceId = source()

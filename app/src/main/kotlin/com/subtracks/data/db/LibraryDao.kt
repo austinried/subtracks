@@ -705,6 +705,12 @@ interface LibraryDao {
     fun starredSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
 
     @Query(
+        "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL " +
+            "ORDER BY starred DESC, title COLLATE NOCASE, id",
+    )
+    suspend fun starredSongIds(sourceId: Long): List<String>
+
+    @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND (" +

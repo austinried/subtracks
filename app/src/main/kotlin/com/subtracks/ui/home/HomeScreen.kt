@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
@@ -122,7 +121,7 @@ fun HomeScreen(
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
-    onPlayStarred: (List<Song>, Int) -> Unit = { _, _ -> },
+    onPlayStarred: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
     onMore: (HomeSection) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
@@ -361,7 +360,7 @@ private fun LazyListScope.starredSongs(
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
-    onPlayStarred: (List<Song>, Int) -> Unit,
+    onPlayStarred: (Song) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
 ) {
@@ -369,7 +368,7 @@ private fun LazyListScope.starredSongs(
     item(key = "${section.name}-header") {
         HomeSectionHeader(section.title) { onMore(section) }
     }
-    itemsIndexed(songs, key = { _, item -> item.song.id }) { index, item ->
+    items(songs, key = { it.song.id }) { item ->
         SongRow(
             song = item.song,
             coverArtId = item.coverArt,
@@ -378,7 +377,7 @@ private fun LazyListScope.starredSongs(
             durationSeconds = item.song.duration,
             modifier =
                 Modifier.combinedClickable(
-                    onClick = { onPlayStarred(songs.map { it.song }, index) },
+                    onClick = { onPlayStarred(item.song) },
                     onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                 ),
         )
