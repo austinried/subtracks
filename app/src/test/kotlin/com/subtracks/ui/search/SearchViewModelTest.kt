@@ -5,6 +5,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
@@ -12,6 +13,7 @@ import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
@@ -116,10 +118,39 @@ class SearchViewModelTest {
         assertEquals(listOf("pl-1"), results.playlists.map { it.id })
         assertEquals(listOf("s1"), results.songs.map { it.song.id })
 
+        viewModel.setQuery("oa")
+        val short = runBlocking { withTimeout(5_000) { viewModel.results.first { it.isEmpty } } }
+
+        assertTrue(short.isEmpty)
+
         viewModel.setQuery("")
         val blank = runBlocking { withTimeout(5_000) { viewModel.results.first { it.isEmpty } } }
 
         assertTrue(blank.isEmpty)
+    }
+
+    @Test
+    fun playingASearchResultPlaysItsAlbumInsteadOfASearchQueue() {
+        val sourceId =
+            runBlocking {
+                val id = sourceRepository.addSource("nav", "http://localhost/", "u", "p", false)
+                db.libraryDao().upsertAlbums(listOf(album(id, "al-1", "Road Album")))
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        song(id, "s1", "Road Song"),
+                        song(id, "s2", "Another").copy(track = 2),
+                    ),
+                )
+                id
+            }
+
+        viewModel.play(song(sourceId, "s1", "Road Song"))
+        awaitUntil("the queue is built") { runBlocking { db.queueDao().entries().isNotEmpty() } }
+
+        val entries = runBlocking { db.queueDao().entries() }
+        assertEquals(1, entries.size)
+        assertEquals(QueueKind.Album, entries.first().kind)
+        assertEquals("al-1", entries.first().refId)
     }
 
     private fun album(

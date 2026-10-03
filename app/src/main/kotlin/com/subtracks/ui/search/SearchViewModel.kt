@@ -9,6 +9,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.LibraryRepository
+import com.subtracks.data.repo.SEARCH_MIN_LENGTH
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.home.playSongInContext
@@ -45,7 +46,7 @@ class SearchViewModel(
         libraryRepository.activeSourceId
             .flatMapLatest { sourceId ->
                 _query.flatMapLatest { text ->
-                    if (sourceId == null || text.isBlank()) {
+                    if (sourceId == null || text.length < SEARCH_MIN_LENGTH) {
                         flowOf(SearchResults())
                     } else {
                         combine(

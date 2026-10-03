@@ -62,14 +62,14 @@ class SearchScreenTest {
     }
 
     @Test
-    fun anEmptyQueryPromptsAndAnEmptyResultSaysSo() {
+    fun aQueryShorterThanThreeCharactersPromptsForMoreInput() {
         composeRule.setContent {
             SubtracksTheme {
-                SearchScreen(query = "", onQueryChange = {}, results = SearchResults())
+                SearchScreen(query = "ro", onQueryChange = {}, results = SearchResults())
             }
         }
 
-        composeRule.onNodeWithText("Search for songs, albums, artists and playlists.").assertIsDisplayed()
+        composeRule.onNodeWithText("Type at least 3 characters to search.").assertIsDisplayed()
     }
 
     @Test

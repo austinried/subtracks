@@ -777,15 +777,15 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun crossTypeSearchFallsBackToAScanBelowThreeCharacters() =
+    fun crossTypeSearchIgnoresQueriesShorterThanThreeCharacters() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertAlbums(listOf(album(sourceId, "al-1", "Gamma", year = null, starred = null)))
             dao.upsertSongs(listOf(song(sourceId, "s1", "Gamma Ray", starred = null)))
 
-            assertEquals(listOf("Gamma"), dao.searchAlbums(sourceId, "ga", 50).first().map { it.name })
-            assertEquals(listOf("s1"), dao.searchSongs(sourceId, "ga", 50).first().map { it.song.id })
+            assertTrue(dao.searchAlbums(sourceId, "ga", 50).first().isEmpty())
+            assertTrue(dao.searchSongs(sourceId, "ga", 50).first().isEmpty())
         }
 
     private suspend fun plan(sql: String): String =

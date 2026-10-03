@@ -37,6 +37,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
+import com.subtracks.data.repo.SEARCH_MIN_LENGTH
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
@@ -144,9 +145,9 @@ fun SearchScreen(
         },
     ) { padding ->
         when {
-            query.isBlank() -> {
+            query.length < SEARCH_MIN_LENGTH -> {
                 EmptyState(
-                    text = "Search for songs, albums, artists and playlists.",
+                    text = "Type at least $SEARCH_MIN_LENGTH characters to search.",
                     modifier = Modifier.padding(padding),
                 )
             }

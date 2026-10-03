@@ -128,33 +128,23 @@ internal const val PLAYLIST_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE
 internal const val PLAYLIST_ORDER_BY_UPDATED = "changed DESC, name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_UPDATED_REVERSED = "changed ASC, name COLLATE NOCASE DESC, id DESC"
 
-// Cross-type search: a three-character-or-longer query runs through the trigram index and anything
-// shorter falls back to the instr scan, mirroring the per-tab filters above.
+// Cross-type search only runs from three characters, since a shorter term cannot use the trigram
+// index and scanning the whole library for it is not worth it.
 internal const val ALBUM_SEARCH_FILTER =
-    "(:search <> '' AND (" +
-        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
-        "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
-        "OR instr(lower(albumArtist), lower(:search)) > 0))))"
+    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
+        "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val ARTIST_SEARCH_FILTER =
-    "(:search <> '' AND (" +
-        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
-        "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)))"
+    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
+        "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val PLAYLIST_SEARCH_FILTER =
-    "(:search <> '' AND (" +
-        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
-        "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)))"
+    "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
+        "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 internal const val SONG_SEARCH_FILTER =
-    "(:search <> '' AND (" +
-        "(length(:search) >= 3 AND songs.rowid IN (SELECT rowid FROM song_search " +
-        "WHERE song_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND (instr(lower(songs.title), lower(:search)) > 0 " +
-        "OR instr(lower(songs.artist), lower(:search)) > 0))))"
+    "(length(:search) >= 3 AND songs.rowid IN (SELECT rowid FROM song_search " +
+        "WHERE song_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"'))"
 
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
