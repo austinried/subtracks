@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -20,6 +21,7 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.library.ALBUM_COVER_TAG
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
@@ -96,6 +98,44 @@ class LibraryOptionsTest {
         composeRule.onNodeWithContentDescription("Clear filters").performClick()
         composeRule.waitForIdle()
         assertEquals(StarredFilter.Any, query.starred)
+    }
+
+    @Test
+    fun theOptionsSheetClosesWhenTransientUiIsDismissed() {
+        val host = ContextMenuHost()
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.from(albums())) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    sortOptions = sortOptionsFor(LibraryTab.Albums),
+                    starredSupported = true,
+                    dismissRequests = host.dismissRequests,
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ALBUM_COVER_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithContentDescription("List options").performClick()
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Added").assertExists()
+
+        composeRule.runOnIdle { host.dismissTransients() }
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText("Added").assertCountEquals(0)
     }
 
     @Test

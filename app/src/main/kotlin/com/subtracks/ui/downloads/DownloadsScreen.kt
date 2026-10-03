@@ -49,6 +49,7 @@ import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.DownloadedSong
 import com.subtracks.ui.components.DeleteDownloadsDialog
+import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.EmptyState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -70,10 +71,12 @@ sealed interface DownloadDeleteTarget {
 @Composable
 fun DownloadsRoute(
     onBack: () -> Unit,
+    dismissRequests: Int = 0,
     viewModel: DownloadsViewModel = koinViewModel(),
 ) {
     val tree by viewModel.tree.collectAsStateWithLifecycle()
     var pending by remember { mutableStateOf<DownloadDeleteTarget?>(null) }
+    DismissOnRequest(dismissRequests) { pending = null }
     DownloadsScreen(
         tree = tree,
         loadEncoding = viewModel::encoding,

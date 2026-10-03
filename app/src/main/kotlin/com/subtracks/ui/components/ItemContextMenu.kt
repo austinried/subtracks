@@ -32,7 +32,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -147,6 +149,11 @@ class ContextMenuHost {
     var actions by mutableStateOf(ItemActions())
         private set
 
+    // Bumped when an external event (opening now playing) should close menu-like UI the host does
+    // not own, such as the library's list options sheet.
+    var dismissRequests by mutableIntStateOf(0)
+        private set
+
     fun show(
         target: MenuTarget,
         actions: ItemActions,
@@ -158,6 +165,21 @@ class ContextMenuHost {
     fun dismiss() {
         target = null
         actions = ItemActions()
+    }
+
+    fun dismissTransients() {
+        dismiss()
+        dismissRequests++
+    }
+}
+
+@Composable
+internal fun DismissOnRequest(
+    dismissRequests: Int,
+    onDismiss: () -> Unit,
+) {
+    LaunchedEffect(dismissRequests) {
+        if (dismissRequests > 0) onDismiss()
     }
 }
 

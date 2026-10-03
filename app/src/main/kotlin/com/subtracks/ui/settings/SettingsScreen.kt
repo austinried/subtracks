@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
+import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.rememberViewportFill
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -71,6 +72,7 @@ fun SettingsRoute(
     onOpenLicenses: () -> Unit,
     onEditServer: (Long) -> Unit,
     onBack: () -> Unit,
+    dismissRequests: Int = 0,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val sources by viewModel.sources.collectAsStateWithLifecycle()
@@ -105,6 +107,7 @@ fun SettingsRoute(
         onOpenDownloads = onOpenDownloads,
         onOpenLicenses = onOpenLicenses,
         onBack = onBack,
+        dismissRequests = dismissRequests,
     )
 }
 
@@ -133,9 +136,11 @@ fun SettingsScreen(
     onOpenDownloads: () -> Unit,
     onOpenLicenses: () -> Unit,
     onBack: () -> Unit,
+    dismissRequests: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
+    DismissOnRequest(dismissRequests) { dialog = null }
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
 

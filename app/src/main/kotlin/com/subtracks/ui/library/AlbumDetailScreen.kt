@@ -39,6 +39,7 @@ import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.DeleteDownloadsDialog
+import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.HeroDetailScaffold
 import com.subtracks.ui.components.HeroHeader
 import com.subtracks.ui.components.ItemActions
@@ -73,6 +74,7 @@ fun AlbumDetailRoute(
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
+    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }

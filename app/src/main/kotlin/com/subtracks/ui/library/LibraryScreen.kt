@@ -119,6 +119,7 @@ import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.DeleteDownloadsDialog
+import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PendingDownloadDelete
@@ -269,6 +270,7 @@ fun LibraryRoute(
     val downloads = downloadsState?.value ?: emptyMap()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
+    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
     val itemActions =
         ItemActions(
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
@@ -339,6 +341,7 @@ fun LibraryRoute(
         albumDownloads = downloads.takeIf { listTab == LibraryListTab.Albums }.orEmpty(),
         artistDownloads = downloads.takeIf { listTab == LibraryListTab.Artists }.orEmpty(),
         playlistDownloads = downloads.takeIf { listTab == LibraryListTab.Playlists }.orEmpty(),
+        dismissRequests = contextMenuHost?.dismissRequests ?: 0,
         homeContent = { topInset, bottomInset ->
             HomeRoute(
                 onAlbumClick = onAlbumClick,
@@ -403,6 +406,7 @@ fun LibraryScreen(
     albumDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     artistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     playlistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
+    dismissRequests: Int = 0,
     homeContent: @Composable (topInset: Dp, bottomInset: Dp) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
@@ -414,6 +418,8 @@ fun LibraryScreen(
     var showOptions by rememberSaveable { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
+
+    DismissOnRequest(dismissRequests) { showOptions = false }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { page ->

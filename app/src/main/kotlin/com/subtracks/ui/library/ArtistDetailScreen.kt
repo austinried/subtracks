@@ -89,6 +89,7 @@ import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.DeleteDownloadsDialog
+import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.ListDownloadIndicator
 import com.subtracks.ui.components.MenuTarget
@@ -159,6 +160,7 @@ fun ArtistDetailRoute(
     val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
+    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(

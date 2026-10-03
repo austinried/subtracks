@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -299,6 +300,7 @@ private fun MainNavigation() {
     }
     LaunchedEffect(Unit) { if (nowPlayingOpen) nowPlayingProgress = 1f }
 
+    val focusManager = LocalFocusManager.current
     val playerVisible = playback.item != null
     LaunchedEffect(playerVisible) {
         if (!playerVisible) {
@@ -308,6 +310,9 @@ private fun MainNavigation() {
             return@LaunchedEffect
         }
         nowPlayingLauncher.openNowPlaying.collect {
+            focusManager.clearFocus()
+            contextMenuHost.dismissTransients()
+            infoSong = null
             showingQueue = false
             if (navController.currentDestination?.route in DETAIL_ROUTES) {
                 navController.popBackStack(Routes.LIBRARY, inclusive = false)
@@ -397,10 +402,14 @@ private fun MainNavigation() {
                             onOpenLicenses = { navController.navigate(Routes.LICENSES) },
                             onEditServer = { id -> navController.navigate(Routes.editServer(id)) },
                             onBack = { navController.popBackStack() },
+                            dismissRequests = contextMenuHost.dismissRequests,
                         )
                     }
                     composable(Routes.DOWNLOADS) {
-                        DownloadsRoute(onBack = { navController.popBackStack() })
+                        DownloadsRoute(
+                            onBack = { navController.popBackStack() },
+                            dismissRequests = contextMenuHost.dismissRequests,
+                        )
                     }
                     composable(Routes.SEARCH) {
                         SearchRoute(
@@ -598,6 +607,7 @@ private fun MainNavigation() {
                         AddSourceRoute(
                             onSaved = { navController.popBackStack() },
                             onBack = { navController.popBackStack() },
+                            dismissRequests = contextMenuHost.dismissRequests,
                         )
                     }
                     composable(
@@ -608,6 +618,7 @@ private fun MainNavigation() {
                             onSaved = { navController.popBackStack() },
                             onBack = { navController.popBackStack() },
                             sourceId = entry.arguments?.getLong("sourceId"),
+                            dismissRequests = contextMenuHost.dismissRequests,
                         )
                     }
                 }
