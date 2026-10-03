@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install platform and build tools
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+      - name: Decode signing material
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
+          KEYPROPERTIES_BASE64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
+          test -n "$alias" || { echo "no keyAlias found in SUBTRACKS_KEYPROPERTIES_BASE64" >&2; exit 1; }
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+      - name: Build APK and bundle
+        env:
+          RELEASE_KEYSTORE: ${{ runner.temp }}/release.keystore
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ steps.signing.outputs.alias }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
+      - name: Read version code
+        id: version
+        run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+      - name: Stage Play release notes
+        run: |
+          mkdir -p whatsnew
+          cp "metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt" whatsnew/whatsnew-en-US
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.subtracks
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          tracks: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: completed
+          whatsNewDirectory: whatsnew
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
+      - name: Collect release APK
+        run: cp app/build/outputs/apk/release/app-release.apk subtracks.apk
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt
+          files: subtracks.apk

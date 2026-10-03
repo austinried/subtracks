@@ -20,7 +20,7 @@ android {
     buildToolsVersion = "37.0.0"
 
     defaultConfig {
-        applicationId = "com.subtracks.next"
+        applicationId = "com.subtracks"
         minSdk = 24
         targetSdk = 37
         versionCode = 13
@@ -79,13 +79,25 @@ android {
         .kotlin.directories
         .add("src/integrationTest/kotlin")
 
+    signingConfigs {
+        val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE").orNull
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").orNull
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Debug key so `installRelease` works locally; store and F-Droid builds re-sign.
-            signingConfig = signingConfigs.getByName("debug")
+            // Release signing when the keystore is supplied (CI); debug elsewhere so local build/install works.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 }

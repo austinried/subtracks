@@ -4,7 +4,7 @@ Guidance for agents (and humans) working in this repository.
 
 ## What this is
 
-A native Android rewrite of Subtracks, a client for Subsonic-compatible servers (Navidrome, gonic, Airsonic, ...), in Kotlin and Jetpack Compose. The `main` history still contains the earlier Flutter app; the native app is being built fresh under `app/` and ships as `com.subtracks.next` for side-by-side beta. The aim is a clean, F-Droid-friendly client: free/libre dependencies only, no telemetry.
+A native Android rewrite of Subtracks, a client for Subsonic-compatible servers (Navidrome, gonic, Airsonic, ...), in Kotlin and Jetpack Compose. The `main` history still contains the earlier Flutter app; the native app is being built fresh under `app/` and ships as `com.subtracks`. The aim is a clean, F-Droid-friendly client: free/libre dependencies only, no telemetry.
 
 ## Environment
 
@@ -59,7 +59,6 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Room 3 does not map `PagingSource` automatically: a DAO that returns it needs `@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)`.
 - Material icons are not pulled in by `material3`; use the BOM-managed `material-icons-core`/`material-icons-extended` (frozen at 1.7.8). Extended is large in debug builds but R8 strips unused icons from release.
 - Robolectric creates a fresh `Application` per test in one JVM, so `SubtracksApp.onCreate` stops any running Koin before `startKoin`.
-- `applicationId` is `com.subtracks.next` for the beta; change it to `com.subtracks` before any store release.
 - The CI image provides `nix-ld`, `jq`, `sqlite`, `node`, `zstd` and a `runner` user that `cache-nix-action` expects. None of that is needed locally beyond the devshell.
 - Integration servers: navidrome on 4533 (`admin`/`password`), gonic on 4747 (`admin`/`admin`), lms on 5082 (`admin`/`subtracks-lms`), Nextcloud Music on 8090 (`admin`/`subtracks-nextcloud`, base URL `http://localhost:8090/index.php/apps/music/subsonic/`). The test music is cached in `.integration/music` (gitignored).
 - lms and Nextcloud Music authenticate the Subsonic API with per-user **API keys** instead of passwords. The harness seeds a key and most tests use `useTokenAuth = false`; `SubsonicAuthIntegrationTest` drives `useTokenAuth = true` and asserts the fallback to plaintext (lms answers code 42, Nextcloud 41).
