@@ -144,10 +144,10 @@ class DemoScreenshotTest {
                                 AlbumsScreen(
                                     demo.albums,
                                     demo.coverArt,
-                                    demo.artwork(demo.albums.first().coverArt),
+                                    demo.artwork(demo.nowPlayingAlbum.coverArt),
                                     modifier = Modifier.weight(1f),
                                 )
-                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
+                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum, progressInset = true)
                             }
                         }
 
@@ -195,10 +195,10 @@ class DemoScreenshotTest {
                                     onPlaylistClick = {},
                                     onSync = {},
                                     onOpenSettings = {},
-                                    artwork = demo.artwork(demo.artists.first().coverArt),
+                                    artwork = demo.artwork(demo.nowPlayingAlbum.coverArt),
                                     modifier = Modifier.weight(1f),
                                 )
-                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
+                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum, progressInset = true)
                             }
                         }
 
@@ -221,7 +221,7 @@ class DemoScreenshotTest {
                                     starredSupported = true,
                                     search = DEMO_SEARCH,
                                     onSearchChange = {},
-                                    artwork = demo.artwork(demo.searchAlbums.first().coverArt),
+                                    artwork = demo.artwork(demo.nowPlayingAlbum.coverArt),
                                     modifier = Modifier.weight(1f),
                                 )
                                 demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
@@ -284,6 +284,7 @@ class DemoScreenshotTest {
     private fun DemoData.MiniPlayerOverlay(
         song: Song,
         album: Album,
+        progressInset: Boolean = false,
         modifier: Modifier = Modifier,
     ) {
         MiniPlayer(
@@ -291,6 +292,7 @@ class DemoScreenshotTest {
             positionMs = positionFor(song),
             coverArt = coverArt(album.coverArt, true),
             artwork = artwork(album.coverArt),
+            progressInset = progressInset,
             onExpand = {},
             onPlayPause = {},
             onNext = {},
