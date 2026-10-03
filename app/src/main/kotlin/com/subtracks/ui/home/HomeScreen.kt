@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -270,6 +271,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
+private val STARRED_ROW_PULL = 4.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
@@ -408,10 +410,14 @@ private fun LazyListScope.starredSongs(
             isPlaying = item.song.id == playingSongId,
             durationSeconds = item.song.duration,
             modifier =
-                Modifier.combinedClickable(
-                    onClick = { onPlayStarred(item.song) },
-                    onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
-                ),
+                Modifier
+                    // ListItem centres its content inside a 72dp minimum height; pull the row up so
+                    // the cover aligns with the flush album and artist rows above it.
+                    .offset(y = -STARRED_ROW_PULL)
+                    .combinedClickable(
+                        onClick = { onPlayStarred(item.song) },
+                        onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
+                    ),
         )
     }
 }
