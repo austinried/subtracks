@@ -1,4 +1,4 @@
-Subtracks is an open source Android client for Subsonic-API-compatible servers, including Navidrome, gonic, Airsonic, Nextcloud Music and Subsonic itself. It is built natively with Kotlin and Jetpack Compose, and gives you clean, convenient access to your music library in the style of a modern media player.
+subtracks is an open source Android client for Subsonic-compatible servers, including Navidrome, gonic, Airsonic, Nextcloud Music and Subsonic itself. It is built natively with Kotlin and Jetpack Compose, and gives you clean, convenient access to your music library in the style of a modern media player.
 
 Features
 - Home tab with recently played, most played, recently added and rediscover rows, plus genre and decade shortcuts
@@ -11,4 +11,4 @@ Features
 - Scrobbling, starred items and long-press context menus
 - Media notification and headset/Bluetooth controls
 
-The full library is mirrored at sync, so browsing, searching, sorting and filtering work offline. Subtracks is free software (GPL-3.0), has no ads and no telemetry, and uses only free/libre dependencies.
+The full library is mirrored at sync, so browsing, searching, sorting and filtering work offline. subtracks is free software (GPL-3.0), has no ads and no telemetry, and uses only free/libre dependencies.

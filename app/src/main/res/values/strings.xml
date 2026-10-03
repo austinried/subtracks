@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Subtracks</string>
+    <string name="app_name">subtracks</string>
     <string name="download_channel_description">Progress while songs download</string>
 
     <string name="actions_cancel">Cancel</string>

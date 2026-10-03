@@ -7,5 +7,5 @@
 ## Fixed
 
 - Removed non-working cast button until support is added
-- Fixed Subtracks showing up multiple times in Navidrome clients menu (too many user-agents)
+- Fixed subtracks showing up multiple times in Navidrome clients menu (too many user-agents)
 - Fixed network error for HTTPS servers using self-signed certificates that the user has trusted
