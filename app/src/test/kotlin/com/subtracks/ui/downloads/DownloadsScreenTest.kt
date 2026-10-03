@@ -39,43 +39,56 @@ class DownloadsScreenTest {
     private val done = active.copy(songId = "s2", title = "Done", status = DownloadStatus.Completed)
 
     @Test
-    fun anInProgressDownloadShowsCancelAndACompletedOneShowsDelete() {
+    fun anInProgressNodeShowsCancelAndACompletedNodeShowsDelete() {
         var cancelled: List<String>? = null
-        render(onCancel = { cancelled = it })
-
-        expandArtistAndAlbum()
+        render(
+            tree =
+                DownloadTree(
+                    artists =
+                        listOf(
+                            artist("ar1", "Active", listOf(active)),
+                            artist("ar2", "Done", listOf(done)),
+                        ),
+                ),
+            onCancel = { cancelled = it },
+        )
 
         composeRule.onAllNodesWithContentDescription("Cancel download").assertCountEquals(1)
-        composeRule.onAllNodesWithContentDescription("Delete download").assertCountEquals(1)
+        composeRule.onAllNodesWithContentDescription("Delete downloads").assertCountEquals(1)
 
         composeRule.onNodeWithContentDescription("Cancel download").performClick()
         assertEquals(listOf("s1"), cancelled)
     }
 
-    private fun render(onCancel: (List<String>) -> Unit) {
+    @Test
+    fun songsUnderAnInProgressNodeAlsoShowCancel() {
+        render(tree = DownloadTree(artists = listOf(artist("ar1", "Artist", listOf(active, done)))), onCancel = {})
+
+        expandArtistAndAlbum()
+
+        composeRule.onAllNodesWithContentDescription("Cancel download").assertCountEquals(3)
+        composeRule.onAllNodesWithContentDescription("Delete download").assertCountEquals(1)
+    }
+
+    private fun artist(
+        id: String,
+        name: String,
+        songs: List<DownloadedSong>,
+    ) = DownloadArtistNode(
+        id = id,
+        name = name,
+        bytes = 0,
+        albums = listOf(DownloadAlbumNode(id = "al-$id", name = "Album", bytes = 0, songs = songs)),
+    )
+
+    private fun render(
+        tree: DownloadTree,
+        onCancel: (List<String>) -> Unit,
+    ) {
         composeRule.setContent {
             SubtracksTheme {
                 DownloadsScreen(
-                    tree =
-                        DownloadTree(
-                            artists =
-                                listOf(
-                                    DownloadArtistNode(
-                                        id = "ar1",
-                                        name = "Artist",
-                                        bytes = 0,
-                                        albums =
-                                            listOf(
-                                                DownloadAlbumNode(
-                                                    id = "al1",
-                                                    name = "Album",
-                                                    bytes = 0,
-                                                    songs = listOf(active, done),
-                                                ),
-                                            ),
-                                    ),
-                                ),
-                        ),
+                    tree = tree,
                     loadEncoding = { null },
                     onBack = {},
                     onDelete = {},

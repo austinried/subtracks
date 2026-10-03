@@ -146,11 +146,13 @@ fun DownloadsScreen(
             tree.artists.forEach { artist ->
                 val artistKey = "artist:${artist.id}:${artist.name}"
                 item(key = artistKey) {
+                    val active = activeDownloads(artist.albums.flatMap { it.songs })
                     NodeRow(
                         name = artist.name,
                         subtitle = "${artist.albums.size} albums · ${size(artist.bytes)}",
                         expanded = artistKey in expanded,
                         indent = 0,
+                        progress = active.progress(),
                         onToggle = { expanded = expanded.toggle(artistKey) },
                         onDelete = {
                             onDelete(
@@ -161,17 +163,20 @@ fun DownloadsScreen(
                                 },
                             )
                         },
+                        onCancel = { onCancel(active.map { it.songId }) },
                     )
                 }
                 if (artistKey in expanded) {
                     artist.albums.forEach { album ->
                         val albumKey = "album:$artistKey:${album.id}:${album.name}"
                         item(key = albumKey) {
+                            val active = activeDownloads(album.songs)
                             NodeRow(
                                 name = album.name,
                                 subtitle = "${album.songs.size} songs · ${size(album.bytes)}",
                                 expanded = albumKey in expanded,
                                 indent = 1,
+                                progress = active.progress(),
                                 onToggle = { expanded = expanded.toggle(albumKey) },
                                 onDelete = {
                                     onDelete(
@@ -182,6 +187,7 @@ fun DownloadsScreen(
                                         },
                                     )
                                 },
+                                onCancel = { onCancel(active.map { it.songId }) },
                             )
                         }
                         if (albumKey in expanded) {
@@ -226,12 +232,24 @@ private fun NodeRow(
     subtitle: String,
     expanded: Boolean,
     indent: Int,
+    progress: Float?,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     ListItem(
         headlineContent = { Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(subtitle, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = {
+            Column {
+                Text(subtitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (progress != null) {
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                }
+            }
+        },
         leadingContent = {
             IconButton(onClick = onToggle) {
                 Icon(
@@ -241,13 +259,28 @@ private fun NodeRow(
             }
         },
         trailingContent = {
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete downloads")
+            if (progress != null) {
+                IconButton(onClick = onCancel) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download")
+                }
+            } else {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete downloads")
+                }
             }
         },
         modifier = Modifier.clickable(onClick = onToggle).padding(start = 16.dp * indent),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
+}
+
+private fun activeDownloads(songs: List<DownloadedSong>): List<DownloadedSong> =
+    songs.filter { it.status == DownloadStatus.Queued || it.status == DownloadStatus.Running }
+
+private fun List<DownloadedSong>.progress(): Float? {
+    if (isEmpty()) return null
+    val total = sumOf { it.total }
+    return if (total > 0) (sumOf { it.bytes }.toFloat() / total).coerceIn(0f, 1f) else 0f
 }
 
 @Composable
