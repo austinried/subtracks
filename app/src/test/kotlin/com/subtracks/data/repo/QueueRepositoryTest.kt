@@ -3,16 +3,19 @@ package com.subtracks.data.repo
 import android.content.Context
 import androidx.room3.Room
 import androidx.room3.useReaderConnection
+import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -53,6 +56,35 @@ class QueueRepositoryTest {
 
             assertEquals(3, snapshot.size)
             assertEquals(listOf("s1", "s2", "s3"), resolveAll(snapshot))
+        }
+
+    @Test
+    fun wholeGenreEntryResolvesEveryTrackInTitleOrder() =
+        runTest {
+            seedLibrary()
+            insertGenre("s4", "Rock")
+            insertGenre("s1", "Rock")
+            insertGenre("s3", "Rock")
+            insertGenre("s2", "Jazz")
+
+            val snapshot = repository.snapshotAfter(listOf(repository.genreEntry(1, "Rock")))
+
+            assertEquals(3, snapshot.size)
+            assertEquals(listOf("s1", "s3", "s4"), resolveAll(snapshot))
+        }
+
+    @Test
+    fun downloadedEntryResolvesOnlyCompletedDownloads() =
+        runTest {
+            seedLibrary()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Running))
+
+            val snapshot = repository.snapshotAfter(listOf(repository.downloadedEntry(1)))
+
+            assertEquals(2, snapshot.size)
+            assertEquals(listOf("s1", "s3"), resolveAll(snapshot))
         }
 
     @Test
@@ -912,4 +944,15 @@ class QueueRepositoryTest {
         genre = null,
         created = created,
     )
+
+    private suspend fun insertGenre(
+        songId: String,
+        genre: String,
+    ) {
+        db.useWriterConnection { connection ->
+            connection.usePrepared(
+                "INSERT INTO song_genres (sourceId, songId, position, genre) VALUES (1, '$songId', 0, '$genre')",
+            ) { it.step() }
+        }
+    }
 }

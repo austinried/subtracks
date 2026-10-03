@@ -754,6 +754,31 @@ interface LibraryDao {
     ): List<String>
 
     @Query(
+        "SELECT COUNT(*) FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
+            "AND (songs.title COLLATE NOCASE < :title OR (songs.title COLLATE NOCASE = :title AND songs.id < :id))",
+    )
+    suspend fun genreSongOrdinal(
+        sourceId: Long,
+        genre: String,
+        title: String,
+        id: String,
+    ): Long
+
+    @Query(
+        "SELECT COUNT(*) FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
+            "AND (songs.title COLLATE NOCASE < :title OR (songs.title COLLATE NOCASE = :title AND songs.id < :id))",
+    )
+    suspend fun downloadedSongOrdinal(
+        sourceId: Long,
+        title: String,
+        id: String,
+    ): Long
+
+    @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND year >= :start AND year < :end " +
             "ORDER BY year DESC, name COLLATE NOCASE, id",
     )

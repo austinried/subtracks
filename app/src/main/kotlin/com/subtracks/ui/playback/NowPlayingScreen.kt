@@ -470,6 +470,8 @@ private fun QueueKind.label(): String =
         QueueKind.Playlist -> "playlist"
         QueueKind.Song -> "song"
         QueueKind.Artist -> "artist"
+        QueueKind.Genre -> "genre"
+        QueueKind.Downloaded -> "downloads"
     }
 
 private fun formatTime(milliseconds: Long): String {

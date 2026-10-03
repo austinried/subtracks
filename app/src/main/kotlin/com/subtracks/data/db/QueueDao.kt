@@ -219,4 +219,59 @@ interface QueueDao {
         sourceId: Long,
         ids: List<String>,
     ): List<AlbumSongItem>
+
+    @Query("SELECT COUNT(*) FROM song_genres WHERE sourceId = :sourceId AND genre = :genre")
+    suspend fun genreLength(
+        sourceId: Long,
+        genre: String,
+    ): Long
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun genreSongs(
+        sourceId: Long,
+        genre: String,
+        offset: Long,
+        limit: Int,
+    ): List<AlbumSongItem>
+
+    @Query(
+        "SELECT songs.id FROM song_genres " +
+            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun genreSongIds(
+        sourceId: Long,
+        genre: String,
+    ): List<String>
+
+    @Query("SELECT COUNT(*) FROM song_downloads WHERE sourceId = :sourceId AND status = 'Completed'")
+    suspend fun downloadedLength(sourceId: Long): Long
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun downloadedSongs(
+        sourceId: Long,
+        offset: Long,
+        limit: Int,
+    ): List<AlbumSongItem>
+
+    @Query(
+        "SELECT songs.id FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun downloadedSongIds(sourceId: Long): List<String>
 }

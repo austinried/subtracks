@@ -241,8 +241,8 @@ internal fun CoroutineScope.playGenreList(
     song: Song,
 ) {
     launch {
-        val ids = libraryRepository.genreSongIds(song.sourceId, genre)
-        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+        val ordinal = libraryRepository.genreSongOrdinal(song.sourceId, genre, song.title, song.id)
+        playbackController.playGenre(song.sourceId, genre, ordinal)
     }
 }
 
@@ -252,7 +252,7 @@ internal fun CoroutineScope.playDownloadedList(
     song: Song,
 ) {
     launch {
-        val ids = libraryRepository.downloadedSongIds(song.sourceId)
-        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+        val ordinal = libraryRepository.downloadedSongOrdinal(song.sourceId, song.title, song.id)
+        playbackController.playDownloaded(song.sourceId, ordinal)
     }
 }

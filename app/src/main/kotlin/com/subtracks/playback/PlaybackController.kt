@@ -226,6 +226,17 @@ class PlaybackController(
         startPosition: Long,
     ) = playContext(queueRepository.playlistEntry(sourceId, playlistId), startPosition)
 
+    fun playGenre(
+        sourceId: Long,
+        genre: String,
+        startOrdinal: Long,
+    ) = playContext(queueRepository.genreEntry(sourceId, genre), startOrdinal)
+
+    fun playDownloaded(
+        sourceId: Long,
+        startOrdinal: Long,
+    ) = playContext(queueRepository.downloadedEntry(sourceId), startOrdinal)
+
     fun playAlbumInOrder(
         sourceId: Long,
         albumId: String,

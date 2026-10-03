@@ -255,6 +255,13 @@ class QueueRepository(
         songId: String,
     ) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = songId)
 
+    fun genreEntry(
+        sourceId: Long,
+        genre: String,
+    ) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Genre, refId = genre)
+
+    fun downloadedEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Downloaded, refId = "")
+
     suspend fun sourceName(
         kind: QueueKind,
         sourceId: Long,
@@ -294,6 +301,14 @@ class QueueRepository(
                     .first()
                     ?.album
                     ?.takeIf { it.isNotBlank() }
+            }
+
+            QueueKind.Genre -> {
+                refId.takeIf { it.isNotBlank() }
+            }
+
+            QueueKind.Downloaded -> {
+                null
             }
         }
     }
@@ -646,6 +661,8 @@ class QueueRepository(
                     QueueKind.Album -> dao.albumSongIds(ref.sourceId, ref.refId)
                     QueueKind.Playlist -> dao.playlistSongIds(ref.sourceId, ref.refId)
                     QueueKind.Artist -> dao.artistSongIds(ref.sourceId, ref.refId)
+                    QueueKind.Genre -> dao.genreSongIds(ref.sourceId, ref.refId)
+                    QueueKind.Downloaded -> dao.downloadedSongIds(ref.sourceId)
                 }
             val from = ref.offset.toInt().coerceIn(0, entryIds.size)
             val to = (ref.offset + entry.length).toInt().coerceIn(from, entryIds.size)
@@ -746,6 +763,8 @@ class QueueRepository(
                 QueueKind.Playlist -> dao.playlistSongs(entry.sourceId, entry.refId, offset, limit)
                 QueueKind.Album -> dao.albumSongs(entry.sourceId, entry.refId, offset, limit)
                 QueueKind.Artist -> dao.artistSongs(entry.sourceId, entry.refId, offset, limit)
+                QueueKind.Genre -> dao.genreSongs(entry.sourceId, entry.refId, offset, limit)
+                QueueKind.Downloaded -> dao.downloadedSongs(entry.sourceId, offset, limit)
                 QueueKind.Song -> emptyList()
             }
         if (fresh.isNotEmpty()) remember(ref, offset, fresh)
@@ -769,6 +788,8 @@ class QueueRepository(
             QueueKind.Album -> OrderKey(row.song.id, disc = row.song.disc, track = row.song.track)
             QueueKind.Playlist -> OrderKey(row.song.id, position = row.playlistPosition)
             QueueKind.Artist -> OrderKey(row.song.id)
+            QueueKind.Genre -> OrderKey(row.song.id)
+            QueueKind.Downloaded -> OrderKey(row.song.id)
             QueueKind.Song -> OrderKey(row.song.id)
         }
 
@@ -809,6 +830,8 @@ class QueueRepository(
             QueueKind.Playlist -> dao.playlistSongsFrom(entry.sourceId, entry.refId, key.position!!, skip, limit)
             QueueKind.Album -> dao.albumSongsFrom(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
             QueueKind.Artist -> emptyList()
+            QueueKind.Genre -> emptyList()
+            QueueKind.Downloaded -> emptyList()
             QueueKind.Song -> emptyList()
         }
 
@@ -822,6 +845,8 @@ class QueueRepository(
             QueueKind.Playlist -> dao.playlistSongsBefore(entry.sourceId, entry.refId, key.position!!, skip, limit)
             QueueKind.Album -> dao.albumSongsBefore(entry.sourceId, entry.refId, key.disc!!, key.track!!, key.id, skip, limit)
             QueueKind.Artist -> emptyList()
+            QueueKind.Genre -> emptyList()
+            QueueKind.Downloaded -> emptyList()
             QueueKind.Song -> emptyList()
         }
 
@@ -831,6 +856,8 @@ class QueueRepository(
             QueueKind.Playlist -> position != null
             QueueKind.Album -> disc != null && track != null
             QueueKind.Artist -> false
+            QueueKind.Genre -> false
+            QueueKind.Downloaded -> false
             QueueKind.Song -> false
         }
 
@@ -873,6 +900,14 @@ class QueueRepository(
 
                 QueueKind.Artist -> {
                     dao.artistLength(sourceId, refId)
+                }
+
+                QueueKind.Genre -> {
+                    dao.genreLength(sourceId, refId)
+                }
+
+                QueueKind.Downloaded -> {
+                    dao.downloadedLength(sourceId)
                 }
             }
         val available = (total - offset).coerceAtLeast(0)

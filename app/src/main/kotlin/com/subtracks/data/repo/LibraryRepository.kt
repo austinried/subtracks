@@ -106,6 +106,19 @@ class LibraryRepository(
         genre: String,
     ): List<String> = db.libraryDao().songsByGenreIds(sourceId, genre)
 
+    suspend fun genreSongOrdinal(
+        sourceId: Long,
+        genre: String,
+        title: String,
+        id: String,
+    ): Long = db.libraryDao().genreSongOrdinal(sourceId, genre, title, id)
+
+    suspend fun downloadedSongOrdinal(
+        sourceId: Long,
+        title: String,
+        id: String,
+    ): Long = db.libraryDao().downloadedSongOrdinal(sourceId, title, id)
+
     fun albumsByDecade(
         sourceId: Long,
         decade: Long,
