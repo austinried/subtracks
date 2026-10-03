@@ -157,7 +157,7 @@ fun HomeScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -167,7 +167,7 @@ fun HomeScreen(
                         modifier = Modifier.size(width = 34.dp, height = 25.dp),
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(text = "subtracks", style = MaterialTheme.typography.titleLarge)
+                    Text(text = "subtracks", style = MaterialTheme.typography.headlineMedium)
                 }
             }
             albumRow(
