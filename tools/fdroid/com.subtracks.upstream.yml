@@ -1,0 +1,366 @@
+Categories:
+  - Multimedia
+License: GPL-3.0-only
+AuthorName: austinried
+AuthorEmail: subtracks@functionkey.xyz
+WebSite: https://github.com/austinried/subtracks
+SourceCode: https://github.com/austinried/subtracks
+IssueTracker: https://github.com/austinried/subtracks/issues
+Donate: https://ko-fi.com/austinried
+
+AutoName: Subtracks
+
+RepoType: git
+Repo: https://github.com/austinried/subtracks
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 3
+    commit: v1.0.1
+    subdir: android/app
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz
+      - cp -a node-v14.17.5-linux-x64/. /usr/local/
+      - npm -g install yarn
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.2.0
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - yarn install
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.64.1
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+    build:
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-64-hermes.aar
+    ndk: r21e
+
+  - versionName: 1.1.0
+    versionCode: 4
+    commit: v1.1.0
+    subdir: android/app
+    submodules: true
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz
+      - cp -a node-v14.17.5-linux-x64/. /usr/local/
+      - npm -g install yarn
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.2.0
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - mkdir .yarncache
+      - yarn install --cache-folder ./.yarncache
+      - rm -rf .yarncache
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.64.1
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+      - submodules
+    build:
+      - ../../scripts/prepare-exoplayer-ffmpeg.sh
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-64-hermes.aar
+    ndk: r21e
+
+  - versionName: 1.1.1
+    versionCode: 5
+    commit: 336e106e0152a479490a6c619fc0ee53461a2cd8
+    subdir: android/app
+    submodules: true
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz
+      - cp -a node-v14.17.5-linux-x64/. /usr/local/
+      - npm -g install yarn
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.2.0
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - mkdir .yarncache
+      - yarn install --cache-folder ./.yarncache
+      - rm -rf .yarncache
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.64.1
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+      - submodules
+    build:
+      - ../../scripts/prepare-exoplayer-ffmpeg.sh
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-64-hermes.aar
+    ndk: r21e
+
+  - versionName: 1.1.3
+    versionCode: 7
+    commit: 5a2ab98af55764c0ef4c73d2640a2d8c5c3b0609
+    subdir: android/app
+    submodules: true
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz
+      - cp -a node-v14.17.5-linux-x64/. /usr/local/
+      - npm -g install yarn
+      - apt-get update
+      - apt-get install -y wget
+      - apt-get install -y openjdk-11-jdk-headless
+      - update-alternatives --auto java
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.3.1
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - mkdir .yarncache
+      - yarn install --network-concurrency 1 --cache-folder ./.yarncache
+      - rm -rf .yarncache
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.67.1
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-get-random-values/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+      - submodules
+    build:
+      - ../../scripts/prepare-exoplayer-ffmpeg.sh
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-hermes.aar
+      - pushd $$react-native-reanimated$$
+      - gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-jsc.aar
+    ndk: r21e
+
+  - versionName: 1.2.0
+    versionCode: 8
+    commit: 4905f75564bf8f6b96597a91d3d8f39b1551a56e
+    subdir: android/app
+    submodules: true
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz --strip-components=1 -C /usr/local/
+      - npm -g install yarn
+      - apt-get update
+      - apt-get install -y openjdk-11-jdk-headless
+      - update-alternatives --auto java
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.3.1
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - mkdir .yarncache
+      - yarn install --network-concurrency 1 --cache-folder ./.yarncache
+      - rm -rf .yarncache
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.67.4
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-blob-util/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+      - submodules
+    build:
+      - ../../scripts/prepare-exoplayer-ffmpeg.sh
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-hermes.aar
+      - pushd $$react-native-reanimated$$
+      - gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-jsc.aar
+    ndk: r21e
+
+  - versionName: 1.3.0
+    versionCode: 9
+    commit: 2bf3e8853de705bb49aa4175b1ad5a9b5bb431b2
+    subdir: android/app
+    submodules: true
+    sudo:
+      - sysctl fs.inotify.max_user_watches=524288
+      - curl -Lo node.tar.xz https://nodejs.org/dist/v14.17.5/node-v14.17.5-linux-x64.tar.xz
+      - echo "2d759de07a50cd7f75bd73d67e97b0d0e095ee3c413efac7d1b3d1e84ed76fff node.tar.xz"
+        | sha256sum -c -
+      - tar xJf node.tar.xz --strip-components=1 -C /usr/local/
+      - npm -g install yarn
+      - apt-get update
+      - apt-get install -y openjdk-11-jdk-headless
+      - update-alternatives --auto java
+    gradle:
+      - yes
+    srclibs:
+      - react-native-reanimated@2.3.1
+    prebuild:
+      - echo -e '\norg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=4g' >> ../gradle.properties
+      - echo -e "android { packagingOptions { pickFirst 'lib/**/*.so' } }" >> build.gradle
+      - cd ../..
+      - mkdir .yarncache
+      - yarn install --network-concurrency 1 --cache-folder ./.yarncache
+      - rm -rf .yarncache
+      - cd $$react-native-reanimated$$
+      - echo -e "android { ndkVersion '21.4.7075529' }" >> build.gradle
+      - yarn add react-native@0.67.4
+    scanignore:
+      - android/build.gradle
+      - node_modules/jsc-android
+      - node_modules/hermes-engine
+      - node_modules/react-native/android/com/facebook/react/react-native/*/
+      - node_modules/react-native-safe-area-context/android/build.gradle
+      - node_modules/react-native-screens/android/build.gradle
+      - node_modules/react-native-webview/android/build.gradle
+      - node_modules/react-native/template/android/build.gradle
+      - node_modules/react-native-image-colors/android/build.gradle
+      - node_modules/react-native-blob-util/android/build.gradle
+      - node_modules/react-native-localize/android/build.gradle
+      - node_modules/react-native-track-player/android/build.gradle
+      - node_modules/react-native-vector-icons/android/build.gradle
+      - node_modules/@react-native-async-storage/async-storage/android/build.gradle
+      - node_modules/@react-native-community/masked-view/android/build.gradle
+      - node_modules/@react-native-community/netinfo/android/build.gradle
+    scandelete:
+      - node_modules
+      - submodules
+    build:
+      - ../../scripts/prepare-exoplayer-ffmpeg.sh
+      - pushd $$react-native-reanimated$$
+      - FOR_HERMES=True gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-hermes.aar
+      - pushd $$react-native-reanimated$$
+      - gradle :assembleRelease
+      - popd
+      - mv $$react-native-reanimated$$/build/outputs/aar/android-release.aar 
+        ../../node_modules/react-native-reanimated/android/react-native-reanimated-67-jsc.aar
+    ndk: r21e
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.3.0
+CurrentVersionCode: 9
