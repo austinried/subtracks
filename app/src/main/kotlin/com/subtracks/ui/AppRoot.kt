@@ -301,11 +301,10 @@ private fun MainNavigation() {
             settleJob?.cancel()
             nowPlayingOpen = false
             nowPlayingProgress = 0f
+            return@LaunchedEffect
         }
-    }
-    LaunchedEffect(playerVisible) {
-        if (!playerVisible) return@LaunchedEffect
         nowPlayingLauncher.openNowPlaying.collect {
+            showingQueue = false
             if (navController.currentDestination?.route in DETAIL_ROUTES) {
                 navController.popBackStack(Routes.LIBRARY, inclusive = false)
             }

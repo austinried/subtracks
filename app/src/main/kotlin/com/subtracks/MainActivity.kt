@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.subtracks.ui.NowPlayingLauncher
 import com.subtracks.ui.SubtracksRoot
@@ -16,6 +17,7 @@ import com.subtracks.ui.theme.SubtracksTheme
 import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
+    private val launchViewModel: NowPlayingLaunchViewModel by viewModels()
     private val nowPlayingLauncher: NowPlayingLauncher by lazy { GlobalContext.get().get() }
 
     private val requestNotifications =
@@ -25,9 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
         enableEdgeToEdge()
-        if (shouldRecordNowPlayingLaunch(intent?.action, restoringState = savedInstanceState != null)) {
-            nowPlayingLauncher.request()
-        }
+        if (launchViewModel.claimLaunch(intent?.action)) nowPlayingLauncher.request()
         setContent {
             SubtracksTheme {
                 SubtracksRoot()
@@ -38,7 +38,10 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.action == ACTION_OPEN_NOW_PLAYING) nowPlayingLauncher.request()
+        if (intent.action == ACTION_OPEN_NOW_PLAYING) {
+            launchViewModel.markHandled()
+            nowPlayingLauncher.request()
+        }
     }
 
     private fun requestNotificationPermission() {
@@ -53,8 +56,3 @@ class MainActivity : ComponentActivity() {
         const val ACTION_OPEN_NOW_PLAYING = "com.subtracks.action.OPEN_NOW_PLAYING"
     }
 }
-
-internal fun shouldRecordNowPlayingLaunch(
-    action: String?,
-    restoringState: Boolean,
-): Boolean = action == MainActivity.ACTION_OPEN_NOW_PLAYING && !restoringState
