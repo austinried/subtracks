@@ -256,7 +256,7 @@ private fun HomeSectionHeader(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f),
         )
@@ -272,7 +272,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
-private val SECTION_CONTENT_TOP = 8.dp
+private val SECTION_CONTENT_TOP = 4.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
