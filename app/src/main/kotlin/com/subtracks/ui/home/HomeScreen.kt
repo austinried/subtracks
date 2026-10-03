@@ -20,6 +20,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -32,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -294,6 +309,7 @@ fun OfflineHomeScreen(
             songList(
                 key = "downloaded-songs",
                 title = "Downloaded songs",
+                icon = Icons.Rounded.MusicNote,
                 songs = songs,
                 coverArt = coverArt,
                 playingSongId = playingSongId,
@@ -314,7 +330,7 @@ private fun LazyListScope.downloadedAlbumRow(
 ) {
     if (albums.itemCount == 0) return
     item(key = "downloaded-albums-header") {
-        HomeSectionHeader("Downloaded albums") { onMore() }
+        HomeSectionHeader("Downloaded albums", Icons.Rounded.Album) { onMore() }
     }
     item(key = "downloaded-albums-row") {
         LazyRow(
@@ -347,7 +363,7 @@ private fun LazyListScope.downloadedArtistRow(
 ) {
     if (artists.itemCount == 0) return
     item(key = "downloaded-artists-header") {
-        HomeSectionHeader("Downloaded artists") { onMore() }
+        HomeSectionHeader("Downloaded artists", Icons.Rounded.Person) { onMore() }
     }
     item(key = "downloaded-artists-row") {
         LazyRow(
@@ -380,7 +396,7 @@ private fun LazyListScope.downloadedPlaylistRow(
 ) {
     if (playlists.itemCount == 0) return
     item(key = "downloaded-playlists-header") {
-        HomeSectionHeader("Downloaded playlists") { onMore() }
+        HomeSectionHeader("Downloaded playlists", Icons.AutoMirrored.Rounded.PlaylistPlay) { onMore() }
     }
     item(key = "downloaded-playlists-row") {
         LazyRow(
@@ -443,12 +459,20 @@ private fun HomeFeed.isEmpty(): Boolean =
 @Composable
 private fun HomeSectionHeader(
     title: String,
+    icon: ImageVector,
     onMore: (() -> Unit)?,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 24.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(8.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -461,6 +485,20 @@ private fun HomeSectionHeader(
         }
     }
 }
+
+private val HomeSection.icon: ImageVector
+    get() =
+        when (this) {
+            HomeSection.RecentlyPlayedAlbums -> Icons.Rounded.History
+            HomeSection.RecentlyPlayedArtists -> Icons.Rounded.Groups
+            HomeSection.MostPlayedAlbums -> Icons.Rounded.TrendingUp
+            HomeSection.MostPlayedArtists -> Icons.Rounded.LocalFireDepartment
+            HomeSection.Genres -> Icons.Rounded.Category
+            HomeSection.Decades -> Icons.Rounded.CalendarMonth
+            HomeSection.RecentlyStarredSongs -> Icons.Rounded.Star
+            HomeSection.RecentlyAddedAlbums -> Icons.Rounded.NewReleases
+            HomeSection.Rediscover -> Icons.Rounded.Replay
+        }
 
 private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
@@ -480,7 +518,7 @@ private fun LazyListScope.albumRow(
 ) {
     if (albums.isEmpty()) return
     item(key = "${section.name}-header") {
-        HomeSectionHeader(section.title) { onMore(section) }
+        HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
         LazyRow(
@@ -511,7 +549,7 @@ private fun LazyListScope.artistRow(
 ) {
     if (artists.isEmpty()) return
     item(key = "${section.name}-header") {
-        HomeSectionHeader(section.title) { onMore(section) }
+        HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
         LazyRow(
@@ -540,7 +578,7 @@ private fun LazyListScope.genreBlock(
 ) {
     if (genres.isEmpty()) return
     item(key = "${section.name}-header") {
-        HomeSectionHeader(section.title) { onMore(section) }
+        HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
         Row(
@@ -573,7 +611,7 @@ private fun LazyListScope.decadeRow(
 ) {
     if (decades.isEmpty()) return
     item(key = "${section.name}-header") {
-        HomeSectionHeader(section.title) { onMore(section) }
+        HomeSectionHeader(section.title, section.icon) { onMore(section) }
     }
     item(key = "${section.name}-row") {
         LazyRow(
@@ -599,6 +637,7 @@ private fun LazyListScope.homeSongs(
 ) = songList(
     key = section.name,
     title = section.title,
+    icon = section.icon,
     songs = songs,
     coverArt = coverArt,
     playingSongId = playingSongId,
@@ -610,6 +649,7 @@ private fun LazyListScope.homeSongs(
 private fun LazyListScope.songList(
     key: String,
     title: String,
+    icon: ImageVector,
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
@@ -619,7 +659,7 @@ private fun LazyListScope.songList(
 ) {
     if (songs.isEmpty()) return
     item(key = "$key-header") {
-        HomeSectionHeader(title, onMore)
+        HomeSectionHeader(title, icon, onMore)
     }
     items(songs, key = { it.song.id }) { item ->
         SongRow(
