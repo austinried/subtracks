@@ -254,6 +254,27 @@ interface QueueDao {
     @Query("SELECT COUNT(*) FROM song_downloads WHERE sourceId = :sourceId AND status = 'Completed'")
     suspend fun downloadedLength(sourceId: Long): Long
 
+    @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL")
+    suspend fun starredLength(sourceId: Long): Long
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
+            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+    )
+    suspend fun starredSongs(
+        sourceId: Long,
+        offset: Long,
+        limit: Int,
+    ): List<AlbumSongItem>
+
+    @Query(
+        "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL " +
+            "ORDER BY starred DESC, title COLLATE NOCASE, id",
+    )
+    suspend fun starredSongIds(sourceId: Long): List<String>
+
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +

@@ -2537,6 +2537,7 @@ class PlaybackControllerTest {
 
         await { handle.operations.any { it.startsWith("add") } }
         assertFalse(handle.operations.any { it.startsWith("setWindow") })
+        assertFalse(handle.operations.any { it == "prepare" || it == "play" || it == "pause" })
         assertEquals(
             "s5",
             controller.state.value.item
@@ -2804,6 +2805,7 @@ class PlaybackControllerTest {
 
         await { handle.operations.any { it.startsWith("remove") || it.startsWith("add") } }
         assertFalse(handle.operations.any { it.startsWith("setWindow") })
+        assertFalse(handle.operations.any { it == "prepare" || it == "play" || it == "pause" })
         assertEquals(
             "s2",
             controller.state.value.item

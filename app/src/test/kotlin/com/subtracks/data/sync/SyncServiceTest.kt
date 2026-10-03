@@ -326,7 +326,7 @@ class SyncServiceTest {
         }
 
     @Test
-    fun albumGenresUnionsSongGenresAndFallsBackToTheSingleValue() =
+    fun syncNormalizesSingularGenresIntoTheGenreRows() =
         runTest {
             insertSource()
             val source =
@@ -342,7 +342,24 @@ class SyncServiceTest {
 
             SyncService(db, source).sync()
 
-            assertEquals(listOf("Jazz", "Pop", "Rock"), db.libraryDao().albumGenres(1, "al1").first())
+            assertEquals(listOf("Rock", "Pop"), db.libraryDao().songGenres(1, "s1").first())
+            assertEquals(listOf("Jazz"), db.libraryDao().songGenres(1, "s2").first())
+            assertEquals(listOf("Rock"), db.libraryDao().songGenres(1, "s3").first())
+        }
+
+    @Test
+    fun thePluralGenresWinOverTheSingularAttribute() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(genres = listOf("Rock", "Pop"), genre = "Jazz")),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(listOf("Rock", "Pop"), db.libraryDao().songGenres(1, "s1").first())
         }
 
     @Test

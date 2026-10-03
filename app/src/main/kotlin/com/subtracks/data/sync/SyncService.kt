@@ -285,7 +285,7 @@ private val songColumns =
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
 
-private fun Song.genreNames(): List<String> = genres.ifEmpty { listOfNotNull(genre?.trim()?.takeIf { it.isNotEmpty() }) }
+private fun Song.genreNames(): List<String> = genres.distinct().ifEmpty { listOfNotNull(genre?.trim()?.takeIf { it.isNotEmpty() }) }
 
 private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
 

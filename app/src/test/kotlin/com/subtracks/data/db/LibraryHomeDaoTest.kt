@@ -218,6 +218,27 @@ class LibraryHomeDaoTest {
         }
 
     @Test
+    fun genreSongOrdinalMatchesTheListOrder() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "Alpha"),
+                    song(sourceId, "s2", "Bravo"),
+                    song(sourceId, "s3", "Charlie"),
+                ),
+            )
+            insertGenre(sourceId, "s1", 0, "Rock")
+            insertGenre(sourceId, "s2", 0, "Rock")
+            insertGenre(sourceId, "s3", 0, "Rock")
+
+            assertEquals(0L, dao.genreSongOrdinal(sourceId, "Rock", "Alpha", "s1"))
+            assertEquals(1L, dao.genreSongOrdinal(sourceId, "Rock", "Bravo", "s2"))
+            assertEquals(2L, dao.genreSongOrdinal(sourceId, "Rock", "Charlie", "s3"))
+        }
+
+    @Test
     fun downloadedSongsOrderByNewestDownload() =
         runTest {
             val sourceId = source()

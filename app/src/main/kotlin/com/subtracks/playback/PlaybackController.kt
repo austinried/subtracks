@@ -210,16 +210,6 @@ class PlaybackController(
         songId: String,
     ) = playContext(queueRepository.songEntry(sourceId, songId), 0)
 
-    fun playSongs(
-        sourceId: Long,
-        songIds: List<String>,
-        startIndex: Int,
-    ) {
-        if (songIds.isEmpty()) return
-        val entries = songIds.map { id -> QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Song, refId = id) }
-        play(entries, startIndex.toLong().coerceIn(0L, songIds.lastIndex.toLong()))
-    }
-
     fun playPlaylist(
         sourceId: Long,
         playlistId: String,
@@ -236,6 +226,11 @@ class PlaybackController(
         sourceId: Long,
         startOrdinal: Long,
     ) = playContext(queueRepository.downloadedEntry(sourceId), startOrdinal)
+
+    fun playStarred(
+        sourceId: Long,
+        startOrdinal: Long,
+    ) = playContext(queueRepository.starredEntry(sourceId), startOrdinal)
 
     fun playAlbumInOrder(
         sourceId: Long,
@@ -1250,6 +1245,12 @@ class PlaybackController(
             loadWindow(position, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
             return
         }
+        // A track downloaded while it was streaming still holds a stream URL; fix the current item's
+        // source in place (without resetting the window) so an offline switch can play the local file.
+        val current = ordered[index]
+        val wantsLocal = downloads.localUri(current.item.song.id) != null
+        val isLocal = player.itemUris().getOrNull(player.currentIndex)?.startsWith(FILE_SCHEME) == true
+        if (wantsLocal != isLocal) player.replaceItem(player.currentIndex, current.item.toQueueItem())
         windowPositions = LongArray(ordered.size) { ordered[it].position }
         windowFiltered = offline
         windowStart = ordered.first().position

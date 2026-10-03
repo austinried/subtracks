@@ -802,6 +802,19 @@ interface LibraryDao {
     ): Long
 
     @Query(
+        "SELECT COUNT(*) FROM songs s " +
+            "WHERE s.sourceId = :sourceId AND s.starred IS NOT NULL " +
+            "AND (s.starred > (SELECT starred FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "OR (s.starred = (SELECT starred FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "AND (s.title COLLATE NOCASE < (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "OR (s.title COLLATE NOCASE = (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
+    )
+    suspend fun starredSongOrdinal(
+        sourceId: Long,
+        id: String,
+    ): Long
+
+    @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND year >= :start AND year < :end " +
             "ORDER BY year DESC, name COLLATE NOCASE, id",
     )
@@ -857,17 +870,6 @@ interface LibraryDao {
     fun songGenres(
         sourceId: Long,
         songId: String,
-    ): Flow<List<String>>
-
-    @Query(
-        "SELECT DISTINCT song_genres.genre FROM song_genres " +
-            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
-            "WHERE songs.sourceId = :sourceId AND songs.albumId = :albumId " +
-            "ORDER BY song_genres.genre COLLATE NOCASE",
-    )
-    fun albumGenres(
-        sourceId: Long,
-        albumId: String,
     ): Flow<List<String>>
 
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND artistId = :artistId ORDER BY year DESC, name COLLATE NOCASE, id")

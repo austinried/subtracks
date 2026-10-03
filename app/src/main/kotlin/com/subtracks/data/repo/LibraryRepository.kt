@@ -88,11 +88,7 @@ class LibraryRepository(
 
     fun starredSongs(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().starredSongs(sourceId) }
 
-    suspend fun starredSongIds(sourceId: Long): List<String> = db.libraryDao().starredSongIds(sourceId)
-
     fun downloadedSongs(sourceId: Long): Flow<List<AlbumSongItem>> = db.libraryDao().downloadedSongs(sourceId)
-
-    suspend fun downloadedSongIds(sourceId: Long): List<String> = db.libraryDao().downloadedSongIds(sourceId)
 
     fun downloadedSongsPage(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().homeDownloadedSongs(sourceId) }
 
@@ -105,11 +101,6 @@ class LibraryRepository(
         genre: String,
     ): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().songsByGenre(sourceId, genre) }
 
-    suspend fun genreSongIds(
-        sourceId: Long,
-        genre: String,
-    ): List<String> = db.libraryDao().songsByGenreIds(sourceId, genre)
-
     suspend fun genreSongOrdinal(
         sourceId: Long,
         genre: String,
@@ -121,6 +112,11 @@ class LibraryRepository(
         sourceId: Long,
         id: String,
     ): Long = db.libraryDao().downloadedSongOrdinal(sourceId, id)
+
+    suspend fun starredSongOrdinal(
+        sourceId: Long,
+        id: String,
+    ): Long = db.libraryDao().starredSongOrdinal(sourceId, id)
 
     fun albumsByDecade(
         sourceId: Long,

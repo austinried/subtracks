@@ -262,6 +262,8 @@ class QueueRepository(
 
     fun downloadedEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Downloaded, refId = "")
 
+    fun starredEntry(sourceId: Long) = QueueEntry(position = 0, sourceId = sourceId, kind = QueueKind.Starred, refId = "")
+
     suspend fun sourceName(
         kind: QueueKind,
         sourceId: Long,
@@ -308,6 +310,10 @@ class QueueRepository(
             }
 
             QueueKind.Downloaded -> {
+                null
+            }
+
+            QueueKind.Starred -> {
                 null
             }
         }
@@ -663,6 +669,7 @@ class QueueRepository(
                     QueueKind.Artist -> dao.artistSongIds(ref.sourceId, ref.refId)
                     QueueKind.Genre -> dao.genreSongIds(ref.sourceId, ref.refId)
                     QueueKind.Downloaded -> dao.downloadedSongIds(ref.sourceId)
+                    QueueKind.Starred -> dao.starredSongIds(ref.sourceId)
                 }
             val from = ref.offset.toInt().coerceIn(0, entryIds.size)
             val to = (ref.offset + entry.length).toInt().coerceIn(from, entryIds.size)
@@ -765,6 +772,7 @@ class QueueRepository(
                 QueueKind.Artist -> dao.artistSongs(entry.sourceId, entry.refId, offset, limit)
                 QueueKind.Genre -> dao.genreSongs(entry.sourceId, entry.refId, offset, limit)
                 QueueKind.Downloaded -> dao.downloadedSongs(entry.sourceId, offset, limit)
+                QueueKind.Starred -> dao.starredSongs(entry.sourceId, offset, limit)
                 QueueKind.Song -> emptyList()
             }
         if (fresh.isNotEmpty()) remember(ref, offset, fresh)
@@ -790,6 +798,7 @@ class QueueRepository(
             QueueKind.Artist -> OrderKey(row.song.id)
             QueueKind.Genre -> OrderKey(row.song.id)
             QueueKind.Downloaded -> OrderKey(row.song.id)
+            QueueKind.Starred -> OrderKey(row.song.id)
             QueueKind.Song -> OrderKey(row.song.id)
         }
 
@@ -832,6 +841,7 @@ class QueueRepository(
             QueueKind.Artist -> emptyList()
             QueueKind.Genre -> emptyList()
             QueueKind.Downloaded -> emptyList()
+            QueueKind.Starred -> emptyList()
             QueueKind.Song -> emptyList()
         }
 
@@ -847,10 +857,10 @@ class QueueRepository(
             QueueKind.Artist -> emptyList()
             QueueKind.Genre -> emptyList()
             QueueKind.Downloaded -> emptyList()
+            QueueKind.Starred -> emptyList()
             QueueKind.Song -> emptyList()
         }
 
-    // Artist songs span albums, so there is no single keyset to seek on; artist pages use OFFSET.
     private fun OrderKey.seekable(kind: QueueKind): Boolean =
         when (kind) {
             QueueKind.Playlist -> position != null
@@ -858,6 +868,7 @@ class QueueRepository(
             QueueKind.Artist -> false
             QueueKind.Genre -> false
             QueueKind.Downloaded -> false
+            QueueKind.Starred -> false
             QueueKind.Song -> false
         }
 
@@ -908,6 +919,10 @@ class QueueRepository(
 
                 QueueKind.Downloaded -> {
                     dao.downloadedLength(sourceId)
+                }
+
+                QueueKind.Starred -> {
+                    dao.starredLength(sourceId)
                 }
             }
         val available = (total - offset).coerceAtLeast(0)

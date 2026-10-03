@@ -88,6 +88,24 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun starredEntryResolvesStarredTracksNewestFirst() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    song("s1", "al1", track = 1, starred = 100),
+                    song("s2", "al1", track = 2, starred = 300),
+                    song("s3", "al1", track = 3, starred = 200),
+                ),
+            )
+
+            val snapshot = repository.snapshotAfter(listOf(repository.starredEntry(1)))
+
+            assertEquals(3, snapshot.size)
+            assertEquals(listOf("s2", "s3", "s1"), resolveAll(snapshot))
+        }
+
+    @Test
     fun rangeLimitsAnEntryToASlice() =
         runTest {
             seedLibrary()

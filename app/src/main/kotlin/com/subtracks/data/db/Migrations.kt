@@ -344,8 +344,8 @@ val MIGRATION_23_24 =
         override suspend fun migrate(connection: SQLiteConnection) {
             connection.execSQL(
                 "INSERT INTO `song_genres` (`sourceId`, `songId`, `position`, `genre`) " +
-                    "SELECT `sourceId`, `id`, 0, `genre` FROM `songs` " +
-                    "WHERE `genre` IS NOT NULL AND `genre` != '' " +
+                    "SELECT `sourceId`, `id`, 0, trim(`genre`) FROM `songs` " +
+                    "WHERE `genre` IS NOT NULL AND trim(`genre`) != '' " +
                     "AND NOT EXISTS (SELECT 1 FROM `song_genres` sg " +
                     "WHERE sg.`sourceId` = `songs`.`sourceId` AND sg.`songId` = `songs`.`id`)",
             )

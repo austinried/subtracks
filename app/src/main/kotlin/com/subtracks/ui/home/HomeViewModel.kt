@@ -206,8 +206,8 @@ internal fun CoroutineScope.playStarredList(
     song: Song,
 ) {
     launch {
-        val ids = libraryRepository.starredSongIds(song.sourceId)
-        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+        val ordinal = libraryRepository.starredSongOrdinal(song.sourceId, song.id)
+        playbackController.playStarred(song.sourceId, ordinal)
     }
 }
 

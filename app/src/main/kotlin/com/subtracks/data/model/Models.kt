@@ -316,7 +316,7 @@ data class DiscKey(
     val disc: Long,
 )
 
-enum class QueueKind { Playlist, Album, Song, Artist, Genre, Downloaded }
+enum class QueueKind { Playlist, Album, Song, Artist, Genre, Downloaded, Starred }
 
 @Entity(
     tableName = "queue_entries",

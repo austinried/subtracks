@@ -134,6 +134,25 @@ class MigrationsTest {
             }
         }
 
+    @Test
+    fun theGenreBackfillTrimsAndSkipsBlankSingularGenres() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, versions.first())
+                MIGRATIONS.filter { it.endVersion <= 23 }.sortedBy { it.startVersion }.forEach { it.migrate(migrated) }
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL("INSERT INTO songs (sourceId, id, title, genre) VALUES (1, 's1', 'Song', '  Rock ')")
+                migrated.execSQL("INSERT INTO songs (sourceId, id, title, genre) VALUES (1, 's2', 'Blank', '   ')")
+
+                MIGRATIONS.first { it.endVersion == 24 }.migrate(migrated)
+
+                assertEquals("Rock", text(migrated, "SELECT genre FROM song_genres WHERE songId = 's1'"))
+                assertEquals(0L, long(migrated, "SELECT COUNT(*) FROM song_genres WHERE songId = 's2'"))
+            }
+        }
+
     private fun text(
         connection: SQLiteConnection,
         sql: String,

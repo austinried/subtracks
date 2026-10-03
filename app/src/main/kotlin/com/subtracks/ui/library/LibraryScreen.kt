@@ -406,7 +406,11 @@ fun LibraryScreen(
         if (pagerState.currentPage != selectedTab.ordinal) {
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
-        if (search.isNotEmpty()) searchActive = true
+        if (selectedTab == LibraryTab.Home) {
+            searchActive = false
+        } else if (search.isNotEmpty()) {
+            searchActive = true
+        }
     }
 
     fun dismissSearch() {
