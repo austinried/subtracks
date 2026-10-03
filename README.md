@@ -8,13 +8,13 @@ subtracks is an open source Android client for [Subsonic-compatible](http://www.
 
 ## Screenshots
 
-<a href="metadata/en-US/images/phoneScreenshots/01_home.png"><img src="metadata/en-US/images/phoneScreenshots/01_home.png" alt="home" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/02_now-playing.png"><img src="metadata/en-US/images/phoneScreenshots/02_now-playing.png" alt="now playing" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/03_library-albums.png"><img src="metadata/en-US/images/phoneScreenshots/03_library-albums.png" alt="albums" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/04_album.png"><img src="metadata/en-US/images/phoneScreenshots/04_album.png" alt="album" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/05_artist.png"><img src="metadata/en-US/images/phoneScreenshots/05_artist.png" alt="artist" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/06_library-artists.png"><img src="metadata/en-US/images/phoneScreenshots/06_library-artists.png" alt="artists" width="150"/></a>
-<a href="metadata/en-US/images/phoneScreenshots/07_search.png"><img src="metadata/en-US/images/phoneScreenshots/07_search.png" alt="search" width="150"/></a>
+<div align="center">
+  <a href="metadata/en-US/images/phoneScreenshots/01_home.png"><img src="metadata/en-US/images/phoneScreenshots/01_home.png" alt="home" width="150"/></a>
+  <a href="metadata/en-US/images/phoneScreenshots/02_now-playing.png"><img src="metadata/en-US/images/phoneScreenshots/02_now-playing.png" alt="now playing" width="150"/></a>
+  <a href="metadata/en-US/images/phoneScreenshots/03_library-albums.png"><img src="metadata/en-US/images/phoneScreenshots/03_library-albums.png" alt="albums" width="150"/></a>
+  <a href="metadata/en-US/images/phoneScreenshots/04_album.png"><img src="metadata/en-US/images/phoneScreenshots/04_album.png" alt="album" width="150"/></a>
+  <a href="metadata/en-US/images/phoneScreenshots/05_artist.png"><img src="metadata/en-US/images/phoneScreenshots/05_artist.png" alt="artist" width="150"/></a>
+</div>
 
 ## Download
 
