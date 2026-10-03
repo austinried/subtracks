@@ -47,6 +47,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -165,6 +166,64 @@ class PlaybackControllerTest {
         }
 
         assertEquals("cover-al1", runBlocking { controller.upcomingItem()?.coverArtId })
+    }
+
+    @Test
+    fun previousItemIsThePreviousQueueItemWithItsCoverArt() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking {
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    Album(
+                        sourceId = 1,
+                        id = "al1",
+                        artistId = "ar1",
+                        name = "Album",
+                        albumArtist = "Artist",
+                        created = 0,
+                        coverArt = "cover-al1",
+                        genre = null,
+                        year = null,
+                        starred = null,
+                        songCount = 3,
+                    ),
+                ),
+            )
+        }
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        assertEquals("s1", runBlocking { controller.previousItem()?.id })
+        assertEquals("cover-al1", runBlocking { controller.previousItem()?.coverArtId })
+    }
+
+    @Test
+    fun previousItemIsNullAtTheStartOfTheQueue() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+
+        assertNull(runBlocking { controller.previousItem() })
+    }
+
+    @Test
+    fun previousItemIsNullOncePreviousWouldRestartTheTrack() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 1)
+        await {
+            controller.state.value.item
+                ?.id == "s2"
+        }
+
+        handle.positionMs = 3_100
+
+        assertNull(runBlocking { controller.previousItem() })
     }
 
     @Test

@@ -57,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
@@ -76,27 +77,81 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.source.StarType
+import com.subtracks.playback.PLAYBACK_RESTART_THRESHOLD_MS
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
+import com.subtracks.playback.QueueItem
 import com.subtracks.playback.RepeatMode
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.prefetchArtworkRatio
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkSeedCache
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
 const val NOW_PLAYING_COVER_TAG = "now-playing-cover"
+const val NOW_PLAYING_PREVIOUS_TAG = "now-playing-previous"
+const val NOW_PLAYING_NEXT_TAG = "now-playing-next"
 
 private const val SWIPE_THRESHOLD_FRACTION = 0.25f
 private const val SWIPE_FLING_VELOCITY = 1000f
 private const val SWIPE_SETTLE_MS = 180
+private const val SWIPE_EDGE_RESISTANCE = 0.3f
+private const val HAND_BACK_TIMEOUT_MS = 750L
+
+data class NowPlayingArt(
+    val id: String?,
+    val ref: CoverArtRef?,
+    val thumbnailRef: CoverArtRef?,
+    val name: String,
+)
+
+private data class AdjacentArt(
+    val previous: NowPlayingArt? = null,
+    val next: NowPlayingArt? = null,
+)
+
+internal enum class SwipeAction { CommitNext, CommitPrevious, Next, Previous, None }
+
+internal fun swipeAction(
+    offsetX: Float,
+    velocity: Float,
+    width: Float,
+    canGoNext: Boolean,
+    canGoPrevious: Boolean,
+): SwipeAction {
+    if (width <= 0f) return SwipeAction.None
+    val threshold = width * SWIPE_THRESHOLD_FRACTION
+    val wantsNext = offsetX <= -threshold || velocity <= -SWIPE_FLING_VELOCITY
+    val wantsPrevious = offsetX >= threshold || velocity >= SWIPE_FLING_VELOCITY
+    return when {
+        wantsNext && canGoNext -> SwipeAction.CommitNext
+        wantsPrevious && canGoPrevious -> SwipeAction.CommitPrevious
+        wantsNext -> SwipeAction.Next
+        wantsPrevious -> SwipeAction.Previous
+        else -> SwipeAction.None
+    }
+}
+
+internal fun rotateStrip(
+    base: List<NowPlayingArt?>,
+    direction: Int,
+): List<NowPlayingArt?> =
+    if (direction > 0) {
+        listOf(base.getOrNull(1), base.getOrNull(2), null)
+    } else {
+        listOf(null, base.getOrNull(0), base.getOrNull(1))
+    }
 
 @Composable
 fun NowPlayingRoute(
@@ -147,10 +202,27 @@ fun NowPlayingRoute(
     LaunchedEffect(queueContext) {
         sourceTitle.value = controller.sourceTitle(queueContext)?.takeIf { it.isNotBlank() } ?: fallbackTitle
     }
-    LaunchedEffect(state.item?.id, state.hasNext) {
-        if (!state.hasNext) return@LaunchedEffect
-        val next = controller.upcomingItem() ?: return@LaunchedEffect
-        controller.coverArt(next, thumbnail = true)?.let { ArtworkSeedCache.prefetch(context, it) }
+
+    fun artFor(item: QueueItem) =
+        NowPlayingArt(
+            id = item.id,
+            ref = controller.coverArt(item),
+            thumbnailRef = controller.coverArt(item, thumbnail = true),
+            name = item.title,
+        )
+    var adjacent by remember { mutableStateOf(AdjacentArt()) }
+    val previousReachable = positionMs <= PLAYBACK_RESTART_THRESHOLD_MS
+    LaunchedEffect(state.item?.id, state.layout, previousReachable) {
+        if (state.item == null) {
+            adjacent = AdjacentArt()
+            return@LaunchedEffect
+        }
+        val previous = controller.previousItem()?.let { artFor(it) }
+        val next = controller.upcomingItem()?.let { artFor(it) }
+        adjacent = AdjacentArt(previous, next)
+        val thumbnails = listOfNotNull(previous?.thumbnailRef, next?.thumbnailRef)
+        withContext(Dispatchers.IO) { thumbnails.forEach { prefetchArtworkRatio(context, it) } }
+        next?.thumbnailRef?.let { ArtworkSeedCache.prefetch(context, it) }
     }
     NowPlayingScreen(
         state = state,
@@ -158,6 +230,8 @@ fun NowPlayingRoute(
         title = sourceTitle.value,
         coverArt = art,
         thumbnailRef = thumbnail,
+        previousArt = if (previousReachable) adjacent.previous else null,
+        nextArt = adjacent.next,
         artwork = rememberArtworkColors(thumbnail ?: art, fallbackName = state.item?.title),
         onBack = onBack,
         onQueue = onQueue,
@@ -198,6 +272,8 @@ fun NowPlayingScreen(
     onToggleStar: (() -> Unit)? = null,
     onSeek: (Long) -> Unit,
     thumbnailRef: CoverArtRef? = null,
+    previousArt: NowPlayingArt? = null,
+    nextArt: NowPlayingArt? = null,
     modifier: Modifier = Modifier,
 ) {
     val playButtonSize = 90.dp
@@ -212,17 +288,50 @@ fun NowPlayingScreen(
             platformStyle = PlatformTextStyle(includeFontPadding = false),
             lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
         )
+    val currentArt =
+        NowPlayingArt(
+            id = state.item?.id,
+            ref = coverArt,
+            thumbnailRef = thumbnailRef,
+            name = state.item?.title.orEmpty(),
+        )
+    val liveStrip = listOf(previousArt, currentArt, nextArt)
+    var frozenStrip by remember { mutableStateOf<List<NowPlayingArt?>?>(null) }
+    var dragging by remember { mutableStateOf(false) }
     var swipeOffsetX by remember { mutableFloatStateOf(0f) }
     var coverWidthPx by remember { mutableFloatStateOf(0f) }
     var settleJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
+    val strip = frozenStrip ?: liveStrip
+    val canGoNext = strip.getOrNull(2) != null
+    val canGoPrevious = strip.getOrNull(0) != null
 
-    fun settleSwipe() {
+    fun animateSwipe(target: Float) {
         settleJob?.cancel()
         settleJob =
             scope.launch {
-                animate(swipeOffsetX, 0f, animationSpec = tween(SWIPE_SETTLE_MS)) { value, _ -> swipeOffsetX = value }
+                animate(swipeOffsetX, target, animationSpec = tween(SWIPE_SETTLE_MS)) { value, _ -> swipeOffsetX = value }
             }
+    }
+
+    fun commitSwipe(direction: Int) {
+        frozenStrip = rotateStrip(strip, direction)
+        swipeOffsetX += direction * coverWidthPx
+        if (direction > 0) onNext() else onPrevious()
+        animateSwipe(0f)
+    }
+
+    // The rotated strip keeps the slide continuous while the controller catches up. Hand back once
+    // it reports the target track, or after a grace period when the action did not move there (a
+    // restart, an offline skip), so a frozen strip can never stay desynced from playback.
+    LaunchedEffect(state.item?.id, frozenStrip, dragging) {
+        val pending = frozenStrip ?: return@LaunchedEffect
+        if (pending.getOrNull(1)?.id == state.item?.id) {
+            frozenStrip = null
+        } else if (!dragging) {
+            delay(HAND_BACK_TIMEOUT_MS)
+            if (frozenStrip === pending) frozenStrip = null
+        }
     }
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
@@ -278,19 +387,49 @@ fun NowPlayingScreen(
                                     .weight(1f)
                                     .fillMaxWidth()
                                     .padding(top = 2.dp)
+                                    .clipToBounds()
                                     .onSizeChanged { coverWidthPx = it.width.toFloat() }
-                                    .graphicsLayer { translationX = swipeOffsetX }
                                     .draggable(
                                         orientation = Orientation.Horizontal,
-                                        state = rememberDraggableState { delta -> swipeOffsetX += delta },
-                                        onDragStarted = { settleJob?.cancel() },
+                                        state =
+                                            rememberDraggableState { delta ->
+                                                val resisted =
+                                                    when {
+                                                        delta > 0 && !canGoPrevious -> delta * SWIPE_EDGE_RESISTANCE
+                                                        delta < 0 && !canGoNext -> delta * SWIPE_EDGE_RESISTANCE
+                                                        else -> delta
+                                                    }
+                                                swipeOffsetX = (swipeOffsetX + resisted).coerceIn(-coverWidthPx, coverWidthPx)
+                                            },
+                                        onDragStarted = {
+                                            dragging = true
+                                            settleJob?.cancel()
+                                        },
                                         onDragStopped = { velocity ->
-                                            val threshold = coverWidthPx * SWIPE_THRESHOLD_FRACTION
-                                            when {
-                                                swipeOffsetX <= -threshold || velocity <= -SWIPE_FLING_VELOCITY -> onNext()
-                                                swipeOffsetX >= threshold || velocity >= SWIPE_FLING_VELOCITY -> onPrevious()
+                                            dragging = false
+                                            when (swipeAction(swipeOffsetX, velocity, coverWidthPx, canGoNext, canGoPrevious)) {
+                                                SwipeAction.CommitNext -> {
+                                                    commitSwipe(1)
+                                                }
+
+                                                SwipeAction.CommitPrevious -> {
+                                                    commitSwipe(-1)
+                                                }
+
+                                                SwipeAction.Next -> {
+                                                    onNext()
+                                                    animateSwipe(0f)
+                                                }
+
+                                                SwipeAction.Previous -> {
+                                                    onPrevious()
+                                                    animateSwipe(0f)
+                                                }
+
+                                                SwipeAction.None -> {
+                                                    animateSwipe(0f)
+                                                }
                                             }
-                                            settleSwipe()
                                         },
                                     ).clickable(
                                         interactionSource = remember { MutableInteractionSource() },
@@ -301,15 +440,30 @@ fun NowPlayingScreen(
                                     .testTag(NOW_PLAYING_COVER_TAG),
                             contentAlignment = Alignment.Center,
                         ) {
-                            CoverArt(
-                                ref = coverArt,
-                                name = state.item?.title.orEmpty(),
-                                thumbnailRef = thumbnailRef,
-                                showPlaceholder = coverArt == null,
-                                square = false,
-                                elevation = 3.dp,
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            strip.forEachIndexed { index, slot ->
+                                if (slot != null && (index == 1 || coverWidthPx > 0f)) {
+                                    CoverArt(
+                                        ref = slot.ref,
+                                        name = slot.name,
+                                        thumbnailRef = slot.thumbnailRef,
+                                        showPlaceholder = slot.ref == null,
+                                        square = false,
+                                        elevation = 3.dp,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .graphicsLayer {
+                                                    translationX = (index - 1) * coverWidthPx + swipeOffsetX
+                                                }.then(
+                                                    when (index) {
+                                                        0 -> Modifier.testTag(NOW_PLAYING_PREVIOUS_TAG)
+                                                        2 -> Modifier.testTag(NOW_PLAYING_NEXT_TAG)
+                                                        else -> Modifier
+                                                    },
+                                                ),
+                                    )
+                                }
+                            }
                         }
                         val density = LocalDensity.current
                         val titleHeight =

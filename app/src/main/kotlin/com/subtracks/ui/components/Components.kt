@@ -41,19 +41,23 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
+import coil3.request.SuccessResult
 import coil3.request.crossfade
 import coil3.size.Dimension
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.ui.theme.artworkColorsFromSeed
 import com.subtracks.ui.theme.placeholderSeed
+import kotlinx.coroutines.CancellationException
 import java.lang.Character.UnicodeScript
 
 private const val MAX_CACHED_RATIOS = 256
 private const val COVER_ART_FADE_MILLIS = 100
+private const val COVER_RATIO_PREFETCH_PX = 512
 private const val IDEOGRAPHIC_INITIAL_LIFT = 0.05f
 
 private object ArtworkRatioCache {
@@ -245,6 +249,31 @@ private fun BoxScope.CoverArtContent(
 }
 
 private fun Size.ratioOrNull(): Float? = if (width > 0f && height > 0f && width.isFinite() && height.isFinite()) width / height else null
+
+internal suspend fun prefetchArtworkRatio(
+    context: Context,
+    ref: CoverArtRef,
+) {
+    if (ArtworkRatioCache.get(ref.cacheKey) != null) return
+    val request =
+        ImageRequest
+            .Builder(context)
+            .data(ref.url)
+            .diskCacheKey(ref.cacheKey)
+            .size(COVER_RATIO_PREFETCH_PX)
+            .build()
+    val image =
+        try {
+            (SingletonImageLoader.get(context).execute(request) as? SuccessResult)?.image
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        } ?: return
+    if (image.width > 0 && image.height > 0) {
+        ArtworkRatioCache.put(ref.cacheKey, image.width.toFloat() / image.height)
+    }
+}
 
 internal fun String.isIdeographicInitial(): Boolean {
     if (isEmpty()) return false

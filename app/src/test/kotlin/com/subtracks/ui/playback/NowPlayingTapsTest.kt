@@ -22,6 +22,7 @@ import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.ui.theme.SubtracksTheme
 import com.subtracks.ui.theme.artworkColorsFromSeed
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -55,6 +56,8 @@ class NowPlayingTapsTest {
         onArtistClick: (() -> Unit)? = null,
         onNext: () -> Unit = {},
         onPrevious: () -> Unit = {},
+        previousArt: NowPlayingArt? = null,
+        nextArt: NowPlayingArt? = null,
     ) {
         composeRule.setContent {
             SubtracksTheme {
@@ -72,10 +75,20 @@ class NowPlayingTapsTest {
                     onAlbumClick = onAlbumClick,
                     onArtistClick = onArtistClick,
                     onSeek = {},
+                    previousArt = previousArt,
+                    nextArt = nextArt,
                 )
             }
         }
     }
+
+    private fun adjacentArt(id: String) =
+        NowPlayingArt(
+            id = id,
+            ref = CoverArtRef(id, "test:$id"),
+            thumbnailRef = null,
+            name = id,
+        )
 
     @Test
     fun tappingTheCoverArtOpensTheAlbum() {
@@ -156,6 +169,72 @@ class NowPlayingTapsTest {
 
         assertTrue("a right swipe should go to the previous track", previous)
         assertTrue("a right swipe should not skip to the next track", !next)
+    }
+
+    @Test
+    fun theSwipeActionCommitsWhenANeighbourExists() {
+        assertEquals(
+            SwipeAction.CommitNext,
+            swipeAction(offsetX = -300f, velocity = 0f, width = 1000f, canGoNext = true, canGoPrevious = false),
+        )
+        assertEquals(
+            SwipeAction.CommitPrevious,
+            swipeAction(offsetX = 300f, velocity = 0f, width = 1000f, canGoNext = false, canGoPrevious = true),
+        )
+    }
+
+    @Test
+    fun theSwipeActionFallsBackWhenTheNeighbourIsMissing() {
+        assertEquals(
+            SwipeAction.Next,
+            swipeAction(offsetX = -300f, velocity = 0f, width = 1000f, canGoNext = false, canGoPrevious = false),
+        )
+        assertEquals(
+            SwipeAction.Previous,
+            swipeAction(offsetX = 300f, velocity = 0f, width = 1000f, canGoNext = false, canGoPrevious = false),
+        )
+    }
+
+    @Test
+    fun theSwipeActionIgnoresShortAndUnmeasuredSwipes() {
+        assertEquals(
+            SwipeAction.None,
+            swipeAction(offsetX = -50f, velocity = 0f, width = 1000f, canGoNext = true, canGoPrevious = true),
+        )
+        assertEquals(
+            SwipeAction.None,
+            swipeAction(offsetX = -300f, velocity = 0f, width = 0f, canGoNext = true, canGoPrevious = true),
+        )
+    }
+
+    @Test
+    fun rotatingTheStripMovesTheNeighbourIntoTheCentre() {
+        val a = adjacentArt("a")
+        val b = adjacentArt("b")
+        val c = adjacentArt("c")
+        val base = listOf(a, b, c)
+
+        assertEquals(listOf(b, c, null), rotateStrip(base, 1))
+        assertEquals(listOf(null, a, b), rotateStrip(base, -1))
+    }
+
+    @Test
+    fun theAdjacentArtRendersBesideTheCurrentArt() {
+        render(
+            previousArt = adjacentArt("s-previous"),
+            nextArt = adjacentArt("s-next"),
+        )
+
+        composeRule.onNodeWithTag(NOW_PLAYING_PREVIOUS_TAG, useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun theAdjacentArtIsAbsentWithoutNeighbours() {
+        render()
+
+        composeRule.onNodeWithTag(NOW_PLAYING_PREVIOUS_TAG, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test

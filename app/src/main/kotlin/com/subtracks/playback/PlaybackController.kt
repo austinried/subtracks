@@ -25,6 +25,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
+internal const val PLAYBACK_RESTART_THRESHOLD_MS = 3_000L
+
 data class QueueItem(
     val id: String,
     val title: String,
@@ -745,7 +747,7 @@ class PlaybackController(
 
     fun previous() {
         val player = player ?: return
-        if (player.currentPositionMs > RESTART_THRESHOLD_MS) {
+        if (player.currentPositionMs > PLAYBACK_RESTART_THRESHOLD_MS) {
             scope.launch {
                 startLock.withLock { player.seekTo(0) }
                 refresh()
@@ -899,6 +901,21 @@ class PlaybackController(
         val snapshot = current ?: return null
         val at = position ?: return null
         return queueRepository.itemAt(snapshot, at + 1)?.toQueueItem()
+    }
+
+    suspend fun previousItem(): QueueItem? {
+        var current: QueueSnapshot? = null
+        var position: Long? = null
+        var restarting = false
+        startLock.withLock {
+            current = snapshot
+            position = currentPosition()
+            restarting = (player?.currentPositionMs ?: 0L) > PLAYBACK_RESTART_THRESHOLD_MS
+        }
+        val snapshot = current ?: return null
+        val at = position ?: return null
+        if (at <= 0 || restarting) return null
+        return queueRepository.itemAt(snapshot, at - 1)?.toQueueItem()
     }
 
     private fun play(
@@ -1496,7 +1513,6 @@ class PlaybackController(
         const val BUFFERING_INDICATOR_DELAY_MS = 1_000L
         const val QUEUE_WINDOW_RADIUS = 25L
         const val WINDOW_SHIFT_DELAY_MS = 400L
-        const val RESTART_THRESHOLD_MS = 3_000L
         const val SEED_PIN_TRIES = 1_000_000
         const val FILE_SCHEME = "file:"
 
