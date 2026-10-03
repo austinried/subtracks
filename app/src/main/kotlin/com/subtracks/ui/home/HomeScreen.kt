@@ -1,10 +1,9 @@
 package com.subtracks.ui.home
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,9 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,10 +32,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
@@ -149,6 +152,24 @@ fun HomeScreen(
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = topInset + 8.dp, bottom = bottomInset + 24.dp),
         ) {
+            item(key = "home-title") {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_subtracks_logo),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(width = 34.dp, height = 25.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = "subtracks", style = MaterialTheme.typography.titleLarge)
+                }
+            }
             albumRow(
                 HomeSection.RecentlyAddedAlbums,
                 feed.recentlyAddedAlbums,
@@ -249,6 +270,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
+private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
     section: HomeSection,
@@ -310,7 +332,6 @@ private fun LazyListScope.artistRow(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 private fun LazyListScope.genreBlock(
     section: HomeSection,
     genres: List<String>,
@@ -322,13 +343,23 @@ private fun LazyListScope.genreBlock(
         HomeSectionHeader(section.title) { onMore(section) }
     }
     item(key = "${section.name}-row") {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
-            verticalArrangement = Arrangement.spacedBy(TILE_SPACING),
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
         ) {
-            genres.forEach { genre ->
-                AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
+            Column(verticalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
+                repeat(GENRE_ROWS) { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
+                        genres.forEachIndexed { index, genre ->
+                            if (index % GENRE_ROWS == row) {
+                                AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -426,7 +457,7 @@ private fun ArtistTile(
 ) {
     Column(
         modifier = Modifier.width(ARTIST_TILE_SIZE).combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        horizontalAlignment = Alignment.Start,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CoverArt(
             ref = ref,
