@@ -77,7 +77,8 @@ import java.io.File
 /**
  * Records the store screenshots from a real sync of the public Navidrome demo library. It is not run
  * by `:*UnitTest` or the integration suite; run it explicitly with `gradle :app:demoScreenshots`.
- * The synced database and the downloaded cover art live only in memory and are never written down.
+ * The synced database is rebuilt each run; downloaded cover art is cached under the system temp dir
+ * so reruns do not re-fetch it.
  */
 @OptIn(DelicateCoilApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -378,17 +379,20 @@ class DemoScreenshotTest {
                     val allArtists = dao.artistIds(1).mapNotNull { dao.artist(1, it).first() }
                     val playlists = dao.playlistIds(1).mapNotNull { dao.playlist(1, it).first() }
 
+                    suspend fun songsOf(album: Album) =
+                        dao.songsByAlbum(1, album.id).first().ifEmpty { error("demo album '${album.name}' has no songs") }
+
                     val nowPlayingAlbum = allAlbums.firstOrNull { it.name == "Chillhop Essentials - Winter 2016" } ?: allAlbums.first()
-                    val nowPlayingSongs = dao.songsByAlbum(1, nowPlayingAlbum.id).first()
+                    val nowPlayingSongs = songsOf(nowPlayingAlbum)
                     val nowPlayingSong = nowPlayingSongs.getOrNull(1) ?: nowPlayingSongs.first()
                     val album = allAlbums.firstOrNull { it.name == "My latin way" } ?: allAlbums.first()
-                    val albumSongs = dao.songsByAlbum(1, album.id).first()
+                    val albumSongs = songsOf(album)
                     val homePlayingAlbum = allAlbums.firstOrNull { it.name == "Shaking The Habitual" } ?: allAlbums.last()
-                    val homePlayingSong = dao.songsByAlbum(1, homePlayingAlbum.id).first().first()
+                    val homePlayingSong = songsOf(homePlayingAlbum).first()
                     val artist =
                         allArtists.firstOrNull { it.name == "Ugress" }
                             ?: allArtists.maxByOrNull { it.albumCount }
-                            ?: allArtists.first()
+                            ?: error("demo library has no artists")
                     val artistAlbums = dao.albumsForArtist(1, artist.id).first()
 
                     val coverArtIds =
@@ -492,26 +496,34 @@ class DemoScreenshotTest {
                 id: String,
                 thumbnail: Boolean,
                 coverDir: File,
-            ): Bitmap? =
-                try {
-                    val url = source.coverArtUri(id, thumbnail) ?: return null
-                    val file = File(coverDir, "${url.hashCode().toUInt().toString(16)}.img")
+            ): Bitmap? {
+                val url = source.coverArtUri(id, thumbnail) ?: return null
+                val file = File(coverDir, "${url.hashCode().toUInt().toString(16)}.img")
+                return try {
                     if (!file.exists()) {
                         http.newCall(Request.Builder().url(url).build()).execute().use { response ->
+                            check(response.isSuccessful) { "cover art HTTP ${response.code}" }
                             response.body.byteStream().use { input ->
                                 file.outputStream().use { output -> input.copyTo(output) }
                             }
                         }
                     }
                     val bytes = file.readBytes()
-                    if (thumbnail) {
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    } else {
-                        decodeDownsampled(bytes, MAX_ART_DIM)
+                    val bitmap =
+                        if (thumbnail) {
+                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        } else {
+                            decodeDownsampled(bytes, MAX_ART_DIM)
+                        }
+                    bitmap ?: run {
+                        file.delete()
+                        null
                     }
                 } catch (_: Exception) {
+                    file.delete()
                     null
                 }
+            }
 
             private fun decodeDownsampled(
                 bytes: ByteArray,

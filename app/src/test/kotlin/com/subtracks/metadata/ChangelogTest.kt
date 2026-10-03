@@ -18,7 +18,7 @@ class ChangelogTest {
                 .filter { it.isFile && it.extension == "txt" }
         assertTrue("no changelog files found under metadata/", files.isNotEmpty())
         files.forEach { file ->
-            val text = file.readText()
+            val text = file.readText().replace("\r\n", "\n")
             val length = text.codePointCount(0, text.length)
             assertTrue(
                 "metadata changelogs must be at most $LIMIT characters; ${file.name} is $length",
