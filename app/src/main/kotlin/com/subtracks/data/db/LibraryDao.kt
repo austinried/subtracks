@@ -306,17 +306,17 @@ interface LibraryDao {
 
     @Query(
         "SELECT genre FROM (" +
-            "SELECT song_genres.genre AS genre, songs.played AS played FROM song_genres " +
+            "SELECT song_genres.genre AS genre, songs.playCount AS plays FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE song_genres.sourceId = :sourceId " +
             "UNION ALL " +
-            "SELECT songs.genre AS genre, songs.played AS played FROM songs " +
+            "SELECT songs.genre AS genre, songs.playCount AS plays FROM songs " +
             "WHERE songs.sourceId = :sourceId AND songs.genre IS NOT NULL AND songs.genre != '' " +
             "AND NOT EXISTS (SELECT 1 FROM song_genres " +
             "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id)" +
-            ") GROUP BY genre ORDER BY MAX(played) DESC NULLS LAST, genre COLLATE NOCASE",
+            ") GROUP BY genre ORDER BY SUM(plays) DESC, genre COLLATE NOCASE",
     )
-    fun genresByRecentPlay(sourceId: Long): Flow<List<String>>
+    fun genresByMostPlayed(sourceId: Long): Flow<List<String>>
 
     @Query(
         "SELECT DISTINCT (year / 10) * 10 AS decade FROM albums " +

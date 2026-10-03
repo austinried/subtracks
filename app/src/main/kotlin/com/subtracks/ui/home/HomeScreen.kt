@@ -3,6 +3,8 @@ package com.subtracks.ui.home
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -246,6 +248,7 @@ private fun HomeSectionHeader(
 private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
+private val ARTIST_SPACING = 16.dp
 
 private fun LazyListScope.albumRow(
     section: HomeSection,
@@ -292,7 +295,7 @@ private fun LazyListScope.artistRow(
     item(key = "${section.name}-row") {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            horizontalArrangement = Arrangement.spacedBy(ARTIST_SPACING),
         ) {
             items(artists, key = { it.id }) { artist ->
                 val ref = coverArt(artist.coverArt, true)
@@ -307,6 +310,7 @@ private fun LazyListScope.artistRow(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 private fun LazyListScope.genreBlock(
     section: HomeSection,
     genres: List<String>,
@@ -318,16 +322,13 @@ private fun LazyListScope.genreBlock(
         HomeSectionHeader(section.title) { onMore(section) }
     }
     item(key = "${section.name}-row") {
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            verticalArrangement = Arrangement.spacedBy(TILE_SPACING),
         ) {
-            items(genres.chunked(GENRE_COLUMN_HEIGHT), key = { it.first() }) { column ->
-                Column(verticalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
-                    column.forEach { genre ->
-                        AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
-                    }
-                }
+            genres.forEach { genre ->
+                AssistChip(onClick = { onGenreClick(genre) }, label = { Text(genre) })
             }
         }
     }
@@ -384,8 +385,6 @@ private fun LazyListScope.starredSongs(
     }
 }
 
-private const val GENRE_COLUMN_HEIGHT = 3
-
 @Composable
 private fun AlbumTile(
     album: Album,
@@ -399,7 +398,7 @@ private fun AlbumTile(
         CoverArt(
             ref = ref,
             name = album.name,
-            modifier = Modifier.size(TILE_SIZE).clip(RoundedCornerShape(4.dp)),
+            modifier = Modifier.size(TILE_SIZE).clip(RoundedCornerShape(2.dp)),
         )
         Spacer(Modifier.height(6.dp))
         Text(
@@ -427,7 +426,7 @@ private fun ArtistTile(
 ) {
     Column(
         modifier = Modifier.width(ARTIST_TILE_SIZE).combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
     ) {
         CoverArt(
             ref = ref,

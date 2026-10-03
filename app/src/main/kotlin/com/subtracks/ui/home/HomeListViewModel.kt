@@ -97,7 +97,7 @@ class HomeListViewModel(
 
     val genres: StateFlow<List<String>> =
         sourceId
-            .flatMapLatest { libraryRepository.genresByRecentPlay(it) }
+            .flatMapLatest { libraryRepository.genresByMostPlayed(it) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val decades: StateFlow<List<Long>> =

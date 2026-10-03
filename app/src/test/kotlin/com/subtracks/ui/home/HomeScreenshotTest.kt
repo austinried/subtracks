@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -46,6 +48,31 @@ class HomeScreenshotTest {
             composeRule.onAllNodesWithText("Recently added").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/home.png")
+    }
+
+    @Test
+    fun homeGenres() {
+        composeRule.setContent {
+            SubtracksTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    HomeScreen(
+                        feed = feed(),
+                        coverArt = { _, _ -> null },
+                        playingSongId = null,
+                    )
+                }
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Recently added").fetchSemanticsNodes().isNotEmpty()
+        }
+        repeat(2) {
+            composeRule.onRoot().performTouchInput {
+                swipeUp(startY = centerY + 600f, endY = centerY - 600f, durationMillis = 300)
+            }
+            composeRule.waitForIdle()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/home_genres.png")
     }
 
     private fun feed() =

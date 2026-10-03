@@ -67,7 +67,7 @@ class HomeViewModel(
                     }
                 val discovery =
                     combine(
-                        libraryRepository.genresByRecentPlay(sourceId),
+                        libraryRepository.genresByMostPlayed(sourceId),
                         libraryRepository.decades(sourceId),
                         libraryRepository.recentlyStarredSongs(sourceId, HOME_STARRED_LIMIT),
                         libraryRepository.recentlyAddedAlbums(sourceId, HOME_ROW_LIMIT),

@@ -124,22 +124,22 @@ class LibraryHomeDaoTest {
         }
 
     @Test
-    fun genresOrderByMostRecentPlayWithinTheGenre() =
+    fun genresOrderByMostPlayed() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "One", genre = "Rock", played = 100),
-                    song(sourceId, "s2", "Two", genre = "Jazz", played = 400),
-                    song(sourceId, "s3", "Three", genre = "Rock", played = 300),
-                    song(sourceId, "s4", "Four", genre = "Classical", played = null),
+                    song(sourceId, "s1", "One", genre = "Rock", playCount = 5),
+                    song(sourceId, "s2", "Two", genre = "Jazz", playCount = 2),
+                    song(sourceId, "s3", "Three", genre = "Rock", playCount = 4),
+                    song(sourceId, "s4", "Four", genre = "Classical", playCount = 0),
                 ),
             )
 
             assertEquals(
-                listOf("Jazz", "Rock", "Classical"),
-                dao.genresByRecentPlay(sourceId).first(),
+                listOf("Rock", "Jazz", "Classical"),
+                dao.genresByMostPlayed(sourceId).first(),
             )
         }
 
@@ -150,8 +150,8 @@ class LibraryHomeDaoTest {
             val dao = db.libraryDao()
             dao.upsertSongs(
                 listOf(
-                    song(sourceId, "s1", "One", genre = "Legacy", played = 100),
-                    song(sourceId, "s2", "Two", genre = "Legacy", played = 300),
+                    song(sourceId, "s1", "One", genre = "Legacy", playCount = 1),
+                    song(sourceId, "s2", "Two", genre = "Legacy", playCount = 3),
                 ),
             )
             insertGenre(sourceId, "s2", 0, "Rock")
@@ -159,7 +159,7 @@ class LibraryHomeDaoTest {
 
             assertEquals(
                 listOf("Electronic", "Rock", "Legacy"),
-                dao.genresByRecentPlay(sourceId).first(),
+                dao.genresByMostPlayed(sourceId).first(),
             )
         }
 
