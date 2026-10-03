@@ -492,6 +492,73 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun anArtistPageListsAlbumsWhereTheArtistIsOnlyACreditedTrack() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Compilation", year = null, starred = null)))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null),
+                    song(sourceId, "s2", "Two", starred = null).copy(artistId = "ar-guest"),
+                ),
+            )
+
+            assertEquals(listOf("al-1"), dao.albumsForArtist(sourceId, "ar-1").first().map { it.id })
+            assertEquals(listOf("al-1"), dao.albumsForArtist(sourceId, "ar-guest").first().map { it.id })
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            assertEquals(emptyList<String>(), dao.albumsForArtistDownloaded(sourceId, "ar-guest").first().map { it.id })
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
+            assertEquals(listOf("al-1"), dao.albumsForArtistDownloaded(sourceId, "ar-guest").first().map { it.id })
+        }
+
+    @Test
+    fun downloadedArtistsIncludeOneCreditedOnlyOnADownloadedTrack() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Album Artist", albumCount = 1),
+                    artist(sourceId, "ar-guest", "Guest", albumCount = 0),
+                ),
+            )
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Compilation", year = null, starred = null)))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null),
+                    song(sourceId, "s2", "Two", starred = null).copy(artistId = "ar-guest"),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            assertEquals(
+                listOf("Album Artist"),
+                dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Album Artist"),
+                dao.downloadedArtists(sourceId).page().map { it.name },
+            )
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
+
+            val filtered = dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page()
+            assertEquals(listOf("Album Artist", "Guest"), filtered.map { it.name })
+            assertEquals(listOf(1L, 1L), filtered.map { it.albumCount })
+
+            assertEquals(
+                setOf("Album Artist", "Guest"),
+                dao
+                    .downloadedArtists(sourceId)
+                    .page()
+                    .map { it.name }
+                    .toSet(),
+            )
+        }
+
+    @Test
     fun downloadedFilterReportsTheDownloadedAlbumCount() =
         runTest {
             val sourceId = source()

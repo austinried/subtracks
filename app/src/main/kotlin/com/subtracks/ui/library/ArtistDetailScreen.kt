@@ -197,7 +197,6 @@ fun ArtistDetailRoute(
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
         onShuffle = viewModel::shuffle,
-        offline = offline,
     )
 
     pendingDelete?.let { pending ->
@@ -227,7 +226,6 @@ fun ArtistDetailScreen(
     starred: Boolean = false,
     onToggleStar: (() -> Unit)? = null,
     onShuffle: () -> Unit = {},
-    offline: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
@@ -241,7 +239,7 @@ fun ArtistDetailScreen(
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val navBarBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
-    val albumCount = if (offline) albums.size.toLong() else artist?.albumCount ?: 0L
+    val albumCount = albums.size.toLong()
     val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }

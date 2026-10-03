@@ -624,6 +624,76 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun aGuestArtistCountsAndDownloadsOnlyTheTracksCreditedToThem() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s2",
+                            albumId = "al1",
+                            artistId = "ar-guest",
+                            title = "Song 2",
+                            album = "Album",
+                            artist = "Guest",
+                            duration = 100,
+                            track = 2,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.libraryDao().upsertArtists(
+                    listOf(Artist(sourceId = 1, id = "ar-guest", name = "Guest", albumCount = 0, starred = null, coverArt = null)),
+                )
+            }
+
+            assertEquals(ListDownloadStatus(total = 1, downloaded = 0, downloading = 0), statusOf(DownloadList.Artist, "ar-guest"))
+
+            runBlocking { repository.downloadAll(1, DownloadList.Artist, "ar-guest") }
+
+            assertEquals(listOf("s2"), requestedSongIds())
+        }
+
+    @Test
+    fun theArtistListBadgesCountADownloadedGuestTrackForTheGuest() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s2",
+                            albumId = "al1",
+                            artistId = "ar-guest",
+                            title = "Song 2",
+                            album = "Album",
+                            artist = "Guest",
+                            duration = 100,
+                            track = 2,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.libraryDao().upsertArtists(
+                    listOf(Artist(sourceId = 1, id = "ar-guest", name = "Guest", albumCount = 0, starred = null, coverArt = null)),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+            }
+
+            val artists = runBlocking { repository.statuses(1, DownloadList.Artist).first() }
+
+            assertEquals(ListDownloadStatus(total = 2, downloaded = 1), artists["ar1"])
+            assertEquals(ListDownloadStatus(total = 1, downloaded = 1), artists["ar-guest"])
+        }
+
+    @Test
     fun cancellingWhileAListIsStillQueuingRemovesTheWholeList() =
         runTest {
             seedLibrary()

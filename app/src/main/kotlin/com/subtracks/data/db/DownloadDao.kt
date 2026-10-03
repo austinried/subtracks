@@ -11,6 +11,21 @@ import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.SourceCoverArt
 import kotlinx.coroutines.flow.Flow
 
+// A song is attributed to its album artist and to its credited track artist, so a guest artist's
+// downloads are visible even though they lead no albums of their own.
+private const val ARTIST_DOWNLOAD_ROWS =
+    "SELECT albums.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT songs.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL"
+
 @Dao
 interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
@@ -23,13 +38,10 @@ interface DownloadDao {
     suspend fun all(): List<SongDownload>
 
     @Query(
-        "SELECT COUNT(songs.id) AS total, " +
-            "COALESCE(SUM(CASE WHEN song_downloads.status = 'Completed' THEN 1 ELSE 0 END), 0) AS downloaded, " +
-            "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
-            "FROM songs " +
-            "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
-            "WHERE songs.sourceId = :sourceId " +
-            "AND songs.albumId IN (SELECT id FROM albums WHERE sourceId = :sourceId AND artistId = :artistId)",
+        "SELECT COUNT(DISTINCT songId) AS total, " +
+            "COUNT(DISTINCT CASE WHEN status = 'Completed' THEN songId END) AS downloaded, " +
+            "COUNT(DISTINCT CASE WHEN status IN ('Queued', 'Running') THEN songId END) AS downloading " +
+            "FROM (" + ARTIST_DOWNLOAD_ROWS + ") WHERE id = :artistId",
     )
     fun artistStatus(
         sourceId: Long,
@@ -77,15 +89,11 @@ interface DownloadDao {
     fun albumStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
 
     @Query(
-        "SELECT albums.artistId AS id, " +
-            "COUNT(songs.id) AS total, " +
-            "COALESCE(SUM(CASE WHEN song_downloads.status = 'Completed' THEN 1 ELSE 0 END), 0) AS downloaded, " +
-            "COALESCE(SUM(CASE WHEN song_downloads.status IN ('Queued', 'Running') THEN 1 ELSE 0 END), 0) AS downloading " +
-            "FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
-            "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
-            "GROUP BY albums.artistId " +
+        "SELECT id, " +
+            "COUNT(DISTINCT songId) AS total, " +
+            "COUNT(DISTINCT CASE WHEN status = 'Completed' THEN songId END) AS downloaded, " +
+            "COUNT(DISTINCT CASE WHEN status IN ('Queued', 'Running') THEN songId END) AS downloading " +
+            "FROM (" + ARTIST_DOWNLOAD_ROWS + ") GROUP BY id " +
             "HAVING downloaded > 0 OR downloading > 0",
     )
     fun artistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>
