@@ -26,6 +26,7 @@ class HomeViewModelTest {
                 addedAlbums = listOf(album("c")),
                 rediscover = listOf(album("d")),
                 hasPlayData = true,
+                onRepeatSongs = listOf(starred("repeat")),
             )
 
         assertEquals(listOf("a"), feed.recentlyPlayedAlbums.map { it.id })
@@ -35,6 +36,7 @@ class HomeViewModelTest {
         assertEquals(listOf("Rock"), feed.genres)
         assertEquals(listOf(1970L), feed.decades)
         assertEquals(listOf("song"), feed.recentlyStarredSongs.map { it.song.id })
+        assertEquals(listOf("repeat"), feed.onRepeatSongs.map { it.song.id })
         assertEquals(listOf("c"), feed.recentlyAddedAlbums.map { it.id })
         assertEquals(listOf("d"), feed.rediscoverAlbums.map { it.id })
     }

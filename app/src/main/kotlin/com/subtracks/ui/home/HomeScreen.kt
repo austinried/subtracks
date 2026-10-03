@@ -65,6 +65,7 @@ enum class HomeSection(
     Genres("Genres"),
     Decades("Decades"),
     RecentlyStarredSongs("Recently starred"),
+    OnRepeatSongs("On repeat"),
     RecentlyAddedAlbums("Recently added"),
     Rediscover("Rediscover"),
     ;
@@ -109,6 +110,7 @@ fun HomeRoute(
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onPlayStarred = viewModel::playStarred,
+        onPlayOnRepeat = viewModel::playOnRepeat,
         onLongClick = { contextMenuHost?.show(it, actions) },
         onMore = onMore,
         onGenreClick = onGenreClick,
@@ -127,6 +129,7 @@ fun HomeScreen(
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
     onPlayStarred: (Song) -> Unit = {},
+    onPlayOnRepeat: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
     onMore: (HomeSection) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
@@ -186,12 +189,12 @@ fun HomeScreen(
                 onLongClick,
                 onMore,
             )
-            starredSongs(
-                HomeSection.RecentlyStarredSongs,
-                feed.recentlyStarredSongs,
+            homeSongs(
+                HomeSection.OnRepeatSongs,
+                feed.onRepeatSongs,
                 coverArt,
                 playingSongId,
-                onPlayStarred,
+                onPlayOnRepeat,
                 onLongClick,
                 onMore,
             )
@@ -204,6 +207,15 @@ fun HomeScreen(
                 onMore,
             )
             genreBlock(HomeSection.Genres, feed.genres, onGenreClick, onMore)
+            homeSongs(
+                HomeSection.RecentlyStarredSongs,
+                feed.recentlyStarredSongs,
+                coverArt,
+                playingSongId,
+                onPlayStarred,
+                onLongClick,
+                onMore,
+            )
             artistRow(
                 HomeSection.MostPlayedArtists,
                 feed.mostPlayedArtists,
@@ -250,7 +262,7 @@ private fun HomeSectionHeader(
     onMore: (() -> Unit)?,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 28.dp, bottom = 0.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 24.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -391,12 +403,12 @@ private fun LazyListScope.decadeRow(
     }
 }
 
-private fun LazyListScope.starredSongs(
+private fun LazyListScope.homeSongs(
     section: HomeSection,
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
-    onPlayStarred: (Song) -> Unit,
+    onSongPlay: (Song) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
 ) {
@@ -413,7 +425,7 @@ private fun LazyListScope.starredSongs(
             durationSeconds = item.song.duration,
             modifier =
                 Modifier.combinedClickable(
-                    onClick = { onPlayStarred(item.song) },
+                    onClick = { onSongPlay(item.song) },
                     onLongClick = { onLongClick(MenuTarget.Song(item.song, coverArt(item.coverArt, true))) },
                 ),
         )

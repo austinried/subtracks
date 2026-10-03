@@ -131,6 +131,7 @@ class HomeScreenshotTest {
             genres = listOf("Rock", "Jazz", "Classical", "Electronic", "Pop", "Folk", "Blues"),
             decades = listOf(1960L, 1970L, 1980L, 1990L, 2000L, 2010L),
             recentlyStarredSongs = songs(),
+            onRepeatSongs = songs(),
             recentlyAddedAlbums = albums("Added"),
             rediscoverAlbums = albums("Repeat"),
         )

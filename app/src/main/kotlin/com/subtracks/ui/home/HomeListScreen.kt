@@ -169,7 +169,7 @@ fun HomeListScreen(
                 )
             }
 
-            HomeSection.RecentlyStarredSongs -> {
+            HomeSection.RecentlyStarredSongs, HomeSection.OnRepeatSongs -> {
                 SongsList(
                     songs = songs,
                     coverArt = coverArt,

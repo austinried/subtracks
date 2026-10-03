@@ -35,6 +35,7 @@ data class HomeFeed(
     val genres: List<String> = emptyList(),
     val decades: List<Long> = emptyList(),
     val recentlyStarredSongs: List<AlbumSongItem> = emptyList(),
+    val onRepeatSongs: List<AlbumSongItem> = emptyList(),
     val recentlyAddedAlbums: List<Album> = emptyList(),
     val rediscoverAlbums: List<Album> = emptyList(),
     val loading: Boolean = false,
@@ -62,8 +63,9 @@ class HomeViewModel(
                         libraryRepository.recentlyPlayedArtists(sourceId, HOME_ROW_LIMIT),
                         libraryRepository.mostPlayedAlbums(sourceId, HOME_ROW_LIMIT),
                         libraryRepository.mostPlayedArtists(sourceId, HOME_ROW_LIMIT),
-                    ) { albums, artists, frequentAlbums, frequentArtists ->
-                        PlayRows(albums, artists, frequentAlbums, frequentArtists)
+                        libraryRepository.onRepeatSongs(sourceId, HOME_STARRED_LIMIT),
+                    ) { albums, artists, frequentAlbums, frequentArtists, onRepeat ->
+                        PlayRows(albums, artists, frequentAlbums, frequentArtists, onRepeat)
                     }
                 val discovery =
                     combine(
@@ -86,6 +88,7 @@ class HomeViewModel(
                         recentArtists = rows.recentArtists,
                         frequentAlbums = rows.frequentAlbums,
                         frequentArtists = rows.frequentArtists,
+                        onRepeatSongs = rows.onRepeatSongs,
                         genres = found.genres,
                         decades = found.decades,
                         starredSongs = found.starredSongs,
@@ -105,6 +108,10 @@ class HomeViewModel(
         viewModelScope.playStarredList(libraryRepository, playbackController, song)
     }
 
+    fun playOnRepeat(song: Song) {
+        viewModelScope.playOnRepeatList(libraryRepository, playbackController, song)
+    }
+
     fun sync() = syncManager.requestSync()
 
     private data class PlayRows(
@@ -112,6 +119,7 @@ class HomeViewModel(
         val recentArtists: List<Artist>,
         val frequentAlbums: List<Album>,
         val frequentArtists: List<Artist>,
+        val onRepeatSongs: List<AlbumSongItem>,
     )
 
     private data class Discovery(
@@ -134,6 +142,7 @@ internal fun buildHomeFeed(
     addedAlbums: List<Album>,
     rediscover: List<Album>,
     hasPlayData: Boolean,
+    onRepeatSongs: List<AlbumSongItem> = emptyList(),
 ): HomeFeed =
     HomeFeed(
         recentlyPlayedAlbums = recentAlbums.takeIf { hasPlayData }.orEmpty(),
@@ -143,6 +152,7 @@ internal fun buildHomeFeed(
         genres = genres,
         decades = decades,
         recentlyStarredSongs = starredSongs,
+        onRepeatSongs = onRepeatSongs,
         recentlyAddedAlbums = addedAlbums,
         rediscoverAlbums = rediscover,
     )
@@ -170,6 +180,17 @@ internal fun CoroutineScope.playStarredList(
 ) {
     launch {
         val ids = libraryRepository.starredSongIds(song.sourceId)
+        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+    }
+}
+
+internal fun CoroutineScope.playOnRepeatList(
+    libraryRepository: LibraryRepository,
+    playbackController: PlaybackController,
+    song: Song,
+) {
+    launch {
+        val ids = libraryRepository.onRepeatSongIds(song.sourceId)
         playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
     }
 }

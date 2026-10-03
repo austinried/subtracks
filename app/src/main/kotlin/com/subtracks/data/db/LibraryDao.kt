@@ -305,6 +305,18 @@ interface LibraryDao {
     ): Flow<List<AlbumSongItem>>
 
     @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.played IS NOT NULL AND songs.played >= :cutoff " +
+            "ORDER BY songs.playCount DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+    )
+    fun onRepeatSongs(
+        sourceId: Long,
+        cutoff: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>>
+
+    @Query(
         "SELECT genre FROM (" +
             "SELECT song_genres.genre AS genre, songs.playCount AS plays FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
@@ -709,6 +721,26 @@ interface LibraryDao {
             "ORDER BY starred DESC, title COLLATE NOCASE, id",
     )
     suspend fun starredSongIds(sourceId: Long): List<String>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.played IS NOT NULL AND songs.played >= :cutoff " +
+            "ORDER BY songs.playCount DESC, songs.title COLLATE NOCASE, songs.id",
+    )
+    fun homeOnRepeatSongs(
+        sourceId: Long,
+        cutoff: Long,
+    ): PagingSource<Int, AlbumSongItem>
+
+    @Query(
+        "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND played IS NOT NULL AND played >= :cutoff " +
+            "ORDER BY playCount DESC, title COLLATE NOCASE, id",
+    )
+    suspend fun onRepeatSongIds(
+        sourceId: Long,
+        cutoff: Long,
+    ): List<String>
 
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +

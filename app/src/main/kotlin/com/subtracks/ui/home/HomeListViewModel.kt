@@ -91,6 +91,7 @@ class HomeListViewModel(
                 when {
                     request.genre != null -> libraryRepository.songsByGenre(id, request.genre)
                     request.section == HomeSection.RecentlyStarredSongs -> libraryRepository.starredSongs(id)
+                    request.section == HomeSection.OnRepeatSongs -> libraryRepository.onRepeatSongsPage(id)
                     else -> flowOf(PagingData.empty<AlbumSongItem>())
                 }
             }.cachedIn(viewModelScope)
@@ -111,10 +112,10 @@ class HomeListViewModel(
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
     fun play(song: Song) {
-        if (request.section == HomeSection.RecentlyStarredSongs) {
-            viewModelScope.playStarredList(libraryRepository, playbackController, song)
-        } else {
-            viewModelScope.playSongInContext(libraryRepository, playbackController, song)
+        when (request.section) {
+            HomeSection.RecentlyStarredSongs -> viewModelScope.playStarredList(libraryRepository, playbackController, song)
+            HomeSection.OnRepeatSongs -> viewModelScope.playOnRepeatList(libraryRepository, playbackController, song)
+            else -> viewModelScope.playSongInContext(libraryRepository, playbackController, song)
         }
     }
 }
