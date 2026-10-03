@@ -38,6 +38,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.ListQuery
+import com.subtracks.data.repo.SEARCH_RESULT_LIMIT
 import com.subtracks.data.source.subsonic.SubsonicSource
 import com.subtracks.data.source.subsonic.TestServer
 import com.subtracks.data.source.subsonic.TestServers
@@ -53,6 +54,8 @@ import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.sortOptionsFor
 import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingScreen
+import com.subtracks.ui.search.SearchResults
+import com.subtracks.ui.search.SearchScreen
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.SubtracksTheme
@@ -203,29 +206,14 @@ class DemoScreenshotTest {
                         }
 
                         Screen.Search -> {
-                            Column(Modifier.fillMaxSize()) {
-                                LibraryScreen(
-                                    selectedTab = LibraryTab.Albums,
-                                    onTabSelected = {},
-                                    albums = remember { flowOf(PagingData.from(demo.searchAlbums)) },
-                                    artists = remember { flowOf(PagingData.empty<Artist>()) },
-                                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
-                                    coverArt = demo.coverArt,
-                                    onAlbumClick = {},
-                                    onArtistClick = {},
-                                    onPlaylistClick = {},
-                                    onSync = {},
-                                    onOpenSettings = {},
-                                    listQuery = ListQuery("Name"),
-                                    sortOptions = sortOptionsFor(LibraryTab.Albums),
-                                    starredSupported = true,
-                                    search = DEMO_SEARCH,
-                                    onSearchChange = {},
-                                    artwork = demo.artwork(demo.nowPlayingAlbum.coverArt),
-                                    modifier = Modifier.weight(1f),
-                                )
-                                demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum)
-                            }
+                            SearchScreen(
+                                query = DEMO_SEARCH,
+                                onQueryChange = {},
+                                results = demo.search,
+                                coverArt = demo.coverArt,
+                                playingSongId = demo.nowPlayingSong.id,
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         }
                     }
                 }
@@ -314,7 +302,7 @@ class DemoScreenshotTest {
         val homePlayingSong: Song,
         val artist: Artist,
         val artistAlbums: List<Album>,
-        val searchAlbums: List<Album>,
+        val search: SearchResults,
         val coverArt: (String?, Boolean) -> CoverArtRef?,
         val engine: FakeImageLoaderEngine,
         private val bitmaps: Map<String, Bitmap>,
@@ -452,12 +440,17 @@ class DemoScreenshotTest {
                             rediscoverAlbums = coveredAlbums(dao.rediscoverAlbums(1, System.currentTimeMillis() / 1000, 10).first()),
                         )
 
-                    val searchAlbums =
-                        albums
-                            .filter {
-                                it.name.contains(DEMO_SEARCH, ignoreCase = true) ||
-                                    (it.albumArtist ?: "").contains(DEMO_SEARCH, ignoreCase = true)
-                            }.ifEmpty { albums.take(4) }
+                    val search =
+                        SearchResults(
+                            playlists =
+                                dao.searchPlaylists(1, DEMO_SEARCH, SEARCH_RESULT_LIMIT).first().filter { it.coverArt != null },
+                            artists =
+                                dao.searchArtists(1, DEMO_SEARCH, SEARCH_RESULT_LIMIT).first().filter { it.coverArt != null },
+                            albums =
+                                dao.searchAlbums(1, DEMO_SEARCH, SEARCH_RESULT_LIMIT).first().filter { it.coverArt != null },
+                            songs =
+                                dao.searchSongs(1, DEMO_SEARCH, SEARCH_RESULT_LIMIT).first().filter { it.coverArt != null },
+                        )
                     val fallback =
                         Bitmap
                             .createBitmap(1, 1, Bitmap.Config.ARGB_8888)
@@ -486,7 +479,7 @@ class DemoScreenshotTest {
                         homePlayingSong = homePlayingSong,
                         artist = artist,
                         artistAlbums = artistAlbums.filter { it.coverArt != null },
-                        searchAlbums = searchAlbums,
+                        search = search,
                         coverArt = coverArt,
                         engine = engine,
                         bitmaps = bitmaps,
