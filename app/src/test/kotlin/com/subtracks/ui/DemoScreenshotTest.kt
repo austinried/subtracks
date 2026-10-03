@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
@@ -50,6 +52,7 @@ import com.subtracks.ui.library.ArtistDetailScreen
 import com.subtracks.ui.library.LibraryScreen
 import com.subtracks.ui.library.LibraryTab
 import com.subtracks.ui.library.sortOptionsFor
+import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingScreen
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
@@ -67,6 +70,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.io.File
 
 /**
  * Records the store screenshots from a real sync of the public Navidrome demo library. It is not run
@@ -123,9 +127,9 @@ class DemoScreenshotTest {
                             NowPlayingScreen(
                                 state = demo.playbackState,
                                 positionMs = demo.positionMs,
-                                title = demo.album.name,
-                                coverArt = demo.coverArt(demo.album.coverArt, false),
-                                artwork = demo.artwork(demo.album.coverArt),
+                                title = demo.nowPlayingAlbum.name,
+                                coverArt = demo.coverArt(demo.nowPlayingAlbum.coverArt, false),
+                                artwork = demo.artwork(demo.nowPlayingAlbum.coverArt),
                                 onBack = {},
                                 onQueue = {},
                                 onPlayPause = {},
@@ -137,20 +141,26 @@ class DemoScreenshotTest {
                         }
 
                         Screen.Albums -> {
-                            AlbumsScreen(demo.albums, demo.coverArt, demo.artwork(demo.albums.first().coverArt))
+                            Box(Modifier.fillMaxSize()) {
+                                AlbumsScreen(demo.albums, demo.coverArt, demo.artwork(demo.albums.first().coverArt))
+                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                            }
                         }
 
                         Screen.AlbumDetail -> {
-                            AlbumDetailScreen(
-                                album = demo.album,
-                                songs = demo.albumSongs,
-                                coverArt = demo.coverArt,
-                                artwork = demo.artwork(demo.album.coverArt),
-                                onBack = {},
-                                onSongClick = {},
-                                playingSongId = demo.song.id,
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            Box(Modifier.fillMaxSize()) {
+                                AlbumDetailScreen(
+                                    album = demo.album,
+                                    songs = demo.albumSongs,
+                                    coverArt = demo.coverArt,
+                                    artwork = demo.artwork(demo.album.coverArt),
+                                    onBack = {},
+                                    onSongClick = {},
+                                    playingSongId = demo.nowPlayingSong.id,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                            }
                         }
 
                         Screen.ArtistDetail -> {
@@ -168,44 +178,50 @@ class DemoScreenshotTest {
                         }
 
                         Screen.Artists -> {
-                            LibraryScreen(
-                                selectedTab = LibraryTab.Artists,
-                                onTabSelected = {},
-                                albums = remember { flowOf(PagingData.empty<Album>()) },
-                                artists = remember { flowOf(PagingData.from(demo.artists)) },
-                                playlists = remember { flowOf(PagingData.empty<Playlist>()) },
-                                coverArt = demo.coverArt,
-                                onAlbumClick = {},
-                                onArtistClick = {},
-                                onPlaylistClick = {},
-                                onSync = {},
-                                onOpenSettings = {},
-                                artwork = demo.artwork(demo.artists.first().coverArt),
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            Box(Modifier.fillMaxSize()) {
+                                LibraryScreen(
+                                    selectedTab = LibraryTab.Artists,
+                                    onTabSelected = {},
+                                    albums = remember { flowOf(PagingData.empty<Album>()) },
+                                    artists = remember { flowOf(PagingData.from(demo.artists)) },
+                                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                                    coverArt = demo.coverArt,
+                                    onAlbumClick = {},
+                                    onArtistClick = {},
+                                    onPlaylistClick = {},
+                                    onSync = {},
+                                    onOpenSettings = {},
+                                    artwork = demo.artwork(demo.artists.first().coverArt),
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                            }
                         }
 
                         Screen.Search -> {
-                            LibraryScreen(
-                                selectedTab = LibraryTab.Albums,
-                                onTabSelected = {},
-                                albums = remember { flowOf(PagingData.from(demo.searchAlbums)) },
-                                artists = remember { flowOf(PagingData.empty<Artist>()) },
-                                playlists = remember { flowOf(PagingData.empty<Playlist>()) },
-                                coverArt = demo.coverArt,
-                                onAlbumClick = {},
-                                onArtistClick = {},
-                                onPlaylistClick = {},
-                                onSync = {},
-                                onOpenSettings = {},
-                                listQuery = ListQuery("Name"),
-                                sortOptions = sortOptionsFor(LibraryTab.Albums),
-                                starredSupported = true,
-                                search = DEMO_SEARCH,
-                                onSearchChange = {},
-                                artwork = demo.artwork(demo.searchAlbums.first().coverArt),
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                            Box(Modifier.fillMaxSize()) {
+                                LibraryScreen(
+                                    selectedTab = LibraryTab.Albums,
+                                    onTabSelected = {},
+                                    albums = remember { flowOf(PagingData.from(demo.searchAlbums)) },
+                                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                                    coverArt = demo.coverArt,
+                                    onAlbumClick = {},
+                                    onArtistClick = {},
+                                    onPlaylistClick = {},
+                                    onSync = {},
+                                    onOpenSettings = {},
+                                    listQuery = ListQuery("Name"),
+                                    sortOptions = sortOptionsFor(LibraryTab.Albums),
+                                    starredSupported = true,
+                                    search = DEMO_SEARCH,
+                                    onSearchChange = {},
+                                    artwork = demo.artwork(demo.searchAlbums.first().coverArt),
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                demo.MiniPlayerOverlay(Modifier.align(Alignment.BottomCenter))
+                            }
                         }
                     }
                 }
@@ -259,13 +275,28 @@ class DemoScreenshotTest {
         composeRule.onRoot().captureRoboImage("src/test/screenshots/demo/$file")
     }
 
+    @Composable
+    private fun DemoData.MiniPlayerOverlay(modifier: Modifier = Modifier) {
+        MiniPlayer(
+            state = playbackState,
+            positionMs = positionMs,
+            coverArt = coverArt(nowPlayingAlbum.coverArt, true),
+            artwork = artwork(nowPlayingAlbum.coverArt),
+            onExpand = {},
+            onPlayPause = {},
+            onNext = {},
+            modifier = modifier,
+        )
+    }
+
     private enum class Screen { Home, NowPlaying, Albums, AlbumDetail, ArtistDetail, Artists, Search }
 
     private class DemoData(
         val albums: List<Album>,
         val artists: List<Artist>,
         val feed: HomeFeed,
-        val song: Song,
+        val nowPlayingSong: Song,
+        val nowPlayingAlbum: Album,
         val album: Album,
         val albumSongs: List<Song>,
         val homePlayingAlbum: Album,
@@ -281,19 +312,19 @@ class DemoScreenshotTest {
             PlaybackState(
                 item =
                     QueueItem(
-                        id = song.id,
-                        title = song.title,
-                        artist = song.artist,
-                        album = song.album,
-                        coverArtId = album.coverArt,
+                        id = nowPlayingSong.id,
+                        title = nowPlayingSong.title,
+                        artist = nowPlayingSong.artist,
+                        album = nowPlayingSong.album,
+                        coverArtId = nowPlayingAlbum.coverArt,
                     ),
                 isPlaying = true,
-                durationMs = (song.duration ?: 0) * 1000,
+                durationMs = (nowPlayingSong.duration ?: 0) * 1000,
                 hasNext = true,
                 hasPrevious = false,
             )
 
-        val positionMs: Long = (song.duration ?: 0) * 1000 * 35 / 100
+        val positionMs: Long = (nowPlayingSong.duration ?: 0) * 1000 * 35 / 100
 
         fun artwork(coverArtId: String?): ArtworkColors {
             val bitmap = coverArtId?.let(bitmaps::get) ?: return artworkColorsFromSeeds(FALLBACK_SEED, null)
@@ -326,9 +357,10 @@ class DemoScreenshotTest {
                         )
                     val source: SubsonicSource = TestServers.source(server)
 
+                    context.deleteDatabase(DEMO_DB_NAME)
                     val db =
                         Room
-                            .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
+                            .databaseBuilder<SubtracksDatabase>(context, DEMO_DB_NAME)
                             .setDriver(BundledSQLiteDriver())
                             .build()
                     db.sourcesDao().upsertSource(
@@ -341,9 +373,11 @@ class DemoScreenshotTest {
                     val artists = dao.artistIds(1).mapNotNull { dao.artist(1, it).first() }
                     val playlists = dao.playlistIds(1).mapNotNull { dao.playlist(1, it).first() }
 
-                    val album = albums.firstOrNull { it.name == "Future, Sex, Computers" } ?: albums.first()
+                    val nowPlayingAlbum = albums.firstOrNull { it.name == "Chillhop Essentials - Winter 2016" } ?: albums.first()
+                    val nowPlayingSongs = dao.songsByAlbum(1, nowPlayingAlbum.id).first()
+                    val nowPlayingSong = nowPlayingSongs.getOrNull(1) ?: nowPlayingSongs.first()
+                    val album = albums.firstOrNull { it.name == "My latin way" } ?: albums.first()
                     val albumSongs = dao.songsByAlbum(1, album.id).first()
-                    val song = albumSongs.getOrNull(1) ?: albumSongs.first()
                     val homePlayingAlbum = albums.firstOrNull { it.name == "Shaking The Habitual" } ?: albums.last()
                     val homePlayingSong = dao.songsByAlbum(1, homePlayingAlbum.id).first().first()
                     val artist =
@@ -376,15 +410,27 @@ class DemoScreenshotTest {
                             .filterNotNull()
                             .distinct()
 
+                    val fullSizeIds =
+                        buildSet {
+                            addAll(listOfNotNull(album.coverArt, nowPlayingAlbum.coverArt, artist.coverArt))
+                            artistAlbums.mapNotNullTo(this) { it.coverArt }
+                        }
+
                     val bitmaps = mutableMapOf<String, Bitmap>()
                     val builder = FakeImageLoaderEngine.Builder()
+                    val coverDir = DEMO_COVER_DIR.apply { mkdirs() }
                     coverArtIds.forEach { id ->
-                        val bitmap = fetchBitmap(http, source, id) ?: return@forEach
-                        bitmaps[id] = bitmap
-                        val image = bitmap.asImage()
-                        listOf(false, true).forEach { thumbnail ->
-                            source.coverArtUri(id, thumbnail)?.let { builder.intercept(it.toString(), image) }
-                        }
+                        val thumbnail = fetchBitmap(http, source, id, thumbnail = true, coverDir) ?: return@forEach
+                        source.coverArtUri(id, true)?.let { builder.intercept(it.toString(), thumbnail.asImage()) }
+                        val image =
+                            if (id in fullSizeIds) {
+                                (fetchBitmap(http, source, id, thumbnail = false, coverDir) ?: thumbnail).also {
+                                    bitmaps[id] = it
+                                }
+                            } else {
+                                thumbnail.also { bitmaps[id] = it }
+                            }
+                        source.coverArtUri(id, false)?.let { builder.intercept(it.toString(), image.asImage()) }
                     }
                     val fallback =
                         Bitmap
@@ -406,7 +452,8 @@ class DemoScreenshotTest {
                         albums = albums,
                         artists = artists,
                         feed = feed,
-                        song = song,
+                        nowPlayingSong = nowPlayingSong,
+                        nowPlayingAlbum = nowPlayingAlbum,
                         album = album,
                         albumSongs = albumSongs,
                         homePlayingAlbum = homePlayingAlbum,
@@ -424,16 +471,62 @@ class DemoScreenshotTest {
                 http: OkHttpClient,
                 source: SubsonicSource,
                 id: String,
+                thumbnail: Boolean,
+                coverDir: File,
             ): Bitmap? =
                 try {
-                    val url = source.coverArtUri(id, false) ?: return null
-                    val bytes = http.newCall(Request.Builder().url(url).build()).execute().use { it.body.bytes() }
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    val url = source.coverArtUri(id, thumbnail) ?: return null
+                    val file = File(coverDir, "${url.hashCode().toUInt().toString(16)}.img")
+                    if (!file.exists()) {
+                        http.newCall(Request.Builder().url(url).build()).execute().use { response ->
+                            response.body.byteStream().use { input ->
+                                file.outputStream().use { output -> input.copyTo(output) }
+                            }
+                        }
+                    }
+                    val bytes = file.readBytes()
+                    if (thumbnail) {
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    } else {
+                        decodeDownsampled(bytes, MAX_ART_DIM)
+                    }
                 } catch (_: Exception) {
                     null
                 }
+
+            private fun decodeDownsampled(
+                bytes: ByteArray,
+                maxDim: Int,
+            ): Bitmap? {
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxDim) sample *= 2
+                val decoded =
+                    BitmapFactory.decodeByteArray(
+                        bytes,
+                        0,
+                        bytes.size,
+                        BitmapFactory.Options().apply { inSampleSize = sample },
+                    ) ?: return null
+                val largest = maxOf(decoded.width, decoded.height)
+                if (largest <= maxDim) return decoded
+                val scale = maxDim.toFloat() / largest
+                val scaled =
+                    Bitmap.createScaledBitmap(
+                        decoded,
+                        (decoded.width * scale).toInt().coerceAtLeast(1),
+                        (decoded.height * scale).toInt().coerceAtLeast(1),
+                        true,
+                    )
+                if (scaled !== decoded) decoded.recycle()
+                return scaled
+            }
         }
     }
 }
 
 private const val DEMO_SEARCH = "chill"
+private const val MAX_ART_DIM = 1200
+private const val DEMO_DB_NAME = "demo-screens.db"
+private val DEMO_COVER_DIR = File(System.getProperty("java.io.tmpdir"), "subtracks-demo-covers")
