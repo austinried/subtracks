@@ -3,12 +3,15 @@ package com.subtracks.ui.home
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -17,6 +20,7 @@ import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Song
 import com.subtracks.ui.theme.SubtracksTheme
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,6 +78,49 @@ class HomeScreenshotTest {
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/home_genres.png")
     }
+
+    @Test
+    fun homeRecentlyAddedList() {
+        val now = System.currentTimeMillis()
+        val albums =
+            listOf(
+                listAlbum("Added Yesterday", (now - 86_400_000L) / 1000L),
+                listAlbum("Added This Week", (now - 3 * 86_400_000L) / 1000L),
+                listAlbum("Added Weeks Ago", (now - 21 * 86_400_000L) / 1000L),
+            )
+        composeRule.setContent {
+            SubtracksTheme {
+                HomeListScreen(
+                    request = HomeListRequest(title = "Recently added", section = HomeSection.RecentlyAddedAlbums),
+                    albums = remember { flowOf(PagingData.from(albums)) }.collectAsLazyPagingItems(),
+                    artists = remember { flowOf(PagingData.empty<Artist>()) }.collectAsLazyPagingItems(),
+                    songs = remember { flowOf(PagingData.empty<AlbumSongItem>()) }.collectAsLazyPagingItems(),
+                    coverArt = { _, _ -> null },
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Added Yesterday").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/home_album_list.png")
+    }
+
+    private fun listAlbum(
+        name: String,
+        created: Long,
+    ) = Album(
+        sourceId = 1,
+        id = name,
+        artistId = "ar",
+        name = name,
+        albumArtist = "Radiohead",
+        created = created,
+        coverArt = null,
+        genre = null,
+        year = 2000,
+        starred = null,
+        songCount = 10,
+    )
 
     private fun feed() =
         HomeFeed(
