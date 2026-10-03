@@ -213,7 +213,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun previousItemIsNullOncePreviousWouldRestartTheTrack() {
+    fun previousTrackMovesBackEvenOncePreviousWouldRestart() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 1)
         await {
@@ -222,8 +222,12 @@ class PlaybackControllerTest {
         }
 
         handle.positionMs = 3_100
+        controller.previousTrack()
 
-        assertNull(runBlocking { controller.previousItem() })
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
     }
 
     @Test

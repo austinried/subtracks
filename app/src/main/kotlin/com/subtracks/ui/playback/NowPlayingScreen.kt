@@ -77,7 +77,6 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.source.StarType
-import com.subtracks.playback.PLAYBACK_RESTART_THRESHOLD_MS
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
@@ -153,6 +152,21 @@ internal fun rotateStrip(
         listOf(null, base.getOrNull(0), base.getOrNull(1))
     }
 
+internal fun handBackReady(
+    frozen: List<NowPlayingArt?>,
+    itemId: String?,
+    previousArt: NowPlayingArt?,
+    nextArt: NowPlayingArt?,
+): Boolean {
+    val centre = frozen.getOrNull(1)?.id ?: return false
+    if (centre != itemId) return false
+    return when {
+        frozen.getOrNull(2) == null -> previousArt?.id == frozen.getOrNull(0)?.id
+        frozen.getOrNull(0) == null -> nextArt?.id == frozen.getOrNull(2)?.id
+        else -> true
+    }
+}
+
 @Composable
 fun NowPlayingRoute(
     onBack: () -> Unit,
@@ -211,8 +225,7 @@ fun NowPlayingRoute(
             name = item.title,
         )
     var adjacent by remember { mutableStateOf(AdjacentArt()) }
-    val previousReachable = positionMs <= PLAYBACK_RESTART_THRESHOLD_MS
-    LaunchedEffect(state.item?.id, state.layout, previousReachable) {
+    LaunchedEffect(state.item?.id, state.layout) {
         if (state.item == null) {
             adjacent = AdjacentArt()
             return@LaunchedEffect
@@ -230,8 +243,9 @@ fun NowPlayingRoute(
         title = sourceTitle.value,
         coverArt = art,
         thumbnailRef = thumbnail,
-        previousArt = if (previousReachable) adjacent.previous else null,
+        previousArt = adjacent.previous,
         nextArt = adjacent.next,
+        onSkipPrevious = controller::previousTrack,
         artwork = rememberArtworkColors(thumbnail ?: art, fallbackName = state.item?.title),
         onBack = onBack,
         onQueue = onQueue,
@@ -263,6 +277,7 @@ fun NowPlayingScreen(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onSkipPrevious: () -> Unit = onPrevious,
     onShuffle: () -> Unit = {},
     onRepeat: () -> Unit = {},
     onMore: () -> Unit = {},
@@ -317,18 +332,19 @@ fun NowPlayingScreen(
     fun commitSwipe(direction: Int) {
         frozenStrip = rotateStrip(strip, direction)
         swipeOffsetX += direction * coverWidthPx
-        if (direction > 0) onNext() else onPrevious()
+        if (direction > 0) onNext() else onSkipPrevious()
         animateSwipe(0f)
     }
 
-    // The rotated strip keeps the slide continuous while the controller catches up. Hand back once
-    // it reports the target track, or after a grace period when the action did not move there (a
-    // restart, an offline skip), so a frozen strip can never stay desynced from playback.
-    LaunchedEffect(state.item?.id, frozenStrip, dragging) {
+    // The rotated strip keeps the slide continuous while the controller catches up. It only hands
+    // back once the live props agree with the frozen slots, so a stale neighbour can never flash
+    // during the slide; the timeout covers an action that does not move (an offline skip).
+    LaunchedEffect(state.item?.id, frozenStrip, dragging, previousArt, nextArt) {
         val pending = frozenStrip ?: return@LaunchedEffect
-        if (pending.getOrNull(1)?.id == state.item?.id) {
+        if (dragging) return@LaunchedEffect
+        if (handBackReady(pending, state.item?.id, previousArt, nextArt)) {
             frozenStrip = null
-        } else if (!dragging) {
+        } else {
             delay(HAND_BACK_TIMEOUT_MS)
             if (frozenStrip === pending) frozenStrip = null
         }
@@ -422,7 +438,7 @@ fun NowPlayingScreen(
                                                 }
 
                                                 SwipeAction.Previous -> {
-                                                    onPrevious()
+                                                    onSkipPrevious()
                                                     animateSwipe(0f)
                                                 }
 

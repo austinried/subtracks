@@ -56,6 +56,7 @@ class NowPlayingTapsTest {
         onArtistClick: (() -> Unit)? = null,
         onNext: () -> Unit = {},
         onPrevious: () -> Unit = {},
+        onSkipPrevious: () -> Unit = onPrevious,
         previousArt: NowPlayingArt? = null,
         nextArt: NowPlayingArt? = null,
     ) {
@@ -72,6 +73,7 @@ class NowPlayingTapsTest {
                     onPlayPause = {},
                     onNext = onNext,
                     onPrevious = onPrevious,
+                    onSkipPrevious = onSkipPrevious,
                     onAlbumClick = onAlbumClick,
                     onArtistClick = onArtistClick,
                     onSeek = {},
@@ -163,12 +165,34 @@ class NowPlayingTapsTest {
     fun swipingRightOnTheCoverGoesToThePreviousTrack() {
         var next = false
         var previous = false
-        render(onNext = { next = true }, onPrevious = { previous = true })
+        var skipPrevious = false
+        render(
+            onNext = { next = true },
+            onPrevious = { previous = true },
+            onSkipPrevious = { skipPrevious = true },
+        )
 
         composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).performTouchInput { swipeRight() }
 
-        assertTrue("a right swipe should go to the previous track", previous)
+        assertTrue("a right swipe should skip to the previous track", skipPrevious)
         assertTrue("a right swipe should not skip to the next track", !next)
+        assertTrue("a right swipe should not use the restart-on-previous button", !previous)
+    }
+
+    @Test
+    fun theStripHandsBackOnlyWhenTheLivePropsAgree() {
+        val before = adjacentArt("s0")
+        val current = adjacentArt("s1")
+        val next = adjacentArt("s2")
+        val after = adjacentArt("s3")
+        val frozenNext = listOf(current, next, null)
+        val frozenPrevious = listOf(null, before, current)
+
+        assertTrue(!handBackReady(frozenNext, itemId = "s1", previousArt = before, nextArt = after))
+        assertTrue(!handBackReady(frozenNext, itemId = "s2", previousArt = before, nextArt = after))
+        assertTrue(handBackReady(frozenNext, itemId = "s2", previousArt = current, nextArt = after))
+        assertTrue(handBackReady(frozenPrevious, itemId = "s0", previousArt = null, nextArt = current))
+        assertTrue(!handBackReady(frozenPrevious, itemId = "s1", previousArt = null, nextArt = current))
     }
 
     @Test
