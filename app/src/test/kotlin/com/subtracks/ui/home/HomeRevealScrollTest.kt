@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -16,7 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.subtracks.ui.theme.SubtracksTheme
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,6 +36,52 @@ class HomeRevealScrollTest {
     @Test
     fun aNewFrontItemAtTheStartScrollsBack() {
         val labels = mutableStateOf(listOf("a", "b", "c", "d", "e"))
+        val state = render(labels)
+
+        composeRule.runOnIdle { labels.value = listOf("z") + labels.value }
+
+        composeRule.waitForIdle()
+        assertEquals(0, state.firstVisibleItemIndex)
+    }
+
+    @Test
+    fun aNewFrontItemOneRowInScrollsBack() {
+        val labels = mutableStateOf(listOf("a", "b", "c", "d", "e"))
+        val state = render(labels)
+        composeRule.runOnIdle { runBlocking { state.scrollToItem(1) } }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { labels.value = listOf("z") + labels.value }
+
+        composeRule.waitForIdle()
+        assertEquals(0, state.firstVisibleItemIndex)
+    }
+
+    @Test
+    fun twoNewFrontItemsAtTheStartScrollBack() {
+        val labels = mutableStateOf(listOf("a", "b", "c", "d", "e"))
+        val state = render(labels)
+
+        composeRule.runOnIdle { labels.value = listOf("y", "z") + labels.value }
+
+        composeRule.waitForIdle()
+        assertEquals(0, state.firstVisibleItemIndex)
+    }
+
+    @Test
+    fun aNewFrontItemDoesNotYankAScrolledAwayRow() {
+        val labels = mutableStateOf(listOf("a", "b", "c", "d", "e"))
+        val state = render(labels)
+        composeRule.runOnIdle { runBlocking { state.scrollToItem(3) } }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { labels.value = listOf("z") + labels.value }
+
+        composeRule.waitForIdle()
+        assertTrue(state.firstVisibleItemIndex > 1)
+    }
+
+    private fun render(labels: MutableState<List<String>>): LazyListState {
         lateinit var state: LazyListState
         composeRule.setContent {
             SubtracksTheme {
@@ -46,11 +95,6 @@ class HomeRevealScrollTest {
             }
         }
         composeRule.waitForIdle()
-        assertEquals(0, state.firstVisibleItemIndex)
-
-        composeRule.runOnIdle { labels.value = listOf("z") + labels.value }
-
-        composeRule.waitForIdle()
-        assertEquals(0, state.firstVisibleItemIndex)
+        return state
     }
 }

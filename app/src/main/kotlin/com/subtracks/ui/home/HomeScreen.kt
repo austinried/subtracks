@@ -535,13 +535,19 @@ private const val REVEAL_NEAR_FRONT = 1
 internal fun shouldRevealNewFront(
     previousKey: Any?,
     firstKey: Any?,
+    insertedCount: Int,
     firstVisibleItemIndex: Int,
-): Boolean = firstKey != null && previousKey != null && previousKey != firstKey && firstVisibleItemIndex <= REVEAL_NEAR_FRONT
+): Boolean =
+    firstKey != null &&
+        previousKey != null &&
+        previousKey != firstKey &&
+        insertedCount >= 0 &&
+        firstVisibleItemIndex - insertedCount <= REVEAL_NEAR_FRONT
 
 /**
  * Scrolls a row back to the front when a new first item appears while it is already at/near the
- * start. The lazy layout anchors to the previously visible key, so an item that moves to the front
- * after a play lands left of the viewport and is not revealed.
+ * start. The lazy layout anchors to the previously visible key, so a row at the start advances by
+ * the number of prepended items; subtracting that recovers the position the user was actually at.
  */
 @Composable
 internal fun <T> RevealNewFrontItem(
@@ -552,7 +558,11 @@ internal fun <T> RevealNewFrontItem(
     val firstKey = items.firstOrNull()?.let(key)
     var previous by remember { mutableStateOf<Any?>(null) }
     LaunchedEffect(firstKey) {
-        if (shouldRevealNewFront(previous, firstKey, state.firstVisibleItemIndex)) state.animateScrollToItem(0)
+        val oldFront = previous
+        val inserted = if (oldFront != null) items.indexOfFirst { key(it) == oldFront } else -1
+        if (shouldRevealNewFront(oldFront, firstKey, inserted, state.firstVisibleItemIndex)) {
+            state.animateScrollToItem(0)
+        }
         if (firstKey != null) previous = firstKey
     }
 }

@@ -36,7 +36,7 @@ fun SongInfoDialog(
     localFile: File?,
     streamEncoding: AudioEncoding?,
     onDismiss: () -> Unit,
-    genres: List<String> = emptyList(),
+    genres: List<String>,
 ) {
     val context = LocalContext.current
     var encoding by remember(song.id, localFile) { mutableStateOf<AudioEncoding?>(null) }
