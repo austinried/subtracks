@@ -11,6 +11,8 @@ internal fun id3v1Genre(value: String): String? {
     return ID3V1_GENRES.getOrNull(code)
 }
 
+// Fixed ID3v1/Winamp tag names, stored as genre metadata. Identifiers rather than UI copy, so they
+// stay untranslated.
 private val ID3V1_GENRES =
     listOf(
         "Blues",
