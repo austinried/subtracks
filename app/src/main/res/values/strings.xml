@@ -119,6 +119,7 @@
     <string name="playlists_empty">No playlists yet.</string>
     <string name="sync">Sync</string>
     <string name="list_options">List options</string>
+    <string name="search">Search</string>
     <string name="search_this_list">Search this list</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_ascending">Sort ascending</string>

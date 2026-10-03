@@ -362,7 +362,7 @@ private fun AlbumsList(
 }
 
 @Composable
-private fun AlbumListRow(
+internal fun AlbumListRow(
     album: Album,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     info: String?,
@@ -446,7 +446,7 @@ private fun ArtistsList(
 }
 
 @Composable
-private fun ArtistListRow(
+internal fun ArtistListRow(
     artist: Artist,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     info: String?,

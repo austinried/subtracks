@@ -111,6 +111,33 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun theHomeTabOffersSearch() {
+        var searched = false
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Home,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.empty<Album>()) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    onOpenSearch = { searched = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Search").performClick()
+
+        assertTrue("the home tab should expose search", searched)
+    }
+
+    @Test
     fun theVisibleTabAndItsNeighbourCollectTheirPagingFlows() {
         val collected = CopyOnWriteArrayList<String>()
         val albums =

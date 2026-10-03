@@ -103,6 +103,26 @@ class LibraryRepository(
 
     fun downloadedSongsPage(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().homeDownloadedSongs(sourceId) }
 
+    fun searchAlbums(
+        sourceId: Long,
+        query: String,
+    ): Flow<List<Album>> = db.libraryDao().searchAlbums(sourceId, query, SEARCH_RESULT_LIMIT)
+
+    fun searchArtists(
+        sourceId: Long,
+        query: String,
+    ): Flow<List<Artist>> = db.libraryDao().searchArtists(sourceId, query, SEARCH_RESULT_LIMIT)
+
+    fun searchPlaylists(
+        sourceId: Long,
+        query: String,
+    ): Flow<List<Playlist>> = db.libraryDao().searchPlaylists(sourceId, query, SEARCH_RESULT_LIMIT)
+
+    fun searchSongs(
+        sourceId: Long,
+        query: String,
+    ): Flow<List<AlbumSongItem>> = db.libraryDao().searchSongs(sourceId, query, SEARCH_RESULT_LIMIT)
+
     fun downloadedAlbumsPage(sourceId: Long): Flow<PagingData<Album>> = pager(40) { db.libraryDao().downloadedAlbums(sourceId) }
 
     fun downloadedArtistsPage(sourceId: Long): Flow<PagingData<Artist>> = pager(60) { db.libraryDao().downloadedArtists(sourceId) }
@@ -487,5 +507,7 @@ class LibraryRepository(
 }
 
 const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
+
+const val SEARCH_RESULT_LIMIT = 50
 
 fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS

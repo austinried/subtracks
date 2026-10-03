@@ -82,6 +82,7 @@ import com.subtracks.ui.library.PlaylistDetailRoute
 import com.subtracks.ui.playback.MiniPlayer
 import com.subtracks.ui.playback.NowPlayingRoute
 import com.subtracks.ui.playback.QueueRoute
+import com.subtracks.ui.search.SearchRoute
 import com.subtracks.ui.settings.AddSourceRoute
 import com.subtracks.ui.settings.LicensesRoute
 import com.subtracks.ui.settings.SettingsRoute
@@ -117,6 +118,7 @@ private object Routes {
     const val LIBRARY = "library"
     const val SETTINGS = "settings"
     const val DOWNLOADS = "downloads"
+    const val SEARCH = "search"
     const val LICENSES = "licenses"
     const val ADD_SERVER = "add-server"
     const val EDIT_SERVER = "edit-server/{sourceId}"
@@ -374,6 +376,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
                             },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onOpenSearch = { navController.navigate(Routes.SEARCH) },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->
                                 navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
@@ -398,6 +401,26 @@ private fun MainNavigation() {
                     }
                     composable(Routes.DOWNLOADS) {
                         DownloadsRoute(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.SEARCH) {
+                        SearchRoute(
+                            onBack = { navController.popBackStack() },
+                            onAlbumClick = { album ->
+                                navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
+                            },
+                            onArtistClick = { artist ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                            },
+                            onPlaylistClick = { playlist ->
+                                navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
+                            },
+                            onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
+                            onViewArtist = { artistId ->
+                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artistId, Routes.artist(artistId))
+                            },
+                            contextMenuHost = contextMenuHost,
+                            setStar = libraryRepository::star,
+                        )
                     }
                     composable(Routes.LICENSES) {
                         LicensesRoute(onBack = { navController.popBackStack() })

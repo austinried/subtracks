@@ -83,47 +83,16 @@ fun PlaylistsContent(
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
                     val playlist = items[index]
                     if (playlist != null) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = playlist.name,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
+                        PlaylistRow(
+                            playlist = playlist,
+                            coverArt = coverArt,
+                            download = downloadStatuses[playlist.id],
+                            onClick = { onPlaylistClick(playlist) },
+                            onLongClick = {
+                                onLongClick(
+                                    MenuTarget.Playlist(playlist, coverArt(playlist.coverArt, true), downloadStatuses[playlist.id]),
                                 )
                             },
-                            supportingContent = {
-                                Text(
-                                    text =
-                                        playlist.comment?.takeIf { it.isNotBlank() }
-                                            ?: pluralStringResource(
-                                                R.plurals.resources_song_count,
-                                                playlist.songCount.toInt(),
-                                                playlist.songCount,
-                                            ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            leadingContent = {
-                                CoverArt(
-                                    ref = coverArt(playlist.coverArt, true),
-                                    name = playlist.name,
-                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                )
-                            },
-                            trailingContent = {
-                                ListDownloadIndicator(downloadStatuses[playlist.id], Modifier.padding(end = 8.dp))
-                            },
-                            modifier =
-                                Modifier.combinedClickable(
-                                    onClick = { onPlaylistClick(playlist) },
-                                    onLongClick = {
-                                        onLongClick(
-                                            MenuTarget.Playlist(playlist, coverArt(playlist.coverArt, true), downloadStatuses[playlist.id]),
-                                        )
-                                    },
-                                ),
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }
                 }
@@ -131,4 +100,48 @@ fun PlaylistsContent(
             }
         }
     }
+}
+
+@Composable
+internal fun PlaylistRow(
+    playlist: Playlist,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    download: ListDownloadStatus?,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = playlist.name,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = {
+            Text(
+                text =
+                    playlist.comment?.takeIf { it.isNotBlank() }
+                        ?: pluralStringResource(
+                            R.plurals.resources_song_count,
+                            playlist.songCount.toInt(),
+                            playlist.songCount,
+                        ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        leadingContent = {
+            CoverArt(
+                ref = coverArt(playlist.coverArt, true),
+                name = playlist.name,
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+            )
+        },
+        trailingContent = {
+            ListDownloadIndicator(download, Modifier.padding(end = 8.dp))
+        },
+        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    )
 }

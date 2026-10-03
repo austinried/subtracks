@@ -225,6 +225,7 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenSearch: () -> Unit = {},
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
     onHomeMore: (HomeSection) -> Unit = {},
@@ -306,6 +307,7 @@ fun LibraryRoute(
         onPlaylistClick = onPlaylistClick,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
+        onOpenSearch = onOpenSearch,
         onItemLongClick = { contextMenuHost?.show(it, itemActions) },
         listQuery = displayQuery,
         resetKeys = resetKeys,
@@ -383,6 +385,7 @@ fun LibraryScreen(
     onPlaylistClick: (Playlist) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenSearch: () -> Unit = {},
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
     onItemLongClick: (MenuTarget) -> Unit = {},
@@ -588,31 +591,36 @@ fun LibraryScreen(
             )
         }
 
-        if (!searchActive && selectedTab != LibraryTab.Home) {
+        if (!searchActive) {
+            val searchFab = selectedTab == LibraryTab.Home
             FloatingActionButton(
-                onClick = { showOptions = true },
+                onClick = { if (searchFab) onOpenSearch() else showOptions = true },
                 containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
-                Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-                    ListOptionsGlyph(
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .semantics { contentDescription = listOptionsLabel },
-                    )
-                    if (filtersActive) {
-                        Box(
+                if (searchFab) {
+                    Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.search))
+                } else {
+                    Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+                        ListOptionsGlyph(
                             modifier =
                                 Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = 4.dp, y = (-4).dp)
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.primary),
+                                    .size(24.dp)
+                                    .semantics { contentDescription = listOptionsLabel },
                         )
+                        if (filtersActive) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = 4.dp, y = (-4).dp)
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.primary),
+                            )
+                        }
                     }
                 }
             }

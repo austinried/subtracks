@@ -703,6 +703,91 @@ class LibraryDaoTest {
             assertTrue(plan, plan.contains("album_search"))
         }
 
+    @Test
+    fun crossTypeSearchMatchesAllFourEntityTypes() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Road Album", year = null, starred = null)))
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Road Artists", albumCount = 1)))
+            dao.upsertPlaylists(listOf(playlist(sourceId, "pl-1", "Road Trip", created = 0, changed = 0)))
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "Road Song", starred = null),
+                    song(sourceId, "s2", "Neutral", starred = null).copy(artist = "Roadie"),
+                    song(sourceId, "s3", "Unrelated", starred = null).copy(artist = "Someone"),
+                ),
+            )
+
+            assertEquals(listOf("Road Album"), dao.searchAlbums(sourceId, "oad", 50).first().map { it.name })
+            assertEquals(listOf("ar-1"), dao.searchArtists(sourceId, "oad", 50).first().map { it.id })
+            assertEquals(listOf("pl-1"), dao.searchPlaylists(sourceId, "oad", 50).first().map { it.id })
+            assertEquals(
+                setOf("s1", "s2"),
+                dao
+                    .searchSongs(sourceId, "oad", 50)
+                    .first()
+                    .map { it.song.id }
+                    .toSet(),
+            )
+
+            assertTrue(dao.searchAlbums(sourceId, "", 50).first().isEmpty())
+            assertTrue(dao.searchSongs(sourceId, "", 50).first().isEmpty())
+        }
+
+    @Test
+    fun crossTypeSearchIsScopedToTheSource() =
+        runTest {
+            val first = source()
+            val second = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(first, "a1", "Road One", year = null, starred = null),
+                    album(second, "a2", "Road Two", year = null, starred = null),
+                ),
+            )
+
+            assertEquals(listOf("Road One"), dao.searchAlbums(first, "oad", 50).first().map { it.name })
+            assertEquals(listOf("Road Two"), dao.searchAlbums(second, "oad", 50).first().map { it.name })
+        }
+
+    @Test
+    fun crossTypeSearchHonoursTheLimit() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums((1..3).map { album(sourceId, "a$it", "Road $it", year = null, starred = null) })
+
+            assertEquals(2, dao.searchAlbums(sourceId, "oad", 2).first().size)
+        }
+
+    @Test
+    fun songSearchRunsThroughTheTrigramIndex() =
+        runTest {
+            val plan =
+                plan(
+                    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+                        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+                        "WHERE songs.sourceId = 1 AND ${SONG_SEARCH_FILTER.replace(":search", "'abc'")} " +
+                        "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT 20 OFFSET 0",
+                )
+
+            assertTrue(plan, plan.contains("song_search"))
+        }
+
+    @Test
+    fun crossTypeSearchFallsBackToAScanBelowThreeCharacters() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Gamma", year = null, starred = null)))
+            dao.upsertSongs(listOf(song(sourceId, "s1", "Gamma Ray", starred = null)))
+
+            assertEquals(listOf("Gamma"), dao.searchAlbums(sourceId, "ga", 50).first().map { it.name })
+            assertEquals(listOf("s1"), dao.searchSongs(sourceId, "ga", 50).first().map { it.song.id })
+        }
+
     private suspend fun plan(sql: String): String =
         db.useReaderConnection { connection ->
             connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->

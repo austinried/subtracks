@@ -128,6 +128,34 @@ internal const val PLAYLIST_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE
 internal const val PLAYLIST_ORDER_BY_UPDATED = "changed DESC, name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_UPDATED_REVERSED = "changed ASC, name COLLATE NOCASE DESC, id DESC"
 
+// Cross-type search: a three-character-or-longer query runs through the trigram index and anything
+// shorter falls back to the instr scan, mirroring the per-tab filters above.
+internal const val ALBUM_SEARCH_FILTER =
+    "(:search <> '' AND (" +
+        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
+        "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
+        "OR instr(lower(albumArtist), lower(:search)) > 0))))"
+
+internal const val ARTIST_SEARCH_FILTER =
+    "(:search <> '' AND (" +
+        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
+        "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)))"
+
+internal const val PLAYLIST_SEARCH_FILTER =
+    "(:search <> '' AND (" +
+        "(length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
+        "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)))"
+
+internal const val SONG_SEARCH_FILTER =
+    "(:search <> '' AND (" +
+        "(length(:search) >= 3 AND songs.rowid IN (SELECT rowid FROM song_search " +
+        "WHERE song_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
+        "OR (length(:search) < 3 AND (instr(lower(songs.title), lower(:search)) > 0 " +
+        "OR instr(lower(songs.artist), lower(:search)) > 0))))"
+
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LibraryDao {
@@ -303,6 +331,48 @@ interface LibraryDao {
     )
     fun recentlyStarredSongs(
         sourceId: Long,
+        limit: Int,
+    ): Flow<List<AlbumSongItem>>
+
+    @Query(
+        "SELECT * FROM albums WHERE sourceId = :sourceId AND $ALBUM_SEARCH_FILTER " +
+            "ORDER BY name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun searchAlbums(
+        sourceId: Long,
+        search: String,
+        limit: Int,
+    ): Flow<List<Album>>
+
+    @Query(
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER " +
+            "ORDER BY name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun searchArtists(
+        sourceId: Long,
+        search: String,
+        limit: Int,
+    ): Flow<List<Artist>>
+
+    @Query(
+        "SELECT * FROM playlists WHERE sourceId = :sourceId AND $PLAYLIST_SEARCH_FILTER " +
+            "ORDER BY name COLLATE NOCASE, id LIMIT :limit",
+    )
+    fun searchPlaylists(
+        sourceId: Long,
+        search: String,
+        limit: Int,
+    ): Flow<List<Playlist>>
+
+    @Query(
+        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND $SONG_SEARCH_FILTER " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+    )
+    fun searchSongs(
+        sourceId: Long,
+        search: String,
         limit: Int,
     ): Flow<List<AlbumSongItem>>
 
