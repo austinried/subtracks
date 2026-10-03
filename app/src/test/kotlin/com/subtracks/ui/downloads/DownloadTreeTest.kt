@@ -3,6 +3,7 @@ package com.subtracks.ui.downloads
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.DownloadedSong
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DownloadTreeTest {
@@ -42,6 +43,19 @@ class DownloadTreeTest {
         assertEquals("Unknown artist", artist.name)
         assertEquals("", artist.id)
         assertEquals("Unknown album", artist.albums.single().name)
+    }
+
+    @Test
+    fun nodeProgressCountsCompletedTracksRatherThanBytes() {
+        val songs =
+            listOf(
+                song("s1", "One", "ar1", "Artist", "al1", "Album", size = 100),
+                song("s2", "Two", "ar1", "Artist", "al1", "Album", size = 50)
+                    .copy(status = DownloadStatus.Running, bytes = 50, total = 100),
+            )
+
+        assertEquals(0.75f, nodeProgress(songs)!!, 0.0001f)
+        assertNull(nodeProgress(listOf(song("s3", "Three", "ar1", "Artist", "al1", "Album", size = 1))))
     }
 
     private fun song(

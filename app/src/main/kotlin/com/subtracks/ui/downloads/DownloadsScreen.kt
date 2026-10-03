@@ -146,13 +146,14 @@ fun DownloadsScreen(
             tree.artists.forEach { artist ->
                 val artistKey = "artist:${artist.id}:${artist.name}"
                 item(key = artistKey) {
-                    val active = activeDownloads(artist.albums.flatMap { it.songs })
+                    val songs = artist.albums.flatMap { it.songs }
+                    val active = activeDownloads(songs)
                     NodeRow(
                         name = artist.name,
                         subtitle = "${artist.albums.size} albums · ${size(artist.bytes)}",
                         expanded = artistKey in expanded,
                         indent = 0,
-                        progress = active.progress(),
+                        progress = nodeProgress(songs),
                         onToggle = { expanded = expanded.toggle(artistKey) },
                         onDelete = {
                             onDelete(
@@ -176,7 +177,7 @@ fun DownloadsScreen(
                                 subtitle = "${album.songs.size} songs · ${size(album.bytes)}",
                                 expanded = albumKey in expanded,
                                 indent = 1,
-                                progress = active.progress(),
+                                progress = nodeProgress(album.songs),
                                 onToggle = { expanded = expanded.toggle(albumKey) },
                                 onDelete = {
                                     onDelete(
@@ -277,10 +278,12 @@ private fun NodeRow(
 private fun activeDownloads(songs: List<DownloadedSong>): List<DownloadedSong> =
     songs.filter { it.status == DownloadStatus.Queued || it.status == DownloadStatus.Running }
 
-private fun List<DownloadedSong>.progress(): Float? {
-    if (isEmpty()) return null
-    val total = sumOf { it.total }
-    return if (total > 0) (sumOf { it.bytes }.toFloat() / total).coerceIn(0f, 1f) else 0f
+internal fun nodeProgress(songs: List<DownloadedSong>): Float? {
+    val active = activeDownloads(songs)
+    if (active.isEmpty() || songs.isEmpty()) return null
+    val completed = songs.count { it.status == DownloadStatus.Completed }
+    val partial = active.sumOf { (it.progress ?: 0f).toDouble() }
+    return ((completed + partial) / songs.size).toFloat().coerceIn(0f, 1f)
 }
 
 @Composable
