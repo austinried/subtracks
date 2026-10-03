@@ -1,1 +1,1 @@
-A media player for Android.
+A clean, open source Subsonic music player.

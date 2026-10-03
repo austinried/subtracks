@@ -1,0 +1,10 @@
+## New
+
+* Subtracks 3.0.0 is a ground-up rewrite in Kotlin and Jetpack Compose, with a fresh interface
+* New Home tab with recently played, most played, recently added and rediscover rows, plus genre and decade shortcuts
+* Sortable and filterable album, artist and playlist views, with starred-only filters
+* Full library search across albums, artists, playlists and songs
+* Offline downloads with per-album, artist and playlist progress, download quality and a metered-connection toggle
+* An editable queue: play next, add to queue, reorder, remove and jump to any track
+* Adaptive theming that draws its colours from the current artwork
+* Multiple servers, scrobbling, per-network stream quality and long-press context menus

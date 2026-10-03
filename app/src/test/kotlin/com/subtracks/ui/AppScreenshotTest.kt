@@ -741,7 +741,7 @@ private object Fixtures {
 
         fun color(offset: Float): Int =
             Color.HSVToColor(
-                floatArrayOf(((base + offset) % 360f + 360f) % 360f, 0.88f, 0.92f),
+                floatArrayOf(((base + offset) % 360f + 360f) % 360f, 0.42f, 0.72f),
             )
 
         val palette =
