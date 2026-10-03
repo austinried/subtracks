@@ -255,7 +255,7 @@ private fun HomeSectionHeader(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.weight(1f),
         )
         if (onMore != null) {
@@ -270,6 +270,7 @@ private val TILE_SIZE = 132.dp
 private val ARTIST_TILE_SIZE = 104.dp
 private val TILE_SPACING = 8.dp
 private val ARTIST_SPACING = 16.dp
+private val SECTION_CONTENT_TOP = 12.dp
 private const val GENRE_ROWS = 3
 
 private fun LazyListScope.albumRow(
@@ -288,6 +289,7 @@ private fun LazyListScope.albumRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(albums, key = { it.id }) { album ->
                 val ref = coverArt(album.coverArt, true)
@@ -318,6 +320,7 @@ private fun LazyListScope.artistRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(ARTIST_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(artists, key = { it.id }) { artist ->
                 val ref = coverArt(artist.coverArt, true)
@@ -348,7 +351,7 @@ private fun LazyListScope.genreBlock(
                 Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = SECTION_CONTENT_TOP),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(TILE_SPACING)) {
                 repeat(GENRE_ROWS) { row ->
@@ -379,6 +382,7 @@ private fun LazyListScope.decadeRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(TILE_SPACING),
+            modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(decades, key = { it }) { decade ->
                 AssistChip(onClick = { onDecadeClick(decade) }, label = { Text("${decade}s") })
