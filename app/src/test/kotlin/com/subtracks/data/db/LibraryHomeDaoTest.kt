@@ -182,6 +182,7 @@ class LibraryHomeDaoTest {
             val page = dao.songsByGenre(sourceId, "Rock").page()
             assertEquals(listOf("s1", "s2"), page.map { it.song.id })
             assertEquals("cover-1", page.first().coverArt)
+            assertEquals(page.map { it.song.id }, dao.songsByGenreIds(sourceId, "Rock"))
         }
 
     private suspend fun insertGenre(

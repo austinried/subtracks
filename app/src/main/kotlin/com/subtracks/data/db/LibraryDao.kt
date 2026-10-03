@@ -727,6 +727,21 @@ interface LibraryDao {
     ): PagingSource<Int, AlbumSongItem>
 
     @Query(
+        "SELECT songs.id FROM songs " +
+            "WHERE songs.sourceId = :sourceId AND (" +
+            "EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id " +
+            "AND song_genres.genre = :genre) " +
+            "OR (songs.genre = :genre AND NOT EXISTS (SELECT 1 FROM song_genres " +
+            "WHERE song_genres.sourceId = songs.sourceId AND song_genres.songId = songs.id))) " +
+            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+    )
+    suspend fun songsByGenreIds(
+        sourceId: Long,
+        genre: String,
+    ): List<String>
+
+    @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND year >= :start AND year < :end " +
             "ORDER BY year DESC, name COLLATE NOCASE, id",
     )

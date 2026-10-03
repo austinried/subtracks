@@ -173,3 +173,15 @@ internal fun CoroutineScope.playStarredList(
         playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
     }
 }
+
+internal fun CoroutineScope.playGenreList(
+    libraryRepository: LibraryRepository,
+    playbackController: PlaybackController,
+    genre: String,
+    song: Song,
+) {
+    launch {
+        val ids = libraryRepository.genreSongIds(song.sourceId, genre)
+        playbackController.playSongs(song.sourceId, ids, ids.indexOf(song.id).coerceAtLeast(0))
+    }
+}
