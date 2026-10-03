@@ -371,7 +371,7 @@ class LibraryHomeDaoTest {
 
             assertEquals(
                 listOf("Older", "Old"),
-                dao.albumsByRediscover(sourceId, starredFilter = 0, search = "", cutoff = 500).page().map { it.name },
+                dao.albumsPaging(rediscoverAlbumsQuery(sourceId, starredFilter = 0, search = "", cutoff = 500)).page().map { it.name },
             )
         }
 

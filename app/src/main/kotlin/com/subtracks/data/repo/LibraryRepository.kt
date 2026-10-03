@@ -8,6 +8,7 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.albumsDefaultQuery
 import com.subtracks.data.db.artistsDefaultQuery
 import com.subtracks.data.db.playlistsDefaultQuery
+import com.subtracks.data.db.rediscoverAlbumsQuery
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
@@ -87,7 +88,9 @@ class LibraryRepository(
     fun decades(sourceId: Long): Flow<List<Long>> = db.libraryDao().decades(sourceId)
 
     fun rediscoverAlbumsPage(sourceId: Long): Flow<PagingData<Album>> =
-        pager(40) { db.libraryDao().albumsByRediscover(sourceId, starredFilter = 0, search = "", cutoff = rediscoverCutoff()) }
+        pager(
+            40,
+        ) { db.libraryDao().albumsPaging(rediscoverAlbumsQuery(sourceId, starredFilter = 0, search = "", cutoff = rediscoverCutoff())) }
 
     fun starredSongs(sourceId: Long): Flow<PagingData<AlbumSongItem>> = pager(60) { db.libraryDao().starredSongs(sourceId) }
 
@@ -150,10 +153,10 @@ class LibraryRepository(
     ): Flow<PagingData<Album>> =
         pager(40) {
             val dao = db.libraryDao()
-            val downloadedFilter = if (downloaded) 1 else 0
             if (!downloaded) {
                 dao.albumsPaging(albumsDefaultQuery(sourceId, starred.ordinal, search, sort, descending))
             } else {
+                val downloadedFilter = 1
                 when (sort) {
                     AlbumSort.Name -> {
                         if (descending) {
@@ -224,10 +227,10 @@ class LibraryRepository(
     ): Flow<PagingData<Artist>> =
         pager(60) {
             val dao = db.libraryDao()
-            val downloadedFilter = if (downloaded) 1 else 0
             if (!downloaded) {
                 dao.artistsPaging(artistsDefaultQuery(sourceId, starred.ordinal, search, sort, descending))
             } else {
+                val downloadedFilter = 1
                 when (sort) {
                     ArtistSort.Name -> {
                         if (descending) {
@@ -281,10 +284,10 @@ class LibraryRepository(
     ): Flow<PagingData<Playlist>> =
         pager(40) {
             val dao = db.libraryDao()
-            val downloadedFilter = if (downloaded) 1 else 0
             if (!downloaded) {
                 dao.playlistsPaging(playlistsDefaultQuery(sourceId, search, sort, descending))
             } else {
+                val downloadedFilter = 1
                 when (sort) {
                     PlaylistSort.Name -> {
                         if (descending) {

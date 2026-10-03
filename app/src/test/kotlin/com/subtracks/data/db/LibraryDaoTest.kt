@@ -675,6 +675,10 @@ class LibraryDaoTest {
             )
 
             assertEquals(listOf("Say \"Hello\""), dao.albumsByName(sourceId, 0, "\"Hel").page().map { it.name })
+            assertEquals(
+                listOf("Say \"Hello\""),
+                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "\"Hel", AlbumSort.Name, false)).page().map { it.name },
+            )
         }
 
     @Test
@@ -817,6 +821,9 @@ class LibraryDaoTest {
 
             awaitUntil("the downloaded list observes download writes") { downloadedInvalidated.get() }
             assertFalse("the default list must not observe download writes", defaultInvalidated.get())
+
+            dao.upsertAlbums(listOf(album(sourceId, "a", "Renamed", year = null, starred = null)))
+            awaitUntil("the default list observes album writes") { defaultInvalidated.get() }
         }
 
     private suspend fun source(): Long =

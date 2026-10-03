@@ -677,15 +677,6 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $ALBUMS_FILTER AND played IS NOT NULL AND played < :cutoff ORDER BY played ASC, name COLLATE NOCASE, id")
-    fun albumsByRediscover(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        cutoff: Long,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, name COLLATE NOCASE, id")
     fun homeRecentlyPlayedAlbums(sourceId: Long): PagingSource<Int, Album>
 

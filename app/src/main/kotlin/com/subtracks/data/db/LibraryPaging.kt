@@ -1,6 +1,7 @@
 package com.subtracks.data.db
 
 import androidx.room3.RoomRawQuery
+import androidx.sqlite.SQLiteStatement
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
@@ -40,17 +41,39 @@ internal fun albumsDefaultQuery(
 ): RoomRawQuery {
     val order = albumOrder(sort, descending)
     return RoomRawQuery("SELECT * $ALBUMS_FILTER_BASE ORDER BY $order") { stmt ->
-        stmt.bindLong(1, sourceId)
-        stmt.bindInt(2, starredFilter)
-        stmt.bindInt(3, starredFilter)
-        stmt.bindInt(4, starredFilter)
-        stmt.bindText(5, search)
-        stmt.bindText(6, search)
-        stmt.bindText(7, search)
-        stmt.bindText(8, search)
-        stmt.bindText(9, search)
-        stmt.bindText(10, search)
+        stmt.bindAlbumFilters(sourceId, starredFilter, search)
     }
+}
+
+internal fun rediscoverAlbumsQuery(
+    sourceId: Long,
+    starredFilter: Int,
+    search: String,
+    cutoff: Long,
+): RoomRawQuery =
+    RoomRawQuery(
+        "SELECT * $ALBUMS_FILTER_BASE AND played IS NOT NULL AND played < ? " +
+            "ORDER BY played ASC, name COLLATE NOCASE, id",
+    ) { stmt ->
+        stmt.bindAlbumFilters(sourceId, starredFilter, search)
+        stmt.bindLong(11, cutoff)
+    }
+
+private fun SQLiteStatement.bindAlbumFilters(
+    sourceId: Long,
+    starredFilter: Int,
+    search: String,
+) {
+    bindLong(1, sourceId)
+    bindInt(2, starredFilter)
+    bindInt(3, starredFilter)
+    bindInt(4, starredFilter)
+    bindText(5, search)
+    bindText(6, search)
+    bindText(7, search)
+    bindText(8, search)
+    bindText(9, search)
+    bindText(10, search)
 }
 
 internal fun artistsDefaultQuery(
