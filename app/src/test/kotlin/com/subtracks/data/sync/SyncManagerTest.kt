@@ -11,6 +11,7 @@ import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.prefs.fakeUserPreferences
+import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import kotlinx.coroutines.CoroutineScope
@@ -61,7 +62,15 @@ class SyncManagerTest {
         sourceRepository =
             SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
         queueRepository = QueueRepository(db)
-        manager = SyncManager(db, sourceRepository, queueRepository, showMessage = { messages += it.resolve(resources) }, scope = scope)
+        manager =
+            SyncManager(
+                db,
+                sourceRepository,
+                queueRepository,
+                NetworkServerActionSink(sourceRepository),
+                showMessage = { messages += it.resolve(resources) },
+                scope = scope,
+            )
         server = MockWebServer()
         server.start()
     }

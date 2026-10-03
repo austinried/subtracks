@@ -1,9 +1,8 @@
 package com.subtracks.data.source
 
 /**
- * Writes the app pushes back to the server. Today they go straight over the
- * network, but funneling them through one seam leaves room to persist them and
- * replay later while the server is unreachable.
+ * Writes the app pushes back to the server. Actions that could not be delivered
+ * while the server was unreachable are persisted and replayed by [flush].
  */
 interface ServerActionSink {
     suspend fun nowPlaying(songId: String)
@@ -18,4 +17,6 @@ interface ServerActionSink {
         id: String,
         starred: Boolean,
     )
+
+    suspend fun flush()
 }

@@ -287,6 +287,29 @@ data class SongGenre(
     val genre: String,
 )
 
+enum class PendingActionKind { Scrobble, Star, Unstar }
+
+@Entity(
+    tableName = "pending_actions",
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId")],
+)
+data class PendingAction(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sourceId: Long,
+    val kind: PendingActionKind,
+    val targetId: String,
+    val starType: String? = null,
+    @ColumnInfo(defaultValue = "0") val time: Long = 0,
+)
+
 sealed interface SongItem {
     val song: Song
     val coverArt: String?
@@ -441,4 +464,13 @@ class QueueKindConverter {
 
     @ColumnTypeConverter
     fun toQueueKind(value: String): QueueKind = QueueKind.entries.firstOrNull { it.name == value } ?: QueueKind.Song
+}
+
+class PendingActionKindConverter {
+    @ColumnTypeConverter
+    fun fromPendingActionKind(kind: PendingActionKind): String = kind.name
+
+    @ColumnTypeConverter
+    fun toPendingActionKind(value: String): PendingActionKind =
+        PendingActionKind.entries.firstOrNull { it.name == value } ?: PendingActionKind.Scrobble
 }

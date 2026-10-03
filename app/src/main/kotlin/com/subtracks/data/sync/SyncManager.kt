@@ -6,6 +6,7 @@ import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.subsonic.SubsonicException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ class SyncManager(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
+    private val serverActions: ServerActionSink,
     private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
@@ -60,6 +62,7 @@ class SyncManager(
         val result =
             try {
                 val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
+                serverActions.flush()
                 SyncService(db, source).sync()
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {

@@ -11,6 +11,8 @@ import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DownloadErrorConverter
 import com.subtracks.data.model.DownloadStatusConverter
+import com.subtracks.data.model.PendingAction
+import com.subtracks.data.model.PendingActionKindConverter
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSearch
@@ -45,11 +47,17 @@ import com.subtracks.data.model.UpNextEntry
         PlaybackCursor::class,
         ArtworkSeed::class,
         SongDownload::class,
+        PendingAction::class,
     ],
-    version = 26,
+    version = 27,
     exportSchema = true,
 )
-@ColumnTypeConverters(QueueKindConverter::class, DownloadStatusConverter::class, DownloadErrorConverter::class)
+@ColumnTypeConverters(
+    QueueKindConverter::class,
+    DownloadStatusConverter::class,
+    DownloadErrorConverter::class,
+    PendingActionKindConverter::class,
+)
 abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
 
@@ -60,4 +68,6 @@ abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun artworkSeedDao(): ArtworkSeedDao
 
     abstract fun downloadDao(): DownloadDao
+
+    abstract fun pendingActionDao(): PendingActionDao
 }

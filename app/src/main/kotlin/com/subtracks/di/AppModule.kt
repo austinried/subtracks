@@ -22,6 +22,7 @@ import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.NetworkServerActionSink
+import com.subtracks.data.repo.PendingServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
@@ -77,10 +78,18 @@ fun appModule(
             scope = get(),
         )
     }
-    single<ServerActionSink> { NetworkServerActionSink(get()) }
+    single<ServerActionSink> {
+        PendingServerActionSink(
+            delegate = NetworkServerActionSink(get()),
+            db = get(),
+            activeSourceId = get<SourceRepository>()::activeSourceIdOnce,
+            offline = get<SourceRepository>().offline,
+            scope = get(),
+        )
+    }
     single { LibraryRepository(get(), get(), get(), toast, scope = get(named("io"))) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
-    single { SyncManager(get(), get(), get(), showMessage = toast, scope = get()) }
+    single { SyncManager(get(), get(), get(), get(), showMessage = toast, scope = get()) }
     single { QueueRepository(get()) }
     single { ArtworkStore(downloadsRoot(context)) }
     single<ArtworkFetcher> { OkHttpArtworkFetcher(get()) }

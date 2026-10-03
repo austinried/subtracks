@@ -369,6 +369,21 @@ val MIGRATION_25_26 =
         }
     }
 
+val MIGRATION_26_27 =
+    object : Migration(26, 27) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `pending_actions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `targetId` TEXT NOT NULL, " +
+                    "`starType` TEXT, `time` INTEGER NOT NULL DEFAULT 0, " +
+                    "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_pending_actions_sourceId` ON `pending_actions` (`sourceId`)",
+            )
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -428,4 +443,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_23_24,
         MIGRATION_24_25,
         MIGRATION_25_26,
+        MIGRATION_26_27,
     )

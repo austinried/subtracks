@@ -48,6 +48,8 @@ class ScrobblerTest {
             id: String,
             starred: Boolean,
         ) = Unit
+
+        override suspend fun flush() = Unit
     }
 
     private fun TestScope.testScope() = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SupervisorJob())

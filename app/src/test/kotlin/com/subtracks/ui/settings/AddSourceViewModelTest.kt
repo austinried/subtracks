@@ -13,6 +13,7 @@ import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
+import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
@@ -154,7 +155,8 @@ class AddSourceViewModelTest {
         }
 
     private fun viewModel(sourceId: Long? = null): AddSourceViewModel {
-        val syncManager = SyncManager(db, sourceRepository, QueueRepository(db), scope = repoScope)
+        val syncManager =
+            SyncManager(db, sourceRepository, QueueRepository(db), NetworkServerActionSink(sourceRepository), scope = repoScope)
         val resources = ApplicationProvider.getApplicationContext<Context>().resources
         return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId, resources).also { createdViewModels += it }
     }
