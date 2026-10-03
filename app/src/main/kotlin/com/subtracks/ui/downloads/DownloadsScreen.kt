@@ -3,6 +3,7 @@ package com.subtracks.ui.downloads
 import android.text.format.Formatter
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,12 +13,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +81,7 @@ fun DownloadsRoute(
                 is DownloadDeleteTarget.All, is DownloadDeleteTarget.Node -> pending = target
             }
         },
+        onCancel = viewModel::cancelSongs,
     )
     when (val dialog = pending) {
         is DownloadDeleteTarget.All -> {
@@ -111,6 +115,7 @@ fun DownloadsScreen(
     loadEncoding: suspend (DownloadedSong) -> AudioEncoding?,
     onBack: () -> Unit,
     onDelete: (DownloadDeleteTarget) -> Unit,
+    onCancel: (List<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(emptySet<String>()) }
@@ -181,7 +186,12 @@ fun DownloadsScreen(
                         }
                         if (albumKey in expanded) {
                             items(album.songs, key = { "$albumKey:${it.songId}" }) { song ->
-                                SongRow(song, loadEncoding) { onDelete(DownloadDeleteTarget.Songs(listOf(song.songId))) }
+                                SongRow(
+                                    song = song,
+                                    loadEncoding = loadEncoding,
+                                    onDelete = { onDelete(DownloadDeleteTarget.Songs(listOf(song.songId))) },
+                                    onCancel = { onCancel(listOf(song.songId)) },
+                                )
                             }
                         }
                     }
@@ -245,17 +255,35 @@ private fun SongRow(
     song: DownloadedSong,
     loadEncoding: suspend (DownloadedSong) -> AudioEncoding?,
     onDelete: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     var encoding by remember(song.songId) { mutableStateOf<AudioEncoding?>(null) }
     LaunchedEffect(song.songId, song.status) {
         encoding = if (song.status == DownloadStatus.Completed) loadEncoding(song) else null
     }
+    val active = song.status == DownloadStatus.Queued || song.status == DownloadStatus.Running
     ListItem(
         headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(songSubtitle(song, encoding), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = {
+            Column {
+                Text(songSubtitle(song, encoding), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (active) {
+                    LinearProgressIndicator(
+                        progress = { song.progress ?: 0f },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                }
+            }
+        },
         trailingContent = {
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete download")
+            if (active) {
+                IconButton(onClick = onCancel) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Cancel download")
+                }
+            } else {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete download")
+                }
             }
         },
         modifier = Modifier.padding(start = 32.dp),

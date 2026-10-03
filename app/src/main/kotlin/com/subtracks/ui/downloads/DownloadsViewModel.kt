@@ -79,6 +79,13 @@ class DownloadsViewModel(
         }
     }
 
+    fun cancelSongs(songIds: List<String>) {
+        viewModelScope.launch {
+            downloadRepository.cancel(sourceId.first(), songIds)
+            playbackController.refreshMediaItems()
+        }
+    }
+
     suspend fun encoding(song: DownloadedSong): AudioEncoding? =
         downloadRepository.localFile(song.sourceId, song.songId)?.let { readAudioEncoding(it) }
 }

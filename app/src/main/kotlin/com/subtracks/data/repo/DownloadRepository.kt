@@ -193,6 +193,21 @@ class DownloadRepository(
         }
     }
 
+    suspend fun cancel(
+        sourceId: Long,
+        songIds: Collection<String>,
+    ) = withContext(dispatcher) {
+        val ids = songIds.toHashSet()
+        mutex.withLock {
+            removeRows(
+                db
+                    .downloadDao()
+                    .all()
+                    .filter { it.sourceId == sourceId && it.songId in ids && it.status.isActive },
+            )
+        }
+    }
+
     fun status(
         sourceId: Long,
         list: DownloadList,

@@ -72,7 +72,12 @@ data class DownloadedSong(
     val artistName: String?,
     val status: DownloadStatus,
     val size: Long = 0,
-)
+    val bytes: Long = 0,
+    val total: Long = 0,
+) {
+    val progress: Float?
+        get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
+}
 
 data class DownloadArtwork(
     val sourceId: Long,

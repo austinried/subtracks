@@ -138,6 +138,18 @@ class DownloadsViewModelTest {
         assertNotNull("an unnamed song should survive", row("s2"))
     }
 
+    @Test
+    fun cancelSongsRemovesOnlyTheActiveDownload() {
+        seedDownloads()
+        runBlocking { db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Running, engineId = 7)) }
+
+        viewModel.cancelSongs(listOf("s1", "s2"))
+        await { row("s1") == null }
+
+        assertNull(row("s1"))
+        assertNotNull("a completed download should survive a cancel", row("s2"))
+    }
+
     private fun seedDownloads() {
         sourceId =
             runBlocking {
