@@ -38,6 +38,14 @@ class ArtistDetailViewModel(
 
     val artist: Flow<Artist?> = sourceId.flatMapLatest { libraryRepository.artist(it, artistId) }
 
+    val artistName: Flow<String?> =
+        sourceId.flatMapLatest { id ->
+            combine(
+                libraryRepository.artist(id, artistId),
+                libraryRepository.artistName(id, artistId),
+            ) { loaded, fromSongs -> loaded?.name?.takeIf { it.isNotBlank() } ?: fromSongs }
+        }
+
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
     val albums: Flow<List<Album>> =

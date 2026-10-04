@@ -942,6 +942,16 @@ interface LibraryDao {
         artistId: String,
     ): Flow<Artist?>
 
+    // A credited track artist may not have an artists row; its name only lives on the songs.
+    @Query(
+        "SELECT artist FROM songs WHERE sourceId = :sourceId AND artistId = :artistId " +
+            "AND artist IS NOT NULL AND artist != '' ORDER BY id LIMIT 1",
+    )
+    fun artistName(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<String?>
+
     @Query("SELECT * FROM songs WHERE sourceId = :sourceId AND id = :songId")
     fun song(
         sourceId: Long,

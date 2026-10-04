@@ -559,6 +559,20 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun aCreditedTrackArtistsNameComesFromItsSongs() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null).copy(artistId = "ar-guest", artist = "Guest"),
+                ),
+            )
+
+            assertEquals("Guest", dao.artistName(sourceId, "ar-guest").first())
+        }
+
+    @Test
     fun downloadedFilterReportsTheDownloadedAlbumCount() =
         runTest {
             val sourceId = source()

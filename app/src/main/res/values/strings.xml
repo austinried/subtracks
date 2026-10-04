@@ -29,6 +29,8 @@
     <string name="resources_playlist_name">Playlists</string>
     <string name="resources_filter_album">Album</string>
     <string name="resources_filter_artist">Artist</string>
+    <string name="artist_type_artist">Artist</string>
+    <string name="artist_type_album_artist">Album artist</string>
     <string name="resources_filter_genre">Genre</string>
     <string name="resources_filter_starred">Starred</string>
     <string name="resources_song_list_delete_all_content">%1$s\n\nDeleting will free %2$s</string>

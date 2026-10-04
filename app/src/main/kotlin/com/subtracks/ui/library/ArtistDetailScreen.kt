@@ -152,6 +152,7 @@ fun ArtistDetailRoute(
     playbackController: PlaybackController = koinInject(),
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
+    val artistName by viewModel.artistName.collectAsStateWithLifecycle(initialValue = null)
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
@@ -184,10 +185,12 @@ fun ArtistDetailRoute(
         )
     ArtistDetailScreen(
         artist = artist,
+        artistName = artistName.orEmpty(),
+        isAlbumArtist = albums.any { it.artistId == artistId },
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,
-        artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artist?.name),
+        artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artistName),
         coverArt = viewModel::coverArt,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
@@ -213,6 +216,8 @@ fun ArtistDetailRoute(
 @Composable
 fun ArtistDetailScreen(
     artist: Artist?,
+    artistName: String = "",
+    isAlbumArtist: Boolean = false,
     albums: List<Album>,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
@@ -240,6 +245,8 @@ fun ArtistDetailScreen(
     val navBarBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
     val albumCount = albums.size.toLong()
+    val displayName = artistName.ifBlank { artist?.name.orEmpty() }
+    val artistType = stringResource(if (isAlbumArtist) R.string.artist_type_album_artist else R.string.artist_type_artist)
     val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
@@ -309,7 +316,7 @@ fun ArtistDetailScreen(
                             Box(Modifier.fillMaxWidth()) {
                                 CoverArt(
                                     ref = art,
-                                    name = artist?.name.orEmpty(),
+                                    name = displayName,
                                     thumbnailRef = artThumbnail,
                                     showPlaceholder = art == null,
                                     modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
@@ -331,7 +338,7 @@ fun ArtistDetailScreen(
                                 }
                                 Box(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
                                     ArtistTitle(
-                                        text = artist?.name.orEmpty(),
+                                        text = displayName,
                                         style = imageNameStyle,
                                         color = Color.White,
                                         endReserve = SHUFFLE_RESERVE,
@@ -360,12 +367,18 @@ fun ArtistDetailScreen(
                                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 34.dp, bottom = 0.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    text = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f),
-                                )
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        text = artistType,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                                 IconButton(
                                     onClick = { onToggleStar?.invoke() },
                                     enabled = onToggleStar != null,
@@ -452,7 +465,7 @@ fun ArtistDetailScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = artist?.name.orEmpty(),
+                            text = displayName,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.graphicsLayer { alpha = barFraction },

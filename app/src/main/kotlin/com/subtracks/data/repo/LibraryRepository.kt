@@ -348,6 +348,11 @@ class LibraryRepository(
         artistId: String,
     ): Flow<Artist?> = db.libraryDao().artist(sourceId, artistId)
 
+    fun artistName(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<String?> = db.libraryDao().artistName(sourceId, artistId)
+
     fun song(
         sourceId: Long,
         songId: String,
