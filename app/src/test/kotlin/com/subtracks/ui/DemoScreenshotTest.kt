@@ -174,6 +174,8 @@ class DemoScreenshotTest {
                         Screen.ArtistDetail -> {
                             ArtistDetailScreen(
                                 artist = demo.artist,
+                                artistName = demo.artist.name,
+                                isAlbumArtist = demo.artistAlbums.any { it.artistId == demo.artist.id },
                                 albums = demo.artistAlbums,
                                 art = demo.coverArt(demo.artist.coverArt, false),
                                 artThumbnail = demo.coverArt(demo.artist.coverArt, true),
