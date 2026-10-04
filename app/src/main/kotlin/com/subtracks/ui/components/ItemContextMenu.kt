@@ -151,7 +151,9 @@ class ContextMenuHost {
     var actions by mutableStateOf(ItemActions())
         private set
 
-    private val transientDismissals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    // Replay one so a screen recreated by the notification (whose collector subscribes after the
+    // event fires) still sees the dismissal; every onDismiss is a harmless no-op on default state.
+    private val transientDismissals = MutableSharedFlow<Unit>(replay = 1)
 
     // Fires when an external event (opening now playing) should close menu-like UI the host does
     // not own, such as the library's list options sheet.

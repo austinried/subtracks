@@ -420,6 +420,7 @@ fun LibraryScreen(
     var searchActive by rememberSaveable { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
 
+    // Search mode is left open so the typed query survives; MainNavigation dismisses the keyboard.
     DismissOnRequest(dismissals) { showOptions = false }
 
     LaunchedEffect(pagerState) {
