@@ -52,3 +52,29 @@ fun networkMode(context: Context): Flow<NetworkMode> {
         awaitClose { if (registered) runCatching { connectivity?.unregisterNetworkCallback(callback) } }
     }.distinctUntilChanged()
 }
+
+fun networkAvailable(context: Context): Flow<Boolean> {
+    val connectivity = context.applicationContext.getSystemService(ConnectivityManager::class.java)
+    return callbackFlow {
+        fun push() {
+            val capabilities =
+                connectivity?.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+            // INTERNET, not VALIDATED: a LAN-only server is reachable without internet validation.
+            trySend(capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true)
+        }
+        val callback =
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) = push()
+
+                override fun onLost(network: Network) = push()
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    capabilities: NetworkCapabilities,
+                ) = push()
+            }
+        val registered = runCatching { connectivity?.registerDefaultNetworkCallback(callback) }.isSuccess
+        push()
+        awaitClose { if (registered) runCatching { connectivity?.unregisterNetworkCallback(callback) } }
+    }.distinctUntilChanged()
+}

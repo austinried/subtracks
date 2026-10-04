@@ -15,9 +15,12 @@ import com.subtracks.data.source.StarType
 import com.subtracks.data.source.subsonic.SubsonicException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -73,6 +76,7 @@ class PendingServerActionSinkTest {
     private lateinit var sink: PendingServerActionSink
     private val offline = MutableStateFlow(true)
     private val offlinePreferences = MutableStateFlow(true)
+    private val networkAvailable = MutableStateFlow(true)
     private var sourceId = 0L
 
     @Before
@@ -93,6 +97,7 @@ class PendingServerActionSinkTest {
                 activeSourceId = { sourceId },
                 offline = offline,
                 offlinePreferences = offlinePreferences,
+                networkAvailable = networkAvailable,
                 scope = scope,
             )
     }
@@ -129,6 +134,40 @@ class PendingServerActionSinkTest {
             awaitUntil("the queued star to replay") { delegate.calls.isNotEmpty() }
             assertEquals(listOf(Call.Star(StarType.Song, "s1", true)), delegate.calls)
             assertEquals(0, db.pendingActionDao().pending(sourceId).size)
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun aRestoredConnectionReplaysThroughTheCollector() =
+        runBlocking {
+            offline.value = false
+            networkAvailable.value = false
+            val reconnectScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
+            try {
+                val reconnectable =
+                    PendingServerActionSink(
+                        delegate = delegate,
+                        db = db,
+                        activeSourceId = { sourceId },
+                        offline = offline,
+                        offlinePreferences = flowOf(false),
+                        networkAvailable = networkAvailable,
+                        scope = reconnectScope,
+                    )
+                delegate.scrobbleFailure = IOException("down")
+
+                reconnectable.scrobble("s1", 1_000)
+                assertEquals(1, db.pendingActionDao().pending(sourceId).size)
+
+                delegate.scrobbleFailure = null
+                networkAvailable.value = true
+
+                awaitUntil("the queued scrobble to replay") { delegate.calls.isNotEmpty() }
+                assertEquals(listOf(Call.Scrobble("s1", 1_000)), delegate.calls)
+                assertEquals(0, db.pendingActionDao().pending(sourceId).size)
+            } finally {
+                cancelAndJoinBlocking(reconnectScope)
+            }
         }
 
     @Test

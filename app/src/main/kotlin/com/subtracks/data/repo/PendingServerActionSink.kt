@@ -10,6 +10,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -21,20 +23,23 @@ class PendingServerActionSink(
     private val activeSourceId: suspend () -> Long?,
     private val offline: StateFlow<Boolean>,
     offlinePreferences: Flow<Boolean>,
+    networkAvailable: Flow<Boolean>,
     scope: CoroutineScope,
 ) : ServerActionSink {
     private val lock = Mutex()
 
     init {
         scope.launch {
-            offlinePreferences.collect { isOffline ->
-                // The persisted value is authoritative, unlike the process flag's default at cold
-                // start, so wait for that flag to agree before replaying.
-                if (!isOffline) {
-                    offline.first { !it }
-                    flush()
+            combine(offlinePreferences, networkAvailable) { isOffline, online -> !isOffline && online }
+                .distinctUntilChanged()
+                .collect { ready ->
+                    // The persisted flag and connectivity are authoritative, unlike the process
+                    // flag's default at cold start, so wait for that flag to agree before replaying.
+                    if (ready) {
+                        offline.first { !it }
+                        flush()
+                    }
                 }
-            }
         }
     }
 

@@ -14,6 +14,7 @@ import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.DownloadNotifier
 import com.subtracks.data.download.OkHttpArtworkFetcher
 import com.subtracks.data.download.SystemDownloadEngine
+import com.subtracks.data.net.networkAvailable
 import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.createUserPreferences
@@ -85,6 +86,7 @@ fun appModule(
             activeSourceId = get<SourceRepository>()::activeSourceIdOnce,
             offline = get<SourceRepository>().offline,
             offlinePreferences = get<UserPreferences>().offlineMode(),
+            networkAvailable = networkAvailable(context.applicationContext),
             scope = get(),
         )
     }
