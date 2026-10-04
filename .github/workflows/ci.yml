@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+  NIX_CONFIG: experimental-features = nix-command flakes
+
+defaults:
+  run:
+    shell: sh
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: nix-v2-
+          gc-max-store-size-linux: 6G
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+      - uses: actions/cache@v4
+        with:
+          path: .integration/music
+          key: integration-music-v1
+      - run: nix develop --command gradle :app:ktlintCheck :app:lintDebug :app:testDebugUnitTest --no-configuration-cache --console=plain
+      - run: nix develop .#integration --command nu tools/integration-test.nu
