@@ -363,42 +363,47 @@ fun ArtistDetailScreen(
                                     }
                                 }
                             }
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 34.dp, bottom = 0.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
                             ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        text = artistType,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                Text(
+                                    text = artistType,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
                                     Text(
                                         text = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(1f),
                                     )
-                                }
-                                IconButton(
-                                    onClick = { onToggleStar?.invoke() },
-                                    enabled = onToggleStar != null,
-                                ) {
-                                    Icon(
-                                        imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                                        contentDescription =
-                                            stringResource(
-                                                if (starred) R.string.actions_unstar else R.string.actions_star,
-                                            ),
-                                        tint =
-                                            if (starred) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            },
-                                    )
-                                }
-                                IconButton(onClick = onMore) {
-                                    Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
+                                    if (artist != null) {
+                                        IconButton(
+                                            onClick = { onToggleStar?.invoke() },
+                                            enabled = onToggleStar != null,
+                                        ) {
+                                            Icon(
+                                                imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                                                contentDescription =
+                                                    stringResource(
+                                                        if (starred) R.string.actions_unstar else R.string.actions_star,
+                                                    ),
+                                                tint =
+                                                    if (starred) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                                    },
+                                            )
+                                        }
+                                        IconButton(onClick = onMore) {
+                                            Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -1,8 +1,11 @@
 package com.subtracks.ui.library
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Artist
@@ -45,6 +48,7 @@ class ArtistDetailScreenTest {
 
         composeRule.onAllNodesWithText("Guest")[0].assertExists()
         composeRule.onNodeWithText("Artist").assertExists()
+        composeRule.onAllNodesWithContentDescription("More options").assertCountEquals(0)
     }
 
     @Test
@@ -56,5 +60,6 @@ class ArtistDetailScreenTest {
         )
 
         composeRule.onNodeWithText("Album artist").assertExists()
+        composeRule.onNodeWithContentDescription("More options").assertExists()
     }
 }
