@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 enum class NetworkMode(
@@ -55,6 +56,8 @@ fun networkMode(context: Context): Flow<NetworkMode> {
 
 fun networkAvailable(context: Context): Flow<Boolean> {
     val connectivity = context.applicationContext.getSystemService(ConnectivityManager::class.java)
+    // Conflated, not distinct: switching between two available networks must still re-notify so the
+    // replay retries against the (possibly different) newly active route to the server.
     return callbackFlow {
         fun push() {
             val capabilities =
@@ -76,5 +79,5 @@ fun networkAvailable(context: Context): Flow<Boolean> {
         val registered = runCatching { connectivity?.registerDefaultNetworkCallback(callback) }.isSuccess
         push()
         awaitClose { if (registered) runCatching { connectivity?.unregisterNetworkCallback(callback) } }
-    }.distinctUntilChanged()
+    }.conflate()
 }

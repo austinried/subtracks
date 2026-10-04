@@ -11,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +30,6 @@ class PendingServerActionSink(
     init {
         scope.launch {
             combine(offlinePreferences, networkAvailable) { isOffline, online -> !isOffline && online }
-                .distinctUntilChanged()
                 .collect { ready ->
                     // The persisted flag and connectivity are authoritative, unlike the process
                     // flag's default at cold start, so wait for that flag to agree before replaying.
@@ -89,14 +87,7 @@ class PendingServerActionSink(
         }
     }
 
-    override suspend fun flush() {
-        try {
-            lock.withLock { drainLocked() }
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-        }
-    }
+    override suspend fun flush() = lock.withLock { drainSafelyLocked() }
 
     private suspend fun drainLocked() {
         if (offline.value) return

@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -165,6 +166,44 @@ class PendingServerActionSinkTest {
                 awaitUntil("the queued scrobble to replay") { delegate.calls.isNotEmpty() }
                 assertEquals(listOf(Call.Scrobble("s1", 1_000)), delegate.calls)
                 assertEquals(0, db.pendingActionDao().pending(sourceId).size)
+            } finally {
+                cancelAndJoinBlocking(reconnectScope)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun aNetworkSwitchThatStaysAvailableReplaysAgain() =
+        runBlocking {
+            offline.value = false
+            val network = MutableSharedFlow<Boolean>(replay = 1, extraBufferCapacity = 1)
+            network.tryEmit(false)
+            val reconnectScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
+            try {
+                val reconnectable =
+                    PendingServerActionSink(
+                        delegate = delegate,
+                        db = db,
+                        activeSourceId = { sourceId },
+                        offline = offline,
+                        offlinePreferences = flowOf(false),
+                        networkAvailable = network,
+                        scope = reconnectScope,
+                    )
+                delegate.scrobbleFailure = IOException("down")
+                reconnectable.scrobble("s1", 1_000)
+                delegate.scrobbleFailure = null
+                network.tryEmit(true)
+                awaitUntil("the first replay") { delegate.calls.size == 1 }
+
+                delegate.scrobbleFailure = IOException("down")
+                reconnectable.scrobble("s2", 2_000)
+                delegate.scrobbleFailure = null
+                // No false in between: an available-network switch must still re-notify.
+                network.tryEmit(true)
+
+                awaitUntil("the second replay") { delegate.calls.size == 2 }
+                assertEquals(listOf(Call.Scrobble("s1", 1_000), Call.Scrobble("s2", 2_000)), delegate.calls)
             } finally {
                 cancelAndJoinBlocking(reconnectScope)
             }
