@@ -1,9 +1,10 @@
 <h1><img src=".assets/logo.png" alt="subtracks logo" width="44" align="texttop" /> subtracks</h1>
 
-[![release](https://img.shields.io/github/v/release/austinried/subtracks?label=release&logo=github)](https://github.com/austinried/subtracks/releases/latest/)
+[![f-droid](https://img.shields.io/f-droid/v/com.subtracks?color=007ec6&label=f-droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/en/packages/com.subtracks)
+[![github](https://img.shields.io/github/v/release/austinried/subtracks?label=github&logo=github)](https://github.com/austinried/subtracks/releases/latest/)
 [![downloads](https://img.shields.io/github/downloads/austinried/subtracks/total?label=downloads&logo=github)](https://github.com/austinried/subtracks/releases/)
 <a href="https://hosted.weblate.org/engage/subtracks/"><img src="https://hosted.weblate.org/widget/subtracks/svg-badge.svg" alt="Translation status"></a>
-[![license](https://img.shields.io/github/license/austinried/subtracks?color=b4eb12&label=license)](LICENSE)
+[![license](https://img.shields.io/github/license/austinried/subtracks?color=222&label=license)](LICENSE)
 
 subtracks is an open source Android client for [Subsonic-compatible](http://www.subsonic.org/pages/api.jsp) servers ([Navidrome](https://www.navidrome.org/), [gonic](https://github.com/sentriz/gonic), [LMS](https://github.com/epoupon/lms), [Nextcloud Music](https://apps.nextcloud.com/apps/music) and more). It is written natively in Kotlin and Jetpack Compose and gives you clean, convenient access to your music in the style of a modern media player.
 
