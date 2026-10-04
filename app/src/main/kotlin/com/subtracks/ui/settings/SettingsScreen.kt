@@ -58,6 +58,8 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.rememberViewportFill
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
@@ -72,7 +74,7 @@ fun SettingsRoute(
     onOpenLicenses: () -> Unit,
     onEditServer: (Long) -> Unit,
     onBack: () -> Unit,
-    dismissRequests: Int = 0,
+    dismissals: Flow<Unit> = emptyFlow(),
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val sources by viewModel.sources.collectAsStateWithLifecycle()
@@ -107,7 +109,7 @@ fun SettingsRoute(
         onOpenDownloads = onOpenDownloads,
         onOpenLicenses = onOpenLicenses,
         onBack = onBack,
-        dismissRequests = dismissRequests,
+        dismissals = dismissals,
     )
 }
 
@@ -136,11 +138,11 @@ fun SettingsScreen(
     onOpenDownloads: () -> Unit,
     onOpenLicenses: () -> Unit,
     onBack: () -> Unit,
-    dismissRequests: Int = 0,
+    dismissals: Flow<Unit> = emptyFlow(),
     modifier: Modifier = Modifier,
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
-    DismissOnRequest(dismissRequests) { dialog = null }
+    DismissOnRequest(dismissals) { dialog = null }
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
 

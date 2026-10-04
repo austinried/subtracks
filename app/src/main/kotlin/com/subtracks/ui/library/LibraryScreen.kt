@@ -134,6 +134,7 @@ import com.subtracks.ui.theme.librarySurfaceColor
 import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -270,7 +271,7 @@ fun LibraryRoute(
     val downloads = downloadsState?.value ?: emptyMap()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
+    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
     val itemActions =
         ItemActions(
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
@@ -341,7 +342,7 @@ fun LibraryRoute(
         albumDownloads = downloads.takeIf { listTab == LibraryListTab.Albums }.orEmpty(),
         artistDownloads = downloads.takeIf { listTab == LibraryListTab.Artists }.orEmpty(),
         playlistDownloads = downloads.takeIf { listTab == LibraryListTab.Playlists }.orEmpty(),
-        dismissRequests = contextMenuHost?.dismissRequests ?: 0,
+        dismissals = contextMenuHost?.dismissals ?: emptyFlow(),
         homeContent = { topInset, bottomInset ->
             HomeRoute(
                 onAlbumClick = onAlbumClick,
@@ -406,7 +407,7 @@ fun LibraryScreen(
     albumDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     artistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     playlistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
-    dismissRequests: Int = 0,
+    dismissals: Flow<Unit> = emptyFlow(),
     homeContent: @Composable (topInset: Dp, bottomInset: Dp) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
@@ -419,7 +420,7 @@ fun LibraryScreen(
     var searchActive by rememberSaveable { mutableStateOf(false) }
     val searchFocus = remember { FocusRequester() }
 
-    DismissOnRequest(dismissRequests) { showOptions = false }
+    DismissOnRequest(dismissals) { showOptions = false }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { page ->

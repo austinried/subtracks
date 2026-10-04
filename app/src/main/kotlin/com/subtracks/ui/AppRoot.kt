@@ -402,13 +402,13 @@ private fun MainNavigation() {
                             onOpenLicenses = { navController.navigate(Routes.LICENSES) },
                             onEditServer = { id -> navController.navigate(Routes.editServer(id)) },
                             onBack = { navController.popBackStack() },
-                            dismissRequests = contextMenuHost.dismissRequests,
+                            dismissals = contextMenuHost.dismissals,
                         )
                     }
                     composable(Routes.DOWNLOADS) {
                         DownloadsRoute(
                             onBack = { navController.popBackStack() },
-                            dismissRequests = contextMenuHost.dismissRequests,
+                            dismissals = contextMenuHost.dismissals,
                         )
                     }
                     composable(Routes.SEARCH) {
@@ -607,7 +607,7 @@ private fun MainNavigation() {
                         AddSourceRoute(
                             onSaved = { navController.popBackStack() },
                             onBack = { navController.popBackStack() },
-                            dismissRequests = contextMenuHost.dismissRequests,
+                            dismissals = contextMenuHost.dismissals,
                         )
                     }
                     composable(
@@ -618,7 +618,7 @@ private fun MainNavigation() {
                             onSaved = { navController.popBackStack() },
                             onBack = { navController.popBackStack() },
                             sourceId = entry.arguments?.getLong("sourceId"),
-                            dismissRequests = contextMenuHost.dismissRequests,
+                            dismissals = contextMenuHost.dismissals,
                         )
                     }
                 }

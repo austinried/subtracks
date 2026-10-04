@@ -34,7 +34,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,6 +56,9 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import com.subtracks.data.model.Album as AlbumModel
 import com.subtracks.data.model.Artist as ArtistModel
@@ -149,10 +151,11 @@ class ContextMenuHost {
     var actions by mutableStateOf(ItemActions())
         private set
 
-    // Bumped when an external event (opening now playing) should close menu-like UI the host does
+    private val transientDismissals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Fires when an external event (opening now playing) should close menu-like UI the host does
     // not own, such as the library's list options sheet.
-    var dismissRequests by mutableIntStateOf(0)
-        private set
+    val dismissals: Flow<Unit> = transientDismissals.asSharedFlow()
 
     fun show(
         target: MenuTarget,
@@ -169,17 +172,17 @@ class ContextMenuHost {
 
     fun dismissTransients() {
         dismiss()
-        dismissRequests++
+        transientDismissals.tryEmit(Unit)
     }
 }
 
 @Composable
 internal fun DismissOnRequest(
-    dismissRequests: Int,
+    dismissals: Flow<Unit>,
     onDismiss: () -> Unit,
 ) {
-    LaunchedEffect(dismissRequests) {
-        if (dismissRequests > 0) onDismiss()
+    LaunchedEffect(dismissals) {
+        dismissals.collect { onDismiss() }
     }
 }
 

@@ -46,6 +46,7 @@ import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.rememberArtworkColors
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -74,7 +75,7 @@ fun AlbumDetailRoute(
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
+    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }

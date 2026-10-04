@@ -119,7 +119,7 @@ class LibraryOptionsTest {
                     onOpenSettings = {},
                     sortOptions = sortOptionsFor(LibraryTab.Albums),
                     starredSupported = true,
-                    dismissRequests = host.dismissRequests,
+                    dismissals = host.dismissals,
                 )
             }
         }

@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
 import com.subtracks.ui.components.DismissOnRequest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -56,7 +58,7 @@ fun AddSourceRoute(
     onSaved: () -> Unit,
     onBack: (() -> Unit)?,
     sourceId: Long? = null,
-    dismissRequests: Int = 0,
+    dismissals: Flow<Unit> = emptyFlow(),
     viewModel: AddSourceViewModel = koinViewModel(key = sourceId?.toString() ?: "new") { parametersOf(sourceId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -71,7 +73,7 @@ fun AddSourceRoute(
         onSave = { viewModel.save(onSaved) },
         onDelete = { viewModel.delete(onSaved) },
         onBack = onBack,
-        dismissRequests = dismissRequests,
+        dismissals = dismissals,
     )
 }
 
@@ -88,13 +90,13 @@ fun AddSourceScreen(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onBack: (() -> Unit)?,
-    dismissRequests: Int = 0,
+    dismissals: Flow<Unit> = emptyFlow(),
     modifier: Modifier = Modifier,
 ) {
     val nameFocus = remember { FocusRequester() }
     val addressFocus = remember { FocusRequester() }
     var confirmingDelete by remember { mutableStateOf(false) }
-    DismissOnRequest(dismissRequests) { confirmingDelete = false }
+    DismissOnRequest(dismissals) { confirmingDelete = false }
     LaunchedEffect(state.nameError, state.addressError) {
         when {
             state.nameError -> nameFocus.requestFocus()

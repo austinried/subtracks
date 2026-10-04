@@ -105,6 +105,7 @@ import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -160,7 +161,7 @@ fun ArtistDetailRoute(
     val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissRequests ?: 0) { pendingDelete = null }
+    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
