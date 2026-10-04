@@ -59,7 +59,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class SearchFilter(
-    @StringRes val label: Int,
+    @param:StringRes val label: Int,
 ) {
     Songs(R.string.search_songs),
     Albums(R.string.resources_album_name),
@@ -125,6 +125,7 @@ fun SearchScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     results: SearchResults,
+    modifier: Modifier = Modifier,
     filters: Set<SearchFilter> = ALL_FILTERS,
     onToggleFilter: (SearchFilter) -> Unit = {},
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
@@ -135,7 +136,6 @@ fun SearchScreen(
     onPlaylistClick: (Playlist) -> Unit = {},
     onSongClick: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
     val backLabel = stringResource(R.string.navigation_back)

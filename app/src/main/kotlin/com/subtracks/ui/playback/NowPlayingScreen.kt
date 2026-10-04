@@ -182,9 +182,9 @@ fun NowPlayingRoute(
     onQueue: () -> Unit,
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
+    modifier: Modifier = Modifier,
     contextMenuHost: ContextMenuHost? = null,
     setStar: (StarType, String, Boolean) -> Unit,
-    modifier: Modifier = Modifier,
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
     downloadRepository: DownloadRepository = koinInject(),
@@ -286,6 +286,7 @@ fun NowPlayingScreen(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    modifier: Modifier = Modifier,
     onSkipPrevious: () -> Unit = onPrevious,
     onShuffle: () -> Unit = {},
     onRepeat: () -> Unit = {},
@@ -298,7 +299,6 @@ fun NowPlayingScreen(
     thumbnailRef: CoverArtRef? = null,
     previousArt: NowPlayingArt? = null,
     nextArt: NowPlayingArt? = null,
-    modifier: Modifier = Modifier,
 ) {
     val playButtonSize = 90.dp
     val playCircleDiameter = playButtonSize * 20f / 24f

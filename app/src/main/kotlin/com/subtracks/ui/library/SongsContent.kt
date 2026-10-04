@@ -93,6 +93,7 @@ private fun buildVectorPath(vector: ImageVector): Path {
 @Composable
 fun SongRow(
     song: Song,
+    modifier: Modifier = Modifier,
     coverArtId: String? = null,
     coverArt: ((String?, Boolean) -> CoverArtRef?)? = null,
     isPlaying: Boolean = false,
@@ -100,7 +101,6 @@ fun SongRow(
     durationSeconds: Long? = null,
     download: SongDownload? = null,
     trailingContent: (@Composable () -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     ListItem(
         modifier = modifier,

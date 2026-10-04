@@ -45,6 +45,7 @@ fun ArtistsContent(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     bottomInset: Dp,
     onArtistClick: (Artist) -> Unit,
+    modifier: Modifier = Modifier,
     onLongClick: (MenuTarget) -> Unit = {},
     filtered: Boolean = false,
     onClearFilters: () -> Unit = {},
@@ -52,7 +53,6 @@ fun ArtistsContent(
     topInset: Dp = 0.dp,
     onSync: () -> Unit = {},
     downloadStatuses: Map<String, ListDownloadStatus> = emptyMap(),
-    modifier: Modifier = Modifier,
 ) {
     when {
         items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {

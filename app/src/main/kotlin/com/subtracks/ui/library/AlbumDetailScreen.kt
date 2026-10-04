@@ -146,6 +146,7 @@ fun AlbumDetailRoute(
 fun AlbumDetailScreen(
     album: Album?,
     songs: List<Song>,
+    modifier: Modifier = Modifier,
     discs: List<Disc> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
@@ -160,7 +161,6 @@ fun AlbumDetailScreen(
     onMore: () -> Unit = {},
     onArtistClick: (() -> Unit)? = null,
     playingSongId: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     val multiDisc = songs.map { it.disc ?: 1L }.distinct().size > 1
     val resources = LocalResources.current

@@ -60,10 +60,10 @@ fun MiniPlayer(
     onExpand: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
+    modifier: Modifier = Modifier,
     progressInset: Boolean = false,
     onExpandDrag: (Float) -> Unit = {},
     onExpandRelease: (Float) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val item = state.item ?: return
     var dragUpPx by remember { mutableFloatStateOf(0f) }

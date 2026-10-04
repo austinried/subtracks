@@ -43,7 +43,28 @@ android {
 
     lint {
         checkReleaseBuilds = false
-        disable += setOf("MissingTranslation", "MissingQuantity")
+        warningsAsErrors = true
+        disable +=
+            setOf(
+                "MissingTranslation",
+                "MissingQuantity",
+                // Version nags are handled by the dependency-update process, not the build.
+                "AndroidGradlePluginVersion",
+                "GradleDependency",
+                "NewerVersionAvailable",
+            )
+    }
+
+    packaging {
+        jniLibs {
+            // Prebuilt .so files with no symbol table; leaving them unstripped avoids the strip warning.
+            keepDebugSymbols +=
+                setOf(
+                    "**/libandroidx.graphics.path.so",
+                    "**/libdatastore_shared_counter.so",
+                    "**/libsqliteJni.so",
+                )
+        }
     }
 
     testOptions {
@@ -71,6 +92,7 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+        allWarningsAsErrors.set(true)
     }
 }
 
@@ -82,6 +104,8 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Resolving the variant classpaths here makes AGP warn that a configuration was resolved during
+// configuration time; upstream, tracked in mikepenz/AboutLibraries#1369.
 aboutLibraries {
     collect {
         configPath = file("config")

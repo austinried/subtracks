@@ -34,17 +34,17 @@ class StringResourcesTest {
             val locale = parse(file)
             locale.forEach { (name, resource) ->
                 val base = default[name]
-                assertTrue("$name in ${file.parentFile.name} is missing from values/strings.xml", base != null)
-                assertEquals("$name kind differs in ${file.parentFile.name}", base!!.kind, resource.kind)
+                assertTrue("$name in ${file.parentFile?.name} is missing from values/strings.xml", base != null)
+                assertEquals("$name kind differs in ${file.parentFile?.name}", base!!.kind, resource.kind)
                 if (resource.kind == "plurals") {
                     assertTrue(
-                        "$name has an invalid quantity in ${file.parentFile.name}",
+                        "$name has an invalid quantity in ${file.parentFile?.name}",
                         resource.quantities.all { it in validQuantities },
                     )
-                    assertTrue("$name in ${file.parentFile.name} is missing the required 'other' quantity", "other" in resource.quantities)
+                    assertTrue("$name in ${file.parentFile?.name} is missing the required 'other' quantity", "other" in resource.quantities)
                 }
                 assertEquals(
-                    "$name placeholders differ in ${file.parentFile.name}",
+                    "$name placeholders differ in ${file.parentFile?.name}",
                     placeholders(base.text),
                     placeholders(resource.text),
                 )

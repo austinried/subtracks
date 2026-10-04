@@ -2,8 +2,8 @@ package com.subtracks.data.download
 
 import android.app.DownloadManager
 import android.content.Context
-import android.net.Uri
 import android.os.Environment
+import androidx.core.net.toUri
 import com.subtracks.data.model.DownloadError
 
 class SystemDownloadEngine(
@@ -12,7 +12,7 @@ class SystemDownloadEngine(
     override fun enqueue(request: EngineRequest): Long {
         val download =
             DownloadManager
-                .Request(Uri.parse(request.uri))
+                .Request(request.uri.toUri())
                 .setTitle(request.title)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MUSIC, request.path)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)

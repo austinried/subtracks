@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -106,10 +107,10 @@ class QueueViewModel(
     var ready by mutableStateOf(false)
         private set
 
-    var initialIndex by mutableStateOf(0)
+    var initialIndex by mutableIntStateOf(0)
         private set
 
-    var generation by mutableStateOf(0)
+    var generation by mutableIntStateOf(0)
         private set
 
     private var nextId = 0L
@@ -562,6 +563,7 @@ internal fun dropTarget(
     return (before - if (before > from) 1 else 0) + 1
 }
 
+@Suppress("ModifierParameter")
 @Composable
 private fun QueueRowItem(
     row: QueueRow,

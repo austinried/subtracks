@@ -217,6 +217,7 @@ fun ArtistDetailRoute(
 @Composable
 fun ArtistDetailScreen(
     artist: Artist?,
+    modifier: Modifier = Modifier,
     artistName: String = "",
     isAlbumArtist: Boolean = false,
     albums: List<Album>,
@@ -232,7 +233,6 @@ fun ArtistDetailScreen(
     starred: Boolean = false,
     onToggleStar: (() -> Unit)? = null,
     onShuffle: () -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyGridState()
     val fill = rememberViewportFill(listState)

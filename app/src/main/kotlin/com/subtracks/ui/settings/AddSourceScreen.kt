@@ -90,8 +90,8 @@ fun AddSourceScreen(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onBack: (() -> Unit)?,
-    dismissals: Flow<Unit> = emptyFlow(),
     modifier: Modifier = Modifier,
+    dismissals: Flow<Unit> = emptyFlow(),
 ) {
     val nameFocus = remember { FocusRequester() }
     val addressFocus = remember { FocusRequester() }

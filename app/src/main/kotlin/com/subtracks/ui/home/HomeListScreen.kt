@@ -35,7 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -123,6 +123,7 @@ fun HomeListScreen(
     artists: LazyPagingItems<Artist>,
     songs: LazyPagingItems<AlbumSongItem>,
     playlists: LazyPagingItems<Playlist>,
+    modifier: Modifier = Modifier,
     genres: List<String> = emptyList(),
     decades: List<Long> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
@@ -135,10 +136,9 @@ fun HomeListScreen(
     onLongClick: (MenuTarget) -> Unit = {},
     onGenreClick: (String) -> Unit = {},
     onDecadeClick: (Long) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val now = remember { System.currentTimeMillis() }
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     Scaffold(
         modifier = modifier,
         topBar = {

@@ -10,8 +10,8 @@
     <string name="navigation_tabs_library">Biblioteca</string>
     <string name="navigation_tabs_settings">Configurações</string>
     <plurals name="resources_album_count">
-        <item quantity="one">%1$d album</item>
-        <item quantity="other">%1$d albums</item>
+        <item quantity="one">%1$d álbum</item>
+        <item quantity="other">%1$d álbuns</item>
     </plurals>
     <string name="resources_filter_album">Álbum</string>
     <string name="resources_filter_artist">Artista</string>
@@ -42,7 +42,7 @@
     <string name="settings_servers_fields_password">Senha</string>
     <string name="settings_servers_fields_username">Usuário</string>
     <string name="navigation_tabs_home">Home</string>
-    <string name="resources_album_name">Albums</string>
+    <string name="resources_album_name">Álbuns</string>
     <string name="resources_artist_name">Artists</string>
     <string name="resources_playlist_name">Playlists</string>
 </resources>

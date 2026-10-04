@@ -386,6 +386,7 @@ fun LibraryScreen(
     onPlaylistClick: (Playlist) -> Unit,
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
     onOpenSearch: () -> Unit = {},
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
@@ -409,7 +410,6 @@ fun LibraryScreen(
     playlistDownloads: Map<String, ListDownloadStatus> = emptyMap(),
     dismissals: Flow<Unit> = emptyFlow(),
     homeContent: @Composable (topInset: Dp, bottomInset: Dp) -> Unit = { _, _ -> },
-    modifier: Modifier = Modifier,
 ) {
     val pagerState =
         rememberPagerState(
@@ -831,6 +831,7 @@ private fun ListOptionsGlyph(modifier: Modifier = Modifier) {
     }
 }
 
+@Suppress("FrequentlyChangingValue")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LibraryTabs(

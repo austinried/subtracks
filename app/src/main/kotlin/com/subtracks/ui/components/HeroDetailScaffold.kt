@@ -248,11 +248,11 @@ fun HeroHeader(
     onDownloadAction: (BulkDownloadAction) -> Unit,
     onMore: () -> Unit,
     topInset: Dp,
+    modifier: Modifier = Modifier,
     controlsModifier: Modifier = Modifier,
     thumbnailRef: CoverArtRef? = null,
     comment: String? = null,
     onSubtitleClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =

@@ -172,6 +172,7 @@ fun HomeScreen(
     feed: HomeFeed,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
+    modifier: Modifier = Modifier,
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -182,7 +183,6 @@ fun HomeScreen(
     onGenreClick: (String) -> Unit = {},
     onDecadeClick: (Long) -> Unit = {},
     onSync: () -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         if (feed.loading) {
@@ -295,6 +295,7 @@ fun OfflineHomeScreen(
     songs: List<AlbumSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
+    modifier: Modifier = Modifier,
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -303,7 +304,6 @@ fun OfflineHomeScreen(
     onSongPlay: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
     onMore: (OfflineListKind) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         LazyColumn(

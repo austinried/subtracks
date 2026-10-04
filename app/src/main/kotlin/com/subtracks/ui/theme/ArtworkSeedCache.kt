@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.core.graphics.get
 import androidx.palette.graphics.Palette
 import coil3.SingletonImageLoader
 import coil3.compose.LocalPlatformContext
@@ -202,7 +203,7 @@ object ArtworkSeedCache {
         x: Int,
         y: Int,
     ): Float {
-        val color = Color(bitmap.getPixel(x, y))
+        val color = Color(bitmap[x, y])
         return 0.2126f * color.red + 0.7152f * color.green + 0.0722f * color.blue
     }
 

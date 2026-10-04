@@ -275,8 +275,8 @@ class DemoScreenshotTest {
     private fun DemoData.MiniPlayerOverlay(
         song: Song,
         album: Album,
-        progressInset: Boolean = false,
         modifier: Modifier = Modifier,
+        progressInset: Boolean = false,
     ) {
         MiniPlayer(
             state = playbackFor(song, album),

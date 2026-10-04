@@ -10,7 +10,6 @@
     <string name="navigation_tabs_library">Thư viện</string>
     <string name="navigation_tabs_settings">Cài đặt</string>
     <plurals name="resources_album_count">
-        <item quantity="one">%1$d album</item>
         <item quantity="other">%1$d album</item>
     </plurals>
     <string name="resources_filter_album">Theo album</string>
@@ -18,7 +17,6 @@
     <string name="resources_filter_genre">Theo thể loại</string>
     <string name="resources_filter_starred">Theo yêu thích</string>
     <plurals name="resources_song_count">
-        <item quantity="one">%1$d bài hát</item>
         <item quantity="other">%1$d bài hát</item>
     </plurals>
     <string name="resources_sort_by_artist">Nghệ sĩ</string>

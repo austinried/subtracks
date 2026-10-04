@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">subtracks</string>
     <string name="download_channel_description">Progress while songs download</string>
 
@@ -124,7 +124,7 @@
     <string name="search">Search</string>
     <string name="search_this_list">Search this list</string>
     <string name="search_songs">Songs</string>
-    <string name="search_min_length">Type at least %1$d characters to search.</string>
+    <string name="search_min_length" tools:ignore="PluralsCandidate">Type at least %1$d characters to search.</string>
     <string name="search_no_results">No results for “%1$s”.</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_ascending">Sort ascending</string>
@@ -245,7 +245,7 @@
     <string name="error_server_unknown">Unknown error</string>
     <string name="error_server_malformed">Malformed response from the server</string>
     <string name="error_server_truncated">Truncated response from the server</string>
-    <string name="error_library_too_large">Library is too large to sync: it exceeds %1$d rows</string>
+    <string name="error_library_too_large" tools:ignore="PluralsCandidate">Library is too large to sync: it exceeds %1$d rows</string>
     <string name="error_http">HTTP %1$d</string>
 
     <string name="home_section_recently_played_artists">Recently played artists</string>

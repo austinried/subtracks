@@ -120,6 +120,7 @@ fun PlaylistDetailScreen(
     songs: LazyPagingItems<PlaylistSongItem>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     artwork: ArtworkColors?,
+    modifier: Modifier = Modifier,
     downloads: Map<String, SongDownload> = emptyMap(),
     downloadStatus: ListDownloadStatus = ListDownloadStatus(),
     offline: Boolean = false,
@@ -131,7 +132,6 @@ fun PlaylistDetailScreen(
     onPlay: () -> Unit = {},
     onMore: () -> Unit = {},
     playingSongId: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     HeroDetailScaffold(

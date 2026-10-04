@@ -41,6 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -124,6 +125,7 @@ fun SettingsScreen(
     downloadQuality: StreamQuality,
     downloadOverMetered: Boolean,
     scrobbling: Boolean,
+    modifier: Modifier = Modifier,
     offline: Boolean = false,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
@@ -139,7 +141,6 @@ fun SettingsScreen(
     onOpenLicenses: () -> Unit,
     onBack: () -> Unit,
     dismissals: Flow<Unit> = emptyFlow(),
-    modifier: Modifier = Modifier,
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
     DismissOnRequest(dismissals) { dialog = null }
@@ -397,7 +398,7 @@ private fun ConcurrencyDialog(
     onDismiss: () -> Unit,
 ) {
     val resources = LocalResources.current
-    var draft by remember(selected) { mutableStateOf(selected) }
+    var draft by remember(selected) { mutableIntStateOf(selected) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.sync_concurrency)) },
