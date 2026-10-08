@@ -54,9 +54,6 @@ jobs:
             --release_status completed \
             --json_key_data "$PLAY_SERVICE_ACCOUNT_JSON" \
             --metadata_path metadata \
-            --skip_upload_metadata \
-            --skip_upload_images \
-            --skip_upload_screenshots \
             --mapping app/build/outputs/mapping/release/mapping.txt
       - name: Collect release APK
         run: cp app/build/outputs/apk/release/app-release.apk subtracks.apk
