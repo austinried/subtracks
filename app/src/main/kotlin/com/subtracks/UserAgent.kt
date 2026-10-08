@@ -1,6 +1,7 @@
 package com.subtracks
 
 import okhttp3.Interceptor
+import okhttp3.OkHttpClient
 
 object UserAgent {
     val value: String = "Subtracks (Android; ${BuildConfig.VERSION_NAME})"
@@ -15,4 +16,6 @@ object UserAgent {
                     .build(),
             )
         }
+
+    fun httpClient(): OkHttpClient = OkHttpClient.Builder().addInterceptor(interceptor()).build()
 }

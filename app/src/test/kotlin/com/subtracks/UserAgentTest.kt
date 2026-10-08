@@ -1,24 +1,29 @@
 package com.subtracks
 
-import okhttp3.OkHttpClient
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class UserAgentTest {
     @Test
-    fun addsTheSubtracksUserAgent() {
+    fun theSharedClientSendsTheSubtracksUserAgent() {
         val server = MockWebServer()
         server.enqueue(MockResponse())
         server.start()
-        val client = OkHttpClient.Builder().addInterceptor(UserAgent.interceptor()).build()
 
-        client.newCall(Request.Builder().url(server.url("/")).build()).execute().close()
+        UserAgent
+            .httpClient()
+            .newCall(Request.Builder().url(server.url("/")).build())
+            .execute()
+            .close()
         val header = server.takeRequest().getHeader("User-Agent")
         server.shutdown()
 
-        assertEquals(UserAgent.value, header)
+        assertEquals("Subtracks (Android; ${BuildConfig.VERSION_NAME})", header)
     }
 }

@@ -9,12 +9,11 @@ import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.di.appModule
 import com.subtracks.ui.theme.ArtworkSeedCache
-import okhttp3.OkHttpClient
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
 class SubtracksApp : Application() {
-    private val http = OkHttpClient.Builder().addInterceptor(UserAgent.interceptor()).build()
+    private val http = UserAgent.httpClient()
 
     @OptIn(DelicateCoilApi::class)
     override fun onCreate() {
