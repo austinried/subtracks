@@ -23,7 +23,22 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/build
         with:
-          gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleNightly --no-configuration-cache --console=plain --no-daemon"
+          gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleDebug :app:assembleNightly --no-configuration-cache --console=plain --no-daemon"
+      - name: Collect nightly builds
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk subtracks-nightly-debug.apk
+          cp app/build/outputs/apk/nightly/app-nightly.apk subtracks-nightly.apk
+      - name: Checksums
+        if: github.ref == 'refs/heads/main'
+        run: sha256sum subtracks-nightly.apk subtracks-nightly-debug.apk
+      - uses: actions/upload-artifact@v7
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: subtracks-nightly
+          path: |
+            subtracks-nightly.apk
+            subtracks-nightly-debug.apk
       - uses: actions/cache@v6
         with:
           path: .integration/music
