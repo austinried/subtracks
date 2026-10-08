@@ -3,7 +3,7 @@ package com.subtracks
 import okhttp3.Interceptor
 
 object UserAgent {
-    val value: String = "subtracks/android (${BuildConfig.VERSION_NAME})"
+    val value: String = "Subtracks (Android; ${BuildConfig.VERSION_NAME})"
 
     fun interceptor(): Interceptor =
         Interceptor { chain ->
