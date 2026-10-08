@@ -6,62 +6,65 @@ on:
       - "v*"
 
 permissions:
-  contents: write
-
-env:
-  NIX_CONFIG: experimental-features = nix-command flakes
+  contents: read
 
 jobs:
-  release:
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+    with:
+      gradle-args: ":app:assembleRelease :app:bundleRelease --no-daemon"
+      sign: true
+      artifact-name: release
+      artifact-path: app/build/outputs
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
+      KEYPROPERTIES_BASE64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+
+  publish:
+    needs: build
     runs-on: ubuntu-26.04
     timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      NIX_CONFIG: experimental-features = nix-command flakes
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: dist
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
       - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
           restore-prefixes-first-match: nix-v2-
           gc-max-store-size-linux: 6G
-      - name: Decode signing material
-        id: signing
-        env:
-          KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
-          KEYPROPERTIES_BASE64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
-          alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
-          test -n "$alias" || { echo "no keyAlias found in SUBTRACKS_KEYPROPERTIES_BASE64" >&2; exit 1; }
-          echo "alias=$alias" >> "$GITHUB_OUTPUT"
-      - name: Build APK and bundle
-        env:
-          RELEASE_KEYSTORE: ${{ runner.temp }}/release.keystore
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ steps.signing.outputs.alias }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
-        run: nix develop --command gradle :app:assembleRelease :app:bundleRelease --no-daemon
-      - name: Remove signing keystore
-        if: always()
-        run: rm -f "$RUNNER_TEMP/release.keystore"
-      - name: Read version code
-        id: version
-        run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
       - name: Upload to Google Play
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
+          umask 077
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play.json"
           nix develop .#release --command fastlane supply \
-            --aab app/build/outputs/bundle/release/app-release.aab \
+            --aab dist/bundle/release/app-release.aab \
             --package_name com.subtracks \
             --track "${{ vars.PLAY_TRACK || 'internal' }}" \
             --release_status completed \
-            --json_key_data "$PLAY_SERVICE_ACCOUNT_JSON" \
+            --json_key "$RUNNER_TEMP/play.json" \
             --metadata_path metadata \
-            --mapping app/build/outputs/mapping/release/mapping.txt
+            --mapping dist/mapping/release/mapping.txt
+      - name: Remove Play service account
+        if: always()
+        run: rm -f "$RUNNER_TEMP/play.json"
       - name: Collect release APK
-        run: cp app/build/outputs/apk/release/app-release.apk subtracks.apk
+        run: cp dist/apk/release/app-release.apk subtracks.apk
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,4 +72,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" subtracks.apk \
             --verify-tag \
             --title "$GITHUB_REF_NAME" \
-            --notes-file "metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt"
+            --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"

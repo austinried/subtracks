@@ -1,0 +1,95 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      gradle-args:
+        description: Gradle tasks and flags to run
+        required: true
+        type: string
+      sign:
+        description: Decode and use the store keystore
+        required: false
+        type: boolean
+        default: false
+      artifact-name:
+        description: If set, upload the build outputs as an artifact with this name
+        required: false
+        type: string
+        default: ""
+      artifact-path:
+        description: Path uploaded when artifact-name is set
+        required: false
+        type: string
+        default: ""
+    secrets:
+      KEYSTORE_BASE64:
+        required: false
+      KEYPROPERTIES_BASE64:
+        required: false
+      KEYSTORE_PASSWORD:
+        required: false
+      KEY_PASSWORD:
+        required: false
+    outputs:
+      version-code:
+        description: versionCode read from app/build.gradle.kts
+        value: ${{ jobs.build.outputs.version-code }}
+
+permissions:
+  contents: read
+
+env:
+  NIX_CONFIG: experimental-features = nix-command flakes
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    outputs:
+      version-code: ${{ steps.version.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: nix-v2-
+          gc-max-store-size-linux: 6G
+      - uses: actions/cache@v6
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+      - name: Decode signing material
+        if: inputs.sign
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYPROPERTIES_BASE64: ${{ secrets.KEYPROPERTIES_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
+          test -n "$alias" || { echo "no keyAlias in KEYPROPERTIES_BASE64" >&2; exit 1; }
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+      - name: Build
+        env:
+          RELEASE_KEYSTORE: ${{ inputs.sign && format('{0}/release.keystore', runner.temp) || '' }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ steps.signing.outputs.alias }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: nix develop --command gradle ${{ inputs.gradle-args }}
+      - name: Remove signing keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"
+      - name: Read version code
+        id: version
+        run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+      - name: Upload build outputs
+        if: inputs.artifact-name != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}

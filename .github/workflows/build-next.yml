@@ -7,33 +7,12 @@ on:
 permissions:
   contents: read
 
-env:
-  NIX_CONFIG: experimental-features = nix-command flakes
-
 jobs:
   build:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
-        with:
-          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: nix-v2-
-          gc-max-store-size-linux: 6G
-      - name: Build next builds
-        run: nix develop --command gradle :app:assembleDebug :app:assembleNext --no-daemon
-      - name: Collect next builds
-        run: |
-          cp app/build/outputs/apk/debug/app-debug.apk subtracks-next-debug.apk
-          cp app/build/outputs/apk/next/app-next.apk subtracks-next.apk
-      - name: Upload next builds
-        uses: actions/upload-artifact@v7
-        with:
-          name: subtracks-next
-          path: |
-            subtracks-next-debug.apk
-            subtracks-next.apk
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+    with:
+      gradle-args: ":app:assembleDebug :app:assembleNext --no-daemon"
+      artifact-name: subtracks-next
+      artifact-path: app/build/outputs/apk
