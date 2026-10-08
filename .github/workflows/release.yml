@@ -90,9 +90,10 @@ jobs:
         id: checksums
         run: |
           cp dist/apk/release/app-release.apk subtracks.apk
-          sha256sum subtracks.apk > SHA256SUMS
+          cp dist/bundle/release/app-release.aab subtracks.aab
+          sha256sum subtracks.apk subtracks.aab > SHA256SUMS
           echo "Artifact SHA-256:"
-          sha256sum dist/apk/release/app-release.apk dist/bundle/release/app-release.aab
+          sha256sum subtracks.apk subtracks.aab
           echo "APK signature:"
           certs=$(nix develop --command bash -c '"$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs subtracks.apk')
           printf '%s\n' "$certs"
@@ -105,11 +106,13 @@ jobs:
             echo
             echo '---'
             echo
-            echo "APK SHA-256: \`$(cut -d ' ' -f1 SHA256SUMS)\`"
+            echo "APK SHA-256: \`$(grep 'subtracks\.apk$' SHA256SUMS | cut -d ' ' -f1)\`"
+            echo
+            echo "AAB SHA-256: \`$(grep 'subtracks\.aab$' SHA256SUMS | cut -d ' ' -f1)\`"
             echo
             echo "Signing certificate SHA-256: \`${{ steps.checksums.outputs.fingerprint }}\`"
             echo
-            echo 'The signing certificate is attached as `release-certificate.pem`.'
+            echo 'The signing certificate is attached as `release-certificate.pem`. The `.aab` is the exact bundle uploaded to Google Play; the `.apk` is the universal APK for sideloading.'
           } > release-notes.md
       - name: Create GitHub release
         env:
@@ -119,4 +122,4 @@ jobs:
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" subtracks.apk SHA256SUMS dist/release-certificate.pem "${args[@]}"
+          gh release create "$GITHUB_REF_NAME" subtracks.apk subtracks.aab SHA256SUMS dist/release-certificate.pem "${args[@]}"

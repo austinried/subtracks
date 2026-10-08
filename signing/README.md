@@ -2,8 +2,8 @@
 
 subtracks ships through four channels:
 
-- **GitHub releases** — the APK is signed with the release key. Its public
-  certificate is committed here as
+- **GitHub releases** — the APK and the AAB are signed with the release key. The
+  public certificate is committed here as
   [`release-certificate.pem`](release-certificate.pem) and attached to each
   release, along with a `SHA256SUMS`.
 - **Google Play** — uses Play App Signing, so Google re-signs the app it
@@ -42,16 +42,20 @@ The APK is signed with the release key. Certificate SHA-256:
 02:DA:2C:B7:B8:21:4E:53:BD:BF:B4:55:69:8D:CB:96:52:22:F9:1C:95:4B:52:10:AE:AC:96:FE:32:9C:8F:01
 ```
 
-Each release attaches the APK, the checksums and the certificate (committed here
-as [`release-certificate.pem`](release-certificate.pem)):
+Each release attaches the APK, the AAB, the checksums and the certificate
+(committed here as [`release-certificate.pem`](release-certificate.pem)):
 
 ```sh
 sha256sum -c SHA256SUMS
 apksigner verify --print-certs subtracks.apk              # compare with the .pem
+keytool -printcert -jarfile subtracks.aab                 # the AAB
 keytool -printcert -file release-certificate.pem          # prints its SHA-256
 ```
 
-The signing certificate SHA-256 is also listed in the release notes.
+The `.aab` is the exact bundle uploaded to Google Play (install it by generating
+device APKs with [bundletool](https://github.com/google/bundletool)); the `.apk`
+is the universal APK for sideloading. The signing certificate SHA-256 is also
+listed in the release notes.
 
 ## Google Play
 
