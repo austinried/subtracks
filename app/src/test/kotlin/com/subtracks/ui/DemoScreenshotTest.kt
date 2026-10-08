@@ -72,7 +72,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
 
 /**
  * Records the store screenshots from a real sync of the public Navidrome demo library. It is not run
@@ -269,6 +271,17 @@ class DemoScreenshotTest {
             composeRule.waitForIdle()
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/demo/$file")
+        reencodeOpaqueRgb(File("src/test/screenshots/demo/$file"))
+    }
+
+    private fun reencodeOpaqueRgb(file: File) {
+        val decoded = ImageIO.read(file)
+        val rgb = BufferedImage(decoded.width, decoded.height, BufferedImage.TYPE_INT_RGB)
+        rgb.createGraphics().run {
+            drawImage(decoded, 0, 0, null)
+            dispose()
+        }
+        ImageIO.write(rgb, "png", file)
     }
 
     @Composable
