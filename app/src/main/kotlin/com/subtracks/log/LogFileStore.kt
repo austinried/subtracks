@@ -10,15 +10,6 @@ import java.util.zip.ZipOutputStream
 
 enum class LogLevel { VERBOSE, DEBUG, INFO, WARN, ERROR }
 
-fun interface LogSink {
-    fun log(
-        level: LogLevel,
-        tag: String,
-        message: String,
-        throwable: Throwable?,
-    )
-}
-
 class LogFileStore(
     private val rootDir: File,
     private val minLevel: LogLevel,
@@ -31,7 +22,6 @@ class LogFileStore(
         }
     private val lock = Any()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    private val stampFormat = SimpleDateFormat("yyyy-MM-dd-HHmmss-SSS", Locale.US)
     private val lineFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private var current = currentFile()
 
@@ -42,7 +32,9 @@ class LogFileStore(
         throwable: Throwable?,
     ) {
         if (level.ordinal < minLevel.ordinal) return
-        executor.execute { synchronized(lock) { append(level, tag, message, throwable) } }
+        runCatching {
+            executor.execute { runCatching { synchronized(lock) { append(level, tag, message, throwable) } } }
+        }
     }
 
     fun writeImmediately(
@@ -52,11 +44,15 @@ class LogFileStore(
         throwable: Throwable?,
     ) {
         if (level.ordinal < minLevel.ordinal) return
-        synchronized(lock) { append(level, tag, message, throwable) }
+        runCatching { synchronized(lock) { append(level, tag, message, throwable) } }
     }
 
     fun flush() {
-        executor.submit {}.get()
+        runCatching { executor.submit {}.get() }
+    }
+
+    fun shutdown() {
+        executor.shutdownNow()
     }
 
     fun files(): List<File> =
@@ -65,20 +61,22 @@ class LogFileStore(
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
 
-    fun exportZip(destDir: File): File? {
-        val logs = files()
-        if (logs.isEmpty()) return null
-        destDir.mkdirs()
-        val zip = File(destDir, "subtracks-logs-${stampFormat.format(Date())}.zip")
-        ZipOutputStream(zip.outputStream().buffered()).use { out ->
-            logs.forEach { log ->
-                out.putNextEntry(ZipEntry(log.name))
-                log.inputStream().use { it.copyTo(out) }
-                out.closeEntry()
+    fun exportZip(destDir: File): File? =
+        synchronized(lock) {
+            val logs = files()
+            if (logs.isEmpty()) return null
+            destDir.mkdirs()
+            val zip = File(destDir, "subtracks-logs-${System.currentTimeMillis()}.zip")
+            ZipOutputStream(zip.outputStream().buffered()).use { out ->
+                logs.forEach { log ->
+                    if (!log.isFile) return@forEach
+                    out.putNextEntry(ZipEntry(log.name))
+                    log.inputStream().use { it.copyTo(out) }
+                    out.closeEntry()
+                }
             }
+            zip
         }
-        return zip
-    }
 
     private fun append(
         level: LogLevel,

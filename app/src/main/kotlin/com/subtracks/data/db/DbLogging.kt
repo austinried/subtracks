@@ -6,6 +6,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.SQLiteStatement
 import com.subtracks.log.Log
+import kotlinx.coroutines.CancellationException
 
 data class SqlExecution(
     val sql: String,
@@ -102,6 +103,8 @@ class LoggedMigration(
         val start = System.nanoTime()
         try {
             delegate.migrate(connection)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (failure: Throwable) {
             Log.e("sql", "migration $label failed after ${(System.nanoTime() - start) / 1_000_000}ms", failure)
             throw failure

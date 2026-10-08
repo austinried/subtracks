@@ -28,15 +28,11 @@ object Log {
         appContext = app
         consoleLevel = if (BuildConfig.DEBUG) LogLevel.VERBOSE else LogLevel.INFO
         val fileLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.INFO
+        fileStore?.shutdown()
         fileStore = LogFileStore(File(app.filesDir, "logs"), fileLevel)
         installCrashHandler()
         i("app", "started ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) on Android ${Build.VERSION.SDK_INT} ${Build.MODEL}")
     }
-
-    fun v(
-        tag: String,
-        message: String,
-    ) = log(LogLevel.VERBOSE, tag, message, null)
 
     fun d(
         tag: String,
@@ -59,8 +55,6 @@ object Log {
         message: String,
         throwable: Throwable? = null,
     ) = log(LogLevel.ERROR, tag, message, throwable)
-
-    fun files(): List<File> = fileStore?.files().orEmpty()
 
     fun exportZip(): File? {
         val store = fileStore ?: return null
@@ -109,7 +103,8 @@ object Log {
             return
         }
         if (!isSlowQuery(execution, SLOW_QUERY_MS)) return
-        w("sql", "slow ${execution.durationMillis.roundToLong()}ms rows=${execution.rows}: ${shortSql(execution.sql)}")
+        val rows = if (isReadStatement(execution.sql)) " rows=${execution.rows}" else ""
+        w("sql", "slow ${execution.durationMillis.roundToLong()}ms$rows: ${shortSql(execution.sql)}")
     }
 
     private fun log(
@@ -120,7 +115,12 @@ object Log {
     ) {
         val redacted = redactLogs(message)
         if (level.ordinal >= consoleLevel.ordinal) {
-            val text = if (throwable != null) "$redacted\n${AndroidLog.getStackTraceString(throwable)}" else redacted
+            val text =
+                if (throwable != null) {
+                    "$redacted\n${redactLogs(AndroidLog.getStackTraceString(throwable))}"
+                } else {
+                    redacted
+                }
             AndroidLog.println(priority(level), tag.take(23), text)
         }
         fileStore?.write(level, tag, redacted, throwable)
@@ -151,6 +151,7 @@ object Log {
 }
 
 private val DATA_KEYWORDS = setOf("SELECT", "INSERT", "UPDATE", "DELETE", "WITH", "REPLACE")
+private val READ_KEYWORDS = setOf("SELECT", "WITH")
 private const val SQL_INTERNAL = "room_table_modification_log"
 
 internal fun isDataStatement(sql: String): Boolean {
@@ -158,6 +159,8 @@ internal fun isDataStatement(sql: String): Boolean {
     if (normalized.contains(SQL_INTERNAL)) return false
     return normalized.takeWhile { !it.isWhitespace() }.uppercase() in DATA_KEYWORDS
 }
+
+internal fun isReadStatement(sql: String): Boolean = sql.trimStart().takeWhile { !it.isWhitespace() }.uppercase() in READ_KEYWORDS
 
 internal fun isSlowQuery(
     execution: SqlExecution,

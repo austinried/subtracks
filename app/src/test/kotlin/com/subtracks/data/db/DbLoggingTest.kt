@@ -2,11 +2,13 @@ package com.subtracks.data.db
 
 import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -21,8 +23,24 @@ class DbLoggingTest {
 
     @Test
     fun forwardsConnectionPoolFlag() {
-        val delegate = BundledSQLiteDriver()
-        assertEquals(delegate.hasConnectionPool, LoggingSQLiteDriver(delegate) {}.hasConnectionPool)
+        assertTrue(LoggingSQLiteDriver(FakeDriver(hasConnectionPool = true)) {}.hasConnectionPool)
+        assertFalse(LoggingSQLiteDriver(FakeDriver(hasConnectionPool = false)) {}.hasConnectionPool)
+    }
+
+    @Test
+    fun recordsOneExecutionPerBatchedWriteRow() {
+        driver().open(":memory:").use { connection ->
+            connection.prepare("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)").use { it.step() }
+            connection.prepare("INSERT INTO t (name) VALUES (?)").use { statement ->
+                repeat(3) { index ->
+                    statement.bindText(1, "row$index")
+                    statement.step()
+                    statement.reset()
+                    statement.clearBindings()
+                }
+            }
+        }
+        assertEquals(3, executions.count { it.sql.startsWith("INSERT") })
     }
 
     @Test
@@ -104,4 +122,10 @@ class DbLoggingTest {
                 assertTrue(runCatching { migration.migrate(connection) }.isFailure)
             }
         }
+}
+
+private class FakeDriver(
+    override val hasConnectionPool: Boolean,
+) : SQLiteDriver {
+    override fun open(fileName: String): SQLiteConnection = error("open should not be called")
 }

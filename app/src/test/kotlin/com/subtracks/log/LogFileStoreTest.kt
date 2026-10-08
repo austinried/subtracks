@@ -60,6 +60,22 @@ class LogFileStoreTest {
     }
 
     @Test
+    fun redactsCredentialsInThrowable() {
+        val store = LogFileStore(root, LogLevel.VERBOSE)
+        store.write(
+            LogLevel.ERROR,
+            "http",
+            "failed",
+            IllegalStateException("GET http://alice:secret@host/x?u=bob&p=hunter2 failed"),
+        )
+        store.flush()
+        val text = store.files().single().readText()
+        assertTrue(text, text.contains("REDACTED@host"))
+        assertFalse(text, text.contains("secret"))
+        assertFalse(text, text.contains("hunter2"))
+    }
+
+    @Test
     fun dropsBelowMinimumLevel() {
         val store = LogFileStore(root, LogLevel.WARN)
         store.write(LogLevel.INFO, "x", "quiet", null)
@@ -75,7 +91,7 @@ class LogFileStoreTest {
         val store = LogFileStore(root, LogLevel.VERBOSE, maxFileBytes = 1)
         repeat(4) { store.write(LogLevel.INFO, "x", "line $it", null) }
         store.flush()
-        assertTrue(store.files().size >= 4)
+        assertEquals(4, store.files().size)
     }
 
     @Test
@@ -125,6 +141,13 @@ class LogFileStoreTest {
         assertTrue(isDataStatement("  SELECT 1"))
         assertFalse(isDataStatement("PRAGMA user_version"))
         assertFalse(isDataStatement("END TRANSACTION"))
+    }
+
+    @Test
+    fun classifiesReadStatements() {
+        assertTrue(isReadStatement("select * from songs"))
+        assertTrue(isReadStatement("WITH x AS (SELECT 1) SELECT * FROM x"))
+        assertFalse(isReadStatement("INSERT INTO t VALUES (1)"))
     }
 
     private fun execution(

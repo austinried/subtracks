@@ -129,12 +129,19 @@ fun SettingsRoute(
         onOpenLicenses = onOpenLicenses,
         onShareLogs = {
             scope.launch {
-                val zip = withContext(Dispatchers.IO) { Log.exportZip() }
-                if (zip != null) {
-                    Log.share(context, zip)
-                } else {
-                    Toast.makeText(context, R.string.settings_about_share_logs_empty, Toast.LENGTH_SHORT).show()
-                }
+                val result =
+                    runCatching {
+                        val zip = withContext(Dispatchers.IO) { Log.exportZip() }
+                        if (zip != null) Log.share(context, zip)
+                        zip
+                    }
+                val message =
+                    when {
+                        result.isFailure -> R.string.settings_about_share_logs_failed
+                        result.getOrNull() == null -> R.string.settings_about_share_logs_empty
+                        else -> null
+                    }
+                message?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
             }
         },
         onBack = onBack,
