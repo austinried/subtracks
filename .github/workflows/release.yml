@@ -29,6 +29,17 @@ jobs:
           keyproperties-base64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
           keystore-password: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
           key-password: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+      - name: Export release certificate
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
+          KEYPROPERTIES_BASE64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+        run: |
+          umask 077
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/keystore"
+          alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
+          nix develop --command keytool -exportcert -rfc -keystore "$RUNNER_TEMP/keystore" -alias "$alias" -storepass "$KEYSTORE_PASSWORD" -file app/build/outputs/release-certificate.pem
+          rm -f "$RUNNER_TEMP/keystore"
       - uses: actions/upload-artifact@v7
         with:
           name: release
@@ -75,14 +86,37 @@ jobs:
       - name: Remove Play service account
         if: always()
         run: rm -f "$RUNNER_TEMP/play.json"
-      - name: Collect release APK
-        run: cp dist/apk/release/app-release.apk subtracks.apk
+      - name: Checksums and signature
+        id: checksums
+        run: |
+          cp dist/apk/release/app-release.apk subtracks.apk
+          sha256sum subtracks.apk > SHA256SUMS
+          echo "Artifact SHA-256:"
+          sha256sum dist/apk/release/app-release.apk dist/bundle/release/app-release.aab
+          echo "APK signature:"
+          certs=$(nix develop --command bash -c '"$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs subtracks.apk')
+          printf '%s\n' "$certs"
+          fingerprint=$(printf '%s\n' "$certs" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)
+          echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
+      - name: Compose release notes
+        run: |
+          {
+            cat "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
+            echo
+            echo '---'
+            echo
+            echo "APK SHA-256: \`$(cut -d ' ' -f1 SHA256SUMS)\`"
+            echo
+            echo "Signing certificate SHA-256: \`${{ steps.checksums.outputs.fingerprint }}\`"
+            echo
+            echo 'The signing certificate is attached as `release-certificate.pem`.'
+          } > release-notes.md
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt")
+          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md)
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" subtracks.apk "${args[@]}"
+          gh release create "$GITHUB_REF_NAME" subtracks.apk SHA256SUMS dist/release-certificate.pem "${args[@]}"

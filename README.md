@@ -26,6 +26,10 @@ subtracks is an open source Android client for [Subsonic-compatible](http://www.
   <a href="https://github.com/austinried/subtracks/releases/"><img src=".assets/github-badge.png" width="250"/></a>
 </div>
 
+## Verifying releases
+
+APKs are signed. Every GitHub release attaches `SHA256SUMS` and the signing certificate (`release-certificate.pem`); the `next` build key is committed. See [signing/README.md](signing/README.md) for the fingerprints and the commands to verify a download.
+
 ## Features
 
 - **Large Libraries:** Built for very large libraries, from syncing the whole collection to playing playlists with thousands of tracks.

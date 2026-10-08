@@ -20,6 +20,8 @@ jobs:
       - uses: ./.github/actions/build
         with:
           gradle-args: ":app:assembleDebug :app:assembleNext --no-daemon"
+      - name: Checksums
+        run: sha256sum app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/next/app-next.apk
       - uses: actions/upload-artifact@v7
         with:
           name: subtracks-next
