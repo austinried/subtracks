@@ -1,10 +1,14 @@
 # Verifying a subtracks download
 
-subtracks ships through three channels, each with its own signer:
+subtracks ships through four channels:
 
-- **GitHub releases and Google Play** — signed with the release key. Every GitHub
-  release attaches `subtracks.apk`, a `SHA256SUMS` file and the public certificate
-  `release-certificate.pem`.
+- **GitHub releases** — the APK is signed with the release key. Every release
+  attaches the public certificate `release-certificate.pem` and a `SHA256SUMS`.
+- **Google Play** — uses Play App Signing, so Google re-signs the app it
+  delivers. The release key is only the *upload* key there: it signs the AAB we
+  send to Play, not the APK users install. The installed app verifies against
+  Google's app signing certificate (Play Console → App integrity), and the upload
+  key only proves the AAB we uploaded.
 - **`next` builds** (the `subtracks-next` artifact from CI) — signed with the
   public debug key committed here as [`next-certificate.pem`](next-certificate.pem).
 - **F-Droid** — re-signed by F-Droid with its own key; see F-Droid's published
@@ -38,3 +42,16 @@ keytool -printcert -file release-certificate.pem          # prints its SHA-256
 ```
 
 The signing certificate SHA-256 is also listed in the release notes.
+
+## Google Play
+
+The AAB we upload is signed with the release (upload) key, and that is what Play
+checks; Google then re-signs the delivered APKs with its own app signing key. So
+a Play-installed app is verified against Play's app signing certificate (shown in
+Play Console → App integrity), not `release-certificate.pem`.
+
+To check the AAB that was sent:
+
+```sh
+keytool -printcert -jarfile app-release.aab
+```
