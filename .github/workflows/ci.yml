@@ -10,36 +10,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/build.yml
-    with:
-      gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest --no-configuration-cache --console=plain --no-daemon"
-
-  integration:
+  ci:
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     permissions:
       contents: read
     env:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
-      NIX_CONFIG: experimental-features = nix-command flakes
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+      - uses: ./.github/actions/build
         with:
-          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: nix-v2-
-          gc-max-store-size-linux: 6G
-      - uses: actions/cache@v6
-        with:
-          path: ~/.gradle/caches
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+          gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest --no-configuration-cache --console=plain --no-daemon"
       - uses: actions/cache@v6
         with:
           path: .integration/music

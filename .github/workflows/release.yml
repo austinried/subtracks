@@ -10,19 +10,29 @@ permissions:
 
 jobs:
   build:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
     permissions:
       contents: read
-    uses: ./.github/workflows/build.yml
-    with:
-      gradle-args: ":app:assembleRelease :app:bundleRelease --no-daemon"
-      sign: true
-      artifact-name: release
-      artifact-path: app/build/outputs
-    secrets:
-      KEYSTORE_BASE64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
-      KEYPROPERTIES_BASE64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
-      KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
-      KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+    outputs:
+      version-code: ${{ steps.build.outputs.version-code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - id: build
+        uses: ./.github/actions/build
+        with:
+          gradle-args: ":app:assembleRelease :app:bundleRelease --no-daemon"
+          sign: "true"
+          keystore-base64: ${{ secrets.SUBTRACKS_KEYSTORE_BASE64 }}
+          keyproperties-base64: ${{ secrets.SUBTRACKS_KEYPROPERTIES_BASE64 }}
+          keystore-password: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
+          key-password: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: app/build/outputs
 
   publish:
     needs: build
@@ -30,8 +40,6 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
-    env:
-      NIX_CONFIG: experimental-features = nix-command flakes
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,12 +48,7 @@ jobs:
         with:
           name: release
           path: dist
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
-        with:
-          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: nix-v2-
-          gc-max-store-size-linux: 6G
+      - uses: ./.github/actions/nix
       - name: Upload to Google Play
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}

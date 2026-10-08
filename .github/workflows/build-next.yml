@@ -9,10 +9,18 @@ permissions:
 
 jobs:
   build:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
     permissions:
       contents: read
-    uses: ./.github/workflows/build.yml
-    with:
-      gradle-args: ":app:assembleDebug :app:assembleNext --no-daemon"
-      artifact-name: subtracks-next
-      artifact-path: app/build/outputs/apk
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/build
+        with:
+          gradle-args: ":app:assembleDebug :app:assembleNext --no-daemon"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: subtracks-next
+          path: app/build/outputs/apk

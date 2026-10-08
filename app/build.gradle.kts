@@ -87,7 +87,7 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
-        val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE").orNull?.takeIf { it.isNotBlank() }
+        val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE").orNull
         if (keystorePath != null) {
             create("release") {
                 storeFile = file(keystorePath)
