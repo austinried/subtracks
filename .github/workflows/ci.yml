@@ -35,11 +35,18 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: github.ref == 'refs/heads/main'
         with:
-          name: subtracks-nightly
-          path: |
-            subtracks-nightly.apk
-            subtracks-nightly-debug.apk
-            SHA256SUMS
+          path: subtracks-nightly.apk
+          archive: false
+      - uses: actions/upload-artifact@v7
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: subtracks-nightly-debug.apk
+          archive: false
+      - uses: actions/upload-artifact@v7
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: SHA256SUMS
+          archive: false
       - uses: actions/cache@v6
         with:
           path: .integration/music

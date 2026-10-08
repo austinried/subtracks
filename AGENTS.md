@@ -34,7 +34,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 ## CI
 
-- Forgejo Actions, `.forgejo/workflows/ci.yml`, a single `ci` job that runs lint, the unit tests, the debug and nightly assembles and the integration suite (one cache restore/save and Gradle warm-up instead of several); the GitHub copy uploads the debug and nightly APKs as the `subtracks-nightly` artifact on a push to `main`.
+- Forgejo Actions, `.forgejo/workflows/ci.yml`, a single `ci` job that runs lint, the unit tests, the debug and nightly assembles and the integration suite (one cache restore/save and Gradle warm-up instead of several); the GitHub copy uploads the debug and nightly APKs and the checksums as separate artifacts on a push to `main`.
 - Runs on the `nix-docker` runner (the `localhost/nix-ci` image built by the separate `nix-home` repo) inside the devshell, restoring the Nix store via `cache-nix-action` and caching Gradle and the integration test music.
 - The `nix-docker` and `bookworm` runner labels, their images and the runner's networking are defined in the separate `nix-home` repo (`hosts-incus/git-runner.nix`).
 - Pull requests from a fork need approval before the workflow runs.
