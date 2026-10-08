@@ -30,6 +30,7 @@
     <string name="search_input_placeholder">Введіть заголовок/опис</string>
     <string name="settings_about_actions_licenses">Ліцензії</string>
     <string name="settings_about_actions_project_homepage">Головна сторінка проєкту</string>
+    <string name="settings_about_actions_share_logs">Поділитися журналами</string>
     <string name="settings_about_actions_support">Підтримайте розробника</string>
     <string name="settings_about_name">Про застосунок</string>
     <string name="settings_about_version">версія %1$s</string>

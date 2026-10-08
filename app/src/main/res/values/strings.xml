@@ -57,13 +57,12 @@
 
     <string name="settings_about_actions_licenses">Licenses</string>
     <string name="settings_about_actions_project_homepage">Project homepage</string>
-    <string name="settings_about_actions_share_logs">Send logs</string>
-    <string name="settings_about_actions_share_logs_description">Share the recent app logs with the developer</string>
+    <string name="settings_about_actions_share_logs">Share logs</string>
+    <string name="settings_about_actions_support">Support the developer</string>
+    <string name="settings_about_name">About</string>
     <string name="settings_about_share_logs_empty">No logs to send yet</string>
     <string name="settings_about_share_logs_failed">Couldn\'t prepare the logs</string>
     <string name="settings_about_share_logs_subject">Subtracks logs</string>
-    <string name="settings_about_actions_support">Support the developer</string>
-    <string name="settings_about_name">About</string>
     <string name="settings_about_version">Version %1$s</string>
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>

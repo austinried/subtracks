@@ -30,6 +30,7 @@
     <string name="search_input_placeholder">தேடல்</string>
     <string name="settings_about_actions_licenses">உரிமங்கள்</string>
     <string name="settings_about_actions_project_homepage">திட்ட முகப்புப்பக்கம்</string>
+    <string name="settings_about_actions_share_logs">பதிவுகளைப் பகிரவும்</string>
     <string name="settings_about_actions_support">டெவலப்பரை ஆதரிக்கவும்</string>
     <string name="settings_about_name">பற்றி</string>
     <string name="settings_about_version">பதிப்பு %1$s</string>

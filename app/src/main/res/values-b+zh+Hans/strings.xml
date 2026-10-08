@@ -28,6 +28,7 @@
     <string name="search_input_placeholder">搜索</string>
     <string name="settings_about_actions_licenses">许可</string>
     <string name="settings_about_actions_project_homepage">项目地址</string>
+    <string name="settings_about_actions_share_logs">分享日志</string>
     <string name="settings_about_actions_support">支持开发者</string>
     <string name="settings_about_name">关于</string>
     <string name="settings_about_version">版本 %1$s</string>

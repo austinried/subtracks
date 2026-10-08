@@ -28,6 +28,7 @@
     <string name="search_input_placeholder">ค้นหา</string>
     <string name="settings_about_actions_licenses">ใบอนุญาต</string>
     <string name="settings_about_actions_project_homepage">โฮมเพจของโครงการ</string>
+    <string name="settings_about_actions_share_logs">แบ่งปันล็อกไฟล์</string>
     <string name="settings_about_actions_support">ให้การสนับสนุนผู้พัฒนา</string>
     <string name="settings_about_name">เกี่ยวกับ</string>
     <string name="settings_about_version">เวอร์ชั่น %1$s</string>

@@ -32,6 +32,7 @@
     <string name="search_input_placeholder">Поиск</string>
     <string name="settings_about_actions_licenses">Лицензии</string>
     <string name="settings_about_actions_project_homepage">Сайт проекта</string>
+    <string name="settings_about_actions_share_logs">Поделиться журналами</string>
     <string name="settings_about_actions_support">Поддержать разработчика</string>
     <string name="settings_about_name">О Subtracks</string>
     <string name="settings_about_version">версия %1$s</string>

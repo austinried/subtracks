@@ -30,6 +30,7 @@
     <string name="search_input_placeholder">Søk</string>
     <string name="settings_about_actions_licenses">Lisenser</string>
     <string name="settings_about_actions_project_homepage">Prosjekthjemmeside</string>
+    <string name="settings_about_actions_share_logs">Dele logger</string>
     <string name="settings_about_actions_support">Støtt utvikleren</string>
     <string name="settings_about_name">Om</string>
     <string name="settings_about_version">versjon %1$s</string>

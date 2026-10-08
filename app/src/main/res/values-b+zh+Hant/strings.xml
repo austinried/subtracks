@@ -28,6 +28,7 @@
     <string name="search_input_placeholder">搜尋</string>
     <string name="settings_about_actions_licenses">許可</string>
     <string name="settings_about_actions_project_homepage">專案首頁</string>
+    <string name="settings_about_actions_share_logs">分享日誌</string>
     <string name="settings_about_actions_support">支援開發者</string>
     <string name="settings_about_name">關於</string>
     <string name="settings_about_version">版本 %1$s</string>

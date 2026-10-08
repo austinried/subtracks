@@ -30,6 +30,7 @@
     <string name="search_input_placeholder">Ricerca</string>
     <string name="settings_about_actions_licenses">Licenze</string>
     <string name="settings_about_actions_project_homepage">Pagina principale del progetto</string>
+    <string name="settings_about_actions_share_logs">Condividi i log</string>
     <string name="settings_about_actions_support">Sostieni lo sviluppatore</string>
     <string name="settings_about_name">Informazioni</string>
     <string name="settings_about_version">versione %1$s</string>

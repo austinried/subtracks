@@ -395,7 +395,6 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_share_logs)) },
-                    supportingContent = { Text(stringResource(R.string.settings_about_actions_share_logs_description)) },
                     leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onShareLogs),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
