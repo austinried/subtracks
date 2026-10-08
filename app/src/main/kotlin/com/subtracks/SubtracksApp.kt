@@ -14,7 +14,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
 class SubtracksApp : Application() {
-    private val http = OkHttpClient()
+    private val http = OkHttpClient.Builder().addInterceptor(UserAgent.interceptor()).build()
 
     @OptIn(DelicateCoilApi::class)
     override fun onCreate() {

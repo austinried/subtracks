@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.os.Environment
 import androidx.core.net.toUri
+import com.subtracks.UserAgent
 import com.subtracks.data.model.DownloadError
 
 class SystemDownloadEngine(
@@ -16,6 +17,7 @@ class SystemDownloadEngine(
                 .setTitle(request.title)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MUSIC, request.path)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
+                .addRequestHeader("User-Agent", UserAgent.value)
                 // Wi-Fi only unless the preference allows a metered network, and roaming counts as
                 // one of those; the platform otherwise permits it by default.
                 .setAllowedOverMetered(request.allowMetered)

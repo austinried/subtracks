@@ -20,7 +20,6 @@ class SubsonicClient(
     private val password: String,
     useTokenAuth: Boolean,
     private val http: OkHttpClient,
-    private val userAgent: String = "subtracks/android",
     private val onTokenAuthUnsupported: () -> Unit = {},
 ) {
     @Volatile
@@ -76,7 +75,6 @@ class SubsonicClient(
             Request
                 .Builder()
                 .url(uri(method, params))
-                .header("User-Agent", userAgent)
                 .build()
         http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {

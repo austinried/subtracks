@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.subtracks.MainActivity
 import com.subtracks.R
+import com.subtracks.UserAgent
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.StarType
@@ -104,7 +105,9 @@ class PlaybackService : MediaSessionService() {
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(this)
                         .setEnableClippingInMediaPeriod(true)
-                        .setDataSourceFactory(mediaDataSourceFactory(this, OkHttpDataSource.Factory(streamingClient()))),
+                        .setDataSourceFactory(
+                            mediaDataSourceFactory(this, OkHttpDataSource.Factory(streamingClient()).setUserAgent(UserAgent.value)),
+                        ),
                 ).build()
         exoPlayer.addListener(
             object : Player.Listener {
