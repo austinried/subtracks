@@ -96,7 +96,11 @@ object Log {
                 }
                 response
             } catch (failure: IOException) {
-                w("http", "${request.method} ${request.url} failed", failure)
+                if (chain.call().isCanceled()) {
+                    v("http", "${request.method} ${request.url} cancelled")
+                } else {
+                    w("http", "${request.method} ${request.url} failed", failure)
+                }
                 throw failure
             }
         }
