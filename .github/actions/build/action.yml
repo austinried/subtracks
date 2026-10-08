@@ -1,0 +1,73 @@
+name: Build
+description: Set up Nix, optionally sign, run Gradle and report the version code
+
+inputs:
+  gradle-args:
+    description: Gradle tasks and flags to run
+    required: true
+  sign:
+    description: Decode and use the store keystore when "true"
+    required: false
+    default: "false"
+  keystore-base64:
+    description: Base64 of the release keystore
+    required: false
+    default: ""
+  keyproperties-base64:
+    description: Base64 of the key.properties holding the key alias
+    required: false
+    default: ""
+  keystore-password:
+    description: Keystore (store) password
+    required: false
+    default: ""
+  key-password:
+    description: Signing key password
+    required: false
+    default: ""
+
+outputs:
+  version-code:
+    description: versionCode read from app/build.gradle.kts
+    value: ${{ steps.version.outputs.code }}
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/nix
+    - uses: actions/cache@v6
+      with:
+        path: ~/.gradle/caches
+        key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: gradle-
+    - id: signing
+      if: inputs.sign == 'true'
+      shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
+        KEYPROPERTIES_BASE64: ${{ inputs.keyproperties-base64 }}
+      run: |
+        echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+        alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
+        test -n "$alias" || { echo "no keyAlias in keyproperties" >&2; exit 1; }
+        echo "alias=$alias" >> "$GITHUB_OUTPUT"
+    - shell: bash
+      env:
+        SIGN: ${{ inputs.sign }}
+        KEYSTORE_PASSWORD: ${{ inputs.keystore-password }}
+        KEY_ALIAS: ${{ steps.signing.outputs.alias }}
+        KEY_PASSWORD: ${{ inputs.key-password }}
+      run: |
+        if [ "$SIGN" = "true" ]; then
+          export RELEASE_KEYSTORE="$RUNNER_TEMP/release.keystore"
+          export RELEASE_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD"
+          export RELEASE_KEY_ALIAS="$KEY_ALIAS"
+          export RELEASE_KEY_PASSWORD="$KEY_PASSWORD"
+        fi
+        nix develop --command gradle ${{ inputs.gradle-args }}
+    - if: always()
+      shell: bash
+      run: rm -f "$RUNNER_TEMP/release.keystore"
+    - id: version
+      shell: bash
+      run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
