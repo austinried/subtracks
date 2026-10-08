@@ -3,7 +3,7 @@
 subtracks ships through four channels:
 
 - **GitHub releases** — the APK and the AAB are signed with the release key. The public certificate is committed here as [`release-certificate.pem`](release-certificate.pem) and attached to each release, along with a `SHA256SUMS`.
-- **Google Play** — uses Play App Signing, so Google re-signs the app it delivers. The release key is only the *upload* key there: it signs the AAB we send to Play, not the APK users install. The installed app verifies against Google's app signing certificate (Play Console → App integrity), and the upload key only proves the AAB we uploaded.
+- **Google Play** — uses Play App Signing, so Google re-signs the app it delivers. The release key is only the *upload* key there: it signs the AAB we send to Play, not the APK users install. The installed app is signed by Google's app signing key, and the upload key only proves the AAB we uploaded.
 - **F-Droid** — re-signed by F-Droid with its own key; see [F-Droid's signing keys](https://f-droid.org/docs/Release_Channels_and_Signing_Keys/).
 - **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed at [`app/debug.keystore`](../app/debug.keystore), whose certificate is [`nightly-certificate.pem`](nightly-certificate.pem).
 
@@ -12,7 +12,7 @@ subtracks ships through four channels:
 The APK and the AAB are signed with the release key. Certificate SHA-256:
 
 ```
-# keytool -printcert, and Play Console → App integrity (upload key)
+# keytool -printcert
 02:DA:2C:B7:B8:21:4E:53:BD:BF:B4:55:69:8D:CB:96:52:22:F9:1C:95:4B:52:10:AE:AC:96:FE:32:9C:8F:01
 # apksigner verify --print-certs
 02da2cb7b8214e53bdbfb455698dcb965222f91c954b5210aeac96fe329c8f01
@@ -31,7 +31,7 @@ The `.aab` is the exact bundle uploaded to Google Play (install it by generating
 
 ## Google Play
 
-The AAB we upload is signed with the release (upload) key, and that is what Play checks; Google then re-signs the delivered APKs with its own app signing key. So a Play-installed app is verified against Play's app signing certificate (shown in Play Console → App integrity), not `release-certificate.pem`.
+The AAB we upload is signed with the release (upload) key, and that is what Play checks; Google then re-signs the delivered APKs with its own app signing key. So a Play-installed app is signed by Google's key, not `release-certificate.pem`.
 
 To check the AAB that was sent:
 
