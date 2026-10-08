@@ -41,7 +41,7 @@ keytool -printcert -jarfile app-release.aab
 
 ## `nightly` builds
 
-The signing key is the committed [`app/debug.keystore`](../app/debug.keystore) (a public key: alias `androiddebugkey`, password `android`). Certificate SHA-256:
+The signing key is the committed [`app/debug.keystore`](../app/debug.keystore) (a public key: alias `androiddebugkey`, password `android`). The `subtracks-nightly` artifact contains `subtracks-nightly.apk` (minified) and `subtracks-nightly-debug.apk` (debuggable), both `com.subtracks.nightly`. Certificate SHA-256:
 
 ```
 # keytool format

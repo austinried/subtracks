@@ -1,5 +1,5 @@
 {
-  "uniqueId": "com.subtracks:next",
+  "uniqueId": "com.subtracks",
   "name": "Subtracks",
   "description": "Subtracks itself, a client for Subsonic-compatible servers.",
   "website": "https://github.com/austinried/subtracks",

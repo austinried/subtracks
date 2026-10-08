@@ -66,6 +66,7 @@ class MetadataConstraintsTest {
                 RGBA_COLOR_TYPE,
                 image.colorType,
             )
+            assertTrue("${file.path} must be an 8-bit PNG; bitDepth ${image.bitDepth}", image.bitDepth == 8)
             assertTrue("${file.path} must be at most 1 MiB", file.length() <= 1024 * 1024)
         }
     }
@@ -119,6 +120,8 @@ class MetadataConstraintsTest {
                     RGB_COLOR_TYPE,
                     image.colorType,
                 )
+                assertTrue("${file.path} must be an 8-bit PNG; bitDepth ${image.bitDepth}", image.bitDepth == 8)
+                assertTrue("${file.path} must not carry a tRNS (transparency) chunk", !image.hasTrns)
             }
 
             ImageFormat.JPEG -> {
@@ -156,6 +159,8 @@ class MetadataConstraintsTest {
         val width: Int,
         val height: Int,
         val colorType: Int?,
+        val bitDepth: Int?,
+        val hasTrns: Boolean,
         val format: ImageFormat,
     )
 
@@ -166,12 +171,33 @@ class MetadataConstraintsTest {
                 width = bytes.beInt(PNG_WIDTH_OFFSET),
                 height = bytes.beInt(PNG_HEIGHT_OFFSET),
                 colorType = bytes[PNG_COLOR_TYPE_OFFSET].toInt() and 0xFF,
+                bitDepth = bytes[PNG_BIT_DEPTH_OFFSET].toInt() and 0xFF,
+                hasTrns = bytes.hasTrnsChunk(),
                 format = ImageFormat.PNG,
             )
         }
         val image = ImageIO.read(file)
         assertTrue("unreadable image ${file.path}", image != null)
-        return ImageInfo(image.width, image.height, colorType = null, format = if (bytes.isJpeg()) ImageFormat.JPEG else ImageFormat.OTHER)
+        return ImageInfo(
+            image.width,
+            image.height,
+            null,
+            null,
+            hasTrns = false,
+            format = if (bytes.isJpeg()) ImageFormat.JPEG else ImageFormat.OTHER,
+        )
+    }
+
+    private fun ByteArray.hasTrnsChunk(): Boolean {
+        var offset = PNG_SIGNATURE_SIZE
+        while (offset + 8 <= size) {
+            val length = beInt(offset)
+            val type = String(this, offset + 4, 4, Charsets.US_ASCII)
+            if (type == "tRNS") return true
+            if (type == "IEND" || length < 0) return false
+            offset += PNG_CHUNK_OVERHEAD + length
+        }
+        return false
     }
 
     private fun ByteArray.isPng(): Boolean =
@@ -208,6 +234,9 @@ class MetadataConstraintsTest {
 
         const val PNG_WIDTH_OFFSET = 16
         const val PNG_HEIGHT_OFFSET = 20
+        const val PNG_BIT_DEPTH_OFFSET = 24
         const val PNG_COLOR_TYPE_OFFSET = 25
+        const val PNG_SIGNATURE_SIZE = 8
+        const val PNG_CHUNK_OVERHEAD = 12
     }
 }

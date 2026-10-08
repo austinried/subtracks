@@ -68,6 +68,8 @@ jobs:
           else
             echo "value=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Check release notes exist
+        run: test -f "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
       - name: Upload to Google Play
         if: steps.stable.outputs.value == 'true'
         env:
@@ -79,9 +81,7 @@ jobs:
             --aab dist/bundle/release/app-release.aab \
             --package_name com.subtracks \
             --track "${{ vars.PLAY_TRACK || 'internal' }}" \
-            --release_status completed \
             --json_key "$RUNNER_TEMP/play.json" \
-            --metadata_path metadata \
             --mapping dist/mapping/release/mapping.txt
       - name: Remove Play service account
         if: always()

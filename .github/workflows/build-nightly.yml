@@ -20,9 +20,15 @@ jobs:
       - uses: ./.github/actions/build
         with:
           gradle-args: ":app:assembleDebug :app:assembleNightly --no-daemon"
+      - name: Collect
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk subtracks-nightly-debug.apk
+          cp app/build/outputs/apk/nightly/app-nightly.apk subtracks-nightly.apk
       - name: Checksums
-        run: sha256sum app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/nightly/app-nightly.apk
+        run: sha256sum subtracks-nightly.apk subtracks-nightly-debug.apk
       - uses: actions/upload-artifact@v7
         with:
           name: subtracks-nightly
-          path: app/build/outputs/apk
+          path: |
+            subtracks-nightly.apk
+            subtracks-nightly-debug.apk
