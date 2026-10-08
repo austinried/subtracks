@@ -12,9 +12,9 @@ subtracks ships through four channels:
 The APK and the AAB are signed with the release key. Certificate SHA-256:
 
 ```
-# keytool -printcert
+# keytool format
 02:DA:2C:B7:B8:21:4E:53:BD:BF:B4:55:69:8D:CB:96:52:22:F9:1C:95:4B:52:10:AE:AC:96:FE:32:9C:8F:01
-# apksigner verify --print-certs
+# apksigner format
 02da2cb7b8214e53bdbfb455698dcb965222f91c954b5210aeac96fe329c8f01
 ```
 
@@ -44,9 +44,9 @@ keytool -printcert -jarfile app-release.aab
 The signing key is the committed [`app/debug.keystore`](../app/debug.keystore) (a public key: alias `androiddebugkey`, password `android`). Certificate SHA-256:
 
 ```
-# keytool -printcert
+# keytool format
 DF:31:3F:18:58:E9:AD:F4:7F:44:65:B2:80:8F:DC:E5:B9:F8:8A:48:35:DC:D0:79:95:19:61:C3:05:05:08:37
-# apksigner verify --print-certs
+# apksigner format
 df313f1858e9adf47f4465b2808fdce5b9f88a4835dcd079951961c305050837
 ```
 
