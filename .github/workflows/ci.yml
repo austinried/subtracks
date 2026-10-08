@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/build
         with:
-          gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest --no-configuration-cache --console=plain --no-daemon"
+          gradle-args: ":app:ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleNightly --no-configuration-cache --console=plain --no-daemon"
       - uses: actions/cache@v6
         with:
           path: .integration/music
