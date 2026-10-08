@@ -30,6 +30,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     androidResources {
@@ -101,6 +102,7 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".nightly"
+            resValue("string", "app_name", "subtracks nightly")
         }
         release {
             isMinifyEnabled = true
@@ -113,6 +115,7 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".nightly"
             signingConfig = signingConfigs.getByName("debug")
+            resValue("string", "app_name", "subtracks nightly")
         }
     }
 }
