@@ -152,10 +152,21 @@ class LogFileStoreTest {
 
     @Test
     fun detectsUpsertConflictErrors() {
-        assertTrue(isUpsertConflict(IllegalStateException("UNIQUE constraint failed: playback_cursor.id")))
-        assertTrue(isUpsertConflict(IllegalStateException("Error code: 1555, message: UNIQUE constraint failed")))
-        assertTrue(isUpsertConflict(IllegalStateException("SQLITE_CONSTRAINT_UNIQUE 2067")))
-        assertFalse(isUpsertConflict(IllegalStateException("no such table: songs")))
+        assertTrue(
+            isUpsertConflict(
+                "INSERT INTO playback_cursor (id) VALUES (?)",
+                IllegalStateException("UNIQUE constraint failed: playback_cursor.id"),
+            ),
+        )
+        assertTrue(
+            isUpsertConflict(
+                "INSERT OR ABORT INTO t VALUES (?)",
+                IllegalStateException("PRIMARY KEY constraint failed"),
+            ),
+        )
+        assertFalse(isUpsertConflict("UPDATE t SET x = 1", IllegalStateException("UNIQUE constraint failed: t.x")))
+        assertFalse(isUpsertConflict("SELECT * FROM t", IllegalStateException("no such table: t")))
+        assertFalse(isUpsertConflict("INSERT INTO t VALUES (?)", IllegalStateException("Error code: 1555")))
     }
 
     private fun execution(

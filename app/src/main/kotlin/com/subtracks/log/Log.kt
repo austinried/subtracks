@@ -108,7 +108,7 @@ object Log {
     fun sql(execution: SqlExecution) {
         val failure = execution.error
         if (failure != null) {
-            if (isUpsertConflict(failure)) {
+            if (isUpsertConflict(execution.sql, failure)) {
                 d("sql", "upsert fallback conflict: ${shortSql(execution.sql)}")
             } else {
                 e("sql", "failed: ${shortSql(execution.sql)}", failure)
@@ -180,16 +180,18 @@ internal fun isSlowQuery(
     thresholdMs: Double,
 ): Boolean = execution.error == null && execution.durationMillis >= thresholdMs && isDataStatement(execution.sql)
 
-// Room's EntityUpsertAdapter implements @Upsert as an INSERT and, on a uniqueness conflict, catches
-// the error and runs an UPDATE instead (EntityUpsertAdapter.checkUniquenessException). That failure
-// is expected control flow, not an error worth alarming about.
+// Room's EntityUpsertAdapter implements @Upsert as an INSERT and treats a uniqueness conflict as the
+// signal to UPDATE instead (EntityUpsertAdapter.checkUniquenessException). Only downgrade a failed
+// INSERT whose error says the conflict was a unique/primary key; anything else stays an ERROR so a
+// genuine failure isn't hidden in release.
 private const val CONSTRAINT_UNIQUE_MESSAGE = "unique constraint failed"
-private const val SQLITE_CONSTRAINT_PRIMARYKEY = "1555"
-private const val SQLITE_CONSTRAINT_UNIQUE = "2067"
+private const val CONSTRAINT_PRIMARY_KEY_MESSAGE = "primary key constraint failed"
 
-internal fun isUpsertConflict(error: Throwable): Boolean {
+internal fun isUpsertConflict(
+    sql: String,
+    error: Throwable,
+): Boolean {
+    if (!sql.trimStart().uppercase().startsWith("INSERT")) return false
     val message = error.message?.lowercase() ?: return false
-    return message.contains(CONSTRAINT_UNIQUE_MESSAGE) ||
-        message.contains(SQLITE_CONSTRAINT_PRIMARYKEY) ||
-        message.contains(SQLITE_CONSTRAINT_UNIQUE)
+    return message.contains(CONSTRAINT_UNIQUE_MESSAGE) || message.contains(CONSTRAINT_PRIMARY_KEY_MESSAGE)
 }

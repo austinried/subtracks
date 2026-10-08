@@ -25,6 +25,10 @@ class LogFileStore(
     private val lineFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private var current = currentFile()
 
+    init {
+        prune()
+    }
+
     fun write(
         level: LogLevel,
         tag: String,
@@ -66,6 +70,7 @@ class LogFileStore(
             val logs = files()
             if (logs.isEmpty()) return null
             destDir.mkdirs()
+            destDir.listFiles()?.forEach { if (it.isFile) it.delete() }
             val zip = File(destDir, "subtracks-logs-${System.currentTimeMillis()}.zip")
             ZipOutputStream(zip.outputStream().buffered()).use { out ->
                 logs.forEach { log ->
@@ -100,9 +105,18 @@ class LogFileStore(
                 append('\n')
             }
         rootDir.mkdirs()
-        if (current.length() >= maxFileBytes) roll()
+        var rolled = false
+        val today = currentFile()
+        if (current.name != today.name) {
+            current = today
+            rolled = true
+        }
+        if (current.length() >= maxFileBytes) {
+            roll()
+            rolled = true
+        }
         current.appendText(redactLogs(text))
-        prune()
+        if (rolled) prune()
     }
 
     private var rollSequence = 0
