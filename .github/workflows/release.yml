@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -20,6 +24,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Check tag matches versionName
+        run: |
+          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          case "$GITHUB_REF_NAME" in
+            "v$version" | "v$version"-*) ;;
+            *)
+              echo "tag $GITHUB_REF_NAME does not match versionName $version" >&2
+              exit 1
+              ;;
+          esac
       - id: build
         uses: ./.github/actions/build
         with:
@@ -70,13 +84,16 @@ jobs:
           fi
       - name: Check release notes exist
         run: test -f "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
-      - name: Upload to Google Play
+      - name: Write Play service account
         if: steps.stable.outputs.value == 'true'
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           umask 077
           printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play.json"
+      - name: Upload to Google Play
+        if: steps.stable.outputs.value == 'true'
+        run: |
           nix develop .#release --command fastlane supply \
             --aab dist/bundle/release/app-release.aab \
             --package_name com.subtracks \
@@ -127,4 +144,4 @@ jobs:
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" subtracks.apk subtracks.aab SHA256SUMS dist/release-certificate.pem "${args[@]}"
+          gh release create "$GITHUB_REF_NAME" subtracks.apk subtracks.aab SHA256SUMS dist/release-certificate.pem dist/mapping/release/mapping.txt "${args[@]}"

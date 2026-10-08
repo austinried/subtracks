@@ -18,7 +18,7 @@ The APK and the AAB are signed with the release key. Certificate SHA-256:
 02da2cb7b8214e53bdbfb455698dcb965222f91c954b5210aeac96fe329c8f01
 ```
 
-Each release attaches the APK, the AAB, the checksums and the certificate (committed here as [`release-certificate.pem`](release-certificate.pem)):
+Each release attaches the APK, the AAB, the checksums, the certificate (committed here as [`release-certificate.pem`](release-certificate.pem)) and the R8 `mapping.txt`:
 
 ```sh
 sha256sum -c SHA256SUMS
