@@ -80,7 +80,7 @@ android {
         .add("src/integrationTest/kotlin")
 
     signingConfigs {
-        // Committed on purpose: a public key for debug and next builds, never for distribution.
+        // Committed on purpose: a public key for debug and nightly builds, never for distribution.
         getByName("debug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
@@ -100,7 +100,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".next"
+            applicationIdSuffix = ".nightly"
         }
         release {
             isMinifyEnabled = true
@@ -109,9 +109,9 @@ android {
             // Release signing when the keystore is supplied (CI); debug elsewhere so local build/install works.
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
-        create("next") {
+        create("nightly") {
             initWith(getByName("release"))
-            applicationIdSuffix = ".next"
+            applicationIdSuffix = ".nightly"
             signingConfig = signingConfigs.getByName("debug")
         }
     }

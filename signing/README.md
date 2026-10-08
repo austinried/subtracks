@@ -9,12 +9,13 @@ subtracks ships through four channels:
   send to Play, not the APK users install. The installed app verifies against
   Google's app signing certificate (Play Console → App integrity), and the upload
   key only proves the AAB we uploaded.
-- **`next` builds** (the `subtracks-next` artifact from CI) — signed with the
-  public debug key committed here as [`next-certificate.pem`](next-certificate.pem).
+- **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with
+  the public debug key committed here as
+  [`nightly-certificate.pem`](nightly-certificate.pem).
 - **F-Droid** — re-signed by F-Droid with its own key; see F-Droid's published
   signing key.
 
-## `next` builds
+## `nightly` builds
 
 Certificate SHA-256:
 
@@ -22,14 +23,14 @@ Certificate SHA-256:
 DF:31:3F:18:58:E9:AD:F4:7F:44:65:B2:80:8F:DC:E5:B9:F8:8A:48:35:DC:D0:79:95:19:61:C3:05:05:08:37
 ```
 
-To check a `next` APK:
+To check a `nightly` APK:
 
 ```sh
-apksigner verify --print-certs subtracks-next.apk
+apksigner verify --print-certs subtracks-nightly.apk
 ```
 
 The `SHA-256 digest` line must equal the fingerprint above (the certificate is
-committed at [`next-certificate.pem`](next-certificate.pem)).
+committed at [`nightly-certificate.pem`](nightly-certificate.pem)).
 
 ## GitHub releases
 

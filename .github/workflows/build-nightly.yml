@@ -1,4 +1,4 @@
-name: Build Next
+name: Build Nightly
 
 on:
   push:
@@ -19,10 +19,10 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/build
         with:
-          gradle-args: ":app:assembleDebug :app:assembleNext --no-daemon"
+          gradle-args: ":app:assembleDebug :app:assembleNightly --no-daemon"
       - name: Checksums
-        run: sha256sum app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/next/app-next.apk
+        run: sha256sum app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/nightly/app-nightly.apk
       - uses: actions/upload-artifact@v7
         with:
-          name: subtracks-next
+          name: subtracks-nightly
           path: app/build/outputs/apk
