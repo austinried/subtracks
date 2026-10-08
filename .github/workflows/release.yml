@@ -49,7 +49,16 @@ jobs:
           name: release
           path: dist
       - uses: ./.github/actions/nix
+      - name: Detect stable tag
+        id: stable
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Upload to Google Play
+        if: steps.stable.outputs.value == 'true'
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
@@ -72,7 +81,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "$GITHUB_REF_NAME" subtracks.apk \
-            --verify-tag \
-            --title "$GITHUB_REF_NAME" \
-            --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
+          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt")
+          if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" subtracks.apk "${args[@]}"

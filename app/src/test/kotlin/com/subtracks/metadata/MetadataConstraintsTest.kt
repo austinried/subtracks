@@ -23,9 +23,21 @@ class MetadataConstraintsTest {
     }
 
     @Test
-    fun iconsAre512OpaqueAlphaPngsWithinOneMegabyte() {
+    fun changelogsFitStoreLimit() {
+        localeFiles("changelogs").forEach { dir ->
+            dir
+                .listFiles()
+                .orEmpty()
+                .filter { it.isFile && it.extension == "txt" }
+                .forEach { assertAtMost(it, CHANGELOG_LIMIT) }
+        }
+    }
+
+    @Test
+    fun iconsAre512AlphaPngsWithinOneMegabyte() {
         localeFiles("images/icon.png").forEach { file ->
             val image = readImage(file)
+            assertEquals("${file.path} must be a PNG", ImageFormat.PNG, image.format)
             assertEquals("${file.path} must be 512x512", 512, image.width)
             assertEquals("${file.path} must be 512x512", 512, image.height)
             assertEquals(
@@ -43,7 +55,7 @@ class MetadataConstraintsTest {
             val image = readImage(file)
             assertEquals("${file.path} must be 1024x500", 1024, image.width)
             assertEquals("${file.path} must be 1024x500", 500, image.height)
-            assertNoAlpha(file, image)
+            assertOpaquePngOrJpeg(file, image)
         }
     }
 
@@ -67,21 +79,31 @@ class MetadataConstraintsTest {
                 assertTrue("${file.path} shortest side $short must be at least 320", short >= 320)
                 assertTrue("${file.path} longest side $long must be at most 3840", long <= 3840)
                 assertTrue("${file.path} aspect ratio exceeds 2:1", long <= 2 * short)
-                assertNoAlpha(file, image)
+                assertOpaquePngOrJpeg(file, image)
             }
         }
     }
 
-    private fun assertNoAlpha(
+    private fun assertOpaquePngOrJpeg(
         file: File,
         image: ImageInfo,
     ) {
-        if (image.isPng) {
-            assertEquals(
-                "${file.path} must be a 24-bit PNG without alpha (colorType $RGB_COLOR_TYPE); colorType ${image.colorType}",
-                RGB_COLOR_TYPE,
-                image.colorType,
-            )
+        when (image.format) {
+            ImageFormat.PNG -> {
+                assertEquals(
+                    "${file.path} must be a 24-bit PNG without alpha (colorType $RGB_COLOR_TYPE); colorType ${image.colorType}",
+                    RGB_COLOR_TYPE,
+                    image.colorType,
+                )
+            }
+
+            ImageFormat.JPEG -> {
+                Unit
+            }
+
+            ImageFormat.OTHER -> {
+                assertTrue("${file.path} must be a PNG or JPEG", false)
+            }
         }
     }
 
@@ -104,11 +126,13 @@ class MetadataConstraintsTest {
         generateSequence(File(".").canonicalFile) { it.parentFile }
             .first { File(it, "settings.gradle.kts").isFile }
 
+    private enum class ImageFormat { PNG, JPEG, OTHER }
+
     private data class ImageInfo(
         val width: Int,
         val height: Int,
         val colorType: Int?,
-        val isPng: Boolean,
+        val format: ImageFormat,
     )
 
     private fun readImage(file: File): ImageInfo {
@@ -118,12 +142,12 @@ class MetadataConstraintsTest {
                 width = bytes.beInt(PNG_WIDTH_OFFSET),
                 height = bytes.beInt(PNG_HEIGHT_OFFSET),
                 colorType = bytes[PNG_COLOR_TYPE_OFFSET].toInt() and 0xFF,
-                isPng = true,
+                format = ImageFormat.PNG,
             )
         }
         val image = ImageIO.read(file)
         assertTrue("unreadable image ${file.path}", image != null)
-        return ImageInfo(image.width, image.height, colorType = null, isPng = false)
+        return ImageInfo(image.width, image.height, colorType = null, format = if (bytes.isJpeg()) ImageFormat.JPEG else ImageFormat.OTHER)
     }
 
     private fun ByteArray.isPng(): Boolean =
@@ -132,6 +156,8 @@ class MetadataConstraintsTest {
             this[1] == 'P'.code.toByte() &&
             this[2] == 'N'.code.toByte() &&
             this[3] == 'G'.code.toByte()
+
+    private fun ByteArray.isJpeg(): Boolean = size > 2 && this[0] == 0xFF.toByte() && this[1] == 0xD8.toByte()
 
     private fun ByteArray.beInt(offset: Int): Int =
         ((this[offset].toInt() and 0xFF) shl 24) or
@@ -148,6 +174,9 @@ class MetadataConstraintsTest {
 
         // Play and F-Droid both allow 4000.
         const val FULL_DESCRIPTION_LIMIT = 4000
+
+        // Play's "What's new" and F-Droid's changelog both allow 500.
+        const val CHANGELOG_LIMIT = 500
 
         const val RGB_COLOR_TYPE = 2
         const val RGBA_COLOR_TYPE = 6

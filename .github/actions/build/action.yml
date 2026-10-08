@@ -47,6 +47,7 @@ runs:
         KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
         KEYPROPERTIES_BASE64: ${{ inputs.keyproperties-base64 }}
       run: |
+        umask 077
         echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
         alias=$(printf '%s' "$KEYPROPERTIES_BASE64" | base64 -d | sed -n 's/^keyAlias=//p' | tr -d '\r')
         test -n "$alias" || { echo "no keyAlias in keyproperties" >&2; exit 1; }
