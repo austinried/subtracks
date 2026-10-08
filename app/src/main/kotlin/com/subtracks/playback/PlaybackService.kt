@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -33,6 +32,7 @@ import com.subtracks.UserAgent
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.StarType
+import com.subtracks.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -186,12 +186,13 @@ class PlaybackService : MediaSessionService() {
     private fun streamingClient(): OkHttpClient =
         OkHttpClient
             .Builder()
+            .addInterceptor(Log.interceptor())
             .addInterceptor { chain ->
                 val started = SystemClock.elapsedRealtime()
                 val response = chain.proceed(chain.request())
                 Log.d(
-                    STREAM_TAG,
-                    "stream range=${chain.request().header("Range")} code=${response.code} " +
+                    "stream",
+                    "range=${chain.request().header("Range")} code=${response.code} " +
                         "contentRange=${response.header("Content-Range")} " +
                         "length=${response.body.contentLength()} in ${SystemClock.elapsedRealtime() - started}ms",
                 )
@@ -211,7 +212,6 @@ class PlaybackService : MediaSessionService() {
     }
 
     private companion object {
-        const val STREAM_TAG = "SubtracksPlayback"
         val STAR_COMMAND = SessionCommand("com.subtracks.STAR", Bundle.EMPTY)
     }
 }

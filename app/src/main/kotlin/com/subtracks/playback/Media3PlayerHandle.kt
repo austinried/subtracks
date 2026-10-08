@@ -1,7 +1,6 @@
 package com.subtracks.playback
 
 import android.os.Bundle
-import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
@@ -16,6 +15,7 @@ import com.subtracks.UiMessage
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.log.Log
 
 class Media3PlayerHandle(
     private val controller: MediaController,
@@ -112,13 +112,13 @@ class Media3PlayerHandle(
     ) = controller.replaceMediaItem(index, toMediaItem(item))
 
     override fun seekToIndex(index: Int) {
-        Log.d(TAG, "seekToIndex($index) playerDuration=${controller.duration} state=${controller.playbackState}")
+        Log.d("playback", "seekToIndex($index) playerDuration=${controller.duration} state=${controller.playbackState}")
         controller.seekTo(index, 0)
     }
 
     override fun seekTo(positionMs: Long) {
         Log.d(
-            TAG,
+            "playback",
             "seekTo(${positionMs}ms) from=${controller.currentPosition} playerDuration=${controller.duration} " +
                 "itemDuration=${currentItem?.durationMs} state=${controller.playbackState}",
         )
@@ -136,7 +136,7 @@ class Media3PlayerHandle(
                     mediaItem: MediaItem?,
                     reason: Int,
                 ) {
-                    Log.d(TAG, "item=${mediaItem?.mediaId}")
+                    Log.d("playback", "item=${mediaItem?.mediaId}")
                     listener.onTransition()
                 }
 
@@ -147,7 +147,7 @@ class Media3PlayerHandle(
 
                 override fun onPlayerError(error: PlaybackException) {
                     Log.w(
-                        TAG,
+                        "playback",
                         "Playback error ${error.errorCodeName} at ${controller.currentPosition}/${controller.duration}",
                         error,
                     )
@@ -156,7 +156,7 @@ class Media3PlayerHandle(
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     Log.d(
-                        TAG,
+                        "playback",
                         "state=$playbackState position=${controller.currentPosition} " +
                             "playerDuration=${controller.duration} itemDuration=${currentItem?.durationMs}",
                     )
@@ -190,10 +190,6 @@ class Media3PlayerHandle(
                     ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
                     ?.getLong(EXTRA_DURATION_MS),
         )
-
-    private companion object {
-        const val TAG = "SubtracksPlayback"
-    }
 }
 
 private const val EXTRA_COVER_ART_ID = "coverArtId"

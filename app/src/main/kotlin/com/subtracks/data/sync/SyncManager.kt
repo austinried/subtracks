@@ -1,6 +1,5 @@
 package com.subtracks.data.sync
 
-import android.util.Log
 import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
@@ -8,6 +7,7 @@ import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.subsonic.SubsonicException
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +68,7 @@ class SyncManager(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
-                Log.w(TAG, "Sync failed", failure)
+                Log.w("sync", "sync failed", failure)
                 val message =
                     when (failure) {
                         is NoServerException -> {
@@ -85,10 +85,6 @@ class SyncManager(
             }
         queueRepository.invalidateLibraryCache()
         _status.value = result
-    }
-
-    private companion object {
-        const val TAG = "SubtracksSync"
     }
 }
 

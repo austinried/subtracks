@@ -158,10 +158,12 @@ val integrationTestClasses =
 
 val demoScreenshotClass = "com.subtracks.ui.DemoScreenshotTest"
 
+val queryTimingClass = "com.subtracks.data.db.QueryTimingMeasurementTest"
+
 tasks.withType<Test>().configureEach {
     if (name.endsWith("UnitTest")) {
         filter {
-            (integrationTestClasses + demoScreenshotClass).forEach { excludeTestsMatching(it) }
+            (integrationTestClasses + demoScreenshotClass + queryTimingClass).forEach { excludeTestsMatching(it) }
         }
     }
     testLogging {
@@ -194,6 +196,20 @@ tasks.register<Test>("demoScreenshots") {
         includeTestsMatching(demoScreenshotClass)
     }
     systemProperty("roborazzi.test.record", "true")
+    outputs.upToDateWhen { false }
+}
+
+tasks.register<Test>("queryTiming") {
+    description = "Measures SQL query timings for the logging threshold (not a CI gate)"
+    group = "verification"
+    val unitTest = tasks.named<Test>("testDebugUnitTest")
+    dependsOn("compileDebugUnitTestKotlin")
+    testClassesDirs = files(provider { unitTest.get().testClassesDirs })
+    classpath = files(provider { unitTest.get().classpath })
+    filter {
+        includeTestsMatching(queryTimingClass)
+    }
+    providers.gradleProperty("measureSongs").orNull?.let { systemProperty("measure.songs", it) }
     outputs.upToDateWhen { false }
 }
 

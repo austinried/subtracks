@@ -362,6 +362,7 @@ class AppScreenshotTest {
                     onAddServer = {},
                     onOpenDownloads = {},
                     onOpenLicenses = {},
+                    onShareLogs = {},
                     onBack = {},
                 )
             }

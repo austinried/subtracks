@@ -67,6 +67,7 @@ class LicensesScreenTest {
                     onAddServer = {},
                     onOpenDownloads = {},
                     onOpenLicenses = { opened = true },
+                    onShareLogs = {},
                     onBack = {},
                 )
             }

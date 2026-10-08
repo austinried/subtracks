@@ -1,6 +1,7 @@
 package com.subtracks.ui.settings
 
 import android.content.res.Resources
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,11 +49,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -62,10 +66,14 @@ import com.subtracks.BuildConfig
 import com.subtracks.R
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
+import com.subtracks.log.Log
 import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.rememberViewportFill
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
@@ -95,6 +103,8 @@ fun SettingsRoute(
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     SettingsScreen(
         sources = sources,
         activeSourceId = activeSourceId,
@@ -117,6 +127,16 @@ fun SettingsRoute(
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onOpenLicenses = onOpenLicenses,
+        onShareLogs = {
+            scope.launch {
+                val zip = withContext(Dispatchers.IO) { Log.exportZip() }
+                if (zip != null) {
+                    Log.share(context, zip)
+                } else {
+                    Toast.makeText(context, R.string.settings_about_share_logs_empty, Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
         onBack = onBack,
         dismissals = dismissals,
     )
@@ -147,6 +167,7 @@ fun SettingsScreen(
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onOpenLicenses: () -> Unit,
+    onShareLogs: () -> Unit,
     onBack: () -> Unit,
     dismissals: Flow<Unit> = emptyFlow(),
 ) {
@@ -361,6 +382,15 @@ fun SettingsScreen(
                         )
                     },
                     modifier = Modifier.clickable { runCatching { uriHandler.openUri(SUPPORT_URL) } },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_actions_share_logs)) },
+                    supportingContent = { Text(stringResource(R.string.settings_about_actions_share_logs_description)) },
+                    leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
+                    modifier = Modifier.clickable(onClick = onShareLogs),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
