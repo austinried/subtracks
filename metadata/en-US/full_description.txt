@@ -1,16 +1,16 @@
 subtracks is an open source Android client for Subsonic-compatible servers, including Navidrome, gonic, LMS, Nextcloud Music and more. It is built natively with Kotlin and Jetpack Compose, and gives you clean, convenient access to your music library in the style of a modern media player.
 
 Features
-- Home screen to browse your library over many categories, genres, and more
-- Album and artist artwork, shown full-resolution in the detail and now playing views
-- Downloads with album, artist and playlist bulk downloads, download quality and a metered-connection toggle
-- Search across albums, artists, playlists and songs, with per-list sort and filter controls
-- Gapless playback, an editable queue you can reorder and jump through, and loop and shuffle modes
-- Up next queue to add items into the currently playing queue without rewriting it
-- Multiple server support with quick switching
-- Stream quality (bitrate and format) settings for Wi-Fi and mobile and automatic switching
-- Scrobbling and starred items, cached while offline and sent back to the server when online
-- Media notification and headset/Bluetooth controls
-- Adaptive theming from the current song's artwork
+- Large Libraries: built for very large libraries, from syncing the whole collection to playing playlists with thousands of tracks.
+- Downloads: song and bulk downloads, with download quality (encoding, bitrate) and metered-connection settings.
+- Offline Mode: stars, scrobbles and play counts queue up while you're offline and sync back to the server when you're online again.
+- Artwork-first: album and artist art everywhere, shown full-resolution in the detail and now playing views.
+- Adaptive Theming: colours drawn from the current song's artwork.
+- Search: fast search across the whole library, with per-list sort and filter controls.
+- Playback: gapless playback, an editable queue you can reorder and jump through, plus loop and shuffle modes.
+- Up Next: add items into the currently playing queue without rewriting it.
+- Multiple Servers: connect several servers and switch between them quickly.
+- Stream Quality: bitrate and format settings for Wi-Fi and mobile, with automatic switching.
+- System Controls: media notification and headset/Bluetooth controls.
 
-The full library is mirrored at sync, so browsing, searching, sorting and filtering work offline. Only media and artwork are fetched on demand, and not even that when they're already downloaded. subtracks is free software (GPL-3.0), has no ads and no telemetry, and uses only free/libre dependencies.
+subtracks is free software (GPL-3.0), with no ads or telemetry.
