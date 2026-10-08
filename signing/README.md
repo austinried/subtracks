@@ -7,6 +7,8 @@ subtracks ships through four channels:
 - **F-Droid** — re-signed by F-Droid with its own key; see [F-Droid's signing keys](https://f-droid.org/docs/Release_Channels_and_Signing_Keys/).
 - **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed at [`app/debug.keystore`](../app/debug.keystore), whose certificate is [`nightly-certificate.pem`](nightly-certificate.pem).
 
+Fingerprints below are written in `keytool`'s colon-separated uppercase form. `apksigner` prints the same digest as lowercase hex with no colons, so compare them ignoring colons and case.
+
 ## GitHub releases
 
 The APK and the AAB are signed with the release key. Certificate SHA-256:
