@@ -57,7 +57,7 @@
 
     <string name="settings_about_actions_licenses">Licenses</string>
     <string name="settings_about_actions_project_homepage">Project homepage</string>
-    <string name="settings_about_actions_support">Support</string>
+    <string name="settings_about_actions_support">Support the developer</string>
     <string name="settings_about_name">About</string>
     <string name="settings_about_version">Version %1$s</string>
     <string name="settings_music_name">Playback</string>

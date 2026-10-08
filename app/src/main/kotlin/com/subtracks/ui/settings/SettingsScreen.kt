@@ -345,7 +345,7 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_project_homepage)) },
                     supportingContent = { Text(PROJECT_HOMEPAGE) },
                     leadingContent = { Icon(Icons.Rounded.Language, contentDescription = null) },
-                    modifier = Modifier.clickable { uriHandler.openUri(PROJECT_HOMEPAGE) },
+                    modifier = Modifier.clickable { runCatching { uriHandler.openUri(PROJECT_HOMEPAGE) } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -360,7 +360,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     },
-                    modifier = Modifier.clickable { uriHandler.openUri(SUPPORT_URL) },
+                    modifier = Modifier.clickable { runCatching { uriHandler.openUri(SUPPORT_URL) } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
