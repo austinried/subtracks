@@ -8,21 +8,20 @@ on:
 permissions:
   contents: write
 
+env:
+  NIX_CONFIG: experimental-features = nix-command flakes
+
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
-          distribution: temurin
-          java-version: "21"
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-      - name: Install platform and build tools
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+          primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: nix-v2-
       - name: Decode signing material
         id: signing
         env:
@@ -39,9 +38,7 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ steps.signing.outputs.alias }}
           RELEASE_KEY_PASSWORD: ${{ secrets.SUBTRACKS_UPLOAD_KEY_PASSWORD }}
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
+        run: nix develop --command gradle :app:assembleRelease :app:bundleRelease --no-daemon
       - name: Read version code
         id: version
         run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
