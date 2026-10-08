@@ -28,7 +28,7 @@
     <string name="search_input_placeholder">검색</string>
     <string name="settings_about_actions_licenses">저작권</string>
     <string name="settings_about_actions_project_homepage">프로젝트 홈페이지</string>
-    <string name="settings_about_actions_support">개발자 지원하기💜</string>
+    <string name="settings_about_actions_support">개발자 지원하기</string>
     <string name="settings_about_name">subtracks에 대하여</string>
     <string name="settings_about_version">버전: %1$s</string>
     <string name="settings_network_name">네트워크</string>

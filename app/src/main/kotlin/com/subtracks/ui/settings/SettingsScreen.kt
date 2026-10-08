@@ -20,11 +20,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -326,6 +328,7 @@ fun SettingsScreen(
                     supportingContent = {
                         Text(stringResource(R.string.settings_about_version, BuildConfig.VERSION_NAME))
                     },
+                    leadingContent = { Icon(Icons.Rounded.Info, contentDescription = null) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -341,9 +344,7 @@ fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_project_homepage)) },
                     supportingContent = { Text(PROJECT_HOMEPAGE) },
-                    trailingContent = {
-                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
-                    },
+                    leadingContent = { Icon(Icons.Rounded.Language, contentDescription = null) },
                     modifier = Modifier.clickable { uriHandler.openUri(PROJECT_HOMEPAGE) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
@@ -352,8 +353,12 @@ fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_support)) },
                     supportingContent = { Text(SUPPORT_URL) },
-                    trailingContent = {
-                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
+                    leadingContent = {
+                        Icon(
+                            Icons.Rounded.Favorite,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
                     },
                     modifier = Modifier.clickable { uriHandler.openUri(SUPPORT_URL) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),

@@ -30,7 +30,7 @@
     <string name="search_input_placeholder">Ara</string>
     <string name="settings_about_actions_licenses">Lisanslar</string>
     <string name="settings_about_actions_project_homepage">Proje Ana Sayfası</string>
-    <string name="settings_about_actions_support">Geliştiriciyi destekleyin 💜</string>
+    <string name="settings_about_actions_support">Geliştiriciyi destekleyin</string>
     <string name="settings_about_name">Hakkında</string>
     <string name="settings_about_version">sürüm %1$s</string>
     <string name="settings_network_name">Ağ</string>

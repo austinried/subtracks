@@ -22,7 +22,7 @@
     <string name="search_input_placeholder">Hledat</string>
     <string name="settings_about_actions_licenses">Licence</string>
     <string name="settings_about_actions_project_homepage">Stránka projektu</string>
-    <string name="settings_about_actions_support">Podpořit vývojáře 💜</string>
+    <string name="settings_about_actions_support">Podpořit vývojáře</string>
     <string name="settings_about_name">O aplikaci</string>
     <string name="settings_about_version">verze %1$s</string>
     <string name="settings_network_name">Síť</string>
