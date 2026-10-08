@@ -4,8 +4,8 @@ subtracks ships through four channels:
 
 - **GitHub releases** — the APK and the AAB are signed with the release key. The public certificate is committed here as [`release-certificate.pem`](release-certificate.pem) and attached to each release, along with a `SHA256SUMS`.
 - **Google Play** — uses Play App Signing, so Google re-signs the app it delivers. The release key is only the *upload* key there: it signs the AAB we send to Play, not the APK users install. The installed app verifies against Google's app signing certificate (Play Console → App integrity), and the upload key only proves the AAB we uploaded.
-- **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed here as [`nightly-certificate.pem`](nightly-certificate.pem).
 - **F-Droid** — re-signed by F-Droid with its own key; see F-Droid's published signing key.
+- **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed here as [`nightly-certificate.pem`](nightly-certificate.pem).
 
 ## GitHub releases
 
