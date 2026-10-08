@@ -2,8 +2,10 @@
 
 subtracks ships through four channels:
 
-- **GitHub releases** — the APK is signed with the release key. Every release
-  attaches the public certificate `release-certificate.pem` and a `SHA256SUMS`.
+- **GitHub releases** — the APK is signed with the release key. Its public
+  certificate is committed here as
+  [`release-certificate.pem`](release-certificate.pem) and attached to each
+  release, along with a `SHA256SUMS`.
 - **Google Play** — uses Play App Signing, so Google re-signs the app it
   delivers. The release key is only the *upload* key there: it signs the AAB we
   send to Play, not the APK users install. The installed app verifies against
@@ -34,7 +36,14 @@ committed at [`nightly-certificate.pem`](nightly-certificate.pem)).
 
 ## GitHub releases
 
-Each release attaches the APK, the checksums and the certificate:
+The APK is signed with the release key. Certificate SHA-256:
+
+```
+02:DA:2C:B7:B8:21:4E:53:BD:BF:B4:55:69:8D:CB:96:52:22:F9:1C:95:4B:52:10:AE:AC:96:FE:32:9C:8F:01
+```
+
+Each release attaches the APK, the checksums and the certificate (committed here
+as [`release-certificate.pem`](release-certificate.pem)):
 
 ```sh
 sha256sum -c SHA256SUMS
