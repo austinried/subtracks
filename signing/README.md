@@ -7,14 +7,15 @@ subtracks ships through four channels:
 - **F-Droid** — re-signed by F-Droid with its own key; see [F-Droid's signing keys](https://f-droid.org/docs/Release_Channels_and_Signing_Keys/).
 - **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed at [`app/debug.keystore`](../app/debug.keystore), whose certificate is [`nightly-certificate.pem`](nightly-certificate.pem).
 
-Fingerprints below are written in `keytool`'s colon-separated uppercase form. `apksigner` prints the same digest as lowercase hex with no colons, so compare them ignoring colons and case.
-
 ## GitHub releases
 
 The APK and the AAB are signed with the release key. Certificate SHA-256:
 
 ```
+# keytool -printcert, and Play Console → App integrity (upload key)
 02:DA:2C:B7:B8:21:4E:53:BD:BF:B4:55:69:8D:CB:96:52:22:F9:1C:95:4B:52:10:AE:AC:96:FE:32:9C:8F:01
+# apksigner verify --print-certs
+02da2cb7b8214e53bdbfb455698dcb965222f91c954b5210aeac96fe329c8f01
 ```
 
 Each release attaches the APK, the AAB, the checksums and the certificate (committed here as [`release-certificate.pem`](release-certificate.pem)):
@@ -43,7 +44,10 @@ keytool -printcert -jarfile app-release.aab
 The signing key is the committed [`app/debug.keystore`](../app/debug.keystore) (a public key: alias `androiddebugkey`, password `android`). Certificate SHA-256:
 
 ```
+# keytool -printcert
 DF:31:3F:18:58:E9:AD:F4:7F:44:65:B2:80:8F:DC:E5:B9:F8:8A:48:35:DC:D0:79:95:19:61:C3:05:05:08:37
+# apksigner verify --print-certs
+df313f1858e9adf47f4465b2808fdce5b9f88a4835dcd079951961c305050837
 ```
 
 To check a `nightly` APK:
