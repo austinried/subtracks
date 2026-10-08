@@ -108,6 +108,7 @@ jobs:
         run: |
           cp dist/apk/release/app-release.apk subtracks.apk
           cp dist/bundle/release/app-release.aab subtracks.aab
+          gzip -n -9 -c dist/mapping/release/mapping.txt > mapping.txt.gz
           sha256sum subtracks.apk subtracks.aab > SHA256SUMS
           echo "Artifact SHA-256:"
           sha256sum subtracks.apk subtracks.aab
@@ -144,4 +145,4 @@ jobs:
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" subtracks.apk subtracks.aab SHA256SUMS dist/release-certificate.pem dist/mapping/release/mapping.txt "${args[@]}"
+          gh release create "$GITHUB_REF_NAME" subtracks.apk subtracks.aab SHA256SUMS dist/release-certificate.pem mapping.txt.gz "${args[@]}"
