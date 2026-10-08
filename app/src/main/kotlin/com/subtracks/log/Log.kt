@@ -34,6 +34,11 @@ object Log {
         i("app", "started ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) on Android ${Build.VERSION.SDK_INT} ${Build.MODEL}")
     }
 
+    fun v(
+        tag: String,
+        message: String,
+    ) = log(LogLevel.VERBOSE, tag, message, null)
+
     fun d(
         tag: String,
         message: String,
@@ -83,7 +88,7 @@ object Log {
     fun interceptor(): Interceptor =
         Interceptor { chain ->
             val request = chain.request()
-            d("http", "${request.method} ${request.url}")
+            v("http", "${request.method} ${request.url}")
             try {
                 val response = chain.proceed(request)
                 if (response.code >= 400) {
@@ -99,7 +104,11 @@ object Log {
     fun sql(execution: SqlExecution) {
         val failure = execution.error
         if (failure != null) {
-            e("sql", "failed: ${shortSql(execution.sql)}", failure)
+            if (isUpsertConflict(failure)) {
+                d("sql", "upsert fallback conflict: ${shortSql(execution.sql)}")
+            } else {
+                e("sql", "failed: ${shortSql(execution.sql)}", failure)
+            }
             return
         }
         if (!isSlowQuery(execution, SLOW_QUERY_MS)) return
@@ -166,3 +175,17 @@ internal fun isSlowQuery(
     execution: SqlExecution,
     thresholdMs: Double,
 ): Boolean = execution.error == null && execution.durationMillis >= thresholdMs && isDataStatement(execution.sql)
+
+// Room's EntityUpsertAdapter implements @Upsert as an INSERT and, on a uniqueness conflict, catches
+// the error and runs an UPDATE instead (EntityUpsertAdapter.checkUniquenessException). That failure
+// is expected control flow, not an error worth alarming about.
+private const val CONSTRAINT_UNIQUE_MESSAGE = "unique constraint failed"
+private const val SQLITE_CONSTRAINT_PRIMARYKEY = "1555"
+private const val SQLITE_CONSTRAINT_UNIQUE = "2067"
+
+internal fun isUpsertConflict(error: Throwable): Boolean {
+    val message = error.message?.lowercase() ?: return false
+    return message.contains(CONSTRAINT_UNIQUE_MESSAGE) ||
+        message.contains(SQLITE_CONSTRAINT_PRIMARYKEY) ||
+        message.contains(SQLITE_CONSTRAINT_UNIQUE)
+}

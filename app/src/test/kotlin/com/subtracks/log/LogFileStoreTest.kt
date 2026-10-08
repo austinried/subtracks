@@ -150,6 +150,14 @@ class LogFileStoreTest {
         assertFalse(isReadStatement("INSERT INTO t VALUES (1)"))
     }
 
+    @Test
+    fun detectsUpsertConflictErrors() {
+        assertTrue(isUpsertConflict(IllegalStateException("UNIQUE constraint failed: playback_cursor.id")))
+        assertTrue(isUpsertConflict(IllegalStateException("Error code: 1555, message: UNIQUE constraint failed")))
+        assertTrue(isUpsertConflict(IllegalStateException("SQLITE_CONSTRAINT_UNIQUE 2067")))
+        assertFalse(isUpsertConflict(IllegalStateException("no such table: songs")))
+    }
+
     private fun execution(
         milliseconds: Double,
         sql: String,

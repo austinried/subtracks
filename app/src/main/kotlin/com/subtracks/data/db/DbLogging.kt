@@ -47,14 +47,13 @@ private class LoggingStatement(
     private val sql: String,
     private val onExecution: (SqlExecution) -> Unit,
 ) : SQLiteStatement by delegate {
-    private var startNanos = System.nanoTime()
+    private var startNanos = 0L
     private var rows = 0L
     private var failure: Throwable? = null
-    private var started = false
-    private var reported = false
+    private var active = false
 
     override fun step(): Boolean {
-        started = true
+        begin()
         val result =
             try {
                 delegate.step()
@@ -71,7 +70,6 @@ private class LoggingStatement(
     override fun reset() {
         report()
         delegate.reset()
-        begin()
     }
 
     override fun close() {
@@ -80,17 +78,20 @@ private class LoggingStatement(
     }
 
     private fun report() {
-        if (!started || reported) return
-        reported = true
+        if (!active) return
+        active = false
         onExecution(SqlExecution(sql, System.nanoTime() - startNanos, rows, failure))
     }
 
+    // Started on the first step, not on reset: Room's statement cache resets a statement when it is
+    // returned to the cache (BasePreparedStatementCache.CachedStatement.close), so timing from reset
+    // would count however long the statement idled there before its next use.
     private fun begin() {
+        if (active) return
         startNanos = System.nanoTime()
         rows = 0
         failure = null
-        started = false
-        reported = false
+        active = true
     }
 }
 

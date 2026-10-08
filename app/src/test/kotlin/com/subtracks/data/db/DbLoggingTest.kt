@@ -63,6 +63,25 @@ class DbLoggingTest {
     }
 
     @Test
+    fun doesNotCountIdleTimeBetweenReuses() {
+        driver().open(":memory:").use { connection ->
+            connection.prepare("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)").use { it.step() }
+            connection.prepare("INSERT INTO t (name) VALUES (?)").use { statement ->
+                statement.bindText(1, "a")
+                statement.step()
+                statement.reset()
+                Thread.sleep(250)
+                statement.bindText(1, "b")
+                statement.step()
+                statement.reset()
+            }
+        }
+        val inserts = executions.filter { it.sql.startsWith("INSERT") }
+        assertEquals(2, inserts.size)
+        inserts.forEach { assertTrue("${it.durationMillis}ms", it.durationNanos < 100_000_000) }
+    }
+
+    @Test
     fun recordsPrepareError() {
         driver().open(":memory:").use { connection ->
             runCatching { connection.prepare("THIS IS NOT SQL") }
