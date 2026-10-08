@@ -80,6 +80,13 @@ android {
         .add("src/integrationTest/kotlin")
 
     signingConfigs {
+        // Committed on purpose: a public key for debug and next builds, never for distribution.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE").orNull
         if (keystorePath != null) {
             create("release") {
@@ -92,12 +99,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".next"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             // Release signing when the keystore is supplied (CI); debug elsewhere so local build/install works.
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+        }
+        create("next") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".next"
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

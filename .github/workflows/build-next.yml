@@ -1,0 +1,39 @@
+name: Build Next
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install platform and build tools
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+      - name: Build next builds
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:assembleNext --no-daemon
+      - name: Collect next builds
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk subtracks-next-debug.apk
+          cp app/build/outputs/apk/next/app-next.apk subtracks-next.apk
+      - name: Upload next builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: subtracks-next
+          path: |
+            subtracks-next-debug.apk
+            subtracks-next.apk
