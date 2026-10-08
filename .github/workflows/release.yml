@@ -42,24 +42,25 @@ jobs:
       - name: Read version code
         id: version
         run: echo "code=$(grep -oP 'versionCode = \K\d+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
-      - name: Stage Play release notes
-        run: |
-          mkdir -p whatsnew
-          cp "metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt" whatsnew/whatsnew-en-US
       - name: Upload to Google Play
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.subtracks
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          tracks: ${{ vars.PLAY_TRACK || 'internal' }}
-          status: completed
-          whatsNewDirectory: whatsnew
-          mappingFile: app/build/outputs/mapping/release/mapping.txt
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          nix develop .#release --command fastlane supply \
+            --aab app/build/outputs/bundle/release/app-release.aab \
+            --package_name com.subtracks \
+            --track "${{ vars.PLAY_TRACK || 'internal' }}" \
+            --release_status completed \
+            --json_key_data "$PLAY_SERVICE_ACCOUNT_JSON" \
+            --metadata_path metadata \
+            --skip_upload_metadata \
+            --skip_upload_images \
+            --skip_upload_screenshots \
+            --mapping app/build/outputs/mapping/release/mapping.txt
       - name: Collect release APK
         run: cp app/build/outputs/apk/release/app-release.apk subtracks.apk
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           body_path: metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt
           files: subtracks.apk

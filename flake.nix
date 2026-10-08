@@ -83,6 +83,10 @@
 
             inherit shellHook;
           };
+
+          release = pkgs.mkShell {
+            packages = [ pkgs.fastlane ];
+          };
         }
       );
     };
