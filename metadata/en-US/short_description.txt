@@ -1,1 +1,1 @@
-A clean, open source Subsonic music player.
+A clean, open source Subsonic music player
