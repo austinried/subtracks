@@ -13,7 +13,9 @@
     <string name="resources_sort_by_year">حسب السنة</string>
     <string name="search_input_placeholder">بحث</string>
     <string name="settings_about_actions_licenses">الرخص</string>
+    <string name="settings_about_actions_project_homepage">موقع المشروع</string>
     <string name="settings_about_name">حول</string>
+    <string name="settings_about_version">الإصدار %1$s</string>
     <string name="settings_network_name">الشبكة</string>
     <string name="settings_network_values_kbps">%1$s كيلو بايت في الثانية</string>
     <string name="settings_network_values_unlimited_kbps">غير محدود</string>

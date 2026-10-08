@@ -29,7 +29,10 @@
     <string name="resources_sort_by_year">Por ano</string>
     <string name="search_input_placeholder">Buscar</string>
     <string name="settings_about_actions_licenses">Licenzas</string>
+    <string name="settings_about_actions_project_homepage">Web do Proxecto</string>
+    <string name="settings_about_actions_support">Axuda ao desenvolvemento 💜</string>
     <string name="settings_about_name">Acerca de</string>
+    <string name="settings_about_version">versión %1$s</string>
     <string name="settings_network_name">Rede</string>
     <string name="settings_network_options_offline_mode">Modo sen conexión</string>
     <string name="settings_network_options_offline_mode_off">Usa internet para sincr. música.</string>

@@ -29,7 +29,10 @@
     <string name="resources_sort_by_year">Efter år</string>
     <string name="search_input_placeholder">Sök</string>
     <string name="settings_about_actions_licenses">Licenser</string>
+    <string name="settings_about_actions_project_homepage">Projekthemsida</string>
+    <string name="settings_about_actions_support">Stöd utvecklaren 💜</string>
     <string name="settings_about_name">Om</string>
+    <string name="settings_about_version">version %1$s</string>
     <string name="settings_network_name">Nätverk</string>
     <string name="settings_network_options_offline_mode">Offline-läge</string>
     <string name="settings_network_options_offline_mode_off">Använd internet för att uppdatera musik.</string>

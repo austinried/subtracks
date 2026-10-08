@@ -27,7 +27,10 @@
     <string name="resources_sort_by_year">根據年份</string>
     <string name="search_input_placeholder">搜尋</string>
     <string name="settings_about_actions_licenses">許可</string>
+    <string name="settings_about_actions_project_homepage">專案首頁</string>
+    <string name="settings_about_actions_support">支援開發者</string>
     <string name="settings_about_name">關於</string>
+    <string name="settings_about_version">版本 %1$s</string>
     <string name="settings_network_name">網路</string>
     <string name="settings_network_options_offline_mode">離線模式</string>
     <string name="settings_network_options_offline_mode_off">使用網際網路同步音樂。</string>

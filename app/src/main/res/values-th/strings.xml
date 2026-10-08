@@ -27,7 +27,10 @@
     <string name="resources_sort_by_year">ปี</string>
     <string name="search_input_placeholder">ค้นหา</string>
     <string name="settings_about_actions_licenses">ใบอนุญาต</string>
+    <string name="settings_about_actions_project_homepage">โฮมเพจของโครงการ</string>
+    <string name="settings_about_actions_support">ให้การสนับสนุนผู้พัฒนา 💜</string>
     <string name="settings_about_name">เกี่ยวกับ</string>
+    <string name="settings_about_version">เวอร์ชั่น %1$s</string>
     <string name="settings_network_name">เคลือข่าย</string>
     <string name="settings_network_options_offline_mode">โหมดอ๊อฟไลน์</string>
     <string name="settings_network_options_offline_mode_off">เปิดใช้อินเตอร์เน็ตเพื่อให้ข้อมูลเพลงเหมือนกัน</string>

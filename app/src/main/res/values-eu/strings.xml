@@ -28,7 +28,10 @@
     <string name="resources_sort_by_year">Urtearen arabera</string>
     <string name="search_input_placeholder">Bilatu</string>
     <string name="settings_about_actions_licenses">Lizentziak</string>
+    <string name="settings_about_actions_project_homepage">Proiektuaren webgunea</string>
+    <string name="settings_about_actions_support">Lagundu garatzaileari 💜</string>
     <string name="settings_about_name">Honi buruz</string>
+    <string name="settings_about_version">%1$s bertsioa</string>
     <string name="settings_network_name">Sarea</string>
     <string name="navigation_tabs_home">Hasiera</string>
     <string name="resources_album_name">Albumak</string>

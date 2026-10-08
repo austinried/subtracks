@@ -19,4 +19,5 @@
     <string name="resources_album_name">アルバム</string>
     <string name="resources_artist_name">アーティスト</string>
     <string name="resources_playlist_name">プレイリスト</string>
+    <string name="settings_about_actions_project_homepage">ホームページ</string>
 </resources>

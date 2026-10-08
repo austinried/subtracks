@@ -29,7 +29,10 @@
     <string name="resources_sort_by_year">Рік</string>
     <string name="search_input_placeholder">Введіть заголовок/опис</string>
     <string name="settings_about_actions_licenses">Ліцензії</string>
+    <string name="settings_about_actions_project_homepage">Головна сторінка проєкту</string>
+    <string name="settings_about_actions_support">Підтримайте розробника 💜</string>
     <string name="settings_about_name">Про застосунок</string>
+    <string name="settings_about_version">версія %1$s</string>
     <string name="settings_network_name">Мережа</string>
     <string name="settings_network_options_offline_mode">Автономний режим</string>
     <string name="settings_network_options_offline_mode_off">Використовувати інтернет для синхронізації музики.</string>

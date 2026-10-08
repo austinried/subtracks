@@ -27,7 +27,10 @@
     <string name="resources_sort_by_year">Năm</string>
     <string name="search_input_placeholder">Tìm kiếm</string>
     <string name="settings_about_actions_licenses">Bản quyền</string>
+    <string name="settings_about_actions_project_homepage">Trang chủ dự án</string>
+    <string name="settings_about_actions_support">Hỗ trợ nhà phát triển 💜</string>
     <string name="settings_about_name">Về ứng dụng</string>
+    <string name="settings_about_version">phiên bản %1$s</string>
     <string name="settings_network_name">Mạng</string>
     <string name="settings_network_options_offline_mode">Chế độ ngoại tuyến</string>
     <string name="settings_network_options_offline_mode_off">Đồng bộ nhạc qua mạng.</string>

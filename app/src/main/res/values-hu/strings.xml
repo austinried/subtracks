@@ -24,7 +24,10 @@
     <string name="resources_sort_by_year">Év</string>
     <string name="search_input_placeholder">Keresés</string>
     <string name="settings_about_actions_licenses">Licenszek</string>
+    <string name="settings_about_actions_project_homepage">Projekt weboldal</string>
+    <string name="settings_about_actions_support">Támogasd a fejlesztőt 💜</string>
     <string name="settings_about_name">Az alkalmazásról</string>
+    <string name="settings_about_version">%1$s verzió</string>
     <string name="settings_network_name">Hálózat</string>
     <string name="settings_network_options_offline_mode">Offline mód</string>
     <string name="settings_network_options_stream_format_server_default">Szerver alapértelmezés használata</string>

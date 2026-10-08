@@ -21,7 +21,9 @@
     <string name="resources_sort_by_year">Wg roku</string>
     <string name="search_input_placeholder">Szukaj</string>
     <string name="settings_about_actions_licenses">Licencje</string>
+    <string name="settings_about_actions_project_homepage">Strona główna projektu</string>
     <string name="settings_about_name">Informacje o projekcie</string>
+    <string name="settings_about_version">wersja %1$s</string>
     <string name="settings_network_name">Sieć</string>
     <string name="settings_network_options_offline_mode">Tryb offline</string>
     <string name="settings_network_values_kbps">%1$skbps</string>

@@ -29,7 +29,10 @@
     <string name="resources_sort_by_year">Etter år</string>
     <string name="search_input_placeholder">Søk</string>
     <string name="settings_about_actions_licenses">Lisenser</string>
+    <string name="settings_about_actions_project_homepage">Prosjekthjemmeside</string>
+    <string name="settings_about_actions_support">Støtt utvikleren 💜</string>
     <string name="settings_about_name">Om</string>
+    <string name="settings_about_version">versjon %1$s</string>
     <string name="settings_network_name">Nettverk</string>
     <string name="settings_network_options_offline_mode">Offline-modus</string>
     <string name="settings_network_options_offline_mode_off">Bruk Internett til å synkronisere musikk.</string>

@@ -13,7 +13,9 @@
     <string name="resources_sort_by_year">ਸਾਲ ਦੁਆਰਾ</string>
     <string name="search_input_placeholder">ਖੋਜੋ</string>
     <string name="settings_about_actions_licenses">ਲਾਇਸੰਸ</string>
+    <string name="settings_about_actions_project_homepage">ਪ੍ਰੋਜੈਕਟ ਹੋਮਪੇਜ</string>
     <string name="settings_about_name">ਬਾਰੇ</string>
+    <string name="settings_about_version">ਸੰਸਕਰਣ %1$s</string>
     <string name="settings_network_name">ਨੈੱਟਵਰਕ</string>
     <string name="settings_network_values_kbps">%1$skbps</string>
     <string name="settings_network_values_unlimited_kbps">ਅਸੀਮਿਤ</string>

@@ -13,7 +13,9 @@
     <string name="resources_sort_by_year">Per any</string>
     <string name="search_input_placeholder">Cercar</string>
     <string name="settings_about_actions_licenses">Llicències</string>
+    <string name="settings_about_actions_project_homepage">Pàgina d\'inici del projecte</string>
     <string name="settings_about_name">Quant a</string>
+    <string name="settings_about_version">versió %1$s</string>
     <string name="settings_network_name">Xarxa</string>
     <string name="settings_network_values_kbps">%1$s kbps</string>
     <string name="settings_network_values_unlimited_kbps">Il·limitat</string>

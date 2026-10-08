@@ -12,7 +12,9 @@
     <string name="resources_sort_by_year">Efter år</string>
     <string name="search_input_placeholder">Søg</string>
     <string name="settings_about_actions_licenses">Licenser</string>
+    <string name="settings_about_actions_project_homepage">Projekt hjemmeside</string>
     <string name="settings_about_name">Omkring</string>
+    <string name="settings_about_version">version %1$s</string>
     <string name="settings_network_name">Netværk</string>
     <string name="settings_network_values_kbps">%1$skbps</string>
     <string name="settings_network_values_unlimited_kbps">Ubegrænset</string>

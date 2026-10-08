@@ -29,7 +29,10 @@
     <string name="resources_sort_by_year">Nach Jahr</string>
     <string name="search_input_placeholder">Suche</string>
     <string name="settings_about_actions_licenses">Lizenzen</string>
+    <string name="settings_about_actions_project_homepage">Projektseite</string>
+    <string name="settings_about_actions_support">Den Entwickler unterstützen</string>
     <string name="settings_about_name">Über</string>
+    <string name="settings_about_version">Version %1$s</string>
     <string name="settings_network_name">Netzwerk</string>
     <string name="settings_network_options_offline_mode">Offline Modus</string>
     <string name="settings_network_options_offline_mode_off">Nutze das Internet um Musik zu synchronisieren.</string>

@@ -21,7 +21,10 @@
     <string name="resources_sort_by_year">Por Ano</string>
     <string name="search_input_placeholder">Procurar</string>
     <string name="settings_about_actions_licenses">Licenças</string>
+    <string name="settings_about_actions_project_homepage">Página do Projeto</string>
+    <string name="settings_about_actions_support">Apoie o programador 💜</string>
     <string name="settings_about_name">Acerca</string>
+    <string name="settings_about_version">versão %1$s</string>
     <string name="settings_network_name">Rede</string>
     <string name="settings_network_options_offline_mode">Modo offline</string>
     <string name="settings_network_options_offline_mode_off">Usar a internet para sincronizar música.</string>

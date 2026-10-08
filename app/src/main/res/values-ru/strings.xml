@@ -31,7 +31,10 @@
     <string name="resources_sort_by_year">По году</string>
     <string name="search_input_placeholder">Поиск</string>
     <string name="settings_about_actions_licenses">Лицензии</string>
+    <string name="settings_about_actions_project_homepage">Сайт проекта</string>
+    <string name="settings_about_actions_support">Поддержать разработчика</string>
     <string name="settings_about_name">О Subtracks</string>
+    <string name="settings_about_version">версия %1$s</string>
     <string name="settings_network_name">Сеть</string>
     <string name="settings_network_options_offline_mode">Автономный режим</string>
     <string name="settings_network_options_offline_mode_off">Использовать интернет для синхронизации музыки.</string>
