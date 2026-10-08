@@ -6,6 +6,26 @@ import org.junit.Test
 import java.io.File
 import javax.imageio.ImageIO
 
+/**
+ * Checks the committed store metadata against the stricter of the two stores' rules.
+ *
+ * Google Play, "Add preview assets to showcase your app":
+ * https://support.google.com/googleplay/android-developer/answer/9866151
+ * - Screenshots (Requirements): "JPEG or 24-bit PNG (no alpha)", "Minimum dimension: 320px",
+ *   "Maximum dimension: 3840px", "The maximum dimension of your screenshot can't be more than
+ *   twice as long as the minimum dimension"; "a minimum of two screenshots" and "up to 8".
+ * - Screenshots (Highly recommended, not enforced here): "16:9 for landscape ... and 9:16 for
+ *   portrait screenshots (minimum 1080x1920px)" for recommendation eligibility.
+ * - App icon (Requirements): "32-bit PNG (with alpha)", "512px by 512px", "Maximum file size: 1024KB".
+ * - Feature graphic (Requirements): "JPEG or 24-bit PNG (no alpha)", "1024px by 500px".
+ * - Short description (Requirements): "80 character limit".
+ *
+ * F-Droid, "All About Descriptions, Graphics, and Screenshots":
+ * https://f-droid.org/docs/All_About_Descriptions_Graphics_and_Screenshots/
+ * - Fastlane structure: "title.txt (app name, max 50 chars)",
+ *   "short_description.txt (short description, max 80 chars)",
+ *   "full_description.txt (full app description, max 4000 chars)", "changelogs/... (max 500 chars)".
+ */
 class MetadataConstraintsTest {
     @Test
     fun titlesFitStoreLimit() {
@@ -33,6 +53,7 @@ class MetadataConstraintsTest {
         }
     }
 
+    // Play (Requirements): "32-bit PNG (with alpha)", "512px by 512px", "Maximum file size: 1024KB".
     @Test
     fun iconsAre512AlphaPngsWithinOneMegabyte() {
         localeFiles("images/icon.png").forEach { file ->
@@ -49,6 +70,7 @@ class MetadataConstraintsTest {
         }
     }
 
+    // Play (Requirements): "JPEG or 24-bit PNG (no alpha)", "1024px by 500px".
     @Test
     fun featureGraphicsAre1024x500WithoutAlpha() {
         localeFiles("images/featureGraphic.png").forEach { file ->
@@ -59,6 +81,8 @@ class MetadataConstraintsTest {
         }
     }
 
+    // Play (Requirements): 2-8 screenshots, sides 320-3840px, and "The maximum dimension of your
+    // screenshot can't be more than twice as long as the minimum dimension" (the 2:1 ratio).
     @Test
     fun phoneScreenshotsMeetStoreRules() {
         localeFiles("images/phoneScreenshots").forEach { dir ->
@@ -166,16 +190,16 @@ class MetadataConstraintsTest {
             (this[offset + 3].toInt() and 0xFF)
 
     private companion object {
-        // Play allows 30 and F-Droid 50; the stricter wins.
+        // Play (Requirements): 30; F-Droid title.txt: 50. Stricter wins.
         const val TITLE_LIMIT = 30
 
-        // Play and F-Droid both allow 80.
+        // Play short description and F-Droid short_description.txt: 80.
         const val SHORT_DESCRIPTION_LIMIT = 80
 
-        // Play and F-Droid both allow 4000.
+        // F-Droid full_description.txt: 4000.
         const val FULL_DESCRIPTION_LIMIT = 4000
 
-        // Play's "What's new" and F-Droid's changelog both allow 500.
+        // Play "What's new" and F-Droid changelogs: 500.
         const val CHANGELOG_LIMIT = 500
 
         const val RGB_COLOR_TYPE = 2
