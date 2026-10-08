@@ -7,22 +7,6 @@ subtracks ships through four channels:
 - **`nightly` builds** (the `subtracks-nightly` artifact from CI) — signed with the public debug key committed here as [`nightly-certificate.pem`](nightly-certificate.pem).
 - **F-Droid** — re-signed by F-Droid with its own key; see F-Droid's published signing key.
 
-## `nightly` builds
-
-Certificate SHA-256:
-
-```
-DF:31:3F:18:58:E9:AD:F4:7F:44:65:B2:80:8F:DC:E5:B9:F8:8A:48:35:DC:D0:79:95:19:61:C3:05:05:08:37
-```
-
-To check a `nightly` APK:
-
-```sh
-apksigner verify --print-certs subtracks-nightly.apk
-```
-
-The `SHA-256 digest` line must equal the fingerprint above (the certificate is committed at [`nightly-certificate.pem`](nightly-certificate.pem)).
-
 ## GitHub releases
 
 The APK and the AAB are signed with the release key. Certificate SHA-256:
@@ -51,3 +35,19 @@ To check the AAB that was sent:
 ```sh
 keytool -printcert -jarfile app-release.aab
 ```
+
+## `nightly` builds
+
+Certificate SHA-256:
+
+```
+DF:31:3F:18:58:E9:AD:F4:7F:44:65:B2:80:8F:DC:E5:B9:F8:8A:48:35:DC:D0:79:95:19:61:C3:05:05:08:37
+```
+
+To check a `nightly` APK:
+
+```sh
+apksigner verify --print-certs subtracks-nightly.apk
+```
+
+The `SHA-256 digest` line must equal the fingerprint above (the certificate is committed at [`nightly-certificate.pem`](nightly-certificate.pem)).
