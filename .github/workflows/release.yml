@@ -61,7 +61,10 @@ jobs:
       - name: Collect release APK
         run: cp app/build/outputs/apk/release/app-release.apk subtracks.apk
       - name: Create GitHub release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
-        with:
-          body_path: metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt
-          files: subtracks.apk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" subtracks.apk \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "metadata/en-US/changelogs/${{ steps.version.outputs.code }}.txt"
