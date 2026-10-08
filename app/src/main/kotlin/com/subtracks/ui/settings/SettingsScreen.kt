@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Download
@@ -50,10 +51,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.subtracks.BuildConfig
 import com.subtracks.R
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.StreamQuality
@@ -65,6 +68,9 @@ import org.koin.compose.viewmodel.koinViewModel
 
 private val bitrateOptions = listOf(0, 24, 32, 64, 96, 128, 192, 256, 320)
 private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "flac")
+
+private const val PROJECT_HOMEPAGE = "https://github.com/austinried/subtracks"
+private const val SUPPORT_URL = "https://ko-fi.com/austinried"
 
 private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality, SyncConcurrency }
 
@@ -146,6 +152,7 @@ fun SettingsScreen(
     DismissOnRequest(dismissals) { dialog = null }
     val listState = rememberLazyListState()
     val fill = rememberViewportFill(listState)
+    val uriHandler = LocalUriHandler.current
 
     Scaffold(
         modifier = modifier,
@@ -315,9 +322,40 @@ fun SettingsScreen(
             item { SectionHeader(stringResource(R.string.settings_about_name)) }
             item {
                 ListItem(
+                    headlineContent = { Text(stringResource(R.string.app_name)) },
+                    supportingContent = {
+                        Text(stringResource(R.string.settings_about_version, BuildConfig.VERSION_NAME))
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_licenses)) },
                     leadingContent = { Icon(Icons.Rounded.Description, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onOpenLicenses),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_actions_project_homepage)) },
+                    supportingContent = { Text(PROJECT_HOMEPAGE) },
+                    trailingContent = {
+                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable { uriHandler.openUri(PROJECT_HOMEPAGE) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_actions_support)) },
+                    supportingContent = { Text(SUPPORT_URL) },
+                    trailingContent = {
+                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable { uriHandler.openUri(SUPPORT_URL) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

@@ -56,7 +56,10 @@
     <string name="search_input_placeholder">Search</string>
 
     <string name="settings_about_actions_licenses">Licenses</string>
+    <string name="settings_about_actions_project_homepage">Project homepage</string>
+    <string name="settings_about_actions_support">Support</string>
     <string name="settings_about_name">About</string>
+    <string name="settings_about_version">Version %1$s</string>
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
     <string name="settings_music_options_scrobble_title">Scrobble to server</string>
