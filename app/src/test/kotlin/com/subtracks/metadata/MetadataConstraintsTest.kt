@@ -45,11 +45,9 @@ class MetadataConstraintsTest {
     @Test
     fun changelogsFitStoreLimit() {
         localeFiles("changelogs").forEach { dir ->
-            dir
-                .listFiles()
-                .orEmpty()
-                .filter { it.isFile && it.extension == "txt" }
-                .forEach { assertAtMost(it, CHANGELOG_LIMIT) }
+            val changelogs = dir.listFiles().orEmpty().filter { it.isFile && it.extension == "txt" }
+            assertTrue("no changelogs found in ${dir.path}", changelogs.isNotEmpty())
+            changelogs.forEach { assertAtMost(it, CHANGELOG_LIMIT) }
         }
     }
 

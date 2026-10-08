@@ -27,7 +27,7 @@ keytool -printcert -jarfile subtracks.aab                 # the AAB
 keytool -printcert -file release-certificate.pem          # prints its SHA-256
 ```
 
-The `.aab` is the exact bundle uploaded to Google Play (install it by generating device APKs with [bundletool](https://github.com/google/bundletool)); the `.apk` is the universal APK for sideloading. The signing certificate SHA-256 is also listed in the release notes.
+The `.aab` is the app bundle (the one uploaded to Google Play for stable releases; install it by generating device APKs with [bundletool](https://github.com/google/bundletool)); the `.apk` is the universal APK for sideloading. The signing certificate SHA-256 is also listed in the release notes.
 
 ## Google Play
 

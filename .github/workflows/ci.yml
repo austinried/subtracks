@@ -31,7 +31,7 @@ jobs:
           cp app/build/outputs/apk/nightly/app-nightly.apk subtracks-nightly.apk
       - name: Checksums
         if: github.ref == 'refs/heads/main'
-        run: sha256sum subtracks-nightly.apk subtracks-nightly-debug.apk
+        run: sha256sum subtracks-nightly.apk subtracks-nightly-debug.apk | tee SHA256SUMS
       - uses: actions/upload-artifact@v7
         if: github.ref == 'refs/heads/main'
         with:
@@ -39,6 +39,7 @@ jobs:
           path: |
             subtracks-nightly.apk
             subtracks-nightly-debug.apk
+            SHA256SUMS
       - uses: actions/cache@v6
         with:
           path: .integration/music
