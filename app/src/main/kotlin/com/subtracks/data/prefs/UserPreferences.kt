@@ -121,6 +121,14 @@ class UserPreferences(
 
     private val offlineModeKey = booleanPreferencesKey("offline_mode")
 
+    fun verboseLogging(): Flow<Boolean> = store.data.map { prefs -> prefs[verboseLoggingKey] ?: false }
+
+    suspend fun setVerboseLogging(enabled: Boolean) {
+        store.edit { prefs -> prefs[verboseLoggingKey] = enabled }
+    }
+
+    private val verboseLoggingKey = booleanPreferencesKey("verbose_logging")
+
     suspend fun lastSeed(): ArtworkSeedValue? {
         val prefs = store.data.first()
         val cacheKey = prefs[lastSeedKey] ?: return null

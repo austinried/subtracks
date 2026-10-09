@@ -65,8 +65,8 @@ class SyncManager(
                 val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
                 Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
-                SyncService(db, source).sync()
-                Log.i("sync", "finished in ${elapsedMs(startedAt)}ms")
+                val summary = SyncService(db, source).sync()
+                Log.i("sync", "finished in ${elapsedMs(startedAt)}ms: $summary")
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation

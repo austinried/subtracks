@@ -20,13 +20,21 @@ class SyncService(
     private val db: SubtracksDatabase,
     private val source: MusicSource,
 ) {
-    suspend fun sync() {
+    private var artistsSynced = 0
+    private var albumsSynced = 0
+    private var songsSynced = 0
+    private var playlistsSynced = 0
+    private var playlistSongsSynced = 0
+    private var pruned = 0
+
+    suspend fun sync(): SyncSummary {
         syncArtists()
         syncAlbums()
         syncSongs()
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
+        return SyncSummary(artistsSynced, albumsSynced, songsSynced, playlistsSynced, playlistSongsSynced, pruned)
     }
 
     private suspend fun syncArtists() {
@@ -36,8 +44,9 @@ class SyncService(
             if (batch.isEmpty()) return@collect
             write("artists", artistColumns, primaryKey, batch) { it.values() }
             batch.forEach { seen.add(idHash(it.id)) }
+            artistsSynced += batch.size
         }
-        pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteArtists(source.id, it) })
+        pruned += pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteArtists(source.id, it) })
     }
 
     private suspend fun syncAlbums() {
@@ -53,11 +62,13 @@ class SyncService(
             writeAlbumsAndDiscs(batch, discs)
             batch.forEach { seenAlbums.add(idHash(it.id)) }
             discs.forEach { seenDiscs.add(discHash(it.albumId, it.disc)) }
+            albumsSynced += batch.size
         }
-        pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
-        pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
-            deleteStaleDiscs(it)
-        }
+        pruned += pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
+        pruned +=
+            pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
+                deleteStaleDiscs(it)
+            }
     }
 
     private suspend fun syncSongs() {
@@ -67,8 +78,9 @@ class SyncService(
             if (batch.isEmpty()) return@collect
             writeSongs(batch)
             batch.forEach { seen.add(idHash(it.id)) }
+            songsSynced += batch.size
         }
-        pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
+        pruned += pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
     }
 
     private suspend fun writeSongs(batch: List<Song>) {
@@ -106,8 +118,9 @@ class SyncService(
             if (batch.isEmpty()) return@collect
             write("playlists", playlistColumns, primaryKey, batch) { it.values() }
             batch.forEach { seen.add(idHash(it.id)) }
+            playlistsSynced += batch.size
         }
-        pruneStaleIds(seen, { library.playlistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deletePlaylists(source.id, it) })
+        pruned += pruneStaleIds(seen, { library.playlistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deletePlaylists(source.id, it) })
     }
 
     private suspend fun syncPlaylistSongs() {
@@ -118,6 +131,7 @@ class SyncService(
             if (batch.isEmpty()) return@collect
             write("playlist_songs", playlistSongColumns, playlistSongKey, batch) { it.values() }
             batch.forEach { counts[it.playlistId] = (counts[it.playlistId] ?: 0L) + 1L }
+            playlistSongsSynced += batch.size
         }
         playlistIds.forEach { library.deletePlaylistSongsFrom(source.id, it, counts[it] ?: 0L) }
         library.deleteOrphanPlaylistSongs(source.id)
@@ -173,15 +187,17 @@ class SyncService(
         seen: HashedIds,
         pageOf: suspend (afterId: String) -> List<String>,
         delete: suspend (Collection<String>) -> Unit,
-    ) {
+    ): Int {
         seen.freeze()
         var afterId = ""
+        var pruned = 0
         while (true) {
             val ids = pageOf(afterId)
-            if (ids.isEmpty()) return
+            if (ids.isEmpty()) return pruned
             val stale = ids.filterNot { seen.contains(idHash(it)) }
             stale.chunked(DELETE_CHUNK).forEach { delete(it) }
-            if (ids.size < PRUNE_PAGE) return
+            pruned += stale.size
+            if (ids.size < PRUNE_PAGE) return pruned
             afterId = ids.last()
         }
     }
@@ -190,21 +206,32 @@ class SyncService(
         seen: HashedIds,
         pageOf: suspend (afterAlbumId: String, afterDisc: Long) -> List<DiscKey>,
         delete: suspend (Collection<DiscKey>) -> Unit,
-    ) {
+    ): Int {
         seen.freeze()
         var afterAlbumId = ""
         var afterDisc = 0L
+        var pruned = 0
         while (true) {
             val keys = pageOf(afterAlbumId, afterDisc)
-            if (keys.isEmpty()) return
+            if (keys.isEmpty()) return pruned
             val stale = keys.filterNot { seen.contains(discHash(it.albumId, it.disc)) }
             stale.chunked(DELETE_CHUNK).forEach { delete(it) }
-            if (keys.size < PRUNE_PAGE) return
+            pruned += stale.size
+            if (keys.size < PRUNE_PAGE) return pruned
             afterAlbumId = keys.last().albumId
             afterDisc = keys.last().disc
         }
     }
 }
+
+data class SyncSummary(
+    val artists: Int,
+    val albums: Int,
+    val songs: Int,
+    val playlists: Int,
+    val playlistSongs: Int,
+    val pruned: Int,
+)
 
 private const val DELETE_CHUNK = 500
 private const val PRUNE_PAGE = 500

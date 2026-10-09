@@ -2,6 +2,7 @@ package com.subtracks.data.source.subsonic
 
 import com.subtracks.R
 import com.subtracks.UiMessage
+import com.subtracks.log.Log
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -60,7 +61,11 @@ class SubsonicClient(
         return try {
             execute(method, params, body)
         } catch (failure: SubsonicException) {
-            if (failure.code !in TOKEN_AUTH_UNSUPPORTED_CODES || !usedTokenAuth) throw failure
+            if (failure.code !in TOKEN_AUTH_UNSUPPORTED_CODES || !usedTokenAuth) {
+                Log.w("http", "$method failed: server code ${failure.code} \"${failure.message}\"")
+                throw failure
+            }
+            Log.w("http", "$method: token auth unsupported (server code ${failure.code}), retrying with plaintext")
             disableTokenAuth()
             execute(method, params, body)
         }

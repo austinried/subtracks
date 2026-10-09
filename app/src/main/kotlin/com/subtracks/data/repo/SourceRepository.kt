@@ -111,7 +111,10 @@ class SourceRepository(
                 active = config?.let { ActiveSource(it.id, it.toMusicSource(quality, concurrency)) }
                 _quality.value = quality
                 if (sourceChanged && config != null && config.useTokenAuth && !_offline.value) {
-                    scope.launch { runCatching { config.toClient().check("ping") } }
+                    scope.launch {
+                        runCatching { config.toClient().check("ping") }
+                            .onSuccess { Log.i("net", "connected (ping ok)") }
+                    }
                 }
             }
         }

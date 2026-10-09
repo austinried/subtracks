@@ -55,8 +55,17 @@ class SettingsViewModel(
 
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
+    val verboseLogging: StateFlow<Boolean> =
+        userPreferences
+            .verboseLogging()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun setOfflineMode(enabled: Boolean) {
         sourceRepository.setOfflineMode(enabled)
+    }
+
+    fun setVerboseLogging(enabled: Boolean) {
+        viewModelScope.launch { userPreferences.setVerboseLogging(enabled) }
     }
 
     fun selectSource(id: Long) {

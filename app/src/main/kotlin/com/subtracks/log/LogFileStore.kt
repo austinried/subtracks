@@ -12,7 +12,7 @@ enum class LogLevel { VERBOSE, DEBUG, INFO, WARN, ERROR }
 
 class LogFileStore(
     private val rootDir: File,
-    private val minLevel: LogLevel,
+    @Volatile private var minLevel: LogLevel,
     private val maxFileBytes: Long = DEFAULT_MAX_FILE_BYTES,
     private val maxFiles: Int = DEFAULT_MAX_FILES,
 ) {
@@ -53,6 +53,10 @@ class LogFileStore(
 
     fun flush() {
         runCatching { executor.submit {}.get() }
+    }
+
+    fun setMinLevel(level: LogLevel) {
+        minLevel = level
     }
 
     fun shutdown() {

@@ -28,6 +28,7 @@ import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.sync.SyncManager
+import com.subtracks.log.Log
 import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlayerConnection
@@ -48,6 +49,8 @@ import com.subtracks.ui.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import okhttp3.OkHttpClient
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
@@ -68,6 +71,7 @@ fun appModule(
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single(named("io")) { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
     single(named("playback")) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
+    single(createdAtStart = true) { get<UserPreferences>().verboseLogging().onEach(Log::setVerbose).launchIn(get()) }
     single {
         SourceRepository(
             get(),

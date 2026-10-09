@@ -21,17 +21,22 @@ object Log {
     private var fileStore: LogFileStore? = null
     private var appContext: Context? = null
     private var consoleLevel = LogLevel.DEBUG
+    private var defaultFileLevel = LogLevel.INFO
     private var crashHandlerInstalled = false
 
     fun init(context: Context) {
         val app = context.applicationContext
         appContext = app
         consoleLevel = if (BuildConfig.DEBUG) LogLevel.VERBOSE else LogLevel.INFO
-        val fileLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.INFO
+        defaultFileLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.INFO
         fileStore?.shutdown()
-        fileStore = LogFileStore(File(app.filesDir, "logs"), fileLevel)
+        fileStore = LogFileStore(File(app.filesDir, "logs"), defaultFileLevel)
         installCrashHandler()
         i("app", "started ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) on Android ${Build.VERSION.SDK_INT} ${Build.MODEL}")
+    }
+
+    fun setVerbose(enabled: Boolean) {
+        fileStore?.setMinLevel(if (enabled) LogLevel.DEBUG else defaultFileLevel)
     }
 
     fun v(

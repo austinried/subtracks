@@ -103,6 +103,7 @@ fun SettingsRoute(
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val verboseLogging by viewModel.verboseLogging.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     SettingsScreen(
@@ -115,6 +116,7 @@ fun SettingsRoute(
         downloadOverMetered = downloadOverMetered,
         scrobbling = scrobbling,
         offline = offline,
+        verboseLogging = verboseLogging,
         onSelectSource = viewModel::selectSource,
         onEditServer = onEditServer,
         onWifiQualityChange = viewModel::setWifiQuality,
@@ -124,6 +126,7 @@ fun SettingsRoute(
         onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
         onScrobblingChange = viewModel::setScrobbling,
         onOfflineChange = viewModel::setOfflineMode,
+        onVerboseLoggingChange = viewModel::setVerboseLogging,
         onAddServer = onAddServer,
         onOpenDownloads = onOpenDownloads,
         onOpenLicenses = onOpenLicenses,
@@ -162,6 +165,7 @@ fun SettingsScreen(
     scrobbling: Boolean,
     modifier: Modifier = Modifier,
     offline: Boolean = false,
+    verboseLogging: Boolean = false,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -171,6 +175,7 @@ fun SettingsScreen(
     onDownloadOverMeteredChange: (Boolean) -> Unit,
     onScrobblingChange: (Boolean) -> Unit,
     onOfflineChange: (Boolean) -> Unit = {},
+    onVerboseLoggingChange: (Boolean) -> Unit = {},
     onAddServer: () -> Unit,
     onOpenDownloads: () -> Unit,
     onOpenLicenses: () -> Unit,
@@ -397,6 +402,26 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.settings_about_actions_share_logs)) },
                     leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onShareLogs),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_verbose_logging)) },
+                    supportingContent = { Text(stringResource(R.string.settings_about_verbose_logging_description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = verboseLogging,
+                            onCheckedChange = onVerboseLoggingChange,
+                            colors =
+                                SwitchDefaults.colors(
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                                ),
+                        )
+                    },
+                    modifier = Modifier.clickable { onVerboseLoggingChange(!verboseLogging) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

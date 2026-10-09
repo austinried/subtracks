@@ -141,7 +141,7 @@ class Media3PlayerHandle(
                     mediaItem: MediaItem?,
                     reason: Int,
                 ) {
-                    Log.d("playback", "${describe(mediaItem)} transition=${transitionReason(reason)}")
+                    Log.i("playback", "${describe(mediaItem)} transition=${transitionReason(reason)}")
                     listener.onTransition()
                 }
 
@@ -166,6 +166,9 @@ class Media3PlayerHandle(
                         "state=$playbackState position=${controller.currentPosition} " +
                             "duration=${duration(controller.duration)} itemDuration=${currentItem?.durationMs}",
                     )
+                    if (playbackState == Player.STATE_ENDED) {
+                        Log.i("playback", "ended ${describe(controller.currentMediaItem)}")
+                    }
                 }
             },
         )
