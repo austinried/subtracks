@@ -354,6 +354,35 @@ fun SettingsScreen(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
+            item { SectionHeader(stringResource(R.string.settings_troubleshooting_name)) }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_actions_share_logs)) },
+                    leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
+                    modifier = Modifier.clickable(onClick = onShareLogs),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_about_verbose_logging)) },
+                    supportingContent = { Text(stringResource(R.string.settings_about_verbose_logging_description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = verboseLogging,
+                            onCheckedChange = onVerboseLoggingChange,
+                            colors =
+                                SwitchDefaults.colors(
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                                ),
+                        )
+                    },
+                    modifier = Modifier.clickable { onVerboseLoggingChange(!verboseLogging) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
             item { SectionHeader(stringResource(R.string.settings_about_name)) }
             item {
                 ListItem(
@@ -394,34 +423,6 @@ fun SettingsScreen(
                         )
                     },
                     modifier = Modifier.clickable { runCatching { uriHandler.openUri(SUPPORT_URL) } },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_about_actions_share_logs)) },
-                    leadingContent = { Icon(Icons.Rounded.Share, contentDescription = null) },
-                    modifier = Modifier.clickable(onClick = onShareLogs),
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_about_verbose_logging)) },
-                    supportingContent = { Text(stringResource(R.string.settings_about_verbose_logging_description)) },
-                    trailingContent = {
-                        Switch(
-                            checked = verboseLogging,
-                            onCheckedChange = onVerboseLoggingChange,
-                            colors =
-                                SwitchDefaults.colors(
-                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
-                                ),
-                        )
-                    },
-                    modifier = Modifier.clickable { onVerboseLoggingChange(!verboseLogging) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
