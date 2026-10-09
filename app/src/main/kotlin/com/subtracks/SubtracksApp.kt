@@ -5,6 +5,7 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.subtracks.data.LegacyDataCleanup
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.ArtworkSeedStore
 import com.subtracks.di.appModule
@@ -25,6 +26,7 @@ class SubtracksApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Log.init(this)
+        LegacyDataCleanup.run(this)
         stopKoin()
         SingletonImageLoader.reset()
         val koin =
