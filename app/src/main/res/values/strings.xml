@@ -65,7 +65,7 @@
     <string name="settings_about_share_logs_failed">Couldn\'t prepare the logs</string>
     <string name="settings_about_share_logs_subject">Subtracks logs</string>
     <string name="settings_about_verbose_logging">Verbose logging</string>
-    <string name="settings_about_verbose_logging_description">Log extra detail for troubleshooting. Log files get larger.</string>
+    <string name="settings_about_verbose_logging_description">Log extra detail for troubleshooting</string>
     <string name="settings_about_version">Version %1$s</string>
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>

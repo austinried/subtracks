@@ -36,7 +36,7 @@ object Log {
     }
 
     fun setVerbose(enabled: Boolean) {
-        fileStore?.setMinLevel(if (enabled) LogLevel.DEBUG else defaultFileLevel)
+        fileStore?.setMinLevel(if (enabled) LogLevel.VERBOSE else defaultFileLevel)
     }
 
     fun v(
