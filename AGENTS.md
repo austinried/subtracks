@@ -14,7 +14,6 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - The default devshell provides JDK 21, Gradle 9, the Android SDK (platform 37, build-tools 37.0.0, platform-tools 37.0.1) and nushell.
 - The integration harness needs real servers, so it lives in a separate `nix develop .#integration` shell (navidrome, gonic, lms, php, Nextcloud with the Music app, sqlite). Keeping them out of the default shell avoids pulling that closure into everyday builds.
 - Build with the devshell `gradle`, not `./gradlew`. CI uses the nix Gradle pinned by `flake.lock`; the wrapper is kept only for people without Nix.
-- The devshell `gradle` is a wrapper: outside CI it takes a lock (under `$XDG_RUNTIME_DIR`, falling back to `~/.cache`) and runs under `nice` with a capped worker count, so several agents building at once queue instead of exhausting the box. `--stop`/`--status`/`--version` bypass the lock; with `CI` set it execs Gradle directly, unchanged.
 
 ## Commands
 

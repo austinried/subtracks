@@ -40,31 +40,9 @@
           };
           androidSdk = android.androidsdk;
 
-          gradle_wrapper = pkgs.writeShellScriptBin "gradle" ''
-            if [ -n "''${CI:-}" ]; then
-              exec ${pkgs.gradle_9}/bin/gradle "$@"
-            fi
-            for arg in "$@"; do
-              case "$arg" in
-                -v | --version | --status | --stop)
-                  exec ${pkgs.gradle_9}/bin/gradle "$@"
-                  ;;
-              esac
-            done
-            runtime_dir="''${XDG_RUNTIME_DIR:-''${HOME:-/tmp}/.cache}"
-            mkdir -p "$runtime_dir"
-            lock="$runtime_dir/subtracks-gradle.lock"
-            if ! ${pkgs.util-linux}/bin/flock -n "$lock" ${pkgs.coreutils}/bin/true 2>/dev/null; then
-              echo "gradle: waiting for the build lock at $lock" >&2
-            fi
-            export GRADLE_OPTS="''${GRADLE_OPTS:-} -Dorg.gradle.workers.max=4"
-            exec ${pkgs.util-linux}/bin/flock "$lock" \
-              ${pkgs.coreutils}/bin/nice -n 10 ${pkgs.gradle_9}/bin/gradle "$@"
-          '';
-
           basePackages = [
             pkgs.jdk21
-            gradle_wrapper
+            pkgs.gradle_9
             pkgs.git
             pkgs.curl
             pkgs.unzip
