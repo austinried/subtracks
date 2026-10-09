@@ -12,8 +12,13 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -41,6 +46,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.koin.core.context.GlobalContext
+import java.io.File
 
 @OptIn(UnstableApi::class)
 class PlaybackService : MediaSessionService() {
@@ -91,6 +97,7 @@ class PlaybackService : MediaSessionService() {
         val sources = GlobalContext.get().get<SourceRepository>()
         sourceRepository = sources
         library = GlobalContext.get().get<LibraryRepository>()
+        val cache = StreamCache.open(this)
         val exoPlayer =
             ExoPlayer
                 .Builder(this)
@@ -106,7 +113,11 @@ class PlaybackService : MediaSessionService() {
                     DefaultMediaSourceFactory(this)
                         .setEnableClippingInMediaPeriod(true)
                         .setDataSourceFactory(
-                            mediaDataSourceFactory(this, OkHttpDataSource.Factory(streamingClient()).setUserAgent(UserAgent.value)),
+                            mediaDataSourceFactory(
+                                this,
+                                cache,
+                                OkHttpDataSource.Factory(streamingClient()).setUserAgent(UserAgent.value),
+                            ),
                         ),
                 ).build()
         exoPlayer.addListener(
@@ -216,8 +227,46 @@ class PlaybackService : MediaSessionService() {
     }
 }
 
+// Process-scoped so it is never released while a loader thread is still committing to it, and so
+// a recreated service does not try to lock the directory a second time.
+@OptIn(UnstableApi::class)
+private object StreamCache {
+    @Volatile
+    private var instance: SimpleCache? = null
+
+    fun open(context: Context): SimpleCache? =
+        instance ?: synchronized(this) {
+            instance ?: runCatching {
+                SimpleCache(
+                    File(context.cacheDir, STREAM_CACHE_DIR),
+                    LeastRecentlyUsedCacheEvictor(STREAM_CACHE_BYTES),
+                    StandaloneDatabaseProvider(context),
+                )
+            }.onFailure { Log.w("playback", "stream cache unavailable: ${it.message}") }
+                .getOrNull()
+                ?.also { instance = it }
+        }
+
+    private const val STREAM_CACHE_DIR = "stream-cache"
+    private const val STREAM_CACHE_BYTES = 64L * 1024 * 1024
+}
+
 @OptIn(UnstableApi::class)
 internal fun mediaDataSourceFactory(
     context: Context,
+    cache: Cache?,
     upstream: DataSource.Factory,
-): DataSource.Factory = DefaultDataSource.Factory(context, KnownLengthDataSourceFactory(upstream))
+): DataSource.Factory {
+    val known = KnownLengthDataSourceFactory(upstream)
+    val source: DataSource.Factory =
+        if (cache == null) {
+            known
+        } else {
+            CacheDataSource
+                .Factory()
+                .setCache(cache)
+                .setUpstreamDataSourceFactory(known)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        }
+    return DefaultDataSource.Factory(context, source)
+}
