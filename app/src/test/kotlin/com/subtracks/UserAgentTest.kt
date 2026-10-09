@@ -24,6 +24,6 @@ class UserAgentTest {
         val header = server.takeRequest().getHeader("User-Agent")
         server.shutdown()
 
-        assertEquals("Subtracks (Android; ${BuildConfig.VERSION_NAME})", header)
+        assertEquals("subtracks (Android; ${BuildConfig.VERSION_NAME})", header)
     }
 }
