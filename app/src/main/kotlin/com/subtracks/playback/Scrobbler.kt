@@ -59,7 +59,7 @@ class ScrobblePolicy(
             item?.id != songId ||
                 (item != null && item.id == lastItemId && positionMs < previousPosition && positionMs <= RESTART_POSITION_MS)
         if (restarted) {
-            val sameSong = item != null && item.id == songId
+            val alreadyAnnounced = nowPlayingSent && item?.id == songId
             songId = item?.id
             lastItemId = null
             playedMs = 0
@@ -69,7 +69,7 @@ class ScrobblePolicy(
             if (item == null || !isPlaying) return null
             nowPlayingSent = true
             startedAt = now()
-            return if (sameSong) null else Scrobble.NowPlaying(item.id)
+            return if (alreadyAnnounced) null else Scrobble.NowPlaying(item.id)
         }
         lastPositionMs = positionMs
         lastItemId = item?.id

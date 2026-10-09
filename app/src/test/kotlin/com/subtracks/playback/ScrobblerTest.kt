@@ -190,4 +190,34 @@ class ScrobblerTest {
             enabled.value = true
             assertEquals(listOf(Call.NowPlaying("s1")), sink.calls)
         }
+
+    @Test
+    fun aTransitionSendsNowPlayingOnceForTheNewTrack() =
+        runTest {
+            val sink = RecordingSink()
+            val scrobbler = Scrobbler(sink = sink, enabled = flowOf(true), scope = testScope(), policy = ScrobblePolicy(now = { 1_000L }))
+            val state = MutableStateFlow(PlaybackState())
+            val position = MutableStateFlow(0L)
+            scrobbler.attach(state, position)
+            val first = QueueItem("s1", "One", "Artist", "Album", null, durationMs = 30_000)
+            val second = QueueItem("s2", "Two", "Artist", "Album", null, durationMs = 30_000)
+
+            state.value = PlaybackState(item = first, isPlaying = true)
+            var tick = 500L
+            while (tick <= 15_000L) {
+                position.value = tick
+                tick += 500
+            }
+            position.value = 0L
+            state.value = PlaybackState(item = second, isPlaying = true)
+
+            assertEquals(
+                listOf(
+                    Call.NowPlaying("s1"),
+                    Call.Scrobble("s1", 1_000L),
+                    Call.NowPlaying("s2"),
+                ),
+                sink.calls,
+            )
+        }
 }

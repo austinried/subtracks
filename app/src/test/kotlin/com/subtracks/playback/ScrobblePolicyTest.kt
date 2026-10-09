@@ -171,6 +171,14 @@ class ScrobblePolicyTest {
     }
 
     @Test
+    fun announcesWhenATrackLoadedWhilePausedStartsFromTheBeginning() {
+        val item = track(id = "s1")
+        assertNull(policy.advance(item, 200_000, isPlaying = false, positionMs = 0))
+        assertNull(policy.advance(item, 200_000, isPlaying = false, positionMs = 2_500))
+        assertEquals(Scrobble.NowPlaying("s1"), policy.advance(item, 200_000, isPlaying = true, positionMs = 0))
+    }
+
+    @Test
     fun aTransitionDoesNotReannounceTheNewTrackOnAStaleLowPosition() {
         val first = track(id = "s1")
         val second = track(id = "s2")
