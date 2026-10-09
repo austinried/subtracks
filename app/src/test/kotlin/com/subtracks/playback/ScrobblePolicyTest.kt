@@ -130,13 +130,44 @@ class ScrobblePolicyTest {
     }
 
     @Test
-    fun restartingTheSameTrackScrobblesAgain() {
+    fun restartingTheSameTrackResubmitsWithoutReannouncing() {
         val item = track(durationMs = 200_000)
         play(item, toPositionMs = 100_000)
         clock = 120_000L
         val repeat = play(item, toPositionMs = 100_000)
-        assertEquals(Scrobble.NowPlaying("s1"), repeat.first())
+        assertEquals(emptyList<Scrobble>(), repeat.filterIsInstance<Scrobble.NowPlaying>())
         assertEquals(Scrobble.Submission("s1", 120_000L), repeat.last())
+    }
+
+    @Test
+    fun doesNotReannounceTheTrackItJustLeftWhenItsPositionResets() {
+        val events = mutableListOf<Scrobble>()
+        events += play(track(id = "s1"), toPositionMs = 100_000)
+        events +=
+            listOfNotNull(
+                policy.advance(track(id = "s1"), 200_000, isPlaying = true, positionMs = 0),
+                policy.advance(track(id = "s2"), 200_000, isPlaying = true, positionMs = 0),
+            )
+        assertEquals(
+            listOf(Scrobble.NowPlaying("s1"), Scrobble.Submission("s1", 1_000L), Scrobble.NowPlaying("s2")),
+            events,
+        )
+    }
+
+    @Test
+    fun doesNotReannounceWhenTheNewTracksPositionJittersBackToZero() {
+        val events = mutableListOf<Scrobble>()
+        events += play(track(id = "s1"), toPositionMs = 100_000)
+        events +=
+            listOfNotNull(
+                policy.advance(track(id = "s2"), 200_000, isPlaying = true, positionMs = 0),
+                policy.advance(track(id = "s2"), 200_000, isPlaying = true, positionMs = 500),
+                policy.advance(track(id = "s2"), 200_000, isPlaying = true, positionMs = 0),
+            )
+        assertEquals(
+            listOf(Scrobble.NowPlaying("s1"), Scrobble.Submission("s1", 1_000L), Scrobble.NowPlaying("s2")),
+            events,
+        )
     }
 
     @Test
