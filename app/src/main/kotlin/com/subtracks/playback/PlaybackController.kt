@@ -11,6 +11,7 @@ import com.subtracks.data.repo.QueueSnapshot
 import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.Shuffle
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +128,9 @@ class PlaybackController(
     private var positionJob: Job? = null
     private var windowJob: Job? = null
     private var bufferingJob: Job? = null
+    private var stallJob: Job? = null
     private var showBuffering = false
+    private var stalled = false
     private val startLock = Mutex()
 
     private var snapshot: QueueSnapshot? = null
@@ -1047,6 +1050,9 @@ class PlaybackController(
         windowJob?.cancel()
         bufferingJob?.cancel()
         bufferingJob = null
+        stallJob?.cancel()
+        stallJob = null
+        stalled = false
         showBuffering = false
         snapshot = null
         queueSourceId = null
@@ -1460,21 +1466,42 @@ class PlaybackController(
     suspend fun sourceTitle(context: QueueContext?): String? = context?.let { queueRepository.sourceName(it.kind, it.sourceId, it.refId) }
 
     private fun updateBuffering() {
+        val player = player
         if (player?.isBuffering != true) {
             bufferingJob?.cancel()
             bufferingJob = null
+            stallJob?.cancel()
+            stallJob = null
+            stalled = false
             showBuffering = false
             return
         }
-        if (showBuffering || bufferingJob?.isActive == true) return
-        bufferingJob =
-            scope.launch {
-                delay(BUFFERING_INDICATOR_DELAY_MS)
-                if (player?.isBuffering == true) {
-                    showBuffering = true
-                    refresh()
+        if (!showBuffering && bufferingJob?.isActive != true) {
+            bufferingJob =
+                scope.launch {
+                    delay(BUFFERING_INDICATOR_DELAY_MS)
+                    if (player.isBuffering) {
+                        showBuffering = true
+                        refresh()
+                    }
                 }
-            }
+        }
+        // A stall is buffering that persists long enough to be a real problem, not a track change.
+        if (stallJob?.isActive != true && !stalled) {
+            stallJob =
+                scope.launch {
+                    delay(STALL_WATCHDOG_MS)
+                    if (player.isBuffering && player.playWhenReady) {
+                        stalled = true
+                        val item = player.currentItem
+                        Log.w(
+                            "playback",
+                            "stalled: buffering for ${STALL_WATCHDOG_MS / 1000}s at ${player.currentPositionMs}ms " +
+                                "item id=${item?.id} title=\"${item?.title}\"",
+                        )
+                    }
+                }
+        }
     }
 
     private fun refresh(position: Long? = currentPosition()) {
@@ -1541,6 +1568,7 @@ class PlaybackController(
         const val POSITION_TICK_MS = 500L
         const val POSITION_SAVE_INTERVAL_MS = 15_000L
         const val BUFFERING_INDICATOR_DELAY_MS = 1_000L
+        const val STALL_WATCHDOG_MS = 15_000L
         const val QUEUE_WINDOW_RADIUS = 25L
         const val WINDOW_SHIFT_DELAY_MS = 400L
         const val RESTART_THRESHOLD_MS = 3_000L

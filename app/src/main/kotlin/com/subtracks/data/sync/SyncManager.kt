@@ -66,7 +66,13 @@ class SyncManager(
                 Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
                 val summary = SyncService(db, source).sync()
-                Log.i("sync", "finished in ${elapsedMs(startedAt)}ms: $summary")
+                Log.i(
+                    "sync",
+                    "finished in ${elapsedMs(startedAt)}ms: " +
+                        "${summary.artists} artists, ${summary.albums} albums (server reported ${summary.reportedAlbums}), " +
+                        "${summary.songs} songs (server reported ${summary.reportedSongs}), " +
+                        "${summary.playlists} playlists, ${summary.playlistSongs} playlist tracks, ${summary.pruned} pruned",
+                )
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation
