@@ -418,6 +418,7 @@ fun LibraryScreen(
         )
     var showOptions by rememberSaveable { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
+    var topRequest by remember { mutableIntStateOf(0) }
     val searchFocus = remember { FocusRequester() }
 
     // Search mode is left open so the typed query survives; MainNavigation dismisses the keyboard.
@@ -470,6 +471,7 @@ fun LibraryScreen(
         ) { page ->
             val pageTab = LibraryTab.entries[page]
             val resetKey = resetKeys[pageTab]
+            val scrollToTopKey = if (pageTab == selectedTab) topRequest else null
             val pullToRefreshState = rememberPullToRefreshState()
             PullToRefreshBox(
                 isRefreshing = syncing,
@@ -507,6 +509,7 @@ fun LibraryScreen(
                             topInset = listTopInset,
                             onSync = onSync,
                             downloadStatuses = albumDownloads,
+                            scrollToTopKey = scrollToTopKey,
                         )
                     }
 
@@ -526,6 +529,7 @@ fun LibraryScreen(
                             topInset = listTopInset,
                             onSync = onSync,
                             downloadStatuses = artistDownloads,
+                            scrollToTopKey = scrollToTopKey,
                         )
                     }
 
@@ -545,6 +549,7 @@ fun LibraryScreen(
                             topInset = listTopInset,
                             onSync = onSync,
                             downloadStatuses = playlistDownloads,
+                            scrollToTopKey = scrollToTopKey,
                         )
                     }
                 }
@@ -570,7 +575,9 @@ fun LibraryScreen(
             ) {
                 LibraryTabs(
                     pagerState = pagerState,
-                    onTabSelected = onTabSelected,
+                    onTabSelected = { tab ->
+                        if (tab == selectedTab) topRequest++ else onTabSelected(tab)
+                    },
                     onOpenSettings = onOpenSettings,
                     offline = offline,
                     onExitOffline = onExitOffline,

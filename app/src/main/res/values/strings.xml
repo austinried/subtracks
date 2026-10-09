@@ -20,6 +20,7 @@
     <string name="controls_more">More</string>
 
     <string name="navigation_back">Back</string>
+    <string name="scroll_to_top">Scroll to top</string>
     <string name="navigation_tabs_home">Home</string>
     <string name="navigation_tabs_library">Library</string>
     <string name="navigation_tabs_settings">Settings</string>

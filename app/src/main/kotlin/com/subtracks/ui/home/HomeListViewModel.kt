@@ -21,9 +21,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class HomeListRequest(
     val title: String,
@@ -50,6 +52,11 @@ class HomeListViewModel(
     val request: HomeListRequest,
 ) : ViewModel() {
     private val sourceId = libraryRepository.activeSourceId.filterNotNull()
+
+    val canShuffle: Boolean =
+        request.genre != null ||
+            request.section == HomeSection.RecentlyStarredSongs ||
+            request.downloaded == OfflineListKind.Songs
 
     val albums: Flow<PagingData<Album>> =
         sourceId
@@ -170,6 +177,20 @@ class HomeListViewModel(
 
             else -> {
                 viewModelScope.playSongInContext(libraryRepository, playbackController, song)
+            }
+        }
+    }
+
+    fun shuffle() {
+        val genre = request.genre
+        val downloaded = request.downloaded
+        val starred = request.section == HomeSection.RecentlyStarredSongs
+        viewModelScope.launch {
+            val id = sourceId.first()
+            when {
+                genre != null -> playbackController.shuffleGenre(id, genre)
+                downloaded == OfflineListKind.Songs -> playbackController.shuffleDownloaded(id)
+                starred -> playbackController.shuffleStarred(id)
             }
         }
     }

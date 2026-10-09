@@ -51,6 +51,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +78,7 @@ import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
+import kotlinx.coroutines.launch
 
 private const val FADE_DISTANCE_DP = 64
 
@@ -96,12 +98,14 @@ fun HeroDetailScaffold(
     header: @Composable (controlsModifier: Modifier, topInset: Dp) -> Unit,
     content: LazyListScope.(rowModifier: Modifier) -> Unit,
     modifier: Modifier = Modifier,
+    onShuffle: (() -> Unit)? = null,
 ) {
     val effectiveArtwork = artwork ?: baseArtworkColors()
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 val listState = rememberLazyListState()
+                val scope = rememberCoroutineScope()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
                 val screenHeightPx = with(density) { maxHeight.toPx() }
@@ -147,7 +151,7 @@ fun HeroDetailScaffold(
                     state = listState,
                     contentPadding =
                         PaddingValues(
-                            bottom = 16.dp + with(density) { navBarBottom.toDp() },
+                            bottom = (if (onShuffle != null) 88.dp else 16.dp) + with(density) { navBarBottom.toDp() },
                         ),
                     modifier = Modifier.fillMaxSize(),
                 ) {
@@ -195,8 +199,20 @@ fun HeroDetailScaffold(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
-                            ) {},
+                                onClickLabel = stringResource(R.string.scroll_to_top),
+                            ) { scope.launch { listState.animateScrollToItem(0) } },
                 )
+
+                if (onShuffle != null) {
+                    ShuffleFab(
+                        onClick = onShuffle,
+                        visible = barFraction > 0f,
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 16.dp, bottom = 16.dp + with(density) { navBarBottom.toDp() }),
+                    )
+                }
             }
         }
     }

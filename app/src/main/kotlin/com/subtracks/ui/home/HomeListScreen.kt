@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,8 +62,10 @@ import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.ShuffleFab
 import com.subtracks.ui.library.PlaylistsContent
 import com.subtracks.ui.library.SongRow
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -110,6 +115,7 @@ fun HomeListRoute(
         onPlaylistClick = onPlaylistClick,
         onSongClick = viewModel::play,
         onLongClick = { contextMenuHost?.show(it, actions) },
+        onShuffle = if (viewModel.canShuffle) viewModel::shuffle else null,
         onGenreClick = onGenreClick,
         onDecadeClick = onDecadeClick,
     )
@@ -134,11 +140,18 @@ fun HomeListScreen(
     onPlaylistClick: (Playlist) -> Unit = {},
     onSongClick: (Song) -> Unit = {},
     onLongClick: (MenuTarget) -> Unit = {},
+    onShuffle: (() -> Unit)? = null,
     onGenreClick: (String) -> Unit = {},
     onDecadeClick: (Long) -> Unit = {},
 ) {
     val now = remember { System.currentTimeMillis() }
     val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
+    val songListState = rememberLazyListState()
+    val isSongList =
+        request.downloaded == OfflineListKind.Songs ||
+            request.section == HomeSection.RecentlyStarredSongs ||
+            request.genre != null
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -149,7 +162,20 @@ fun HomeListScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.navigation_back))
                     }
                 },
+                modifier =
+                    if (isSongList) {
+                        Modifier.clickable(onClickLabel = stringResource(R.string.scroll_to_top)) {
+                            scope.launch { songListState.animateScrollToItem(0) }
+                        }
+                    } else {
+                        Modifier
+                    },
             )
+        },
+        floatingActionButton = {
+            if (onShuffle != null && songs.itemCount > 0) {
+                ShuffleFab(onClick = onShuffle)
+            }
         },
     ) { padding ->
         val downloaded = request.downloaded
@@ -184,6 +210,7 @@ fun HomeListScreen(
                         playingSongId = playingSongId,
                         onSongClick = onSongClick,
                         onLongClick = onLongClick,
+                        listState = songListState,
                         modifier = Modifier.padding(padding),
                     )
                 }
@@ -237,6 +264,7 @@ fun HomeListScreen(
                         playingSongId = playingSongId,
                         onSongClick = onSongClick,
                         onLongClick = onLongClick,
+                        listState = songListState,
                         modifier = Modifier.padding(padding),
                     )
                 }
@@ -254,6 +282,7 @@ fun HomeListScreen(
                             playingSongId = playingSongId,
                             onSongClick = onSongClick,
                             onLongClick = onLongClick,
+                            listState = songListState,
                             modifier = Modifier.padding(padding),
                         )
                     } else {
@@ -297,6 +326,7 @@ private fun SongsList(
     playingSongId: String?,
     onSongClick: (Song) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     if (songs.itemCount == 0 && songs.loadState.refresh is LoadState.Loading) {
@@ -304,8 +334,9 @@ private fun SongsList(
         return
     }
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp),
+        contentPadding = PaddingValues(bottom = 88.dp),
     ) {
         items(count = songs.itemCount, key = songs.itemKey { it.song.id }) { index ->
             val item = songs[index]

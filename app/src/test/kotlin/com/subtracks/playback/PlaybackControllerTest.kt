@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import androidx.media3.common.PlaybackException
 import androidx.room3.Room
+import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -2392,6 +2393,27 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun shuffleGenrePlaysOnlyThatGenresSongs() {
+        seedGenre()
+
+        controller.shuffleGenre(1, "Rock")
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertTrue(controller.state.value.shuffle)
+        assertEquals(
+            QueueKind.Genre,
+            controller.state.value.context
+                ?.kind,
+        )
+        assertEquals(
+            "Rock",
+            controller.state.value.context
+                ?.refId,
+        )
+        assertEquals(setOf("r1", "r2"), handle.items.map { it.id }.toSet())
+    }
+
+    @Test
     fun artistQueueRowsFollowTheFlatShuffleIdOrder() {
         seedArtist()
         runBlocking { queues.replace(listOf(queues.artistEntry(1, "ar1"))) }
@@ -3097,6 +3119,26 @@ class PlaybackControllerTest {
                     Song(1, "b2", "al2", "ar1", "B2", "Second", "Artist", 100, 2, 1, null, null),
                 ),
             )
+        }
+    }
+
+    private fun seedGenre() {
+        runBlocking {
+            db.sourcesDao().upsertSource(Source(1, "source 1", "http://localhost:1", true, 1))
+            db.libraryDao().upsertSongs(
+                listOf(
+                    Song(1, "r1", "al1", "ar1", "Rock 1", "Album", "Artist", 100, 1, 1, null, null),
+                    Song(1, "r2", "al1", "ar1", "Rock 2", "Album", "Artist", 100, 2, 1, null, null),
+                    Song(1, "j1", "al1", "ar1", "Jazz 1", "Album", "Artist", 100, 3, 1, null, null),
+                ),
+            )
+            db.useWriterConnection { connection ->
+                listOf("r1" to "Rock", "r2" to "Rock", "j1" to "Jazz").forEach { (songId, genre) ->
+                    connection.usePrepared(
+                        "INSERT INTO song_genres (sourceId, songId, position, genre) VALUES (1, '$songId', 0, '$genre')",
+                    ) { it.step() }
+                }
+            }
         }
     }
 

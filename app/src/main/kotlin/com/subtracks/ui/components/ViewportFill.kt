@@ -88,3 +88,32 @@ fun rememberViewportFill(state: LazyGridState): Dp {
     }
     return with(density) { fillPx.toDp() }
 }
+
+/**
+ * Scrolls to the top when [request] changes to a new non-null value, but not when it merely becomes
+ * non-null. Selecting a page passes it the current request; only a fresh request (a tab re-tap)
+ * should move the list, so a stale scroll position survives tab switches.
+ */
+@Composable
+fun ScrollToTopOnRequest(
+    request: Any?,
+    state: LazyListState,
+) {
+    var previous by remember { mutableStateOf(request) }
+    LaunchedEffect(request) {
+        if (request != null && previous != null && request != previous) state.animateScrollToItem(0)
+        previous = request
+    }
+}
+
+@Composable
+fun ScrollToTopOnRequest(
+    request: Any?,
+    state: LazyGridState,
+) {
+    var previous by remember { mutableStateOf(request) }
+    LaunchedEffect(request) {
+        if (request != null && previous != null && request != previous) state.animateScrollToItem(0)
+        previous = request
+    }
+}

@@ -178,6 +178,7 @@ fun PlaylistDetailScreen(
             }
         },
         modifier = modifier,
+        onShuffle = onShuffle.takeIf { songs.itemCount > 0 },
     )
 }
 

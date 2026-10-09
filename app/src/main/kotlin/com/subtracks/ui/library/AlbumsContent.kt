@@ -37,6 +37,7 @@ import com.subtracks.ui.components.ListDownloadIndicator
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.ResetScrollOnChange
+import com.subtracks.ui.components.ScrollToTopOnRequest
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.theme.PrefetchArtworkSeeds
 
@@ -56,6 +57,7 @@ fun AlbumsContent(
     topInset: Dp = 0.dp,
     onSync: () -> Unit = {},
     downloadStatuses: Map<String, ListDownloadStatus> = emptyMap(),
+    scrollToTopKey: Any? = null,
 ) {
     when {
         items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {
@@ -78,6 +80,7 @@ fun AlbumsContent(
         else -> {
             val gridState = rememberLazyGridState()
             ResetScrollOnChange(resetKey, { items.loadState.refresh }) { gridState.scrollToItem(0) }
+            ScrollToTopOnRequest(scrollToTopKey, gridState)
             val fill = rememberViewportFill(gridState)
             LazyVerticalGrid(
                 state = gridState,

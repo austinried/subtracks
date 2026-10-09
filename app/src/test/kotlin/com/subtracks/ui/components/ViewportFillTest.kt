@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -54,5 +55,34 @@ class ViewportFillTest {
         }
 
         assertEquals(initial, fillHeight)
+    }
+
+    @Test
+    fun scrollToTopOnRequestMovesOnlyOnANewRequest() {
+        lateinit var state: LazyListState
+        val request = mutableStateOf<Any?>(null)
+        composeRule.setContent {
+            SubtracksTheme {
+                state = rememberLazyListState()
+                ScrollToTopOnRequest(request.value, state)
+                LazyColumn(state = state, modifier = Modifier.fillMaxSize()) {
+                    items(50) { Text("item $it", modifier = Modifier.height(56.dp)) }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { runBlocking { state.scrollToItem(10) } }
+        composeRule.waitForIdle()
+        assertEquals(10, state.firstVisibleItemIndex)
+
+        composeRule.runOnIdle { request.value = 0 }
+        composeRule.waitForIdle()
+        assertEquals("selecting a page must keep its scroll position", 10, state.firstVisibleItemIndex)
+
+        composeRule.runOnIdle { request.value = 1 }
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+        assertEquals("a new request should scroll back to the top", 0, state.firstVisibleItemIndex)
     }
 }
