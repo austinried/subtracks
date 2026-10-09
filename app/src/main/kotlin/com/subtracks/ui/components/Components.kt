@@ -87,9 +87,11 @@ fun CoverArt(
     colorFilter: ColorFilter? = null,
 ) {
     val context = LocalPlatformContext.current
-    var failed by remember(ref, thumbnailRef) { mutableStateOf(false) }
-    var thumbnailLoaded by remember(ref, thumbnailRef) { mutableStateOf(false) }
-    var thumbnailRatio by remember(ref, thumbnailRef) { mutableStateOf(thumbnailRef?.cacheKey?.let(ArtworkRatioCache::get)) }
+    val refKey = ref?.cacheKey
+    val thumbnailKey = thumbnailRef?.cacheKey
+    var failed by remember(refKey, thumbnailKey) { mutableStateOf(false) }
+    var thumbnailLoaded by remember(refKey, thumbnailKey) { mutableStateOf(false) }
+    var thumbnailRatio by remember(refKey, thumbnailKey) { mutableStateOf(thumbnailKey?.let(ArtworkRatioCache::get)) }
     val letterScheme =
         if (showPlaceholder || (failed && !thumbnailLoaded)) {
             remember(name) { artworkColorsFromSeed(placeholderSeed(name)).scheme }
@@ -102,7 +104,7 @@ fun CoverArt(
             .background(letterScheme?.primaryContainer ?: MaterialTheme.colorScheme.surfaceVariant)
 
     if (square) {
-        val model = remember(ref, thumbnailRef) { ref?.let { imageRequest(context, it, crossfade = true) } }
+        val model = remember(refKey, thumbnailKey) { ref?.let { imageRequest(context, it, crossfade = true) } }
         Box(modifier.then(frameModifier)) {
             CoverArtContent(
                 ref = ref,
@@ -147,7 +149,7 @@ fun CoverArt(
             val painter =
                 rememberAsyncImagePainter(
                     model =
-                        remember(ref, thumbnailRef, target) {
+                        remember(refKey, thumbnailKey, target) {
                             ref?.let {
                                 imageRequest(
                                     context,
@@ -231,7 +233,7 @@ private fun BoxScope.CoverArtContent(
     }
     if (thumbnailRef != null && thumbnailRef != ref) {
         AsyncImage(
-            model = remember(thumbnailRef) { imageRequest(context, thumbnailRef, crossfade = false) },
+            model = remember(thumbnailRef.cacheKey) { imageRequest(context, thumbnailRef, crossfade = false) },
             contentDescription = null,
             contentScale = contentScale,
             colorFilter = colorFilter,
