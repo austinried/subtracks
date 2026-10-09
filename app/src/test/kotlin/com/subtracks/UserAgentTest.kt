@@ -1,5 +1,6 @@
 package com.subtracks
 
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
@@ -24,6 +25,6 @@ class UserAgentTest {
         val header = server.takeRequest().getHeader("User-Agent")
         server.shutdown()
 
-        assertEquals("subtracks (Android; ${BuildConfig.VERSION_NAME})", header)
+        assertEquals("subtracks (Android ${Build.VERSION.RELEASE}; ${BuildConfig.VERSION_NAME})", header)
     }
 }
