@@ -69,8 +69,7 @@ class SyncManager(
                 Log.i(
                     "sync",
                     "finished in ${elapsedMs(startedAt)}ms: " +
-                        "${summary.artists} artists, ${summary.albums} albums, " +
-                        "${summary.songs} songs (server reported ${summary.reportedSongs}), " +
+                        "${summary.artists} artists, ${summary.albums} albums, ${summary.songs} songs, " +
                         "${summary.playlists} playlists, ${summary.playlistSongs} playlist tracks, ${summary.pruned} pruned",
                 )
                 SyncStatus.Success

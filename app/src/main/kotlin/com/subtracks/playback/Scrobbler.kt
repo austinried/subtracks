@@ -134,7 +134,7 @@ class Scrobbler(
             }
 
             is Scrobble.Submission -> {
-                Log.i("scrobble", "submitted ${event.songId}")
+                Log.i("scrobble", "submitting ${event.songId}")
                 attempt("record play ${event.songId}") { recordPlay(event.songId, event.time / 1000) }
                 attempt("scrobble ${event.songId}") { sink.scrobble(event.songId, event.time) }
             }

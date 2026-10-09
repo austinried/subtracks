@@ -87,6 +87,19 @@ class LogFileStoreTest {
     }
 
     @Test
+    fun setMinLevelChangesWhatIsWritten() {
+        val store = LogFileStore(root, LogLevel.WARN)
+        store.setMinLevel(LogLevel.VERBOSE)
+        store.write(LogLevel.VERBOSE, "x", "verbose-line", null)
+        store.setMinLevel(LogLevel.ERROR)
+        store.write(LogLevel.INFO, "x", "info-line", null)
+        store.flush()
+        val text = store.files().single().readText()
+        assertTrue(text, text.contains("verbose-line"))
+        assertFalse(text, text.contains("info-line"))
+    }
+
+    @Test
     fun rotatesWhenFileExceedsCap() {
         val store = LogFileStore(root, LogLevel.VERBOSE, maxFileBytes = 1)
         repeat(4) { store.write(LogLevel.INFO, "x", "line $it", null) }

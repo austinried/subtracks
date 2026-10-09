@@ -26,7 +26,6 @@ class SyncService(
     private var playlistsSynced = 0
     private var playlistSongsSynced = 0
     private var pruned = 0
-    private var reportedSongs = 0L
 
     suspend fun sync(): SyncSummary {
         syncArtists()
@@ -42,7 +41,6 @@ class SyncService(
             playlists = playlistsSynced,
             playlistSongs = playlistSongsSynced,
             pruned = pruned,
-            reportedSongs = reportedSongs,
         )
     }
 
@@ -72,7 +70,6 @@ class SyncService(
             batch.forEach { seenAlbums.add(idHash(it.id)) }
             discs.forEach { seenDiscs.add(discHash(it.albumId, it.disc)) }
             albumsSynced += batch.size
-            reportedSongs += batch.sumOf { it.songCount }
         }
         pruned += pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
         pruned +=
@@ -241,7 +238,6 @@ data class SyncSummary(
     val playlists: Int,
     val playlistSongs: Int,
     val pruned: Int,
-    val reportedSongs: Long,
 )
 
 private const val DELETE_CHUNK = 500

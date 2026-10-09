@@ -175,4 +175,19 @@ class UserPreferencesTest {
 
             file.delete()
         }
+
+    @Test
+    fun verboseLoggingDefaultsOffAndRoundTrips() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(false, prefs.verboseLogging().first())
+
+            prefs.setVerboseLogging(true)
+            assertEquals(true, prefs.verboseLogging().first())
+
+            file.delete()
+        }
 }

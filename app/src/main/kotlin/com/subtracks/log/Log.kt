@@ -131,8 +131,11 @@ object Log {
         message: String,
         throwable: Throwable?,
     ) {
+        val toConsole = level.ordinal >= consoleLevel.ordinal
+        val store = fileStore
+        if (!toConsole && store?.willLog(level) != true) return
         val redacted = redactLogs(message)
-        if (level.ordinal >= consoleLevel.ordinal) {
+        if (toConsole) {
             // Logging is best effort: a logcat write must never disturb the caller.
             runCatching {
                 val text =
@@ -144,7 +147,7 @@ object Log {
                 AndroidLog.println(priority(level), tag.take(23), text)
             }
         }
-        fileStore?.write(level, tag, redacted, throwable)
+        store?.write(level, tag, redacted, throwable)
     }
 
     private fun priority(level: LogLevel): Int =

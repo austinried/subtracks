@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -21,13 +22,17 @@ class LogFileStore(
             Thread(runnable, "log-writer").apply { isDaemon = true }
         }
     private val lock = Any()
+    private val pending = AtomicInteger()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val lineFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private var current = currentFile()
 
     init {
-        prune()
+        // Log.init runs in Application.onCreate, so clean up leftovers on the writer thread.
+        runCatching { executor.execute { synchronized(lock) { prune() } } }
     }
+
+    fun willLog(level: LogLevel): Boolean = level.ordinal >= minLevel.ordinal
 
     fun write(
         level: LogLevel,
@@ -36,9 +41,18 @@ class LogFileStore(
         throwable: Throwable?,
     ) {
         if (level.ordinal < minLevel.ordinal) return
+        // Drop under pressure rather than grow the queue without bound (verbose logs every request).
+        if (pending.get() >= MAX_PENDING) return
+        pending.incrementAndGet()
         runCatching {
-            executor.execute { runCatching { synchronized(lock) { append(level, tag, message, throwable) } } }
-        }
+            executor.execute {
+                try {
+                    synchronized(lock) { append(level, tag, message, throwable) }
+                } finally {
+                    pending.decrementAndGet()
+                }
+            }
+        }.onFailure { pending.decrementAndGet() }
     }
 
     fun writeImmediately(
@@ -151,6 +165,7 @@ class LogFileStore(
     companion object {
         const val DEFAULT_MAX_FILE_BYTES = 1L * 1024 * 1024
         const val DEFAULT_MAX_FILES = 7
+        private const val MAX_PENDING = 4096
         private const val LOG_SUFFIX = ".log"
         private val LEVEL_CHARS = charArrayOf('V', 'D', 'I', 'W', 'E')
     }

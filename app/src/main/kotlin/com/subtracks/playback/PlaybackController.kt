@@ -1491,7 +1491,7 @@ class PlaybackController(
             stallJob =
                 scope.launch {
                     delay(STALL_WATCHDOG_MS)
-                    if (player.isBuffering && player.playWhenReady) {
+                    if (player === this@PlaybackController.player && player.isBuffering && player.playWhenReady) {
                         stalled = true
                         val item = player.currentItem
                         Log.w(
