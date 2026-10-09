@@ -26,7 +26,6 @@ class SyncService(
     private var playlistsSynced = 0
     private var playlistSongsSynced = 0
     private var pruned = 0
-    private var reportedAlbums = 0L
     private var reportedSongs = 0L
 
     suspend fun sync(): SyncSummary {
@@ -43,7 +42,6 @@ class SyncService(
             playlists = playlistsSynced,
             playlistSongs = playlistSongsSynced,
             pruned = pruned,
-            reportedAlbums = reportedAlbums,
             reportedSongs = reportedSongs,
         )
     }
@@ -56,7 +54,6 @@ class SyncService(
             write("artists", artistColumns, primaryKey, batch) { it.values() }
             batch.forEach { seen.add(idHash(it.id)) }
             artistsSynced += batch.size
-            reportedAlbums += batch.sumOf { it.albumCount }
         }
         pruned += pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteArtists(source.id, it) })
     }
@@ -244,7 +241,6 @@ data class SyncSummary(
     val playlists: Int,
     val playlistSongs: Int,
     val pruned: Int,
-    val reportedAlbums: Long,
     val reportedSongs: Long,
 )
 
