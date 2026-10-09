@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -61,18 +62,45 @@ class CoverArtReloadTest {
     }
 
     @Test
-    fun aNewSaltedUrlForTheSameArtworkDoesNotRestartTheLoad() {
-        val refState = mutableStateOf(CoverArtRef(url = "http://host/art?id=1&s=one", cacheKey = "1:art:true"))
-        composeRule.setContent {
-            CoverArt(ref = refState.value, name = "Kid A", modifier = Modifier.size(64.dp))
-        }
-        composeRule.waitUntil(timeoutMillis = 5_000) { requests.get() == 1 }
+    fun aNewSaltedUrlForTheSameArtworkDoesNotRestartTheSquareLoad() {
+        assertANewSaltedUrlDoesNotReload(square = true, thumbnail = false)
+    }
 
-        refState.value = CoverArtRef(url = "http://host/art?id=1&s=two", cacheKey = "1:art:true")
+    @Test
+    fun aNewSaltedUrlForTheSameArtworkDoesNotRestartTheNonSquareLoad() {
+        assertANewSaltedUrlDoesNotReload(square = false, thumbnail = false)
+    }
+
+    @Test
+    fun aNewSaltedUrlForTheSameArtworkDoesNotRestartTheThumbnailLoad() {
+        assertANewSaltedUrlDoesNotReload(square = true, thumbnail = true)
+    }
+
+    private fun assertANewSaltedUrlDoesNotReload(
+        square: Boolean,
+        thumbnail: Boolean,
+    ) {
+        val refState = mutableStateOf(CoverArtRef(url = "http://host/art?id=1&s=one", cacheKey = "1:art:false"))
+        val thumbnailState: MutableState<CoverArtRef>? =
+            if (thumbnail) mutableStateOf(CoverArtRef(url = "http://host/art?id=1&t=one", cacheKey = "1:art:true")) else null
+        val expected = if (thumbnail) 2 else 1
+        composeRule.setContent {
+            CoverArt(
+                ref = refState.value,
+                name = "Kid A",
+                thumbnailRef = thumbnailState?.value,
+                square = square,
+                modifier = Modifier.size(64.dp),
+            )
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) { requests.get() == expected }
+
+        refState.value = CoverArtRef(url = "http://host/art?id=1&s=two", cacheKey = "1:art:false")
+        thumbnailState?.value = CoverArtRef(url = "http://host/art?id=1&t=two", cacheKey = "1:art:true")
         composeRule.waitForIdle()
         composeRule.mainClock.advanceTimeBy(500)
         composeRule.waitForIdle()
 
-        assertEquals(1, requests.get())
+        assertEquals("a fresh salt for the same artwork must not rebuild the image request", expected, requests.get())
     }
 }
