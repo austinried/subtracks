@@ -36,6 +36,12 @@ android {
         generateLocaleConfig = true
     }
 
+    dependenciesInfo {
+        // The APK signing-block copy is encrypted per build, breaking APK reproducibility, and
+        // F-Droid rejects it; the bundle keeps its copy for Play.
+        includeInApk = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
