@@ -14,6 +14,19 @@ ktlint {
     version.set(libs.versions.ktlint.get())
 }
 
+val commitHash: String =
+    runCatching {
+        providers
+            .exec {
+                commandLine("git", "rev-parse", "HEAD")
+                workingDir = rootProject.layout.projectDirectory.asFile
+                isIgnoreExitValue = true
+            }.standardOutput.asText
+            .get()
+            .trim()
+            .take(7)
+    }.getOrDefault("")
+
 android {
     namespace = "com.subtracks"
     compileSdk = 37
@@ -25,6 +38,7 @@ android {
         targetSdk = 37
         versionCode = 13
         versionName = "3.0.0"
+        buildConfigField("String", "COMMIT_HASH", "\"$commitHash\"")
     }
 
     buildFeatures {

@@ -388,7 +388,16 @@ fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.app_name)) },
                     supportingContent = {
-                        Text(stringResource(R.string.settings_about_version, BuildConfig.VERSION_NAME))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.settings_about_version, BuildConfig.VERSION_NAME))
+                            if (BuildConfig.COMMIT_HASH.isNotEmpty()) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    BuildConfig.COMMIT_HASH,
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
+                            }
+                        }
                     },
                     leadingContent = { Icon(Icons.Rounded.Info, contentDescription = null) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
