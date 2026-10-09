@@ -148,10 +148,6 @@ fun HomeListScreen(
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val songListState = rememberLazyListState()
-    val isSongList =
-        request.downloaded == OfflineListKind.Songs ||
-            request.section == HomeSection.RecentlyStarredSongs ||
-            request.genre != null
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -163,7 +159,7 @@ fun HomeListScreen(
                     }
                 },
                 modifier =
-                    if (isSongList) {
+                    if (onShuffle != null) {
                         Modifier.clickable(onClickLabel = stringResource(R.string.scroll_to_top)) {
                             scope.launch { songListState.animateScrollToItem(0) }
                         }

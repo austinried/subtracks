@@ -101,8 +101,9 @@ fun ScrollToTopOnRequest(
 ) {
     var previous by remember { mutableStateOf(request) }
     LaunchedEffect(request) {
-        if (request != null && previous != null && request != previous) state.animateScrollToItem(0)
+        val stale = previous
         previous = request
+        if (request != null && stale != null && request != stale) state.animateScrollToItem(0)
     }
 }
 
@@ -113,7 +114,8 @@ fun ScrollToTopOnRequest(
 ) {
     var previous by remember { mutableStateOf(request) }
     LaunchedEffect(request) {
-        if (request != null && previous != null && request != previous) state.animateScrollToItem(0)
+        val stale = previous
         previous = request
+        if (request != null && stale != null && request != stale) state.animateScrollToItem(0)
     }
 }

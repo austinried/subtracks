@@ -2414,6 +2414,40 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun shuffleStarredPlaysOnlyStarredSongs() {
+        seedStarred()
+
+        controller.shuffleStarred(1)
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertTrue(controller.state.value.shuffle)
+        assertEquals(
+            QueueKind.Starred,
+            controller.state.value.context
+                ?.kind,
+        )
+        assertEquals(setOf("t1", "t2"), handle.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun shuffleDownloadedPlaysOnlyDownloadedSongs() {
+        seedAlbum(3, sourceId = 1)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s3")
+
+        controller.shuffleDownloaded(1)
+        await { controller.state.value.item != null && controller.state.value.shuffle }
+
+        assertTrue(controller.state.value.shuffle)
+        assertEquals(
+            QueueKind.Downloaded,
+            controller.state.value.context
+                ?.kind,
+        )
+        assertEquals(setOf("s1", "s3"), handle.items.map { it.id }.toSet())
+    }
+
+    @Test
     fun artistQueueRowsFollowTheFlatShuffleIdOrder() {
         seedArtist()
         runBlocking { queues.replace(listOf(queues.artistEntry(1, "ar1"))) }
@@ -3139,6 +3173,19 @@ class PlaybackControllerTest {
                     ) { it.step() }
                 }
             }
+        }
+    }
+
+    private fun seedStarred() {
+        runBlocking {
+            db.sourcesDao().upsertSource(Source(1, "source 1", "http://localhost:1", true, 1))
+            db.libraryDao().upsertSongs(
+                listOf(
+                    Song(1, "t1", "al1", "ar1", "Star 1", "Album", "Artist", 100, 1, 1, 1_700_000_000L, null),
+                    Song(1, "t2", "al1", "ar1", "Star 2", "Album", "Artist", 100, 2, 1, 1_700_000_000L, null),
+                    Song(1, "n1", "al1", "ar1", "Plain 1", "Album", "Artist", 100, 3, 1, null, null),
+                ),
+            )
         }
     }
 
