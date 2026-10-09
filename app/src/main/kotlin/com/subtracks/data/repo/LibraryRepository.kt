@@ -24,6 +24,7 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.StarType
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -464,14 +465,17 @@ class LibraryRepository(
         }
         val previous = starredValue(sourceId, type, id)
         updateStarred(sourceId, type, id, if (starred) System.currentTimeMillis() else null)
+        val action = if (starred) "star" else "unstar"
         return try {
             serverActions.setStar(type, id, starred)
+            Log.i("star", "$action ${type.name.lowercase()} $id")
             Result.success(Unit)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (failure: Exception) {
             withContext(NonCancellable) { updateStarred(sourceId, type, id, previous) }
             showMessage(UiMessage(R.string.star_update_failed))
+            Log.w("star", "failed to $action ${type.name.lowercase()} $id", failure)
             Result.failure(failure)
         }
     }

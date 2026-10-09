@@ -1,6 +1,7 @@
 package com.subtracks.playback
 
 import com.subtracks.data.source.ServerActionSink
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -128,22 +129,28 @@ class Scrobbler(
     private suspend fun submit(event: Scrobble) {
         when (event) {
             is Scrobble.NowPlaying -> {
-                attempt { sink.nowPlaying(event.songId) }
+                Log.i("scrobble", "now playing ${event.songId}")
+                attempt("now playing ${event.songId}") { sink.nowPlaying(event.songId) }
             }
 
             is Scrobble.Submission -> {
-                attempt { recordPlay(event.songId, event.time / 1000) }
-                attempt { sink.scrobble(event.songId, event.time) }
+                Log.i("scrobble", "submitted ${event.songId}")
+                attempt("record play ${event.songId}") { recordPlay(event.songId, event.time / 1000) }
+                attempt("scrobble ${event.songId}") { sink.scrobble(event.songId, event.time) }
             }
         }
     }
 
-    private suspend fun attempt(block: suspend () -> Unit) {
+    private suspend fun attempt(
+        label: String,
+        block: suspend () -> Unit,
+    ) {
         try {
             block()
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+            Log.w("scrobble", "$label failed", failure)
         }
     }
 }

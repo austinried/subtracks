@@ -112,14 +112,19 @@ class Media3PlayerHandle(
     ) = controller.replaceMediaItem(index, toMediaItem(item))
 
     override fun seekToIndex(index: Int) {
-        Log.d("playback", "seekToIndex($index) playerDuration=${controller.duration} state=${controller.playbackState}")
+        Log.d(
+            "playback",
+            "seekToIndex($index) position=${controller.currentPosition} duration=${duration(
+                controller.duration,
+            )} state=${controller.playbackState}",
+        )
         controller.seekTo(index, 0)
     }
 
     override fun seekTo(positionMs: Long) {
         Log.d(
             "playback",
-            "seekTo(${positionMs}ms) from=${controller.currentPosition} playerDuration=${controller.duration} " +
+            "seekTo(${positionMs}ms) from=${controller.currentPosition} duration=${duration(controller.duration)} " +
                 "itemDuration=${currentItem?.durationMs} state=${controller.playbackState}",
         )
         controller.seekTo(positionMs)
@@ -136,7 +141,7 @@ class Media3PlayerHandle(
                     mediaItem: MediaItem?,
                     reason: Int,
                 ) {
-                    Log.d("playback", "item=${mediaItem?.mediaId}")
+                    Log.d("playback", "${describe(mediaItem)} transition=${transitionReason(reason)}")
                     listener.onTransition()
                 }
 
@@ -148,7 +153,8 @@ class Media3PlayerHandle(
                 override fun onPlayerError(error: PlaybackException) {
                     Log.w(
                         "playback",
-                        "Playback error ${error.errorCodeName} at ${controller.currentPosition}/${controller.duration}",
+                        "error ${error.errorCodeName} ${describe(controller.currentMediaItem)} " +
+                            "position=${controller.currentPosition} duration=${duration(controller.duration)}",
                         error,
                     )
                     listener.onError(playbackErrorMessage(error))
@@ -158,12 +164,48 @@ class Media3PlayerHandle(
                     Log.d(
                         "playback",
                         "state=$playbackState position=${controller.currentPosition} " +
-                            "playerDuration=${controller.duration} itemDuration=${currentItem?.durationMs}",
+                            "duration=${duration(controller.duration)} itemDuration=${currentItem?.durationMs}",
                     )
                 }
             },
         )
     }
+
+    private fun describe(mediaItem: MediaItem?): String {
+        if (mediaItem == null) return "item=none"
+        val metadata = mediaItem.mediaMetadata
+        val artist =
+            metadata.artist
+                ?.toString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { " artist=\"$it\"" }
+                .orEmpty()
+        val album =
+            metadata.albumTitle
+                ?.toString()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { " album=\"$it\"" }
+                .orEmpty()
+        val source =
+            when (mediaItem.localConfiguration?.uri?.scheme) {
+                "file", "content" -> "file"
+                "http", "https" -> "http"
+                null -> "none"
+                else -> "other"
+            }
+        return "item id=${mediaItem.mediaId} title=\"${metadata.title?.toString().orEmpty()}\"$artist$album source=$source"
+    }
+
+    private fun duration(value: Long): String = if (value == C.TIME_UNSET) "unset" else "${value}ms"
+
+    private fun transitionReason(reason: Int): String =
+        when (reason) {
+            Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> "repeat"
+            Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> "auto"
+            Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> "seek"
+            Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> "playlist"
+            else -> reason.toString()
+        }
 
     private fun toMediaItem(item: QueueItem): MediaItem {
         val quality = sourceRepository.quality.value

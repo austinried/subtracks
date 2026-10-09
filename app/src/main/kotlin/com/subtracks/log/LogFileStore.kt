@@ -137,8 +137,9 @@ class LogFileStore(
     }
 
     private fun prune() {
-        val logs = files()
-        if (logs.size > maxFiles) logs.drop(maxFiles).forEach { it.delete() }
+        // Never prune the file we are writing to, and never keep fewer than one rolled file slot.
+        val rolled = files().filterNot { it == current }
+        if (rolled.size > maxFiles - 1) rolled.drop(maxFiles - 1).forEach { it.delete() }
     }
 
     private fun currentFile(): File = File(rootDir, dateFormat.format(Date()) + LOG_SUFFIX)

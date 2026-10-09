@@ -128,13 +128,16 @@ object Log {
     ) {
         val redacted = redactLogs(message)
         if (level.ordinal >= consoleLevel.ordinal) {
-            val text =
-                if (throwable != null) {
-                    "$redacted\n${redactLogs(AndroidLog.getStackTraceString(throwable))}"
-                } else {
-                    redacted
-                }
-            AndroidLog.println(priority(level), tag.take(23), text)
+            // Logging is best effort: a logcat write must never disturb the caller.
+            runCatching {
+                val text =
+                    if (throwable != null) {
+                        "$redacted\n${redactLogs(AndroidLog.getStackTraceString(throwable))}"
+                    } else {
+                        redacted
+                    }
+                AndroidLog.println(priority(level), tag.take(23), text)
+            }
         }
         fileStore?.write(level, tag, redacted, throwable)
     }

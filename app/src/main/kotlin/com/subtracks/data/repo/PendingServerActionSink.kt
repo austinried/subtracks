@@ -6,6 +6,7 @@ import com.subtracks.data.model.PendingActionKind
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.StarType
 import com.subtracks.data.source.subsonic.SubsonicException
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -29,8 +30,13 @@ class PendingServerActionSink(
 
     init {
         scope.launch {
+            var lastReady: Boolean? = null
             combine(offlinePreferences, networkAvailable) { isOffline, online -> !isOffline && online }
                 .collect { ready ->
+                    if (ready && lastReady == false) {
+                        Log.i("net", "connection available, replaying pending server actions")
+                    }
+                    lastReady = ready
                     // The persisted flag and connectivity are authoritative, unlike the process
                     // flag's default at cold start, so wait for that flag to agree before replaying.
                     if (ready) {
@@ -96,12 +102,14 @@ class PendingServerActionSink(
         for (action in dao.pending(sourceId)) {
             try {
                 deliver(action)
+                Log.i("net", "replayed ${action.kind.name.lowercase()} ${action.targetId}")
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
                 // Still unreachable: keep this and the remaining actions for the next attempt.
                 if (isRetryable(failure)) return
                 // The server answered and refused; drop the action rather than block the queue.
+                Log.w("net", "dropped ${action.kind.name.lowercase()} ${action.targetId}", failure)
             }
             dao.delete(action.id)
         }
@@ -139,6 +147,7 @@ class PendingServerActionSink(
         db.pendingActionDao().replace(
             PendingAction(sourceId = sourceId, kind = kind, targetId = targetId, starType = starType, time = time),
         )
+        Log.i("net", "queued ${kind.name.lowercase()} $targetId")
         return true
     }
 

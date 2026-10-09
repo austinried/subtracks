@@ -19,6 +19,7 @@ import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.coverArtKey
+import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
@@ -79,7 +80,10 @@ class DownloadRepository(
         }
         scope.launch {
             sourceRepository.offline.collect { offline ->
-                if (offline) cancelActive()
+                if (offline) {
+                    Log.i("download", "offline: cancelling active downloads")
+                    cancelActive()
+                }
             }
         }
     }
@@ -140,6 +144,7 @@ class DownloadRepository(
         dir(sourceId).mkdirs()
         file(sourceId, songId).delete()
         db.downloadDao().upsert(SongDownload(sourceId = sourceId, songId = songId, status = DownloadStatus.Queued))
+        Log.i("download", "queued song=$songId (source $sourceId)")
         ensurePolling()
         return true
     }
@@ -336,6 +341,7 @@ class DownloadRepository(
 
     private suspend fun removeRows(rows: List<SongDownload>) {
         if (rows.isEmpty()) return
+        Log.i("download", "removed ${rows.size} download(s)")
         val engineIds = rows.mapNotNull { it.engineId }
         if (engineIds.isNotEmpty()) engine.cancel(engineIds)
         rows.groupBy { it.sourceId }.forEach { (sourceId, group) ->
@@ -581,6 +587,14 @@ class DownloadRepository(
                     },
             )
         if (updated != row) db.downloadDao().upsert(updated)
+        if (updated.status != row.status) {
+            when (updated.status) {
+                DownloadStatus.Completed -> Log.i("download", "completed ${row.songId} (${updated.total} bytes)")
+                DownloadStatus.Failed -> Log.w("download", "failed ${row.songId}: ${updated.error}")
+                DownloadStatus.Running -> Log.i("download", "started ${row.songId}")
+                DownloadStatus.Queued -> Unit
+            }
+        }
     }
 
     private suspend fun markFailed(
@@ -590,6 +604,7 @@ class DownloadRepository(
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = error))
+        Log.w("download", "failed ${row.songId}: $error")
     }
 
     private fun ensurePolling() {

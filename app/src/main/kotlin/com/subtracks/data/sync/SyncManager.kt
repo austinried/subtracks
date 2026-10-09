@@ -59,16 +59,19 @@ class SyncManager(
             return
         }
         _status.value = SyncStatus.Running
+        val startedAt = System.nanoTime()
         val result =
             try {
                 val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
+                Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
                 SyncService(db, source).sync()
+                Log.i("sync", "finished in ${elapsedMs(startedAt)}ms")
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
-                Log.w("sync", "sync failed", failure)
+                Log.w("sync", "failed after ${elapsedMs(startedAt)}ms", failure)
                 val message =
                     when (failure) {
                         is NoServerException -> {
@@ -86,6 +89,8 @@ class SyncManager(
         queueRepository.invalidateLibraryCache()
         _status.value = result
     }
+
+    private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 }
 
 private class NoServerException : IllegalStateException()

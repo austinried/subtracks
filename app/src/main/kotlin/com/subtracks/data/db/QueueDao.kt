@@ -2,8 +2,8 @@ package com.subtracks.data.db
 
 import androidx.room3.Dao
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
-import androidx.room3.Upsert
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.PlaylistSongItem
@@ -55,7 +55,7 @@ interface QueueDao {
     @Query("SELECT * FROM playback_cursor WHERE id = 1")
     suspend fun cursor(): PlaybackCursor?
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setCursor(cursor: PlaybackCursor)
 
     @Query(

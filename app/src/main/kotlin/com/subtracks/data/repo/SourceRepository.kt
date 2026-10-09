@@ -17,6 +17,7 @@ import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.declaredStreamLength
 import com.subtracks.data.source.streamLengthSuffix
 import com.subtracks.data.source.subsonic.SubsonicClient
+import com.subtracks.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +47,13 @@ class SourceRepository(
         val source: SubsonicMusicSource,
     )
 
+    private data class ResolvedSource(
+        val config: SubsonicConfig?,
+        val quality: StreamQuality,
+        val mode: NetworkMode,
+        val concurrency: Int,
+    )
+
     @Volatile
     private var active: ActiveSource? = null
 
@@ -64,6 +72,7 @@ class SourceRepository(
     fun downloadsAllowedOverMetered(): Boolean = allowMeteredDownloads
 
     fun setOfflineMode(enabled: Boolean) {
+        Log.i("net", "offline mode -> $enabled")
         scope.launch { prefs.setOfflineMode(enabled) }
     }
 
@@ -81,6 +90,7 @@ class SourceRepository(
             // Read the persisted flag before the source config can build a source or probe it, so a
             // cold start with offline on never touches the network.
             _offline.value = prefs.offlineMode().first()
+            var lastMode: NetworkMode? = null
             combine(
                 db.sourcesDao().activeSubsonicConfig(),
                 networkMode,
@@ -88,9 +98,16 @@ class SourceRepository(
                 prefs.streamQuality(NetworkMode.Mobile),
                 prefs.syncConcurrency(),
             ) { config, mode, wifi, mobile, concurrency ->
-                Triple(config, if (mode == NetworkMode.Wifi) wifi else mobile, concurrency)
-            }.collect { (config, quality, concurrency) ->
+                ResolvedSource(config, if (mode == NetworkMode.Wifi) wifi else mobile, mode, concurrency)
+            }.collect { (config, quality, mode, concurrency) ->
+                if (mode != lastMode) {
+                    Log.i("net", "network mode -> ${mode.key}")
+                    lastMode = mode
+                }
                 val sourceChanged = config?.id != active?.id
+                if (sourceChanged) {
+                    Log.i("net", "active source -> ${config?.name ?: "none"}")
+                }
                 active = config?.let { ActiveSource(it.id, it.toMusicSource(quality, concurrency)) }
                 _quality.value = quality
                 if (sourceChanged && config != null && config.useTokenAuth && !_offline.value) {
