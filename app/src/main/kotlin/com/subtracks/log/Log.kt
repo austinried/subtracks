@@ -109,7 +109,7 @@ object Log {
         val failure = execution.error
         if (failure != null) {
             if (isUpsertConflict(execution.sql, failure)) {
-                d("sql", "upsert fallback conflict: ${shortSql(execution.sql)}")
+                v("sql", "upsert fallback conflict: ${shortSql(execution.sql)}")
             } else {
                 e("sql", "failed: ${shortSql(execution.sql)}", failure)
             }
