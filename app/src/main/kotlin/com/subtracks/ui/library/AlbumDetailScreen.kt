@@ -248,7 +248,6 @@ fun AlbumDetailScreen(
             }
         },
         modifier = modifier,
-        onShuffle = onShuffle.takeIf { songs.isNotEmpty() },
     )
 }
 
