@@ -326,6 +326,42 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun ignoringASecondMoveWhileTheFirstIsStillCommitting() {
+        runBlocking { seedSongs(10) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+
+        viewModel.open()
+        await { viewModel.ready }
+        val before = rowsSnapshot().map { it.song.song.id }
+        val from = rowsSnapshot().first().position
+
+        runOnMain {
+            assertTrue(viewModel.move(from, from + 3))
+            assertFalse(viewModel.move(from, from + 1))
+        }
+
+        val expected = before.toMutableList().also { it.add(3, it.removeAt(0)) }
+        await { rowsSnapshot().map { it.song.song.id } == expected }
+        assertEquals(expected, rowsSnapshot().map { it.song.song.id })
+    }
+
+    @Test
+    fun dropMoveTakesTheDraggedRowsCurrentPosition() {
+        val rows =
+            listOf(
+                row(10).copy(id = 2L),
+                row(11).copy(id = 3L),
+                row(9).copy(id = 1L),
+            )
+
+        val move = rows.dropMoveFor(1L)!!
+
+        assertEquals(9L, move.from)
+        assertEquals(11L, move.to)
+    }
+
+    @Test
     fun removingATrackUnderTheBlockReloadsRows() {
         runBlocking { seedSongs(10) }
         runBlocking {

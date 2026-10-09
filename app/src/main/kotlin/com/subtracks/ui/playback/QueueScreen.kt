@@ -113,6 +113,8 @@ class QueueViewModel(
     var generation by mutableIntStateOf(0)
         private set
 
+    private var reorderPending = false
+
     private var nextId = 0L
     private val mutex = Mutex()
 
@@ -249,12 +251,19 @@ class QueueViewModel(
     fun move(
         from: Long,
         to: Long,
-    ) {
-        if (from == to) return
+    ): Boolean {
+        if (from == to) return false
+        if (reorderPending) return false
+        reorderPending = true
         viewModelScope.launch {
-            playbackController.move(from, to)
-            mutex.withLock { reconcileLocked() }
+            try {
+                playbackController.move(from, to)
+                mutex.withLock { reconcileLocked() }
+            } finally {
+                reorderPending = false
+            }
         }
+        return true
     }
 
     fun remove(position: Long) {
@@ -331,7 +340,7 @@ fun QueueScreen(
     onPlay: (Long) -> Unit,
     onRemove: (Long) -> Unit,
     onReorder: (Int, Int) -> Unit,
-    onMove: (Long, Long) -> Unit,
+    onMove: (Long, Long) -> Boolean,
     onLoadOlder: () -> Unit,
     onLoadNewer: () -> Unit,
     onUndo: () -> Unit,
@@ -347,7 +356,6 @@ fun QueueScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var dragId by remember { mutableStateOf<Long?>(null) }
-    var dragFrom by remember { mutableStateOf<Long?>(null) }
     val undoLabel = stringResource(R.string.undo)
     val queueReordered = stringResource(R.string.queue_reordered)
     val queueRemoved = stringResource(R.string.queue_removed)
@@ -470,28 +478,14 @@ fun QueueScreen(
                                             null
                                         } else {
                                             Modifier.draggableHandle(
-                                                onDragStarted = {
-                                                    dragId = row.id
-                                                    dragFrom = row.position
-                                                },
+                                                onDragStarted = { dragId = row.id },
                                                 onDragStopped = {
-                                                    val id = dragId
-                                                    val from = dragFrom
-                                                    if (id != null && from != null) {
-                                                        val draggedIndex = rows.indexOfFirst { it.id == id }
-                                                        val to =
-                                                            if (draggedIndex < 0) {
-                                                                from
-                                                            } else {
-                                                                dropTarget(rows, draggedIndex, from)
-                                                            }
-                                                        if (to != from) {
-                                                            onMove(from, to)
-                                                            showUndo(queueReordered)
+                                                    dragId?.let { id ->
+                                                        rows.dropMoveFor(id)?.let { move ->
+                                                            if (onMove(move.from, move.to)) showUndo(queueReordered)
                                                         }
                                                     }
                                                     dragId = null
-                                                    dragFrom = null
                                                 },
                                             )
                                         },
@@ -561,6 +555,19 @@ internal fun dropTarget(
     if (next != null) return next.position - if (next.position > from) 1 else 0
     val before = rows.getOrNull(index - 1)?.position ?: return from
     return (before - if (before > from) 1 else 0) + 1
+}
+
+internal data class QueueMove(
+    val from: Long,
+    val to: Long,
+)
+
+internal fun List<QueueRow>.dropMoveFor(draggedId: Long): QueueMove? {
+    val index = indexOfFirst { it.id == draggedId }
+    if (index < 0) return null
+    val from = this[index].position
+    val to = dropTarget(this, index, from)
+    return if (to == from) null else QueueMove(from, to)
 }
 
 @Suppress("ModifierParameter")
