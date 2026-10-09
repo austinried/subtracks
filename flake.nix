@@ -40,9 +40,17 @@
           };
           androidSdk = android.androidsdk;
 
+          gradle_wrapper = pkgs.writeShellScriptBin "gradle" ''
+            if [ -n "''${CI:-}''${GITHUB_ACTIONS:-}" ]; then
+              exec ${pkgs.gradle_9}/bin/gradle "$@"
+            fi
+            exec ${pkgs.util-linux}/bin/flock /tmp/subtracks-gradle.lock \
+              ${pkgs.coreutils}/bin/nice -n 10 ${pkgs.gradle_9}/bin/gradle --max-workers=4 "$@"
+          '';
+
           basePackages = [
             pkgs.jdk21
-            pkgs.gradle_9
+            gradle_wrapper
             pkgs.git
             pkgs.curl
             pkgs.unzip
