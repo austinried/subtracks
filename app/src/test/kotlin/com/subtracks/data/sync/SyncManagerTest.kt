@@ -10,6 +10,7 @@ import com.subtracks.TEST_TIMEOUT_MS
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
@@ -44,6 +45,7 @@ class SyncManagerTest {
     private lateinit var sourceRepository: SourceRepository
     private lateinit var queueRepository: QueueRepository
     private lateinit var manager: SyncManager
+    private lateinit var preferences: UserPreferences
     private lateinit var scope: CoroutineScope
     private val messages = CopyOnWriteArrayList<String>()
     private lateinit var server: MockWebServer
@@ -62,12 +64,14 @@ class SyncManagerTest {
         sourceRepository =
             SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
         queueRepository = QueueRepository(db)
+        preferences = fakeUserPreferences()
         manager =
             SyncManager(
                 db,
                 sourceRepository,
                 queueRepository,
                 NetworkServerActionSink(sourceRepository),
+                preferences = preferences,
                 showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )
@@ -89,6 +93,16 @@ class SyncManagerTest {
             withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertEquals(listOf("No server configured"), messages)
+            assertTrue(preferences.lastSyncAt().first() > 0)
+        }
+
+    @Test
+    fun aSilentSyncDoesNotTellTheUser() =
+        runBlocking {
+            manager.requestSync(silent = true)
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertTrue(messages.isEmpty())
         }
 
     @Test
@@ -114,6 +128,7 @@ class SyncManagerTest {
 
             assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
             assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
+            assertTrue(preferences.lastSyncAt().first() > 0)
         }
 
     @Test

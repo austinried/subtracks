@@ -27,7 +27,9 @@ import com.subtracks.data.repo.PendingServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
+import com.subtracks.data.sync.AutoSync
 import com.subtracks.data.sync.SyncManager
+import com.subtracks.data.sync.SyncNotifier
 import com.subtracks.log.Log
 import com.subtracks.playback.MediaSessionConnection
 import com.subtracks.playback.PlaybackController
@@ -96,7 +98,16 @@ fun appModule(
     }
     single { LibraryRepository(get(), get(), get(), toast, scope = get(named("io"))) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
-    single { SyncManager(get(), get(), get(), get(), showMessage = toast, scope = get()) }
+    single { SyncManager(get(), get(), get(), get(), preferences = get(), showMessage = toast, scope = get()) }
+    single {
+        AutoSync(
+            preferences = get(),
+            networkMode = networkMode(context.applicationContext),
+            hasSource = { get<SourceRepository>().activeSourceIdOnce() != null },
+            requestSync = { get<SyncManager>().requestSync(silent = true) },
+            scope = get(),
+        )
+    }
     single { QueueRepository(get()) }
     single { ArtworkStore(downloadsRoot(context)) }
     single<ArtworkFetcher> { OkHttpArtworkFetcher(get()) }
@@ -115,6 +126,7 @@ fun appModule(
         ).also { it.start() }
     }
     single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get(), scope = get()).also { it.start() } }
+    single(createdAtStart = true) { SyncNotifier(context.applicationContext, get<SyncManager>().status, scope = get()).also { it.start() } }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
     single { PlaybackController(get(), get(), get(), get(), showMessage = toast, scope = get(named("playback"))) }
     single(createdAtStart = true) {

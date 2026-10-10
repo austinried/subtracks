@@ -2,6 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">subtracks</string>
     <string name="download_channel_description">Progress while songs download</string>
+    <string name="sync_notification_channel">Sync</string>
+    <string name="sync_notification_title">Syncing library</string>
+    <string name="sync_notification_text">Keeping your library up to date</string>
 
     <string name="actions_cancel">Cancel</string>
     <string name="actions_delete">Delete</string>
@@ -201,6 +204,21 @@
     <string name="sync_concurrency">Sync concurrency</string>
     <string name="sync_concurrency_parallel">Parallel server requests while syncing</string>
     <string name="sync_concurrency_sequential">1 (sequential)</string>
+    <string name="settings_sync_auto_title">Sync automatically</string>
+    <string name="sync_mode_off">Off</string>
+    <string name="sync_mode_wifi">Wi-Fi only</string>
+    <string name="sync_mode_always">Always</string>
+    <string name="sync_mode_prompt">When to sync automatically</string>
+    <string name="sync_interval">Automatic sync interval</string>
+    <string name="sync_interval_prompt">How often to sync automatically</string>
+    <plurals name="sync_interval_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="sync_interval_hours">
+        <item quantity="one">%1$d hour</item>
+        <item quantity="other">%1$d hours</item>
+    </plurals>
     <string name="download_quality">Download quality</string>
     <string name="download_over_mobile">Download over mobile data</string>
     <string name="download_network_wifi_and_mobile">Wi-Fi and mobile</string>

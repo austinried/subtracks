@@ -65,7 +65,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.BuildConfig
 import com.subtracks.R
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.StreamQuality
+import com.subtracks.data.prefs.SyncMode
 import com.subtracks.log.Log
 import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.rememberViewportFill
@@ -82,7 +84,7 @@ private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "f
 private const val PROJECT_HOMEPAGE = "https://github.com/austinried/subtracks"
 private const val SUPPORT_URL = "https://ko-fi.com/austinried"
 
-private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality, SyncConcurrency }
+private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality, SyncConcurrency, SyncInterval, SyncMode }
 
 @Composable
 fun SettingsRoute(
@@ -99,6 +101,8 @@ fun SettingsRoute(
     val wifiQuality by viewModel.wifiQuality.collectAsStateWithLifecycle()
     val mobileQuality by viewModel.mobileQuality.collectAsStateWithLifecycle()
     val syncConcurrency by viewModel.syncConcurrency.collectAsStateWithLifecycle()
+    val syncMode by viewModel.syncMode.collectAsStateWithLifecycle()
+    val syncIntervalMinutes by viewModel.syncIntervalMinutes.collectAsStateWithLifecycle()
     val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
@@ -112,6 +116,8 @@ fun SettingsRoute(
         wifiQuality = wifiQuality,
         mobileQuality = mobileQuality,
         syncConcurrency = syncConcurrency,
+        syncMode = syncMode,
+        syncInterval = syncIntervalMinutes,
         downloadQuality = downloadQuality,
         downloadOverMetered = downloadOverMetered,
         scrobbling = scrobbling,
@@ -122,6 +128,8 @@ fun SettingsRoute(
         onWifiQualityChange = viewModel::setWifiQuality,
         onMobileQualityChange = viewModel::setMobileQuality,
         onSyncConcurrencyChange = viewModel::setSyncConcurrency,
+        onSyncModeChange = viewModel::setSyncMode,
+        onSyncIntervalChange = viewModel::setSyncIntervalMinutes,
         onDownloadQualityChange = viewModel::setDownloadQuality,
         onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
         onScrobblingChange = viewModel::setScrobbling,
@@ -166,11 +174,15 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     offline: Boolean = false,
     verboseLogging: Boolean = false,
+    syncMode: SyncMode = SyncMode.WifiOnly,
+    syncInterval: Int = DEFAULT_SYNC_INTERVAL_MINUTES,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
     onMobileQualityChange: (StreamQuality) -> Unit,
     onSyncConcurrencyChange: (Int) -> Unit,
+    onSyncModeChange: (SyncMode) -> Unit = {},
+    onSyncIntervalChange: (Int) -> Unit = {},
     onDownloadQualityChange: (StreamQuality) -> Unit,
     onDownloadOverMeteredChange: (Boolean) -> Unit,
     onScrobblingChange: (Boolean) -> Unit,
@@ -285,6 +297,22 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.sync_concurrency)) },
                     supportingContent = { Text(concurrencyLabel(LocalResources.current, syncConcurrency)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_sync_auto_title)) },
+                    supportingContent = { Text(syncModeLabel(LocalResources.current, syncMode)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SyncMode },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.sync_interval)) },
+                    supportingContent = { Text(syncIntervalLabel(LocalResources.current, syncInterval)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SyncInterval },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -475,6 +503,22 @@ fun SettingsScreen(
             )
         }
 
+        SettingsDialog.SyncInterval -> {
+            SyncIntervalDialog(
+                selected = syncInterval,
+                onSelect = onSyncIntervalChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
+        SettingsDialog.SyncMode -> {
+            SyncModeDialog(
+                selected = syncMode,
+                onSelect = onSyncModeChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
         null -> {
             Unit
         }
@@ -500,10 +544,55 @@ private fun bitrateLabel(
 
 private val syncConcurrencyOptions = listOf(1, 2, 4, 8, 16)
 
+private val syncIntervalOptions = listOf(15, 60, 360, 720, DEFAULT_SYNC_INTERVAL_MINUTES)
+
 private fun concurrencyLabel(
     resources: Resources,
     value: Int,
 ): String = if (value <= 1) resources.getString(R.string.sync_concurrency_sequential) else value.toString()
+
+private fun syncIntervalLabel(
+    resources: Resources,
+    minutes: Int,
+): String =
+    if (minutes >= 60 && minutes % 60 == 0) {
+        resources.getQuantityString(R.plurals.sync_interval_hours, minutes / 60, minutes / 60)
+    } else {
+        resources.getQuantityString(R.plurals.sync_interval_minutes, minutes, minutes)
+    }
+
+@Composable
+private fun SyncIntervalDialog(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableIntStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.sync_interval)) },
+        text = {
+            ChoiceGroup(
+                header = stringResource(R.string.sync_interval_prompt),
+                options = syncIntervalOptions.map { it to syncIntervalLabel(resources, it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
 
 @Composable
 private fun ConcurrencyDialog(
@@ -520,6 +609,51 @@ private fun ConcurrencyDialog(
             ChoiceGroup(
                 header = stringResource(R.string.sync_concurrency_parallel),
                 options = syncConcurrencyOptions.map { it to concurrencyLabel(resources, it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
+
+private val syncModeOptions = SyncMode.entries
+
+private fun syncModeLabel(
+    resources: Resources,
+    mode: SyncMode,
+): String =
+    when (mode) {
+        SyncMode.Off -> resources.getString(R.string.sync_mode_off)
+        SyncMode.WifiOnly -> resources.getString(R.string.sync_mode_wifi)
+        SyncMode.Always -> resources.getString(R.string.sync_mode_always)
+    }
+
+@Composable
+private fun SyncModeDialog(
+    selected: SyncMode,
+    onSelect: (SyncMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_sync_auto_title)) },
+        text = {
+            ChoiceGroup(
+                header = stringResource(R.string.sync_mode_prompt),
+                options = syncModeOptions.map { it to syncModeLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )

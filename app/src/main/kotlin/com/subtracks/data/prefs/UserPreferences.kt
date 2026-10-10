@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.subtracks.data.net.NetworkMode
@@ -47,6 +48,10 @@ data class StreamQuality(
 }
 
 private val Context.preferences: DataStore<Preferences> by preferencesDataStore("user_prefs")
+
+const val DEFAULT_SYNC_INTERVAL_MINUTES = 24 * 60
+
+enum class SyncMode { Off, WifiOnly, Always }
 
 data class ArtworkSeedValue(
     val cacheKey: String,
@@ -104,6 +109,34 @@ class UserPreferences(
     }
 
     private val syncConcurrencyKey = intPreferencesKey("sync_concurrency")
+
+    fun syncMode(): Flow<SyncMode> =
+        store.data.map { prefs ->
+            prefs[syncModeKey]?.let { stored -> SyncMode.entries.firstOrNull { it.name == stored } } ?: SyncMode.WifiOnly
+        }
+
+    suspend fun setSyncMode(mode: SyncMode) {
+        store.edit { prefs -> prefs[syncModeKey] = mode.name }
+    }
+
+    private val syncModeKey = stringPreferencesKey("sync_mode")
+
+    fun lastSyncAt(): Flow<Long> = store.data.map { prefs -> prefs[lastSyncAtKey] ?: 0L }
+
+    suspend fun setLastSyncAt(value: Long) {
+        store.edit { prefs -> prefs[lastSyncAtKey] = value }
+    }
+
+    private val lastSyncAtKey = longPreferencesKey("last_sync_at")
+
+    fun syncIntervalMinutes(): Flow<Int> =
+        store.data.map { prefs -> (prefs[syncIntervalKey] ?: DEFAULT_SYNC_INTERVAL_MINUTES).coerceAtLeast(1) }
+
+    suspend fun setSyncIntervalMinutes(value: Int) {
+        store.edit { prefs -> prefs[syncIntervalKey] = value.coerceAtLeast(1) }
+    }
+
+    private val syncIntervalKey = intPreferencesKey("sync_interval_minutes")
 
     fun scrobbling(): Flow<Boolean> = store.data.map { prefs -> prefs[scrobblingKey] ?: true }
 

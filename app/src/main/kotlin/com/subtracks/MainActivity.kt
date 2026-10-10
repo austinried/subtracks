@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import com.subtracks.data.sync.AutoSync
 import com.subtracks.ui.NowPlayingLauncher
 import com.subtracks.ui.SubtracksRoot
 import com.subtracks.ui.theme.SubtracksTheme
@@ -19,9 +20,20 @@ import org.koin.core.context.GlobalContext
 class MainActivity : ComponentActivity() {
     private val launchViewModel: NowPlayingLaunchViewModel by viewModels()
     private val nowPlayingLauncher: NowPlayingLauncher by lazy { GlobalContext.get().get() }
+    private val autoSync: AutoSync by lazy { GlobalContext.get().get() }
 
     private val requestNotifications =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    override fun onStart() {
+        super.onStart()
+        autoSync.setForeground(true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        autoSync.setForeground(false)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

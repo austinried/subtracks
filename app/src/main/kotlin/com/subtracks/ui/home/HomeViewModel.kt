@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -53,11 +52,6 @@ class HomeViewModel(
     private val syncManager: SyncManager,
     private val playbackController: PlaybackController,
 ) : ViewModel() {
-    val syncing: StateFlow<Boolean> =
-        syncManager.status
-            .map { it == SyncStatus.Running }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
     val offline: StateFlow<Boolean> =
         sourceRepository.offline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
@@ -141,7 +135,9 @@ class HomeViewModel(
         viewModelScope.playDownloadedList(libraryRepository, playbackController, song)
     }
 
-    fun sync() = syncManager.requestSync()
+    fun sync() {
+        if (syncManager.status.value !is SyncStatus.Running) syncManager.requestSync()
+    }
 
     private data class PlayRows(
         val recentAlbums: List<Album>,

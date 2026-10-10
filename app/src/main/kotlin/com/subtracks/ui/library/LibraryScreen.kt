@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -243,6 +244,7 @@ fun LibraryRoute(
     var previousTabName by remember { mutableStateOf(selectedTab.name) }
     val previousTab = LibraryTab.entries.firstOrNull { it.name == previousTabName } ?: LibraryTab.Albums
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val listTab = selectedTab.listTab()
     LaunchedEffect(selectedTab) {
         if (previousTab != selectedTab) {
@@ -296,6 +298,7 @@ fun LibraryRoute(
         selectedTab = selectedTab,
         onTabSelected = { tab -> if (viewModel.selectedTab.value != tab) viewModel.selectTab(tab) },
         syncing = syncing,
+        refreshing = refreshing,
         bottomInset = bottomInset,
         artwork = artwork,
         albums = viewModel.albums,
@@ -392,6 +395,7 @@ fun LibraryScreen(
     onExitOffline: () -> Unit = {},
     onItemLongClick: (MenuTarget) -> Unit = {},
     syncing: Boolean = false,
+    refreshing: Boolean = false,
     bottomInset: Dp = 0.dp,
     listQuery: ListQuery = ListQuery(""),
     resetKeys: Map<LibraryTab, Any?> = emptyMap(),
@@ -474,13 +478,13 @@ fun LibraryScreen(
             val scrollToTopKey = if (pageTab == selectedTab) topRequest else null
             val pullToRefreshState = rememberPullToRefreshState()
             PullToRefreshBox(
-                isRefreshing = syncing,
+                isRefreshing = refreshing,
                 onRefresh = onSync,
                 state = pullToRefreshState,
                 indicator = {
                     PullToRefreshDefaults.Indicator(
                         state = pullToRefreshState,
-                        isRefreshing = syncing,
+                        isRefreshing = refreshing,
                         modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding(),
                         containerColor = headerColor,
                         color = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.primary,
@@ -582,6 +586,7 @@ fun LibraryScreen(
                     offline = offline,
                     onExitOffline = onExitOffline,
                     artwork = artwork,
+                    syncing = syncing,
                 )
             }
         }
@@ -848,6 +853,7 @@ internal fun LibraryTabs(
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
     artwork: ArtworkColors?,
+    syncing: Boolean = false,
 ) {
     val indicatorStretch = 18.dp
     val density = LocalDensity.current
@@ -939,11 +945,20 @@ internal fun LibraryTabs(
                         }
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = stringResource(R.string.navigation_tabs_settings),
-                            tint = MaterialTheme.colorScheme.onBackground,
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = stringResource(R.string.navigation_tabs_settings),
+                                tint = MaterialTheme.colorScheme.onBackground,
+                            )
+                            if (syncing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
                     }
                 }
             }

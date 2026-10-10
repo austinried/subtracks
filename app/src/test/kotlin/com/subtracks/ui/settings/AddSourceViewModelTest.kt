@@ -156,7 +156,14 @@ class AddSourceViewModelTest {
 
     private fun viewModel(sourceId: Long? = null): AddSourceViewModel {
         val syncManager =
-            SyncManager(db, sourceRepository, QueueRepository(db), NetworkServerActionSink(sourceRepository), scope = repoScope)
+            SyncManager(
+                db,
+                sourceRepository,
+                QueueRepository(db),
+                NetworkServerActionSink(sourceRepository),
+                preferences = fakeUserPreferences(),
+                scope = repoScope,
+            )
         val resources = ApplicationProvider.getApplicationContext<Context>().resources
         return AddSourceViewModel(sourceRepository, syncManager, downloadRepository, sourceId, resources).also { createdViewModels += it }
     }

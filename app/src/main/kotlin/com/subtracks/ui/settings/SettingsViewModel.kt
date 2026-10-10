@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.StreamQuality
+import com.subtracks.data.prefs.SyncMode
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.DEFAULT_FETCH_CONCURRENCY
@@ -48,6 +50,16 @@ class SettingsViewModel(
             .syncConcurrency()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_FETCH_CONCURRENCY)
 
+    val syncMode: StateFlow<SyncMode> =
+        userPreferences
+            .syncMode()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncMode.WifiOnly)
+
+    val syncIntervalMinutes: StateFlow<Int> =
+        userPreferences
+            .syncIntervalMinutes()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_SYNC_INTERVAL_MINUTES)
+
     val scrobbling: StateFlow<Boolean> =
         userPreferences
             .scrobbling()
@@ -90,6 +102,14 @@ class SettingsViewModel(
 
     fun setSyncConcurrency(value: Int) {
         viewModelScope.launch { userPreferences.setSyncConcurrency(value) }
+    }
+
+    fun setSyncMode(mode: SyncMode) {
+        viewModelScope.launch { userPreferences.setSyncMode(mode) }
+    }
+
+    fun setSyncIntervalMinutes(value: Int) {
+        viewModelScope.launch { userPreferences.setSyncIntervalMinutes(value) }
     }
 
     fun setScrobbling(enabled: Boolean) {

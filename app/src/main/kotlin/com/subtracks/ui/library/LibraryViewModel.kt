@@ -117,7 +117,12 @@ class LibraryViewModel(
 
     val syncing: StateFlow<Boolean> =
         syncManager.status
-            .map { it == SyncStatus.Running }
+            .map { it is SyncStatus.Running }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val refreshing: StateFlow<Boolean> =
+        syncManager.status
+            .map { it is SyncStatus.Running && !it.silent }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val activeSourceId = libraryRepository.activeSourceId.filterNotNull()
@@ -206,7 +211,9 @@ class LibraryViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    fun sync() = syncManager.requestSync()
+    fun sync() {
+        if (syncManager.status.value !is SyncStatus.Running) syncManager.requestSync()
+    }
 }
 
 internal fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { it.name == sort } ?: AlbumSort.Name
