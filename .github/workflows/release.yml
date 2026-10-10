@@ -117,31 +117,11 @@ jobs:
           printf '%s\n' "$certs"
           fingerprint=$(printf '%s\n' "$certs" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1 | tr '[:lower:]' '[:upper:]' | sed 's/\(..\)/\1:/g; s/:$//')
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
-      - name: Compose release notes
-        run: |
-          {
-            cat "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
-            echo
-            echo '---'
-            echo
-            echo "APK SHA-256: \`$(grep 'subtracks\.apk$' SHA256SUMS | cut -d ' ' -f1)\`"
-            echo
-            echo "AAB SHA-256: \`$(grep 'subtracks\.aab$' SHA256SUMS | cut -d ' ' -f1)\`"
-            echo
-            echo "Signing certificate SHA-256: \`${{ steps.checksums.outputs.fingerprint }}\`"
-            echo
-            echo 'The signing certificate is attached as `release-certificate.pem`.'
-            if [ "${{ steps.stable.outputs.value }}" = "true" ]; then
-              echo 'The `.aab` is the exact bundle uploaded to Google Play; the `.apk` is the universal APK for sideloading.'
-            else
-              echo 'The `.aab` is the built app bundle (this pre-release was not uploaded to Google Play); the `.apk` is the universal APK for sideloading.'
-            fi
-          } > release-notes.md
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md)
+          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt")
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
