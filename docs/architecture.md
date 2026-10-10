@@ -163,4 +163,4 @@ No analytics or third-party telemetry. Credentials are stored locally in app dat
 
 ## Build and CI
 
-The Nix flake devshell provides the whole toolchain, and `direnv` loads it into the working shell. CI (`.forgejo/workflows/ci.yml`) runs `unit`, `lint` and `integration` on a containerized Nix runner, restoring the Nix store from the Actions cache and caching Gradle and the integration test music.
+The Nix flake devshell provides the whole toolchain, and `direnv` loads it into the working shell. CI runs `unit`, `lint` and `integration`, restoring the Nix store from the Actions cache and caching Gradle and the integration test music.

@@ -34,11 +34,7 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 
 ## CI
 
-- Forgejo Actions, `.forgejo/workflows/ci.yml`, a single `ci` job that runs lint, the unit tests, the debug and nightly assembles and the integration suite (one cache restore/save and Gradle warm-up instead of several); the GitHub copy uploads the debug and nightly APKs and the checksums as separate artifacts on a push to `main`.
-- Runs on the `nix-docker` runner (the `localhost/nix-ci` image built by the separate `nix-home` repo) inside the devshell, restoring the Nix store via `cache-nix-action` and caching Gradle and the integration test music.
-- The `nix-docker` and `bookworm` runner labels, their images and the runner's networking are defined in the separate `nix-home` repo (`hosts-incus/git-runner.nix`).
-- Pull requests from a fork need approval before the workflow runs.
-- The GitHub mirror and the GitHub PR import live under `.forgejo/`; see `.forgejo/README.md`.
+- The CI workflows live under `.forgejo/` and `.github/`, and the GitHub mirror and the GitHub PR import under `.forgejo/`; see `.forgejo/README.md`.
 
 ## Conventions
 
@@ -60,7 +56,6 @@ Everything comes from the Nix flake devshell; do not install toolchains by hand.
 - Room 3 does not map `PagingSource` automatically: a DAO that returns it needs `@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)`.
 - Material icons are not pulled in by `material3`; use the BOM-managed `material-icons-core`/`material-icons-extended` (frozen at 1.7.8). Extended is large in debug builds but R8 strips unused icons from release.
 - Robolectric creates a fresh `Application` per test in one JVM, so `SubtracksApp.onCreate` stops any running Koin before `startKoin`.
-- The CI image provides `nix-ld`, `jq`, `sqlite`, `node`, `zstd` and a `runner` user that `cache-nix-action` expects. None of that is needed locally beyond the devshell.
 - Integration servers: navidrome on 4533 (`admin`/`password`), gonic on 4747 (`admin`/`admin`), lms on 5082 (`admin`/`subtracks-lms`), Nextcloud Music on 8090 (`admin`/`subtracks-nextcloud`, base URL `http://localhost:8090/index.php/apps/music/subsonic/`). The test music is cached in `.integration/music` (gitignored).
 - lms and Nextcloud Music authenticate the Subsonic API with per-user **API keys** instead of passwords. The harness seeds a key and most tests use `useTokenAuth = false`; `SubsonicAuthIntegrationTest` drives `useTokenAuth = true` and asserts the fallback to plaintext (lms answers code 42, Nextcloud 41).
 - `nix develop` does not source your shell rc files (so tools like atuin are not active); use direnv if you want your normal interactive shell.
