@@ -189,6 +189,7 @@ tasks.withType<Test>().configureEach {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
     }
+    outputs.cacheIf { false }
 }
 
 tasks.register<Test>("integrationTest") {
