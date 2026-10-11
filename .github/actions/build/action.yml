@@ -38,8 +38,8 @@ runs:
     - uses: actions/cache@v6
       with:
         path: ~/.gradle/caches
-        key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
-        restore-keys: gradle-
+        key: gradle-v2-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: gradle-v2-
     - id: signing
       if: inputs.sign == 'true'
       shell: bash
