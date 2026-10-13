@@ -174,6 +174,14 @@ class UserPreferences(
 
     private val replayGainPreampKey = floatPreferencesKey("replay_gain_preamp_db")
 
+    fun keepScreenOn(): Flow<Boolean> = store.data.map { prefs -> prefs[keepScreenOnKey] ?: false }
+
+    suspend fun setKeepScreenOn(enabled: Boolean) {
+        store.edit { prefs -> prefs[keepScreenOnKey] = enabled }
+    }
+
+    private val keepScreenOnKey = booleanPreferencesKey("keep_screen_on")
+
     fun offlineMode(): Flow<Boolean> = store.data.map { prefs -> prefs[offlineModeKey] ?: false }
 
     suspend fun setOfflineMode(enabled: Boolean) {

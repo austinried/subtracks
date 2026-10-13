@@ -123,6 +123,7 @@ fun SettingsRoute(
     val downloadQuality by viewModel.downloadQuality.collectAsStateWithLifecycle()
     val downloadOverMetered by viewModel.downloadOverMetered.collectAsStateWithLifecycle()
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
+    val keepScreenOn by viewModel.keepScreenOn.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     val verboseLogging by viewModel.verboseLogging.collectAsStateWithLifecycle()
     val replayGainMode by viewModel.replayGainMode.collectAsStateWithLifecycle()
@@ -142,6 +143,7 @@ fun SettingsRoute(
         scrobbling = scrobbling,
         replayGainMode = replayGainMode,
         replayGainPreamp = replayGainPreamp,
+        keepScreenOn = keepScreenOn,
         offline = offline,
         verboseLogging = verboseLogging,
         onSelectSource = viewModel::selectSource,
@@ -156,6 +158,7 @@ fun SettingsRoute(
         onScrobblingChange = viewModel::setScrobbling,
         onReplayGainModeChange = viewModel::setReplayGainMode,
         onReplayGainPreampChange = viewModel::setReplayGainPreamp,
+        onKeepScreenOnChange = viewModel::setKeepScreenOn,
         onOfflineChange = viewModel::setOfflineMode,
         onVerboseLoggingChange = viewModel::setVerboseLogging,
         onAddServer = onAddServer,
@@ -195,6 +198,7 @@ fun SettingsScreen(
     downloadOverMetered: Boolean,
     scrobbling: Boolean,
     modifier: Modifier = Modifier,
+    keepScreenOn: Boolean = false,
     offline: Boolean = false,
     verboseLogging: Boolean = false,
     syncMode: SyncMode = SyncMode.WifiOnly,
@@ -213,6 +217,7 @@ fun SettingsScreen(
     onScrobblingChange: (Boolean) -> Unit,
     onReplayGainModeChange: (ReplayGainMode) -> Unit = {},
     onReplayGainPreampChange: (Float) -> Unit = {},
+    onKeepScreenOnChange: (Boolean) -> Unit = {},
     onOfflineChange: (Boolean) -> Unit = {},
     onVerboseLoggingChange: (Boolean) -> Unit = {},
     onAddServer: () -> Unit,
@@ -377,6 +382,26 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.settings_replay_gain_preamp_title)) },
                     supportingContent = { Text(replayGainPreampLabel(LocalResources.current, replayGainPreamp)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.ReplayGainPreamp },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_music_options_keep_screen_on_title)) },
+                    supportingContent = { Text(stringResource(R.string.settings_music_options_keep_screen_on_description)) },
+                    trailingContent = {
+                        Switch(
+                            checked = keepScreenOn,
+                            onCheckedChange = onKeepScreenOnChange,
+                            colors =
+                                SwitchDefaults.colors(
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                                ),
+                        )
+                    },
+                    modifier = Modifier.clickable { onKeepScreenOnChange(!keepScreenOn) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

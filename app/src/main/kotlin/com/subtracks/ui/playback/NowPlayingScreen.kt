@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -76,6 +77,7 @@ import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.source.StarType
@@ -191,8 +193,10 @@ fun NowPlayingRoute(
     controller: PlaybackController = koinInject(),
     libraryRepository: LibraryRepository = koinInject(),
     downloadRepository: DownloadRepository = koinInject(),
+    userPreferences: UserPreferences = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
+    val keepScreenOn by userPreferences.keepScreenOn().collectAsStateWithLifecycle(initialValue = false)
     val positionMs by controller.positionMs.collectAsStateWithLifecycle()
     val sourceId = state.context?.sourceId
     val songId = state.item?.id
@@ -272,6 +276,7 @@ fun NowPlayingRoute(
         starred = song?.starred != null,
         onToggleStar = song?.let { s -> { setStar(StarType.Song, s.id, s.starred == null) } },
         onSeek = controller::seekTo,
+        keepScreenOn = keepScreenOn,
         modifier = modifier,
     )
 }
@@ -290,6 +295,7 @@ fun NowPlayingScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     modifier: Modifier = Modifier,
+    keepScreenOn: Boolean = false,
     onSkipPrevious: () -> Unit = onPrevious,
     onShuffle: () -> Unit = {},
     onRepeat: () -> Unit = {},
@@ -366,7 +372,12 @@ fun NowPlayingScreen(
 
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(artwork) {
-            Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Box(
+                modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .then(if (keepScreenOn) Modifier.keepScreenOn() else Modifier),
+            ) {
                 HeroGradient(
                     colors = artwork,
                     scrollPx = { 0f },
