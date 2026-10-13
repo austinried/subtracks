@@ -85,6 +85,8 @@
     <string name="settings_replay_gain_preamp_value">%1$s dB</string>
     <string name="settings_replay_gain_prompt">Normalise loudness using the ReplayGain tags from the server</string>
     <string name="settings_replay_gain_title">ReplayGain</string>
+    <string name="settings_music_options_keep_screen_on_description">Keep the screen awake while now playing is open</string>
+    <string name="settings_music_options_keep_screen_on_title">Keep screen on</string>
     <string name="settings_network_name">Network</string>
     <string name="settings_network_options_max_bitrate_mobile_title">Stream quality: Mobile</string>
     <string name="settings_network_options_max_bitrate_wifi_title">Stream quality: Wi-Fi</string>

@@ -76,6 +76,11 @@ class SettingsViewModel(
             .replayGainPreampDb()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0f)
 
+    val keepScreenOn: StateFlow<Boolean> =
+        userPreferences
+            .keepScreenOn()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
     val verboseLogging: StateFlow<Boolean> =
@@ -133,5 +138,9 @@ class SettingsViewModel(
 
     fun setReplayGainPreamp(value: Float) {
         viewModelScope.launch { userPreferences.setReplayGainPreampDb(value) }
+    }
+
+    fun setKeepScreenOn(enabled: Boolean) {
+        viewModelScope.launch { userPreferences.setKeepScreenOn(enabled) }
     }
 }

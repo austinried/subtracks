@@ -156,6 +156,24 @@ class UserPreferencesTest {
         }
 
     @Test
+    fun keepScreenOnDefaultsOffAndRoundTrips() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(false, prefs.keepScreenOn().first())
+
+            prefs.setKeepScreenOn(true)
+            assertEquals(true, prefs.keepScreenOn().first())
+
+            prefs.setKeepScreenOn(false)
+            assertEquals(false, prefs.keepScreenOn().first())
+
+            file.delete()
+        }
+
+    @Test
     fun lastSeedRoundTripsWithAndWithoutASecondary() =
         runTest {
             val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
