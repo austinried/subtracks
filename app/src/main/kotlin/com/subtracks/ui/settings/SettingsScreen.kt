@@ -361,7 +361,6 @@ fun SettingsScreen(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
-            item { SectionHeader(stringResource(R.string.settings_music_name)) }
             item {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_replay_gain_title)) },
@@ -729,8 +728,6 @@ private fun SyncModeDialog(
     )
 }
 
-private const val REPLAY_GAIN_PREAMP_STEPS = 59
-
 @Composable
 private fun ReplayGainModeDialog(
     selected: ReplayGainMode,
@@ -771,7 +768,7 @@ private fun ReplayGainPreampDialog(
     onDismiss: () -> Unit,
 ) {
     val resources = LocalResources.current
-    var draft by remember(selected) { mutableFloatStateOf(selected) }
+    var draft by remember(selected) { mutableFloatStateOf(snapReplayGainPreampDb(selected)) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_replay_gain_preamp_title)) },
@@ -784,7 +781,7 @@ private fun ReplayGainPreampDialog(
                 )
                 Slider(
                     value = draft,
-                    onValueChange = { draft = it },
+                    onValueChange = { draft = snapReplayGainPreampDb(it) },
                     valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
                     steps = REPLAY_GAIN_PREAMP_STEPS,
                 )
