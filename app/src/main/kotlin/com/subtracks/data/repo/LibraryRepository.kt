@@ -174,7 +174,7 @@ class LibraryRepository(
         search: String,
         downloaded: Boolean,
     ): Flow<PagingData<Album>> =
-        pager(40) {
+        pager(40, enablePlaceholders = true) {
             val dao = db.libraryDao()
             if (!downloaded) {
                 dao.albumsPaging(albumsDefaultQuery(sourceId, starred.ordinal, search, sort, descending))
@@ -507,10 +507,11 @@ class LibraryRepository(
 
     private fun <T : Any> pager(
         pageSize: Int,
+        enablePlaceholders: Boolean = false,
         source: () -> PagingSource<Int, T>,
     ): Flow<PagingData<T>> =
         Pager(
-            config = PagingConfig(pageSize = pageSize, enablePlaceholders = false),
+            config = PagingConfig(pageSize = pageSize, enablePlaceholders = enablePlaceholders),
             pagingSourceFactory = source,
         ).flow
 }

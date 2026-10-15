@@ -2,6 +2,8 @@ package com.subtracks.data.repo
 
 import android.content.Context
 import android.content.res.Resources
+import androidx.paging.PagingDataEvent
+import androidx.paging.PagingDataPresenter
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
@@ -9,16 +11,23 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
+import com.subtracks.data.model.Album
 import com.subtracks.data.model.Song
+import com.subtracks.data.prefs.AlbumSort
+import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.source.StarType
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -32,7 +41,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 @RunWith(AndroidJUnit4::class)
 class LibraryRepositoryTest {
@@ -162,6 +174,75 @@ class LibraryRepositoryTest {
             assertEquals(0L, repository.albumSongOrdinal(sourceId, "al1", "s1"))
             assertEquals(2L, repository.albumSongOrdinal(sourceId, "al1", "s3"))
         }
+
+    @Test
+    fun theAlbumGridPresentsTheWholeLibraryAndSurvivesAReload() =
+        runBlocking {
+            val sourceId = sourceRepository.addSource("nav", "http://localhost/", "u", "p", false)
+            db.libraryDao().upsertAlbums((0 until 250).map { seedAlbum(sourceId, it) })
+
+            val presenterDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            val presenter = RecordingPresenter(presenterDispatcher)
+            val job =
+                launch {
+                    repository
+                        .albums(sourceId, AlbumSort.Name, false, StarredFilter.Any, "", false)
+                        .collect { presenter.collectFrom(it) }
+                }
+            try {
+                awaitRefreshes(presenter, 1)
+                assertEquals(250, presented(presenter, presenterDispatcher))
+
+                db.libraryDao().upsertAlbums(listOf(seedAlbum(sourceId, 0).copy(playCount = 1)))
+                awaitRefreshes(presenter, 2)
+
+                assertEquals("a reload must not collapse the grid to one page", 250, presented(presenter, presenterDispatcher))
+            } finally {
+                job.cancelAndJoin()
+                presenterDispatcher.close()
+            }
+        }
+
+    private suspend fun awaitRefreshes(
+        presenter: RecordingPresenter,
+        target: Int,
+    ) {
+        withTimeout(30_000) {
+            while (presenter.refreshes.get() < target) delay(10)
+        }
+    }
+
+    private suspend fun presented(
+        presenter: RecordingPresenter,
+        dispatcher: CoroutineDispatcher,
+    ): Int = withContext(dispatcher) { presenter.size }
+
+    private fun seedAlbum(
+        sourceId: Long,
+        index: Int,
+    ) = Album(
+        sourceId = sourceId,
+        id = "al-" + index.toString().padStart(4, '0'),
+        artistId = "ar1",
+        name = "Album " + index.toString().padStart(4, '0'),
+        albumArtist = "Artist",
+        created = 0,
+        coverArt = null,
+        genre = null,
+        year = null,
+        starred = null,
+        songCount = 1,
+    )
+
+    private class RecordingPresenter(
+        context: CoroutineContext,
+    ) : PagingDataPresenter<Album>(context) {
+        val refreshes = AtomicInteger()
+
+        override suspend fun presentPagingDataEvent(event: PagingDataEvent<Album>) {
+            if (event is PagingDataEvent.Refresh) refreshes.incrementAndGet()
+        }
+    }
 
     private suspend fun withSource(block: suspend (MockWebServer) -> Unit) {
         val server = MockWebServer()
