@@ -913,6 +913,10 @@ class SyncServiceTest {
             assertEquals(0.98f, stored.trackPeak)
             assertEquals(0.99f, stored.albumPeak)
 
+            val before = totalChanges()
+            SyncService(db, source).sync()
+            assertEquals(before, totalChanges())
+
             source.songs = listOf(song("s1"))
 
             SyncService(db, source).sync()

@@ -382,6 +382,7 @@ private suspend fun <T> PooledConnection.upsertChanged(
     values: (T) -> List<Any?>,
 ) {
     if (rows.isEmpty()) return
+    check(values(rows.first()).size == columns.size) { "column/value mismatch for $table" }
     val updates = columns.filterNot { it in key }
     val sql =
         "INSERT INTO $table (${columns.joinToString()}) VALUES (${columns.joinToString { "?" }}) " +
