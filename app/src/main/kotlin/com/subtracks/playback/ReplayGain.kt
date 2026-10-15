@@ -38,11 +38,11 @@ internal fun replayGainLinearGain(
         }
     val gainDb = requestedDb ?: return 1f
     val requested = gainDb + settings.preampDb
-    val applied = if (peak != null && peak > 0f) min(requested, maxSafeGainDb(peak)) else requested
-    return 10f.pow(applied / 20f)
+    val cap = peak?.takeIf { it.isFinite() && it > 0f }?.let(::maxSafeGainDb)
+    val applied = if (cap != null) min(requested, cap) else requested
+    return 10f.pow(applied / 20f).takeIf { it.isFinite() } ?: 1f
 }
 
-// A peak of 1.0 is full scale, so anything above it leaves no headroom and this goes negative. A
-// peak of zero or less carries no peak data (gonic sends 0 when only album gain is known), which
-// is why the caller ignores it rather than treating it as silence.
+// gonic sends a peak of 0 when it only has album gain, so a non-positive or non-finite peak means
+// "no peak data" and is ignored rather than treated as silence.
 private fun maxSafeGainDb(peak: Float): Float = -20f * log10(peak)

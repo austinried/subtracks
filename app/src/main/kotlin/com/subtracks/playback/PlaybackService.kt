@@ -20,10 +20,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.audio.AudioSink
-import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
@@ -113,24 +110,10 @@ class PlaybackService : MediaSessionService() {
                 .combine(preferences.replayGainPreampDb()) { mode, preamp -> ReplayGainSettings(mode, preamp) }
                 .collect(replayGain::setSettings)
         }
-        val renderersFactory =
-            object : DefaultRenderersFactory(this) {
-                override fun buildAudioSink(
-                    context: Context,
-                    enableFloatOutput: Boolean,
-                    enableAudioOutputPlaybackParameters: Boolean,
-                ): AudioSink =
-                    DefaultAudioSink
-                        .Builder(context)
-                        .setEnableFloatOutput(enableFloatOutput)
-                        .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParameters)
-                        .setAudioProcessors(arrayOf(gainProcessor))
-                        .build()
-            }
         val exoPlayer =
             ExoPlayer
                 .Builder(this)
-                .setRenderersFactory(renderersFactory)
+                .setRenderersFactory(ReplayGainRenderersFactory(this, gainProcessor))
                 .setAudioAttributes(
                     AudioAttributes
                         .Builder()
@@ -204,7 +187,11 @@ class PlaybackService : MediaSessionService() {
         session?.setMediaButtonPreferences(listOf(starButton(false)))
         songJob =
             scope.launch {
-                val sourceId = sourceRepository?.activeSourceIdOnce() ?: return@launch
+                val sourceId = sourceRepository?.activeSourceIdOnce()
+                if (sourceId == null) {
+                    replayGain.setTrack(null)
+                    return@launch
+                }
                 library.song(sourceId, songId).collect { song ->
                     if (currentSongId != songId) return@collect
                     starred = song?.starred != null

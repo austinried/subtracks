@@ -213,6 +213,9 @@ class UserPreferencesTest {
             prefs.setReplayGainPreampDb(-99f)
             assertEquals(MIN_REPLAY_GAIN_PREAMP_DB, prefs.replayGainPreampDb().first(), 0f)
 
+            prefs.setReplayGainPreampDb(Float.NaN)
+            assertEquals(0f, prefs.replayGainPreampDb().first(), 0f)
+
             file.delete()
         }
 }

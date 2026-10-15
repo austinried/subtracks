@@ -143,6 +143,26 @@ class ReplayGainTest {
         )
     }
 
+    @Test
+    fun aNonFinitePeakDoesNotCap() {
+        assertEquals(
+            3.9810717f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = 12f, trackPeak = Float.POSITIVE_INFINITY),
+                ReplayGainSettings(ReplayGainMode.Track, 0f),
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun playsAtUnityWhenTheGainIsNotFinite() {
+        val settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
+
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = Float.POSITIVE_INFINITY), settings), TOLERANCE)
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = Float.NaN), settings), TOLERANCE)
+    }
+
     private companion object {
         const val TOLERANCE = 0.001f
     }

@@ -163,12 +163,14 @@ class UserPreferences(
 
     private val replayGainModeKey = stringPreferencesKey("replay_gain_mode")
 
-    fun replayGainPreampDb(): Flow<Float> =
-        store.data.map { prefs -> (prefs[replayGainPreampKey] ?: 0f).coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB) }
+    fun replayGainPreampDb(): Flow<Float> = store.data.map { prefs -> prefs[replayGainPreampKey].sanitizedPreampDb() }
 
     suspend fun setReplayGainPreampDb(value: Float) {
-        store.edit { prefs -> prefs[replayGainPreampKey] = value.coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB) }
+        store.edit { prefs -> prefs[replayGainPreampKey] = value.sanitizedPreampDb() }
     }
+
+    private fun Float?.sanitizedPreampDb(): Float =
+        this?.takeIf { it.isFinite() }?.coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB) ?: 0f
 
     private val replayGainPreampKey = floatPreferencesKey("replay_gain_preamp_db")
 

@@ -58,6 +58,24 @@ class ReplayGainProcessorTest {
     }
 
     @Test
+    fun passesSamplesThroughWhenTheGainIsNaN() {
+        val processor = processor(gain = Float.NaN)
+
+        processor.queueInput(sixteenBit(1234, -4321))
+
+        assertEquals(listOf(1234, -4321), readShorts(processor.getOutput()))
+    }
+
+    @Test
+    fun passesSamplesThroughWhenTheGainIsInfinite() {
+        val processor = processor(gain = Float.POSITIVE_INFINITY)
+
+        processor.queueInput(sixteenBit(1234, -4321))
+
+        assertEquals(listOf(1234, -4321), readShorts(processor.getOutput()))
+    }
+
+    @Test
     fun keepsTheInputFormatSoTheSinkKeepsItInThePipeline() {
         val processor = ReplayGainProcessor()
 

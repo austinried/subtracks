@@ -21,7 +21,7 @@ internal class ReplayGainProcessor : BaseAudioProcessor() {
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         val output = replaceOutputBuffer(inputBuffer.remaining())
-        val gain = linearGain
+        val gain = linearGain.takeIf { it.isFinite() } ?: 1f
         when (inputAudioFormat.encoding) {
             C.ENCODING_PCM_16BIT -> {
                 while (inputBuffer.remaining() >= 2) {
