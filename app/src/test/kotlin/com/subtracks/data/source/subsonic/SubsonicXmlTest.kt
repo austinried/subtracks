@@ -232,6 +232,33 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun ignoresNonFiniteReplayGainValues() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Junk">
+                      <replayGain trackGain="Infinity" albumGain="NaN" trackPeak="1e40" albumPeak="-Infinity"/>
+                    </song>
+                    <song id="s2" title="Mostly fine">
+                      <replayGain trackGain="-3.2" albumGain="NaN" trackPeak="0.98"/>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(null, songs[0].trackGain)
+        assertEquals(null, songs[0].albumGain)
+        assertEquals(null, songs[0].trackPeak)
+        assertEquals(null, songs[0].albumPeak)
+        assertEquals(-3.2f, songs[1].trackGain)
+        assertEquals(null, songs[1].albumGain)
+        assertEquals(0.98f, songs[1].trackPeak)
+    }
+
+    @Test
     fun ignoresSongGenresThatAreNotDirectChildren() {
         val songs =
             songs(

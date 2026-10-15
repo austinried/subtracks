@@ -245,7 +245,7 @@ internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
 
 internal fun Attributes.longAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
 
-internal fun Attributes.floatAttr(name: String): Float? = attr(name).takeIf { it.isNotEmpty() }?.toFloatOrNull()
+internal fun Attributes.floatAttr(name: String): Float? = attr(name).takeIf { it.isNotEmpty() }?.toFloatOrNull()?.takeIf { it.isFinite() }
 
 internal fun Attributes.dateAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
 
