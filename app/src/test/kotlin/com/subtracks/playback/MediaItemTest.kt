@@ -76,4 +76,17 @@ class MediaItemTest {
 
         assertEquals(ReplayGain(), item.replayGain())
     }
+
+    @Test
+    fun aZeroGainIsNotMistakenForNoGain() {
+        val item =
+            queueMediaItem(
+                song.copy(replayGain = ReplayGain(trackGain = 0f, trackPeak = 0.5f)),
+                local = null,
+                stream = "http://server/stream?s=s1",
+                transcode = false,
+            )
+
+        assertEquals(ReplayGain(trackGain = 0f, trackPeak = 0.5f), item.replayGain())
+    }
 }

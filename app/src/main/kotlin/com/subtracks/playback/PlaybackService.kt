@@ -140,7 +140,7 @@ class PlaybackService : MediaSessionService() {
                     reason: Int,
                 ) {
                     observeCurrentSong(mediaItem?.mediaId)
-                    replayGain.setTrack(mediaItem?.replayGain())
+                    replayGain.applyItem(mediaItem)
                 }
             },
         )
@@ -187,11 +187,7 @@ class PlaybackService : MediaSessionService() {
         session?.setMediaButtonPreferences(listOf(starButton(false)))
         songJob =
             scope.launch {
-                val sourceId = sourceRepository?.activeSourceIdOnce()
-                if (sourceId == null) {
-                    replayGain.setTrack(null)
-                    return@launch
-                }
+                val sourceId = sourceRepository?.activeSourceIdOnce() ?: return@launch
                 library.song(sourceId, songId).collect { song ->
                     if (currentSongId != songId) return@collect
                     starred = song?.starred != null
