@@ -93,7 +93,7 @@ class ReplayGainProcessorTest {
 
     @Test
     fun aFlushReportsTheItemBeingFlushed() {
-        val reported = mutableListOf<MediaItem?>()
+        val reported = mutableListOf<MediaItem>()
         val item = item("a", trackGain = -6.0206f)
 
         ReplayGainProcessor { reported += it }.flush(streamMetadata(item))
@@ -102,12 +102,18 @@ class ReplayGainProcessorTest {
     }
 
     @Test
-    fun aFlushWithoutAPeriodReportsNoItem() {
-        val reported = mutableListOf<MediaItem?>()
+    fun aFlushWithoutAPeriodLeavesTheGainAlone() {
+        lateinit var processor: ReplayGainProcessor
+        val controller = ReplayGainController { processor.setLinearGain(it) }
+        processor = ReplayGainProcessor { controller.applyItem(it) }
+        controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
+        processor.configure(AudioFormat(SAMPLE_RATE, CHANNELS, C.ENCODING_PCM_16BIT))
 
-        ReplayGainProcessor { reported += it }.flush(StreamMetadata.DEFAULT)
+        processor.flush(streamMetadata(item("a", trackGain = -6.0206f)))
+        processor.flush(StreamMetadata.DEFAULT)
+        processor.queueInput(sixteenBit(1000))
 
-        assertEquals(listOf(null), reported)
+        assertEquals(listOf(500), readShorts(processor.getOutput()))
     }
 
     @Test

@@ -12,16 +12,16 @@ class ReplayGainControllerTest {
     private val controller = ReplayGainController { applied += it }
 
     @Test
-    fun appliesTheGainForTheCurrentTrack() {
+    fun appliesTheItemsGain() {
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
-        controller.setTrack(ReplayGain(trackGain = -6.0206f))
+        controller.applyItem(item("a", trackGain = -6.0206f))
 
         assertEquals(0.5f, applied.last(), TOLERANCE)
     }
 
     @Test
     fun recomputesWhenTheSettingsChange() {
-        controller.setTrack(ReplayGain(trackGain = -6.0206f))
+        controller.applyItem(item("a", trackGain = -6.0206f))
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 6.0206f))
 
         assertEquals(1f, applied.last(), TOLERANCE)
@@ -29,7 +29,7 @@ class ReplayGainControllerTest {
 
     @Test
     fun switchingOffRestoresUnityGain() {
-        controller.setTrack(ReplayGain(trackGain = -6.0206f))
+        controller.applyItem(item("a", trackGain = -6.0206f))
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
         assertEquals(0.5f, applied.last(), TOLERANCE)
 
@@ -39,9 +39,12 @@ class ReplayGainControllerTest {
     }
 
     @Test
-    fun aTrackWithoutGainPlaysAtUnity() {
+    fun anItemWithoutGainPlaysAtUnity() {
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
-        controller.setTrack(null)
+        controller.applyItem(item("a", trackGain = -6.0206f))
+        assertEquals(0.5f, applied.last(), TOLERANCE)
+
+        controller.applyItem(item("b", trackGain = null))
 
         assertEquals(1f, applied.last(), TOLERANCE)
     }
@@ -54,25 +57,6 @@ class ReplayGainControllerTest {
         controller.applyItem(item("b", trackGain = -6.0206f))
 
         assertEquals(0.5f, applied.last(), TOLERANCE)
-    }
-
-    @Test
-    fun anItemWithoutGainPlaysAtUnity() {
-        controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
-
-        controller.applyItem(item("a", trackGain = null))
-
-        assertEquals(1f, applied.last(), TOLERANCE)
-    }
-
-    @Test
-    fun noItemPlaysAtUnity() {
-        controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
-        controller.applyItem(item("a", trackGain = 6.0206f))
-
-        controller.applyItem(null)
-
-        assertEquals(1f, applied.last(), TOLERANCE)
     }
 
     private fun item(

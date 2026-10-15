@@ -140,7 +140,6 @@ class PlaybackService : MediaSessionService() {
                     reason: Int,
                 ) {
                     observeCurrentSong(mediaItem?.mediaId)
-                    replayGain.applyItem(mediaItem)
                 }
             },
         )

@@ -13,7 +13,7 @@ import kotlin.math.roundToInt
 
 @OptIn(UnstableApi::class)
 internal class ReplayGainProcessor(
-    private val onItem: (MediaItem?) -> Unit = {},
+    private val onItem: (MediaItem) -> Unit = {},
 ) : BaseAudioProcessor() {
     @Volatile
     private var linearGain = 1f
@@ -30,7 +30,9 @@ internal class ReplayGainProcessor(
     // Player.Listener.onMediaItemTransition, which the app thread receives afterwards.
     // See androidx/media#418.
     override fun onFlush(streamMetadata: StreamMetadata) {
-        onItem(streamMetadata.currentItem())
+        // A flush with no period comes from a sink reset rather than an item boundary, so leave the
+        // gain alone rather than resetting it to unity.
+        streamMetadata.currentItem()?.let(onItem)
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
@@ -48,7 +50,9 @@ internal class ReplayGainProcessor(
             }
 
             else -> {
-                output.put(inputBuffer)
+                // An empty input would be the pipeline's own shared buffer, which cannot be put into
+                // itself.
+                if (inputBuffer.hasRemaining()) output.put(inputBuffer)
             }
         }
         inputBuffer.position(inputBuffer.limit())

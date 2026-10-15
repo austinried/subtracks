@@ -266,10 +266,6 @@ private fun Bundle.putGain(
 
 private fun Bundle.gain(key: String): Float? = if (containsKey(key)) getFloat(key) else null
 
-internal fun ReplayGainController.applyItem(mediaItem: MediaItem?) {
-    setTrack(mediaItem.replayGain())
-}
-
 internal fun queueMediaItem(
     item: QueueItem,
     local: String?,
