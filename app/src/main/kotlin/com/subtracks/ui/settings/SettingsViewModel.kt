@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
+import com.subtracks.data.prefs.ReplayGainMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
 import com.subtracks.data.prefs.UserPreferences
@@ -65,6 +66,16 @@ class SettingsViewModel(
             .scrobbling()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
+    val replayGainMode: StateFlow<ReplayGainMode> =
+        userPreferences
+            .replayGainMode()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReplayGainMode.Track)
+
+    val replayGainPreamp: StateFlow<Float> =
+        userPreferences
+            .replayGainPreampDb()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0f)
+
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
     val verboseLogging: StateFlow<Boolean> =
@@ -114,5 +125,13 @@ class SettingsViewModel(
 
     fun setScrobbling(enabled: Boolean) {
         viewModelScope.launch { userPreferences.setScrobbling(enabled) }
+    }
+
+    fun setReplayGainMode(mode: ReplayGainMode) {
+        viewModelScope.launch { userPreferences.setReplayGainMode(mode) }
+    }
+
+    fun setReplayGainPreamp(value: Float) {
+        viewModelScope.launch { userPreferences.setReplayGainPreampDb(value) }
     }
 }

@@ -39,6 +39,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -46,6 +47,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,6 +68,9 @@ import com.subtracks.BuildConfig
 import com.subtracks.R
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
+import com.subtracks.data.prefs.MAX_REPLAY_GAIN_PREAMP_DB
+import com.subtracks.data.prefs.MIN_REPLAY_GAIN_PREAMP_DB
+import com.subtracks.data.prefs.ReplayGainMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
 import com.subtracks.log.Log
@@ -84,7 +89,16 @@ private val streamFormats = listOf(null, "mp3", "opus", "ogg", "webm", "aac", "f
 private const val PROJECT_HOMEPAGE = "https://github.com/austinried/subtracks"
 private const val SUPPORT_URL = "https://ko-fi.com/austinried"
 
-private enum class SettingsDialog { WifiQuality, MobileQuality, DownloadQuality, SyncConcurrency, SyncInterval, SyncMode }
+private enum class SettingsDialog {
+    WifiQuality,
+    MobileQuality,
+    DownloadQuality,
+    SyncConcurrency,
+    SyncInterval,
+    SyncMode,
+    ReplayGain,
+    ReplayGainPreamp,
+}
 
 @Composable
 fun SettingsRoute(
@@ -108,6 +122,8 @@ fun SettingsRoute(
     val scrobbling by viewModel.scrobbling.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     val verboseLogging by viewModel.verboseLogging.collectAsStateWithLifecycle()
+    val replayGainMode by viewModel.replayGainMode.collectAsStateWithLifecycle()
+    val replayGainPreamp by viewModel.replayGainPreamp.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     SettingsScreen(
@@ -121,6 +137,8 @@ fun SettingsRoute(
         downloadQuality = downloadQuality,
         downloadOverMetered = downloadOverMetered,
         scrobbling = scrobbling,
+        replayGainMode = replayGainMode,
+        replayGainPreamp = replayGainPreamp,
         offline = offline,
         verboseLogging = verboseLogging,
         onSelectSource = viewModel::selectSource,
@@ -133,6 +151,8 @@ fun SettingsRoute(
         onDownloadQualityChange = viewModel::setDownloadQuality,
         onDownloadOverMeteredChange = viewModel::setDownloadOverMetered,
         onScrobblingChange = viewModel::setScrobbling,
+        onReplayGainModeChange = viewModel::setReplayGainMode,
+        onReplayGainPreampChange = viewModel::setReplayGainPreamp,
         onOfflineChange = viewModel::setOfflineMode,
         onVerboseLoggingChange = viewModel::setVerboseLogging,
         onAddServer = onAddServer,
@@ -176,6 +196,8 @@ fun SettingsScreen(
     verboseLogging: Boolean = false,
     syncMode: SyncMode = SyncMode.WifiOnly,
     syncInterval: Int = DEFAULT_SYNC_INTERVAL_MINUTES,
+    replayGainMode: ReplayGainMode = ReplayGainMode.Track,
+    replayGainPreamp: Float = 0f,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -186,6 +208,8 @@ fun SettingsScreen(
     onDownloadQualityChange: (StreamQuality) -> Unit,
     onDownloadOverMeteredChange: (Boolean) -> Unit,
     onScrobblingChange: (Boolean) -> Unit,
+    onReplayGainModeChange: (ReplayGainMode) -> Unit = {},
+    onReplayGainPreampChange: (Float) -> Unit = {},
     onOfflineChange: (Boolean) -> Unit = {},
     onVerboseLoggingChange: (Boolean) -> Unit = {},
     onAddServer: () -> Unit,
@@ -334,6 +358,23 @@ fun SettingsScreen(
                         )
                     },
                     modifier = Modifier.clickable { onScrobblingChange(!scrobbling) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { SectionHeader(stringResource(R.string.settings_music_name)) }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_replay_gain_title)) },
+                    supportingContent = { Text(replayGainModeLabel(LocalResources.current, replayGainMode)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.ReplayGain },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_replay_gain_preamp_title)) },
+                    supportingContent = { Text(replayGainPreampLabel(LocalResources.current, replayGainPreamp)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.ReplayGainPreamp },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -519,6 +560,22 @@ fun SettingsScreen(
             )
         }
 
+        SettingsDialog.ReplayGain -> {
+            ReplayGainModeDialog(
+                selected = replayGainMode,
+                onSelect = onReplayGainModeChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
+        SettingsDialog.ReplayGainPreamp -> {
+            ReplayGainPreampDialog(
+                selected = replayGainPreamp,
+                onSelect = onReplayGainPreampChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
         null -> {
             Unit
         }
@@ -657,6 +714,82 @@ private fun SyncModeDialog(
                 selected = draft,
                 onSelect = { draft = it },
             )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
+
+private const val REPLAY_GAIN_PREAMP_STEPS = 59
+
+@Composable
+private fun ReplayGainModeDialog(
+    selected: ReplayGainMode,
+    onSelect: (ReplayGainMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_replay_gain_title)) },
+        text = {
+            ChoiceGroup(
+                header = stringResource(R.string.settings_replay_gain_prompt),
+                options = ReplayGainMode.entries.map { it to replayGainModeLabel(resources, it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun ReplayGainPreampDialog(
+    selected: Float,
+    onSelect: (Float) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableFloatStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_replay_gain_preamp_title)) },
+        text = {
+            Column {
+                Text(
+                    stringResource(R.string.settings_replay_gain_preamp_prompt),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Slider(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
+                    steps = REPLAY_GAIN_PREAMP_STEPS,
+                )
+                Text(replayGainPreampLabel(resources, draft))
+            }
         },
         confirmButton = {
             TextButton(

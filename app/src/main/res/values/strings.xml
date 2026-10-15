@@ -74,6 +74,14 @@
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
     <string name="settings_music_options_scrobble_title">Scrobble to server</string>
+    <string name="settings_replay_gain_mode_album">Album gain</string>
+    <string name="settings_replay_gain_mode_off">Off</string>
+    <string name="settings_replay_gain_mode_track">Track gain</string>
+    <string name="settings_replay_gain_preamp_prompt">Adjust level on top of the replay gain</string>
+    <string name="settings_replay_gain_preamp_title">Preamp</string>
+    <string name="settings_replay_gain_preamp_value">%1$s dB</string>
+    <string name="settings_replay_gain_prompt">Normalise loudness using the gain from the server</string>
+    <string name="settings_replay_gain_title">Replay gain</string>
     <string name="settings_network_name">Network</string>
     <string name="settings_network_options_max_bitrate_mobile_title">Stream quality: Mobile</string>
     <string name="settings_network_options_max_bitrate_wifi_title">Stream quality: Wi-Fi</string>
