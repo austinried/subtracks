@@ -130,6 +130,7 @@ class PlaybackService : MediaSessionService() {
                 }
             },
         )
+        val player = KnownDurationPlayer(exoPlayer)
         val loader =
             CoverArtBitmapLoader(
                 applicationContext,
@@ -139,7 +140,7 @@ class PlaybackService : MediaSessionService() {
         artworkLoader = loader
         session =
             MediaSession
-                .Builder(this, exoPlayer)
+                .Builder(this, player)
                 .setSessionActivity(
                     PendingIntent.getActivity(
                         this,
