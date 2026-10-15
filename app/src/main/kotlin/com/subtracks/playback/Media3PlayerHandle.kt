@@ -234,11 +234,37 @@ class Media3PlayerHandle(
                 mediaItem.mediaMetadata.extras
                     ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
                     ?.getLong(EXTRA_DURATION_MS),
+            replayGain = mediaItem.replayGain(),
         )
 }
 
 private const val EXTRA_COVER_ART_ID = "coverArtId"
 private const val EXTRA_DURATION_MS = "durationMs"
+private const val EXTRA_REPLAY_GAIN_TRACK_GAIN = "replayGainTrackGain"
+private const val EXTRA_REPLAY_GAIN_ALBUM_GAIN = "replayGainAlbumGain"
+private const val EXTRA_REPLAY_GAIN_TRACK_PEAK = "replayGainTrackPeak"
+private const val EXTRA_REPLAY_GAIN_ALBUM_PEAK = "replayGainAlbumPeak"
+
+// The gain rides on the MediaItem so PlaybackService can apply it the moment the item becomes
+// current, rather than after an asynchronous round trip to the library.
+internal fun MediaItem?.replayGain(): ReplayGain {
+    val extras = this?.mediaMetadata?.extras ?: return ReplayGain()
+    return ReplayGain(
+        trackGain = extras.gain(EXTRA_REPLAY_GAIN_TRACK_GAIN),
+        albumGain = extras.gain(EXTRA_REPLAY_GAIN_ALBUM_GAIN),
+        trackPeak = extras.gain(EXTRA_REPLAY_GAIN_TRACK_PEAK),
+        albumPeak = extras.gain(EXTRA_REPLAY_GAIN_ALBUM_PEAK),
+    )
+}
+
+private fun Bundle.putGain(
+    key: String,
+    value: Float?,
+) {
+    if (value != null) putFloat(key, value)
+}
+
+private fun Bundle.gain(key: String): Float? = if (containsKey(key)) getFloat(key) else null
 
 internal fun queueMediaItem(
     item: QueueItem,
@@ -260,6 +286,10 @@ internal fun queueMediaItem(
                 Bundle().apply {
                     putString(EXTRA_COVER_ART_ID, item.coverArtId)
                     item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
+                    putGain(EXTRA_REPLAY_GAIN_TRACK_GAIN, item.replayGain.trackGain)
+                    putGain(EXTRA_REPLAY_GAIN_ALBUM_GAIN, item.replayGain.albumGain)
+                    putGain(EXTRA_REPLAY_GAIN_TRACK_PEAK, item.replayGain.trackPeak)
+                    putGain(EXTRA_REPLAY_GAIN_ALBUM_PEAK, item.replayGain.albumPeak)
                 },
             ).build()
     val builder =

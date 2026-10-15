@@ -34,6 +34,7 @@ data class QueueItem(
     val album: String?,
     val coverArtId: String?,
     val durationMs: Long? = null,
+    val replayGain: ReplayGain = ReplayGain(),
 )
 
 data class QueueContext(

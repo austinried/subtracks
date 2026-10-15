@@ -6,7 +6,7 @@ import kotlin.math.log10
 import kotlin.math.min
 import kotlin.math.pow
 
-internal data class ReplayGain(
+data class ReplayGain(
     val trackGain: Float? = null,
     val albumGain: Float? = null,
     val trackPeak: Float? = null,

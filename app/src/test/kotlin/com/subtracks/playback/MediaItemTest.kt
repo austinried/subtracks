@@ -54,4 +54,26 @@ class MediaItemTest {
         assertEquals("Song", item.mediaMetadata.title.toString())
         assertEquals(CoverArtArtwork.uri("al1"), item.mediaMetadata.artworkUri)
     }
+
+    @Test
+    fun theItemCarriesTheReplayGain() {
+        val gain = ReplayGain(trackGain = -3.2f, albumGain = -2.1f, trackPeak = 0.98f, albumPeak = 0.99f)
+
+        val item =
+            queueMediaItem(
+                song.copy(replayGain = gain),
+                local = null,
+                stream = "http://server/stream?s=s1",
+                transcode = false,
+            )
+
+        assertEquals(gain, item.replayGain())
+    }
+
+    @Test
+    fun anItemWithoutGainReadsBackAsNoGain() {
+        val item = queueMediaItem(song, local = null, stream = "http://server/stream?s=s1", transcode = false)
+
+        assertEquals(ReplayGain(), item.replayGain())
+    }
 }

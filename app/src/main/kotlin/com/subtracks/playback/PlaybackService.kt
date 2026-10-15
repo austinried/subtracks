@@ -140,6 +140,7 @@ class PlaybackService : MediaSessionService() {
                     reason: Int,
                 ) {
                     observeCurrentSong(mediaItem?.mediaId)
+                    replayGain.setTrack(mediaItem?.replayGain())
                 }
             },
         )
@@ -181,7 +182,6 @@ class PlaybackService : MediaSessionService() {
         val library = library ?: return
         if (songId == null) {
             session?.setMediaButtonPreferences(emptyList())
-            replayGain.setTrack(null)
             return
         }
         session?.setMediaButtonPreferences(listOf(starButton(false)))
@@ -196,7 +196,6 @@ class PlaybackService : MediaSessionService() {
                     if (currentSongId != songId) return@collect
                     starred = song?.starred != null
                     session?.setMediaButtonPreferences(listOf(starButton(starred)))
-                    replayGain.setTrack(song?.replayGain())
                 }
             }
     }

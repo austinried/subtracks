@@ -10,4 +10,5 @@ fun SongItem.toQueueItem() =
         album = song.album,
         coverArtId = coverArt,
         durationMs = song.duration?.let { it * 1000 },
+        replayGain = song.replayGain(),
     )
