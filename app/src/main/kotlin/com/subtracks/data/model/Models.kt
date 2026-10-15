@@ -264,6 +264,10 @@ data class Song(
     @ColumnInfo(defaultValue = "0") val created: Long = 0,
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
+    val trackGain: Float? = null,
+    val albumGain: Float? = null,
+    val trackPeak: Float? = null,
+    val albumPeak: Float? = null,
     @Ignore val genres: List<String> = emptyList(),
 )
 

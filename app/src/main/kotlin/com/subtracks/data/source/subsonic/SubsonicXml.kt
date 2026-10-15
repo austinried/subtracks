@@ -78,6 +78,17 @@ object SubsonicXml {
             played = attrs.dateAttr("played"),
         )
 
+    internal fun songChild(
+        entity: SongDraft,
+        name: String,
+        attrs: Attributes,
+    ) {
+        when (name) {
+            "genres" -> entity.addGenre(attrs)
+            "replayGain" -> entity.addReplayGain(attrs)
+        }
+    }
+
     internal fun playlist(
         sourceId: Long,
         attrs: Attributes,
@@ -184,6 +195,10 @@ internal class SongDraft(
     private val created: Long = 0L,
     private val playCount: Long = 0L,
     private val played: Long? = null,
+    private var trackGain: Float? = null,
+    private var albumGain: Float? = null,
+    private var trackPeak: Float? = null,
+    private var albumPeak: Float? = null,
     private val genres: MutableList<String> = mutableListOf(),
 ) {
     fun addGenre(attrs: Attributes) {
@@ -192,6 +207,13 @@ internal class SongDraft(
             .trim()
             .takeIf { it.isNotEmpty() }
             ?.let { genres += it }
+    }
+
+    fun addReplayGain(attrs: Attributes) {
+        trackGain = attrs.floatAttr("trackGain")
+        albumGain = attrs.floatAttr("albumGain")
+        trackPeak = attrs.floatAttr("trackPeak")
+        albumPeak = attrs.floatAttr("albumPeak")
     }
 
     fun toSong(): Song =
@@ -211,6 +233,10 @@ internal class SongDraft(
             created = created,
             playCount = playCount,
             played = played,
+            trackGain = trackGain,
+            albumGain = albumGain,
+            trackPeak = trackPeak,
+            albumPeak = albumPeak,
             genres = genres.toList(),
         )
 }
@@ -218,6 +244,8 @@ internal class SongDraft(
 internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
 
 internal fun Attributes.longAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
+
+internal fun Attributes.floatAttr(name: String): Float? = attr(name).takeIf { it.isNotEmpty() }?.toFloatOrNull()
 
 internal fun Attributes.dateAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.let(IsoDate::parse)
 

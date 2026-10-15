@@ -384,6 +384,16 @@ val MIGRATION_26_27 =
         }
     }
 
+val MIGRATION_27_28 =
+    object : Migration(27, 28) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `trackGain` REAL")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `albumGain` REAL")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `trackPeak` REAL")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `albumPeak` REAL")
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -444,4 +454,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_24_25,
         MIGRATION_25_26,
         MIGRATION_26_27,
+        MIGRATION_27_28,
     )

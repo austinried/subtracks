@@ -257,6 +257,75 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun songsKeepTheOpenSubsonicReplayGain() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        if (url.encodedPath != "/rest/search3.view") return MockResponse().setResponseCode(404)
+                        return MockResponse().setBody(
+                            "<subsonic-response status=\"ok\"><searchResult3>" +
+                                "<song id=\"s1\" title=\"Gained\">" +
+                                "<replayGain trackGain=\"-3.2\" albumGain=\"-2.1\" trackPeak=\"0.98\" albumPeak=\"0.99\"/>" +
+                                "</song></searchResult3></subsonic-response>",
+                        )
+                    }
+                }
+
+            val songs = SubsonicSource(1, client()).songs().toList().flatten()
+
+            assertEquals(-3.2f, songs.single().trackGain)
+            assertEquals(-2.1f, songs.single().albumGain)
+            assertEquals(0.98f, songs.single().trackPeak)
+            assertEquals(0.99f, songs.single().albumPeak)
+        }
+
+    @Test
+    fun albumSongsKeepTheOpenSubsonicReplayGain() =
+        runBlocking {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        return when (url.encodedPath) {
+                            "/rest/search3.view" -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            "/rest/getAlbumList2.view" -> {
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><albumList2>" +
+                                        "<album id=\"al1\" name=\"Album\" artist=\"Artist\" artistId=\"ar1\" songCount=\"1\"/>" +
+                                        "</albumList2></subsonic-response>",
+                                )
+                            }
+
+                            "/rest/getAlbum.view" -> {
+                                MockResponse().setBody(
+                                    "<subsonic-response status=\"ok\"><album id=\"al1\">" +
+                                        "<song id=\"s1\" title=\"Gained\">" +
+                                        "<replayGain trackGain=\"-3.2\" albumGain=\"-2.1\" trackPeak=\"0.98\" albumPeak=\"0.99\"/>" +
+                                        "</song></album></subsonic-response>",
+                                )
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                    }
+                }
+
+            val songs = SubsonicSource(1, client()).songs().toList().flatten()
+
+            assertEquals(-3.2f, songs.single().trackGain)
+            assertEquals(-2.1f, songs.single().albumGain)
+            assertEquals(0.98f, songs.single().trackPeak)
+            assertEquals(0.99f, songs.single().albumPeak)
+        }
+
+    @Test
     fun entitiesWithEmptyIdsAreDropped() =
         runBlocking {
             server.enqueue(

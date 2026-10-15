@@ -33,6 +33,14 @@ class SubsonicXmlTest {
             onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
         ).map { it.toAlbum() }
 
+    private fun songs(xml: String) =
+        parse(
+            xml,
+            tag = "song",
+            create = { SubsonicXml.songDraft(1, it) },
+            onChild = SubsonicXml::songChild,
+        ).map { it.toSong() }
+
     @Test
     fun mapsArtists() {
         val artists =
@@ -156,51 +164,87 @@ class SubsonicXmlTest {
 
     @Test
     fun mapsSongGenresAndIgnoresEmptyOnes() {
-        val xml =
-            """
-            <subsonic-response status="ok">
-              <searchResult3>
-                <song id="s1" title="Multi">
-                  <genres name="Rock"/>
-                  <genres name="Electronic"/>
-                  <genres name=""/>
-                  <genres name="   "/>
-                </song>
-              </searchResult3>
-            </subsonic-response>
-            """.trimIndent()
-
         val songs =
-            parse(
-                xml,
-                tag = "song",
-                create = { SubsonicXml.songDraft(1, it) },
-                onChild = { draft, name, attrs -> if (name == "genres") draft.addGenre(attrs) },
-            ).map { it.toSong() }
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Multi">
+                      <genres name="Rock"/>
+                      <genres name="Electronic"/>
+                      <genres name=""/>
+                      <genres name="   "/>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
 
         assertEquals(listOf("Rock", "Electronic"), songs.single().genres)
     }
 
     @Test
-    fun ignoresSongGenresThatAreNotDirectChildren() {
-        val xml =
-            """
-            <subsonic-response status="ok">
-              <searchResult3>
-                <song id="s1" title="Nested">
-                  <wrapper><genres name="Rock"/></wrapper>
-                </song>
-              </searchResult3>
-            </subsonic-response>
-            """.trimIndent()
-
+    fun mapsSongReplayGain() {
         val songs =
-            parse(
-                xml,
-                tag = "song",
-                create = { SubsonicXml.songDraft(1, it) },
-                onChild = { draft, name, attrs -> if (name == "genres") draft.addGenre(attrs) },
-            ).map { it.toSong() }
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Gained">
+                      <replayGain trackGain="-3.2" albumGain="-2.1" trackPeak="0.98" albumPeak="0.99"/>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        val song = songs.single()
+        assertEquals(-3.2f, song.trackGain)
+        assertEquals(-2.1f, song.albumGain)
+        assertEquals(0.98f, song.trackPeak)
+        assertEquals(0.99f, song.albumPeak)
+    }
+
+    @Test
+    fun leavesMissingReplayGainFieldsUnset() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Track gain only">
+                      <replayGain trackGain="-3.2"/>
+                    </song>
+                    <song id="s2" title="No gain"/>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(-3.2f, songs[0].trackGain)
+        assertEquals(null, songs[0].albumGain)
+        assertEquals(null, songs[0].trackPeak)
+        assertEquals(null, songs[0].albumPeak)
+        assertEquals(null, songs[1].trackGain)
+        assertEquals(null, songs[1].albumGain)
+        assertEquals(null, songs[1].trackPeak)
+        assertEquals(null, songs[1].albumPeak)
+    }
+
+    @Test
+    fun ignoresSongGenresThatAreNotDirectChildren() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Nested">
+                      <wrapper><genres name="Rock"/></wrapper>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
 
         assertEquals(emptyList<String>(), songs.single().genres)
     }

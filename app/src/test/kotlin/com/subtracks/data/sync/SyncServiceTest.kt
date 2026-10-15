@@ -887,6 +887,43 @@ class SyncServiceTest {
             assertEquals(before, totalChanges())
         }
 
+    @Test
+    fun storesReplayGainAndClearsItWhenTheServerStopsSendingIt() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                trackGain = -3.2f,
+                                albumGain = -2.1f,
+                                trackPeak = 0.98f,
+                                albumPeak = 0.99f,
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            val stored = db.libraryDao().song(1, "s1").first()!!
+            assertEquals(-3.2f, stored.trackGain)
+            assertEquals(-2.1f, stored.albumGain)
+            assertEquals(0.98f, stored.trackPeak)
+            assertEquals(0.99f, stored.albumPeak)
+
+            source.songs = listOf(song("s1"))
+
+            SyncService(db, source).sync()
+
+            val cleared = db.libraryDao().song(1, "s1").first()!!
+            assertEquals(null, cleared.trackGain)
+            assertEquals(null, cleared.albumGain)
+            assertEquals(null, cleared.trackPeak)
+            assertEquals(null, cleared.albumPeak)
+        }
+
     private suspend fun totalChanges(): Long =
         db.useWriterConnection { connection ->
             connection.usePrepared("SELECT total_changes()") { statement ->

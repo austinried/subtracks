@@ -314,6 +314,10 @@ private val songColumns =
         "created",
         "playCount",
         "played",
+        "trackGain",
+        "albumGain",
+        "trackPeak",
+        "albumPeak",
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
@@ -358,6 +362,10 @@ private fun Song.values() =
         created,
         playCount,
         played,
+        trackGain,
+        albumGain,
+        trackPeak,
+        albumPeak,
     )
 
 private fun SongGenre.values() = listOf<Any?>(sourceId, songId, position, genre)
@@ -401,6 +409,7 @@ private fun SQLiteStatement.bind(
         is Int -> bindLong(index, value.toLong())
         is Boolean -> bindLong(index, if (value) 1L else 0L)
         is Double -> bindDouble(index, value)
+        is Float -> bindDouble(index, value.toDouble())
         is String -> bindText(index, value)
         else -> error("Cannot bind ${value::class}")
     }
