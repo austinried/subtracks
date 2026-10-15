@@ -2,15 +2,21 @@ package com.subtracks.playback
 
 import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor.AudioFormat
 import androidx.media3.common.audio.AudioProcessor.StreamMetadata
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.source.SinglePeriodTimeline
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.prefs.ReplayGainMode
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 @OptIn(UnstableApi::class)
+@RunWith(AndroidJUnit4::class)
 class ReplayGainProcessorTest {
     @Test
     fun scalesSixteenBitSamples() {
@@ -85,6 +91,42 @@ class ReplayGainProcessorTest {
         assertEquals(true, processor.isActive())
     }
 
+    @Test
+    fun aFlushReportsTheItemBeingFlushed() {
+        val reported = mutableListOf<MediaItem?>()
+        val item = item("a", trackGain = -6.0206f)
+
+        ReplayGainProcessor { reported += it }.flush(streamMetadata(item))
+
+        assertEquals(listOf(item), reported)
+    }
+
+    @Test
+    fun aFlushWithoutAPeriodReportsNoItem() {
+        val reported = mutableListOf<MediaItem?>()
+
+        ReplayGainProcessor { reported += it }.flush(StreamMetadata.DEFAULT)
+
+        assertEquals(listOf(null), reported)
+    }
+
+    @Test
+    fun aFlushMovesTheGainToTheNextItem() {
+        lateinit var processor: ReplayGainProcessor
+        val controller = ReplayGainController { processor.setLinearGain(it) }
+        processor = ReplayGainProcessor { controller.applyItem(it) }
+        controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
+        processor.configure(AudioFormat(SAMPLE_RATE, CHANNELS, C.ENCODING_PCM_16BIT))
+
+        processor.flush(streamMetadata(item("a", trackGain = -6.0206f)))
+        processor.queueInput(sixteenBit(1000))
+        assertEquals(listOf(500), readShorts(processor.getOutput()))
+
+        processor.flush(streamMetadata(item("b", trackGain = 6.0206f)))
+        processor.queueInput(sixteenBit(1000))
+        assertEquals(listOf(2000), readShorts(processor.getOutput()))
+    }
+
     private fun processor(
         gain: Float,
         encoding: Int = C.ENCODING_PCM_16BIT,
@@ -94,6 +136,33 @@ class ReplayGainProcessorTest {
             configure(AudioFormat(SAMPLE_RATE, CHANNELS, encoding))
             flush(StreamMetadata.DEFAULT)
         }
+
+    private fun item(
+        id: String,
+        trackGain: Float,
+    ): MediaItem =
+        queueMediaItem(
+            QueueItem(
+                id = id,
+                title = id,
+                artist = null,
+                album = null,
+                coverArtId = null,
+                replayGain = ReplayGain(trackGain = trackGain),
+            ),
+            local = null,
+            stream = "http://server/$id",
+            transcode = false,
+        )
+
+    private fun streamMetadata(item: MediaItem): StreamMetadata {
+        val timeline = SinglePeriodTimeline(DURATION_US, false, false, false, null, item)
+        return StreamMetadata
+            .Builder()
+            .setTimeline(timeline)
+            .setPeriodUid(timeline.getUidOfPeriod(0))
+            .build()
+    }
 
     private fun sixteenBit(vararg samples: Int): ByteBuffer =
         ByteBuffer.allocate(samples.size * 2).order(ByteOrder.nativeOrder()).apply {
@@ -125,5 +194,6 @@ class ReplayGainProcessorTest {
     private companion object {
         const val SAMPLE_RATE = 44_100
         const val CHANNELS = 2
+        const val DURATION_US = 1_000_000L
     }
 }

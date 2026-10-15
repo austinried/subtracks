@@ -62,8 +62,8 @@ class PlaybackService : MediaSessionService() {
     private var starred = false
     private var songJob: Job? = null
 
-    private val gainProcessor = ReplayGainProcessor()
-    private val replayGain = ReplayGainController { gainProcessor.setLinearGain(it) }
+    private val gainProcessor: ReplayGainProcessor = ReplayGainProcessor { replayGain.applyItem(it) }
+    private val replayGain: ReplayGainController = ReplayGainController { gainProcessor.setLinearGain(it) }
 
     private val starCallback =
         object : MediaSession.Callback {

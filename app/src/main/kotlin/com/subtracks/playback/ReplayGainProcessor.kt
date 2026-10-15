@@ -2,14 +2,19 @@ package com.subtracks.playback
 
 import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Timeline
 import androidx.media3.common.audio.AudioProcessor.AudioFormat
+import androidx.media3.common.audio.AudioProcessor.StreamMetadata
 import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
 @OptIn(UnstableApi::class)
-internal class ReplayGainProcessor : BaseAudioProcessor() {
+internal class ReplayGainProcessor(
+    private val onItem: (MediaItem?) -> Unit = {},
+) : BaseAudioProcessor() {
     @Volatile
     private var linearGain = 1f
 
@@ -18,6 +23,15 @@ internal class ReplayGainProcessor : BaseAudioProcessor() {
     }
 
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat = inputAudioFormat
+
+    // DefaultAudioSink configures and flushes the processors at every media item transition, even
+    // when the format is unchanged, and hands over the timeline and the period being flushed. That
+    // is early enough to set the new item's gain before any of its buffers are processed, unlike
+    // Player.Listener.onMediaItemTransition, which the app thread receives afterwards.
+    // See androidx/media#418.
+    override fun onFlush(streamMetadata: StreamMetadata) {
+        onItem(streamMetadata.currentItem())
+    }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         val output = replaceOutputBuffer(inputBuffer.remaining())
@@ -45,4 +59,13 @@ internal class ReplayGainProcessor : BaseAudioProcessor() {
         const val MIN_SAMPLE = -32768
         const val MAX_SAMPLE = 32767
     }
+}
+
+@OptIn(UnstableApi::class)
+internal fun StreamMetadata.currentItem(): MediaItem? {
+    val uid = periodUid ?: return null
+    val index = timeline.getIndexOfPeriod(uid)
+    if (index == C.INDEX_UNSET) return null
+    val period = timeline.getPeriod(index, Timeline.Period())
+    return timeline.getWindow(period.windowIndex, Timeline.Window()).mediaItem
 }
