@@ -20,7 +20,10 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
@@ -34,6 +37,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.subtracks.MainActivity
 import com.subtracks.R
 import com.subtracks.UserAgent
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.StarType
@@ -43,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.koin.core.context.GlobalContext
@@ -58,7 +63,10 @@ class PlaybackService : MediaSessionService() {
     private var library: LibraryRepository? = null
     private var currentSongId: String? = null
     private var starred = false
-    private var starJob: Job? = null
+    private var songJob: Job? = null
+
+    private val gainProcessor = ReplayGainProcessor()
+    private val replayGain = ReplayGainController { gainProcessor.setLinearGain(it) }
 
     private val starCallback =
         object : MediaSession.Callback {
@@ -97,10 +105,32 @@ class PlaybackService : MediaSessionService() {
         val sources = GlobalContext.get().get<SourceRepository>()
         sourceRepository = sources
         library = GlobalContext.get().get<LibraryRepository>()
+        val preferences = GlobalContext.get().get<UserPreferences>()
         val cache = StreamCache.open(this)
+        scope.launch {
+            preferences
+                .replayGainMode()
+                .combine(preferences.replayGainPreampDb()) { mode, preamp -> ReplayGainSettings(mode, preamp) }
+                .collect(replayGain::setSettings)
+        }
+        val renderersFactory =
+            object : DefaultRenderersFactory(this) {
+                override fun buildAudioSink(
+                    context: Context,
+                    enableFloatOutput: Boolean,
+                    enableAudioOutputPlaybackParameters: Boolean,
+                ): AudioSink =
+                    DefaultAudioSink
+                        .Builder(context)
+                        .setEnableFloatOutput(enableFloatOutput)
+                        .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParameters)
+                        .setAudioProcessors(arrayOf(gainProcessor))
+                        .build()
+            }
         val exoPlayer =
             ExoPlayer
                 .Builder(this)
+                .setRenderersFactory(renderersFactory)
                 .setAudioAttributes(
                     AudioAttributes
                         .Builder()
@@ -126,7 +156,7 @@ class PlaybackService : MediaSessionService() {
                     mediaItem: MediaItem?,
                     reason: Int,
                 ) {
-                    observeStar(mediaItem?.mediaId)
+                    observeCurrentSong(mediaItem?.mediaId)
                 }
             },
         )
@@ -161,23 +191,25 @@ class PlaybackService : MediaSessionService() {
         pauseAllPlayersAndStopSelf()
     }
 
-    private fun observeStar(songId: String?) {
-        starJob?.cancel()
+    private fun observeCurrentSong(songId: String?) {
+        songJob?.cancel()
         currentSongId = songId
         starred = false
         val library = library ?: return
         if (songId == null) {
             session?.setMediaButtonPreferences(emptyList())
+            replayGain.setTrack(null)
             return
         }
         session?.setMediaButtonPreferences(listOf(starButton(false)))
-        starJob =
+        songJob =
             scope.launch {
                 val sourceId = sourceRepository?.activeSourceIdOnce() ?: return@launch
                 library.song(sourceId, songId).collect { song ->
                     if (currentSongId != songId) return@collect
                     starred = song?.starred != null
                     session?.setMediaButtonPreferences(listOf(starButton(starred)))
+                    replayGain.setTrack(song?.replayGain())
                 }
             }
     }

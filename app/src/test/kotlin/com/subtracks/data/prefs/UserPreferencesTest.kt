@@ -190,4 +190,29 @@ class UserPreferencesTest {
 
             file.delete()
         }
+
+    @Test
+    fun replayGainDefaultsToTrackModeAndRoundTrips() =
+        runTest {
+            val file = File.createTempFile("user-prefs", ".preferences_pb").apply { delete() }
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
+            val prefs = UserPreferences(store)
+
+            assertEquals(ReplayGainMode.Track, prefs.replayGainMode().first())
+            assertEquals(0f, prefs.replayGainPreampDb().first(), 0f)
+
+            prefs.setReplayGainMode(ReplayGainMode.Album)
+            prefs.setReplayGainPreampDb(3.5f)
+
+            assertEquals(ReplayGainMode.Album, prefs.replayGainMode().first())
+            assertEquals(3.5f, prefs.replayGainPreampDb().first(), 0f)
+
+            prefs.setReplayGainPreampDb(99f)
+            assertEquals(MAX_REPLAY_GAIN_PREAMP_DB, prefs.replayGainPreampDb().first(), 0f)
+
+            prefs.setReplayGainPreampDb(-99f)
+            assertEquals(MIN_REPLAY_GAIN_PREAMP_DB, prefs.replayGainPreampDb().first(), 0f)
+
+            file.delete()
+        }
 }

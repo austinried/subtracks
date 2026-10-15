@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -51,7 +52,12 @@ private val Context.preferences: DataStore<Preferences> by preferencesDataStore(
 
 const val DEFAULT_SYNC_INTERVAL_MINUTES = 24 * 60
 
+const val MIN_REPLAY_GAIN_PREAMP_DB = -15f
+const val MAX_REPLAY_GAIN_PREAMP_DB = 15f
+
 enum class SyncMode { Off, WifiOnly, Always }
+
+enum class ReplayGainMode { Track, Album, Off }
 
 data class ArtworkSeedValue(
     val cacheKey: String,
@@ -145,6 +151,26 @@ class UserPreferences(
     }
 
     private val scrobblingKey = booleanPreferencesKey("scrobbling")
+
+    fun replayGainMode(): Flow<ReplayGainMode> =
+        store.data.map { prefs ->
+            prefs[replayGainModeKey]?.let { stored -> ReplayGainMode.entries.firstOrNull { it.name == stored } } ?: ReplayGainMode.Track
+        }
+
+    suspend fun setReplayGainMode(mode: ReplayGainMode) {
+        store.edit { prefs -> prefs[replayGainModeKey] = mode.name }
+    }
+
+    private val replayGainModeKey = stringPreferencesKey("replay_gain_mode")
+
+    fun replayGainPreampDb(): Flow<Float> =
+        store.data.map { prefs -> (prefs[replayGainPreampKey] ?: 0f).coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB) }
+
+    suspend fun setReplayGainPreampDb(value: Float) {
+        store.edit { prefs -> prefs[replayGainPreampKey] = value.coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB) }
+    }
+
+    private val replayGainPreampKey = floatPreferencesKey("replay_gain_preamp_db")
 
     fun offlineMode(): Flow<Boolean> = store.data.map { prefs -> prefs[offlineModeKey] ?: false }
 
