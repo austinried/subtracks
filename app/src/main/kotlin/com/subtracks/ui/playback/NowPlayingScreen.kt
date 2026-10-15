@@ -58,7 +58,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
@@ -110,6 +109,10 @@ private const val SWIPE_FLING_VELOCITY = 1000f
 private const val SWIPE_SETTLE_MS = 180
 private const val SWIPE_EDGE_RESISTANCE = 0.3f
 private const val HAND_BACK_TIMEOUT_MS = 750L
+
+// The strip is unclipped, so this spacing is what keeps the neighbours off-screen, and it has to
+// clear the content inset plus a tile's shadow. It doubles as the gap between tiles while dragging.
+private val TILE_GAP = 40.dp
 
 data class NowPlayingArt(
     val id: String?,
@@ -329,6 +332,7 @@ fun NowPlayingScreen(
     val strip = frozenStrip ?: liveStrip
     val canGoNext = strip.getOrNull(2) != null
     val canGoPrevious = strip.getOrNull(0) != null
+    val stridePx = coverWidthPx + with(LocalDensity.current) { TILE_GAP.toPx() }
 
     fun animateSwipe(target: Float) {
         settleJob?.cancel()
@@ -340,7 +344,7 @@ fun NowPlayingScreen(
 
     fun commitSwipe(direction: Int) {
         frozenStrip = rotateStrip(strip, direction)
-        swipeOffsetX += direction * coverWidthPx
+        swipeOffsetX += direction * stridePx
         if (direction > 0) onNext() else onSkipPrevious()
         animateSwipe(0f)
     }
@@ -410,13 +414,14 @@ fun NowPlayingScreen(
                                 .padding(horizontal = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        // Deliberately unclipped: a tile that fills the width would lose its drop
+                        // shadow. TILE_GAP keeps the neighbours off-screen instead.
                         Box(
                             modifier =
                                 Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
                                     .padding(top = 2.dp)
-                                    .clipToBounds()
                                     .onSizeChanged { coverWidthPx = it.width.toFloat() }
                                     .draggable(
                                         orientation = Orientation.Horizontal,
@@ -428,7 +433,7 @@ fun NowPlayingScreen(
                                                         delta < 0 && !canGoNext -> delta * SWIPE_EDGE_RESISTANCE
                                                         else -> delta
                                                     }
-                                                swipeOffsetX = (swipeOffsetX + resisted).coerceIn(-coverWidthPx, coverWidthPx)
+                                                swipeOffsetX = (swipeOffsetX + resisted).coerceIn(-stridePx, stridePx)
                                             },
                                         onDragStarted = {
                                             dragging = true
@@ -484,7 +489,7 @@ fun NowPlayingScreen(
                                             Modifier
                                                 .fillMaxSize()
                                                 .graphicsLayer {
-                                                    translationX = (index - 1) * coverWidthPx + swipeOffsetX
+                                                    translationX = (index - 1) * stridePx + swipeOffsetX
                                                 }.then(
                                                     when (index) {
                                                         0 -> Modifier.testTag(NOW_PLAYING_PREVIOUS_TAG)

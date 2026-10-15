@@ -444,38 +444,31 @@ class AppScreenshotTest {
     }
 
     @Test
-    fun nowPlaying() {
-        composeRule.setContent {
-            SubtracksTheme {
-                NowPlayingScreen(
-                    state = Fixtures.playbackState(),
-                    positionMs = 62_000,
-                    title = "Kid A",
-                    coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
-                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
-                    onBack = {},
-                    onQueue = {},
-                    onPlayPause = {},
-                    onNext = {},
-                    onPrevious = {},
-                    onSeek = {},
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-        awaitText("Everything In Its Right Place")
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/now_playing.png")
-    }
+    fun nowPlaying() = nowPlayingShot(Fixtures.playbackState(), "art-al-kid-a", "now_playing.png")
 
     @Test
-    fun nowPlayingModes() {
+    fun nowPlayingModes() =
+        nowPlayingShot(
+            Fixtures.playbackState().copy(shuffle = true, repeat = RepeatMode.One),
+            "art-al-kid-a",
+            "now_playing_modes.png",
+        )
+
+    @Test
+    fun nowPlayingNonSquare() = nowPlayingShot(Fixtures.playbackState(), "art-nonsquare", "now_playing_nonsquare.png")
+
+    private fun nowPlayingShot(
+        state: PlaybackState,
+        coverArtId: String,
+        file: String,
+    ) {
         composeRule.setContent {
             SubtracksTheme {
                 NowPlayingScreen(
-                    state = Fixtures.playbackState().copy(shuffle = true, repeat = RepeatMode.One),
+                    state = state,
                     positionMs = 62_000,
                     title = "Kid A",
-                    coverArt = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    coverArt = CoverArtRef(coverArtId, "test:$coverArtId"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     onBack = {},
                     onQueue = {},
@@ -488,7 +481,7 @@ class AppScreenshotTest {
             }
         }
         awaitText("Everything In Its Right Place")
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/now_playing_modes.png")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/$file")
     }
 
     @Test
@@ -725,6 +718,7 @@ private object Fixtures {
 
     fun artEngine(): FakeImageLoaderEngine {
         val builder = FakeImageLoaderEngine.Builder()
+        builder.intercept("art-nonsquare", art("art-nonsquare", ArtKind.Album, width = 640, height = 256))
         albums.mapNotNull { it.coverArt }.forEach { builder.intercept(it, art(it, ArtKind.Album)) }
         playlists.mapNotNull { it.coverArt }.forEach { builder.intercept(it, art(it, ArtKind.Playlist)) }
         artists.mapNotNull { it.coverArt }.forEach { builder.intercept(it, art(it, ArtKind.Artist)) }
@@ -734,9 +728,14 @@ private object Fixtures {
     private fun art(
         key: String,
         kind: ArtKind,
+        width: Int = 256,
+        height: Int = 256,
     ): Image {
-        val size = 256
-        val f = size.toFloat()
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val cx = w / 2f
+        val cy = h / 2f
+        val span = maxOf(w, h)
         val random = Random(key.hashCode())
         val base = random.nextFloat() * 360f
 
@@ -752,21 +751,21 @@ private object Fixtures {
                 listOf(color(0f), color(170f + random.nextFloat() * 30f))
             }
 
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         canvas.drawColor(palette[0])
 
         when (kind) {
             ArtKind.Album -> {
-                val stripe = f / 9f
+                val stripe = w / 9f
                 canvas.save()
-                canvas.rotate(-30f, f / 2f, f / 2f)
-                var x = -f
+                canvas.rotate(-30f, cx, cy)
+                var x = -span
                 var index = 1
-                while (x < f * 2f) {
+                while (x < span * 2f) {
                     paint.color = palette[index % palette.size]
-                    canvas.drawRect(x, -f, x + stripe * 0.6f, f * 2f, paint)
+                    canvas.drawRect(x, -span, x + stripe * 0.6f, span * 2f, paint)
                     x += stripe
                     index++
                 }
@@ -774,12 +773,12 @@ private object Fixtures {
             }
 
             ArtKind.Playlist -> {
-                val step = f / 4f
+                val step = w / 4f
                 var row = 1
                 var y = step / 2f
-                while (y < f) {
+                while (y < h) {
                     var x = step / 2f
-                    while (x < f) {
+                    while (x < w) {
                         paint.color = palette[row % palette.size]
                         canvas.drawCircle(x, y, step * 0.3f, paint)
                         x += step
@@ -791,12 +790,12 @@ private object Fixtures {
 
             ArtKind.Artist -> {
                 paint.style = Paint.Style.STROKE
-                paint.strokeWidth = f / 13f
-                var radius = f * 0.5f
+                paint.strokeWidth = span / 13f
+                var radius = span * 0.5f
                 var index = 1
                 while (radius > 0f) {
                     paint.color = palette[index % palette.size]
-                    canvas.drawCircle(f / 2f, f / 2f, radius, paint)
+                    canvas.drawCircle(cx, cy, radius, paint)
                     radius -= paint.strokeWidth
                     index++
                 }

@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -283,6 +284,29 @@ class NowPlayingTapsTest {
 
         composeRule.onNodeWithTag(NOW_PLAYING_PREVIOUS_TAG, useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun theSwipeTargetStaysInsideTheContentMargins() {
+        render()
+
+        val target = composeRule.onNodeWithTag(NOW_PLAYING_COVER_TAG).fetchSemanticsNode().boundsInRoot
+        val screen = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
+
+        assertEquals(
+            "the swipe target must not reach into the screen margins",
+            screen.width - with(composeRule.density) { 48.dp.toPx() },
+            target.width,
+        )
+    }
+
+    @Test
+    fun theNeighboursStayHiddenAtRest() {
+        render(previousArt = adjacentArt("s-previous"), nextArt = adjacentArt("s-next"))
+
+        // TILE_GAP is what keeps them off-screen now that the strip is unclipped.
+        composeRule.onNodeWithTag(NOW_PLAYING_PREVIOUS_TAG, useUnmergedTree = true).assertIsNotDisplayed()
+        composeRule.onNodeWithTag(NOW_PLAYING_NEXT_TAG, useUnmergedTree = true).assertIsNotDisplayed()
     }
 
     @Test
