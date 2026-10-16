@@ -9,6 +9,6 @@ runs:
         extra_nix_config: experimental-features = nix-command flakes
     - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
       with:
-        primary-key: nix-v2-${{ hashFiles('flake.lock', '**/*.nix') }}
-        restore-prefixes-first-match: nix-v2-
-        gc-max-store-size-linux: 6G
+        primary-key: nix-v3-${{ hashFiles('flake.lock', '**/*.nix') }}
+        restore-prefixes-first-match: nix-v3-
+        gc-max-store-size-linux: 10G
