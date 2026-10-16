@@ -210,10 +210,10 @@ internal class SongDraft(
     }
 
     fun addReplayGain(attrs: Attributes) {
-        trackGain = attrs.floatAttr("trackGain")
-        albumGain = attrs.floatAttr("albumGain")
-        trackPeak = attrs.floatAttr("trackPeak")
-        albumPeak = attrs.floatAttr("albumPeak")
+        attrs.floatAttr("trackGain")?.let { trackGain = it }
+        attrs.floatAttr("albumGain")?.let { albumGain = it }
+        attrs.floatAttr("trackPeak")?.let { trackPeak = it }
+        attrs.floatAttr("albumPeak")?.let { albumPeak = it }
     }
 
     fun toSong(): Song =

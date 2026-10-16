@@ -232,6 +232,47 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsReplayGainPeaksWithoutGains() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Peaks only">
+                      <replayGain trackPeak="0.98" albumPeak="0.99"/>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(null, songs.single().trackGain)
+        assertEquals(null, songs.single().albumGain)
+        assertEquals(0.98f, songs.single().trackPeak)
+        assertEquals(0.99f, songs.single().albumPeak)
+    }
+
+    @Test
+    fun keepsTheFieldsOfEveryReplayGainElement() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <searchResult3>
+                    <song id="s1" title="Split">
+                      <replayGain trackGain="-3.2"/>
+                      <replayGain trackPeak="0.98"/>
+                    </song>
+                  </searchResult3>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(-3.2f, songs.single().trackGain)
+        assertEquals(0.98f, songs.single().trackPeak)
+    }
+
+    @Test
     fun ignoresNonFiniteReplayGainValues() {
         val songs =
             songs(
