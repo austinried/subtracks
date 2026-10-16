@@ -79,11 +79,11 @@
     <string name="settings_replay_gain_mode_track">Track gain</string>
     <string name="settings_replay_gain_preamp_decrease">Lower preamp</string>
     <string name="settings_replay_gain_preamp_increase">Raise preamp</string>
-    <string name="settings_replay_gain_preamp_prompt">Adjust level on top of the ReplayGain</string>
+    <string name="settings_replay_gain_preamp_prompt">Extra level on top of ReplayGain</string>
     <string name="settings_replay_gain_preamp_reset">Reset</string>
     <string name="settings_replay_gain_preamp_title">Preamp</string>
     <string name="settings_replay_gain_preamp_value">%1$s dB</string>
-    <string name="settings_replay_gain_prompt">Normalise loudness with the server\'s ReplayGain</string>
+    <string name="settings_replay_gain_prompt">Normalise loudness using the ReplayGain tags from the server</string>
     <string name="settings_replay_gain_title">ReplayGain</string>
     <string name="settings_network_name">Network</string>
     <string name="settings_network_options_max_bitrate_mobile_title">Stream quality: Mobile</string>

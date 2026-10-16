@@ -15,14 +15,14 @@ internal val REPLAY_GAIN_PREAMP_STEPS =
 // Compose Material 3's Slider snaps in pixel space and converts back, so the value it reports is
 // near, but not on, the grid it was configured with (for example -0.99999905 for -1.0). Snap before
 // showing or storing it.
-internal fun snapReplayGainPreampDb(value: Float): Float = (value / REPLAY_GAIN_PREAMP_STEP_DB).roundToInt() * REPLAY_GAIN_PREAMP_STEP_DB
+internal fun snapReplayGainPreampDb(value: Float): Float =
+    ((value / REPLAY_GAIN_PREAMP_STEP_DB).roundToInt() * REPLAY_GAIN_PREAMP_STEP_DB)
+        .coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB)
 
 internal fun stepReplayGainPreampDb(
     value: Float,
     steps: Int,
-): Float =
-    snapReplayGainPreampDb(value + steps * REPLAY_GAIN_PREAMP_STEP_DB)
-        .coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB)
+): Float = snapReplayGainPreampDb(value + steps * REPLAY_GAIN_PREAMP_STEP_DB)
 
 internal fun replayGainModeLabel(
     resources: Resources,

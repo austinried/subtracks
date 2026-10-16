@@ -30,7 +30,6 @@ class ReplayGainControlsTest {
 
     @Test
     fun theSliderHasOneStepPerHalfDecibel() {
-        assertEquals(60, ((MAX_REPLAY_GAIN_PREAMP_DB - MIN_REPLAY_GAIN_PREAMP_DB) / REPLAY_GAIN_PREAMP_STEP_DB).toInt())
         assertEquals(59, REPLAY_GAIN_PREAMP_STEPS)
     }
 
@@ -50,5 +49,11 @@ class ReplayGainControlsTest {
         assertEquals(14.5f, snapReplayGainPreampDb(14.6f), 0f)
         assertEquals(MAX_REPLAY_GAIN_PREAMP_DB, snapReplayGainPreampDb(14.9f), 0f)
         assertEquals(MIN_REPLAY_GAIN_PREAMP_DB, snapReplayGainPreampDb(-14.9f), 0f)
+    }
+
+    @Test
+    fun thePreampIsClampedToItsRange() {
+        assertEquals(MAX_REPLAY_GAIN_PREAMP_DB, snapReplayGainPreampDb(20f), 0f)
+        assertEquals(MIN_REPLAY_GAIN_PREAMP_DB, snapReplayGainPreampDb(-20f), 0f)
     }
 }

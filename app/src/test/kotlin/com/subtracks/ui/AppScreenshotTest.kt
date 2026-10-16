@@ -355,6 +355,7 @@ class AppScreenshotTest {
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Preamp"))
         composeRule.onAllNodesWithText("Preamp")[0].performClick()
         composeRule.waitForIdle()
+        composeRule.onAllNodesWithText("Reset").assertCountEquals(1)
         composeRule.onRoot().captureRoboImage("src/test/screenshots/replay_gain_preamp.png")
     }
 
