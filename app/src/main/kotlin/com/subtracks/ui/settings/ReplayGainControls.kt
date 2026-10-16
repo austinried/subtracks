@@ -12,9 +12,9 @@ internal const val REPLAY_GAIN_PREAMP_STEP_DB = 0.5f
 internal val REPLAY_GAIN_PREAMP_STEPS =
     ((MAX_REPLAY_GAIN_PREAMP_DB - MIN_REPLAY_GAIN_PREAMP_DB) / REPLAY_GAIN_PREAMP_STEP_DB).toInt() - 1
 
-// Material's slider snaps in pixel space and converts back, so the value it reports is near, but not
-// on, the grid it was configured with (for example -0.99999905 for -1.0). Snap before showing or
-// storing it.
+// Compose Material 3's Slider snaps in pixel space and converts back, so the value it reports is
+// near, but not on, the grid it was configured with (for example -0.99999905 for -1.0). Snap before
+// showing or storing it.
 internal fun snapReplayGainPreampDb(value: Float): Float = (value / REPLAY_GAIN_PREAMP_STEP_DB).roundToInt() * REPLAY_GAIN_PREAMP_STEP_DB
 
 internal fun stepReplayGainPreampDb(

@@ -799,8 +799,8 @@ private fun ReplayGainPreampDialog(
                         onValueChange = { draft = snapReplayGainPreampDb(it) },
                         valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
                         steps = REPLAY_GAIN_PREAMP_STEPS,
-                        // 59 steps is a tick every few dps, which reads as a smudge; the snapping is
-                        // what matters, so the ticks are not drawn.
+                        // Compose Material 3 draws one track tick per step, and at 59 steps they
+                        // smear together, so the ticks are suppressed and the snapping kept.
                         track = { state -> SliderDefaults.Track(sliderState = state, drawTick = { _, _ -> }) },
                         modifier = Modifier.weight(1f),
                     )
