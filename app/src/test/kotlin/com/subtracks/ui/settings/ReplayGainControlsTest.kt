@@ -35,6 +35,14 @@ class ReplayGainControlsTest {
     }
 
     @Test
+    fun thePreampStepsAlongTheGridAndStopsAtTheEnds() {
+        assertEquals(-1.5f, stepReplayGainPreampDb(-1f, -1), 0f)
+        assertEquals(-0.5f, stepReplayGainPreampDb(-1f, 1), 0f)
+        assertEquals(MIN_REPLAY_GAIN_PREAMP_DB, stepReplayGainPreampDb(MIN_REPLAY_GAIN_PREAMP_DB, -1), 0f)
+        assertEquals(MAX_REPLAY_GAIN_PREAMP_DB, stepReplayGainPreampDb(MAX_REPLAY_GAIN_PREAMP_DB, 1), 0f)
+    }
+
+    @Test
     fun thePreampSnapsBackOntoTheHalfDecibelGrid() {
         assertEquals(0f, snapReplayGainPreampDb(-0f), 0f)
         assertEquals(-1f, snapReplayGainPreampDb(-0.99999905f), 0f)

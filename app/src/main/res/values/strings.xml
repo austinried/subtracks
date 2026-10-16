@@ -77,7 +77,10 @@
     <string name="settings_replay_gain_mode_album">Album gain</string>
     <string name="settings_replay_gain_mode_off">Off</string>
     <string name="settings_replay_gain_mode_track">Track gain</string>
+    <string name="settings_replay_gain_preamp_decrease">Lower preamp</string>
+    <string name="settings_replay_gain_preamp_increase">Raise preamp</string>
     <string name="settings_replay_gain_preamp_prompt">Adjust level on top of the replay gain</string>
+    <string name="settings_replay_gain_preamp_reset">Reset</string>
     <string name="settings_replay_gain_preamp_title">Preamp</string>
     <string name="settings_replay_gain_preamp_value">%1$s dB</string>
     <string name="settings_replay_gain_prompt">Normalise loudness using the gain from the server</string>

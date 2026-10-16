@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -779,13 +780,44 @@ private fun ReplayGainPreampDialog(
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Slider(
-                    value = draft,
-                    onValueChange = { draft = snapReplayGainPreampDb(it) },
-                    valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
-                    steps = REPLAY_GAIN_PREAMP_STEPS,
-                )
-                Text(replayGainPreampLabel(resources, draft))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { draft = stepReplayGainPreampDb(draft, -1) },
+                        enabled = draft > MIN_REPLAY_GAIN_PREAMP_DB,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Remove,
+                            contentDescription = stringResource(R.string.settings_replay_gain_preamp_decrease),
+                        )
+                    }
+                    Slider(
+                        value = draft,
+                        onValueChange = { draft = snapReplayGainPreampDb(it) },
+                        valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
+                        steps = REPLAY_GAIN_PREAMP_STEPS,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        onClick = { draft = stepReplayGainPreampDb(draft, 1) },
+                        enabled = draft < MAX_REPLAY_GAIN_PREAMP_DB,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Add,
+                            contentDescription = stringResource(R.string.settings_replay_gain_preamp_increase),
+                        )
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(replayGainPreampLabel(resources, draft))
+                    Spacer(Modifier.weight(1f))
+                    TextButton(
+                        onClick = { draft = 0f },
+                        enabled = draft != 0f,
+                    ) { Text(stringResource(R.string.settings_replay_gain_preamp_reset)) }
+                }
             }
         },
         confirmButton = {

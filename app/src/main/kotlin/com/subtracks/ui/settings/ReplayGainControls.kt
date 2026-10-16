@@ -17,6 +17,13 @@ internal val REPLAY_GAIN_PREAMP_STEPS =
 // storing it.
 internal fun snapReplayGainPreampDb(value: Float): Float = (value / REPLAY_GAIN_PREAMP_STEP_DB).roundToInt() * REPLAY_GAIN_PREAMP_STEP_DB
 
+internal fun stepReplayGainPreampDb(
+    value: Float,
+    steps: Int,
+): Float =
+    snapReplayGainPreampDb(value + steps * REPLAY_GAIN_PREAMP_STEP_DB)
+        .coerceIn(MIN_REPLAY_GAIN_PREAMP_DB, MAX_REPLAY_GAIN_PREAMP_DB)
+
 internal fun replayGainModeLabel(
     resources: Resources,
     mode: ReplayGainMode,
