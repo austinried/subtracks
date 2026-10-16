@@ -21,8 +21,7 @@ class ReplayGainRenderersFactoryTest {
 
         val sink = ReplayGainRenderersFactory(context, processor).buildAudioSink(context, false, false)
 
-        // DefaultAudioSink exposes no accessor for the chain it was built with, so this is the only
-        // way to assert the processor is actually installed rather than merely constructed.
+        // DefaultAudioSink exposes no accessor for the chain it was built with.
         val chain =
             DefaultAudioSink::class.java
                 .getDeclaredField("audioProcessorChain")

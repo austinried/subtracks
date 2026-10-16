@@ -160,7 +160,33 @@ class ReplayGainTest {
         val settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
 
         assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = Float.POSITIVE_INFINITY), settings), TOLERANCE)
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = Float.NEGATIVE_INFINITY), settings), TOLERANCE)
         assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = Float.NaN), settings), TOLERANCE)
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = -Float.MAX_VALUE), settings), TOLERANCE)
+    }
+
+    @Test
+    fun playsAtUnityWhenANonFiniteGainWouldOtherwiseBeCapped() {
+        assertEquals(
+            1f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = Float.POSITIVE_INFINITY, trackPeak = 0.001f),
+                ReplayGainSettings(ReplayGainMode.Track, 0f),
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun thePeakFallsBackWhenThePreferredOneCarriesNoData() {
+        assertEquals(
+            2f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = 12f, trackPeak = 0f, albumPeak = 0.5f),
+                ReplayGainSettings(ReplayGainMode.Track, 0f),
+            ),
+            TOLERANCE,
+        )
     }
 
     private companion object {

@@ -60,7 +60,7 @@ class PlaybackService : MediaSessionService() {
     private var library: LibraryRepository? = null
     private var currentSongId: String? = null
     private var starred = false
-    private var songJob: Job? = null
+    private var starJob: Job? = null
 
     private val gainProcessor: ReplayGainProcessor = ReplayGainProcessor { replayGain.applyItem(it) }
     private val replayGain: ReplayGainController = ReplayGainController { gainProcessor.setLinearGain(it) }
@@ -139,7 +139,7 @@ class PlaybackService : MediaSessionService() {
                     mediaItem: MediaItem?,
                     reason: Int,
                 ) {
-                    observeCurrentSong(mediaItem?.mediaId)
+                    observeStar(mediaItem?.mediaId)
                 }
             },
         )
@@ -174,8 +174,8 @@ class PlaybackService : MediaSessionService() {
         pauseAllPlayersAndStopSelf()
     }
 
-    private fun observeCurrentSong(songId: String?) {
-        songJob?.cancel()
+    private fun observeStar(songId: String?) {
+        starJob?.cancel()
         currentSongId = songId
         starred = false
         val library = library ?: return
@@ -184,7 +184,7 @@ class PlaybackService : MediaSessionService() {
             return
         }
         session?.setMediaButtonPreferences(listOf(starButton(false)))
-        songJob =
+        starJob =
             scope.launch {
                 val sourceId = sourceRepository?.activeSourceIdOnce() ?: return@launch
                 library.song(sourceId, songId).collect { song ->

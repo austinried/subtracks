@@ -30,19 +30,20 @@ internal fun replayGainLinearGain(
     gain: ReplayGain,
     settings: ReplayGainSettings,
 ): Float {
+    // gonic sends a peak of 0 when it only has album gain, so a non-positive or non-finite peak means
+    // "no peak data" and is ignored rather than treated as silence.
+    val trackPeak = gain.trackPeak?.takeIf { it.isFinite() && it > 0f }
+    val albumPeak = gain.albumPeak?.takeIf { it.isFinite() && it > 0f }
     val (requestedDb, peak) =
         when (settings.mode) {
             ReplayGainMode.Off -> return 1f
-            ReplayGainMode.Track -> (gain.trackGain ?: gain.albumGain) to (gain.trackPeak ?: gain.albumPeak)
-            ReplayGainMode.Album -> (gain.albumGain ?: gain.trackGain) to (gain.albumPeak ?: gain.trackPeak)
+            ReplayGainMode.Track -> (gain.trackGain ?: gain.albumGain) to (trackPeak ?: albumPeak)
+            ReplayGainMode.Album -> (gain.albumGain ?: gain.trackGain) to (albumPeak ?: trackPeak)
         }
-    val gainDb = requestedDb ?: return 1f
+    val gainDb = requestedDb?.takeIf { it.isFinite() } ?: return 1f
     val requested = gainDb + settings.preampDb
-    val cap = peak?.takeIf { it.isFinite() && it > 0f }?.let(::maxSafeGainDb)
-    val applied = if (cap != null) min(requested, cap) else requested
-    return 10f.pow(applied / 20f).takeIf { it.isFinite() } ?: 1f
+    val applied = peak?.let { min(requested, maxSafeGainDb(it)) } ?: requested
+    return 10f.pow(applied / 20f).takeIf { it.isFinite() && it > 0f } ?: 1f
 }
 
-// gonic sends a peak of 0 when it only has album gain, so a non-positive or non-finite peak means
-// "no peak data" and is ignored rather than treated as silence.
 private fun maxSafeGainDb(peak: Float): Float = -20f * log10(peak)

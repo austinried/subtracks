@@ -12,9 +12,8 @@ internal class ReplayGainRenderersFactory(
     context: Context,
     private val processor: ReplayGainProcessor,
 ) : DefaultRenderersFactory(context) {
-    // Mirrors the stock DefaultRenderersFactory.buildAudioSink, plus the processor. setAudioProcessors
-    // keeps the default chain and prepends ours, but DefaultAudioSink drops the whole chain when
-    // float output is enabled, so enabling that would silently disable replay gain.
+    // Mirrors the stock DefaultRenderersFactory.buildAudioSink. setAudioProcessors keeps the default
+    // chain and prepends ours; DefaultAudioSink omits the whole chain when float output is enabled.
     public override fun buildAudioSink(
         context: Context,
         enableFloatOutput: Boolean,

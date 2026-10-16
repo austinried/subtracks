@@ -28,8 +28,7 @@ internal class ReplayGainProcessor(
     // item transition even when the format is unchanged, and hands over the timeline and the period
     // being flushed (androidx/media#418). That is early enough to set the new item's gain before any
     // of its buffers are processed, unlike Player.Listener.onMediaItemTransition, which the app
-    // thread receives afterwards. A flush with no period comes from a DefaultAudioSink reset rather
-    // than an item boundary, hence the ignore.
+    // thread receives afterwards.
     override fun onFlush(streamMetadata: StreamMetadata) {
         streamMetadata.currentItem()?.let(onItem)
     }
