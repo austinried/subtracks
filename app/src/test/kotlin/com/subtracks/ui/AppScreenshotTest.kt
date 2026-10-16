@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.paging.PagingData
@@ -340,6 +344,21 @@ class AppScreenshotTest {
 
     @Test
     fun settings() {
+        setSettingsContent()
+        awaitText("Navidrome")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/settings.png")
+    }
+
+    @Test
+    fun replayGainPreampDialog() {
+        setSettingsContent()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Preamp"))
+        composeRule.onAllNodesWithText("Preamp")[0].performClick()
+        composeRule.waitForIdle()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/replay_gain_preamp.png")
+    }
+
+    private fun setSettingsContent() {
         composeRule.setContent {
             SubtracksTheme {
                 SettingsScreen(
@@ -367,8 +386,6 @@ class AppScreenshotTest {
                 )
             }
         }
-        awaitText("Navidrome")
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/settings.png")
     }
 
     @Test

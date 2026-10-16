@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -780,6 +781,7 @@ private fun ReplayGainPreampDialog(
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
+                Spacer(Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = { draft = stepReplayGainPreampDb(draft, -1) },
@@ -807,29 +809,31 @@ private fun ReplayGainPreampDialog(
                         )
                     }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                Text(
+                    replayGainPreampLabel(resources, draft),
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(replayGainPreampLabel(resources, draft))
-                    Spacer(Modifier.weight(1f))
-                    TextButton(
-                        onClick = { draft = 0f },
-                        enabled = draft != 0f,
-                    ) { Text(stringResource(R.string.settings_replay_gain_preamp_reset)) }
-                }
+                )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    onSelect(draft)
-                    onDismiss()
-                },
-            ) { Text(stringResource(R.string.action_done)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                TextButton(
+                    onClick = { draft = 0f },
+                    enabled = draft != 0f,
+                ) { Text(stringResource(R.string.settings_replay_gain_preamp_reset)) }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+                TextButton(
+                    onClick = {
+                        onSelect(draft)
+                        onDismiss()
+                    },
+                ) { Text(stringResource(R.string.action_done)) }
+            }
         },
     )
 }
