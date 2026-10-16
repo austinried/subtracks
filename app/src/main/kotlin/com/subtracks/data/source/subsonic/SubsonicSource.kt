@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.xml.sax.Attributes
@@ -224,6 +226,23 @@ class SubsonicSource(
     private fun albumSongs(): Flow<List<Song>> =
         channelFlow {
             val permits = Semaphore(maxConcurrentFetches)
+            val lock = Mutex()
+            val pending = ArrayList<Song>(PAGE_SIZE)
+
+            suspend fun accept(songs: List<Song>) {
+                lock
+                    .withLock {
+                        pending.addAll(songs)
+                        if (pending.size < PAGE_SIZE) {
+                            null
+                        } else {
+                            val batch = ArrayList(pending.subList(0, PAGE_SIZE))
+                            pending.subList(0, PAGE_SIZE).clear()
+                            batch
+                        }
+                    }?.let { send(it) }
+            }
+
             var offset = 0
             var pages = 0
             while (true) {
@@ -251,7 +270,7 @@ class SubsonicSource(
                                         onChild = { song, name, attrs -> if (name == "genres") song.addGenre(attrs) },
                                     ).collect { batch ->
                                         val accepted = batch.map { it.toSong() }.filter { it.id.isNotEmpty() }
-                                        if (accepted.isNotEmpty()) send(accepted)
+                                        accept(accepted)
                                     }
                                 }
                             }
@@ -265,7 +284,14 @@ class SubsonicSource(
                 if (pages > maxPages) throw pageCapExceeded()
                 offset += PAGE_SIZE
             }
-        }
+            val tail =
+                lock.withLock {
+                    val held = pending.toList()
+                    pending.clear()
+                    held
+                }
+            if (tail.isNotEmpty()) send(tail)
+        }.buffer(1)
 
     private fun supportsEmptyQuerySearch(): Boolean {
         emptyQuerySearchSupported?.let { return it }

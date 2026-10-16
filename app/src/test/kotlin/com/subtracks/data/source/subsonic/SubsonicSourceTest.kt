@@ -609,6 +609,40 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun albumSongsAreEmittedInBoundedBatches() =
+        runBlocking {
+            val albumCount = 200
+            val songsPerAlbum = 3
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val url = request.requestUrl!!
+                        return when (url.encodedPath) {
+                            "/rest/search3.view" -> {
+                                MockResponse().setBody(failed(10, "Required parameter is missing"))
+                            }
+
+                            "/rest/getAlbumList2.view" -> {
+                                MockResponse().setBody(albumListOf(albumCount))
+                            }
+
+                            "/rest/getAlbum.view" -> {
+                                MockResponse().setBody(albumWithSongs(url.queryParameter("id")!!, songsPerAlbum))
+                            }
+
+                            else -> {
+                                MockResponse().setResponseCode(404)
+                            }
+                        }
+                    }
+                }
+
+            val batches = SubsonicSource(1, client()).songs().toList().map { it.size }
+
+            assertEquals(listOf(500, 100), batches)
+        }
+
+    @Test
     fun playlistEntriesWithoutIdsAreSkipped() =
         runBlocking {
             server.enqueue(
@@ -704,6 +738,13 @@ class SubsonicSourceTest {
         "<subsonic-response status=\"ok\"><album id=\"$albumId\">" +
             "<song id=\"$albumId-s1\" title=\"One\"/>" +
             "</album></subsonic-response>"
+
+    private fun albumWithSongs(
+        albumId: String,
+        count: Int,
+    ) = "<subsonic-response status=\"ok\"><album id=\"$albumId\">" +
+        (1..count).joinToString("") { "<song id=\"$albumId-s$it\" title=\"Title $it\"/>" } +
+        "</album></subsonic-response>"
 
     private fun failed(
         code: Int,
