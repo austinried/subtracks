@@ -41,6 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -763,6 +764,7 @@ private fun ReplayGainModeDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReplayGainPreampDialog(
     selected: Float,
@@ -797,6 +799,9 @@ private fun ReplayGainPreampDialog(
                         onValueChange = { draft = snapReplayGainPreampDb(it) },
                         valueRange = MIN_REPLAY_GAIN_PREAMP_DB..MAX_REPLAY_GAIN_PREAMP_DB,
                         steps = REPLAY_GAIN_PREAMP_STEPS,
+                        // 59 steps is a tick every few dps, which reads as a smudge; the snapping is
+                        // what matters, so the ticks are not drawn.
+                        track = { state -> SliderDefaults.Track(sliderState = state, drawTick = { _, _ -> }) },
                         modifier = Modifier.weight(1f),
                     )
                     IconButton(
