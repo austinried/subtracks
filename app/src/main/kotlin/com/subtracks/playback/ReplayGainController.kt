@@ -9,14 +9,12 @@ internal class ReplayGainController(
     private var track = ReplayGain()
     private var settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
 
-    // Called from the playback thread, by ReplayGainProcessor.onFlush.
     @Synchronized
     fun applyItem(item: MediaItem) {
         track = item.replayGain()
         applyGain()
     }
 
-    // Called from the app thread, when the preferences change.
     @Synchronized
     fun setSettings(value: ReplayGainSettings) {
         settings = value

@@ -245,8 +245,6 @@ private const val EXTRA_REPLAY_GAIN_ALBUM_GAIN = "replayGainAlbumGain"
 private const val EXTRA_REPLAY_GAIN_TRACK_PEAK = "replayGainTrackPeak"
 private const val EXTRA_REPLAY_GAIN_ALBUM_PEAK = "replayGainAlbumPeak"
 
-// The gain rides on the MediaItem so PlaybackService can apply it the moment the item becomes
-// current, rather than after an asynchronous round trip to the library.
 internal fun MediaItem?.replayGain(): ReplayGain {
     val extras = this?.mediaMetadata?.extras ?: return ReplayGain()
     return ReplayGain(

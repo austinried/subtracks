@@ -24,14 +24,13 @@ internal class ReplayGainProcessor(
 
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat = inputAudioFormat
 
-    // DefaultAudioSink configures and flushes the processors at every media item transition, even
-    // when the format is unchanged, and hands over the timeline and the period being flushed. That
-    // is early enough to set the new item's gain before any of its buffers are processed, unlike
-    // Player.Listener.onMediaItemTransition, which the app thread receives afterwards.
-    // See androidx/media#418.
+    // DefaultAudioSink flushes the processors on every configuration, which happens at each media
+    // item transition even when the format is unchanged, and hands over the timeline and the period
+    // being flushed (androidx/media#418). That is early enough to set the new item's gain before any
+    // of its buffers are processed, unlike Player.Listener.onMediaItemTransition, which the app
+    // thread receives afterwards. A flush with no period comes from a DefaultAudioSink reset rather
+    // than an item boundary, hence the ignore.
     override fun onFlush(streamMetadata: StreamMetadata) {
-        // A flush with no period comes from a sink reset rather than an item boundary, so leave the
-        // gain alone rather than resetting it to unity.
         streamMetadata.currentItem()?.let(onItem)
     }
 
@@ -50,8 +49,6 @@ internal class ReplayGainProcessor(
             }
 
             else -> {
-                // An empty input would be the pipeline's own shared buffer, which cannot be put into
-                // itself.
                 if (inputBuffer.hasRemaining()) output.put(inputBuffer)
             }
         }
