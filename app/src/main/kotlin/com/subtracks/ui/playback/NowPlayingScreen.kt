@@ -196,7 +196,7 @@ fun NowPlayingRoute(
     userPreferences: UserPreferences = koinInject(),
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
-    val keepScreenOn by userPreferences.keepScreenOn().collectAsStateWithLifecycle(initialValue = false)
+    val keepScreenOn by remember { userPreferences.keepScreenOn() }.collectAsStateWithLifecycle(initialValue = false)
     val positionMs by controller.positionMs.collectAsStateWithLifecycle()
     val sourceId = state.context?.sourceId
     val songId = state.item?.id

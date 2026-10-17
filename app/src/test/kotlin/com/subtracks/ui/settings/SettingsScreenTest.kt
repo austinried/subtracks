@@ -1,8 +1,10 @@
 package com.subtracks.ui.settings
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -27,8 +29,44 @@ class SettingsScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun theKeepScreenOnRowToggles() {
+    fun theKeepScreenOnRowTurnsTheSettingOn() {
         var requested: Boolean? = null
+        renderSettings(keepScreenOn = false) { requested = it }
+
+        composeRule.onNodeWithText("Keep screen on").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(true, requested)
+    }
+
+    @Test
+    fun theKeepScreenOnRowTurnsTheSettingOff() {
+        var requested: Boolean? = null
+        renderSettings(keepScreenOn = true) { requested = it }
+
+        composeRule.onNodeWithText("Keep screen on").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(false, requested)
+    }
+
+    @Test
+    fun theKeepScreenOnSwitchTurnsTheSettingOn() {
+        var requested: Boolean? = null
+        renderSettings(keepScreenOn = false) { requested = it }
+
+        composeRule
+            .onNode(isToggleable() and hasAnySibling(hasText("Keep screen on")), useUnmergedTree = true)
+            .performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(true, requested)
+    }
+
+    private fun renderSettings(
+        keepScreenOn: Boolean,
+        onKeepScreenOnChange: (Boolean) -> Unit,
+    ) {
         composeRule.setContent {
             SubtracksTheme {
                 SettingsScreen(
@@ -40,7 +78,7 @@ class SettingsScreenTest {
                     downloadQuality = StreamQuality(),
                     downloadOverMetered = false,
                     scrobbling = false,
-                    keepScreenOn = false,
+                    keepScreenOn = keepScreenOn,
                     onSelectSource = {},
                     onEditServer = {},
                     onWifiQualityChange = {},
@@ -49,7 +87,7 @@ class SettingsScreenTest {
                     onDownloadQualityChange = {},
                     onDownloadOverMeteredChange = {},
                     onScrobblingChange = {},
-                    onKeepScreenOnChange = { requested = it },
+                    onKeepScreenOnChange = onKeepScreenOnChange,
                     onAddServer = {},
                     onOpenDownloads = {},
                     onOpenLicenses = {},
@@ -60,9 +98,6 @@ class SettingsScreenTest {
         }
         awaitText("Add server")
         composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Keep screen on"))
-        composeRule.onNodeWithText("Keep screen on").performClick()
-        composeRule.waitForIdle()
-        assertEquals(true, requested)
     }
 
     private fun awaitText(text: String) {
