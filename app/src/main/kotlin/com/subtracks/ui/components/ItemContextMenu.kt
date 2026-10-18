@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
@@ -226,76 +229,84 @@ fun ItemContextMenu(
         dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        MenuHeader(target)
-        when (target) {
-            is MenuTarget.Song -> {
-                queueItems()
-                DownloadItem(target.download, target.song, actions, ::dismiss)
-                StarItem(
-                    current = target.song.starred,
-                    onSet = { starring -> actions.setStar(StarType.Song, target.song.id, starring) },
-                    onDismiss = { dismiss() },
-                )
-                target.song.albumId?.let { albumId ->
-                    actions.viewAlbum?.let { view ->
-                        MenuItem(
-                            Icons.Rounded.Album,
-                            target.song.album?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_album),
-                        ) {
-                            dismiss { view(albumId) }
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = MENU_MAX_HEIGHT)
+                    .verticalScroll(rememberScrollState()),
+        ) {
+            MenuHeader(target)
+            when (target) {
+                is MenuTarget.Song -> {
+                    queueItems()
+                    DownloadItem(target.download, target.song, actions, ::dismiss)
+                    StarItem(
+                        current = target.song.starred,
+                        onSet = { starring -> actions.setStar(StarType.Song, target.song.id, starring) },
+                        onDismiss = { dismiss() },
+                    )
+                    target.song.albumId?.let { albumId ->
+                        actions.viewAlbum?.let { view ->
+                            MenuItem(
+                                Icons.Rounded.Album,
+                                target.song.album?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_album),
+                            ) {
+                                dismiss { view(albumId) }
+                            }
+                        }
+                    }
+                    target.song.artistRefs.forEach { artist ->
+                        actions.viewArtist?.let { view ->
+                            MenuItem(
+                                Icons.Rounded.Person,
+                                artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                            ) {
+                                dismiss { view(artist.id) }
+                            }
+                        }
+                    }
+                    onInfo?.let { info ->
+                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target.song) } }
+                    }
+                }
+
+                is MenuTarget.Album -> {
+                    queueItems()
+                    BulkDownloadItem(target, actions, ::dismiss)
+                    StarItem(
+                        current = target.album.starred,
+                        onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
+                        onDismiss = { dismiss() },
+                    )
+                    target.album.artistRefs.forEach { artist ->
+                        actions.viewArtist?.let { view ->
+                            MenuItem(
+                                Icons.Rounded.Person,
+                                artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                            ) {
+                                dismiss { view(artist.id) }
+                            }
                         }
                     }
                 }
-                target.song.artistRefs.forEach { artist ->
-                    actions.viewArtist?.let { view ->
-                        MenuItem(
-                            Icons.Rounded.Person,
-                            artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
-                        ) {
-                            dismiss { view(artist.id) }
-                        }
-                    }
-                }
-                onInfo?.let { info ->
-                    MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target.song) } }
-                }
-            }
 
-            is MenuTarget.Album -> {
-                queueItems()
-                BulkDownloadItem(target, actions, ::dismiss)
-                StarItem(
-                    current = target.album.starred,
-                    onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
-                    onDismiss = { dismiss() },
-                )
-                target.album.artistRefs.forEach { artist ->
-                    actions.viewArtist?.let { view ->
-                        MenuItem(
-                            Icons.Rounded.Person,
-                            artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
-                        ) {
-                            dismiss { view(artist.id) }
-                        }
-                    }
+                is MenuTarget.Artist -> {
+                    BulkDownloadItem(target, actions, ::dismiss)
+                    StarItem(
+                        current = target.artist.starred,
+                        onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
+                        onDismiss = { dismiss() },
+                    )
+                }
+
+                is MenuTarget.Playlist -> {
+                    queueItems()
+                    BulkDownloadItem(target, actions, ::dismiss)
                 }
             }
-
-            is MenuTarget.Artist -> {
-                BulkDownloadItem(target, actions, ::dismiss)
-                StarItem(
-                    current = target.artist.starred,
-                    onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
-                    onDismiss = { dismiss() },
-                )
-            }
-
-            is MenuTarget.Playlist -> {
-                queueItems()
-                BulkDownloadItem(target, actions, ::dismiss)
-            }
+            Spacer(Modifier.height(16.dp))
         }
-        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -445,3 +456,4 @@ private fun starLabel(starred: Long?): String =
     if (starred == null) stringResource(R.string.actions_star) else stringResource(R.string.actions_unstar)
 
 private const val STAR_DISMISS_DELAY_MS = 200L
+private val MENU_MAX_HEIGHT = 560.dp

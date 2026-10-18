@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.Song
@@ -66,5 +67,30 @@ class ItemContextMenuArtistTest {
         composeRule.mainClock.advanceTimeBy(1_000)
 
         assertEquals("ar2", opened)
+    }
+
+    @Test
+    fun longMenusScrollToTheLastArtist() {
+        var opened: String? = null
+        composeRule.setContent {
+            SubtracksTheme {
+                ItemContextMenu(
+                    target =
+                        MenuTarget.Song(
+                            song.copy(artists = (1..20).map { ArtistRef("ar$it", "Artist $it") }),
+                        ),
+                    actions = ItemActions(viewArtist = { opened = it }),
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Artist 20").performScrollTo().assertIsDisplayed()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithText("Artist 20").performClick()
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        assertEquals("ar20", opened)
     }
 }
