@@ -134,8 +134,8 @@ class SyncService(
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val albumChanged = connection.albumIdsChanged(batch)
-                if (albumChanged) creditsChanged = true
+                val songCreditsChanged = connection.songCreditsChanged(batch)
+                if (songCreditsChanged) creditsChanged = true
                 val resolved = connection.resolveSongSortNames(batch)
                 connection.upsertChanged("songs", songColumns, primaryKey, resolved) { it.values() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
@@ -162,7 +162,7 @@ class SyncService(
                 }
                 connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
                 val artistRowsChanged = connection.totalChanges() != artistRowsBefore
-                if (albumChanged || artistRowsChanged) {
+                if (songCreditsChanged || artistRowsChanged) {
                     connection.markCreditsStale(batch.first().sourceId)
                     creditsChanged = true
                 }
@@ -196,8 +196,8 @@ class SyncService(
         }
     }
 
-    private suspend fun PooledConnection.albumIdsChanged(batch: List<Song>): Boolean {
-        val expected = batch.associate { it.id to it.albumId }.toMutableMap()
+    private suspend fun PooledConnection.songCreditsChanged(batch: List<Song>): Boolean {
+        val expected = batch.associate { it.id to (it.albumId to it.artistId) }.toMutableMap()
         if (expected.isEmpty()) return false
         var changed = false
         batch
@@ -205,13 +205,36 @@ class SyncService(
             .chunked(SQL_VARIABLES)
             .forEach { chunk ->
                 val placeholders = chunk.joinToString(",") { "?" }
-                usePrepared("SELECT id, albumId FROM songs WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
+                usePrepared("SELECT id, albumId, artistId FROM songs WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
                     statement.bindLong(1, chunk.first().first)
                     chunk.forEachIndexed { index, (_, id) -> statement.bindText(index + 2, id) }
                     while (statement.step()) {
                         val id = statement.getText(0)
                         val albumId = if (statement.isNull(1)) null else statement.getText(1)
-                        if (expected.remove(id) != albumId) changed = true
+                        val artistId = if (statement.isNull(2)) null else statement.getText(2)
+                        if (expected.remove(id) != (albumId to artistId)) changed = true
+                    }
+                }
+            }
+        return changed || expected.isNotEmpty()
+    }
+
+    private suspend fun PooledConnection.albumLeadsChanged(batch: List<Album>): Boolean {
+        val expected = batch.associate { it.id to it.artistId }.toMutableMap()
+        if (expected.isEmpty()) return false
+        var changed = false
+        batch
+            .map { it.sourceId to it.id }
+            .chunked(SQL_VARIABLES)
+            .forEach { chunk ->
+                val placeholders = chunk.joinToString(",") { "?" }
+                usePrepared("SELECT id, artistId FROM albums WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
+                    statement.bindLong(1, chunk.first().first)
+                    chunk.forEachIndexed { index, (_, id) -> statement.bindText(index + 2, id) }
+                    while (statement.step()) {
+                        val id = statement.getText(0)
+                        val artistId = if (statement.isNull(1)) null else statement.getText(1)
+                        if (expected.remove(id) != artistId) changed = true
                     }
                 }
             }
@@ -334,6 +357,7 @@ class SyncService(
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
+                val leadsChanged = connection.albumLeadsChanged(albums)
                 val resolved = connection.resolveAlbumSortNames(albums)
                 connection.upsertChanged("albums", albumColumns, primaryKey, resolved) { it.values() }
                 connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
@@ -349,7 +373,7 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
-                if (connection.totalChanges() != artistRowsBefore) {
+                if (leadsChanged || connection.totalChanges() != artistRowsBefore) {
                     connection.markCreditsStale(albums.first().sourceId)
                     creditsChanged = true
                 }

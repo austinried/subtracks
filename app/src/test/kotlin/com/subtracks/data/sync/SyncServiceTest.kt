@@ -1636,6 +1636,53 @@ class SyncServiceTest {
             )
         }
 
+    @Test
+    fun changingOnlyTheLeadArtistRecomputesTheCreditedCounts() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Lead"), artist("a2", "Ref")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a2", "Ref")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "al1",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a2", "Ref")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a1")!!.albumCount)
+
+            source.albums = listOf(album("al1").copy(artistId = "a2", artists = listOf(ArtistRef("a2", "Ref"))))
+            source.songs =
+                listOf(
+                    song("s1").copy(
+                        albumId = "al1",
+                        artistId = "a2",
+                        artists = listOf(ArtistRef("a2", "Ref")),
+                    ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a1")!!.albumCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.albumCount)
+        }
+
     private suspend fun totalChanges(): Long =
         db.useWriterConnection { connection ->
             connection.usePrepared("SELECT total_changes()") { statement ->
