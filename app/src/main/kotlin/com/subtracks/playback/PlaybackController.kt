@@ -934,7 +934,17 @@ class PlaybackController(
         }
         val snapshot = current ?: return null
         val at = position ?: return null
-        if (!isOffline) return queueRepository.itemAt(snapshot, at + 1)?.toQueueItem()
+        if (!isOffline) {
+            val next =
+                if (at + 1 < snapshot.size) {
+                    at + 1
+                } else if (repeatMode != RepeatMode.Off) {
+                    0L
+                } else {
+                    null
+                }
+            return next?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
+        }
         downloads.awaitLoaded()
         val target =
             downloadedAtOrAfter(snapshot, at + 1)
@@ -953,7 +963,15 @@ class PlaybackController(
         }
         val snapshot = current ?: return null
         val at = position ?: return null
-        if (!isOffline) return if (at <= 0) null else queueRepository.itemAt(snapshot, at - 1)?.toQueueItem()
+        if (!isOffline) {
+            val previous =
+                when {
+                    at > 0 -> at - 1
+                    repeatMode == RepeatMode.All -> snapshot.size - 1
+                    else -> return null
+                }
+            return queueRepository.itemAt(snapshot, previous)?.toQueueItem()
+        }
         downloads.awaitLoaded()
         val target =
             downloadedAtOrBefore(snapshot, at - 1)

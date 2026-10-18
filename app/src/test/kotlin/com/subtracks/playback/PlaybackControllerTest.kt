@@ -219,6 +219,61 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun previousItemWrapsToTheEndWithRepeatAll() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        assertEquals("s3", runBlocking { controller.previousItem()?.id })
+    }
+
+    @Test
+    fun upcomingItemIsNullAtTheEndOfTheQueue() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+
+        assertNull(runBlocking { controller.upcomingItem() })
+    }
+
+    @Test
+    fun upcomingItemWrapsToTheStartWithRepeatAll() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        assertEquals("s1", runBlocking { controller.upcomingItem()?.id })
+    }
+
+    @Test
+    fun upcomingItemWrapsToTheStartWithRepeatOne() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.cycleRepeat()
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.One, controller.state.value.repeat)
+
+        assertEquals("s1", runBlocking { controller.upcomingItem()?.id })
+    }
+
+    @Test
     fun previousTrackMovesBackEvenOncePreviousWouldRestart() {
         seedAlbum(3, sourceId = 1)
         controller.playAlbum(1, "al1", 1)
