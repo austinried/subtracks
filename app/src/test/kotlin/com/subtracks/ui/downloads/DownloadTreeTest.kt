@@ -38,6 +38,29 @@ class DownloadTreeTest {
     }
 
     @Test
+    fun songsKeepTheOrderTheRepositoryReturns() {
+        val tree =
+            buildTree(
+                listOf(
+                    song("s2", "Two", "ar1", "Artist", "al1", "First", size = 20),
+                    song("s1", "One", "ar1", "Artist", "al1", "First", size = 10),
+                ),
+                "Unknown artist",
+                "Unknown album",
+            )
+
+        assertEquals(
+            listOf("Two", "One"),
+            tree.artists
+                .single()
+                .albums
+                .single()
+                .songs
+                .map { it.title },
+        )
+    }
+
+    @Test
     fun aSongWithNoArtistOrAlbumIsStillShown() {
         val tree = buildTree(listOf(song("s1", "One", null, null, null, null, size = 3)), "Unknown artist", "Unknown album")
 

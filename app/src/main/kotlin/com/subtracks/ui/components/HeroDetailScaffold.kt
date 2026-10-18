@@ -280,7 +280,7 @@ fun HeroHeader(
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center,
             maxLines = nameMaxLines,
-            overflow = if (nameMaxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis,
         )
         val subtitleIsTarget = onSubtitleClick != null && subtitle.isNotEmpty() && comment.isNullOrBlank()
         if (subtitleIsTarget) {

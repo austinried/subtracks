@@ -52,7 +52,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -257,8 +256,13 @@ fun ArtistDetailScreen(
     val albumCount = albums.size.toLong()
     val displayName = artistName.ifBlank { artist?.name.orEmpty() }
     val artistType = stringResource(if (isAlbumArtist == true) R.string.artist_type_album_artist else R.string.artist_type_artist)
-    var titleLineCount by remember { mutableIntStateOf(1) }
-    val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight * titleLineCount
+    var titleHeightPx by remember { mutableFloatStateOf(0f) }
+    val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
+    val titleMaxLines =
+        ((ART_HEIGHT - TITLE_INSET - barHeight - FADE_LEAD) / lineHeight)
+            .toInt()
+            .coerceIn(1, ARTIST_NAME_MAX_LINES)
+    val imageTitleTop = ART_HEIGHT - TITLE_INSET - titleHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
     val barFraction by remember(fadeStartPx, fadeEndPx) {
@@ -338,7 +342,7 @@ fun ArtistDetailScreen(
                                             Modifier
                                                 .align(Alignment.BottomStart)
                                                 .fillMaxWidth()
-                                                .height(ART_HEIGHT * 0.4f)
+                                                .height(maxOf(ART_HEIGHT * 0.4f, titleHeight + TITLE_INSET * 2))
                                                 .graphicsLayer { alpha = nameScrimAlpha }
                                                 .background(
                                                     Brush.verticalGradient(
@@ -353,8 +357,13 @@ fun ArtistDetailScreen(
                                         style = imageNameStyle,
                                         color = Color.White,
                                         endReserve = SHUFFLE_RESERVE,
-                                        modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(TITLE_INSET),
-                                        onLineCountChanged = { titleLineCount = it },
+                                        maxLines = titleMaxLines,
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomStart)
+                                                .fillMaxWidth()
+                                                .padding(TITLE_INSET)
+                                                .onSizeChanged { titleHeightPx = it.height.toFloat() },
                                     )
                                     FilledIconButton(
                                         onClick = onShuffle,
@@ -521,9 +530,8 @@ private fun ArtistTitle(
     style: TextStyle,
     color: Color,
     endReserve: Dp,
+    maxLines: Int,
     modifier: Modifier = Modifier,
-    maxLines: Int = ARTIST_NAME_MAX_LINES,
-    onLineCountChanged: (Int) -> Unit = {},
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -534,7 +542,6 @@ private fun ArtistTitle(
             remember(text, style, fullWidth, reserve, maxLines) {
                 splitTitle(measurer, text, style, fullWidth, reserve, maxLines)
             }
-        LaunchedEffect(lines.size) { onLineCountChanged(lines.size) }
         Column {
             lines.forEachIndexed { index, line ->
                 Text(
