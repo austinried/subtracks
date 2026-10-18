@@ -50,6 +50,21 @@ class HangingTitleTest {
     }
 
     @Test
+    fun aLongNameWrapsToAtMostSixLines() {
+        setUpMeasurements()
+
+        val text = (1..200).joinToString(" ") { "word$it" }
+        val lines = splitTitle(measurer!!, text, style, fullWidth, reserve)
+
+        assertEquals(6, lines.size)
+        lines.dropLast(1).forEach { line ->
+            val width = measurer!!.measure(AnnotatedString(line), style, maxLines = 1).size.width
+            assertTrue("every line before the last must fit the full width", width <= fullWidth)
+        }
+        assertTrue(lines.last().isNotEmpty())
+    }
+
+    @Test
     fun theLastLineStopsBeforeTheReservedWidth() {
         setUpMeasurements()
 

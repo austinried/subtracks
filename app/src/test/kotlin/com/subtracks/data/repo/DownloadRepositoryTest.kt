@@ -976,6 +976,53 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun downloadedSongsFollowTheAlbumDiscAndTrackOrder() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            sourceId = 1,
+                            id = "s0",
+                            albumId = "al1",
+                            artistId = "ar1",
+                            title = "Alpha",
+                            album = "Album",
+                            artist = "Artist",
+                            duration = 100,
+                            track = 3,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                        Song(
+                            sourceId = 1,
+                            id = "s3",
+                            albumId = "al1",
+                            artistId = "ar1",
+                            title = "Zulu",
+                            album = "Album",
+                            artist = "Artist",
+                            duration = 100,
+                            track = 1,
+                            disc = 2,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                listOf("s0", "s1", "s2", "s3").forEach {
+                    db.downloadDao().upsert(SongDownload(1, it, DownloadStatus.Completed))
+                }
+            }
+
+            val songs = runBlocking { repository.downloadedSongs(1).first() }
+
+            assertEquals(listOf("s1", "s2", "s0", "s3"), songs.map { it.songId })
+        }
+
+    @Test
     fun theTreeGroupsAnAlbumUnderItsAlbumArtistNotEachTrackArtist() =
         runTest {
             seedLibrary()

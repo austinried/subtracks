@@ -117,7 +117,7 @@ internal fun buildTree(
                                         name = albumKey.second.ifBlank { unknownAlbum },
                                         bytes = albumSongs.sumOf { it.size },
                                         sortName = albumSongs.first().albumSort.ifBlank { albumKey.second },
-                                        songs = albumSongs.sortedBy { it.songSort.lowercase() },
+                                        songs = albumSongs,
                                     )
                                 }.sortedBy { it.sortName.lowercase() },
                     )

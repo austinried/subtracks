@@ -52,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -136,6 +137,7 @@ internal fun estimateScrollPx(
     }
 
 private val FADE_LEAD = 24.dp
+private const val ARTIST_NAME_MAX_LINES = 6
 private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
@@ -255,7 +257,8 @@ fun ArtistDetailScreen(
     val albumCount = albums.size.toLong()
     val displayName = artistName.ifBlank { artist?.name.orEmpty() }
     val artistType = stringResource(if (isAlbumArtist == true) R.string.artist_type_album_artist else R.string.artist_type_artist)
-    val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
+    var titleLineCount by remember { mutableIntStateOf(1) }
+    val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight * titleLineCount
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
     val barFraction by remember(fadeStartPx, fadeEndPx) {
@@ -351,6 +354,7 @@ fun ArtistDetailScreen(
                                         color = Color.White,
                                         endReserve = SHUFFLE_RESERVE,
                                         modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(TITLE_INSET),
+                                        onLineCountChanged = { titleLineCount = it },
                                     )
                                     FilledIconButton(
                                         onClick = onShuffle,
@@ -518,13 +522,19 @@ private fun ArtistTitle(
     color: Color,
     endReserve: Dp,
     modifier: Modifier = Modifier,
+    maxLines: Int = ARTIST_NAME_MAX_LINES,
+    onLineCountChanged: (Int) -> Unit = {},
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     BoxWithConstraints(modifier) {
         val fullWidth = with(density) { maxWidth.roundToPx() }
         val reserve = with(density) { endReserve.roundToPx() }
-        val lines = remember(text, style, fullWidth, reserve) { splitTitle(measurer, text, style, fullWidth, reserve) }
+        val lines =
+            remember(text, style, fullWidth, reserve, maxLines) {
+                splitTitle(measurer, text, style, fullWidth, reserve, maxLines)
+            }
+        LaunchedEffect(lines.size) { onLineCountChanged(lines.size) }
         Column {
             lines.forEachIndexed { index, line ->
                 Text(
@@ -549,6 +559,7 @@ internal fun splitTitle(
     style: TextStyle,
     fullWidth: Int,
     reserve: Int,
+    maxLines: Int = ARTIST_NAME_MAX_LINES,
 ): List<String> {
     if (text.isBlank()) return listOf(text)
     if (measurer.measure(AnnotatedString(text), style, maxLines = 1).size.width <= fullWidth - reserve) {
@@ -556,18 +567,36 @@ internal fun splitTitle(
     }
     val words = text.split(' ').filter { it.isNotEmpty() }
     if (words.size <= 1) return listOf(text)
-    var count = 0
-    var acc = ""
-    for (i in words.indices) {
-        val candidate = if (acc.isEmpty()) words[i] else "$acc ${words[i]}"
-        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= fullWidth) {
-            acc = candidate
-            count = i + 1
-        } else {
+    val lines = mutableListOf<String>()
+    var index = 0
+    while (index < words.size && lines.size < maxLines) {
+        val remaining = words.subList(index, words.size).joinToString(" ")
+        if (lines.size == maxLines - 1 ||
+            measurer.measure(AnnotatedString(remaining), style, maxLines = 1).size.width <= fullWidth - reserve
+        ) {
+            lines.add(remaining)
             break
         }
+        var end = index
+        var acc = ""
+        while (end < words.size) {
+            val candidate = if (acc.isEmpty()) words[end] else "$acc ${words[end]}"
+            if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= fullWidth) {
+                acc = candidate
+                end++
+            } else {
+                break
+            }
+        }
+        if (end == index) {
+            acc = words[index]
+            end = index + 1
+        } else if (end >= words.size && end - index > 1) {
+            end -= 1
+            acc = words.subList(index, end).joinToString(" ")
+        }
+        lines.add(acc)
+        index = end
     }
-    if (count >= words.size) count = words.size - 1
-    if (count < 1) count = 1
-    return listOf(words.take(count).joinToString(" "), words.drop(count).joinToString(" "))
+    return lines
 }

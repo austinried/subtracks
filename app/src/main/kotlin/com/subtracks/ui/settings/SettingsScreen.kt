@@ -326,14 +326,6 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.sync_concurrency)) },
-                    supportingContent = { Text(concurrencyLabel(LocalResources.current, syncConcurrency)) },
-                    modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
-            item {
-                ListItem(
                     headlineContent = { Text(stringResource(R.string.settings_sync_auto_title)) },
                     supportingContent = { Text(syncModeLabel(LocalResources.current, syncMode)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncMode },
@@ -345,6 +337,14 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.sync_interval)) },
                     supportingContent = { Text(syncIntervalLabel(LocalResources.current, syncInterval)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncInterval },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.sync_concurrency)) },
+                    supportingContent = { Text(concurrencyLabel(LocalResources.current, syncConcurrency)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

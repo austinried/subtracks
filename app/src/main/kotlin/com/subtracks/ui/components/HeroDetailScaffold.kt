@@ -257,6 +257,7 @@ fun HeroHeader(
     thumbnailRef: CoverArtRef? = null,
     comment: String? = null,
     onSubtitleClick: (() -> Unit)? = null,
+    nameMaxLines: Int = 2,
 ) {
     Column(
         modifier =
@@ -278,8 +279,8 @@ fun HeroHeader(
             text = name,
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+            maxLines = nameMaxLines,
+            overflow = if (nameMaxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
         )
         val subtitleIsTarget = onSubtitleClick != null && subtitle.isNotEmpty() && comment.isNullOrBlank()
         if (subtitleIsTarget) {

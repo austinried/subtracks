@@ -174,7 +174,7 @@ interface DownloadDao {
             "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
             "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +
             "LEFT JOIN artists ar ON ar.sourceId = al.sourceId AND ar.id = al.artistId " +
-            "WHERE d.sourceId = :sourceId",
+            "WHERE d.sourceId = :sourceId ORDER BY s.disc, s.track, s.id",
     )
     fun downloadedSongs(sourceId: Long): Flow<List<DownloadedSong>>
 

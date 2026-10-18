@@ -235,6 +235,7 @@ fun AlbumDetailScreen(
                 onMore = onMore,
                 topInset = topInset,
                 controlsModifier = controlsModifier,
+                nameMaxLines = Int.MAX_VALUE,
             )
         },
         content = { rowModifier ->
