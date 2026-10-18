@@ -244,7 +244,7 @@ fun NowPlayingRoute(
             name = item.title,
         )
     var adjacent by remember { mutableStateOf(AdjacentArt()) }
-    LaunchedEffect(state.item?.id, state.layout) {
+    LaunchedEffect(state.item?.id, state.layout, state.repeat) {
         if (state.item == null) {
             adjacent = AdjacentArt()
             return@LaunchedEffect
