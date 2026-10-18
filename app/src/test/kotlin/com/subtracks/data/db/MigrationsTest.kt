@@ -64,6 +64,8 @@ class MigrationsTest {
                 assertEquals(1, indexColumn(migrated, "index_albums_starred", "starred").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_frequent", "playCount").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_recent", "played").descending)
+                assertEquals("NOCASE", indexColumn(migrated, "index_songs_starred", "sortName").collation)
+                assertEquals(1, indexColumn(migrated, "index_songs_starred", "starred").descending)
                 assertEquals("NOCASE", indexColumn(migrated, "index_artists_name", "sortName").collation)
                 assertEquals(1, indexColumn(migrated, "index_artists_albumCount", "albumCount").descending)
                 assertEquals(1, indexColumn(migrated, "index_artists_starred", "starred").descending)
@@ -228,6 +230,13 @@ class MigrationsTest {
                 migrated.execSQL(
                     "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
                         "VALUES (1, 'al1', 0, 'a1', 'Alpha')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title) VALUES (1, 's1', 'al1', 'a1', 'Song')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (1, 's1', 0, 'a1', 'Alpha')",
                 )
 
                 MIGRATION_31_32.migrate(migrated)

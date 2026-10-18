@@ -18,6 +18,7 @@ data class Source(
     val address: String,
     val isActive: Boolean = false,
     val createdAt: Long,
+    @ColumnInfo(defaultValue = "1") val creditsStale: Boolean = true,
 )
 
 @Entity(
@@ -263,8 +264,8 @@ data class PlaylistSong(
         ),
         Index(
             name = "index_songs_starred",
-            value = ["sourceId", "starred", "id"],
-            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC],
+            value = ["sourceId", "starred", "sortName", "id"],
+            orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
     ],
 )

@@ -34,6 +34,8 @@ class SyncService(
     private var creditsChanged = false
 
     suspend fun sync(): SyncSummary {
+        val sources = db.sourcesDao()
+        val wasStale = sources.creditsStale(source.id) ?: true
         creditsChanged = false
         val artistsBefore = dbTotalChanges()
         syncArtists()
@@ -41,7 +43,10 @@ class SyncService(
         syncAlbums()
         syncSongs()
         optimize()
-        if (creditsChanged || artistsChanged) recomputeArtistSongCounts()
+        if (creditsChanged || artistsChanged || wasStale) {
+            recomputeArtistSongCounts()
+            sources.setCreditsStale(source.id, false)
+        }
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
@@ -83,7 +88,13 @@ class SyncService(
             albumsSynced += batch.size
         }
         val prunedBefore = pruned
-        pruned += pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
+        pruned +=
+            pruneStaleIds(
+                seenAlbums,
+                { library.albumIdsAfter(source.id, it, PRUNE_PAGE) },
+                { library.deleteAlbums(source.id, it) },
+                markStale = { db.sourcesDao().setCreditsStale(source.id, true) },
+            )
         if (pruned > prunedBefore) creditsChanged = true
         pruned +=
             pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
@@ -101,7 +112,13 @@ class SyncService(
             songsSynced += batch.size
         }
         val prunedBefore = pruned
-        pruned += pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
+        pruned +=
+            pruneStaleIds(
+                seen,
+                { library.songIdsAfter(source.id, it, PRUNE_PAGE) },
+                { library.deleteSongs(source.id, it) },
+                markStale = { db.sourcesDao().setCreditsStale(source.id, true) },
+            )
         if (pruned > prunedBefore) creditsChanged = true
     }
 
@@ -117,7 +134,8 @@ class SyncService(
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                if (connection.albumIdsChanged(batch)) creditsChanged = true
+                val albumChanged = connection.albumIdsChanged(batch)
+                if (albumChanged) creditsChanged = true
                 val resolved = connection.resolveSongSortNames(batch)
                 connection.upsertChanged("songs", songColumns, primaryKey, resolved) { it.values() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
@@ -143,7 +161,11 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
-                if (connection.totalChanges() != artistRowsBefore) creditsChanged = true
+                val artistRowsChanged = connection.totalChanges() != artistRowsBefore
+                if (albumChanged || artistRowsChanged) {
+                    connection.markCreditsStale(batch.first().sourceId)
+                    creditsChanged = true
+                }
             }
         }
     }
@@ -166,6 +188,13 @@ class SyncService(
     }
 
     private suspend fun dbTotalChanges(): Long = db.useWriterConnection { it.totalChanges() }
+
+    private suspend fun PooledConnection.markCreditsStale(sourceId: Long) {
+        usePrepared("UPDATE sources SET creditsStale = 1 WHERE id = ? AND creditsStale = 0") { statement ->
+            statement.bindLong(1, sourceId)
+            statement.step()
+        }
+    }
 
     private suspend fun PooledConnection.albumIdsChanged(batch: List<Song>): Boolean {
         val expected = batch.associate { it.id to it.albumId }.toMutableMap()
@@ -319,7 +348,10 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
-                if (connection.totalChanges() != artistRowsBefore) creditsChanged = true
+                if (connection.totalChanges() != artistRowsBefore) {
+                    connection.markCreditsStale(albums.first().sourceId)
+                    creditsChanged = true
+                }
             }
         }
     }
@@ -347,6 +379,7 @@ class SyncService(
         seen: HashedIds,
         pageOf: suspend (afterId: String) -> List<String>,
         delete: suspend (Collection<String>) -> Unit,
+        markStale: (suspend () -> Unit)? = null,
     ): Int {
         seen.freeze()
         var afterId = ""
@@ -355,6 +388,7 @@ class SyncService(
             val ids = pageOf(afterId)
             if (ids.isEmpty()) return pruned
             val stale = ids.filterNot { seen.contains(idHash(it)) }
+            if (stale.isNotEmpty()) markStale?.invoke()
             stale.chunked(DELETE_CHUNK).forEach { delete(it) }
             pruned += stale.size
             if (ids.size < PRUNE_PAGE) return pruned

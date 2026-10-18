@@ -93,7 +93,8 @@ private const val DOWNLOADED_ARTIST_ALBUMS =
         "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
         "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
 
-internal const val ARTIST_CREDITED = "artists.credited = 1"
+internal const val ARTIST_CREDITED =
+    "(artists.credited = 1 OR COALESCE((SELECT creditsStale FROM sources WHERE id = artists.sourceId), 1) = 1)"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
@@ -212,24 +213,25 @@ interface LibraryDao {
     // The credited albums are the union of the lead id and the relation table, so a shared album
     // counts once per artist rather than twice.
     @Query(
-        "UPDATE artists SET " +
-            "playCount = COALESCE((SELECT SUM(a.playCount) FROM albums a " +
-            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
-            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
-            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)), 0), " +
-            "played = (SELECT MAX(a.played) FROM albums a " +
-            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
-            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
-            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)) " +
-            "WHERE sourceId = :sourceId AND (" +
-            "playCount IS NOT COALESCE((SELECT SUM(a.playCount) FROM albums a " +
-            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
-            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
-            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)), 0) " +
-            "OR played IS NOT (SELECT MAX(a.played) FROM albums a " +
-            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
-            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
-            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)))",
+        "WITH credited AS (" +
+            "SELECT albums.artistId AS artistId, albums.id AS albumId, " +
+            "albums.playCount AS playCount, albums.played AS played " +
+            "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+            "UNION " +
+            "SELECT album_artists.artistId, albums.id, albums.playCount, albums.played " +
+            "FROM album_artists JOIN albums " +
+            "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+            "WHERE album_artists.sourceId = :sourceId" +
+            "), totals AS (" +
+            "SELECT artistId AS id, SUM(playCount) AS playCount, MAX(played) AS played " +
+            "FROM credited GROUP BY artistId" +
+            ") " +
+            "UPDATE artists SET playCount = c.playCount, played = c.played " +
+            "FROM (SELECT artists.id AS id, COALESCE(totals.playCount, 0) AS playCount, totals.played AS played " +
+            "FROM artists LEFT JOIN totals ON totals.id = artists.id " +
+            "WHERE artists.sourceId = :sourceId) c " +
+            "WHERE artists.sourceId = :sourceId AND artists.id = c.id " +
+            "AND (artists.playCount != c.playCount OR artists.played IS NOT c.played)",
     )
     suspend fun recomputeArtistPlayData(sourceId: Long)
 
@@ -248,7 +250,7 @@ interface LibraryDao {
             "UPDATE artists SET songCount = c.songCount, credited = c.credited " +
             "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount, " +
             "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
-            "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
+            "OR NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
             "OR EXISTS (SELECT 1 FROM album_artists aa " +
             "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
             "OR EXISTS (SELECT 1 FROM song_artists sa " +

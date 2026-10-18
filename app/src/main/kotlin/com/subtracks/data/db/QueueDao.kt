@@ -34,7 +34,7 @@ private const val ARTIST_SONG_IDS =
 
 private const val ARTIST_SONGS_SELECT =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS"
 
 private const val ARTIST_SONGS_ORDER =
@@ -95,7 +95,7 @@ interface QueueDao {
 
     @Query(
         "SELECT COUNT(*) FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS",
     )
     suspend fun artistLength(
@@ -203,7 +203,7 @@ interface QueueDao {
 
     @Query(
         "SELECT songs.id FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS" +
             ARTIST_SONGS_ORDER,
     )

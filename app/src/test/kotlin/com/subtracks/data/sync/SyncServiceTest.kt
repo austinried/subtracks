@@ -1168,6 +1168,33 @@ class SyncServiceTest {
         }
 
     @Test
+    fun aStaleCreditMarkerForcesARecomputeOnTheNextSync() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals(false, db.sourcesDao().creditsStale(1))
+
+            db.sourcesDao().setCreditsStale(1, true)
+            db.libraryDao().upsertArtists(
+                listOf(db.libraryDao().artistOnce(1, "a1")!!.copy(songCount = 0, credited = false)),
+            )
+
+            SyncService(db, source).sync()
+
+            val artist = db.libraryDao().artistOnce(1, "a1")!!
+            assertEquals(1L, artist.songCount)
+            assertEquals(true, artist.credited)
+            assertEquals(false, db.sourcesDao().creditsStale(1))
+        }
+
+    @Test
     fun everyAlbumArtistAndTrackArtistReachesTheSharedAlbum() =
         runTest {
             insertSource()
@@ -1251,6 +1278,9 @@ class SyncServiceTest {
             SyncService(db, source).sync()
 
             assertEquals(2L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(listOf("s1", "s2"), db.queueDao().artistSongIds(1, "a1"))
+            assertEquals(2L, db.queueDao().artistLength(1, "a1"))
+            assertEquals(2, db.queueDao().artistSongs(1, "a1", 0, 10).size)
             db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
             db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
 

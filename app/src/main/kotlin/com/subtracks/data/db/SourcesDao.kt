@@ -29,6 +29,15 @@ interface SourcesDao {
     @Query("SELECT id FROM sources WHERE isActive = 1 LIMIT 1")
     suspend fun activeSourceIdOnce(): Long?
 
+    @Query("SELECT creditsStale FROM sources WHERE id = :sourceId")
+    suspend fun creditsStale(sourceId: Long): Boolean?
+
+    @Query("UPDATE sources SET creditsStale = :stale WHERE id = :sourceId")
+    suspend fun setCreditsStale(
+        sourceId: Long,
+        stale: Boolean,
+    )
+
     @Insert
     suspend fun insertSource(source: Source): Long
 

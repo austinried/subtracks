@@ -557,12 +557,24 @@ val MIGRATION_31_32 =
             connection.execSQL("ALTER TABLE `artists` ADD COLUMN `credited` INTEGER NOT NULL DEFAULT 1")
             connection.execSQL(
                 "UPDATE `artists` SET `credited` = 0 " +
-                    "WHERE (EXISTS (SELECT 1 FROM `album_artists` WHERE `sourceId` = `artists`.`sourceId`) " +
-                    "OR EXISTS (SELECT 1 FROM `song_artists` WHERE `sourceId` = `artists`.`sourceId`)) " +
+                    "WHERE EXISTS (SELECT 1 FROM `album_artists` WHERE `sourceId` = `artists`.`sourceId`) " +
+                    "AND EXISTS (SELECT 1 FROM `song_artists` WHERE `sourceId` = `artists`.`sourceId`) " +
                     "AND NOT EXISTS (SELECT 1 FROM `album_artists` aa " +
                     "WHERE aa.`sourceId` = `artists`.`sourceId` AND aa.`artistId` = `artists`.`id`) " +
                     "AND NOT EXISTS (SELECT 1 FROM `song_artists` sa " +
                     "WHERE sa.`sourceId` = `artists`.`sourceId` AND sa.`artistId` = `artists`.`id`)",
+            )
+        }
+    }
+
+val MIGRATION_32_33 =
+    object : Migration(32, 33) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `sources` ADD COLUMN `creditsStale` INTEGER NOT NULL DEFAULT 1")
+            connection.execSQL("DROP INDEX IF EXISTS `index_songs_starred`")
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_songs_starred` ON `songs` " +
+                    "(`sourceId` ASC, `starred` DESC, `sortName` ASC, `id` ASC)",
             )
         }
     }
@@ -632,4 +644,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_29_30,
         MIGRATION_30_31,
         MIGRATION_31_32,
+        MIGRATION_32_33,
     )
