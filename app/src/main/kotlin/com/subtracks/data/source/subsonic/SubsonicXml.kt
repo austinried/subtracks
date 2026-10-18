@@ -44,6 +44,7 @@ object SubsonicXml {
             artistId = attrs.attr("artistId").ifEmpty { null },
             name = attrs.attr("name"),
             albumArtist = attrs.attr("artist").ifEmpty { null },
+            displayArtist = attrs.attr("displayArtist").ifEmpty { null },
             created = attrs.dateAttr("created") ?: 0L,
             coverArt = attrs.attr("coverArt").ifEmpty { null },
             genre = attrs.attr("genre").ifEmpty { null },
@@ -69,6 +70,7 @@ object SubsonicXml {
             title = attrs.attr("title"),
             album = attrs.attr("album").ifEmpty { null },
             artist = attrs.attr("artist").ifEmpty { null },
+            displayArtist = attrs.attr("displayArtist").ifEmpty { null },
             duration = attrs.longAttr("duration"),
             track = attrs.longAttr("track"),
             disc = attrs.longAttr("discNumber"),
@@ -168,6 +170,7 @@ internal class AlbumDraft(
     var artistId: String? = null,
     var name: String = "",
     var albumArtist: String? = null,
+    var displayArtist: String? = null,
     var created: Long = 0L,
     var coverArt: String? = null,
     var genre: String? = null,
@@ -203,13 +206,14 @@ internal class AlbumDraft(
         artistContainer = false
     }
 
-    fun toAlbum(): Album =
-        Album(
+    fun toAlbum(): Album {
+        val refs = artistFallback(artists, artistId, albumArtist)
+        return Album(
             sourceId = sourceId,
             id = id,
             artistId = artistId,
             name = name,
-            albumArtist = albumArtist,
+            albumArtist = displayName(albumArtist, displayArtist, refs),
             created = created,
             coverArt = coverArt,
             genre = genre,
@@ -217,8 +221,9 @@ internal class AlbumDraft(
             starred = starred,
             songCount = songCount,
             discTitles = discTitles.toMap(),
-            artists = artistFallback(artists, artistId, albumArtist),
+            artists = refs,
         )
+    }
 }
 
 internal class SongDraft(
@@ -229,6 +234,7 @@ internal class SongDraft(
     private val title: String = "",
     private val album: String? = null,
     private val artist: String? = null,
+    private val displayArtist: String? = null,
     private val duration: Long? = null,
     private val track: Long? = null,
     private val disc: Long? = null,
@@ -279,15 +285,16 @@ internal class SongDraft(
         nestedArtists?.let { list -> attrs.artistRef()?.let { list += it } }
     }
 
-    fun toSong(): Song =
-        Song(
+    fun toSong(): Song {
+        val refs = artistFallback(artists, artistId, artist)
+        return Song(
             sourceId = sourceId,
             id = id,
             albumId = albumId,
             artistId = artistId,
             title = title,
             album = album,
-            artist = artist,
+            artist = displayName(artist, displayArtist, refs),
             duration = duration,
             track = track,
             disc = disc,
@@ -301,8 +308,9 @@ internal class SongDraft(
             trackPeak = trackPeak,
             albumPeak = albumPeak,
             genres = genres.toList(),
-            artists = artistFallback(artists, artistId, artist),
+            artists = refs,
         )
+    }
 }
 
 private fun Attributes.artistRef(): ArtistRef? {
@@ -322,6 +330,22 @@ private fun artistFallback(
     if (artistId.isNullOrBlank()) return emptyList()
     return listOf(ArtistRef(artistId, name.orEmpty()))
 }
+
+private const val ARTIST_JOINER = " • "
+
+private fun displayName(
+    legacy: String?,
+    openSubsonic: String?,
+    refs: List<ArtistRef>,
+): String? =
+    legacy?.takeIf { it.isNotBlank() }
+        ?: openSubsonic?.takeIf { it.isNotBlank() }
+        ?: refs
+            .map { it.name }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .joinToString(ARTIST_JOINER)
+            .takeIf { it.isNotEmpty() }
 
 internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
 

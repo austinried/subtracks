@@ -241,6 +241,80 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun fallsBackToThePluralNamesWhenTheLegacyDisplayArtistIsBlank() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Split" songCount="1">
+                      <artists id="ar1" name="A"/>
+                      <artists id="ar2" name="B"/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("A • B", albums.single().albumArtist)
+        assertEquals(listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")), albums.single().artists)
+    }
+
+    @Test
+    fun prefersTheOpenSubsonicDisplayArtistOverThePluralNames() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Split" displayArtist="A feat. B" songCount="1">
+                      <artists id="ar1" name="A"/>
+                      <artists id="ar2" name="B"/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("A feat. B", albums.single().albumArtist)
+    }
+
+    @Test
+    fun fallsBackToThePluralSongArtistsWhenTheLegacyNameIsBlank() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Collab" albumId="al1">
+                    <artists id="ar1" name="A"/>
+                    <artists id="ar2" name="B"/>
+                  </song>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("A • B", songs.single().artist)
+        assertEquals(listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")), songs.single().artists)
+    }
+
+    @Test
+    fun prefersTheOpenSubsonicDisplayArtistForSongs() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Collab" albumId="al1" displayArtist="A feat. B">
+                    <artists id="ar1" name="A"/>
+                    <artists id="ar2" name="B"/>
+                  </song>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("A feat. B", songs.single().artist)
+    }
+
+    @Test
     fun parsesTimestampsWithFractionsAndOffsets() {
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370827413Z"))
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370Z"))
