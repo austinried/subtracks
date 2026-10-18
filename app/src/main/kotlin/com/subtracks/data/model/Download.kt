@@ -94,6 +94,9 @@ data class DownloadedSong(
     val size: Long = 0,
     val bytes: Long = 0,
     val total: Long = 0,
+    val artistSort: String = artistName.orEmpty(),
+    val albumSort: String = albumName.orEmpty(),
+    val songSort: String = title,
 ) {
     val progress: Float?
         get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }

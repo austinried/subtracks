@@ -461,6 +461,9 @@ val MIGRATION_30_31 =
             connection.execSQL("ALTER TABLE `albums` ADD COLUMN `albumArtistSort` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
             connection.execSQL("ALTER TABLE `songs` ADD COLUMN `sortName` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
             connection.execSQL("ALTER TABLE `songs` ADD COLUMN `artistSort` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            dropSearchIndex(connection, "artist_search")
+            dropSearchIndex(connection, "album_search")
+            dropSearchIndex(connection, "song_search")
             connection.execSQL("UPDATE `artists` SET `sortName` = `name`")
             connection.execSQL("UPDATE `albums` SET `sortName` = `name`")
             connection.execSQL("UPDATE `songs` SET `sortName` = `title`")
@@ -488,15 +491,9 @@ val MIGRATION_30_31 =
             ALBUM_INDEXES.forEach { connection.execSQL("DROP INDEX IF EXISTS `$it`") }
             ARTIST_INDEX_SQL.forEach { connection.execSQL(it) }
             ALBUM_INDEX_SQL.forEach { connection.execSQL(it) }
-            dropSearchIndex(connection, "artist_search")
-            dropSearchIndex(connection, "album_search")
-            dropSearchIndex(connection, "song_search")
             createSearchIndex(connection, "artist_search", "artists", listOf("name", "sortName"))
             createSearchIndex(connection, "album_search", "albums", listOf("name", "albumArtist", "sortName", "albumArtistSort"))
             createSearchIndex(connection, "song_search", "songs", listOf("title", "artist", "sortName", "artistSort"))
-            rebuildSearchIndex(connection, "artist_search")
-            rebuildSearchIndex(connection, "album_search")
-            rebuildSearchIndex(connection, "song_search")
         }
     }
 
@@ -552,13 +549,6 @@ private suspend fun dropSearchIndex(
         connection.execSQL("DROP TRIGGER IF EXISTS `room_fts_content_sync_${table}_$it`")
     }
     connection.execSQL("DROP TABLE IF EXISTS `$table`")
-}
-
-private suspend fun rebuildSearchIndex(
-    connection: SQLiteConnection,
-    table: String,
-) {
-    connection.execSQL("INSERT INTO `$table`(`$table`) VALUES('rebuild')")
 }
 
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.

@@ -994,6 +994,77 @@ class SyncServiceTest {
         }
 
     @Test
+    fun songArtistSortUsesTheSingularArtistOverThePluralList() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists =
+                        listOf(
+                            artist("a1", "A").copy(sortName = "Alpha"),
+                            artist("a2", "B").copy(sortName = "Beta"),
+                        ),
+                    albums = listOf(album("al1")),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals("Beta", db.libraryDao().songOnce(1, "s1")!!.artistSort)
+        }
+
+    @Test
+    fun albumArtistSortFallsBackToAPluralRefWhenTheSingularArtistIsMissing() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A").copy(sortName = "Alpha")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "missing",
+                                albumArtist = "A",
+                                artists = listOf(ArtistRef("a1", "A")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals("Alpha", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
+        }
+
+    @Test
+    fun changingAnArtistSortNameUpdatesAlbumAndSongSortKeys() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A").copy(sortName = "Alpha")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                )
+
+            SyncService(db, source).sync()
+            assertEquals("Alpha", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
+            assertEquals("Alpha", db.libraryDao().songOnce(1, "s1")!!.artistSort)
+
+            source.artists = listOf(artist("a1", "A").copy(sortName = "Zulu"))
+
+            SyncService(db, source).sync()
+
+            assertEquals("Zulu", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
+            assertEquals("Zulu", db.libraryDao().songOnce(1, "s1")!!.artistSort)
+        }
+
+    @Test
     fun everyAlbumArtistAndTrackArtistReachesTheSharedAlbum() =
         runTest {
             insertSource()

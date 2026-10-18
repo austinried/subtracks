@@ -31,6 +31,7 @@ data class DownloadArtistNode(
     val name: String,
     val bytes: Long,
     val albums: List<DownloadAlbumNode>,
+    val sortName: String = name,
 )
 
 data class DownloadAlbumNode(
@@ -38,6 +39,7 @@ data class DownloadAlbumNode(
     val name: String,
     val bytes: Long,
     val songs: List<DownloadedSong>,
+    val sortName: String = name,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -105,6 +107,7 @@ internal fun buildTree(
                         id = artistKey.first,
                         name = artistKey.second.ifBlank { unknownArtist },
                         bytes = artistSongs.sumOf { it.size },
+                        sortName = artistSongs.first().artistSort.ifBlank { artistKey.second },
                         albums =
                             artistSongs
                                 .groupBy { it.albumId.orEmpty() to it.albumName.orEmpty() }
@@ -113,9 +116,10 @@ internal fun buildTree(
                                         id = albumKey.first,
                                         name = albumKey.second.ifBlank { unknownAlbum },
                                         bytes = albumSongs.sumOf { it.size },
-                                        songs = albumSongs.sortedBy { it.title.lowercase() },
+                                        sortName = albumSongs.first().albumSort.ifBlank { albumKey.second },
+                                        songs = albumSongs.sortedBy { it.songSort.lowercase() },
                                     )
-                                }.sortedBy { it.name.lowercase() },
+                                }.sortedBy { it.sortName.lowercase() },
                     )
-                }.sortedBy { it.name.lowercase() },
+                }.sortedBy { it.sortName.lowercase() },
     )

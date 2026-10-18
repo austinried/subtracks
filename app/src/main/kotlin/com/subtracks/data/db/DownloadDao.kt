@@ -166,7 +166,10 @@ interface DownloadDao {
     @Query(
         "SELECT d.sourceId AS sourceId, d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
             "al.artistId AS artistId, COALESCE(ar.name, al.albumArtist) AS artistName, d.status AS status, " +
-            "d.bytes AS bytes, d.total AS total " +
+            "d.bytes AS bytes, d.total AS total, " +
+            "COALESCE(NULLIF(ar.sortName, ''), NULLIF(al.albumArtistSort, ''), ar.name, al.albumArtist, '') AS artistSort, " +
+            "COALESCE(NULLIF(al.sortName, ''), al.name, '') AS albumSort, " +
+            "COALESCE(NULLIF(s.sortName, ''), s.title, '') AS songSort " +
             "FROM song_downloads d " +
             "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +
             "LEFT JOIN albums al ON al.sourceId = s.sourceId AND al.id = s.albumId " +

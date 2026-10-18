@@ -985,30 +985,42 @@ class LibraryDaoTest {
             val dao = db.libraryDao()
             dao.upsertArtists(
                 listOf(
-                    artist(sourceId, "ar-1", "宇多田ヒカル", albumCount = 1).copy(sortName = "Utada Hikaru"),
-                    artist(sourceId, "ar-2", "あいみょん", albumCount = 1).copy(sortName = "Aimyon"),
+                    artist(sourceId, "ar-1", "あいみょん", albumCount = 1).copy(sortName = "Zzz"),
+                    artist(sourceId, "ar-2", "宇多田ヒカル", albumCount = 1).copy(sortName = "Aaa"),
                 ),
             )
             dao.upsertAlbums(
                 listOf(
-                    album(sourceId, "al-1", "First Love", year = null, starred = null)
-                        .copy(sortName = "First Love", albumArtistSort = "Utada Hikaru"),
-                    album(sourceId, "al-2", "Zutto", year = null, starred = null)
-                        .copy(sortName = "Zutto", albumArtistSort = "Aimyon"),
+                    album(sourceId, "al-1", "Zzz", year = null, starred = null)
+                        .copy(sortName = "Aaa", albumArtistSort = "Zzz"),
+                    album(sourceId, "al-2", "Aaa", year = null, starred = null)
+                        .copy(sortName = "Zzz", albumArtistSort = "Aaa"),
                 ),
             )
 
             assertEquals(
-                listOf("あいみょん", "宇多田ヒカル"),
+                listOf("宇多田ヒカル", "あいみょん"),
                 dao.artistsByName(sourceId, 0, "").page().map { it.name },
             )
             assertEquals(
-                listOf("First Love", "Zutto"),
+                listOf("あいみょん", "宇多田ヒカル"),
+                dao.artistsByNameReversed(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Zzz", "Aaa"),
                 dao.albumsByName(sourceId, 0, "").page().map { it.name },
             )
             assertEquals(
-                listOf("Zutto", "First Love"),
+                listOf("Aaa", "Zzz"),
+                dao.albumsByNameReversed(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Aaa", "Zzz"),
                 dao.albumsByArtist(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Zzz", "Aaa"),
+                dao.albumsByArtistReversed(sourceId, 0, "").page().map { it.name },
             )
         }
 

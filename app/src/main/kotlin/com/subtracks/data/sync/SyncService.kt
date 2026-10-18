@@ -190,7 +190,10 @@ class SyncService(
         val sortNames =
             artistSortNames(
                 batch.first().sourceId,
-                batch.mapNotNull { it.artistRefs.firstOrNull()?.id }.toSet(),
+                batch
+                    .flatMap { listOfNotNull(it.artistId) + it.artistRefs.map { ref -> ref.id } }
+                    .filter { it.isNotBlank() }
+                    .toSet(),
             )
         return batch.map { song ->
             val primary = song.artistId ?: song.artists.firstOrNull()?.id
@@ -207,7 +210,10 @@ class SyncService(
         val sortNames =
             artistSortNames(
                 batch.first().sourceId,
-                batch.mapNotNull { it.artistId ?: it.artists.firstOrNull()?.id }.toSet(),
+                batch
+                    .flatMap { listOfNotNull(it.artistId) + it.artistRefs.map { ref -> ref.id } }
+                    .filter { it.isNotBlank() }
+                    .toSet(),
             )
         return batch.map { album ->
             val primary = album.artistId ?: album.artists.firstOrNull()?.id
