@@ -93,9 +93,18 @@ private const val DOWNLOADED_ARTIST_ALBUMS =
         "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
         "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
 
+internal const val ARTIST_CREDITED =
+    "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
+        "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
+        "OR EXISTS (SELECT 1 FROM album_artists aa " +
+        "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
+        "OR EXISTS (SELECT 1 FROM song_artists sa " +
+        "WHERE sa.sourceId = artists.sourceId AND sa.artistId = artists.id))"
+
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
+        "AND $ARTIST_CREDITED " +
         "AND (:downloadedFilter = 0 OR EXISTS (" +
         "SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl " +
         "WHERE dl.id = artists.id AND dl.status = 'Completed')) " +
@@ -325,7 +334,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL " +
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
             "ORDER BY played DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun recentlyPlayedArtists(
@@ -343,7 +352,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 " +
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
             "ORDER BY playCount DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun mostPlayedArtists(
@@ -392,7 +401,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER " +
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER AND $ARTIST_CREDITED " +
             "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun searchArtists(
@@ -803,10 +812,16 @@ interface LibraryDao {
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId ORDER BY created DESC, sortName COLLATE NOCASE, id")
     fun homeRecentlyAddedAlbums(sourceId: Long): PagingSource<Int, Album>
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, sortName COLLATE NOCASE, id")
+    @Query(
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
+            "ORDER BY played DESC, sortName COLLATE NOCASE, id",
+    )
     fun homeRecentlyPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, sortName COLLATE NOCASE, id")
+    @Query(
+        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
+            "ORDER BY playCount DESC, sortName COLLATE NOCASE, id",
+    )
     fun homeMostPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
 
     @Query(

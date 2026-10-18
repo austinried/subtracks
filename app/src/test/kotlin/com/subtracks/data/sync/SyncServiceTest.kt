@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,7 +59,7 @@ class SyncServiceTest {
                 FakeMusicSource(
                     artists = listOf(artist("a1"), artist("a2")),
                     albums = listOf(album("al1")),
-                    songs = listOf(song("s1"), song("s2")),
+                    songs = listOf(song("s1"), song("s2").copy(artistId = "a2")),
                     playlists = listOf(playlist("p1")),
                     playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0)),
                 )
@@ -1062,6 +1063,37 @@ class SyncServiceTest {
 
             assertEquals("Zulu", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
             assertEquals("Zulu", db.libraryDao().songOnce(1, "s1")!!.artistSort)
+        }
+
+    @Test
+    fun theArtistsListHidesNamesThatAreOnlyDisplayStrings() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Alpha"), artist("combo", "Alpha & Beta")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .artistsByName(1, 0, "")
+                    .allRows()
+                    .map { it.id },
+            )
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .searchArtists(1, "alpha", 10)
+                    .first()
+                    .map { it.id },
+            )
         }
 
     @Test

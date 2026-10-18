@@ -22,6 +22,7 @@ internal const val ALBUMS_FILTER_BASE =
 internal const val ARTISTS_FILTER_BASE =
     "FROM artists WHERE sourceId = ? " +
         "AND (? = 0 OR (? = 1 AND starred IS NOT NULL) OR (? = 2 AND starred IS NULL)) " +
+        "AND $ARTIST_CREDITED " +
         "AND (? = '' " +
         "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
         "WHERE artist_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
