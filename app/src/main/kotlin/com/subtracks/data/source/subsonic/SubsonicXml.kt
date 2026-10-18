@@ -91,6 +91,7 @@ object SubsonicXml {
             "artists" -> if (level == 1) entity.addArtists(attrs)
             "albumArtists" -> entity.clearNestedArtists()
             "artist" -> if (level == 2) entity.addNestedArtist(attrs)
+            else -> if (level == 1) entity.clearNestedArtists()
         }
     }
 
@@ -104,6 +105,7 @@ object SubsonicXml {
             "discTitles" -> if (level == 1) entity.addDiscTitle(attrs)
             "artists" -> if (level == 1) entity.addArtists(attrs)
             "artist" -> if (level == 2) entity.addNestedArtist(attrs)
+            else -> if (level == 1) entity.clearArtists()
         }
     }
 
@@ -195,6 +197,10 @@ internal class AlbumDraft(
 
     fun addNestedArtist(attrs: Attributes) {
         if (artistContainer) attrs.artistRef()?.let { artists += it }
+    }
+
+    fun clearArtists() {
+        artistContainer = false
     }
 
     fun toAlbum(): Album =

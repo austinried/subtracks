@@ -1045,6 +1045,44 @@ class SyncServiceTest {
             assertEquals(listOf("A", "B"), filtered.map { it.name })
             assertEquals(listOf(1L, 1L), filtered.map { it.albumCount })
             assertEquals(ListDownloadStatus(total = 1, downloaded = 1), db.downloadDao().artistStatus(1, "a2").first())
+            assertEquals(
+                setOf("A", "B"),
+                db
+                    .libraryDao()
+                    .downloadedArtists(1)
+                    .allRows()
+                    .map { it.name }
+                    .toSet(),
+            )
+        }
+
+    @Test
+    fun playsOnASharedAlbumReachEveryAlbumArtist() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A"), artist("a2", "B")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                    songs = listOf(song("s1").copy(albumId = "al1", playCount = 3, played = 100)),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(3L, db.libraryDao().artistOnce(1, "a2")!!.playCount)
+            assertEquals(100L, db.libraryDao().artistOnce(1, "a2")!!.played)
+
+            db.libraryDao().recordPlay(1, "s1", 500)
+
+            assertEquals(4L, db.libraryDao().artistOnce(1, "a1")!!.playCount)
+            assertEquals(4L, db.libraryDao().artistOnce(1, "a2")!!.playCount)
+            assertEquals(500L, db.libraryDao().artistOnce(1, "a2")!!.played)
         }
 
     private suspend fun totalChanges(): Long =

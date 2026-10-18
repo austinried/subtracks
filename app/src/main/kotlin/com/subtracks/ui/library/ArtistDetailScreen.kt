@@ -140,6 +140,11 @@ private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 
+internal fun isAlbumArtist(
+    albums: List<Album>,
+    artistId: String,
+): Boolean = albums.any { album -> album.artistId == artistId || album.artistRefs.any { it.id == artistId } }
+
 @Composable
 fun ArtistDetailRoute(
     artistId: String,
@@ -187,7 +192,7 @@ fun ArtistDetailRoute(
     ArtistDetailScreen(
         artist = artist,
         artistName = artistName.orEmpty(),
-        isAlbumArtist = albums.any { album -> album.artistRefs.any { it.id == artistId } },
+        isAlbumArtist = isAlbumArtist(albums, artistId),
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,

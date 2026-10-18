@@ -555,21 +555,33 @@ class ArtistRefsConverter {
 }
 
 object ArtistRefsCodec {
-    fun encode(refs: List<ArtistRef>): String = refs.joinToString(RECORD) { "${it.id}$FIELD${it.name}" }
+    fun encode(refs: List<ArtistRef>): String =
+        buildString {
+            refs.forEach { ref ->
+                append(ref.id.length).append(':').append(ref.id)
+                append(ref.name.length).append(':').append(ref.name)
+            }
+        }
 
-    fun decode(value: String): List<ArtistRef> =
-        value
-            .takeIf { it.isNotEmpty() }
-            ?.split(RECORD)
-            ?.map { entry ->
-                val separator = entry.indexOf(FIELD)
-                if (separator < 0) {
-                    ArtistRef(entry, "")
-                } else {
-                    ArtistRef(entry.substring(0, separator), entry.substring(separator + 1))
-                }
-            }.orEmpty()
-
-    private const val FIELD = "\u001F"
-    private const val RECORD = "\u001E"
+    fun decode(value: String): List<ArtistRef> {
+        val refs = mutableListOf<ArtistRef>()
+        var index = 0
+        while (index < value.length) {
+            val idLengthEnd = value.indexOf(':', index)
+            if (idLengthEnd < 0) return refs
+            val idLength = value.substring(index, idLengthEnd).toIntOrNull() ?: return refs
+            val idStart = idLengthEnd + 1
+            val idEnd = idStart + idLength
+            if (idLength < 0 || idEnd > value.length) return refs
+            val nameLengthEnd = value.indexOf(':', idEnd)
+            if (nameLengthEnd < 0) return refs
+            val nameLength = value.substring(idEnd, nameLengthEnd).toIntOrNull() ?: return refs
+            val nameStart = nameLengthEnd + 1
+            val nameEnd = nameStart + nameLength
+            if (nameLength < 0 || nameEnd > value.length) return refs
+            refs += ArtistRef(value.substring(idStart, idEnd), value.substring(nameStart, nameEnd))
+            index = nameEnd
+        }
+        return refs
+    }
 }

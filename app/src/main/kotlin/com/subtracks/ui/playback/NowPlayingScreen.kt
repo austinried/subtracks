@@ -205,6 +205,7 @@ fun NowPlayingRoute(
     val download = songId?.let { downloads[it] }
     val scope = rememberCoroutineScope()
     var showArtistChooser by remember { mutableStateOf(false) }
+    LaunchedEffect(songId) { showArtistChooser = false }
     val song by
         produceState<Song?>(null, sourceId, songId) {
             if (sourceId != null && songId != null) {

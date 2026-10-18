@@ -192,6 +192,27 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun ignoresNestedArtistsOutsideTheArtistsContainer() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Collab" albumId="al1">
+                    <artists>
+                      <artist id="ar1" name="A"/>
+                    </artists>
+                    <contributors>
+                      <artist id="ar9" role="composer"/>
+                    </contributors>
+                  </song>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(listOf(ArtistRef("ar1", "A")), songs.single().artists)
+    }
+
+    @Test
     fun mapsNestedSongArtistRefs() {
         val songs =
             songs(
@@ -205,6 +226,9 @@ class SubsonicXmlTest {
                     <albumArtists>
                       <artist id="ar3" name="Album Artist"/>
                     </albumArtists>
+                    <contributors>
+                      <artist id="ar4" role="composer"/>
+                    </contributors>
                   </song>
                 </subsonic-response>
                 """.trimIndent(),

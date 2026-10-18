@@ -13,27 +13,31 @@ import kotlinx.coroutines.flow.Flow
 
 // A song is attributed to its album artist and to its credited track artist, so a guest artist's
 // downloads are visible even though they lead no albums of their own.
-private const val ARTIST_DOWNLOAD_ROWS =
-    "SELECT albums.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+internal const val ARTIST_DOWNLOAD_ROWS =
+    "SELECT albums.artistId AS id, songs.id AS songId, song_downloads.status AS status, " +
+        "song_downloads.downloadedAt AS downloadedAt " +
         "FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT album_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "SELECT album_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status, " +
+        "song_downloads.downloadedAt AS downloadedAt " +
         "FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN album_artists ON album_artists.sourceId = albums.sourceId AND album_artists.albumId = albums.id " +
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId " +
         "UNION ALL " +
-        "SELECT songs.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "SELECT songs.artistId AS id, songs.id AS songId, song_downloads.status AS status, " +
+        "song_downloads.downloadedAt AS downloadedAt " +
         "FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT song_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "SELECT song_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status, " +
+        "song_downloads.downloadedAt AS downloadedAt " +
         "FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN song_artists ON song_artists.sourceId = songs.sourceId AND song_artists.songId = songs.id " +
@@ -128,7 +132,7 @@ interface DownloadDao {
 
     @Query(
         "SELECT d.sourceId AS sourceId, d.songId AS songId, s.title AS title, s.albumId AS albumId, al.name AS albumName, " +
-            "al.artistId AS artistId, ar.name AS artistName, d.status AS status, " +
+            "al.artistId AS artistId, COALESCE(ar.name, al.albumArtist) AS artistName, d.status AS status, " +
             "d.bytes AS bytes, d.total AS total " +
             "FROM song_downloads d " +
             "JOIN songs s ON s.sourceId = d.sourceId AND s.id = d.songId " +

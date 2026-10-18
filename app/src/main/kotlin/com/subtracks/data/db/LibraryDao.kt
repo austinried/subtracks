@@ -73,6 +73,10 @@ internal const val ALBUM_MATCHES_ARTIST =
     "(albums.artistId = :artistId OR albums.id IN (SELECT albumId FROM album_artists " +
         "WHERE sourceId = albums.sourceId AND artistId = :artistId))"
 
+private const val ARTIST_ALBUM_MATCH =
+    "(a.artistId = artists.id OR a.id IN (SELECT albumId FROM album_artists " +
+        "WHERE sourceId = artists.sourceId AND artistId = artists.id))"
+
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
@@ -201,14 +205,14 @@ interface LibraryDao {
     @Query(
         "UPDATE artists SET " +
             "playCount = COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id), 0), " +
+            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH), 0), " +
             "played = (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id) " +
+            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH) " +
             "WHERE sourceId = :sourceId AND (" +
             "playCount IS NOT COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id), 0) " +
+            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH), 0) " +
             "OR played IS NOT (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND a.artistId = artists.id))",
+            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH))",
     )
     suspend fun recomputeArtistPlayData(sourceId: Long)
 
@@ -240,7 +244,9 @@ interface LibraryDao {
 
     @Query(
         "UPDATE artists SET playCount = playCount + 1, played = MAX(COALESCE(played, :at), :at) " +
-            "WHERE sourceId = :sourceId AND id = (SELECT artistId FROM albums WHERE sourceId = :sourceId AND id = :albumId)",
+            "WHERE sourceId = :sourceId AND (" +
+            "id = (SELECT artistId FROM albums WHERE sourceId = :sourceId AND id = :albumId) " +
+            "OR id IN (SELECT artistId FROM album_artists WHERE sourceId = :sourceId AND albumId = :albumId))",
     )
     suspend fun bumpArtistPlay(
         sourceId: Long,
@@ -825,20 +831,8 @@ interface LibraryDao {
 
     @Query(
         "SELECT artists.* FROM artists " +
-            "JOIN (" +
-            "SELECT albums.artistId AS artistId, d.downloadedAt AS downloadedAt " +
-            "FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id AND d.status = 'Completed' " +
-            "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
-            "UNION ALL " +
-            "SELECT songs.artistId AS artistId, d.downloadedAt AS downloadedAt " +
-            "FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id AND d.status = 'Completed' " +
-            "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL" +
-            ") dl ON dl.artistId = artists.id " +
-            "WHERE artists.sourceId = :sourceId " +
+            "JOIN ($ARTIST_DOWNLOAD_ROWS) dl ON dl.id = artists.id " +
+            "WHERE artists.sourceId = :sourceId AND dl.status = 'Completed' " +
             "GROUP BY artists.sourceId, artists.id " +
             "ORDER BY MAX(dl.downloadedAt) DESC, artists.name COLLATE NOCASE, artists.id",
     )
