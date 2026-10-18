@@ -24,7 +24,8 @@ class ArtistDetailScreenTest {
     private fun render(
         artist: Artist?,
         artistName: String,
-        isAlbumArtist: Boolean,
+        isAlbumArtist: Boolean? = null,
+        albumsLoaded: Boolean = true,
     ) {
         composeRule.setContent {
             SubtracksTheme {
@@ -33,6 +34,7 @@ class ArtistDetailScreenTest {
                     artistName = artistName,
                     isAlbumArtist = isAlbumArtist,
                     albums = emptyList(),
+                    albumsLoaded = albumsLoaded,
                     art = null,
                     coverArt = { _, _ -> null },
                     onBack = {},
@@ -61,5 +63,18 @@ class ArtistDetailScreenTest {
 
         composeRule.onNodeWithText("Album artist").assertExists()
         composeRule.onNodeWithContentDescription("More options").assertExists()
+    }
+
+    @Test
+    fun theTypeAndCountStayBlankUntilTheAlbumsLoad() {
+        render(
+            artist = Artist(sourceId = 1, id = "ar-1", name = "Radiohead", albumCount = 1, starred = null),
+            artistName = "Radiohead",
+            albumsLoaded = false,
+        )
+
+        composeRule.onNodeWithText("Artist").assertDoesNotExist()
+        composeRule.onNodeWithText("Album artist").assertDoesNotExist()
+        composeRule.onNodeWithText("0 albums").assertDoesNotExist()
     }
 }

@@ -159,7 +159,7 @@ fun ArtistDetailRoute(
 ) {
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
     val artistName by viewModel.artistName.collectAsStateWithLifecycle(initialValue = null)
-    val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = emptyList())
+    val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = null)
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
@@ -192,8 +192,9 @@ fun ArtistDetailRoute(
     ArtistDetailScreen(
         artist = artist,
         artistName = artistName.orEmpty(),
-        isAlbumArtist = isAlbumArtist(albums, artistId),
-        albums = albums,
+        isAlbumArtist = albums?.let { isAlbumArtist(it, artistId) },
+        albums = albums.orEmpty(),
+        albumsLoaded = albums != null,
         art = art,
         artThumbnail = artThumbnail,
         artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artistName),
@@ -224,8 +225,9 @@ fun ArtistDetailScreen(
     artist: Artist?,
     modifier: Modifier = Modifier,
     artistName: String = "",
-    isAlbumArtist: Boolean = false,
+    isAlbumArtist: Boolean? = null,
     albums: List<Album>,
+    albumsLoaded: Boolean = true,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
     artwork: ArtworkColors? = null,
@@ -252,7 +254,7 @@ fun ArtistDetailScreen(
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
     val albumCount = albums.size.toLong()
     val displayName = artistName.ifBlank { artist?.name.orEmpty() }
-    val artistType = stringResource(if (isAlbumArtist) R.string.artist_type_album_artist else R.string.artist_type_artist)
+    val artistType = stringResource(if (isAlbumArtist == true) R.string.artist_type_album_artist else R.string.artist_type_artist)
     val imageTitleTop = ART_HEIGHT - TITLE_INSET - lineHeight
     val fadeStartPx = with(density) { (imageTitleTop - barHeight - FADE_LEAD).toPx() }
     val fadeEndPx = with(density) { (imageTitleTop + lineHeight / 2 - barHeight).toPx() }
@@ -373,7 +375,7 @@ fun ArtistDetailScreen(
                                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
                             ) {
                                 Text(
-                                    text = artistType,
+                                    text = if (albumsLoaded) artistType else "",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -384,7 +386,12 @@ fun ArtistDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount),
+                                        text =
+                                            if (albumsLoaded) {
+                                                pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
+                                            } else {
+                                                ""
+                                            },
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(1f),

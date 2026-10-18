@@ -91,6 +91,8 @@ class QueryTimingMeasurementTest {
         timed("albums first page (recent)") { dao.albumsByRecent(1, 0, "").firstPage() }
         timed("artists first page (name)") { dao.artistsByName(1, 0, "").firstPage() }
         timed("artists first page (frequent)") { dao.artistsByFrequent(1, 0, "").firstPage() }
+        timed("artist albums") { dao.albumsForArtist(1, "ar0").first() }
+        timed("artist name") { dao.artistName(1, "ar0").first() }
         timed("playlists first page (name)") { dao.playlistsByName(1, "").firstPage() }
         timed("albums deep page") { dao.albumsByName(1, 0, "").deepPage(1000) }
         timed("albums search FTS") { dao.albumsByName(1, 0, "Album 1").firstPage() }

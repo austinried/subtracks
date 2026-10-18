@@ -945,9 +945,9 @@ interface LibraryDao {
     @Query(
         "SELECT COALESCE(" +
             "(SELECT name FROM song_artists WHERE sourceId = :sourceId AND artistId = :artistId " +
-            "AND name != '' ORDER BY songId, position LIMIT 1), " +
+            "AND name != '' LIMIT 1), " +
             "(SELECT artist FROM songs WHERE sourceId = :sourceId AND artistId = :artistId " +
-            "AND artist IS NOT NULL AND artist != '' ORDER BY id LIMIT 1))",
+            "AND artist IS NOT NULL AND artist != '' LIMIT 1))",
     )
     fun artistName(
         sourceId: Long,
@@ -973,9 +973,22 @@ interface LibraryDao {
     ): Flow<List<String>>
 
     @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId AND ($ALBUM_MATCHES_ARTIST " +
-            "OR id IN (SELECT albumId FROM songs WHERE sourceId = :sourceId AND $SONG_MATCHES_ARTIST)) " +
-            "ORDER BY year DESC, name COLLATE NOCASE, id",
+        "SELECT * FROM (" +
+            "SELECT albums.* FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
+            "UNION " +
+            "SELECT albums.* FROM album_artists " +
+            "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+            "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId " +
+            "UNION " +
+            "SELECT albums.* FROM song_artists " +
+            "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = :artistId " +
+            "UNION " +
+            "SELECT albums.* FROM songs " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId" +
+            ") ORDER BY year DESC, name COLLATE NOCASE, id",
     )
     fun albumsForArtist(
         sourceId: Long,
@@ -1018,15 +1031,31 @@ interface LibraryDao {
     ): PagingSource<Int, PlaylistSongItem>
 
     @Query(
-        "SELECT * FROM albums WHERE sourceId = :sourceId AND (" +
-            "($ALBUM_MATCHES_ARTIST AND EXISTS (SELECT 1 FROM songs " +
+        "SELECT * FROM (" +
+            "SELECT albums.* FROM albums " +
+            "WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
+            "AND EXISTS (SELECT 1 FROM songs " +
             "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-            "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed')) " +
-            "OR EXISTS (SELECT 1 FROM songs " +
+            "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+            "UNION " +
+            "SELECT albums.* FROM album_artists " +
+            "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+            "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId " +
+            "AND EXISTS (SELECT 1 FROM songs " +
             "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-            "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
-            "AND sd.status = 'Completed' AND $SONG_MATCHES_ARTIST)) " +
-            "ORDER BY year DESC, name COLLATE NOCASE, id",
+            "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+            "UNION " +
+            "SELECT albums.* FROM song_artists " +
+            "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id AND sd.status = 'Completed' " +
+            "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = :artistId " +
+            "UNION " +
+            "SELECT albums.* FROM songs " +
+            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+            "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id AND sd.status = 'Completed' " +
+            "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId" +
+            ") ORDER BY year DESC, name COLLATE NOCASE, id",
     )
     fun albumsForArtistDownloaded(
         sourceId: Long,

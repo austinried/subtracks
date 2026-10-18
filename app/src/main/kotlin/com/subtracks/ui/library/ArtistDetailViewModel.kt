@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -48,9 +50,11 @@ class ArtistDetailViewModel(
 
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
-    val albums: Flow<List<Album>> =
+    val albums: Flow<List<Album>?> =
         combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }
             .flatMapLatest { (id, offline) -> libraryRepository.artistAlbums(id, artistId, offline) }
+            .map<List<Album>, List<Album>?> { it }
+            .onStart { emit(null) }
 
     val downloadStatus: StateFlow<ListDownloadStatus> =
         sourceId
