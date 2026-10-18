@@ -77,10 +77,34 @@ class ReplayGainTest {
     @Test
     fun thePreampShiftsTheAppliedGain() {
         assertEquals(
+            0.5f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = -12.0412f),
+                ReplayGainSettings(ReplayGainMode.Track, 6.0206f),
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun aPositivePreampCannotBoostWithoutAPeak() {
+        assertEquals(
             1f,
             replayGainLinearGain(
                 ReplayGain(trackGain = -6.0206f),
-                ReplayGainSettings(ReplayGainMode.Track, 6.0206f),
+                ReplayGainSettings(ReplayGainMode.Track, 12f),
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun aMissingPeakStillAppliesAnAttenuation() {
+        assertEquals(
+            0.31622776f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = -10f),
+                ReplayGainSettings(ReplayGainMode.Track, 0f),
             ),
             TOLERANCE,
         )
@@ -111,12 +135,11 @@ class ReplayGainTest {
     }
 
     @Test
-    fun aMissingOrZeroPeakDoesNotCap() {
+    fun aMissingOrZeroPeakAllowsNoBoost() {
         val settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
-        val expected = 3.9810717f
 
-        assertEquals(expected, replayGainLinearGain(ReplayGain(trackGain = 12f), settings), TOLERANCE)
-        assertEquals(expected, replayGainLinearGain(ReplayGain(trackGain = 12f, trackPeak = 0f), settings), TOLERANCE)
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = 12f), settings), TOLERANCE)
+        assertEquals(1f, replayGainLinearGain(ReplayGain(trackGain = 12f, trackPeak = 0f), settings), TOLERANCE)
     }
 
     @Test
@@ -144,9 +167,9 @@ class ReplayGainTest {
     }
 
     @Test
-    fun aNonFinitePeakDoesNotCap() {
+    fun aNonFinitePeakAllowsNoBoost() {
         assertEquals(
-            3.9810717f,
+            1f,
             replayGainLinearGain(
                 ReplayGain(trackGain = 12f, trackPeak = Float.POSITIVE_INFINITY),
                 ReplayGainSettings(ReplayGainMode.Track, 0f),

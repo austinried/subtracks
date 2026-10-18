@@ -31,7 +31,8 @@ internal fun replayGainLinearGain(
     settings: ReplayGainSettings,
 ): Float {
     // gonic sends a peak of 0 when it only has album gain, so a non-positive or non-finite peak means
-    // "no peak data" and is ignored rather than treated as silence.
+    // "no peak data" and is ignored rather than treated as silence. A boost cannot be checked for
+    // headroom without a peak, so a peakless track is only ever attenuated.
     val trackPeak = gain.trackPeak?.takeIf { it.isFinite() && it > 0f }
     val albumPeak = gain.albumPeak?.takeIf { it.isFinite() && it > 0f }
     val (requestedDb, peak) =
@@ -42,7 +43,8 @@ internal fun replayGainLinearGain(
         }
     val gainDb = requestedDb?.takeIf { it.isFinite() } ?: return 1f
     val requested = gainDb + settings.preampDb
-    val applied = peak?.let { min(requested, maxSafeGainDb(it)) } ?: requested
+    val maxGainDb = peak?.let(::maxSafeGainDb) ?: 0f
+    val applied = min(requested, maxGainDb)
     return 10f.pow(applied / 20f).takeIf { it.isFinite() && it > 0f } ?: 1f
 }
 

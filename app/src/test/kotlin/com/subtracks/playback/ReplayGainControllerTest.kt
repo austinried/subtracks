@@ -53,7 +53,9 @@ class ReplayGainControllerTest {
     fun theLatestItemLeavesItsGainApplied() {
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
 
-        controller.applyItem(item("a", trackGain = 6.0206f))
+        controller.applyItem(item("a", trackGain = 6.0206f, trackPeak = 0.5f))
+        assertEquals(2f, applied.last(), TOLERANCE)
+
         controller.applyItem(item("b", trackGain = -6.0206f))
 
         assertEquals(0.5f, applied.last(), TOLERANCE)
@@ -62,6 +64,7 @@ class ReplayGainControllerTest {
     private fun item(
         id: String,
         trackGain: Float?,
+        trackPeak: Float? = null,
     ) = queueMediaItem(
         QueueItem(
             id = id,
@@ -69,7 +72,7 @@ class ReplayGainControllerTest {
             artist = null,
             album = null,
             coverArtId = null,
-            replayGain = ReplayGain(trackGain = trackGain),
+            replayGain = ReplayGain(trackGain = trackGain, trackPeak = trackPeak),
         ),
         local = null,
         stream = "http://server/$id",

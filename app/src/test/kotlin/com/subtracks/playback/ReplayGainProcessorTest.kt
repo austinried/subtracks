@@ -128,7 +128,7 @@ class ReplayGainProcessorTest {
         processor.queueInput(sixteenBit(1000))
         assertEquals(listOf(500), readShorts(processor.getOutput()))
 
-        processor.flush(streamMetadata(item("b", trackGain = 6.0206f)))
+        processor.flush(streamMetadata(item("b", trackGain = 6.0206f, trackPeak = 0.5f)))
         processor.queueInput(sixteenBit(1000))
         assertEquals(listOf(2000), readShorts(processor.getOutput()))
     }
@@ -146,6 +146,7 @@ class ReplayGainProcessorTest {
     private fun item(
         id: String,
         trackGain: Float,
+        trackPeak: Float? = null,
     ): MediaItem =
         queueMediaItem(
             QueueItem(
@@ -154,7 +155,7 @@ class ReplayGainProcessorTest {
                 artist = null,
                 album = null,
                 coverArtId = null,
-                replayGain = ReplayGain(trackGain = trackGain),
+                replayGain = ReplayGain(trackGain = trackGain, trackPeak = trackPeak),
             ),
             local = null,
             stream = "http://server/$id",
