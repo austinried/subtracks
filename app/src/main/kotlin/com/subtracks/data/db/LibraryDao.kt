@@ -44,26 +44,29 @@ internal const val ALBUMS_FILTER =
         "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
         "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
         "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
-        "OR instr(lower(albumArtist), lower(:search)) > 0))) "
+        "OR instr(lower(albumArtist), lower(:search)) > 0 " +
+        "OR instr(lower(sortName), lower(:search)) > 0 " +
+        "OR instr(lower(albumArtistSort), lower(:search)) > 0))) "
 
-internal const val ALBUM_ORDER_BY_NAME = "name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_ARTIST = "albumArtist COLLATE NOCASE, year, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_ARTIST_REVERSED = "albumArtist COLLATE NOCASE DESC, year DESC, name COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_YEAR = "year DESC, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, name COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_ADDED = "created DESC, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_ADDED_REVERSED = "created ASC, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ARTIST = "albumArtistSort COLLATE NOCASE, year, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_ARTIST_REVERSED =
+    "albumArtistSort COLLATE NOCASE DESC, year DESC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_YEAR = "year DESC, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ADDED = "created DESC, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_ADDED_REVERSED = "created ASC, sortName COLLATE NOCASE DESC, id DESC"
 
 // Starred orders keep unstarred rows last in both directions, matching the list grouping, so the
 // reversed order is not a literal mirror of the base order.
-internal const val ALBUM_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_STARRED = "starred DESC NULLS LAST, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
 
-internal const val ALBUM_ORDER_BY_FREQUENT = "playCount DESC, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, name COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, name COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_FREQUENT = "playCount DESC, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
 
 private const val DOWNLOADED_ARTIST_ALBUMS =
     "SELECT albums.id FROM albums " +
@@ -99,7 +102,8 @@ internal const val ARTISTS_FILTER =
         "AND (:search = '' " +
         "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
         "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
+        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
+        "OR instr(lower(sortName), lower(:search)) > 0))) "
 
 // With the Downloaded filter on, count the albums that actually have a download so the number under
 // an artist matches the albums its detail screen lists.
@@ -108,18 +112,18 @@ internal const val ARTISTS_SELECT =
         "CASE WHEN :downloadedFilter = 1 THEN (" +
         "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount "
+        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount, artists.sortName "
 
-internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "artists.albumCount DESC, name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "artists.albumCount ASC, name COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_FREQUENT = "artists.playCount DESC, name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_FREQUENT_REVERSED = "artists.playCount ASC, name COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_RECENT = "artists.played DESC NULLS LAST, name COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_RECENT_REVERSED = "artists.played ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "artists.albumCount DESC, sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "artists.albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_FREQUENT = "artists.playCount DESC, sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_FREQUENT_REVERSED = "artists.playCount ASC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_RECENT = "artists.played DESC NULLS LAST, sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_RECENT_REVERSED = "artists.played ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
 
 internal const val PLAYLISTS_FILTER =
     "FROM playlists WHERE sourceId = :sourceId " +
@@ -313,7 +317,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL " +
-            "ORDER BY played DESC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY played DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun recentlyPlayedAlbums(
         sourceId: Long,
@@ -322,7 +326,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL " +
-            "ORDER BY played DESC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY played DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun recentlyPlayedArtists(
         sourceId: Long,
@@ -331,7 +335,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND playCount > 0 " +
-            "ORDER BY playCount DESC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY playCount DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun mostPlayedAlbums(
         sourceId: Long,
@@ -340,7 +344,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 " +
-            "ORDER BY playCount DESC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY playCount DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun mostPlayedArtists(
         sourceId: Long,
@@ -349,7 +353,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId " +
-            "ORDER BY created DESC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY created DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun recentlyAddedAlbums(
         sourceId: Long,
@@ -358,7 +362,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL AND played < :cutoff " +
-            "ORDER BY played ASC, name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY played ASC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun rediscoverAlbums(
         sourceId: Long,
@@ -370,7 +374,7 @@ interface LibraryDao {
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
-            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+            "ORDER BY songs.starred DESC, songs.sortName COLLATE NOCASE, songs.id LIMIT :limit",
     )
     fun recentlyStarredSongs(
         sourceId: Long,
@@ -379,7 +383,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND $ALBUM_SEARCH_FILTER " +
-            "ORDER BY name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun searchAlbums(
         sourceId: Long,
@@ -389,7 +393,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER " +
-            "ORDER BY name COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun searchArtists(
         sourceId: Long,
@@ -411,7 +415,7 @@ interface LibraryDao {
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND $SONG_SEARCH_FILTER " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+            "ORDER BY songs.sortName COLLATE NOCASE, songs.id LIMIT :limit",
     )
     fun searchSongs(
         sourceId: Long,
@@ -790,32 +794,32 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Playlist>
 
-    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, name COLLATE NOCASE, id")
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, sortName COLLATE NOCASE, id")
     fun homeRecentlyPlayedAlbums(sourceId: Long): PagingSource<Int, Album>
 
-    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, name COLLATE NOCASE, id")
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, sortName COLLATE NOCASE, id")
     fun homeMostPlayedAlbums(sourceId: Long): PagingSource<Int, Album>
 
-    @Query("SELECT * FROM albums WHERE sourceId = :sourceId ORDER BY created DESC, name COLLATE NOCASE, id")
+    @Query("SELECT * FROM albums WHERE sourceId = :sourceId ORDER BY created DESC, sortName COLLATE NOCASE, id")
     fun homeRecentlyAddedAlbums(sourceId: Long): PagingSource<Int, Album>
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, name COLLATE NOCASE, id")
+    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, sortName COLLATE NOCASE, id")
     fun homeRecentlyPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, name COLLATE NOCASE, id")
+    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 ORDER BY playCount DESC, sortName COLLATE NOCASE, id")
     fun homeMostPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
 
     @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
-            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.starred DESC, songs.sortName COLLATE NOCASE, songs.id",
     )
     fun starredSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
 
     @Query(
         "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL " +
-            "ORDER BY starred DESC, title COLLATE NOCASE, id",
+            "ORDER BY starred DESC, sortName COLLATE NOCASE, id",
     )
     suspend fun starredSongIds(sourceId: Long): List<String>
 
@@ -824,7 +828,7 @@ interface LibraryDao {
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit",
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id LIMIT :limit",
     )
     fun downloadedSongs(
         sourceId: Long,
@@ -835,7 +839,7 @@ interface LibraryDao {
         "SELECT songs.id FROM songs " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id",
     )
     suspend fun downloadedSongIds(sourceId: Long): List<String>
 
@@ -844,7 +848,7 @@ interface LibraryDao {
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id " +
             "WHERE songs.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id",
     )
     fun homeDownloadedSongs(sourceId: Long): PagingSource<Int, AlbumSongItem>
 
@@ -854,7 +858,7 @@ interface LibraryDao {
             "JOIN song_downloads d ON d.sourceId = songs.sourceId AND d.songId = songs.id AND d.status = 'Completed' " +
             "WHERE albums.sourceId = :sourceId " +
             "GROUP BY albums.sourceId, albums.id " +
-            "ORDER BY MAX(d.downloadedAt) DESC, albums.name COLLATE NOCASE, albums.id",
+            "ORDER BY MAX(d.downloadedAt) DESC, albums.sortName COLLATE NOCASE, albums.id",
     )
     fun downloadedAlbums(sourceId: Long): PagingSource<Int, Album>
 
@@ -863,7 +867,7 @@ interface LibraryDao {
             "JOIN (SELECT id, MAX(downloadedAt) AS lastDownloadedAt FROM ($DOWNLOADED_ARTIST_ROWS) " +
             "WHERE status = 'Completed' GROUP BY id) dl ON dl.id = artists.id " +
             "WHERE artists.sourceId = :sourceId " +
-            "ORDER BY dl.lastDownloadedAt DESC, artists.name COLLATE NOCASE, artists.id",
+            "ORDER BY dl.lastDownloadedAt DESC, artists.sortName COLLATE NOCASE, artists.id",
     )
     fun downloadedArtists(sourceId: Long): PagingSource<Int, Artist>
 
@@ -872,7 +876,7 @@ interface LibraryDao {
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.sortName COLLATE NOCASE, songs.id",
     )
     fun songsByGenre(
         sourceId: Long,
@@ -883,7 +887,7 @@ interface LibraryDao {
         "SELECT songs.id FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.sortName COLLATE NOCASE, songs.id",
     )
     suspend fun songsByGenreIds(
         sourceId: Long,
@@ -894,12 +898,12 @@ interface LibraryDao {
         "SELECT COUNT(*) FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "AND (songs.title COLLATE NOCASE < :title OR (songs.title COLLATE NOCASE = :title AND songs.id < :id))",
+            "AND (songs.sortName COLLATE NOCASE < :sortName OR (songs.sortName COLLATE NOCASE = :sortName AND songs.id < :id))",
     )
     suspend fun genreSongOrdinal(
         sourceId: Long,
         genre: String,
-        title: String,
+        sortName: String,
         id: String,
     ): Long
 
@@ -909,8 +913,8 @@ interface LibraryDao {
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
             "AND (d.downloadedAt > (SELECT downloadedAt FROM song_downloads WHERE sourceId = :sourceId AND songId = :id) " +
             "OR (d.downloadedAt = (SELECT downloadedAt FROM song_downloads WHERE sourceId = :sourceId AND songId = :id) " +
-            "AND (s.title COLLATE NOCASE < (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) " +
-            "OR (s.title COLLATE NOCASE = (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
+            "AND (s.sortName COLLATE NOCASE < (SELECT sortName FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "OR (s.sortName COLLATE NOCASE = (SELECT sortName FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
     )
     suspend fun downloadedSongOrdinal(
         sourceId: Long,
@@ -922,8 +926,8 @@ interface LibraryDao {
             "WHERE s.sourceId = :sourceId AND s.starred IS NOT NULL " +
             "AND (s.starred > (SELECT starred FROM songs WHERE sourceId = :sourceId AND id = :id) " +
             "OR (s.starred = (SELECT starred FROM songs WHERE sourceId = :sourceId AND id = :id) " +
-            "AND (s.title COLLATE NOCASE < (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) " +
-            "OR (s.title COLLATE NOCASE = (SELECT title FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
+            "AND (s.sortName COLLATE NOCASE < (SELECT sortName FROM songs WHERE sourceId = :sourceId AND id = :id) " +
+            "OR (s.sortName COLLATE NOCASE = (SELECT sortName FROM songs WHERE sourceId = :sourceId AND id = :id) AND s.id < :id))))",
     )
     suspend fun starredSongOrdinal(
         sourceId: Long,
@@ -932,7 +936,7 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND year >= :start AND year < :end " +
-            "ORDER BY year DESC, name COLLATE NOCASE, id",
+            "ORDER BY year DESC, sortName COLLATE NOCASE, id",
     )
     fun albumsByDecade(
         sourceId: Long,
@@ -1017,7 +1021,7 @@ interface LibraryDao {
             "SELECT albums.* FROM songs " +
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId" +
-            ") ORDER BY year DESC, name COLLATE NOCASE, id",
+            ") ORDER BY year DESC, sortName COLLATE NOCASE, id",
     )
     fun albumsForArtist(
         sourceId: Long,
@@ -1084,7 +1088,7 @@ interface LibraryDao {
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id AND sd.status = 'Completed' " +
             "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId" +
-            ") ORDER BY year DESC, name COLLATE NOCASE, id",
+            ") ORDER BY year DESC, sortName COLLATE NOCASE, id",
     )
     fun albumsForArtistDownloaded(
         sourceId: Long,

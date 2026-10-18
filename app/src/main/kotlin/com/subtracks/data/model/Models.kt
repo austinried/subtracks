@@ -57,25 +57,25 @@ data class ArtistRef(
     ],
     indices = [
         Index("sourceId"),
-        Index(name = "index_artists_name", value = ["sourceId", "name", "id"]),
+        Index(name = "index_artists_name", value = ["sourceId", "sortName", "id"]),
         Index(
             name = "index_artists_albumCount",
-            value = ["sourceId", "albumCount", "name", "id"],
+            value = ["sourceId", "albumCount", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_artists_starred",
-            value = ["sourceId", "starred", "name", "id"],
+            value = ["sourceId", "starred", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_artists_frequent",
-            value = ["sourceId", "playCount", "name", "id"],
+            value = ["sourceId", "playCount", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_artists_recent",
-            value = ["sourceId", "played", "name", "id"],
+            value = ["sourceId", "played", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
     ],
@@ -90,6 +90,7 @@ data class Artist(
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
     @ColumnInfo(defaultValue = "0") val songCount: Long = 0,
+    @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val sortName: String = name,
 )
 
 @Entity(
@@ -106,31 +107,31 @@ data class Artist(
     indices = [
         Index("sourceId"),
         Index("sourceId", "artistId"),
-        Index(name = "index_albums_name", value = ["sourceId", "name", "id"]),
-        Index(name = "index_albums_artist", value = ["sourceId", "albumArtist", "year", "name", "id"]),
+        Index(name = "index_albums_name", value = ["sourceId", "sortName", "id"]),
+        Index(name = "index_albums_artist", value = ["sourceId", "albumArtistSort", "year", "sortName", "id"]),
         Index(
             name = "index_albums_year",
-            value = ["sourceId", "year", "name", "id"],
+            value = ["sourceId", "year", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_albums_added",
-            value = ["sourceId", "created", "name", "id"],
+            value = ["sourceId", "created", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_albums_starred",
-            value = ["sourceId", "starred", "name", "id"],
+            value = ["sourceId", "starred", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_albums_frequent",
-            value = ["sourceId", "playCount", "name", "id"],
+            value = ["sourceId", "playCount", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
         Index(
             name = "index_albums_recent",
-            value = ["sourceId", "played", "name", "id"],
+            value = ["sourceId", "played", "sortName", "id"],
             orders = [Index.Order.ASC, Index.Order.DESC, Index.Order.ASC, Index.Order.ASC],
         ),
     ],
@@ -151,6 +152,8 @@ data class Album(
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
     @ColumnInfo(defaultValue = "''") val artists: List<ArtistRef> = emptyList(),
+    @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val sortName: String = name,
+    @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val albumArtistSort: String = albumArtist.orEmpty(),
 ) {
     val artistRefs: List<ArtistRef>
         get() =
@@ -286,6 +289,8 @@ data class Song(
     val albumPeak: Float? = null,
     @Ignore val genres: List<String> = emptyList(),
     @ColumnInfo(defaultValue = "''") val artists: List<ArtistRef> = emptyList(),
+    @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val sortName: String = title,
+    @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val artistSort: String = artist.orEmpty(),
 ) {
     val artistRefs: List<ArtistRef>
         get() =
@@ -506,6 +511,8 @@ data class AlbumSearch(
     @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
     val name: String,
     val albumArtist: String?,
+    val sortName: String,
+    val albumArtistSort: String,
 )
 
 @Entity(tableName = "artist_search")
@@ -513,6 +520,7 @@ data class AlbumSearch(
 data class ArtistSearch(
     @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
     val name: String,
+    val sortName: String,
 )
 
 @Entity(tableName = "playlist_search")
@@ -528,6 +536,8 @@ data class SongSearch(
     @PrimaryKey @ColumnInfo(name = "rowid") val rowId: Long = 0,
     val title: String,
     val artist: String?,
+    val sortName: String,
+    val artistSort: String,
 )
 
 class QueueKindConverter {

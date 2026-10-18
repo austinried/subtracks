@@ -213,7 +213,7 @@ internal fun CoroutineScope.playGenreList(
     song: Song,
 ) {
     launch {
-        val ordinal = libraryRepository.genreSongOrdinal(song.sourceId, genre, song.title, song.id)
+        val ordinal = libraryRepository.genreSongOrdinal(song.sourceId, genre, song.sortName, song.id)
         playbackController.playGenre(song.sourceId, genre, ordinal)
     }
 }

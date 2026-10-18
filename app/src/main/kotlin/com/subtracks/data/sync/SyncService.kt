@@ -116,7 +116,8 @@ class SyncService(
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
                 if (connection.albumIdsChanged(batch)) creditsChanged = true
-                connection.upsertChanged("songs", songColumns, primaryKey, batch) { it.values() }
+                val resolved = connection.resolveSongSortNames(batch)
+                connection.upsertChanged("songs", songColumns, primaryKey, resolved) { it.values() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
@@ -184,6 +185,57 @@ class SyncService(
         return changed || expected.isNotEmpty()
     }
 
+    private suspend fun PooledConnection.resolveSongSortNames(batch: List<Song>): List<Song> {
+        if (batch.isEmpty()) return batch
+        val sortNames =
+            artistSortNames(
+                batch.first().sourceId,
+                batch.mapNotNull { it.artistRefs.firstOrNull()?.id }.toSet(),
+            )
+        return batch.map { song ->
+            val primary = song.artistId ?: song.artists.firstOrNull()?.id
+            val sortName =
+                primary?.let(sortNames::get)?.takeIf { it.isNotBlank() }
+                    ?: song.artists.firstNotNullOfOrNull { ref -> sortNames[ref.id]?.takeIf { it.isNotBlank() } }
+                    ?: song.artistSort
+            if (sortName == song.artistSort) song else song.copy(artistSort = sortName)
+        }
+    }
+
+    private suspend fun PooledConnection.resolveAlbumSortNames(batch: List<Album>): List<Album> {
+        if (batch.isEmpty()) return batch
+        val sortNames =
+            artistSortNames(
+                batch.first().sourceId,
+                batch.mapNotNull { it.artistId ?: it.artists.firstOrNull()?.id }.toSet(),
+            )
+        return batch.map { album ->
+            val primary = album.artistId ?: album.artists.firstOrNull()?.id
+            val sortName =
+                primary?.let(sortNames::get)?.takeIf { it.isNotBlank() }
+                    ?: album.artists.firstNotNullOfOrNull { ref -> sortNames[ref.id]?.takeIf { it.isNotBlank() } }
+                    ?: album.albumArtistSort
+            if (sortName == album.albumArtistSort) album else album.copy(albumArtistSort = sortName)
+        }
+    }
+
+    private suspend fun PooledConnection.artistSortNames(
+        sourceId: Long,
+        ids: Collection<String>,
+    ): Map<String, String> {
+        if (ids.isEmpty()) return emptyMap()
+        val sortNames = HashMap<String, String>(ids.size)
+        ids.toList().chunked(SQL_VARIABLES).forEach { chunk ->
+            val placeholders = chunk.joinToString(",") { "?" }
+            usePrepared("SELECT id, sortName FROM artists WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
+                statement.bindLong(1, sourceId)
+                chunk.forEachIndexed { index, id -> statement.bindText(index + 2, id) }
+                while (statement.step()) sortNames[statement.getText(0)] = statement.getText(1)
+            }
+        }
+        return sortNames
+    }
+
     // Without sqlite_stat1 the artist and relation queries can fall back to whole-table scans.
     private suspend fun optimize() {
         db.useWriterConnection { connection ->
@@ -242,7 +294,8 @@ class SyncService(
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                connection.upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
+                val resolved = connection.resolveAlbumSortNames(albums)
+                connection.upsertChanged("albums", albumColumns, primaryKey, resolved) { it.values() }
                 connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
                 val artistRowsBefore = connection.totalChanges()
                 connection.usePrepared("DELETE FROM album_artists WHERE sourceId = ? AND albumId = ? AND position >= ?") { statement ->
@@ -368,7 +421,7 @@ private fun discHash(
 
 private val primaryKey = listOf("sourceId", "id")
 
-private val artistColumns = listOf("sourceId", "id", "name", "albumCount", "starred", "coverArt")
+private val artistColumns = listOf("sourceId", "id", "name", "albumCount", "starred", "coverArt", "sortName")
 
 private val albumColumns =
     listOf(
@@ -384,6 +437,8 @@ private val albumColumns =
         "starred",
         "songCount",
         "artists",
+        "sortName",
+        "albumArtistSort",
     )
 
 private val discKey = listOf("sourceId", "albumId", "disc")
@@ -411,6 +466,8 @@ private val songColumns =
         "trackPeak",
         "albumPeak",
         "artists",
+        "sortName",
+        "artistSort",
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
@@ -441,7 +498,7 @@ private val playlistSongColumns = listOf("sourceId", "playlistId", "songId", "po
 
 private val playlistSongKey = listOf("sourceId", "playlistId", "position")
 
-private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt)
+private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt, sortName)
 
 private fun Album.values() =
     listOf<Any?>(
@@ -457,6 +514,8 @@ private fun Album.values() =
         starred,
         songCount,
         ArtistRefsCodec.encode(artistRefs),
+        sortName,
+        albumArtistSort,
     )
 
 private fun AlbumArtistRef.values() = listOf<Any?>(sourceId, albumId, position, artistId, name)
@@ -486,6 +545,8 @@ private fun Song.values() =
         trackPeak,
         albumPeak,
         ArtistRefsCodec.encode(artistRefs),
+        sortName,
+        artistSort,
     )
 
 private fun List<ArtistRef>.positions(): List<Pair<Long, ArtistRef>> =

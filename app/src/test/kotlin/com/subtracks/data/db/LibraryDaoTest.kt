@@ -978,6 +978,73 @@ class LibraryDaoTest {
             awaitUntil("the default list observes album writes") { defaultInvalidated.get() }
         }
 
+    @Test
+    fun sortNamesDriveArtistAndAlbumOrder() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "宇多田ヒカル", albumCount = 1).copy(sortName = "Utada Hikaru"),
+                    artist(sourceId, "ar-2", "あいみょん", albumCount = 1).copy(sortName = "Aimyon"),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "First Love", year = null, starred = null)
+                        .copy(sortName = "First Love", albumArtistSort = "Utada Hikaru"),
+                    album(sourceId, "al-2", "Zutto", year = null, starred = null)
+                        .copy(sortName = "Zutto", albumArtistSort = "Aimyon"),
+                ),
+            )
+
+            assertEquals(
+                listOf("あいみょん", "宇多田ヒカル"),
+                dao.artistsByName(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("First Love", "Zutto"),
+                dao.albumsByName(sourceId, 0, "").page().map { it.name },
+            )
+            assertEquals(
+                listOf("Zutto", "First Love"),
+                dao.albumsByArtist(sourceId, 0, "").page().map { it.name },
+            )
+        }
+
+    @Test
+    fun sortNamesAreSearchableInArtistsAlbumsAndSongs() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "宇多田ヒカル", albumCount = 1)
+                        .copy(sortName = "Utada Hikaru"),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "First Love", year = null, starred = null)
+                        .copy(sortName = "First Love", albumArtistSort = "Utada Hikaru"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "Automatic", starred = null)
+                        .copy(sortName = "Automatic", artist = "宇多田ヒカル", artistSort = "Utada Hikaru"),
+                ),
+            )
+
+            assertEquals(listOf("宇多田ヒカル"), dao.artistsByName(sourceId, 0, "utada").page().map { it.name })
+            assertEquals(listOf("宇多田ヒカル"), dao.artistsByName(sourceId, 0, "ut").page().map { it.name })
+            assertEquals(listOf("宇多田ヒカル"), dao.searchArtists(sourceId, "utada", 10).first().map { it.name })
+            assertEquals(listOf("First Love"), dao.albumsByName(sourceId, 0, "first").page().map { it.name })
+            assertEquals(listOf("First Love"), dao.albumsByName(sourceId, 0, "fi").page().map { it.name })
+            assertEquals(listOf("First Love"), dao.searchAlbums(sourceId, "first", 10).first().map { it.name })
+            assertEquals(listOf("Automatic"), dao.searchSongs(sourceId, "utada", 10).first().map { it.song.title })
+        }
+
     private suspend fun source(): Long =
         db.sourcesDao().insertSource(Source(name = "Navidrome", address = "http://localhost", isActive = true, createdAt = 0))
 

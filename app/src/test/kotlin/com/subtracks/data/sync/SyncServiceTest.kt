@@ -933,6 +933,67 @@ class SyncServiceTest {
         }
 
     @Test
+    fun albumArtistSortPrefersTheSingularArtistOverThePluralList() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists =
+                        listOf(
+                            artist("various", "Various Artists").copy(sortName = "Various Artists"),
+                            artist("utada", "宇多田ヒカル").copy(sortName = "Utada Hikaru"),
+                        ),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "various",
+                                albumArtist = "Various Artists",
+                                artists = listOf(ArtistRef("utada", "宇多田ヒカル")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals("Various Artists", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
+        }
+
+    @Test
+    fun syncStoresSortNamesAndResolvesArtistSorts() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "宇多田ヒカル").copy(sortName = "Utada Hikaru")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                name = "First Love",
+                                sortName = "First Love",
+                                albumArtist = "宇多田ヒカル",
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                title = "Automatic",
+                                sortName = "Automatic",
+                                artist = "宇多田ヒカル",
+                                artistSort = "",
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals("Utada Hikaru", db.libraryDao().artistOnce(1, "a1")!!.sortName)
+            assertEquals("First Love", db.libraryDao().albumOnce(1, "al1")!!.sortName)
+            assertEquals("Utada Hikaru", db.libraryDao().albumOnce(1, "al1")!!.albumArtistSort)
+            assertEquals("Automatic", db.libraryDao().songOnce(1, "s1")!!.sortName)
+            assertEquals("Utada Hikaru", db.libraryDao().songOnce(1, "s1")!!.artistSort)
+        }
+
+    @Test
     fun everyAlbumArtistAndTrackArtistReachesTheSharedAlbum() =
         runTest {
             insertSource()

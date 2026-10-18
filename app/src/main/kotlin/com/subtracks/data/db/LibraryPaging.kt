@@ -15,7 +15,9 @@ internal const val ALBUMS_FILTER_BASE =
         "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
         "WHERE album_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
         "OR (length(?) < 3 AND (instr(lower(name), lower(?)) > 0 " +
-        "OR instr(lower(albumArtist), lower(?)) > 0))) "
+        "OR instr(lower(albumArtist), lower(?)) > 0 " +
+        "OR instr(lower(sortName), lower(?)) > 0 " +
+        "OR instr(lower(albumArtistSort), lower(?)) > 0))) "
 
 internal const val ARTISTS_FILTER_BASE =
     "FROM artists WHERE sourceId = ? " +
@@ -23,7 +25,8 @@ internal const val ARTISTS_FILTER_BASE =
         "AND (? = '' " +
         "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
         "WHERE artist_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
-        "OR (length(?) < 3 AND instr(lower(name), lower(?)) > 0)) "
+        "OR (length(?) < 3 AND (instr(lower(name), lower(?)) > 0 " +
+        "OR instr(lower(sortName), lower(?)) > 0))) "
 
 internal const val PLAYLISTS_FILTER_BASE =
     "FROM playlists WHERE sourceId = ? " +
@@ -53,10 +56,10 @@ internal fun rediscoverAlbumsQuery(
 ): RoomRawQuery =
     RoomRawQuery(
         "SELECT * $ALBUMS_FILTER_BASE AND played IS NOT NULL AND played < ? " +
-            "ORDER BY played ASC, name COLLATE NOCASE, id",
+            "ORDER BY played ASC, sortName COLLATE NOCASE, id",
     ) { stmt ->
         stmt.bindAlbumFilters(sourceId, starredFilter, search)
-        stmt.bindLong(11, cutoff)
+        stmt.bindLong(13, cutoff)
     }
 
 private fun SQLiteStatement.bindAlbumFilters(
@@ -74,6 +77,8 @@ private fun SQLiteStatement.bindAlbumFilters(
     bindText(8, search)
     bindText(9, search)
     bindText(10, search)
+    bindText(11, search)
+    bindText(12, search)
 }
 
 internal fun artistsDefaultQuery(
@@ -94,6 +99,7 @@ internal fun artistsDefaultQuery(
         stmt.bindText(7, search)
         stmt.bindText(8, search)
         stmt.bindText(9, search)
+        stmt.bindText(10, search)
     }
 }
 

@@ -453,6 +453,114 @@ val MIGRATION_29_30 =
         }
     }
 
+val MIGRATION_30_31 =
+    object : Migration(30, 31) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `sortName` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            connection.execSQL("ALTER TABLE `albums` ADD COLUMN `sortName` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            connection.execSQL("ALTER TABLE `albums` ADD COLUMN `albumArtistSort` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `sortName` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `artistSort` TEXT NOT NULL DEFAULT '' COLLATE NOCASE")
+            connection.execSQL("UPDATE `artists` SET `sortName` = `name`")
+            connection.execSQL("UPDATE `albums` SET `sortName` = `name`")
+            connection.execSQL("UPDATE `songs` SET `sortName` = `title`")
+            connection.execSQL(
+                "UPDATE `albums` SET `albumArtistSort` = COALESCE(" +
+                    "(SELECT a.`sortName` FROM `artists` a " +
+                    "WHERE a.`sourceId` = `albums`.`sourceId` AND a.`id` = `albums`.`artistId`), " +
+                    "(SELECT a.`sortName` FROM `album_artists` aa JOIN `artists` a " +
+                    "ON a.`sourceId` = aa.`sourceId` AND a.`id` = aa.`artistId` " +
+                    "WHERE aa.`sourceId` = `albums`.`sourceId` AND aa.`albumId` = `albums`.`id` " +
+                    "ORDER BY aa.`position` LIMIT 1), " +
+                    "`albumArtist`, '')",
+            )
+            connection.execSQL(
+                "UPDATE `songs` SET `artistSort` = COALESCE(" +
+                    "(SELECT a.`sortName` FROM `artists` a " +
+                    "WHERE a.`sourceId` = `songs`.`sourceId` AND a.`id` = `songs`.`artistId`), " +
+                    "(SELECT a.`sortName` FROM `song_artists` sa JOIN `artists` a " +
+                    "ON a.`sourceId` = sa.`sourceId` AND a.`id` = sa.`artistId` " +
+                    "WHERE sa.`sourceId` = `songs`.`sourceId` AND sa.`songId` = `songs`.`id` " +
+                    "ORDER BY sa.`position` LIMIT 1), " +
+                    "`artist`, '')",
+            )
+            ARTIST_INDEXES.forEach { connection.execSQL("DROP INDEX IF EXISTS `$it`") }
+            ALBUM_INDEXES.forEach { connection.execSQL("DROP INDEX IF EXISTS `$it`") }
+            ARTIST_INDEX_SQL.forEach { connection.execSQL(it) }
+            ALBUM_INDEX_SQL.forEach { connection.execSQL(it) }
+            dropSearchIndex(connection, "artist_search")
+            dropSearchIndex(connection, "album_search")
+            dropSearchIndex(connection, "song_search")
+            createSearchIndex(connection, "artist_search", "artists", listOf("name", "sortName"))
+            createSearchIndex(connection, "album_search", "albums", listOf("name", "albumArtist", "sortName", "albumArtistSort"))
+            createSearchIndex(connection, "song_search", "songs", listOf("title", "artist", "sortName", "artistSort"))
+            rebuildSearchIndex(connection, "artist_search")
+            rebuildSearchIndex(connection, "album_search")
+            rebuildSearchIndex(connection, "song_search")
+        }
+    }
+
+private val ARTIST_INDEXES =
+    listOf("index_artists_name", "index_artists_albumCount", "index_artists_starred", "index_artists_frequent", "index_artists_recent")
+
+private val ALBUM_INDEXES =
+    listOf(
+        "index_albums_name",
+        "index_albums_artist",
+        "index_albums_year",
+        "index_albums_added",
+        "index_albums_starred",
+        "index_albums_frequent",
+        "index_albums_recent",
+    )
+
+private val ARTIST_INDEX_SQL =
+    listOf(
+        "CREATE INDEX IF NOT EXISTS `index_artists_name` ON `artists` (`sourceId`, `sortName`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_albumCount` ON `artists` " +
+            "(`sourceId` ASC, `albumCount` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_starred` ON `artists` " +
+            "(`sourceId` ASC, `starred` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_frequent` ON `artists` " +
+            "(`sourceId` ASC, `playCount` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_artists_recent` ON `artists` " +
+            "(`sourceId` ASC, `played` DESC, `sortName` ASC, `id` ASC)",
+    )
+
+private val ALBUM_INDEX_SQL =
+    listOf(
+        "CREATE INDEX IF NOT EXISTS `index_albums_name` ON `albums` (`sourceId`, `sortName`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_artist` ON `albums` " +
+            "(`sourceId`, `albumArtistSort`, `year`, `sortName`, `id`)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_year` ON `albums` " +
+            "(`sourceId` ASC, `year` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_added` ON `albums` " +
+            "(`sourceId` ASC, `created` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_starred` ON `albums` " +
+            "(`sourceId` ASC, `starred` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_frequent` ON `albums` " +
+            "(`sourceId` ASC, `playCount` DESC, `sortName` ASC, `id` ASC)",
+        "CREATE INDEX IF NOT EXISTS `index_albums_recent` ON `albums` " +
+            "(`sourceId` ASC, `played` DESC, `sortName` ASC, `id` ASC)",
+    )
+
+private suspend fun dropSearchIndex(
+    connection: SQLiteConnection,
+    table: String,
+) {
+    listOf("BEFORE_UPDATE", "BEFORE_DELETE", "AFTER_UPDATE", "AFTER_INSERT").forEach {
+        connection.execSQL("DROP TRIGGER IF EXISTS `room_fts_content_sync_${table}_$it`")
+    }
+    connection.execSQL("DROP TABLE IF EXISTS `$table`")
+}
+
+private suspend fun rebuildSearchIndex(
+    connection: SQLiteConnection,
+    table: String,
+) {
+    connection.execSQL("INSERT INTO `$table`(`$table`) VALUES('rebuild')")
+}
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -516,4 +624,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_27_28,
         MIGRATION_28_29,
         MIGRATION_29_30,
+        MIGRATION_30_31,
     )

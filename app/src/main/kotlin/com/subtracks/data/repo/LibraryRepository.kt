@@ -136,9 +136,9 @@ class LibraryRepository(
     suspend fun genreSongOrdinal(
         sourceId: Long,
         genre: String,
-        title: String,
+        sortName: String,
         id: String,
-    ): Long = db.libraryDao().genreSongOrdinal(sourceId, genre, title, id)
+    ): Long = db.libraryDao().genreSongOrdinal(sourceId, genre, sortName, id)
 
     suspend fun downloadedSongOrdinal(
         sourceId: Long,

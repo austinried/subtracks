@@ -32,6 +32,7 @@ object SubsonicXml {
             albumCount = attrs.longAttr("albumCount") ?: 0L,
             starred = attrs.dateAttr("starred"),
             coverArt = attrs.attr("coverArt").ifEmpty { null },
+            sortName = attrs.attr("sortName").ifEmpty { attrs.attr("name") },
         )
 
     internal fun albumDraft(
@@ -45,6 +46,7 @@ object SubsonicXml {
             name = attrs.attr("name"),
             albumArtist = attrs.attr("artist").ifEmpty { null },
             displayArtist = attrs.attr("displayArtist").ifEmpty { null },
+            sortName = attrs.attr("sortName").ifEmpty { null },
             created = attrs.dateAttr("created") ?: 0L,
             coverArt = attrs.attr("coverArt").ifEmpty { null },
             genre = attrs.attr("genre").ifEmpty { null },
@@ -71,6 +73,7 @@ object SubsonicXml {
             album = attrs.attr("album").ifEmpty { null },
             artist = attrs.attr("artist").ifEmpty { null },
             displayArtist = attrs.attr("displayArtist").ifEmpty { null },
+            sortName = attrs.attr("sortName").ifEmpty { null },
             duration = attrs.longAttr("duration"),
             track = attrs.longAttr("track"),
             disc = attrs.longAttr("discNumber"),
@@ -171,6 +174,7 @@ internal class AlbumDraft(
     var name: String = "",
     var albumArtist: String? = null,
     var displayArtist: String? = null,
+    var sortName: String? = null,
     var created: Long = 0L,
     var coverArt: String? = null,
     var genre: String? = null,
@@ -222,6 +226,7 @@ internal class AlbumDraft(
             songCount = songCount,
             discTitles = discTitles.toMap(),
             artists = refs,
+            sortName = sortName?.takeIf { it.isNotBlank() } ?: name,
         )
     }
 }
@@ -235,6 +240,7 @@ internal class SongDraft(
     private val album: String? = null,
     private val artist: String? = null,
     private val displayArtist: String? = null,
+    private val sortName: String? = null,
     private val duration: Long? = null,
     private val track: Long? = null,
     private val disc: Long? = null,
@@ -309,6 +315,7 @@ internal class SongDraft(
             albumPeak = albumPeak,
             genres = genres.toList(),
             artists = refs,
+            sortName = sortName?.takeIf { it.isNotBlank() } ?: title,
         )
     }
 }

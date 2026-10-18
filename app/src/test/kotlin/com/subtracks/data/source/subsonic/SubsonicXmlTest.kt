@@ -315,6 +315,51 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsSortNamesAndFallsBackToTheDisplayName() {
+        val artists =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <artists>
+                    <artist id="ar1" name="宇多田ヒカル" sortName="Utada Hikaru" albumCount="1"/>
+                    <artist id="ar2" name="No Sort" albumCount="1"/>
+                  </artists>
+                </subsonic-response>
+                """.trimIndent(),
+                tag = "artist",
+                create = { SubsonicXml.artist(7, it) },
+            )
+
+        assertEquals("Utada Hikaru", artists[0].sortName)
+        assertEquals("No Sort", artists[1].sortName)
+    }
+
+    @Test
+    fun mapsAlbumAndSongSortNames() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="First Love" sortName="First Love" artist="宇多田ヒカル" songCount="1"/>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Automatic" sortName="Automatic" artist="宇多田ヒカル" albumId="al1"/>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals("First Love", albums.single().sortName)
+        assertEquals("Automatic", songs.single().sortName)
+    }
+
+    @Test
     fun parsesTimestampsWithFractionsAndOffsets() {
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370827413Z"))
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370Z"))

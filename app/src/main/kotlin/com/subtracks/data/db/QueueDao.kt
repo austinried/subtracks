@@ -38,7 +38,7 @@ private const val ARTIST_SONGS_SELECT =
         "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS"
 
 private const val ARTIST_SONGS_ORDER =
-    " ORDER BY albums.year DESC, albums.name COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
+    " ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
 
 private const val SONG_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
@@ -244,7 +244,7 @@ interface QueueDao {
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+            "ORDER BY songs.sortName COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
     )
     suspend fun genreSongs(
         sourceId: Long,
@@ -257,7 +257,7 @@ interface QueueDao {
         "SELECT songs.id FROM song_genres " +
             "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
             "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "ORDER BY songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY songs.sortName COLLATE NOCASE, songs.id",
     )
     suspend fun genreSongIds(
         sourceId: Long,
@@ -274,7 +274,7 @@ interface QueueDao {
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL " +
-            "ORDER BY songs.starred DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+            "ORDER BY songs.starred DESC, songs.sortName COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
     )
     suspend fun starredSongs(
         sourceId: Long,
@@ -284,7 +284,7 @@ interface QueueDao {
 
     @Query(
         "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL " +
-            "ORDER BY starred DESC, title COLLATE NOCASE, id",
+            "ORDER BY starred DESC, sortName COLLATE NOCASE, id",
     )
     suspend fun starredSongIds(sourceId: Long): List<String>
 
@@ -293,7 +293,7 @@ interface QueueDao {
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id LIMIT :limit OFFSET :offset",
     )
     suspend fun downloadedSongs(
         sourceId: Long,
@@ -305,7 +305,7 @@ interface QueueDao {
         "SELECT songs.id FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.title COLLATE NOCASE, songs.id",
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id",
     )
     suspend fun downloadedSongIds(sourceId: Long): List<String>
 }

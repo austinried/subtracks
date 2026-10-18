@@ -54,17 +54,17 @@ class MigrationsTest {
                 applySchema(migrated, versions.first())
                 MIGRATIONS.sortedBy { it.startVersion }.forEach { it.migrate(migrated) }
 
-                assertEquals("NOCASE", indexColumn(migrated, "index_albums_name", "name").collation)
-                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "albumArtist").collation)
-                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "name").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_name", "sortName").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "albumArtistSort").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_artist", "sortName").collation)
                 assertEquals(1, indexColumn(migrated, "index_albums_year", "year").descending)
-                assertEquals("NOCASE", indexColumn(migrated, "index_albums_year", "name").collation)
-                assertEquals(0, indexColumn(migrated, "index_albums_year", "name").descending)
+                assertEquals("NOCASE", indexColumn(migrated, "index_albums_year", "sortName").collation)
+                assertEquals(0, indexColumn(migrated, "index_albums_year", "sortName").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_added", "created").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_starred", "starred").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_frequent", "playCount").descending)
                 assertEquals(1, indexColumn(migrated, "index_albums_recent", "played").descending)
-                assertEquals("NOCASE", indexColumn(migrated, "index_artists_name", "name").collation)
+                assertEquals("NOCASE", indexColumn(migrated, "index_artists_name", "sortName").collation)
                 assertEquals(1, indexColumn(migrated, "index_artists_albumCount", "albumCount").descending)
                 assertEquals(1, indexColumn(migrated, "index_artists_starred", "starred").descending)
                 assertEquals(1, indexColumn(migrated, "index_artists_frequent", "playCount").descending)
@@ -174,6 +174,40 @@ class MigrationsTest {
 
                 assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'ar1'"))
                 assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'ar2'"))
+            }
+        }
+
+    @Test
+    fun theSortNameBackfillUsesDisplayNamesAndArtistSortNames() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 30)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount) " +
+                        "VALUES (1, 'ar1', 'Utada Hikaru', 1)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
+                        "VALUES (1, 'al1', 'ar1', 'First Love', 'Utada Hikaru', 0, 1)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title) " +
+                        "VALUES (1, 's1', 'al1', 'ar1', 'Automatic')",
+                )
+
+                MIGRATION_30_31.migrate(migrated)
+
+                assertEquals("Utada Hikaru", text(migrated, "SELECT sortName FROM artists WHERE id = 'ar1'"))
+                assertEquals("First Love", text(migrated, "SELECT sortName FROM albums WHERE id = 'al1'"))
+                assertEquals("Utada Hikaru", text(migrated, "SELECT albumArtistSort FROM albums WHERE id = 'al1'"))
+                assertEquals("Automatic", text(migrated, "SELECT sortName FROM songs WHERE id = 's1'"))
+                assertEquals("Utada Hikaru", text(migrated, "SELECT artistSort FROM songs WHERE id = 's1'"))
+                assertEquals(1L, long(migrated, "SELECT COUNT(*) FROM artist_search WHERE artist_search MATCH 'utada'"))
+                assertEquals(1L, long(migrated, "SELECT COUNT(*) FROM album_search WHERE album_search MATCH 'first'"))
+                assertEquals(1L, long(migrated, "SELECT COUNT(*) FROM song_search WHERE song_search MATCH 'utada'"))
             }
         }
 
