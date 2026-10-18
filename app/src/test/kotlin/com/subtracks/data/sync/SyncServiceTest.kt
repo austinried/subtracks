@@ -1373,6 +1373,11 @@ class SyncServiceTest {
             insertSource()
             val source =
                 FakeMusicSource(
+                    artists =
+                        listOf(
+                            artist("a1", "Artist").copy(albumCount = 9),
+                            artist("a2", "Other").copy(albumCount = 9),
+                        ),
                     albums =
                         listOf(
                             album("al1").copy(artists = listOf(ArtistRef("a1", "Artist"), ArtistRef("a2", "Other"))),
@@ -1478,6 +1483,10 @@ class SyncServiceTest {
                                 artistId = "a1",
                                 artists = listOf(ArtistRef("a1", "Album Artist")),
                             ),
+                            album("al2").copy(
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a2", "Guest")),
+                            ),
                         ),
                     songs =
                         listOf(
@@ -1488,37 +1497,68 @@ class SyncServiceTest {
                                 playCount = 3,
                                 played = 100,
                             ),
+                            song("s2").copy(
+                                albumId = "al1",
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a2", "Guest")),
+                                playCount = 4,
+                                played = 200,
+                            ),
                         ),
                 )
 
             SyncService(db, source).sync()
 
             val guest = db.libraryDao().artistOnce(1, "a2")!!
-            assertEquals(1L, guest.albumCount)
-            assertEquals(1L, guest.songCount)
-            assertEquals(3L, guest.playCount)
-            assertEquals(100L, guest.played)
+            assertEquals(2L, guest.albumCount)
+            assertEquals(2L, guest.songCount)
+            assertEquals(7L, guest.playCount)
+            assertEquals(200L, guest.played)
+            val albums = db.libraryDao().albumsForArtist(1, "a2").first()
+            assertEquals(listOf("al1", "al2"), albums.map { it.id }.sorted())
+            assertEquals(albums.size.toLong(), guest.albumCount)
             assertEquals(
-                listOf("al1"),
-                db
-                    .libraryDao()
-                    .albumsForArtist(1, "a2")
-                    .first()
-                    .map { it.id },
-            )
-            assertEquals(
-                db
-                    .libraryDao()
-                    .albumsForArtist(1, "a2")
-                    .first()
-                    .size
-                    .toLong(),
+                albums.size.toLong(),
                 db
                     .libraryDao()
                     .artistsByName(1, 0, "")
                     .allRows()
                     .first { it.id == "a2" }
                     .albumCount,
+            )
+            assertEquals(guest.songCount, db.queueDao().artistLength(1, "a2"))
+        }
+
+    @Test
+    fun songsOnMissingAlbumsAreSongsButNotAlbums() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Artist")),
+                    albums = emptyList(),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "missing",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "Artist")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            val artist = db.libraryDao().artistOnce(1, "a1")!!
+            assertEquals(1L, artist.songCount)
+            assertEquals(0L, artist.albumCount)
+            assertEquals(
+                emptyList<String>(),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a1")
+                    .first()
+                    .map { it.id },
             )
         }
 

@@ -579,47 +579,70 @@ val MIGRATION_32_33 =
         }
     }
 
-// Recomputes the artist totals from the same credit union the sync uses, so badges, the artist
+// Recomputes the artist totals from the same credit unions the sync uses, so badges, the artist
 // page and the shuffle queue agree for libraries that predate the change.
 val MIGRATION_33_34 =
     object : Migration(33, 34) {
         override suspend fun migrate(connection: SQLiteConnection) {
             connection.execSQL(
-                "WITH credited AS (" +
+                "WITH credited_songs AS (" +
                     "SELECT songs.`sourceId` AS sourceId, songs.`artistId` AS artistId, " +
-                    "songs.`id` AS songId, songs.`albumId` AS albumId, " +
-                    "songs.`playCount` AS playCount, songs.`played` AS played " +
+                    "songs.`id` AS songId, songs.`playCount` AS playCount, songs.`played` AS played " +
                     "FROM songs WHERE songs.`artistId` IS NOT NULL " +
                     "UNION " +
-                    "SELECT song_artists.`sourceId`, song_artists.`artistId`, songs.`id`, songs.`albumId`, " +
+                    "SELECT song_artists.`sourceId`, song_artists.`artistId`, songs.`id`, " +
                     "songs.`playCount`, songs.`played` " +
                     "FROM song_artists JOIN songs " +
                     "ON songs.`sourceId` = song_artists.`sourceId` AND songs.`id` = song_artists.`songId` " +
                     "UNION " +
-                    "SELECT albums.`sourceId`, albums.`artistId`, songs.`id`, songs.`albumId`, " +
+                    "SELECT albums.`sourceId`, albums.`artistId`, songs.`id`, " +
                     "songs.`playCount`, songs.`played` " +
                     "FROM albums JOIN songs " +
                     "ON songs.`sourceId` = albums.`sourceId` AND songs.`albumId` = albums.`id` " +
                     "WHERE albums.`artistId` IS NOT NULL " +
                     "UNION " +
-                    "SELECT album_artists.`sourceId`, album_artists.`artistId`, songs.`id`, songs.`albumId`, " +
+                    "SELECT album_artists.`sourceId`, album_artists.`artistId`, songs.`id`, " +
                     "songs.`playCount`, songs.`played` " +
                     "FROM album_artists JOIN songs " +
                     "ON songs.`sourceId` = album_artists.`sourceId` AND songs.`albumId` = album_artists.`albumId`" +
+                    "), credited_albums AS (" +
+                    "SELECT albums.`sourceId` AS sourceId, albums.`artistId` AS artistId, " +
+                    "albums.`id` AS albumId " +
+                    "FROM albums WHERE albums.`artistId` IS NOT NULL " +
+                    "UNION " +
+                    "SELECT album_artists.`sourceId`, album_artists.`artistId`, albums.`id` " +
+                    "FROM album_artists JOIN albums " +
+                    "ON albums.`sourceId` = album_artists.`sourceId` AND albums.`id` = album_artists.`albumId` " +
+                    "UNION " +
+                    "SELECT songs.`sourceId`, songs.`artistId`, songs.`albumId` " +
+                    "FROM songs JOIN albums " +
+                    "ON albums.`sourceId` = songs.`sourceId` AND albums.`id` = songs.`albumId` " +
+                    "WHERE songs.`artistId` IS NOT NULL " +
+                    "UNION " +
+                    "SELECT song_artists.`sourceId`, song_artists.`artistId`, songs.`albumId` " +
+                    "FROM song_artists JOIN songs " +
+                    "ON songs.`sourceId` = song_artists.`sourceId` AND songs.`id` = song_artists.`songId` " +
+                    "JOIN albums ON albums.`sourceId` = songs.`sourceId` AND albums.`id` = songs.`albumId`" +
                     "), totals AS (" +
                     "SELECT sourceId, artistId AS id, COUNT(DISTINCT songId) AS songCount, " +
-                    "COUNT(DISTINCT albumId) AS albumCount, SUM(playCount) AS playCount, MAX(played) AS played " +
-                    "FROM credited GROUP BY sourceId, artistId" +
+                    "SUM(playCount) AS playCount, MAX(played) AS played " +
+                    "FROM credited_songs GROUP BY sourceId, artistId" +
+                    "), album_totals AS (" +
+                    "SELECT sourceId, artistId AS id, COUNT(DISTINCT albumId) AS albumCount " +
+                    "FROM credited_albums GROUP BY sourceId, artistId" +
                     ") " +
                     "UPDATE artists SET songCount = c.songCount, albumCount = c.albumCount, " +
                     "playCount = c.playCount, played = c.played " +
                     "FROM (SELECT artists.`sourceId` AS sourceId, artists.`id` AS id, " +
-                    "COALESCE(totals.songCount, 0) AS songCount, COALESCE(totals.albumCount, 0) AS albumCount, " +
+                    "COALESCE(totals.songCount, 0) AS songCount, " +
+                    "COALESCE(album_totals.albumCount, 0) AS albumCount, " +
                     "COALESCE(totals.playCount, 0) AS playCount, totals.played AS played " +
                     "FROM artists LEFT JOIN totals " +
                     "ON totals.sourceId = artists.`sourceId` AND totals.id = artists.`id` " +
+                    "LEFT JOIN album_totals " +
+                    "ON album_totals.sourceId = artists.`sourceId` AND album_totals.id = artists.`id` " +
                     "WHERE EXISTS (SELECT 1 FROM album_artists WHERE album_artists.`sourceId` = artists.`sourceId`) " +
-                    "AND EXISTS (SELECT 1 FROM song_artists WHERE song_artists.`sourceId` = artists.`sourceId`)" +
+                    "OR EXISTS (SELECT 1 FROM song_artists WHERE song_artists.`sourceId` = artists.`sourceId`)" +
                     ") c " +
                     "WHERE artists.`sourceId` = c.sourceId AND artists.`id` = c.id " +
                     "AND (artists.`songCount` != c.songCount OR artists.`albumCount` != c.albumCount " +

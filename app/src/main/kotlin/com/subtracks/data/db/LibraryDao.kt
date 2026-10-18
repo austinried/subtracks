@@ -116,6 +116,25 @@ private const val CREDITED_SONG_ROWS =
         "ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
         "WHERE album_artists.sourceId = :sourceId"
 
+private const val CREDITED_ALBUM_ROWS =
+    "SELECT albums.artistId AS artistId, albums.id AS albumId " +
+        "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "UNION " +
+        "SELECT album_artists.artistId, albums.id " +
+        "FROM album_artists JOIN albums " +
+        "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId " +
+        "UNION " +
+        "SELECT songs.artistId, songs.albumId " +
+        "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
+        "UNION " +
+        "SELECT song_artists.artistId, songs.albumId " +
+        "FROM song_artists JOIN songs " +
+        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_artists.sourceId = :sourceId"
+
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
@@ -141,13 +160,8 @@ internal const val ARTISTS_SELECT =
 
 internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "artists.albumCount DESC, sortName COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "artists.albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
-
-// These order on the projected alias so the downloaded list sorts by the number it shows.
-internal const val ARTIST_ORDER_BY_DOWNLOADED_ALBUM_COUNT = "albumCount DESC, sortName COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_DOWNLOADED_ALBUM_COUNT_REVERSED =
-    "albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, sortName COLLATE NOCASE, id"
+internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_STARRED_REVERSED = "starred ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_FREQUENT = "artists.playCount DESC, sortName COLLATE NOCASE, id"
@@ -252,16 +266,20 @@ interface LibraryDao {
     suspend fun recomputeArtistPlayData(sourceId: Long)
 
     // Stored so the download badge query can report an artist's total without walking every song,
-    // and so the artist badges use the same credit set as the artist page and the shuffle queue.
+    // and so the artist badges use the same counts as the artist page and the shuffle queue.
     @Query(
-        "WITH credited AS ($CREDITED_SONG_ROWS), counts AS (" +
-            "SELECT artistId AS id, COUNT(DISTINCT songId) AS songCount, " +
-            "COUNT(DISTINCT albumId) AS albumCount " +
+        "WITH credited AS ($CREDITED_SONG_ROWS), " +
+            "credited_albums AS ($CREDITED_ALBUM_ROWS), " +
+            "counts AS (" +
+            "SELECT artistId AS id, COUNT(DISTINCT songId) AS songCount " +
             "FROM credited GROUP BY artistId" +
+            "), album_counts AS (" +
+            "SELECT artistId AS id, COUNT(DISTINCT albumId) AS albumCount " +
+            "FROM credited_albums GROUP BY artistId" +
             ") " +
             "UPDATE artists SET songCount = c.songCount, albumCount = c.albumCount, credited = c.credited " +
             "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount, " +
-            "COALESCE(counts.albumCount, 0) AS albumCount, " +
+            "COALESCE(album_counts.albumCount, 0) AS albumCount, " +
             "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
             "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
             "OR EXISTS (SELECT 1 FROM album_artists aa " +
@@ -269,6 +287,7 @@ interface LibraryDao {
             "OR EXISTS (SELECT 1 FROM song_artists sa " +
             "WHERE sa.sourceId = artists.sourceId AND sa.artistId = artists.id)) AS credited " +
             "FROM artists LEFT JOIN counts ON counts.id = artists.id " +
+            "LEFT JOIN album_counts ON album_counts.id = artists.id " +
             "WHERE artists.sourceId = :sourceId) c " +
             "WHERE artists.sourceId = :sourceId AND artists.id = c.id " +
             "AND (artists.songCount != c.songCount OR artists.albumCount != c.albumCount " +
@@ -718,7 +737,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_DOWNLOADED_ALBUM_COUNT")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
     fun artistsByAlbumCount(
         sourceId: Long,
         starredFilter: Int,
@@ -726,7 +745,7 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Artist>
 
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_DOWNLOADED_ALBUM_COUNT_REVERSED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
     fun artistsByAlbumCountReversed(
         sourceId: Long,
         starredFilter: Int,

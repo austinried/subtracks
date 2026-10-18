@@ -65,7 +65,7 @@ class SyncService(
         val seen = HashedIds()
         source.artists().collect { batch ->
             if (batch.isEmpty()) return@collect
-            write("artists", artistColumns, primaryKey, batch) { it.values() }
+            write("artists", artistColumns, primaryKey, batch, preserved = setOf("albumCount")) { it.values() }
             batch.forEach { seen.add(idHash(it.id)) }
             artistsSynced += batch.size
         }
@@ -314,11 +314,12 @@ class SyncService(
         columns: List<String>,
         key: List<String>,
         rows: List<T>,
+        preserved: Set<String> = emptySet(),
         values: (T) -> List<Any?>,
     ) {
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                connection.upsertChanged(table, columns, key, rows, values)
+                connection.upsertChanged(table, columns, key, rows, preserved, values)
             }
         }
     }
@@ -613,11 +614,12 @@ private suspend fun <T> PooledConnection.upsertChanged(
     columns: List<String>,
     key: List<String>,
     rows: List<T>,
+    preserved: Set<String> = emptySet(),
     values: (T) -> List<Any?>,
 ) {
     if (rows.isEmpty()) return
     check(values(rows.first()).size == columns.size) { "column/value mismatch for $table" }
-    val updates = columns.filterNot { it in key }
+    val updates = columns.filterNot { it in key || it in preserved }
     val sql =
         "INSERT INTO $table (${columns.joinToString()}) VALUES (${columns.joinToString { "?" }}) " +
             "ON CONFLICT(${key.joinToString()}) DO UPDATE SET " +

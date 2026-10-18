@@ -284,6 +284,9 @@ class MigrationsTest {
                     "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (2, 't', 'http://y', 1, 0)",
                 )
                 migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (3, 'u', 'http://z', 1, 0)",
+                )
+                migrated.execSQL(
                     "INSERT INTO artists (sourceId, id, name, albumCount, songCount, playCount, played) " +
                         "VALUES (1, 'a1', 'Album Artist', 1, 0, 0, NULL)",
                 )
@@ -296,8 +299,16 @@ class MigrationsTest {
                         "VALUES (2, 'b1', 'Unsynced', 7, 6, 5, 100)",
                 )
                 migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, songCount, playCount, played) " +
+                        "VALUES (3, 'c1', 'Track Only', 7, 6, 5, 100)",
+                )
+                migrated.execSQL(
                     "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
                         "VALUES (1, 'al1', 'a1', 'Album', 'Album Artist', 0, 1)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
+                        "VALUES (1, 'al2', 'a2', 'Empty Album', 'Guest', 0, 0)",
                 )
                 migrated.execSQL(
                     "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
@@ -315,6 +326,18 @@ class MigrationsTest {
                     "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
                         "VALUES (1, 's1', 1, 'a2', 'Guest')",
                 )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title, playCount, played) " +
+                        "VALUES (3, 's3', NULL, 'c1', 'Three', 2, 50)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (3, 's3', 0, 'c1', 'Track Only')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title, playCount, played) " +
+                        "VALUES (3, 's4', 'missing', 'c1', 'Four', 3, 60)",
+                )
 
                 MIGRATION_33_34.migrate(migrated)
 
@@ -323,13 +346,17 @@ class MigrationsTest {
                 assertEquals(4L, long(migrated, "SELECT playCount FROM artists WHERE id = 'a1'"))
                 assertEquals(200L, long(migrated, "SELECT played FROM artists WHERE id = 'a1'"))
                 assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'a2'"))
-                assertEquals(1L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'a2'"))
+                assertEquals(2L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'a2'"))
                 assertEquals(4L, long(migrated, "SELECT playCount FROM artists WHERE id = 'a2'"))
                 assertEquals(200L, long(migrated, "SELECT played FROM artists WHERE id = 'a2'"))
                 assertEquals(6L, long(migrated, "SELECT songCount FROM artists WHERE id = 'b1'"))
                 assertEquals(7L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'b1'"))
                 assertEquals(5L, long(migrated, "SELECT playCount FROM artists WHERE id = 'b1'"))
                 assertEquals(100L, long(migrated, "SELECT played FROM artists WHERE id = 'b1'"))
+                assertEquals(2L, long(migrated, "SELECT songCount FROM artists WHERE id = 'c1'"))
+                assertEquals(0L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'c1'"))
+                assertEquals(5L, long(migrated, "SELECT playCount FROM artists WHERE id = 'c1'"))
+                assertEquals(60L, long(migrated, "SELECT played FROM artists WHERE id = 'c1'"))
             }
         }
 
