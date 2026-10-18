@@ -4,8 +4,10 @@ import androidx.room3.ColumnTypeConverters
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumArtistRef
 import com.subtracks.data.model.AlbumSearch
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistRefsConverter
 import com.subtracks.data.model.ArtistSearch
 import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Disc
@@ -20,6 +22,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKindConverter
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongArtistRef
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.SongGenre
 import com.subtracks.data.model.SongSearch
@@ -36,11 +39,13 @@ import com.subtracks.data.model.UpNextEntry
         Album::class,
         AlbumSearch::class,
         Disc::class,
+        AlbumArtistRef::class,
         Playlist::class,
         PlaylistSearch::class,
         PlaylistSong::class,
         Song::class,
         SongGenre::class,
+        SongArtistRef::class,
         SongSearch::class,
         QueueEntry::class,
         UpNextEntry::class,
@@ -49,7 +54,7 @@ import com.subtracks.data.model.UpNextEntry
         SongDownload::class,
         PendingAction::class,
     ],
-    version = 28,
+    version = 29,
     exportSchema = true,
 )
 @ColumnTypeConverters(
@@ -57,6 +62,7 @@ import com.subtracks.data.model.UpNextEntry
     DownloadStatusConverter::class,
     DownloadErrorConverter::class,
     PendingActionKindConverter::class,
+    ArtistRefsConverter::class,
 )
 abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao

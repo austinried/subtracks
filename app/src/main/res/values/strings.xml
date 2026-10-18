@@ -140,6 +140,7 @@
     <string name="more_options">More options</string>
     <string name="open_album">Open album</string>
     <string name="open_artist">Open artist</string>
+    <string name="artist_chooser_title">Artists</string>
     <string name="unknown_artist">Unknown artist</string>
     <string name="unknown_album">Unknown album</string>
 

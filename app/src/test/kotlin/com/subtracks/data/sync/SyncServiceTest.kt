@@ -10,10 +10,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.DiscKey
+import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.StarType
@@ -926,6 +930,121 @@ class SyncServiceTest {
             assertEquals(null, cleared.albumGain)
             assertEquals(null, cleared.trackPeak)
             assertEquals(null, cleared.albumPeak)
+        }
+
+    @Test
+    fun everyAlbumArtistAndTrackArtistReachesTheSharedAlbum() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A"), artist("a2", "B")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                albumArtist = "A • B",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                artistId = "a1",
+                                artist = "A • B",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                listOf("al1"),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a1")
+                    .first()
+                    .map { it.id },
+            )
+            assertEquals(
+                listOf("al1"),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a2")
+                    .first()
+                    .map { it.id },
+            )
+            assertEquals(listOf("s1"), db.queueDao().artistSongIds(1, "a1"))
+            assertEquals(listOf("s1"), db.queueDao().artistSongIds(1, "a2"))
+            assertEquals(1L, db.queueDao().artistLength(1, "a2"))
+            assertEquals("B", db.libraryDao().artistName(1, "a2").first())
+
+            source.albums = listOf(album("al1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "A"))))
+            source.songs = listOf(song("s1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "A"))))
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                emptyList<String>(),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a2")
+                    .first()
+                    .map { it.id },
+            )
+            assertEquals(emptyList<String>(), db.queueDao().artistSongIds(1, "a2"))
+        }
+
+    @Test
+    fun anIdenticalSyncDoesNotRewriteArtistRows() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    albums =
+                        listOf(
+                            album("al1").copy(artists = listOf(ArtistRef("a1", "Artist"), ArtistRef("a2", "Other"))),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(artists = listOf(ArtistRef("a1", "Artist"), ArtistRef("a2", "Other"))),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+            val before = totalChanges()
+
+            SyncService(db, source).sync()
+
+            assertEquals(before, totalChanges())
+        }
+
+    @Test
+    fun theDownloadedArtistFilterIncludesEveryAlbumArtist() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A"), artist("a2", "B")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                albumArtist = "A • B",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                    songs = listOf(song("s1").copy(artistId = "a1")),
+                )
+
+            SyncService(db, source).sync()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+
+            val filtered = db.libraryDao().artistsByName(1, 0, "", downloadedFilter = 1).allRows()
+            assertEquals(listOf("A", "B"), filtered.map { it.name })
+            assertEquals(listOf(1L, 1L), filtered.map { it.albumCount })
+            assertEquals(ListDownloadStatus(total = 1, downloaded = 1), db.downloadDao().artistStatus(1, "a2").first())
         }
 
     private suspend fun totalChanges(): Long =

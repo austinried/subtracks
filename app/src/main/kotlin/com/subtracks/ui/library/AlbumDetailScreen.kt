@@ -36,6 +36,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistChooserSheet
 import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.DeleteDownloadsDialog
@@ -75,7 +76,11 @@ fun AlbumDetailRoute(
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Long?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
+    var showArtistChooser by remember { mutableStateOf(false) }
+    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) {
+        pendingDelete = null
+        showArtistChooser = false
+    }
     val playback by playbackController.state.collectAsStateWithLifecycle()
     val context = playback.context
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
@@ -126,9 +131,13 @@ fun AlbumDetailRoute(
         },
         onArtistClick =
             album
-                ?.takeIf { !it.albumArtist.isNullOrBlank() }
-                ?.let { it.artistId }
-                ?.let { id -> { onViewArtist(id) } },
+                ?.takeIf { it.artistRefs.isNotEmpty() }
+                ?.let {
+                    {
+                        val artists = it.artistRefs
+                        if (artists.size == 1) onViewArtist(artists.first().id) else showArtistChooser = true
+                    }
+                },
         playingSongId = playback.item?.id.takeIf { context?.kind == QueueKind.Album && context.refId == albumId },
     )
 
@@ -138,6 +147,17 @@ fun AlbumDetailRoute(
             bytes = bytes,
             onConfirm = { viewModel.onDownloadAction(BulkDownloadAction.Delete) },
             onDismiss = { pendingDelete = null },
+        )
+    }
+
+    if (showArtistChooser) {
+        ArtistChooserSheet(
+            artists = album?.artistRefs.orEmpty(),
+            onArtistClick = { artist ->
+                showArtistChooser = false
+                onViewArtist(artist.id)
+            },
+            onDismiss = { showArtistChooser = false },
         )
     }
 }

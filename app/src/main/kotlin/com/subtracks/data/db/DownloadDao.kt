@@ -20,11 +20,25 @@ private const val ARTIST_DOWNLOAD_ROWS =
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
         "UNION ALL " +
+        "SELECT album_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN album_artists ON album_artists.sourceId = albums.sourceId AND album_artists.albumId = albums.id " +
+        "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId " +
+        "UNION ALL " +
         "SELECT songs.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
         "FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
-        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL"
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId AS id, songs.id AS songId, song_downloads.status AS status " +
+        "FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN song_artists ON song_artists.sourceId = songs.sourceId AND song_artists.songId = songs.id " +
+        "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId"
 
 @Dao
 interface DownloadDao {

@@ -4,6 +4,7 @@ import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
@@ -82,10 +83,27 @@ object SubsonicXml {
         entity: SongDraft,
         name: String,
         attrs: Attributes,
+        level: Int,
     ) {
         when (name) {
-            "genres" -> entity.addGenre(attrs)
-            "replayGain" -> entity.addReplayGain(attrs)
+            "genres" -> if (level == 1) entity.addGenre(attrs)
+            "replayGain" -> if (level == 1) entity.addReplayGain(attrs)
+            "artists" -> if (level == 1) entity.addArtists(attrs)
+            "albumArtists" -> entity.clearNestedArtists()
+            "artist" -> if (level == 2) entity.addNestedArtist(attrs)
+        }
+    }
+
+    internal fun albumChild(
+        entity: AlbumDraft,
+        name: String,
+        attrs: Attributes,
+        level: Int,
+    ) {
+        when (name) {
+            "discTitles" -> if (level == 1) entity.addDiscTitle(attrs)
+            "artists" -> if (level == 1) entity.addArtists(attrs)
+            "artist" -> if (level == 2) entity.addNestedArtist(attrs)
         }
     }
 
@@ -126,7 +144,7 @@ object SubsonicXml {
         input: InputStream,
         entityTag: String,
         create: (Attributes) -> T,
-        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+        onChild: (T, String, Attributes, Int) -> Unit = { _, _, _, _ -> },
         onEnd: (T) -> Unit,
     ) {
         parse(input, EntityHandler(entityTag, create, onChild, onEnd, stopAfterFirst = false))
@@ -136,7 +154,7 @@ object SubsonicXml {
         input: InputStream,
         entityTag: String,
     ): Boolean {
-        val handler = EntityHandler(entityTag, { Unit }, { _, _, _ -> }, { }, stopAfterFirst = true)
+        val handler = EntityHandler(entityTag, { Unit }, { _, _, _, _ -> }, { }, stopAfterFirst = true)
         parse(input, handler)
         return handler.found
     }
@@ -156,10 +174,27 @@ internal class AlbumDraft(
     var songCount: Long = 0L,
     val discTitles: MutableMap<Long, String> = mutableMapOf(),
 ) {
+    private val artists = mutableListOf<ArtistRef>()
+    private var artistContainer = false
+
     fun addDiscTitle(attrs: Attributes) {
         val disc = attrs.longAttr("disc") ?: return
         val title = attrs.attr("title").takeIf { it.isNotBlank() } ?: return
         discTitles[disc] = title
+    }
+
+    fun addArtists(attrs: Attributes) {
+        val ref = attrs.artistRef()
+        if (ref == null) {
+            artistContainer = true
+        } else {
+            artists += ref
+            artistContainer = false
+        }
+    }
+
+    fun addNestedArtist(attrs: Attributes) {
+        if (artistContainer) attrs.artistRef()?.let { artists += it }
     }
 
     fun toAlbum(): Album =
@@ -176,6 +211,7 @@ internal class AlbumDraft(
             starred = starred,
             songCount = songCount,
             discTitles = discTitles.toMap(),
+            artists = artistFallback(artists, artistId, albumArtist),
         )
 }
 
@@ -201,6 +237,9 @@ internal class SongDraft(
     private var albumPeak: Float? = null,
     private val genres: MutableList<String> = mutableListOf(),
 ) {
+    private val artists = mutableListOf<ArtistRef>()
+    private var nestedArtists: MutableList<ArtistRef>? = null
+
     fun addGenre(attrs: Attributes) {
         attrs
             .attr("name")
@@ -214,6 +253,24 @@ internal class SongDraft(
         attrs.floatAttr("albumGain")?.let { albumGain = it }
         attrs.floatAttr("trackPeak")?.let { trackPeak = it }
         attrs.floatAttr("albumPeak")?.let { albumPeak = it }
+    }
+
+    fun addArtists(attrs: Attributes) {
+        val ref = attrs.artistRef()
+        if (ref == null) {
+            nestedArtists = artists
+        } else {
+            artists += ref
+            nestedArtists = null
+        }
+    }
+
+    fun clearNestedArtists() {
+        nestedArtists = null
+    }
+
+    fun addNestedArtist(attrs: Attributes) {
+        nestedArtists?.let { list -> attrs.artistRef()?.let { list += it } }
     }
 
     fun toSong(): Song =
@@ -238,7 +295,26 @@ internal class SongDraft(
             trackPeak = trackPeak,
             albumPeak = albumPeak,
             genres = genres.toList(),
+            artists = artistFallback(artists, artistId, artist),
         )
+}
+
+private fun Attributes.artistRef(): ArtistRef? {
+    val id = attr("id")
+    val name = attr("name")
+    if (id.isEmpty() && name.isEmpty()) return null
+    return ArtistRef(id, name)
+}
+
+private fun artistFallback(
+    parsed: List<ArtistRef>,
+    artistId: String?,
+    name: String?,
+): List<ArtistRef> {
+    val refs = parsed.filter { it.id.isNotBlank() }.distinctBy { it.id }
+    if (refs.isNotEmpty()) return refs
+    if (artistId.isNullOrBlank()) return emptyList()
+    return listOf(ArtistRef(artistId, name.orEmpty()))
 }
 
 internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
@@ -311,7 +387,7 @@ private open class SubsonicResponseHandler : DefaultHandler() {
 private class EntityHandler<T>(
     private val entityTag: String,
     private val create: (Attributes) -> T,
-    private val onChild: (T, String, Attributes) -> Unit,
+    private val onChild: (T, String, Attributes, Int) -> Unit,
     private val onEnd: (T) -> Unit,
     private val stopAfterFirst: Boolean,
 ) : SubsonicResponseHandler() {
@@ -332,8 +408,8 @@ private class EntityHandler<T>(
                 current = create(attributes)
                 entityDepth = depth
             }
-        } else if (depth == entityDepth + 1) {
-            onChild(active, name, attributes)
+        } else if (depth > entityDepth) {
+            onChild(active, name, attributes, depth - entityDepth)
         }
     }
 

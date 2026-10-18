@@ -1,5 +1,6 @@
 package com.subtracks.data.source.subsonic
 
+import com.subtracks.data.model.ArtistRef
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,7 +13,7 @@ class SubsonicXmlTest {
         xml: String,
         tag: String,
         create: (Attributes) -> T,
-        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+        onChild: (T, String, Attributes, Int) -> Unit = { _, _, _, _ -> },
     ): List<T> {
         val result = mutableListOf<T>()
         SubsonicXml.readEntities(
@@ -30,7 +31,7 @@ class SubsonicXmlTest {
             xml,
             tag = "album",
             create = { SubsonicXml.albumDraft(1, it) },
-            onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
+            onChild = SubsonicXml::albumChild,
         ).map { it.toAlbum() }
 
     private fun songs(xml: String) =
@@ -108,6 +109,114 @@ class SubsonicXmlTest {
     }
 
     @Test
+    fun mapsAlbumArtistsFromRepeatedOpenSubsonicRefs() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Split" artist="A • B" songCount="1">
+                      <artists id="ar1" name="A"/>
+                      <artists id="ar2" name="B"/>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+            albums.single().artists,
+        )
+    }
+
+    @Test
+    fun mapsNestedAlbumArtistRefs() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Split" songCount="1">
+                      <artists>
+                        <artist id="ar1" name="A"/>
+                        <artist id="ar2" name="B"/>
+                      </artists>
+                    </album>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+            albums.single().artists,
+        )
+    }
+
+    @Test
+    fun fallsBackToTheSingularAlbumArtist() {
+        val albums =
+            albums(
+                """
+                <subsonic-response status="ok">
+                  <albumList2>
+                    <album id="al1" name="Kid A" artist="Radiohead" artistId="ar1" songCount="10"/>
+                  </albumList2>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(listOf(ArtistRef("ar1", "Radiohead")), albums.single().artists)
+    }
+
+    @Test
+    fun mapsSongArtistsAndIgnoresAlbumArtists() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Collab" artist="A • B" albumId="al1">
+                    <artists id="ar1" name="A"/>
+                    <artists id="ar2" name="B"/>
+                    <albumArtists id="ar3" name="Album Artist"/>
+                  </song>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+            songs.single().artists,
+        )
+    }
+
+    @Test
+    fun mapsNestedSongArtistRefs() {
+        val songs =
+            songs(
+                """
+                <subsonic-response status="ok">
+                  <song id="s1" title="Collab" albumId="al1">
+                    <artists>
+                      <artist id="ar1" name="A"/>
+                      <artist id="ar2" name="B"/>
+                    </artists>
+                    <albumArtists>
+                      <artist id="ar3" name="Album Artist"/>
+                    </albumArtists>
+                  </song>
+                </subsonic-response>
+                """.trimIndent(),
+            )
+
+        assertEquals(
+            listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+            songs.single().artists,
+        )
+    }
+
+    @Test
     fun parsesTimestampsWithFractionsAndOffsets() {
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370827413Z"))
         assertEquals(1789906657L, IsoDate.parse("2026-09-20T12:17:37.370Z"))
@@ -138,6 +247,7 @@ class SubsonicXmlTest {
         assertEquals(1, songs.size)
         assertEquals("Idioteque", songs[0].title)
         assertEquals(300L, songs[0].duration)
+        assertEquals(listOf(ArtistRef("ar1", "Radiohead")), songs[0].artists)
         assertEquals(0L, entries[0].position)
         assertEquals("sg1", entries[0].songId)
     }

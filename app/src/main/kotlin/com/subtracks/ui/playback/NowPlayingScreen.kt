@@ -85,6 +85,7 @@ import com.subtracks.playback.PlaybackController
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
 import com.subtracks.playback.RepeatMode
+import com.subtracks.ui.components.ArtistChooserSheet
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
@@ -203,6 +204,7 @@ fun NowPlayingRoute(
     val downloads by downloadRepository.states().collectAsStateWithLifecycle()
     val download = songId?.let { downloads[it] }
     val scope = rememberCoroutineScope()
+    var showArtistChooser by remember { mutableStateOf(false) }
     val song by
         produceState<Song?>(null, sourceId, songId) {
             if (sourceId != null && songId != null) {
@@ -272,13 +274,32 @@ fun NowPlayingRoute(
         onRepeat = controller::cycleRepeat,
         onMore = { song?.let { contextMenuHost?.show(MenuTarget.Song(it, thumbnail, download), actions) } },
         onAlbumClick = song?.albumId?.let { id -> { onViewAlbum(id) } },
-        onArtistClick = song?.artistId?.let { id -> { onViewArtist(id) } },
+        onArtistClick =
+            song
+                ?.takeIf { it.artistRefs.isNotEmpty() }
+                ?.let {
+                    {
+                        val artists = it.artistRefs
+                        if (artists.size == 1) onViewArtist(artists.first().id) else showArtistChooser = true
+                    }
+                },
         starred = song?.starred != null,
         onToggleStar = song?.let { s -> { setStar(StarType.Song, s.id, s.starred == null) } },
         onSeek = controller::seekTo,
         keepScreenOn = keepScreenOn,
         modifier = modifier,
     )
+
+    if (showArtistChooser) {
+        ArtistChooserSheet(
+            artists = song?.artistRefs.orEmpty(),
+            onArtistClick = { artist ->
+                showArtistChooser = false
+                onViewArtist(artist.id)
+            },
+            onDismiss = { showArtistChooser = false },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -103,7 +103,7 @@ class SubsonicSource(
                     params = page("newest", offset),
                     tag = "album",
                     create = { SubsonicXml.albumDraft(id, it) },
-                    onChild = { draft, name, attrs -> if (name == "discTitles") draft.addDiscTitle(attrs) },
+                    onChild = SubsonicXml::albumChild,
                 ).collect { batch ->
                     raw += batch.size
                     val accepted = batch.filter { it.id.isNotEmpty() }
@@ -323,7 +323,7 @@ class SubsonicSource(
         params: Map<String, String> = emptyMap(),
         tag: String,
         create: (Attributes) -> T,
-        onChild: (T, String, Attributes) -> Unit = { _, _, _ -> },
+        onChild: (T, String, Attributes, Int) -> Unit = { _, _, _, _ -> },
     ): Flow<List<T>> =
         channelFlow {
             val buffer = ArrayList<T>(PAGE_SIZE)

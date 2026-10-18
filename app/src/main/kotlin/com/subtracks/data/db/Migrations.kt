@@ -394,6 +394,34 @@ val MIGRATION_27_28 =
         }
     }
 
+val MIGRATION_28_29 =
+    object : Migration(28, 29) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `songs` ADD COLUMN `artists` TEXT NOT NULL DEFAULT ''")
+            connection.execSQL("ALTER TABLE `albums` ADD COLUMN `artists` TEXT NOT NULL DEFAULT ''")
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `album_artists` (`sourceId` INTEGER NOT NULL, `albumId` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, `artistId` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                    "PRIMARY KEY(`sourceId`, `albumId`, `position`), " +
+                    "FOREIGN KEY(`sourceId`, `albumId`) REFERENCES `albums`(`sourceId`, `id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_album_artists_sourceId_artistId` ON `album_artists` (`sourceId`, `artistId`)",
+            )
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `song_artists` (`sourceId` INTEGER NOT NULL, `songId` TEXT NOT NULL, " +
+                    "`position` INTEGER NOT NULL, `artistId` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                    "PRIMARY KEY(`sourceId`, `songId`, `position`), " +
+                    "FOREIGN KEY(`sourceId`, `songId`) REFERENCES `songs`(`sourceId`, `id`) " +
+                    "ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_song_artists_sourceId_artistId` ON `song_artists` (`sourceId`, `artistId`)",
+            )
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -455,4 +483,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_25_26,
         MIGRATION_26_27,
         MIGRATION_27_28,
+        MIGRATION_28_29,
     )

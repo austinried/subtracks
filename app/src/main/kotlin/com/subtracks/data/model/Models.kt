@@ -39,6 +39,11 @@ data class SubsonicSource(
     val useTokenAuth: Boolean = true,
 )
 
+data class ArtistRef(
+    val id: String,
+    val name: String,
+)
+
 @Entity(
     tableName = "artists",
     primaryKeys = ["sourceId", "id"],
@@ -144,7 +149,17 @@ data class Album(
     @Ignore val discTitles: Map<Long, String> = emptyMap(),
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
-)
+    @ColumnInfo(defaultValue = "''") val artists: List<ArtistRef> = emptyList(),
+) {
+    val artistRefs: List<ArtistRef>
+        get() =
+            artists.ifEmpty {
+                artistId
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { listOf(ArtistRef(it, albumArtist.orEmpty())) }
+                    .orEmpty()
+            }
+}
 
 @Entity(
     tableName = "discs",
@@ -269,7 +284,17 @@ data class Song(
     val trackPeak: Float? = null,
     val albumPeak: Float? = null,
     @Ignore val genres: List<String> = emptyList(),
-)
+    @ColumnInfo(defaultValue = "''") val artists: List<ArtistRef> = emptyList(),
+) {
+    val artistRefs: List<ArtistRef>
+        get() =
+            artists.ifEmpty {
+                artistId
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { listOf(ArtistRef(it, artist.orEmpty())) }
+                    .orEmpty()
+            }
+}
 
 @Entity(
     tableName = "song_genres",
@@ -289,6 +314,48 @@ data class SongGenre(
     val songId: String,
     val position: Long,
     val genre: String,
+)
+
+@Entity(
+    tableName = "album_artists",
+    primaryKeys = ["sourceId", "albumId", "position"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Album::class,
+            parentColumns = ["sourceId", "id"],
+            childColumns = ["sourceId", "albumId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId", "artistId")],
+)
+data class AlbumArtistRef(
+    val sourceId: Long,
+    val albumId: String,
+    val position: Long,
+    val artistId: String,
+    val name: String,
+)
+
+@Entity(
+    tableName = "song_artists",
+    primaryKeys = ["sourceId", "songId", "position"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Song::class,
+            parentColumns = ["sourceId", "id"],
+            childColumns = ["sourceId", "songId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId", "artistId")],
+)
+data class SongArtistRef(
+    val sourceId: Long,
+    val songId: String,
+    val position: Long,
+    val artistId: String,
+    val name: String,
 )
 
 enum class PendingActionKind { Scrobble, Star, Unstar }
@@ -477,4 +544,32 @@ class PendingActionKindConverter {
     @ColumnTypeConverter
     fun toPendingActionKind(value: String): PendingActionKind =
         PendingActionKind.entries.firstOrNull { it.name == value } ?: PendingActionKind.Scrobble
+}
+
+class ArtistRefsConverter {
+    @ColumnTypeConverter
+    fun fromArtistRefs(refs: List<ArtistRef>): String = ArtistRefsCodec.encode(refs)
+
+    @ColumnTypeConverter
+    fun toArtistRefs(value: String): List<ArtistRef> = ArtistRefsCodec.decode(value)
+}
+
+object ArtistRefsCodec {
+    fun encode(refs: List<ArtistRef>): String = refs.joinToString(RECORD) { "${it.id}$FIELD${it.name}" }
+
+    fun decode(value: String): List<ArtistRef> =
+        value
+            .takeIf { it.isNotEmpty() }
+            ?.split(RECORD)
+            ?.map { entry ->
+                val separator = entry.indexOf(FIELD)
+                if (separator < 0) {
+                    ArtistRef(entry, "")
+                } else {
+                    ArtistRef(entry.substring(0, separator), entry.substring(separator + 1))
+                }
+            }.orEmpty()
+
+    private const val FIELD = "\u001F"
+    private const val RECORD = "\u001E"
 }

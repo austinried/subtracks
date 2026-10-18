@@ -187,7 +187,7 @@ fun ArtistDetailRoute(
     ArtistDetailScreen(
         artist = artist,
         artistName = artistName.orEmpty(),
-        isAlbumArtist = albums.any { it.artistId == artistId },
+        isAlbumArtist = albums.any { album -> album.artistRefs.any { it.id == artistId } },
         albums = albums,
         art = art,
         artThumbnail = artThumbnail,

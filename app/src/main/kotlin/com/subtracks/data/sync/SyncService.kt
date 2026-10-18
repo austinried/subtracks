@@ -6,12 +6,16 @@ import androidx.room3.useWriterConnection
 import androidx.sqlite.SQLiteStatement
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumArtistRef
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistRef
+import com.subtracks.data.model.ArtistRefsCodec
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongArtistRef
 import com.subtracks.data.model.SongGenre
 import com.subtracks.data.source.MusicSource
 import java.util.Arrays
@@ -96,6 +100,10 @@ class SyncService(
             batch.flatMap { song ->
                 names.getValue(song.id).mapIndexed { index, genre -> SongGenre(song.sourceId, song.id, index.toLong(), genre) }
             }
+        val artists =
+            batch.flatMap { song ->
+                song.artistPositions().map { (position, ref) -> SongArtistRef(song.sourceId, song.id, position, ref.id, ref.name) }
+            }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
                 connection.upsertChanged("songs", songColumns, primaryKey, batch) { it.values() }
@@ -110,6 +118,17 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_genres", songGenreColumns, songGenreKey, genres) { it.values() }
+                connection.usePrepared("DELETE FROM song_artists WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
+                    batch.forEach { song ->
+                        statement.bind(1, song.sourceId)
+                        statement.bind(2, song.id)
+                        statement.bind(3, song.artistPositions().size.toLong())
+                        statement.step()
+                        statement.reset()
+                        statement.clearBindings()
+                    }
+                }
+                connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
             }
         }
     }
@@ -163,10 +182,25 @@ class SyncService(
         albums: List<Album>,
         discs: List<Disc>,
     ) {
+        val artists =
+            albums.flatMap { album ->
+                album.artistPositions().map { (position, ref) -> AlbumArtistRef(album.sourceId, album.id, position, ref.id, ref.name) }
+            }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
                 connection.upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
                 connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
+                connection.usePrepared("DELETE FROM album_artists WHERE sourceId = ? AND albumId = ? AND position >= ?") { statement ->
+                    albums.forEach { album ->
+                        statement.bind(1, album.sourceId)
+                        statement.bind(2, album.id)
+                        statement.bind(3, album.artistPositions().size.toLong())
+                        statement.step()
+                        statement.reset()
+                        statement.clearBindings()
+                    }
+                }
+                connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
             }
         }
     }
@@ -292,6 +326,7 @@ private val albumColumns =
         "year",
         "starred",
         "songCount",
+        "artists",
     )
 
 private val discKey = listOf("sourceId", "albumId", "disc")
@@ -318,6 +353,7 @@ private val songColumns =
         "albumGain",
         "trackPeak",
         "albumPeak",
+        "artists",
     )
 
 private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
@@ -336,13 +372,39 @@ private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
 
 private val songGenreKey = listOf("sourceId", "songId", "position")
 
+private val albumArtistColumns = listOf("sourceId", "albumId", "position", "artistId", "name")
+
+private val albumArtistKey = listOf("sourceId", "albumId", "position")
+
+private val songArtistColumns = listOf("sourceId", "songId", "position", "artistId", "name")
+
+private val songArtistKey = listOf("sourceId", "songId", "position")
+
 private val playlistSongColumns = listOf("sourceId", "playlistId", "songId", "position")
 
 private val playlistSongKey = listOf("sourceId", "playlistId", "position")
 
 private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt)
 
-private fun Album.values() = listOf<Any?>(sourceId, id, artistId, name, albumArtist, created, coverArt, genre, year, starred, songCount)
+private fun Album.values() =
+    listOf<Any?>(
+        sourceId,
+        id,
+        artistId,
+        name,
+        albumArtist,
+        created,
+        coverArt,
+        genre,
+        year,
+        starred,
+        songCount,
+        ArtistRefsCodec.encode(artistRefs),
+    )
+
+private fun AlbumArtistRef.values() = listOf<Any?>(sourceId, albumId, position, artistId, name)
+
+private fun SongArtistRef.values() = listOf<Any?>(sourceId, songId, position, artistId, name)
 
 private fun Disc.values() = listOf<Any?>(sourceId, albumId, disc, title)
 
@@ -366,7 +428,17 @@ private fun Song.values() =
         albumGain,
         trackPeak,
         albumPeak,
+        ArtistRefsCodec.encode(artistRefs),
     )
+
+private fun List<ArtistRef>.positions(): List<Pair<Long, ArtistRef>> =
+    filter { it.id.isNotBlank() }
+        .distinctBy { it.id }
+        .mapIndexed { index, ref -> index.toLong() to ref }
+
+private fun Album.artistPositions(): List<Pair<Long, ArtistRef>> = artistRefs.positions()
+
+private fun Song.artistPositions(): List<Pair<Long, ArtistRef>> = artistRefs.positions()
 
 private fun SongGenre.values() = listOf<Any?>(sourceId, songId, position, genre)
 

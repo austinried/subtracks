@@ -246,13 +246,13 @@ fun ItemContextMenu(
                         }
                     }
                 }
-                target.song.artistId?.let { artistId ->
+                target.song.artistRefs.forEach { artist ->
                     actions.viewArtist?.let { view ->
                         MenuItem(
                             Icons.Rounded.Person,
-                            target.song.artist?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                            artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
                         ) {
-                            dismiss { view(artistId) }
+                            dismiss { view(artist.id) }
                         }
                     }
                 }
@@ -269,13 +269,13 @@ fun ItemContextMenu(
                     onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
                     onDismiss = { dismiss() },
                 )
-                target.album.artistId?.let { artistId ->
+                target.album.artistRefs.forEach { artist ->
                     actions.viewArtist?.let { view ->
                         MenuItem(
                             Icons.Rounded.Person,
-                            target.album.albumArtist?.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                            artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
                         ) {
-                            dismiss { view(artistId) }
+                            dismiss { view(artist.id) }
                         }
                     }
                 }
