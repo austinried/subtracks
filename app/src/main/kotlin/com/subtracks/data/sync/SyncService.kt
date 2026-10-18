@@ -35,6 +35,7 @@ class SyncService(
         syncArtists()
         syncAlbums()
         syncSongs()
+        optimize()
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
@@ -135,6 +136,13 @@ class SyncService(
 
     private suspend fun aggregatePlayData() {
         db.libraryDao().recomputePlayData(source.id)
+    }
+
+    // Without sqlite_stat1 the artist and relation queries can fall back to whole-table scans.
+    private suspend fun optimize() {
+        db.useWriterConnection { connection ->
+            connection.usePrepared("PRAGMA optimize") { it.step() }
+        }
     }
 
     private suspend fun syncPlaylists() {

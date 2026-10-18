@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 
 // A song is attributed to its album artist and to its credited track artist, so a guest artist's
 // downloads are visible even though they lead no albums of their own.
+// Starts from songs so status totals include every song the artist is credited on.
 internal const val ARTIST_DOWNLOAD_ROWS =
     "SELECT albums.artistId AS id, songs.id AS songId, song_downloads.status AS status, " +
         "song_downloads.downloadedAt AS downloadedAt " +
@@ -43,6 +44,38 @@ internal const val ARTIST_DOWNLOAD_ROWS =
         "JOIN song_artists ON song_artists.sourceId = songs.sourceId AND song_artists.songId = songs.id " +
         "LEFT JOIN song_downloads ON song_downloads.sourceId = songs.sourceId AND song_downloads.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId"
+
+// Starts from downloads so lists and filters over partially downloaded libraries do not scan songs.
+internal const val DOWNLOADED_ARTIST_ROWS =
+    "SELECT albums.artistId AS id, song_downloads.downloadedAt AS downloadedAt, " +
+        "song_downloads.status AS status " +
+        "FROM song_downloads " +
+        "JOIN songs ON songs.sourceId = song_downloads.sourceId AND songs.id = song_downloads.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_downloads.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT album_artists.artistId AS id, song_downloads.downloadedAt AS downloadedAt, " +
+        "song_downloads.status AS status " +
+        "FROM song_downloads " +
+        "JOIN songs ON songs.sourceId = song_downloads.sourceId AND songs.id = song_downloads.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN album_artists ON album_artists.sourceId = albums.sourceId AND album_artists.albumId = albums.id " +
+        "WHERE song_downloads.sourceId = :sourceId " +
+        "UNION ALL " +
+        "SELECT songs.artistId AS id, song_downloads.downloadedAt AS downloadedAt, " +
+        "song_downloads.status AS status " +
+        "FROM song_downloads " +
+        "JOIN songs ON songs.sourceId = song_downloads.sourceId AND songs.id = song_downloads.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_downloads.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId AS id, song_downloads.downloadedAt AS downloadedAt, " +
+        "song_downloads.status AS status " +
+        "FROM song_downloads " +
+        "JOIN songs ON songs.sourceId = song_downloads.sourceId AND songs.id = song_downloads.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN song_artists ON song_artists.sourceId = songs.sourceId AND song_artists.songId = songs.id " +
+        "WHERE song_downloads.sourceId = :sourceId"
 
 @Dao
 interface DownloadDao {
@@ -111,7 +144,10 @@ interface DownloadDao {
             "COUNT(DISTINCT songId) AS total, " +
             "COUNT(DISTINCT CASE WHEN status = 'Completed' THEN songId END) AS downloaded, " +
             "COUNT(DISTINCT CASE WHEN status IN ('Queued', 'Running') THEN songId END) AS downloading " +
-            "FROM (" + ARTIST_DOWNLOAD_ROWS + ") GROUP BY id " +
+            "FROM (" + ARTIST_DOWNLOAD_ROWS + ") " +
+            "WHERE id IN (SELECT id FROM (" + DOWNLOADED_ARTIST_ROWS + ") " +
+            "WHERE status IN ('Completed', 'Queued', 'Running')) " +
+            "GROUP BY id " +
             "HAVING downloaded > 0 OR downloading > 0",
     )
     fun artistStatuses(sourceId: Long): Flow<List<EntityDownloadStatus>>

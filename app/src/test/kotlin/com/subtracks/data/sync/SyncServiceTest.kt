@@ -1026,7 +1026,7 @@ class SyncServiceTest {
             insertSource()
             val source =
                 FakeMusicSource(
-                    artists = listOf(artist("a1", "A"), artist("a2", "B")),
+                    artists = listOf(artist("a1", "A"), artist("a2", "B"), artist("a3", "C")),
                     albums =
                         listOf(
                             album("al1").copy(
@@ -1054,6 +1054,15 @@ class SyncServiceTest {
                     .map { it.name }
                     .toSet(),
             )
+
+            val statuses =
+                db
+                    .downloadDao()
+                    .artistStatuses(1)
+                    .first()
+                    .associateBy { it.id }
+            assertEquals(setOf("a1", "a2"), statuses.keys)
+            assertEquals(1L, statuses.getValue("a2").downloaded)
         }
 
     @Test

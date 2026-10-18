@@ -19,12 +19,23 @@ private const val ALBUM_SONGS_ORDER = " ORDER BY songs.disc, songs.track, songs.
 
 private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 
-private const val ARTIST_SONGS_MATCH = "($ALBUM_MATCHES_ARTIST OR $SONG_MATCHES_ARTIST)"
+private const val ARTIST_SONG_IDS =
+    "(SELECT id FROM songs WHERE sourceId = :sourceId AND artistId = :artistId " +
+        "UNION " +
+        "SELECT songId FROM song_artists WHERE sourceId = :sourceId AND artistId = :artistId " +
+        "UNION " +
+        "SELECT songs.id FROM albums " +
+        "JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
+        "WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
+        "UNION " +
+        "SELECT songs.id FROM album_artists " +
+        "JOIN songs ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId)"
 
 private const val ARTIST_SONGS_SELECT =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE songs.sourceId = :sourceId AND $ARTIST_SONGS_MATCH"
+        "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS"
 
 private const val ARTIST_SONGS_ORDER =
     " ORDER BY albums.year DESC, albums.name COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
@@ -85,7 +96,7 @@ interface QueueDao {
     @Query(
         "SELECT COUNT(*) FROM songs " +
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND $ARTIST_SONGS_MATCH",
+            "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS",
     )
     suspend fun artistLength(
         sourceId: Long,
@@ -193,7 +204,7 @@ interface QueueDao {
     @Query(
         "SELECT songs.id FROM songs " +
             "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND $ARTIST_SONGS_MATCH" +
+            "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS" +
             ARTIST_SONGS_ORDER,
     )
     suspend fun artistSongIds(

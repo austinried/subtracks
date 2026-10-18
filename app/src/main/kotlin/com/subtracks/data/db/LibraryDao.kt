@@ -65,29 +65,37 @@ internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, name COLLA
 internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, name COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, name COLLATE NOCASE DESC, id DESC"
 
-internal const val SONG_MATCHES_ARTIST =
-    "(songs.artistId = :artistId OR songs.id IN (SELECT songId FROM song_artists " +
-        "WHERE sourceId = songs.sourceId AND artistId = :artistId))"
-
-internal const val ALBUM_MATCHES_ARTIST =
-    "(albums.artistId = :artistId OR albums.id IN (SELECT albumId FROM album_artists " +
-        "WHERE sourceId = albums.sourceId AND artistId = :artistId))"
-
-private const val ARTIST_ALBUM_MATCH =
-    "(a.artistId = artists.id OR a.id IN (SELECT albumId FROM album_artists " +
-        "WHERE sourceId = artists.sourceId AND artistId = artists.id))"
+private const val DOWNLOADED_ARTIST_ALBUMS =
+    "SELECT albums.id FROM albums " +
+        "WHERE albums.sourceId = :sourceId AND albums.artistId = artists.id " +
+        "AND EXISTS (SELECT 1 FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+        "UNION " +
+        "SELECT albums.id FROM album_artists " +
+        "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = artists.id " +
+        "AND EXISTS (SELECT 1 FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+        "UNION " +
+        "SELECT songs.albumId FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId = artists.id " +
+        "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL " +
+        "UNION " +
+        "SELECT songs.albumId FROM song_artists " +
+        "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
+        "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
         "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-        "WHERE songs.sourceId = artists.sourceId AND sd.status = 'Completed' " +
-        "AND (albums.artistId = artists.id " +
-        "OR albums.id IN (SELECT albumId FROM album_artists aa WHERE aa.sourceId = albums.sourceId AND aa.artistId = artists.id) " +
-        "OR songs.artistId = artists.id " +
-        "OR songs.id IN (SELECT songId FROM song_artists sa WHERE sa.sourceId = songs.sourceId AND sa.artistId = artists.id)))) " +
+        "AND (:downloadedFilter = 0 OR EXISTS (" +
+        "SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl " +
+        "WHERE dl.id = artists.id AND dl.status = 'Completed')) " +
         "AND (:search = '' " +
         "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
         "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
@@ -98,14 +106,7 @@ internal const val ARTISTS_FILTER =
 internal const val ARTISTS_SELECT =
     "SELECT artists.sourceId, artists.id, artists.name, " +
         "CASE WHEN :downloadedFilter = 1 THEN (" +
-        "SELECT COUNT(DISTINCT albums.id) FROM songs " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-        "WHERE songs.sourceId = artists.sourceId AND sd.status = 'Completed' " +
-        "AND (albums.artistId = artists.id " +
-        "OR albums.id IN (SELECT albumId FROM album_artists aa WHERE aa.sourceId = albums.sourceId AND aa.artistId = artists.id) " +
-        "OR songs.artistId = artists.id " +
-        "OR songs.id IN (SELECT songId FROM song_artists sa WHERE sa.sourceId = songs.sourceId AND sa.artistId = artists.id))" +
+        "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
         "artists.starred, artists.coverArt, artists.playCount, artists.played "
 
@@ -200,19 +201,27 @@ interface LibraryDao {
     )
     suspend fun recomputeAlbumPlayData(sourceId: Long)
 
-    // INDEXED BY is required: the planner otherwise answers MAX(played) from index_albums_recent
-    // (sourceId, played), which cannot apply the artistId equality.
+    // The credited albums are the union of the lead id and the relation table, so a shared album
+    // counts once per artist rather than twice.
     @Query(
         "UPDATE artists SET " +
-            "playCount = COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH), 0), " +
-            "played = (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH) " +
+            "playCount = COALESCE((SELECT SUM(a.playCount) FROM albums a " +
+            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
+            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
+            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)), 0), " +
+            "played = (SELECT MAX(a.played) FROM albums a " +
+            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
+            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
+            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)) " +
             "WHERE sourceId = :sourceId AND (" +
-            "playCount IS NOT COALESCE((SELECT SUM(a.playCount) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH), 0) " +
-            "OR played IS NOT (SELECT MAX(a.played) FROM albums a INDEXED BY index_albums_sourceId_artistId " +
-            "WHERE a.sourceId = artists.sourceId AND $ARTIST_ALBUM_MATCH))",
+            "playCount IS NOT COALESCE((SELECT SUM(a.playCount) FROM albums a " +
+            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
+            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
+            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)), 0) " +
+            "OR played IS NOT (SELECT MAX(a.played) FROM albums a " +
+            "WHERE a.sourceId = artists.sourceId AND a.id IN (" +
+            "SELECT albumId FROM album_artists WHERE sourceId = artists.sourceId AND artistId = artists.id " +
+            "UNION SELECT id FROM albums WHERE sourceId = artists.sourceId AND artistId = artists.id)))",
     )
     suspend fun recomputeArtistPlayData(sourceId: Long)
 
@@ -831,10 +840,10 @@ interface LibraryDao {
 
     @Query(
         "SELECT artists.* FROM artists " +
-            "JOIN ($ARTIST_DOWNLOAD_ROWS) dl ON dl.id = artists.id " +
-            "WHERE artists.sourceId = :sourceId AND dl.status = 'Completed' " +
-            "GROUP BY artists.sourceId, artists.id " +
-            "ORDER BY MAX(dl.downloadedAt) DESC, artists.name COLLATE NOCASE, artists.id",
+            "JOIN (SELECT id, MAX(downloadedAt) AS lastDownloadedAt FROM ($DOWNLOADED_ARTIST_ROWS) " +
+            "WHERE status = 'Completed' GROUP BY id) dl ON dl.id = artists.id " +
+            "WHERE artists.sourceId = :sourceId " +
+            "ORDER BY dl.lastDownloadedAt DESC, artists.name COLLATE NOCASE, artists.id",
     )
     fun downloadedArtists(sourceId: Long): PagingSource<Int, Artist>
 

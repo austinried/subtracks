@@ -3,6 +3,8 @@ package com.subtracks.data.db
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.room3.Room
+import androidx.room3.immediateTransaction
+import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -61,6 +63,27 @@ class QueryTimingMeasurementTest {
             val secondSyncMs = wall { SyncService(db, source).sync() }
             val secondSyncExecutions = executions.toList()
 
+            db.useWriterConnection { connection ->
+                connection.immediateTransaction {
+                    connection.usePrepared(
+                        "INSERT INTO song_downloads (sourceId, songId, status, downloadedAt) VALUES (?, ?, ?, ?)",
+                    ) { statement ->
+                        (0 until songCount step 10).forEach { i ->
+                            statement.bindLong(1, 1L)
+                            statement.bindText(2, "s$i")
+                            statement.bindText(3, "Completed")
+                            statement.bindLong(4, i.toLong())
+                            statement.step()
+                            statement.reset()
+                            statement.clearBindings()
+                        }
+                    }
+                }
+            }
+            db.useWriterConnection { connection ->
+                connection.usePrepared("ANALYZE") { it.step() }
+            }
+
             executions.clear()
             measureReads()
             val readExecutions = executions.toList()
@@ -93,6 +116,13 @@ class QueryTimingMeasurementTest {
         timed("artists first page (frequent)") { dao.artistsByFrequent(1, 0, "").firstPage() }
         timed("artist albums") { dao.albumsForArtist(1, "ar0").first() }
         timed("artist name") { dao.artistName(1, "ar0").first() }
+        timed("artist songs") { db.queueDao().artistSongs(1, "ar0", 0, 100) }
+        timed("artist length") { db.queueDao().artistLength(1, "ar0") }
+        timed("artist song ids") { db.queueDao().artistSongIds(1, "ar0") }
+        timed("downloaded artists") { dao.downloadedArtists(1).firstPage() }
+        timed("artists downloaded filter") { dao.artistsByName(1, 0, "", downloadedFilter = 1).firstPage() }
+        timed("artist statuses") { db.downloadDao().artistStatuses(1).first() }
+        timed("artist status") { db.downloadDao().artistStatus(1, "ar0").first() }
         timed("playlists first page (name)") { dao.playlistsByName(1, "").firstPage() }
         timed("albums deep page") { dao.albumsByName(1, 0, "").deepPage(1000) }
         timed("albums search FTS") { dao.albumsByName(1, 0, "Album 1").firstPage() }
