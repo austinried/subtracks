@@ -1168,6 +1168,44 @@ class SyncServiceTest {
         }
 
     @Test
+    fun anInterruptedSyncLeavesTheCreditMarkerStale() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Alpha"), artist("combo", "Alpha & Beta")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1")),
+                    songsFailure = java.io.IOException("boom"),
+                )
+
+            runCatching { SyncService(db, source).sync() }
+
+            assertEquals(true, db.sourcesDao().creditsStale(1))
+            assertEquals(
+                listOf("a1", "combo"),
+                db
+                    .libraryDao()
+                    .artistsByName(1, 0, "")
+                    .allRows()
+                    .map { it.id },
+            )
+
+            source.songsFailure = null
+            SyncService(db, source).sync()
+
+            assertEquals(false, db.sourcesDao().creditsStale(1))
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .artistsByName(1, 0, "")
+                    .allRows()
+                    .map { it.id },
+            )
+        }
+
+    @Test
     fun aStaleCreditMarkerForcesARecomputeOnTheNextSync() =
         runTest {
             insertSource()
@@ -1513,6 +1551,7 @@ private class FakeMusicSource(
     var songs: List<Song> = emptyList(),
     var playlists: List<Playlist> = emptyList(),
     var playlistSongs: List<PlaylistSong> = emptyList(),
+    var songsFailure: Throwable? = null,
     private val batchSize: Int = 1000,
 ) : MusicSource {
     val requestedPlaylistIds = mutableListOf<List<String>>()
@@ -1535,7 +1574,12 @@ private class FakeMusicSource(
 
     override fun albums(): Flow<List<Album>> = batches(albums)
 
-    override fun songs(): Flow<List<Song>> = batches(songs)
+    override fun songs(): Flow<List<Song>> =
+        if (songsFailure == null) {
+            batches(songs)
+        } else {
+            flow { throw songsFailure!! }
+        }
 
     override fun playlists(): Flow<List<Playlist>> = batches(playlists)
 

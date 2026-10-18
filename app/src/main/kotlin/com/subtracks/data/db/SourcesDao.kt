@@ -32,10 +32,17 @@ interface SourcesDao {
     @Query("SELECT creditsStale FROM sources WHERE id = :sourceId")
     suspend fun creditsStale(sourceId: Long): Boolean?
 
-    @Query("UPDATE sources SET creditsStale = :stale WHERE id = :sourceId")
+    @Query("UPDATE sources SET creditsStale = :stale WHERE id = :sourceId AND creditsStale != :stale")
     suspend fun setCreditsStale(
         sourceId: Long,
         stale: Boolean,
+    )
+
+    @Query("UPDATE sources SET name = :name, address = :address WHERE id = :sourceId")
+    suspend fun updateSourceDetails(
+        sourceId: Long,
+        name: String,
+        address: String,
     )
 
     @Insert

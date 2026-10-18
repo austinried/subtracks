@@ -18,6 +18,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.Flow
 
 internal const val PLAYLIST_SONGS_SELECT =
@@ -250,7 +251,7 @@ interface LibraryDao {
             "UPDATE artists SET songCount = c.songCount, credited = c.credited " +
             "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount, " +
             "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
-            "OR NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
+            "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
             "OR EXISTS (SELECT 1 FROM album_artists aa " +
             "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
             "OR EXISTS (SELECT 1 FROM song_artists sa " +
@@ -567,7 +568,7 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Album::class])
     fun albumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
 
-    @RawQuery(observedEntities = [Artist::class])
+    @RawQuery(observedEntities = [Artist::class, Source::class])
     fun artistsPaging(query: RoomRawQuery): PagingSource<Int, Artist>
 
     @RawQuery(observedEntities = [Playlist::class])

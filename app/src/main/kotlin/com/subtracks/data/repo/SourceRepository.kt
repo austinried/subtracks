@@ -220,8 +220,8 @@ class SourceRepository(
         useTokenAuth: Boolean,
     ) {
         val dao = db.sourcesDao()
-        val source = dao.sourceOnce(id) ?: return
-        dao.upsertSource(source.copy(name = name.trim(), address = normalizeAddress(address)))
+        if (dao.sourceOnce(id) == null) return
+        dao.updateSourceDetails(id, name.trim(), normalizeAddress(address))
         dao.upsertSubsonicSource(
             SubsonicSource(
                 sourceId = id,

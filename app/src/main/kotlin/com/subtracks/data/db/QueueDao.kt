@@ -38,7 +38,7 @@ private const val ARTIST_SONGS_SELECT =
         "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS"
 
 private const val ARTIST_SONGS_ORDER =
-    " ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
+    " ORDER BY albums.id IS NULL, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
 
 private const val SONG_SQL =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
