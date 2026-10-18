@@ -93,13 +93,7 @@ private const val DOWNLOADED_ARTIST_ALBUMS =
         "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
         "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
 
-internal const val ARTIST_CREDITED =
-    "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
-        "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
-        "OR EXISTS (SELECT 1 FROM album_artists aa " +
-        "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
-        "OR EXISTS (SELECT 1 FROM song_artists sa " +
-        "WHERE sa.sourceId = artists.sourceId AND sa.artistId = artists.id))"
+internal const val ARTIST_CREDITED = "artists.credited = 1"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
@@ -121,7 +115,8 @@ internal const val ARTISTS_SELECT =
         "CASE WHEN :downloadedFilter = 1 THEN (" +
         "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount, artists.sortName "
+        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount, artists.sortName, " +
+        "artists.credited "
 
 internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
@@ -250,11 +245,18 @@ interface LibraryDao {
             "), counts AS (" +
             "SELECT artistId AS id, COUNT(*) AS songCount FROM credited GROUP BY artistId" +
             ") " +
-            "UPDATE artists SET songCount = c.songCount " +
-            "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount " +
+            "UPDATE artists SET songCount = c.songCount, credited = c.credited " +
+            "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount, " +
+            "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
+            "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
+            "OR EXISTS (SELECT 1 FROM album_artists aa " +
+            "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
+            "OR EXISTS (SELECT 1 FROM song_artists sa " +
+            "WHERE sa.sourceId = artists.sourceId AND sa.artistId = artists.id)) AS credited " +
             "FROM artists LEFT JOIN counts ON counts.id = artists.id " +
             "WHERE artists.sourceId = :sourceId) c " +
-            "WHERE artists.sourceId = :sourceId AND artists.id = c.id AND artists.songCount != c.songCount",
+            "WHERE artists.sourceId = :sourceId AND artists.id = c.id " +
+            "AND (artists.songCount != c.songCount OR artists.credited != c.credited)",
     )
     suspend fun recomputeArtistSongCounts(sourceId: Long)
 
@@ -881,7 +883,7 @@ interface LibraryDao {
         "SELECT artists.* FROM artists " +
             "JOIN (SELECT id, MAX(downloadedAt) AS lastDownloadedAt FROM ($DOWNLOADED_ARTIST_ROWS) " +
             "WHERE status = 'Completed' GROUP BY id) dl ON dl.id = artists.id " +
-            "WHERE artists.sourceId = :sourceId " +
+            "WHERE artists.sourceId = :sourceId AND $ARTIST_CREDITED " +
             "ORDER BY dl.lastDownloadedAt DESC, artists.sortName COLLATE NOCASE, artists.id",
     )
     fun downloadedArtists(sourceId: Long): PagingSource<Int, Artist>

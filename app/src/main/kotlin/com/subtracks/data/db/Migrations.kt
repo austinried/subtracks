@@ -551,6 +551,22 @@ private suspend fun dropSearchIndex(
     connection.execSQL("DROP TABLE IF EXISTS `$table`")
 }
 
+val MIGRATION_31_32 =
+    object : Migration(31, 32) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `credited` INTEGER NOT NULL DEFAULT 1")
+            connection.execSQL(
+                "UPDATE `artists` SET `credited` = 0 " +
+                    "WHERE (EXISTS (SELECT 1 FROM `album_artists` WHERE `sourceId` = `artists`.`sourceId`) " +
+                    "OR EXISTS (SELECT 1 FROM `song_artists` WHERE `sourceId` = `artists`.`sourceId`)) " +
+                    "AND NOT EXISTS (SELECT 1 FROM `album_artists` aa " +
+                    "WHERE aa.`sourceId` = `artists`.`sourceId` AND aa.`artistId` = `artists`.`id`) " +
+                    "AND NOT EXISTS (SELECT 1 FROM `song_artists` sa " +
+                    "WHERE sa.`sourceId` = `artists`.`sourceId` AND sa.`artistId` = `artists`.`id`)",
+            )
+        }
+    }
+
 // Mirrors the FTS5 table and content-sync triggers Room generates for the @Fts5 entities.
 private suspend fun createSearchIndex(
     connection: SQLiteConnection,
@@ -615,4 +631,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_28_29,
         MIGRATION_29_30,
         MIGRATION_30_31,
+        MIGRATION_31_32,
     )

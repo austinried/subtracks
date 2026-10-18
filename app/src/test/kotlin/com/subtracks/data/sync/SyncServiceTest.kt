@@ -8,6 +8,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.artistsDefaultQuery
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistRef
@@ -19,6 +20,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
+import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.source.MusicSource
 import com.subtracks.data.source.StarType
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -1071,12 +1072,19 @@ class SyncServiceTest {
             insertSource()
             val source =
                 FakeMusicSource(
-                    artists = listOf(artist("a1", "Alpha"), artist("combo", "Alpha & Beta")),
+                    artists =
+                        listOf(
+                            artist("a1", "Alpha").copy(playCount = 5, played = 100),
+                            artist("combo", "Alpha & Beta").copy(playCount = 5, played = 100),
+                        ),
                     albums = listOf(album("al1")),
-                    songs = listOf(song("s1")),
+                    songs = listOf(song("s1").copy(playCount = 5, played = 100)),
                 )
 
             SyncService(db, source).sync()
+
+            assertEquals(false, db.libraryDao().artistOnce(1, "combo")!!.credited)
+            assertEquals(true, db.libraryDao().artistOnce(1, "a1")!!.credited)
 
             assertEquals(
                 listOf("a1"),
@@ -1086,12 +1094,75 @@ class SyncServiceTest {
                     .allRows()
                     .map { it.id },
             )
+            val query = artistsDefaultQuery(1, 0, "alpha", ArtistSort.Name, false)
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .artistsByName(1, 0, "alpha")
+                    .allRows()
+                    .map { it.id },
+            )
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .artistsPaging(query)
+                    .allRows()
+                    .map { it.id },
+            )
             assertEquals(
                 listOf("a1"),
                 db
                     .libraryDao()
                     .searchArtists(1, "alpha", 10)
                     .first()
+                    .map { it.id },
+            )
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .homeMostPlayedArtists(1)
+                    .allRows()
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun downloadedArtistsHidesNamesThatAreOnlyDisplayStrings() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Alpha"), artist("combo", "Alpha & Beta")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "combo",
+                                albumArtist = "Alpha & Beta",
+                                artists = listOf(ArtistRef("a1", "Alpha")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                artistId = "combo",
+                                artist = "Alpha & Beta",
+                                artists = listOf(ArtistRef("a1", "Alpha")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+
+            assertEquals(
+                listOf("a1"),
+                db
+                    .libraryDao()
+                    .downloadedArtists(1)
+                    .allRows()
                     .map { it.id },
             )
         }

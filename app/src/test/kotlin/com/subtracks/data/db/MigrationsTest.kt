@@ -211,6 +211,32 @@ class MigrationsTest {
             }
         }
 
+    @Test
+    fun theArtistCreditedFlagsHideRowsWithoutCredits() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 31)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL("INSERT INTO artists (sourceId, id, name, albumCount) VALUES (1, 'a1', 'Alpha', 1)")
+                migrated.execSQL("INSERT INTO artists (sourceId, id, name, albumCount) VALUES (1, 'combo', 'Alpha & Beta', 1)")
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
+                        "VALUES (1, 'al1', 'a1', 'Album', 'Alpha', 0, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
+                        "VALUES (1, 'al1', 0, 'a1', 'Alpha')",
+                )
+
+                MIGRATION_31_32.migrate(migrated)
+
+                assertEquals(1L, long(migrated, "SELECT credited FROM artists WHERE id = 'a1'"))
+                assertEquals(0L, long(migrated, "SELECT credited FROM artists WHERE id = 'combo'"))
+            }
+        }
+
     private fun text(
         connection: SQLiteConnection,
         sql: String,

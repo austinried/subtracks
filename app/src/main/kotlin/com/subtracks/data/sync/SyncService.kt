@@ -35,11 +35,13 @@ class SyncService(
 
     suspend fun sync(): SyncSummary {
         creditsChanged = false
+        val artistsBefore = dbTotalChanges()
         syncArtists()
+        val artistsChanged = dbTotalChanges() != artistsBefore
         syncAlbums()
         syncSongs()
         optimize()
-        if (creditsChanged) recomputeArtistSongCounts()
+        if (creditsChanged || artistsChanged) recomputeArtistSongCounts()
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
@@ -162,6 +164,8 @@ class SyncService(
         }
         return value
     }
+
+    private suspend fun dbTotalChanges(): Long = db.useWriterConnection { it.totalChanges() }
 
     private suspend fun PooledConnection.albumIdsChanged(batch: List<Song>): Boolean {
         val expected = batch.associate { it.id to it.albumId }.toMutableMap()

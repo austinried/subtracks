@@ -91,6 +91,7 @@ data class Artist(
     val played: Long? = null,
     @ColumnInfo(defaultValue = "0") val songCount: Long = 0,
     @ColumnInfo(collate = ColumnInfo.NOCASE, defaultValue = "''") val sortName: String = name,
+    @ColumnInfo(defaultValue = "1") val credited: Boolean = true,
 )
 
 @Entity(
