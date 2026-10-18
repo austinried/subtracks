@@ -2263,6 +2263,38 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aSingleTrackQueueHasNoAdjacentArtwork() {
+        seedAlbum(1, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        assertNull(runBlocking { controller.upcomingItem() })
+        assertNull(runBlocking { controller.previousItem() })
+    }
+
+    @Test
+    fun aSingleDownloadedTrackHasNoAdjacentArtworkWhenOffline() {
+        seedAlbum(1, sourceId = 1)
+        markDownloaded(1, "s1")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+
+        assertNull(runBlocking { controller.upcomingItem() })
+        assertNull(runBlocking { controller.previousItem() })
+    }
+
+    @Test
     fun repeatAllLoopsAfterEndingWithRepeatOff() {
         seedAlbum(2, sourceId = 1)
 

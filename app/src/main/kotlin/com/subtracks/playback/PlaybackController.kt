@@ -693,11 +693,28 @@ class PlaybackController(
             }
             return
         }
-        when {
-            current < snapshot.size - 1 -> jumpTo(current + 1)
-            repeatMode != RepeatMode.Off -> jumpTo(0)
-        }
+        nextPosition(snapshot, current)?.let { jumpTo(it) }
     }
+
+    private fun nextPosition(
+        snapshot: QueueSnapshot,
+        current: Long,
+    ): Long? =
+        when {
+            current < snapshot.size - 1 -> current + 1
+            repeatMode != RepeatMode.Off -> 0L
+            else -> null
+        }
+
+    private fun previousPosition(
+        snapshot: QueueSnapshot,
+        current: Long,
+    ): Long? =
+        when {
+            current > 0 -> current - 1
+            repeatMode == RepeatMode.All -> snapshot.size - 1
+            else -> null
+        }
 
     private suspend fun consumeUpNext(position: Long) =
         startLock.withLock {
@@ -784,19 +801,12 @@ class PlaybackController(
             }
             return
         }
-        when {
-            current > 0 -> {
-                jumpTo(current - 1)
-            }
-
-            repeatMode == RepeatMode.All -> {
-                jumpTo(snapshot.size - 1)
-            }
-
-            else -> {
-                player.seekTo(0)
-                refresh()
-            }
+        val target = previousPosition(snapshot, current)
+        if (target != null) {
+            jumpTo(target)
+        } else {
+            player.seekTo(0)
+            refresh()
         }
     }
 
@@ -814,10 +824,7 @@ class PlaybackController(
             }
             return
         }
-        when {
-            current > 0 -> jumpTo(current - 1)
-            repeatMode == RepeatMode.All -> jumpTo(snapshot.size - 1)
-        }
+        previousPosition(snapshot, current)?.let { jumpTo(it) }
     }
 
     fun addToQueue(
@@ -935,21 +942,15 @@ class PlaybackController(
         val snapshot = current ?: return null
         val at = position ?: return null
         if (!isOffline) {
-            val next =
-                if (at + 1 < snapshot.size) {
-                    at + 1
-                } else if (repeatMode != RepeatMode.Off) {
-                    0L
-                } else {
-                    null
-                }
-            return next?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
+            return nextPosition(snapshot, at)
+                ?.takeIf { it != at }
+                ?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
         }
         downloads.awaitLoaded()
         val target =
             downloadedAtOrAfter(snapshot, at + 1)
                 ?: if (repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0L) else null
-        return target?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
+        return target?.takeIf { it != at }?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
     }
 
     suspend fun previousItem(): QueueItem? {
@@ -964,19 +965,15 @@ class PlaybackController(
         val snapshot = current ?: return null
         val at = position ?: return null
         if (!isOffline) {
-            val previous =
-                when {
-                    at > 0 -> at - 1
-                    repeatMode == RepeatMode.All -> snapshot.size - 1
-                    else -> return null
-                }
-            return queueRepository.itemAt(snapshot, previous)?.toQueueItem()
+            return previousPosition(snapshot, at)
+                ?.takeIf { it != at }
+                ?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
         }
         downloads.awaitLoaded()
         val target =
             downloadedAtOrBefore(snapshot, at - 1)
                 ?: if (repeatMode == RepeatMode.All) downloadedAtOrBefore(snapshot, snapshot.size - 1) else null
-        return target?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
+        return target?.takeIf { it != at }?.let { queueRepository.itemAt(snapshot, it)?.toQueueItem() }
     }
 
     private fun play(
