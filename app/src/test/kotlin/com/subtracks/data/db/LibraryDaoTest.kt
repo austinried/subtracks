@@ -182,8 +182,10 @@ class LibraryDaoTest {
             dao.upsertSongs(
                 listOf(
                     song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1", playCount = 3, played = 100),
-                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2", playCount = 4, played = 200),
-                    song(sourceId, "s3", "Three", starred = null).copy(albumId = "al-2", playCount = 5, played = 400),
+                    song(sourceId, "s2", "Two", starred = null)
+                        .copy(albumId = "al-2", artistId = "ar-2", playCount = 4, played = 200),
+                    song(sourceId, "s3", "Three", starred = null)
+                        .copy(albumId = "al-2", artistId = "ar-2", playCount = 5, played = 400),
                 ),
             )
 
@@ -607,7 +609,7 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun downloadedFilterShowsDownloadedAlbumCountsButSortsByTheSyncedCount() =
+    fun downloadedFilterSortsByTheDownloadedAlbumCountItShows() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
@@ -635,11 +637,11 @@ class LibraryDaoTest {
                 db.downloadDao().upsert(SongDownload(sourceId, it, DownloadStatus.Completed))
             }
 
-            // ar-1 has two downloaded albums, ar-2 one. The list still orders by the synced count
-            // (so the album-count index stays usable) but reports the downloaded count.
+            // ar-1 has two downloaded albums, ar-2 one, so the downloaded order is ar-1 first even
+            // though the synced counts would put ar-2 first.
             val filtered = dao.artistsByAlbumCount(sourceId, 0, "", downloadedFilter = 1).page()
-            assertEquals(listOf("ar-2", "ar-1"), filtered.map { it.id })
-            assertEquals(listOf(1L, 2L), filtered.map { it.albumCount })
+            assertEquals(listOf("ar-1", "ar-2"), filtered.map { it.id })
+            assertEquals(listOf(2L, 1L), filtered.map { it.albumCount })
         }
 
     @Test

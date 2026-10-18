@@ -1465,6 +1465,137 @@ class SyncServiceTest {
             assertEquals(500L, db.libraryDao().artistOnce(1, "a2")!!.played)
         }
 
+    @Test
+    fun trackOnlyCreditsReachTheArtistBadgeAndPlays() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Album Artist"), artist("a2", "Guest").copy(albumCount = 7)),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "Album Artist")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "al1",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "Album Artist"), ArtistRef("a2", "Guest")),
+                                playCount = 3,
+                                played = 100,
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            val guest = db.libraryDao().artistOnce(1, "a2")!!
+            assertEquals(1L, guest.albumCount)
+            assertEquals(1L, guest.songCount)
+            assertEquals(3L, guest.playCount)
+            assertEquals(100L, guest.played)
+            assertEquals(
+                listOf("al1"),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a2")
+                    .first()
+                    .map { it.id },
+            )
+            assertEquals(
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a2")
+                    .first()
+                    .size
+                    .toLong(),
+                db
+                    .libraryDao()
+                    .artistsByName(1, 0, "")
+                    .allRows()
+                    .first { it.id == "a2" }
+                    .albumCount,
+            )
+        }
+
+    @Test
+    fun albumlessTrackCreditsCountAndBumpOnPlay() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Album Artist"), artist("a2", "Guest")),
+                    albums = emptyList(),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = null,
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "Album Artist"), ArtistRef("a2", "Guest")),
+                                playCount = 2,
+                                played = 50,
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            val guest = db.libraryDao().artistOnce(1, "a2")!!
+            assertEquals(0L, guest.albumCount)
+            assertEquals(1L, guest.songCount)
+            assertEquals(2L, guest.playCount)
+            assertEquals(50L, guest.played)
+
+            db.libraryDao().recordPlay(1, "s1", 300)
+
+            assertEquals(3L, db.libraryDao().artistOnce(1, "a2")!!.playCount)
+            assertEquals(300L, db.libraryDao().artistOnce(1, "a2")!!.played)
+        }
+
+    @Test
+    fun leadIdsOutsideThePluralRefsKeepArtistTotalsAndShufflesAligned() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Lead"), artist("a2", "Ref")),
+                    albums =
+                        listOf(
+                            album("al1").copy(
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a2", "Ref")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "al1",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a2", "Ref")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            val lead = db.libraryDao().artistOnce(1, "a1")!!
+            assertEquals(1L, lead.songCount)
+            assertEquals(1L, lead.albumCount)
+            assertEquals(db.queueDao().artistLength(1, "a1"), lead.songCount)
+            assertEquals(
+                lead.songCount,
+                db
+                    .downloadDao()
+                    .artistStatus(1, "a1")
+                    .first()
+                    .total,
+            )
+        }
+
     private suspend fun totalChanges(): Long =
         db.useWriterConnection { connection ->
             connection.usePrepared("SELECT total_changes()") { statement ->

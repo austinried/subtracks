@@ -272,6 +272,67 @@ class MigrationsTest {
             }
         }
 
+    @Test
+    fun theCreditTotalsBackfillUsesEveryCreditedSong() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 33)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (2, 't', 'http://y', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, songCount, playCount, played) " +
+                        "VALUES (1, 'a1', 'Album Artist', 1, 0, 0, NULL)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, songCount, playCount, played) " +
+                        "VALUES (1, 'a2', 'Guest', 0, 0, 0, NULL)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, songCount, playCount, played) " +
+                        "VALUES (2, 'b1', 'Unsynced', 7, 6, 5, 100)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
+                        "VALUES (1, 'al1', 'a1', 'Album', 'Album Artist', 0, 1)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
+                        "VALUES (1, 'al1', 0, 'a1', 'Album Artist')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title, playCount, played) " +
+                        "VALUES (1, 's1', 'al1', 'a1', 'One', 4, 200)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (1, 's1', 0, 'a1', 'Album Artist')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (1, 's1', 1, 'a2', 'Guest')",
+                )
+
+                MIGRATION_33_34.migrate(migrated)
+
+                assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'a1'"))
+                assertEquals(1L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'a1'"))
+                assertEquals(4L, long(migrated, "SELECT playCount FROM artists WHERE id = 'a1'"))
+                assertEquals(200L, long(migrated, "SELECT played FROM artists WHERE id = 'a1'"))
+                assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'a2'"))
+                assertEquals(1L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'a2'"))
+                assertEquals(4L, long(migrated, "SELECT playCount FROM artists WHERE id = 'a2'"))
+                assertEquals(200L, long(migrated, "SELECT played FROM artists WHERE id = 'a2'"))
+                assertEquals(6L, long(migrated, "SELECT songCount FROM artists WHERE id = 'b1'"))
+                assertEquals(7L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'b1'"))
+                assertEquals(5L, long(migrated, "SELECT playCount FROM artists WHERE id = 'b1'"))
+                assertEquals(100L, long(migrated, "SELECT played FROM artists WHERE id = 'b1'"))
+            }
+        }
+
     private fun text(
         connection: SQLiteConnection,
         sql: String,
