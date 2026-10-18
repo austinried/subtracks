@@ -79,7 +79,7 @@
     <string name="settings_replay_gain_mode_track">Track gain</string>
     <string name="settings_replay_gain_preamp_decrease">Lower preamp</string>
     <string name="settings_replay_gain_preamp_increase">Raise preamp</string>
-    <string name="settings_replay_gain_preamp_prompt">Extra level on top of ReplayGain</string>
+    <string name="settings_replay_gain_preamp_prompt">Extra level on top of ReplayGain (tracks without peak data cannot be boosted)</string>
     <string name="settings_replay_gain_preamp_reset">Reset</string>
     <string name="settings_replay_gain_preamp_title">Preamp</string>
     <string name="settings_replay_gain_preamp_value">%1$s dB</string>
