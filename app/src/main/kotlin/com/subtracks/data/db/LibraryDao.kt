@@ -108,7 +108,7 @@ internal const val ARTISTS_SELECT =
         "CASE WHEN :downloadedFilter = 1 THEN (" +
         "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt, artists.playCount, artists.played "
+        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount "
 
 internal const val ARTIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"

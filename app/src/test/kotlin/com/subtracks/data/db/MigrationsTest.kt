@@ -153,6 +153,30 @@ class MigrationsTest {
             }
         }
 
+    @Test
+    fun theArtistSongCountBackfillCountsLegacyCredits() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 29)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL("INSERT INTO artists (sourceId, id, name, albumCount) VALUES (1, 'ar1', 'Album Artist', 1)")
+                migrated.execSQL("INSERT INTO artists (sourceId, id, name, albumCount) VALUES (1, 'ar2', 'Guest', 0)")
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, songCount) " +
+                        "VALUES (1, 'al1', 'ar1', 'Album', 'Album Artist', 0, 1)",
+                )
+                migrated.execSQL("INSERT INTO songs (sourceId, id, albumId, artistId, title) VALUES (1, 's1', 'al1', 'ar1', 'One')")
+                migrated.execSQL("INSERT INTO songs (sourceId, id, albumId, artistId, title) VALUES (1, 's2', NULL, 'ar2', 'Two')")
+
+                MIGRATION_29_30.migrate(migrated)
+
+                assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'ar1'"))
+                assertEquals(1L, long(migrated, "SELECT songCount FROM artists WHERE id = 'ar2'"))
+            }
+        }
+
     private fun text(
         connection: SQLiteConnection,
         sql: String,

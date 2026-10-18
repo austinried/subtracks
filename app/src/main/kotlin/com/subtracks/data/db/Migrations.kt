@@ -426,6 +426,30 @@ val MIGRATION_29_30 =
     object : Migration(29, 30) {
         override suspend fun migrate(connection: SQLiteConnection) {
             connection.execSQL("ALTER TABLE `artists` ADD COLUMN `songCount` INTEGER NOT NULL DEFAULT 0")
+            connection.execSQL(
+                "WITH credited AS (" +
+                    "SELECT sourceId, artistId, songId FROM song_artists " +
+                    "UNION " +
+                    "SELECT sourceId, artistId, id AS songId FROM songs WHERE artistId IS NOT NULL " +
+                    "UNION " +
+                    "SELECT album_artists.sourceId, album_artists.artistId, songs.id " +
+                    "FROM album_artists JOIN songs " +
+                    "ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
+                    "UNION " +
+                    "SELECT albums.sourceId, albums.artistId, songs.id " +
+                    "FROM albums JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
+                    "WHERE albums.artistId IS NOT NULL" +
+                    "), counts AS (" +
+                    "SELECT sourceId, artistId AS id, COUNT(*) AS songCount FROM credited GROUP BY sourceId, artistId" +
+                    ") " +
+                    "UPDATE artists SET songCount = c.songCount " +
+                    "FROM (SELECT artists.sourceId AS sourceId, artists.id AS id, " +
+                    "COALESCE(counts.songCount, 0) AS songCount " +
+                    "FROM artists LEFT JOIN counts " +
+                    "ON counts.sourceId = artists.sourceId AND counts.id = artists.id) c " +
+                    "WHERE artists.sourceId = c.sourceId AND artists.id = c.id " +
+                    "AND artists.songCount != c.songCount",
+            )
         }
     }
 

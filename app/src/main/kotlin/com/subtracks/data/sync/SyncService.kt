@@ -31,14 +31,15 @@ class SyncService(
     private var playlistSongsSynced = 0
     private var pruned = 0
 
+    private var creditsChanged = false
+
     suspend fun sync(): SyncSummary {
+        creditsChanged = false
         syncArtists()
-        val libraryBefore = totalChanges()
         syncAlbums()
         syncSongs()
-        val libraryChanged = totalChanges() != libraryBefore
         optimize()
-        if (libraryChanged) recomputeArtistSongCounts()
+        if (creditsChanged) recomputeArtistSongCounts()
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
@@ -79,7 +80,9 @@ class SyncService(
             discs.forEach { seenDiscs.add(discHash(it.albumId, it.disc)) }
             albumsSynced += batch.size
         }
+        val prunedBefore = pruned
         pruned += pruneStaleIds(seenAlbums, { library.albumIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteAlbums(source.id, it) })
+        if (pruned > prunedBefore) creditsChanged = true
         pruned +=
             pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
                 deleteStaleDiscs(it)
@@ -95,7 +98,9 @@ class SyncService(
             batch.forEach { seen.add(idHash(it.id)) }
             songsSynced += batch.size
         }
+        val prunedBefore = pruned
         pruned += pruneStaleIds(seen, { library.songIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteSongs(source.id, it) })
+        if (pruned > prunedBefore) creditsChanged = true
     }
 
     private suspend fun writeSongs(batch: List<Song>) {
@@ -110,6 +115,7 @@ class SyncService(
             }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
+                if (connection.albumIdsChanged(batch)) creditsChanged = true
                 connection.upsertChanged("songs", songColumns, primaryKey, batch) { it.values() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
@@ -122,6 +128,7 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_genres", songGenreColumns, songGenreKey, genres) { it.values() }
+                val artistRowsBefore = connection.totalChanges()
                 connection.usePrepared("DELETE FROM song_artists WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
@@ -133,6 +140,7 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
+                if (connection.totalChanges() != artistRowsBefore) creditsChanged = true
             }
         }
     }
@@ -145,13 +153,36 @@ class SyncService(
         db.libraryDao().recomputeArtistSongCounts(source.id)
     }
 
-    private suspend fun totalChanges(): Long =
-        db.useWriterConnection { connection ->
-            connection.usePrepared("SELECT total_changes()") { statement ->
-                statement.step()
-                statement.getLong(0)
-            }
+    private suspend fun PooledConnection.totalChanges(): Long {
+        var value = 0L
+        usePrepared("SELECT total_changes()") { statement ->
+            statement.step()
+            value = statement.getLong(0)
         }
+        return value
+    }
+
+    private suspend fun PooledConnection.albumIdsChanged(batch: List<Song>): Boolean {
+        val expected = batch.associate { it.id to it.albumId }.toMutableMap()
+        if (expected.isEmpty()) return false
+        var changed = false
+        batch
+            .map { it.sourceId to it.id }
+            .chunked(SQL_VARIABLES)
+            .forEach { chunk ->
+                val placeholders = chunk.joinToString(",") { "?" }
+                usePrepared("SELECT id, albumId FROM songs WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
+                    statement.bindLong(1, chunk.first().first)
+                    chunk.forEachIndexed { index, (_, id) -> statement.bindText(index + 2, id) }
+                    while (statement.step()) {
+                        val id = statement.getText(0)
+                        val albumId = if (statement.isNull(1)) null else statement.getText(1)
+                        if (expected.remove(id) != albumId) changed = true
+                    }
+                }
+            }
+        return changed || expected.isNotEmpty()
+    }
 
     // Without sqlite_stat1 the artist and relation queries can fall back to whole-table scans.
     private suspend fun optimize() {
@@ -213,6 +244,7 @@ class SyncService(
             connection.immediateTransaction {
                 connection.upsertChanged("albums", albumColumns, primaryKey, albums) { it.values() }
                 connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
+                val artistRowsBefore = connection.totalChanges()
                 connection.usePrepared("DELETE FROM album_artists WHERE sourceId = ? AND albumId = ? AND position >= ?") { statement ->
                     albums.forEach { album ->
                         statement.bind(1, album.sourceId)
@@ -224,6 +256,7 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
+                if (connection.totalChanges() != artistRowsBefore) creditsChanged = true
             }
         }
     }
@@ -298,6 +331,7 @@ data class SyncSummary(
 )
 
 private const val DELETE_CHUNK = 500
+private const val SQL_VARIABLES = 500
 private const val PRUNE_PAGE = 500
 private const val INITIAL_HASH_CAPACITY = 256
 private const val FNV_OFFSET = -3750763034362895579L

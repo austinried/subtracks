@@ -647,7 +647,17 @@ class DownloadRepositoryTest {
                     ),
                 )
                 db.libraryDao().upsertArtists(
-                    listOf(Artist(sourceId = 1, id = "ar-guest", name = "Guest", albumCount = 0, starred = null, coverArt = null)),
+                    listOf(
+                        Artist(
+                            sourceId = 1,
+                            id = "ar-guest",
+                            name = "Guest",
+                            albumCount = 0,
+                            starred = null,
+                            coverArt = null,
+                            songCount = 1,
+                        ),
+                    ),
                 )
             }
 

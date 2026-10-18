@@ -1000,6 +1000,71 @@ class SyncServiceTest {
         }
 
     @Test
+    fun artistSongCountsAndDownloadsIncludeAlbumlessTracks() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A")),
+                    songs =
+                        listOf(
+                            song("s1").copy(albumId = null),
+                            song("s2").copy(albumId = null),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(2L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+
+            assertEquals(
+                ListDownloadStatus(total = 2, downloaded = 2),
+                db.downloadDao().artistStatus(1, "a1").first(),
+            )
+            assertEquals(
+                2L,
+                db
+                    .downloadDao()
+                    .artistStatuses(1)
+                    .first()
+                    .single { it.id == "a1" }
+                    .downloaded,
+            )
+        }
+
+    @Test
+    fun movingASongBetweenAlbumsUpdatesAlbumArtistCounts() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A"), artist("a2", "B"), artist("a3", "Track")),
+                    albums =
+                        listOf(
+                            album("al1").copy(artistId = "a1"),
+                            album("al2").copy(artistId = "a2"),
+                        ),
+                    songs = listOf(song("s1").copy(artistId = "a3", albumId = "al1")),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a3")!!.songCount)
+
+            source.songs = listOf(song("s1").copy(artistId = "a3", albumId = "al2"))
+
+            SyncService(db, source).sync()
+
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a3")!!.songCount)
+        }
+
+    @Test
     fun anIdenticalSyncDoesNotRewriteArtistRows() =
         runTest {
             insertSource()
