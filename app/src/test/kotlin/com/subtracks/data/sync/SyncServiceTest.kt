@@ -979,6 +979,8 @@ class SyncServiceTest {
             assertEquals(listOf("s1"), db.queueDao().artistSongIds(1, "a2"))
             assertEquals(1L, db.queueDao().artistLength(1, "a2"))
             assertEquals("B", db.libraryDao().artistName(1, "a2").first())
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a1")!!.songCount)
+            assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
 
             source.albums = listOf(album("al1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "A"))))
             source.songs = listOf(song("s1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "A"))))
@@ -994,6 +996,7 @@ class SyncServiceTest {
                     .map { it.id },
             )
             assertEquals(emptyList<String>(), db.queueDao().artistSongIds(1, "a2"))
+            assertEquals(0L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
         }
 
     @Test

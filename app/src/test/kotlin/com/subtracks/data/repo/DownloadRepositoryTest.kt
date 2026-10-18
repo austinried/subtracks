@@ -682,7 +682,17 @@ class DownloadRepositoryTest {
                     ),
                 )
                 db.libraryDao().upsertArtists(
-                    listOf(Artist(sourceId = 1, id = "ar-guest", name = "Guest", albumCount = 0, starred = null, coverArt = null)),
+                    listOf(
+                        Artist(
+                            sourceId = 1,
+                            id = "ar-guest",
+                            name = "Guest",
+                            albumCount = 0,
+                            starred = null,
+                            coverArt = null,
+                            songCount = 1,
+                        ),
+                    ),
                 )
                 db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
             }
@@ -910,7 +920,9 @@ class DownloadRepositoryTest {
                     ),
                 )
                 db.libraryDao().upsertArtists(
-                    listOf(Artist(sourceId = 1, id = "ar2", name = "Other", albumCount = 1, starred = null, coverArt = null)),
+                    listOf(
+                        Artist(sourceId = 1, id = "ar2", name = "Other", albumCount = 1, starred = null, coverArt = null, songCount = 1),
+                    ),
                 )
                 db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
                 db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Queued))
@@ -1166,7 +1178,7 @@ class DownloadRepositoryTest {
         )
 
     private fun artist(coverArt: String?) =
-        Artist(sourceId = 1, id = "ar1", name = "Artist", albumCount = 1, starred = null, coverArt = coverArt)
+        Artist(sourceId = 1, id = "ar1", name = "Artist", albumCount = 1, starred = null, coverArt = coverArt, songCount = 2)
 
     private fun seedLibrary() {
         runBlocking {

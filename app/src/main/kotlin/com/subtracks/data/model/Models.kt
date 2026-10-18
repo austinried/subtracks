@@ -89,6 +89,7 @@ data class Artist(
     val coverArt: String? = null,
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
+    @ColumnInfo(defaultValue = "0") val songCount: Long = 0,
 )
 
 @Entity(

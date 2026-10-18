@@ -33,9 +33,12 @@ class SyncService(
 
     suspend fun sync(): SyncSummary {
         syncArtists()
+        val libraryBefore = totalChanges()
         syncAlbums()
         syncSongs()
+        val libraryChanged = totalChanges() != libraryBefore
         optimize()
+        if (libraryChanged) recomputeArtistSongCounts()
         aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
@@ -137,6 +140,18 @@ class SyncService(
     private suspend fun aggregatePlayData() {
         db.libraryDao().recomputePlayData(source.id)
     }
+
+    private suspend fun recomputeArtistSongCounts() {
+        db.libraryDao().recomputeArtistSongCounts(source.id)
+    }
+
+    private suspend fun totalChanges(): Long =
+        db.useWriterConnection { connection ->
+            connection.usePrepared("SELECT total_changes()") { statement ->
+                statement.step()
+                statement.getLong(0)
+            }
+        }
 
     // Without sqlite_stat1 the artist and relation queries can fall back to whole-table scans.
     private suspend fun optimize() {

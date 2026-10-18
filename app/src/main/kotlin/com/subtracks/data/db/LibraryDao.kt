@@ -225,6 +225,26 @@ interface LibraryDao {
     )
     suspend fun recomputeArtistPlayData(sourceId: Long)
 
+    // Stored so the download badge query can report an artist's total without walking every song.
+    @Query(
+        "WITH credited AS (" +
+            "SELECT artistId, songId FROM song_artists WHERE sourceId = :sourceId " +
+            "UNION " +
+            "SELECT album_artists.artistId AS artistId, songs.id AS songId " +
+            "FROM album_artists " +
+            "JOIN songs ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
+            "WHERE album_artists.sourceId = :sourceId" +
+            "), counts AS (" +
+            "SELECT artistId AS id, COUNT(*) AS songCount FROM credited GROUP BY artistId" +
+            ") " +
+            "UPDATE artists SET songCount = c.songCount " +
+            "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount " +
+            "FROM artists LEFT JOIN counts ON counts.id = artists.id " +
+            "WHERE artists.sourceId = :sourceId) c " +
+            "WHERE artists.sourceId = :sourceId AND artists.id = c.id AND artists.songCount != c.songCount",
+    )
+    suspend fun recomputeArtistSongCounts(sourceId: Long)
+
     @Transaction
     suspend fun recomputePlayData(sourceId: Long) {
         recomputeAlbumPlayData(sourceId)
