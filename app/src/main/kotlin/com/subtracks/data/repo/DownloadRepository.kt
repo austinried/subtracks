@@ -11,6 +11,7 @@ import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.download.looksLikeAudio
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadError
 import com.subtracks.data.model.DownloadList
@@ -43,6 +44,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 class DownloadRepository(
     private val db: SubtracksDatabase,
@@ -63,6 +65,7 @@ class DownloadRepository(
     private var started = false
 
     private val statesFlow = MutableStateFlow<Map<String, SongDownload>>(emptyMap())
+    private val attemptedBios = ConcurrentHashMap.newKeySet<Pair<Long, String>>()
 
     fun start() {
         if (started) return
@@ -406,18 +409,55 @@ class DownloadRepository(
     private suspend fun fetchArtwork(
         sourceId: Long,
         songId: String,
+        artistIds: MutableSet<String>,
     ) {
         val song = db.libraryDao().songOnce(sourceId, songId)
+        val album = song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it) }
+        listOfNotNull(song?.artistId, album?.artistId).forEach(artistIds::add)
         val coverArt =
             (
                 listOfNotNull(
-                    song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it)?.coverArt },
+                    album?.coverArt,
                     song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it)?.coverArt },
                 ) + db.downloadDao().playlistCoversForSong(sourceId, songId)
             ).distinct()
         coverArt.forEach { cover ->
             storeArtwork(sourceId, cover, thumbnail = false)
             storeArtwork(sourceId, cover, thumbnail = true)
+        }
+    }
+
+    private suspend fun fetchArtistBio(
+        sourceId: Long,
+        artistId: String,
+    ) {
+        if (db.libraryDao().artistBioOnce(sourceId, artistId) != null) return
+        if (!attemptedBios.add(sourceId to artistId)) return
+        val biography =
+            try {
+                sourceRepository.artistBiography(sourceId, artistId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                return
+            }
+        db.libraryDao().upsertArtistBio(
+            ArtistBio(sourceId, artistId, biography?.trim()?.takeIf { it.isNotEmpty() }),
+        )
+    }
+
+    private suspend fun fetchArtistBiosSafely(
+        sourceId: Long,
+        artistIds: Set<String>,
+    ) {
+        if (artistIds.isEmpty()) return
+        try {
+            withTimeoutOrNull(BIO_TIMEOUT_MS) {
+                artistIds.forEach { fetchArtistBio(sourceId, it) }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 
@@ -537,11 +577,12 @@ class DownloadRepository(
         sourceId: Long,
         songIds: List<String>,
     ) {
+        val artistIds = mutableSetOf<String>()
         try {
             withTimeoutOrNull(ART_TIMEOUT_MS) {
                 songIds.forEach { songId ->
                     // A cancel between the queue and this pass takes the row away; nothing to warm.
-                    if (db.downloadDao().find(sourceId, songId) != null) fetchArtwork(sourceId, songId)
+                    if (db.downloadDao().find(sourceId, songId) != null) fetchArtwork(sourceId, songId, artistIds)
                 }
             }
         } catch (e: CancellationException) {
@@ -549,6 +590,7 @@ class DownloadRepository(
         } catch (_: Exception) {
             // Artwork is best effort and must never disturb a download that is already running.
         }
+        fetchArtistBiosSafely(sourceId, artistIds)
     }
 
     private suspend fun apply(
@@ -673,5 +715,6 @@ class DownloadRepository(
         const val IN_FLIGHT_LIMIT = 8
         const val DELETE_CHUNK = 900
         const val ART_TIMEOUT_MS = 60_000L
+        const val BIO_TIMEOUT_MS = 30_000L
     }
 }

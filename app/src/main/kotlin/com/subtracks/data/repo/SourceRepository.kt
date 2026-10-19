@@ -261,6 +261,15 @@ class SourceRepository(
         return config.toMusicSource(quality.value, prefs.syncConcurrency().first())
     }
 
+    suspend fun artistBiography(
+        sourceId: Long,
+        artistId: String,
+    ): String? {
+        check(!_offline.value) { "Offline mode is on" }
+        val config = db.sourcesDao().subsonicConfigOnce(sourceId) ?: error("No configured source")
+        return config.toMusicSource(quality.value, prefs.syncConcurrency().first()).artistBiography(artistId)
+    }
+
     private fun SubsonicConfig.toClient(): SubsonicClient =
         client(
             address = address,

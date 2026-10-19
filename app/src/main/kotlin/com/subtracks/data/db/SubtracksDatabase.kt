@@ -7,6 +7,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumArtistRef
 import com.subtracks.data.model.AlbumSearch
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.ArtistRefsConverter
 import com.subtracks.data.model.ArtistSearch
 import com.subtracks.data.model.ArtworkSeed
@@ -35,6 +36,7 @@ import com.subtracks.data.model.UpNextEntry
         Source::class,
         SubsonicSource::class,
         Artist::class,
+        ArtistBio::class,
         ArtistSearch::class,
         Album::class,
         AlbumSearch::class,
@@ -54,7 +56,7 @@ import com.subtracks.data.model.UpNextEntry
         SongDownload::class,
         PendingAction::class,
     ],
-    version = 34,
+    version = 35,
     exportSchema = true,
 )
 @ColumnTypeConverters(

@@ -165,6 +165,12 @@ object SubsonicXml {
         parse(input, handler)
         return handler.found
     }
+
+    internal fun artistBiography(input: InputStream): String? {
+        val handler = ArtistBiographyHandler()
+        parse(input, handler)
+        return handler.biography
+    }
 }
 
 internal class AlbumDraft(
@@ -419,6 +425,40 @@ private open class SubsonicResponseHandler : DefaultHandler() {
         name: String,
         depth: Int,
     ) = Unit
+}
+
+private class ArtistBiographyHandler : SubsonicResponseHandler() {
+    private var biographyDepth = -1
+    private val text = StringBuilder()
+
+    var biography: String? = null
+        private set
+
+    override fun characters(
+        ch: CharArray,
+        start: Int,
+        length: Int,
+    ) {
+        if (biographyDepth >= 0) text.append(ch, start, length)
+    }
+
+    override fun onElementStart(
+        name: String,
+        attributes: Attributes,
+        depth: Int,
+    ) {
+        if (name == "biography" && biographyDepth < 0) biographyDepth = depth
+    }
+
+    override fun onElementEnd(
+        name: String,
+        depth: Int,
+    ) {
+        if (name == "biography" && depth == biographyDepth) {
+            biography = text.toString().trim().takeIf { it.isNotEmpty() }
+            biographyDepth = -1
+        }
+    }
 }
 
 private class EntityHandler<T>(

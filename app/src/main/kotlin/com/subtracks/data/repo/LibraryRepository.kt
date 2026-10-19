@@ -15,6 +15,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistAlbums
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSongItem
@@ -355,6 +356,31 @@ class LibraryRepository(
         sourceId: Long,
         artistId: String,
     ): Flow<String?> = db.libraryDao().artistName(sourceId, artistId)
+
+    fun artistBio(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<ArtistBio?> = db.libraryDao().artistBio(sourceId, artistId)
+
+    suspend fun refreshArtistBio(
+        sourceId: Long,
+        artistId: String,
+    ): Result<Unit> {
+        val biography =
+            try {
+                sourceRepository.artistBiography(sourceId, artistId)?.trim()?.takeIf { it.isNotEmpty() }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Exception) {
+                Log.w("artist", "failed to refresh bio for $artistId", failure)
+                return Result.failure(failure)
+            }
+        val current = db.libraryDao().artistBioOnce(sourceId, artistId)
+        if (current == null || current.biography != biography) {
+            db.libraryDao().upsertArtistBio(ArtistBio(sourceId, artistId, biography))
+        }
+        return Result.success(Unit)
+    }
 
     fun song(
         sourceId: Long,

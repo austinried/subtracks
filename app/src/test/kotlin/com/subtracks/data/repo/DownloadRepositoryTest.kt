@@ -36,6 +36,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,6 +53,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class DownloadRepositoryTest {
@@ -119,6 +124,49 @@ class DownloadRepositoryTest {
             assertEquals("downloads/1/s1", request.path)
             assertEquals("Song 1", request.title)
             assertEquals(DownloadStatus.Queued, row(1, "s1")?.status)
+        }
+
+    @Test
+    fun aDownloadAlsoFetchesTheArtistsBiography() =
+        runTest {
+            val server = MockWebServer()
+            server.start()
+            try {
+                server.dispatcher =
+                    object : Dispatcher() {
+                        override fun dispatch(request: RecordedRequest): MockResponse =
+                            when (request.requestUrl!!.encodedPath) {
+                                "/rest/ping.view" -> {
+                                    MockResponse().setBody("<subsonic-response status=\"ok\"/>")
+                                }
+
+                                "/rest/getArtistInfo2.view" -> {
+                                    MockResponse().setBody(
+                                        "<subsonic-response status=\"ok\"><artistInfo2>" +
+                                            "<biography>Downloaded bio</biography>" +
+                                            "</artistInfo2></subsonic-response>",
+                                    )
+                                }
+
+                                else -> {
+                                    MockResponse().setResponseCode(404)
+                                }
+                            }
+                    }
+                seedLibrary(server.url("/").toString())
+
+                runBlocking { repository.download(1, "s1") }
+
+                await { artistBio(1, "ar1") != null }
+                assertEquals("Downloaded bio", artistBio(1, "ar1")?.biography)
+                var request = server.takeRequest(5, TimeUnit.SECONDS)!!
+                while (request.requestUrl!!.encodedPath != "/rest/getArtistInfo2.view") {
+                    request = server.takeRequest(5, TimeUnit.SECONDS)!!
+                }
+                assertEquals("ar1", request.requestUrl!!.queryParameter("id"))
+            } finally {
+                server.shutdown()
+            }
         }
 
     @Test
@@ -1237,9 +1285,9 @@ class DownloadRepositoryTest {
     private fun artist(coverArt: String?) =
         Artist(sourceId = 1, id = "ar1", name = "Artist", albumCount = 1, starred = null, coverArt = coverArt, songCount = 2)
 
-    private fun seedLibrary() {
+    private fun seedLibrary(address: String = "http://localhost:4533/") {
         runBlocking {
-            db.sourcesDao().upsertSource(Source(1, "source", "http://localhost:4533/", isActive = true, createdAt = 0))
+            db.sourcesDao().upsertSource(Source(1, "source", address, isActive = true, createdAt = 0))
             db.sourcesDao().upsertSubsonicSource(SubsonicSource(1, "user", "pass"))
             db.libraryDao().upsertSongs(
                 listOf(
@@ -1288,6 +1336,11 @@ class DownloadRepositoryTest {
         sourceId: Long,
         songId: String,
     ): SongDownload? = runBlocking { db.downloadDao().find(sourceId, songId) }
+
+    private fun artistBio(
+        sourceId: Long,
+        artistId: String,
+    ) = runBlocking { db.libraryDao().artistBioOnce(sourceId, artistId) }
 
     private fun allRows(): List<SongDownload> = runBlocking { db.downloadDao().all() }
 

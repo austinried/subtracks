@@ -137,6 +137,23 @@ class MigrationsTest {
         }
 
     @Test
+    fun theArtistBioTableStoresTheLatestBiography() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 34)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+
+                MIGRATION_34_35.migrate(migrated)
+                migrated.execSQL("INSERT INTO artist_bios (sourceId, artistId, biography) VALUES (1, 'ar1', 'Old')")
+                migrated.execSQL("UPDATE artist_bios SET biography = 'New' WHERE sourceId = 1 AND artistId = 'ar1'")
+
+                assertEquals("New", text(migrated, "SELECT biography FROM artist_bios WHERE artistId = 'ar1'"))
+            }
+        }
+
+    @Test
     fun theGenreBackfillTrimsAndSkipsBlankSingularGenres() =
         runTest {
             driver.open(":memory:").use { migrated ->

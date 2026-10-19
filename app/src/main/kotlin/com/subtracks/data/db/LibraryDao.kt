@@ -12,6 +12,7 @@ import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
@@ -1068,6 +1069,21 @@ interface LibraryDao {
         sourceId: Long,
         artistId: String,
     ): Flow<Artist?>
+
+    @Query("SELECT * FROM artist_bios WHERE sourceId = :sourceId AND artistId = :artistId")
+    fun artistBio(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<ArtistBio?>
+
+    @Query("SELECT * FROM artist_bios WHERE sourceId = :sourceId AND artistId = :artistId")
+    suspend fun artistBioOnce(
+        sourceId: Long,
+        artistId: String,
+    ): ArtistBio?
+
+    @Upsert
+    suspend fun upsertArtistBio(item: ArtistBio)
 
     // A credited track artist may not have an artists row; its name lives on song_artists or the songs.
     @Query(

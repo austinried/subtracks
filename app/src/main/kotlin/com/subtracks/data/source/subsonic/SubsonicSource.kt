@@ -85,6 +85,13 @@ class SubsonicSource(
         }
     }
 
+    override suspend fun artistBiography(artistId: String): String? =
+        withContext(Dispatchers.IO) {
+            client.stream("getArtistInfo2", mapOf("id" to artistId)) { input ->
+                SubsonicXml.artistBiography(input)
+            }
+        }
+
     override fun artists(): Flow<List<Artist>> =
         entityBatches(
             method = "getArtists",

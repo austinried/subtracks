@@ -96,6 +96,24 @@ data class Artist(
 )
 
 @Entity(
+    tableName = "artist_bios",
+    primaryKeys = ["sourceId", "artistId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class ArtistBio(
+    val sourceId: Long,
+    val artistId: String,
+    val biography: String?,
+)
+
+@Entity(
     tableName = "albums",
     primaryKeys = ["sourceId", "id"],
     foreignKeys = [

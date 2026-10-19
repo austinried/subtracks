@@ -2,6 +2,7 @@ package com.subtracks.data.source.subsonic
 
 import com.subtracks.data.model.ArtistRef
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.xml.sax.Attributes
@@ -41,6 +42,30 @@ class SubsonicXmlTest {
             create = { SubsonicXml.songDraft(1, it) },
             onChild = SubsonicXml::songChild,
         ).map { it.toSong() }
+
+    @Test
+    fun readsTheArtistBiography() {
+        val biography =
+            SubsonicXml.artistBiography(
+                (
+                    "<subsonic-response status=\"ok\"><artistInfo2>" +
+                        "<biography>  Radiohead &amp; friends  </biography>" +
+                        "</artistInfo2></subsonic-response>"
+                ).byteInputStream(Charsets.UTF_8),
+            )
+
+        assertEquals("Radiohead & friends", biography)
+    }
+
+    @Test
+    fun anArtistWithoutABiographyReadsAsNull() {
+        val biography =
+            SubsonicXml.artistBiography(
+                "<subsonic-response status=\"ok\"><artistInfo2/></subsonic-response>".byteInputStream(Charsets.UTF_8),
+            )
+
+        assertNull(biography)
+    }
 
     @Test
     fun mapsArtists() {

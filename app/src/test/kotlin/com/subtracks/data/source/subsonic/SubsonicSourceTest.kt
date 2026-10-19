@@ -112,6 +112,37 @@ class SubsonicSourceTest {
         }
 
     @Test
+    fun artistBiographyReadsGetArtistInfo2() =
+        runBlocking {
+            server.enqueue(
+                MockResponse().setBody(
+                    "<subsonic-response status=\"ok\"><artistInfo2>" +
+                        "<biography>From Last.fm</biography>" +
+                        "</artistInfo2></subsonic-response>",
+                ),
+            )
+
+            val biography = SubsonicSource(1, client()).artistBiography("ar1")
+
+            assertEquals("From Last.fm", biography)
+            val request = server.takeRequest()
+            assertEquals("/rest/getArtistInfo2.view", request.requestUrl!!.encodedPath)
+            assertEquals("ar1", request.requestUrl!!.queryParameter("id"))
+        }
+
+    @Test
+    fun artistBiographyIsNullWhenTheServerHasNone() =
+        runBlocking {
+            server.enqueue(
+                MockResponse().setBody(
+                    "<subsonic-response status=\"ok\"><artistInfo2/></subsonic-response>",
+                ),
+            )
+
+            assertNull(SubsonicSource(1, client()).artistBiography("ar1"))
+        }
+
+    @Test
     fun artistsAreEmittedInBoundedBatches() =
         runBlocking {
             val count = 1200

@@ -12,6 +12,7 @@ import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
@@ -271,6 +272,59 @@ class LibraryRepositoryTest {
             assertEquals(listOf("al-0002"), creditedTrack.appearances.map { it.id })
         }
 
+    @Test
+    fun refreshingAnArtistBioStoresItAndUpdatesItOnTheNextOpen() =
+        runBlocking {
+            withSource { server ->
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                server.enqueue(artistInfo("First bio"))
+                assertTrue(repository.refreshArtistBio(sourceId, "ar1").isSuccess)
+                assertEquals("First bio", repository.artistBio(sourceId, "ar1").first()?.biography)
+
+                server.enqueue(artistInfo("Second bio"))
+                assertTrue(repository.refreshArtistBio(sourceId, "ar1").isSuccess)
+
+                assertEquals("Second bio", repository.artistBio(sourceId, "ar1").first()?.biography)
+                val first = server.takeRequest()
+                assertEquals("/rest/getArtistInfo2.view", first.requestUrl!!.encodedPath)
+                assertEquals("ar1", first.requestUrl!!.queryParameter("id"))
+                assertEquals("/rest/getArtistInfo2.view", server.takeRequest().requestUrl!!.encodedPath)
+            }
+        }
+
+    @Test
+    fun anArtistWithoutABioStillRecordsTheFetchedState() =
+        runBlocking {
+            withSource { server ->
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                server.enqueue(
+                    MockResponse().setBody(
+                        "<subsonic-response status=\"ok\"><artistInfo2/></subsonic-response>",
+                    ),
+                )
+
+                assertTrue(repository.refreshArtistBio(sourceId, "ar1").isSuccess)
+
+                val bio = repository.artistBio(sourceId, "ar1").first()
+                assertNotNull(bio)
+                assertNull(bio?.biography)
+            }
+        }
+
+    @Test
+    fun aFailedRefreshKeepsTheStoredBio() =
+        runBlocking {
+            withSource { server ->
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                db.libraryDao().upsertArtistBio(ArtistBio(sourceId, "ar1", "Kept"))
+                server.enqueue(MockResponse().setResponseCode(500))
+
+                assertTrue(repository.refreshArtistBio(sourceId, "ar1").isFailure)
+
+                assertEquals("Kept", repository.artistBio(sourceId, "ar1").first()?.biography)
+            }
+        }
+
     private suspend fun awaitRefreshes(
         presenter: RecordingPresenter,
         target: Int,
@@ -345,6 +399,13 @@ class LibraryRepositoryTest {
             disc = 1,
             starred = null,
             genre = null,
+        )
+
+    private fun artistInfo(biography: String) =
+        MockResponse().setBody(
+            "<subsonic-response status=\"ok\"><artistInfo2>" +
+                "<biography>$biography</biography>" +
+                "</artistInfo2></subsonic-response>",
         )
 
     private fun ok() = MockResponse().setBody("<subsonic-response status=\"ok\" version=\"1.16.1\"/>")

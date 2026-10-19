@@ -26,6 +26,8 @@ interface MusicSource {
         time: Long? = null,
     )
 
+    suspend fun artistBiography(artistId: String): String? = null
+
     fun artists(): Flow<List<Artist>>
 
     fun albums(): Flow<List<Album>>
