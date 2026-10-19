@@ -8,7 +8,7 @@ internal class ReplayGainController(
 ) {
     private var track = ReplayGain()
     private var albumContext = false
-    private var settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
+    private var settings = ReplayGainSettings(ReplayGainMode.Auto, 0f)
 
     @Synchronized
     fun applyItem(item: MediaItem) {

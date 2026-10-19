@@ -203,7 +203,7 @@ fun SettingsScreen(
     verboseLogging: Boolean = false,
     syncMode: SyncMode = SyncMode.WifiOnly,
     syncInterval: Int = DEFAULT_SYNC_INTERVAL_MINUTES,
-    replayGainMode: ReplayGainMode = ReplayGainMode.Track,
+    replayGainMode: ReplayGainMode = ReplayGainMode.Auto,
     replayGainPreamp: Float = 0f,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,

@@ -69,7 +69,7 @@ class SettingsViewModel(
     val replayGainMode: StateFlow<ReplayGainMode> =
         userPreferences
             .replayGainMode()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReplayGainMode.Track)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReplayGainMode.Auto)
 
     val replayGainPreamp: StateFlow<Float> =
         userPreferences

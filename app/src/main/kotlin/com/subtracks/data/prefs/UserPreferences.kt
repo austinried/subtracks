@@ -154,7 +154,7 @@ class UserPreferences(
 
     fun replayGainMode(): Flow<ReplayGainMode> =
         store.data.map { prefs ->
-            prefs[replayGainModeKey]?.let { stored -> ReplayGainMode.entries.firstOrNull { it.name == stored } } ?: ReplayGainMode.Track
+            prefs[replayGainModeKey]?.let { stored -> ReplayGainMode.entries.firstOrNull { it.name == stored } } ?: ReplayGainMode.Auto
         }
 
     suspend fun setReplayGainMode(mode: ReplayGainMode) {
