@@ -73,11 +73,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -116,6 +119,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.ceil
 
 private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
@@ -126,6 +130,10 @@ private val SHUFFLE_ICON = 30.dp
 private val SHUFFLE_END = 22.dp
 private val SHUFFLE_RESERVE = 86.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
+private val BIO_ACTION_RESERVE = 104.dp
+private val BIO_ACTION_HEIGHT = 48.dp
+private val BIO_TOP_GAP = 8.dp
+private const val ARTIST_BIO_EMPTY = "No artist bio available"
 
 internal fun estimateScrollPx(
     index: Int,
@@ -259,6 +267,11 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
+    // No server biography is mirrored yet, so the page ships with the empty state. The collapsed
+    // and expanded paths below are ready for it: collapsed keeps two lines and ends with a bold
+    // More, expanded shows the full flow and leaves extra room before the first section.
+    val bioCollapsed = true
+    val bioText = ARTIST_BIO_EMPTY
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -396,13 +409,24 @@ fun ArtistDetailScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.fillMaxWidth().padding(end = SHUFFLE_RESERVE),
                                 )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    ArtistActions(artist, starred, onToggleStar, onMore)
-                                }
+                                ArtistBio(
+                                    text = bioText,
+                                    color =
+                                        if (bioText == ARTIST_BIO_EMPTY) {
+                                            MaterialTheme.colorScheme.outline
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                    collapsed = bioCollapsed,
+                                    artist = artist,
+                                    starred = starred,
+                                    onToggleStar = onToggleStar,
+                                    onMore = onMore,
+                                    modifier =
+                                        Modifier.padding(
+                                            bottom = if (!bioCollapsed && bioText != ARTIST_BIO_EMPTY) 8.dp else 0.dp,
+                                        ),
+                                )
                             }
                         }
                     }
@@ -484,6 +508,148 @@ fun ArtistDetailScreen(
     }
 }
 
+// The expanded layout narrows only the lines that overlap the action buttons; later lines use the
+// full width. Collapsed keeps two lines and appends a bold More, not yet wired to expand.
+@Composable
+private fun ArtistBio(
+    text: String,
+    color: Color,
+    collapsed: Boolean,
+    artist: Artist?,
+    starred: Boolean,
+    onToggleStar: (() -> Unit)?,
+    onMore: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val style = MaterialTheme.typography.bodyMedium
+    BoxWithConstraints(modifier.fillMaxWidth().padding(top = BIO_TOP_GAP)) {
+        val fullWidth = with(density) { maxWidth.roundToPx() }
+        val reserve = with(density) { BIO_ACTION_RESERVE.roundToPx() }
+        val lineHeightPx =
+            remember(style) {
+                measurer.measure(AnnotatedString("X"), style, maxLines = 1).size.height
+            }.coerceAtLeast(1)
+        val reserveLines = ceil(with(density) { BIO_ACTION_HEIGHT.toPx() } / lineHeightPx).toInt().coerceAtLeast(1)
+        val lines =
+            remember(text, fullWidth, reserve, reserveLines, collapsed) {
+                if (collapsed) {
+                    splitBioCollapsed(measurer, text, style, fullWidth, reserve)
+                } else {
+                    splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
+                        AnnotatedString(it.ifEmpty { " " })
+                    }
+                }
+            }
+        Box {
+            Column(Modifier.fillMaxWidth()) {
+                lines.forEach { line ->
+                    Text(
+                        text = line,
+                        style = style,
+                        color = color,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Row(Modifier.align(Alignment.TopEnd).offset(y = (-8).dp)) {
+                ArtistActions(artist, starred, onToggleStar, onMore)
+            }
+        }
+    }
+}
+
+/** Splits text into lines, narrowing the lines that would overlap the actions. */
+internal fun splitBio(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    fullWidth: Int,
+    reserve: Int,
+    reserveLines: Int,
+): List<String> {
+    if (text.isBlank()) return listOf("")
+    val lines = mutableListOf<String>()
+    text.split("\n\n").forEachIndexed { paragraphIndex, paragraph ->
+        if (paragraphIndex > 0) lines += ""
+        val words = paragraph.replace('\n', ' ').split(' ').filter { it.isNotEmpty() }
+        var current = ""
+        var index = 0
+        while (index < words.size) {
+            val candidate = if (current.isEmpty()) words[index] else "$current ${words[index]}"
+            val available = if (lines.size < reserveLines) fullWidth - reserve else fullWidth
+            if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
+                current = candidate
+                index++
+            } else if (current.isEmpty()) {
+                lines += candidate
+                index++
+            } else {
+                lines += current
+                current = ""
+            }
+        }
+        if (current.isNotEmpty()) lines += current
+    }
+    return lines
+}
+
+/** Collapses text to two lines around the actions, ending with a bold More. */
+internal fun splitBioCollapsed(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    fullWidth: Int,
+    reserve: Int,
+): List<AnnotatedString> {
+    val words =
+        text
+            .replace("\n\n", " ")
+            .replace('\n', ' ')
+            .split(' ')
+            .filter { it.isNotEmpty() }
+    if (words.isEmpty()) return listOf(AnnotatedString(""))
+    val available = (fullWidth - reserve).coerceAtLeast(1)
+    var first = ""
+    var index = 0
+    while (index < words.size) {
+        val candidate = if (first.isEmpty()) words[index] else "$first ${words[index]}"
+        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
+            first = candidate
+            index++
+        } else {
+            break
+        }
+    }
+    if (index >= words.size) return listOf(AnnotatedString(first))
+    val more =
+        buildAnnotatedString {
+            append("… ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("More") }
+        }
+    val moreWidth = measurer.measure(more, style, maxLines = 1).size.width
+    val secondAvailable = (available - moreWidth).coerceAtLeast(1)
+    var second = ""
+    while (index < words.size) {
+        val candidate = if (second.isEmpty()) words[index] else "$second ${words[index]}"
+        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= secondAvailable) {
+            second = candidate
+            index++
+        } else {
+            break
+        }
+    }
+    val secondLine =
+        buildAnnotatedString {
+            if (second.isNotEmpty()) append("$second ")
+            append("… ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("More") }
+        }
+    return listOf(AnnotatedString(first), secondLine)
+}
+
 @Composable
 private fun ArtistSectionHeader(
     text: String,
@@ -491,7 +657,7 @@ private fun ArtistSectionHeader(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
     ) {
         Icon(
             imageVector = icon,
