@@ -134,6 +134,7 @@ private val SHUFFLE_RESERVE = 86.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 private val BIO_ACTION_RESERVE = 104.dp
 private val BIO_ACTION_HEIGHT = 48.dp
+private val BIO_ACTION_OFFSET = 8.dp
 private val BIO_TOP_GAP = 8.dp
 
 internal fun estimateScrollPx(
@@ -363,7 +364,9 @@ fun ArtistDetailScreen(
             BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 val screenHeightPx = with(density) { maxHeight.toPx() }
                 val barHeightPx = with(density) { barHeight.toPx() }
-                val gradientScrollPx = scrollPx - imageHeightPx
+                // The gradient is anchored to the hero image, not the whole header, whose bio can expand.
+                val heroHeightPx = with(density) { ART_HEIGHT.toPx() }
+                val gradientScrollPx = scrollPx - heroHeightPx
                 val barColor = heroBarColor(effectiveArtwork, gradientScrollPx, barHeightPx, screenHeightPx)
                 HeroGradient(
                     colors = effectiveArtwork,
@@ -441,7 +444,7 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Column(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = TITLE_INSET),
                             ) {
                                 Text(
                                     text = metaText,
@@ -579,12 +582,15 @@ private fun ArtistBio(
             remember(style) {
                 measurer.measure(AnnotatedString("X"), style, maxLines = 1).size.height
             }.coerceAtLeast(1)
-        val reserveLines = ceil(with(density) { BIO_ACTION_HEIGHT.toPx() } / lineHeightPx).toInt().coerceAtLeast(1)
+        val reserveLines =
+            ceil(with(density) { (BIO_ACTION_HEIGHT - BIO_ACTION_OFFSET).toPx() } / lineHeightPx)
+                .toInt()
+                .coerceAtLeast(1)
         val bioLines =
             remember(text, fullWidth, reserve, reserveLines, collapsed, expanded, moreText, lessText) {
                 when {
                     collapsed -> {
-                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText, maxLines = 3)
+                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, reserveLines, moreText, maxLines = 3)
                     }
 
                     expanded -> {
@@ -620,7 +626,7 @@ private fun ArtistBio(
                     )
                 }
             }
-            Row(Modifier.align(Alignment.TopEnd).offset(y = (-8).dp)) {
+            Row(Modifier.align(Alignment.TopEnd).offset(y = -BIO_ACTION_OFFSET)) {
                 ArtistActions(artist, starred, onToggleStar, onMore)
             }
         }
@@ -742,6 +748,7 @@ internal fun splitBioCollapsed(
     style: TextStyle,
     fullWidth: Int,
     reserve: Int,
+    reserveLines: Int,
     moreText: String,
     maxLines: Int = 2,
 ): BioLines {
@@ -752,13 +759,13 @@ internal fun splitBioCollapsed(
             .split(' ')
             .filter { it.isNotEmpty() }
     if (words.isEmpty()) return BioLines(listOf(AnnotatedString("")), more = false)
-    val available = (fullWidth - reserve).coerceAtLeast(1)
     val lines = mutableListOf<AnnotatedString>()
     var index = 0
     while (index < words.size && lines.size < maxLines - 1) {
         var current = ""
         while (index < words.size) {
             val candidate = if (current.isEmpty()) words[index] else "$current ${words[index]}"
+            val available = bioLineWidth(lines.size, fullWidth, reserve, reserveLines)
             if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
                 current = candidate
                 index++
@@ -776,8 +783,9 @@ internal fun splitBioCollapsed(
         return BioLines(lines, more = false)
     }
 
+    val remainingAvailable = bioLineWidth(lines.size, fullWidth, reserve, reserveLines)
     val remaining = words.drop(index).joinToString(" ")
-    if (measurer.measure(AnnotatedString(remaining), style, maxLines = 1).size.width <= available) {
+    if (measurer.measure(AnnotatedString(remaining), style, maxLines = 1).size.width <= remainingAvailable) {
         lines += AnnotatedString(remaining)
         return BioLines(lines, more = false)
     }
@@ -790,7 +798,7 @@ internal fun splitBioCollapsed(
     val moreWidth =
         measurer.measure(more, style, maxLines = 1).size.width +
             measurer.measure(AnnotatedString(" "), style, maxLines = 1).size.width
-    val lastAvailable = (available - moreWidth).coerceAtLeast(1)
+    val lastAvailable = (bioLineWidth(lines.size, fullWidth, reserve, reserveLines) - moreWidth).coerceAtLeast(1)
     var truncated = ""
     while (index < words.size) {
         val candidate = if (truncated.isEmpty()) words[index] else "$truncated ${words[index]}"

@@ -238,7 +238,7 @@ class ArtistDetailScreenTest {
         var result: BioLines? = null
         composeRule.setContent {
             val measurer = rememberTextMeasurer()
-            result = splitBioCollapsed(measurer, bio, TextStyle(fontSize = 14.sp), 400, 0, "More")
+            result = splitBioCollapsed(measurer, bio, TextStyle(fontSize = 14.sp), 400, 0, 0, "More")
         }
         composeRule.waitForIdle()
 
@@ -269,6 +269,7 @@ class ArtistDetailScreenTest {
                     TextStyle(fontSize = 14.sp),
                     400,
                     0,
+                    0,
                     "More",
                     maxLines = 3,
                 )
@@ -297,6 +298,7 @@ class ArtistDetailScreenTest {
                     "Supercalifragilisticexpialidocious and the rest",
                     TextStyle(fontSize = 14.sp),
                     20,
+                    0,
                     0,
                     "More",
                 )
