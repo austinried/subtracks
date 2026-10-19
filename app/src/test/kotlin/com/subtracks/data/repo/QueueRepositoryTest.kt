@@ -506,6 +506,43 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun movingARangedAlbumTrackInUpNextKeepsTheAbsoluteOffsets() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    song("s6", "al1", track = 4, album = "First Album"),
+                    song("s7", "al1", track = 5, album = "First Album"),
+                    song("x1", "al3", track = 1),
+                ),
+            )
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al2")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = albumRange(1, 4), playNext = false)
+            repository.addUpNext(
+                repository.snapshot(),
+                currentPosition = 0,
+                entry = repository.songEntry(1, "x1"),
+                playNext = false,
+            )
+            assertEquals(listOf("s4", "s2", "s3", "s6", "s7", "x1", "s5"), resolveAll(repository.snapshot()))
+
+            repository.move(repository.snapshot(), from = 4, to = 5)
+
+            var updated = repository.snapshot()
+            assertEquals(listOf("s4", "s2", "s3", "s6", "x1", "s7", "s5"), resolveAll(updated))
+            val moved = updated.locate(5)!!.first
+            assertEquals(QueueKind.Album, moved.kind)
+            assertEquals(4L, moved.rangeStart)
+            assertEquals(4L, moved.rangeEnd)
+
+            repository.move(repository.snapshot(), from = 5, to = 4)
+
+            updated = repository.snapshot()
+            assertEquals(listOf("s4", "s2", "s3", "s6", "s7", "x1", "s5"), resolveAll(updated))
+            assertTrue(updated.isAlbumContext(4))
+        }
+
+    @Test
     fun movingAPlaylistTrackKeepsItAPinnedSong() =
         runTest {
             seedLibrary()
@@ -895,6 +932,51 @@ class QueueRepositoryTest {
             assertEquals(0L, entry.rangeStart)
             assertEquals(0L, entry.rangeEnd)
             assertEquals("First Album", repository.sourceName(entry.kind, entry.sourceId, entry.refId))
+        }
+
+    @Test
+    fun movingWithinARangedAlbumKeepsTheAbsoluteOffsets() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    song("s6", "al1", track = 4, album = "First Album"),
+                    song("s7", "al1", track = 5, album = "First Album"),
+                ),
+            )
+            repository.snapshotAfter(listOf(albumRange(1, 4)))
+            assertEquals(listOf("s2", "s3", "s6", "s7"), resolveAll(repository.snapshot()))
+
+            repository.move(repository.snapshot(), from = 0, to = 2)
+
+            val snapshot = repository.snapshot()
+            assertEquals(listOf("s3", "s6", "s2", "s7"), resolveAll(snapshot))
+            val (entry, _) = snapshot.locate(2)!!
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals(1L, entry.rangeStart)
+            assertEquals(1L, entry.rangeEnd)
+        }
+
+    @Test
+    fun movingBackwardWithinARangedAlbumKeepsTheAbsoluteOffsets() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    song("s6", "al1", track = 4, album = "First Album"),
+                    song("s7", "al1", track = 5, album = "First Album"),
+                ),
+            )
+            repository.snapshotAfter(listOf(albumRange(1, 4)))
+
+            repository.move(repository.snapshot(), from = 3, to = 0)
+
+            val snapshot = repository.snapshot()
+            assertEquals(listOf("s7", "s2", "s3", "s6"), resolveAll(snapshot))
+            val (entry, _) = snapshot.locate(0)!!
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals(4L, entry.rangeStart)
+            assertEquals(4L, entry.rangeEnd)
         }
 
     @Test

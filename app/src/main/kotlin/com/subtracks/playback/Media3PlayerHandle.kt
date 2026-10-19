@@ -235,7 +235,6 @@ class Media3PlayerHandle(
                     ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
                     ?.getLong(EXTRA_DURATION_MS),
             replayGain = mediaItem.replayGain(),
-            albumContext = mediaItem.albumContext(),
         )
 }
 

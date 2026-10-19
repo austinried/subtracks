@@ -509,17 +509,25 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun shuffledAlbumTracksKeepAlbumContext() {
+        seedShuffledQueue(seed = 5L)
+
+        assertTrue(handle.items.isNotEmpty())
+        assertTrue(handle.items.all { it.albumContext })
+    }
+
+    @Test
     fun movingAnAlbumTrackKeepsItsAlbumGainContext() {
-        seedAlbum(4, sourceId = 1)
+        seedAlbum(60, sourceId = 1)
 
         controller.playAlbum(1, "al1", 0)
         await { handle.items.any { it.id == "s1" } }
 
-        runBlocking { controller.move(0, 2) }
-        await { controller.state.value.position == 2L }
+        runBlocking { controller.move(0, 40) }
+        await { controller.state.value.position == 40L }
 
         assertTrue(handle.items.first { it.id == "s1" }.albumContext)
-        val (entry, _) = runBlocking { queues.snapshot().locate(2)!! }
+        val (entry, _) = runBlocking { queues.snapshot().locate(40)!! }
         assertEquals(QueueKind.Album, entry.kind)
         assertEquals("al1", entry.refId)
     }
@@ -538,6 +546,35 @@ class PlaybackControllerTest {
         await { handle.items.any { it.id == "s2" } }
 
         assertTrue(handle.items.first { it.id == "s2" }.albumContext)
+    }
+
+    @Test
+    fun movingAContextTrackAcrossUpNextKeepsPlayerAndQueueInSync() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { handle.items.any { it.id == "x1" } }
+
+        runBlocking { controller.move(0, 3) }
+        await { controller.state.value.position == 2L }
+
+        val expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, handle.items.map { it.id })
+        assertEquals(
+            "s1",
+            controller.state.value.item
+                ?.id,
+        )
     }
 
     @Test

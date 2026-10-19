@@ -456,7 +456,7 @@ class PlaybackController(
             if (snapshot.upNextSize > 0L || updated.upNextSize > 0L || snapshot.shuffled) {
                 queueRepository.setCursor(target)
                 if (position != current) {
-                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target, updated)
+                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
                     refresh(target)
                 } else {
                     loadWindow(target, autoplay = playing, startPositionMs = 0)
@@ -546,13 +546,13 @@ class PlaybackController(
             return@withLock
         }
         when {
-            fromInWindow && toInWindow -> {
+            fromInWindow && toInWindow && (snapshot.upNextSize == 0L || snapshot.isUpNext(from)) -> {
                 updating = true
                 player.move((from - windowStart).toInt(), (to - windowStart).toInt())
                 updating = false
             }
 
-            !fromInWindow && !toInWindow -> {
+            !fromInWindow && !toInWindow && (snapshot.upNextSize == 0L || snapshot.isUpNext(from)) -> {
                 // The moved track never enters the window, so the playlist is unchanged; only
                 // the window's positions shift, and a move that spans it shifts them by one.
                 when {
@@ -569,7 +569,7 @@ class PlaybackController(
             }
 
             else -> {
-                rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target, updated)
+                rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
             }
         }
         shiftWindowLocked(target)
@@ -768,7 +768,7 @@ class PlaybackController(
                 if (wasUpNext) {
                     loadWindow(target, autoplay = true)
                 } else {
-                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target, updated)
+                    rebuildWindow(queueRepository.window(updated, target, QUEUE_WINDOW_RADIUS), target)
                     refresh(target)
                 }
             }
@@ -864,7 +864,7 @@ class PlaybackController(
         layoutVersion++
         queueRepository.setCursor(position)
         windowJob?.cancel()
-        rebuildWindow(queueRepository.window(updated, position, QUEUE_WINDOW_RADIUS), position, updated)
+        rebuildWindow(queueRepository.window(updated, position, QUEUE_WINDOW_RADIUS), position)
         refresh(position)
     }
 
@@ -913,11 +913,7 @@ class PlaybackController(
                 if (anchor.changed) layoutVersion++
                 this@PlaybackController.snapshot = finalSnapshot
                 queueRepository.setCursor(anchor.position)
-                rebuildWindow(
-                    queueRepository.window(finalSnapshot, anchor.position, QUEUE_WINDOW_RADIUS),
-                    anchor.position,
-                    finalSnapshot,
-                )
+                rebuildWindow(queueRepository.window(finalSnapshot, anchor.position, QUEUE_WINDOW_RADIUS), anchor.position)
                 endedHandled = false
                 refresh(anchor.position)
             }
@@ -1282,7 +1278,7 @@ class PlaybackController(
                 (currentId?.let { queueRepository.combinedIndexOf(snapshot, it) } ?: center)
                     .coerceIn(0, snapshot.size - 1)
             queueRepository.setCursor(position)
-            rebuildWindow(queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS), position, snapshot)
+            rebuildWindow(queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS), position)
             refresh(position)
             return
         }
@@ -1318,9 +1314,9 @@ class PlaybackController(
     private suspend fun rebuildWindow(
         window: List<QueueWindowItem>,
         position: Long,
-        snapshot: QueueSnapshot,
     ) {
         val player = player ?: return
+        val snapshot = this.snapshot ?: return
         downloads.awaitLoaded()
         val ordered =
             if (offline) window.filter { downloads.localUri(it.item.song.id) != null } else window
@@ -1420,7 +1416,7 @@ class PlaybackController(
             if (target == current) {
                 // Keep the playing item in place and only add/remove its neighbours, so a downloaded
                 // track does not re-prepare (and audibly gap) when offline mode is toggled.
-                rebuildWindow(queueRepository.window(snapshot, target, QUEUE_WINDOW_RADIUS), target, snapshot)
+                rebuildWindow(queueRepository.window(snapshot, target, QUEUE_WINDOW_RADIUS), target)
                 refresh(target)
             } else {
                 loadWindow(target, autoplay = player.playWhenReady, startPositionMs = 0)
