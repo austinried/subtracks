@@ -17,7 +17,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
@@ -328,27 +327,6 @@ class ArtistDetailScreenTest {
 
         assertEquals(listOf("First line.", "Second line."), lineBreak)
         assertEquals(listOf("First paragraph.", "", "Second paragraph."), paragraphBreak)
-    }
-
-    @Test
-    fun aJustifiedLineFillsTheAvailableWidth() {
-        val style = TextStyle(fontSize = 14.sp)
-        var plainWidth = 0
-        var justifiedWidth = 0
-        var justified = ""
-        composeRule.setContent {
-            val measurer = rememberTextMeasurer()
-            val line = AnnotatedString("one two three four five")
-            plainWidth = measurer.measure(line, style, maxLines = 1).size.width
-            val result = justifyBioLine(line, measurer, style, 400)
-            justifiedWidth = measurer.measure(result, style, maxLines = 1).size.width
-            justified = result.text
-        }
-        composeRule.waitForIdle()
-
-        assertTrue(justifiedWidth > plainWidth)
-        assertTrue(justifiedWidth <= 400)
-        assertTrue(justified.contains("  "))
     }
 
     private fun album(

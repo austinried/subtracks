@@ -339,6 +339,16 @@ class LibraryRepositoryTest {
     }
 
     @Test
+    fun aPreviouslyStoredBioIsNormalizedWhenRead() =
+        runBlocking {
+            withSource {
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                db.libraryDao().upsertArtistBio(ArtistBio(sourceId, "ar1", "One   Two"))
+                assertEquals("One\n\nTwo", repository.artistBio(sourceId, "ar1").first()?.biography)
+            }
+        }
+
+    @Test
     fun aFailedRefreshKeepsTheStoredBio() =
         runBlocking {
             withSource { server ->

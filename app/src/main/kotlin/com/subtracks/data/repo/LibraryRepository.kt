@@ -35,6 +35,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -360,7 +361,11 @@ class LibraryRepository(
     fun artistBio(
         sourceId: Long,
         artistId: String,
-    ): Flow<ArtistBio?> = db.libraryDao().artistBio(sourceId, artistId)
+    ): Flow<ArtistBio?> =
+        db
+            .libraryDao()
+            .artistBio(sourceId, artistId)
+            .map { bio -> bio?.copy(biography = normalizeBiography(bio.biography)) }
 
     suspend fun refreshArtistBio(
         sourceId: Long,

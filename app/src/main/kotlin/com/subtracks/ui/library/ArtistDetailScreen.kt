@@ -605,16 +605,8 @@ private fun ArtistBio(
             Column(Modifier.fillMaxWidth()) {
                 bioLines.lines.forEachIndexed { index, line ->
                     val isControl = index == bioLines.lines.lastIndex && (bioLines.more || bioLines.less)
-                    val nextBlank = index == bioLines.lines.lastIndex || bioLines.lines[index + 1].text.isBlank()
-                    val available = bioLineWidth(index, fullWidth, reserve, reserveLines)
-                    val displayLine =
-                        if (!nextBlank && line.text.isNotBlank() && line.spanStyles.isEmpty()) {
-                            justifyBioLine(line, measurer, style, available)
-                        } else {
-                            line
-                        }
                     Text(
-                        text = displayLine,
+                        text = line,
                         style = style,
                         color = color,
                         maxLines = 1,
@@ -735,35 +727,6 @@ private fun appendBioControl(
         }
     }
     lines += control
-}
-
-internal fun justifyBioLine(
-    line: AnnotatedString,
-    measurer: TextMeasurer,
-    style: TextStyle,
-    available: Int,
-): AnnotatedString {
-    if (line.spanStyles.isNotEmpty()) return line
-    val parts = line.text.split(' ')
-    if (parts.size < 2) return line
-    val spaceWidth = measurer.measure(AnnotatedString(" "), style, maxLines = 1).size.width
-    if (spaceWidth <= 0) return line
-    val extra = available - measurer.measure(line, style, maxLines = 1).size.width
-    val spaces = extra / spaceWidth
-    if (spaces <= 0) return line
-    val gaps = parts.size - 1
-    val perGap = spaces / gaps
-    val remainder = spaces % gaps
-    return AnnotatedString(
-        buildString {
-            parts.forEachIndexed { index, part ->
-                append(part)
-                if (index < gaps) {
-                    repeat(1 + perGap + if (index < remainder) 1 else 0) { append(' ') }
-                }
-            }
-        },
-    )
 }
 
 internal data class BioLines(
