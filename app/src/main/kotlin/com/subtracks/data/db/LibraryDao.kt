@@ -93,21 +93,20 @@ internal const val CREDITED_SONG_ROWS =
         "WHERE album_artists.sourceId = :sourceId"
 
 // May repeat an (artistId, albumId) pair when several credit paths reach it; consumers dedupe.
-// albumCredit is 1 for album-level credits and 0 for track-level ones.
 internal const val CREDITED_ALBUM_ROWS =
-    "SELECT albums.artistId AS artistId, albums.id AS albumId, 1 AS albumCredit " +
+    "SELECT albums.artistId AS artistId, albums.id AS albumId, 'album' AS creditType " +
         "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT album_artists.artistId, albums.id, 1 " +
+        "SELECT album_artists.artistId, albums.id, 'album' " +
         "FROM album_artists JOIN albums " +
         "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
         "WHERE album_artists.sourceId = :sourceId " +
         "UNION ALL " +
-        "SELECT songs.artistId, songs.albumId, 0 " +
+        "SELECT songs.artistId, songs.albumId, 'track' " +
         "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT song_artists.artistId, songs.albumId, 0 " +
+        "SELECT song_artists.artistId, songs.albumId, 'track' " +
         "FROM song_artists JOIN songs " +
         "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
@@ -120,7 +119,7 @@ internal const val ALBUMS_FOR_ARTIST =
 
 internal const val ALBUM_CREDIT_ALBUM_IDS =
     "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
-        "WHERE artistId = :artistId AND albumCredit = 1"
+        "WHERE artistId = :artistId AND creditType = 'album'"
 
 // Download visibility follows the credit path: an album credit includes the album when any song is
 // downloaded, while a track credit includes it only when the credited track is downloaded.
