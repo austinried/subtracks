@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -124,7 +123,7 @@ class SearchScreenTest {
     }
 
     @Test
-    fun restoringTheScreenDoesNotStealFocus() {
+    fun restoringTheScreenKeepsFocusOnTheQuery() {
         val restorationTester = StateRestorationTester(composeRule)
         restorationTester.setContent {
             SubtracksTheme {
@@ -135,7 +134,7 @@ class SearchScreenTest {
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
         restorationTester.emulateSavedInstanceStateRestore()
 
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
     }
 
     @Test
