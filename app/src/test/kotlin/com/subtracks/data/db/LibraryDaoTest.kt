@@ -857,6 +857,25 @@ class LibraryDaoTest {
             assertTrue(dao.searchSongs(sourceId, "ga", 50).first().isEmpty())
         }
 
+    @Test
+    fun theArtistPageAlbumQueryFindsArtistCreditsThroughArtistIndexes() =
+        runTest {
+            val plan =
+                plan(
+                    "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
+                        "WHERE artistId = :artistId) credits " +
+                        "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+                        "ORDER BY year DESC, sortName COLLATE NOCASE, id",
+                )
+
+            assertTrue(plan, plan.contains("index_albums_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_album_artists_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_songs_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_song_artists_sourceId_artistId"))
+            assertFalse(plan, plan.contains("SCAN albums"))
+            assertFalse(plan, plan.contains("SCAN songs"))
+        }
+
     private suspend fun plan(sql: String): String =
         db.useReaderConnection { connection ->
             connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->

@@ -20,17 +20,7 @@ private const val ALBUM_SONGS_ORDER = " ORDER BY songs.disc, songs.track, songs.
 private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 
 private const val ARTIST_SONG_IDS =
-    "(SELECT id FROM songs WHERE sourceId = :sourceId AND artistId = :artistId " +
-        "UNION " +
-        "SELECT songId FROM song_artists WHERE sourceId = :sourceId AND artistId = :artistId " +
-        "UNION " +
-        "SELECT songs.id FROM albums " +
-        "JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
-        "WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
-        "UNION " +
-        "SELECT songs.id FROM album_artists " +
-        "JOIN songs ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
-        "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId)"
+    "(SELECT songId FROM ($CREDITED_SONG_ROWS) WHERE artistId = :artistId)"
 
 private const val ARTIST_SONGS_SELECT =
     "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +

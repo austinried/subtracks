@@ -1637,6 +1637,68 @@ class SyncServiceTest {
         }
 
     @Test
+    fun everyArtistConsumerAgreesOnTheCreditedSet() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "Album Artist"), artist("a2", "Guest"), artist("a3", "Track Only")),
+                    albums =
+                        listOf(
+                            album("al1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "Album Artist"))),
+                            album("al2").copy(artistId = "a2", artists = listOf(ArtistRef("a2", "Guest"))),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "al1",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "Album Artist"), ArtistRef("a2", "Guest")),
+                                playCount = 1,
+                                played = 100,
+                            ),
+                            song("s2").copy(
+                                albumId = "al1",
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a2", "Guest"), ArtistRef("a3", "Track Only")),
+                            ),
+                            song("s3").copy(
+                                albumId = null,
+                                artistId = "a3",
+                                artists = listOf(ArtistRef("a3", "Track Only")),
+                            ),
+                            song("s4").copy(
+                                albumId = "missing",
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a2", "Guest")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed))
+
+            for (artistId in listOf("a1", "a2", "a3")) {
+                val artist = db.libraryDao().artistOnce(1, artistId)!!
+                val songIds = db.queueDao().artistSongIds(1, artistId)
+                val albums = db.libraryDao().albumsForArtist(1, artistId).first()
+                val status = db.downloadDao().artistStatus(1, artistId).first()
+                val downloaded =
+                    db
+                        .downloadDao()
+                        .all()
+                        .count { it.status == DownloadStatus.Completed && it.songId in songIds }
+
+                assertEquals("$artistId albums", albums.size.toLong(), artist.albumCount)
+                assertEquals("$artistId songs", songIds.size.toLong(), artist.songCount)
+                assertEquals("$artistId length", songIds.size.toLong(), db.queueDao().artistLength(1, artistId))
+                assertEquals("$artistId total", songIds.size.toLong(), status.total)
+                assertEquals("$artistId downloaded", downloaded.toLong(), status.downloaded)
+            }
+        }
+
+    @Test
     fun changingOnlyTheLeadArtistRecomputesTheCreditedCounts() =
         runTest {
             insertSource()

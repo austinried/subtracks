@@ -69,6 +69,51 @@ internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, sortName C
 internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, sortName COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
 
+internal const val ARTIST_CREDITED =
+    "(artists.credited = 1 OR COALESCE((SELECT creditsStale FROM sources WHERE id = artists.sourceId), 1) = 1)"
+
+// May repeat a (artistId, songId) pair when several credit paths reach it; consumers dedupe.
+internal const val CREDITED_SONG_ROWS =
+    "SELECT songs.artistId AS artistId, songs.id AS songId, songs.albumId AS albumId, " +
+        "songs.playCount AS playCount, songs.played AS played " +
+        "FROM songs WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
+        "FROM song_artists JOIN songs " +
+        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "WHERE song_artists.sourceId = :sourceId " +
+        "UNION ALL " +
+        "SELECT albums.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
+        "FROM albums JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
+        "WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT album_artists.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
+        "FROM album_artists JOIN songs " +
+        "ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId"
+
+// May repeat an (artistId, albumId) pair when several credit paths reach it; consumers dedupe.
+internal const val CREDITED_ALBUM_ROWS =
+    "SELECT albums.artistId AS artistId, albums.id AS albumId " +
+        "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT album_artists.artistId, albums.id " +
+        "FROM album_artists JOIN albums " +
+        "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId " +
+        "UNION ALL " +
+        "SELECT songs.artistId, songs.albumId " +
+        "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId, songs.albumId " +
+        "FROM song_artists JOIN songs " +
+        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_artists.sourceId = :sourceId"
+
+// Download visibility follows the credit path: an album credit includes the album when any song is
+// downloaded, while a track credit includes it only when the credited track is downloaded.
 private const val DOWNLOADED_ARTIST_ALBUMS =
     "SELECT albums.id FROM albums " +
         "WHERE albums.sourceId = :sourceId AND albums.artistId = artists.id " +
@@ -93,47 +138,6 @@ private const val DOWNLOADED_ARTIST_ALBUMS =
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
         "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
-
-internal const val ARTIST_CREDITED =
-    "(artists.credited = 1 OR COALESCE((SELECT creditsStale FROM sources WHERE id = artists.sourceId), 1) = 1)"
-
-private const val CREDITED_SONG_ROWS =
-    "SELECT songs.artistId AS artistId, songs.id AS songId, songs.albumId AS albumId, " +
-        "songs.playCount AS playCount, songs.played AS played " +
-        "FROM songs WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
-        "UNION " +
-        "SELECT song_artists.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
-        "FROM song_artists JOIN songs " +
-        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
-        "WHERE song_artists.sourceId = :sourceId " +
-        "UNION " +
-        "SELECT albums.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
-        "FROM albums JOIN songs ON songs.sourceId = albums.sourceId AND songs.albumId = albums.id " +
-        "WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
-        "UNION " +
-        "SELECT album_artists.artistId, songs.id, songs.albumId, songs.playCount, songs.played " +
-        "FROM album_artists JOIN songs " +
-        "ON songs.sourceId = album_artists.sourceId AND songs.albumId = album_artists.albumId " +
-        "WHERE album_artists.sourceId = :sourceId"
-
-private const val CREDITED_ALBUM_ROWS =
-    "SELECT albums.artistId AS artistId, albums.id AS albumId " +
-        "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
-        "UNION " +
-        "SELECT album_artists.artistId, albums.id " +
-        "FROM album_artists JOIN albums " +
-        "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
-        "WHERE album_artists.sourceId = :sourceId " +
-        "UNION " +
-        "SELECT songs.artistId, songs.albumId " +
-        "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
-        "UNION " +
-        "SELECT song_artists.artistId, songs.albumId " +
-        "FROM song_artists JOIN songs " +
-        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE song_artists.sourceId = :sourceId"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
@@ -252,7 +256,7 @@ interface LibraryDao {
     // Every credited song, from both the lead ids and the relation tables, deduplicated so a song
     // counts once per artist even when several credit paths point at it.
     @Query(
-        "WITH credited AS ($CREDITED_SONG_ROWS), totals AS (" +
+        "WITH credited AS (SELECT DISTINCT * FROM ($CREDITED_SONG_ROWS)), totals AS (" +
             "SELECT artistId AS id, SUM(playCount) AS playCount, MAX(played) AS played " +
             "FROM credited GROUP BY artistId" +
             ") " +
@@ -268,7 +272,7 @@ interface LibraryDao {
     // Stored so the download badge query can report an artist's total without walking every song,
     // and so the artist badges use the same counts as the artist page and the shuffle queue.
     @Query(
-        "WITH credited AS ($CREDITED_SONG_ROWS), " +
+        "WITH credited AS (SELECT DISTINCT * FROM ($CREDITED_SONG_ROWS)), " +
             "credited_albums AS ($CREDITED_ALBUM_ROWS), " +
             "counts AS (" +
             "SELECT artistId AS id, COUNT(DISTINCT songId) AS songCount " +
@@ -1061,22 +1065,9 @@ interface LibraryDao {
     ): Flow<List<String>>
 
     @Query(
-        "SELECT * FROM (" +
-            "SELECT albums.* FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
-            "UNION " +
-            "SELECT albums.* FROM album_artists " +
-            "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
-            "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId " +
-            "UNION " +
-            "SELECT albums.* FROM song_artists " +
-            "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = :artistId " +
-            "UNION " +
-            "SELECT albums.* FROM songs " +
-            "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId" +
-            ") ORDER BY year DESC, sortName COLLATE NOCASE, id",
+        "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId) credits " +
+            "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+            "ORDER BY year DESC, sortName COLLATE NOCASE, id",
     )
     fun albumsForArtist(
         sourceId: Long,
@@ -1118,6 +1109,7 @@ interface LibraryDao {
         playlistId: String,
     ): PagingSource<Int, PlaylistSongItem>
 
+    // Download visibility follows the credit path: see DOWNLOADED_ARTIST_ALBUMS.
     @Query(
         "SELECT * FROM (" +
             "SELECT albums.* FROM albums " +
