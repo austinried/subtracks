@@ -10,7 +10,6 @@ import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
-import com.subtracks.data.model.AlbumArtistRef
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Disc
@@ -19,7 +18,6 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
-import com.subtracks.data.model.SongArtistRef
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.Flow
 
@@ -643,16 +641,9 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Album::class])
     fun albumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
 
-    @RawQuery(
-        observedEntities = [
-            Artist::class,
-            Source::class,
-            Album::class,
-            AlbumArtistRef::class,
-            Song::class,
-            SongArtistRef::class,
-        ],
-    )
+    // The fallback art reads albums and credits, but a successful sync writes sources after the
+    // library changes, so observing artists and sources avoids invalidating on every song/album write.
+    @RawQuery(observedEntities = [Artist::class, Source::class])
     fun artistsPaging(query: RoomRawQuery): PagingSource<Int, Artist>
 
     @RawQuery(observedEntities = [Playlist::class])
