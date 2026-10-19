@@ -259,12 +259,6 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
-    val metaTop =
-        TITLE_INSET +
-            with(density) {
-                MaterialTheme.typography.labelLarge.lineHeight
-                    .toDp()
-            }
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -394,18 +388,19 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Column(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = metaTop),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
                             ) {
+                                Text(
+                                    text = metaText,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth().padding(end = SHUFFLE_RESERVE),
+                                )
                                 Row(
                                     modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                                    horizontalArrangement = Arrangement.End,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(
-                                        text = metaText,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.weight(1f),
-                                    )
                                     ArtistActions(artist, starred, onToggleStar, onMore)
                                 }
                             }
