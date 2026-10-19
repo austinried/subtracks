@@ -37,6 +37,7 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
@@ -306,7 +307,10 @@ class AppScreenshotTest {
             SubtracksTheme {
                 ArtistDetailScreen(
                     artist = Fixtures.artists.first(),
-                    albums = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
+                    albums =
+                        ArtistAlbums(
+                            albumCredits = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
+                        ),
                     art = CoverArtRef("art-ar-radiohead", "test:art-ar-radiohead"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },

@@ -32,6 +32,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
@@ -177,8 +178,19 @@ class DemoScreenshotTest {
                             ArtistDetailScreen(
                                 artist = demo.artist,
                                 artistName = demo.artist.name,
-                                isAlbumArtist = demo.artistAlbums.any { album -> album.artistRefs.any { it.id == demo.artist.id } },
-                                albums = demo.artistAlbums,
+                                albums =
+                                    ArtistAlbums(
+                                        albumCredits =
+                                            demo.artistAlbums.filter { album ->
+                                                album.artistId == demo.artist.id ||
+                                                    album.artistRefs.any { it.id == demo.artist.id }
+                                            },
+                                        appearances =
+                                            demo.artistAlbums.filterNot { album ->
+                                                album.artistId == demo.artist.id ||
+                                                    album.artistRefs.any { it.id == demo.artist.id }
+                                            },
+                                    ),
                                 art = demo.coverArt(demo.artist.coverArt, false),
                                 artThumbnail = demo.coverArt(demo.artist.coverArt, true),
                                 artwork = demo.artwork(demo.artist.coverArt),

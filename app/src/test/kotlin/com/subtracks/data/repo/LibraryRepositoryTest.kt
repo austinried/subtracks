@@ -13,6 +13,7 @@ import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.prefs.fakeUserPreferences
@@ -201,6 +202,33 @@ class LibraryRepositoryTest {
                 job.cancelAndJoin()
                 presenterDispatcher.close()
             }
+        }
+
+    @Test
+    fun artistAlbumsSeparatesAlbumCreditsFromTrackAppearances() =
+        runBlocking {
+            val sourceId = 1L
+            db.sourcesDao().upsertSource(
+                Source(id = sourceId, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+            )
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    seedAlbum(sourceId, 1),
+                    seedAlbum(sourceId, 2).copy(artistId = "ar2"),
+                ),
+            )
+            db.libraryDao().upsertSongs(
+                listOf(
+                    seedSong(sourceId).copy(albumId = "al-0001"),
+                    seedSong(sourceId).copy(id = "s2", albumId = "al-0002"),
+                ),
+            )
+
+            val albums = repository.artistAlbums(sourceId, "ar1").first()
+
+            assertEquals(listOf("al-0001"), albums.albumCredits.map { it.id })
+            assertEquals(listOf("al-0002"), albums.appearances.map { it.id })
+            assertEquals(2, albums.count)
         }
 
     private suspend fun awaitRefreshes(

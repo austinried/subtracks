@@ -80,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
@@ -140,11 +141,6 @@ private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 
-internal fun isAlbumArtist(
-    albums: List<Album>,
-    artistId: String,
-): Boolean = albums.any { album -> album.artistId == artistId || album.artistRefs.any { it.id == artistId } }
-
 @Composable
 fun ArtistDetailRoute(
     artistId: String,
@@ -192,8 +188,7 @@ fun ArtistDetailRoute(
     ArtistDetailScreen(
         artist = artist,
         artistName = artistName.orEmpty(),
-        isAlbumArtist = albums?.let { isAlbumArtist(it, artistId) },
-        albums = albums.orEmpty(),
+        albums = albums ?: ArtistAlbums(),
         albumsLoaded = albums != null,
         art = art,
         artThumbnail = artThumbnail,
@@ -225,8 +220,7 @@ fun ArtistDetailScreen(
     artist: Artist?,
     modifier: Modifier = Modifier,
     artistName: String = "",
-    isAlbumArtist: Boolean? = null,
-    albums: List<Album>,
+    albums: ArtistAlbums = ArtistAlbums(),
     albumsLoaded: Boolean = true,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
@@ -252,9 +246,19 @@ fun ArtistDetailScreen(
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val navBarBottom = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
     val barHeight = statusBarTop + TopAppBarDefaults.TopAppBarExpandedHeight
-    val albumCount = albums.size.toLong()
+    val albumCount = albums.count.toLong()
     val displayName = artistName.ifBlank { artist?.name.orEmpty() }
-    val artistType = stringResource(if (isAlbumArtist == true) R.string.artist_type_album_artist else R.string.artist_type_artist)
+    val artistType =
+        stringResource(
+            if (albums.albumCredits.isNotEmpty()) R.string.artist_type_album_artist else R.string.artist_type_artist,
+        )
+    val albumCountText =
+        if (albumsLoaded) {
+            pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
+        } else {
+            ""
+        }
+    val metaText = if (albumsLoaded) "$artistType · $albumCountText" else ""
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -386,24 +390,12 @@ fun ArtistDetailScreen(
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
                             ) {
-                                Text(
-                                    text = if (albumsLoaded) artistType else "",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                // Hold the row at the button height even without the buttons, so the
-                                // label-to-count gap is the same for every artist type.
                                 Row(
                                     modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text =
-                                            if (albumsLoaded) {
-                                                pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
-                                            } else {
-                                                ""
-                                            },
+                                        text = metaText,
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(1f),
@@ -435,49 +427,39 @@ fun ArtistDetailScreen(
                             }
                         }
                     }
-                    itemsIndexed(albums, key = { _, album -> album.id }) { index, album ->
-                        val art = coverArt(album.coverArt, false)
-                        val thumbnail = coverArt(album.coverArt, true)
-                        PrefetchArtworkSeeds(thumbnail)
-                        Column(
-                            modifier =
-                                Modifier
-                                    .padding(
-                                        start = if (index % 2 == 0) 16.dp else 0.dp,
-                                        end = if (index % 2 == 1) 16.dp else 0.dp,
-                                    ).combinedClickable(
-                                        onClick = { onAlbumClick(album) },
-                                        onLongClick = { onAlbumLongClick(MenuTarget.Album(album, thumbnail, albumDownloads[album.id])) },
-                                    ).onSizeChanged { albumHeightPx = it.height.toFloat() },
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
-                            ) {
-                                CoverArt(
-                                    ref = art,
-                                    name = album.name,
-                                    thumbnailRef = thumbnail,
-                                    showPlaceholder = art == null,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                                ListDownloadIndicator(
-                                    status = albumDownloads[album.id],
-                                    modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
-                                    scrim = true,
-                                )
-                            }
-                            Text(
-                                text = album.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 6.dp),
+                    if (albums.albumCredits.isNotEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            ArtistSectionHeader(stringResource(R.string.artist_section_albums, albums.albumCredits.size))
+                        }
+                        itemsIndexed(albums.albumCredits, key = { _, album -> album.id }) { index, album ->
+                            ArtistAlbumCard(
+                                album = album,
+                                index = index,
+                                coverArt = coverArt,
+                                downloadStatus = albumDownloads[album.id],
+                                onClick = { onAlbumClick(album) },
+                                onLongClick = { thumbnail ->
+                                    onAlbumLongClick(MenuTarget.Album(album, thumbnail, albumDownloads[album.id]))
+                                },
+                                onSizeChanged = { albumHeightPx = it },
                             )
-                            Text(
-                                text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        }
+                    }
+                    if (albums.appearances.isNotEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            ArtistSectionHeader(stringResource(R.string.artist_section_appearances, albums.appearances.size))
+                        }
+                        itemsIndexed(albums.appearances, key = { _, album -> album.id }) { index, album ->
+                            ArtistAlbumCard(
+                                album = album,
+                                index = index,
+                                coverArt = coverArt,
+                                downloadStatus = albumDownloads[album.id],
+                                onClick = { onAlbumClick(album) },
+                                onLongClick = { thumbnail ->
+                                    onAlbumLongClick(MenuTarget.Album(album, thumbnail, albumDownloads[album.id]))
+                                },
+                                onSizeChanged = { albumHeightPx = it },
                             )
                         }
                     }
@@ -520,6 +502,72 @@ fun ArtistDetailScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ArtistSectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
+    )
+}
+
+@Composable
+private fun ArtistAlbumCard(
+    album: Album,
+    index: Int,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    downloadStatus: ListDownloadStatus?,
+    onClick: () -> Unit,
+    onLongClick: (CoverArtRef?) -> Unit,
+    onSizeChanged: (Float) -> Unit,
+) {
+    val art = coverArt(album.coverArt, false)
+    val thumbnail = coverArt(album.coverArt, true)
+    PrefetchArtworkSeeds(thumbnail)
+    Column(
+        modifier =
+            Modifier
+                .padding(
+                    start = if (index % 2 == 0) 16.dp else 0.dp,
+                    end = if (index % 2 == 1) 16.dp else 0.dp,
+                ).combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { onLongClick(thumbnail) },
+                ).onSizeChanged { onSizeChanged(it.height.toFloat()) },
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(2.dp)),
+        ) {
+            CoverArt(
+                ref = art,
+                name = album.name,
+                thumbnailRef = thumbnail,
+                showPlaceholder = art == null,
+                modifier = Modifier.fillMaxSize(),
+            )
+            ListDownloadIndicator(
+                status = downloadStatus,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+                scrim = true,
+            )
+        }
+        Text(
+            text = album.name,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Text(
+            text = album.year?.takeIf { it > 0 }?.toString() ?: "\u00A0",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

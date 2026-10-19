@@ -516,6 +516,54 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun albumCreditsAreSeparatedFromTrackAppearances() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Own", year = null, starred = null),
+                    album(sourceId, "al-2", "Other", year = null, starred = null).copy(artistId = "ar-2"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2", artistId = "ar-1"),
+                ),
+            )
+
+            assertEquals(listOf("al-1"), dao.albumCreditAlbumIds(sourceId, "ar-1").first())
+            assertEquals(listOf("al-2"), dao.albumCreditAlbumIds(sourceId, "ar-2").first())
+            assertEquals(
+                listOf("al-1", "al-2"),
+                dao
+                    .albumsForArtist(sourceId, "ar-1")
+                    .first()
+                    .map { it.id }
+                    .sorted(),
+            )
+        }
+
+    @Test
+    fun albumCreditIdsFindCreditsThroughArtistIndexes() =
+        runTest {
+            val plan =
+                plan(
+                    "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
+                        "WHERE artistId = :artistId AND albumCredit = 1",
+                )
+
+            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            )
+            assertFalse(plan, plan.contains("SCAN albums"))
+            assertFalse(plan, plan.contains("SCAN songs"))
+        }
+
+    @Test
     fun downloadedArtistsIncludeOneCreditedOnlyOnADownloadedTrack() =
         runTest {
             val sourceId = source()

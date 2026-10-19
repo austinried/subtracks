@@ -93,20 +93,21 @@ internal const val CREDITED_SONG_ROWS =
         "WHERE album_artists.sourceId = :sourceId"
 
 // May repeat an (artistId, albumId) pair when several credit paths reach it; consumers dedupe.
+// albumCredit is 1 for album-level credits and 0 for track-level ones.
 internal const val CREDITED_ALBUM_ROWS =
-    "SELECT albums.artistId AS artistId, albums.id AS albumId " +
+    "SELECT albums.artistId AS artistId, albums.id AS albumId, 1 AS albumCredit " +
         "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT album_artists.artistId, albums.id " +
+        "SELECT album_artists.artistId, albums.id, 1 " +
         "FROM album_artists JOIN albums " +
         "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
         "WHERE album_artists.sourceId = :sourceId " +
         "UNION ALL " +
-        "SELECT songs.artistId, songs.albumId " +
+        "SELECT songs.artistId, songs.albumId, 0 " +
         "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL " +
         "UNION ALL " +
-        "SELECT song_artists.artistId, songs.albumId " +
+        "SELECT song_artists.artistId, songs.albumId, 0 " +
         "FROM song_artists JOIN songs " +
         "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
@@ -1064,6 +1065,15 @@ interface LibraryDao {
         sourceId: Long,
         artistId: String,
     ): Flow<List<Album>>
+
+    @Query(
+        "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
+            "WHERE artistId = :artistId AND albumCredit = 1",
+    )
+    fun albumCreditAlbumIds(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<List<String>>
 
     @Query("SELECT * FROM discs WHERE sourceId = :sourceId AND albumId = :albumId ORDER BY disc")
     fun discs(

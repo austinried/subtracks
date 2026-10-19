@@ -14,6 +14,7 @@ import com.subtracks.data.db.rediscoverAlbumsQuery
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSongItem
@@ -31,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -376,12 +378,21 @@ class LibraryRepository(
         sourceId: Long,
         artistId: String,
         downloaded: Boolean = false,
-    ): Flow<List<Album>> =
-        if (downloaded) {
-            db.libraryDao().albumsForArtistDownloaded(sourceId, artistId)
-        } else {
-            db.libraryDao().albumsForArtist(sourceId, artistId)
+    ): Flow<ArtistAlbums> {
+        val albums =
+            if (downloaded) {
+                db.libraryDao().albumsForArtistDownloaded(sourceId, artistId)
+            } else {
+                db.libraryDao().albumsForArtist(sourceId, artistId)
+            }
+        return combine(albums, db.libraryDao().albumCreditAlbumIds(sourceId, artistId)) { list, creditIds ->
+            val credits = creditIds.toHashSet()
+            ArtistAlbums(
+                albumCredits = list.filter { it.id in credits },
+                appearances = list.filterNot { it.id in credits },
+            )
         }
+    }
 
     fun albumDiscs(
         sourceId: Long,

@@ -167,6 +167,13 @@ data class Album(
             }
 }
 
+data class ArtistAlbums(
+    val albumCredits: List<Album> = emptyList(),
+    val appearances: List<Album> = emptyList(),
+) {
+    val count: Int get() = albumCredits.size + appearances.size
+}
+
 @Entity(
     tableName = "discs",
     primaryKeys = ["sourceId", "albumId", "disc"],

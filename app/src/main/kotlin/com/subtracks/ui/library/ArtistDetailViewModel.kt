@@ -2,8 +2,8 @@ package com.subtracks.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
@@ -50,10 +50,10 @@ class ArtistDetailViewModel(
 
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
-    val albums: Flow<List<Album>?> =
+    val albums: Flow<ArtistAlbums?> =
         combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }
             .flatMapLatest { (id, offline) -> libraryRepository.artistAlbums(id, artistId, offline) }
-            .map<List<Album>, List<Album>?> { it }
+            .map<ArtistAlbums, ArtistAlbums?> { it }
             .onStart { emit(null) }
 
     val downloadStatus: StateFlow<ListDownloadStatus> =
