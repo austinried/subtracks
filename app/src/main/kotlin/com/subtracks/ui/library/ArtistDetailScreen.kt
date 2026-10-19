@@ -524,6 +524,7 @@ private fun ArtistBio(
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val style = MaterialTheme.typography.bodyMedium
+    val moreText = stringResource(R.string.artist_bio_more)
     BoxWithConstraints(modifier.fillMaxWidth().padding(top = BIO_TOP_GAP)) {
         val fullWidth = with(density) { maxWidth.roundToPx() }
         val reserve = with(density) { BIO_ACTION_RESERVE.roundToPx() }
@@ -533,9 +534,9 @@ private fun ArtistBio(
             }.coerceAtLeast(1)
         val reserveLines = ceil(with(density) { BIO_ACTION_HEIGHT.toPx() } / lineHeightPx).toInt().coerceAtLeast(1)
         val lines =
-            remember(text, fullWidth, reserve, reserveLines, collapsed) {
+            remember(text, fullWidth, reserve, reserveLines, collapsed, moreText) {
                 if (collapsed) {
-                    splitBioCollapsed(measurer, text, style, fullWidth, reserve)
+                    splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText)
                 } else {
                     splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
                         AnnotatedString(it.ifEmpty { " " })
@@ -603,6 +604,7 @@ internal fun splitBioCollapsed(
     style: TextStyle,
     fullWidth: Int,
     reserve: Int,
+    moreText: String,
 ): List<AnnotatedString> {
     val words =
         text
@@ -627,7 +629,7 @@ internal fun splitBioCollapsed(
     val more =
         buildAnnotatedString {
             append("… ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("More") }
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(moreText) }
         }
     val moreWidth = measurer.measure(more, style, maxLines = 1).size.width
     val secondAvailable = (available - moreWidth).coerceAtLeast(1)
@@ -645,7 +647,7 @@ internal fun splitBioCollapsed(
         buildAnnotatedString {
             if (second.isNotEmpty()) append("$second ")
             append("… ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("More") }
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(moreText) }
         }
     return listOf(AnnotatedString(first), secondLine)
 }
