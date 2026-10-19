@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistAlbums
+import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
@@ -13,6 +14,7 @@ import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,6 +67,42 @@ class ArtistDetailViewModel(
         sourceId
             .flatMapLatest { downloadRepository.statuses(it, DownloadList.Album) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val artistBio: Flow<ArtistBio?> = sourceId.flatMapLatest { libraryRepository.artistBio(it, artistId) }
+
+    private val _bioLoading = MutableStateFlow(true)
+    val bioLoading: StateFlow<Boolean> = _bioLoading
+
+    private val _bioExpanded = MutableStateFlow(false)
+    val bioExpanded: StateFlow<Boolean> = _bioExpanded
+
+    private var bioRefresh: Job? = null
+
+    fun refreshBio() {
+        if (bioRefresh?.isActive == true) return
+        bioRefresh =
+            viewModelScope.launch {
+                if (sourceRepository.offline.value) {
+                    _bioLoading.value = false
+                    return@launch
+                }
+                val id = sourceRepository.activeSourceIdOnce()
+                if (id == null) {
+                    _bioLoading.value = false
+                    return@launch
+                }
+                _bioLoading.value = true
+                try {
+                    libraryRepository.refreshArtistBio(id, artistId)
+                } finally {
+                    _bioLoading.value = false
+                }
+            }
+    }
+
+    fun expandBio() {
+        _bioExpanded.value = true
+    }
 
     suspend fun downloadedBytes(
         list: DownloadList,

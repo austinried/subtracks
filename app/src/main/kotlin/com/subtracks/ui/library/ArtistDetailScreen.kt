@@ -50,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -152,6 +153,7 @@ private const val ARTIST_NAME_MAX_LINES = 6
 private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
+internal const val ARTIST_BIO_MORE_TAG = "artistBioMore"
 
 @Composable
 fun ArtistDetailRoute(
@@ -168,6 +170,10 @@ fun ArtistDetailRoute(
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
     val artistName by viewModel.artistName.collectAsStateWithLifecycle(initialValue = null)
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = null)
+    val artistBio by viewModel.artistBio.collectAsStateWithLifecycle(initialValue = null)
+    val bioLoading by viewModel.bioLoading.collectAsStateWithLifecycle()
+    val bioExpanded by viewModel.bioExpanded.collectAsStateWithLifecycle()
+    LaunchedEffect(artistId) { viewModel.refreshBio() }
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
@@ -202,6 +208,9 @@ fun ArtistDetailRoute(
         artistName = artistName.orEmpty(),
         albums = albums ?: ArtistAlbums(),
         albumsLoaded = albums != null,
+        bio = artistBio?.biography,
+        bioLoading = bioLoading && artistBio == null,
+        bioExpanded = bioExpanded,
         art = art,
         artThumbnail = artThumbnail,
         artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artistName),
@@ -213,6 +222,7 @@ fun ArtistDetailRoute(
         onMore = { artist?.let { contextMenuHost?.show(MenuTarget.Artist(it, artThumbnail ?: art, downloadStatus), actions) } },
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
+        onExpandBio = viewModel::expandBio,
         onShuffle = viewModel::shuffle,
     )
 
@@ -234,6 +244,9 @@ fun ArtistDetailScreen(
     artistName: String = "",
     albums: ArtistAlbums = ArtistAlbums(),
     albumsLoaded: Boolean = true,
+    bio: String? = null,
+    bioLoading: Boolean = false,
+    bioExpanded: Boolean = false,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
     artwork: ArtworkColors? = null,
@@ -245,6 +258,7 @@ fun ArtistDetailScreen(
     onMore: () -> Unit = {},
     starred: Boolean = false,
     onToggleStar: (() -> Unit)? = null,
+    onExpandBio: () -> Unit = {},
     onShuffle: () -> Unit = {},
 ) {
     val listState = rememberLazyGridState()
@@ -266,12 +280,14 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
-    // No server biography is mirrored yet, so the page ships with the empty state. When the bio is
-    // wired, set bioIsEmpty and bioText from it and use bioCollapsed for the two-line preview; the
-    // collapsed line ends with a bold More that should expand the block.
-    val bioCollapsed = true
-    val bioIsEmpty = true
-    val bioText = stringResource(R.string.artist_bio_empty)
+    val hasBio = !bio.isNullOrBlank()
+    val bioCollapsed = hasBio && !bioExpanded
+    val bioText =
+        when {
+            hasBio -> bio.orEmpty()
+            bioLoading -> stringResource(R.string.artist_bio_loading)
+            else -> stringResource(R.string.artist_bio_empty)
+        }
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -412,19 +428,20 @@ fun ArtistDetailScreen(
                                 ArtistBio(
                                     text = bioText,
                                     color =
-                                        if (bioIsEmpty) {
-                                            MaterialTheme.colorScheme.outline
-                                        } else {
+                                        if (hasBio) {
                                             MaterialTheme.colorScheme.onSurfaceVariant
+                                        } else {
+                                            MaterialTheme.colorScheme.outline
                                         },
                                     collapsed = bioCollapsed,
                                     artist = artist,
                                     starred = starred,
                                     onToggleStar = onToggleStar,
                                     onMore = onMore,
+                                    onExpand = onExpandBio,
                                     modifier =
                                         Modifier.padding(
-                                            bottom = if (!bioCollapsed && !bioIsEmpty) 8.dp else 0.dp,
+                                            bottom = if (hasBio && !bioCollapsed) 8.dp else 0.dp,
                                         ),
                                 )
                             }
@@ -509,7 +526,7 @@ fun ArtistDetailScreen(
 }
 
 // The expanded layout narrows only the lines that overlap the action buttons; later lines use the
-// full width. Collapsed keeps two lines and appends a bold More, not yet wired to expand.
+// full width.
 @Composable
 private fun ArtistBio(
     text: String,
@@ -519,6 +536,7 @@ private fun ArtistBio(
     starred: Boolean,
     onToggleStar: (() -> Unit)?,
     onMore: () -> Unit,
+    onExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val measurer = rememberTextMeasurer()
@@ -533,25 +551,35 @@ private fun ArtistBio(
                 measurer.measure(AnnotatedString("X"), style, maxLines = 1).size.height
             }.coerceAtLeast(1)
         val reserveLines = ceil(with(density) { BIO_ACTION_HEIGHT.toPx() } / lineHeightPx).toInt().coerceAtLeast(1)
-        val lines =
+        val bioLines =
             remember(text, fullWidth, reserve, reserveLines, collapsed, moreText) {
                 if (collapsed) {
                     splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText)
                 } else {
-                    splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
-                        AnnotatedString(it.ifEmpty { " " })
-                    }
+                    BioLines(
+                        splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
+                            AnnotatedString(it.ifEmpty { " " })
+                        },
+                        more = false,
+                    )
                 }
             }
         Box {
             Column(Modifier.fillMaxWidth()) {
-                lines.forEach { line ->
+                bioLines.lines.forEachIndexed { index, line ->
+                    val more = bioLines.more && index == bioLines.lines.lastIndex
                     Text(
                         text = line,
                         style = style,
                         color = color,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier =
+                            if (more) {
+                                Modifier.testTag(ARTIST_BIO_MORE_TAG).clickable(onClick = onExpand)
+                            } else {
+                                Modifier
+                            },
                     )
                 }
             }
@@ -597,7 +625,12 @@ internal fun splitBio(
     return lines
 }
 
-/** Collapses text to two lines around the actions, ending with a bold More. */
+internal data class BioLines(
+    val lines: List<AnnotatedString>,
+    val more: Boolean,
+)
+
+/** Collapses text to two lines, appending a bold More only when it does not fit. */
 internal fun splitBioCollapsed(
     measurer: TextMeasurer,
     text: String,
@@ -605,14 +638,14 @@ internal fun splitBioCollapsed(
     fullWidth: Int,
     reserve: Int,
     moreText: String,
-): List<AnnotatedString> {
+): BioLines {
     val words =
         text
             .replace("\n\n", " ")
             .replace('\n', ' ')
             .split(' ')
             .filter { it.isNotEmpty() }
-    if (words.isEmpty()) return listOf(AnnotatedString(""))
+    if (words.isEmpty()) return BioLines(listOf(AnnotatedString("")), more = false)
     val available = (fullWidth - reserve).coerceAtLeast(1)
     var first = ""
     var index = 0
@@ -625,31 +658,51 @@ internal fun splitBioCollapsed(
             break
         }
     }
-    if (index >= words.size) return listOf(AnnotatedString(first))
+    if (index >= words.size) return BioLines(listOf(AnnotatedString(first)), more = false)
+
+    val secondStart = index
+    var second = ""
+    var secondIndex = secondStart
+    while (secondIndex < words.size) {
+        val candidate = if (second.isEmpty()) words[secondIndex] else "$second ${words[secondIndex]}"
+        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
+            second = candidate
+            secondIndex++
+        } else {
+            break
+        }
+    }
+    if (secondIndex >= words.size) {
+        return BioLines(listOf(AnnotatedString(first), AnnotatedString(second)), more = false)
+    }
+
     val more =
         buildAnnotatedString {
             append("… ")
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(moreText) }
         }
-    val moreWidth = measurer.measure(more, style, maxLines = 1).size.width
+    val moreWidth =
+        measurer.measure(more, style, maxLines = 1).size.width +
+            measurer.measure(AnnotatedString(" "), style, maxLines = 1).size.width
     val secondAvailable = (available - moreWidth).coerceAtLeast(1)
-    var second = ""
-    while (index < words.size) {
-        val candidate = if (second.isEmpty()) words[index] else "$second ${words[index]}"
+    var truncated = ""
+    var truncatedIndex = secondStart
+    while (truncatedIndex < words.size) {
+        val candidate = if (truncated.isEmpty()) words[truncatedIndex] else "$truncated ${words[truncatedIndex]}"
         if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= secondAvailable) {
-            second = candidate
-            index++
+            truncated = candidate
+            truncatedIndex++
         } else {
             break
         }
     }
     val secondLine =
         buildAnnotatedString {
-            if (second.isNotEmpty()) append("$second ")
+            if (truncated.isNotEmpty()) append("$truncated ")
             append("… ")
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(moreText) }
         }
-    return listOf(AnnotatedString(first), secondLine)
+    return BioLines(listOf(AnnotatedString(first), secondLine), more = true)
 }
 
 @Composable

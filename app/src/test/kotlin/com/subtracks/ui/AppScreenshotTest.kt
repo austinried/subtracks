@@ -303,6 +303,25 @@ class AppScreenshotTest {
 
     @Test
     fun artistDetail() {
+        renderArtistDetail(bioExpanded = false)
+        awaitText("Kid A")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ARTIST_NAME_SCRIM_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail.png")
+    }
+
+    @Test
+    fun artistDetailExpandedBio() {
+        renderArtistDetail(bioExpanded = true)
+        awaitText("Kid A")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ARTIST_NAME_SCRIM_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail_bio_expanded.png")
+    }
+
+    private fun renderArtistDetail(bioExpanded: Boolean) {
         composeRule.setContent {
             SubtracksTheme {
                 ArtistDetailScreen(
@@ -311,6 +330,11 @@ class AppScreenshotTest {
                         ArtistAlbums(
                             albumCredits = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
                         ),
+                    bio =
+                        "Radiohead are an English rock band formed in Abingdon, Oxfordshire, in 1985. " +
+                            "The band consists of Thom Yorke, Jonny Greenwood, Colin Greenwood, Ed O'Brien, " +
+                            "and Philip Selway.",
+                    bioExpanded = bioExpanded,
                     art = CoverArtRef("art-ar-radiohead", "test:art-ar-radiohead"),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
@@ -320,11 +344,6 @@ class AppScreenshotTest {
                 )
             }
         }
-        awaitText("Kid A")
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(ARTIST_NAME_SCRIM_TAG).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail.png")
     }
 
     @Test
