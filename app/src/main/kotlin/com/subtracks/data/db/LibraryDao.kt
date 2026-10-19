@@ -112,13 +112,13 @@ internal const val CREDITED_ALBUM_ROWS =
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE song_artists.sourceId = :sourceId"
 
-// Download visibility follows the credit path: an album credit includes the album when any song is
-// downloaded, while a track credit includes it only when the credited track is downloaded.
 internal const val ALBUMS_FOR_ARTIST =
     "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId) credits " +
         "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
         "ORDER BY year DESC, sortName COLLATE NOCASE, id"
 
+// Download visibility follows the credit path: an album credit includes the album when any song is
+// downloaded, while a track credit includes it only when the credited track is downloaded.
 private const val DOWNLOADED_ARTIST_ALBUMS =
     "SELECT albums.id FROM albums " +
         "WHERE albums.sourceId = :sourceId AND albums.artistId = artists.id " +

@@ -871,6 +871,8 @@ class LibraryDaoTest {
                 plan,
                 plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
             )
+            assertFalse(plan, plan.contains("SCAN albums"))
+            assertFalse(plan, plan.contains("SCAN songs"))
         }
 
     private suspend fun plan(sql: String): String =

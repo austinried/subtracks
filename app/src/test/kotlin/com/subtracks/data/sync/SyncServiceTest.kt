@@ -1765,7 +1765,7 @@ class SyncServiceTest {
         }
 
     @Test
-    fun anIdenticalSyncSkipsTheArtistAggregateQuery() =
+    fun anIdenticalSyncSkipsTheAggregateQueries() =
         runTest {
             val context = ApplicationProvider.getApplicationContext<Context>()
             val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
@@ -1786,11 +1786,16 @@ class SyncServiceTest {
                     )
 
                 SyncService(loggingDb, source).sync()
+                val firstSyncExecutions = synchronized(executions) { executions.toList() }
+                assertTrue(firstSyncExecutions.any { it.sql.contains("credited_albums") })
+                assertTrue(firstSyncExecutions.any { it.sql.contains("UPDATE albums SET playCount") })
+
                 synchronized(executions) { executions.clear() }
                 SyncService(loggingDb, source).sync()
 
                 val secondSyncExecutions = synchronized(executions) { executions.toList() }
                 assertTrue(secondSyncExecutions.none { it.sql.contains("credited_albums") })
+                assertTrue(secondSyncExecutions.none { it.sql.contains("UPDATE albums SET playCount") })
             } finally {
                 loggingDb.close()
             }
