@@ -258,6 +258,36 @@ class ArtistDetailScreenTest {
     }
 
     @Test
+    fun theCollapsedPreviewCanShowThreeLines() {
+        val bio = List(6) { "This is a sufficiently long biography sentence." }.joinToString(" ")
+        var result: BioLines? = null
+        composeRule.setContent {
+            val measurer = rememberTextMeasurer()
+            result =
+                splitBioCollapsed(
+                    measurer,
+                    bio,
+                    TextStyle(fontSize = 14.sp),
+                    400,
+                    0,
+                    "More",
+                    maxLines = 3,
+                )
+        }
+        composeRule.waitForIdle()
+
+        val lines = requireNotNull(result)
+        assertEquals(3, lines.lines.size)
+        assertTrue(lines.more)
+        assertTrue(
+            lines.lines
+                .last()
+                .text
+                .endsWith("More"),
+        )
+    }
+
+    @Test
     fun anOversizedFirstWordIsStillShown() {
         var result: BioLines? = null
         composeRule.setContent {

@@ -584,7 +584,7 @@ private fun ArtistBio(
             remember(text, fullWidth, reserve, reserveLines, collapsed, expanded, moreText, lessText) {
                 when {
                     collapsed -> {
-                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText)
+                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText, maxLines = 3)
                     }
 
                     expanded -> {
@@ -772,7 +772,7 @@ internal data class BioLines(
     val less: Boolean = false,
 )
 
-/** Collapses text to two lines, appending a bold More only when it does not fit. */
+/** Collapses text to [maxLines] lines, appending a bold More only when it does not fit. */
 internal fun splitBioCollapsed(
     measurer: TextMeasurer,
     text: String,
@@ -780,6 +780,7 @@ internal fun splitBioCollapsed(
     fullWidth: Int,
     reserve: Int,
     moreText: String,
+    maxLines: Int = 2,
 ): BioLines {
     val words =
         text
@@ -789,26 +790,33 @@ internal fun splitBioCollapsed(
             .filter { it.isNotEmpty() }
     if (words.isEmpty()) return BioLines(listOf(AnnotatedString("")), more = false)
     val available = (fullWidth - reserve).coerceAtLeast(1)
-    var first = ""
+    val lines = mutableListOf<AnnotatedString>()
     var index = 0
-    while (index < words.size) {
-        val candidate = if (first.isEmpty()) words[index] else "$first ${words[index]}"
-        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
-            first = candidate
-            index++
-        } else if (first.isEmpty()) {
-            first = words[index]
-            index++
-        } else {
-            break
+    while (index < words.size && lines.size < maxLines - 1) {
+        var current = ""
+        while (index < words.size) {
+            val candidate = if (current.isEmpty()) words[index] else "$current ${words[index]}"
+            if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
+                current = candidate
+                index++
+            } else if (current.isEmpty()) {
+                current = words[index]
+                index++
+                break
+            } else {
+                break
+            }
         }
+        lines += AnnotatedString(current)
     }
-    if (index >= words.size) return BioLines(listOf(AnnotatedString(first)), more = false)
+    if (index >= words.size) {
+        return BioLines(lines, more = false)
+    }
 
-    val secondStart = index
-    val remaining = words.drop(secondStart).joinToString(" ")
+    val remaining = words.drop(index).joinToString(" ")
     if (measurer.measure(AnnotatedString(remaining), style, maxLines = 1).size.width <= available) {
-        return BioLines(listOf(AnnotatedString(first), AnnotatedString(remaining)), more = false)
+        lines += AnnotatedString(remaining)
+        return BioLines(lines, more = false)
     }
 
     val more =
@@ -819,25 +827,25 @@ internal fun splitBioCollapsed(
     val moreWidth =
         measurer.measure(more, style, maxLines = 1).size.width +
             measurer.measure(AnnotatedString(" "), style, maxLines = 1).size.width
-    val secondAvailable = (available - moreWidth).coerceAtLeast(1)
+    val lastAvailable = (available - moreWidth).coerceAtLeast(1)
     var truncated = ""
-    var truncatedIndex = secondStart
-    while (truncatedIndex < words.size) {
-        val candidate = if (truncated.isEmpty()) words[truncatedIndex] else "$truncated ${words[truncatedIndex]}"
-        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= secondAvailable) {
+    while (index < words.size) {
+        val candidate = if (truncated.isEmpty()) words[index] else "$truncated ${words[index]}"
+        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= lastAvailable) {
             truncated = candidate
-            truncatedIndex++
+            index++
         } else {
             break
         }
     }
-    val secondLine =
+    val lastLine =
         buildAnnotatedString {
             if (truncated.isNotEmpty()) append("$truncated ")
             append("… ")
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(moreText) }
         }
-    return BioLines(listOf(AnnotatedString(first), secondLine), more = true)
+    lines += lastLine
+    return BioLines(lines, more = true)
 }
 
 @Composable
