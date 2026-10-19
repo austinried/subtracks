@@ -253,56 +253,44 @@ interface LibraryDao {
     )
     suspend fun recomputeAlbumPlayData(sourceId: Long)
 
-    // Every credited song, from both the lead ids and the relation tables, deduplicated so a song
-    // counts once per artist even when several credit paths point at it.
-    @Query(
-        "WITH credited AS (SELECT DISTINCT * FROM ($CREDITED_SONG_ROWS)), totals AS (" +
-            "SELECT artistId AS id, SUM(playCount) AS playCount, MAX(played) AS played " +
-            "FROM credited GROUP BY artistId" +
-            ") " +
-            "UPDATE artists SET playCount = c.playCount, played = c.played " +
-            "FROM (SELECT artists.id AS id, COALESCE(totals.playCount, 0) AS playCount, totals.played AS played " +
-            "FROM artists LEFT JOIN totals ON totals.id = artists.id " +
-            "WHERE artists.sourceId = :sourceId) c " +
-            "WHERE artists.sourceId = :sourceId AND artists.id = c.id " +
-            "AND (artists.playCount != c.playCount OR artists.played IS NOT c.played)",
-    )
-    suspend fun recomputeArtistPlayData(sourceId: Long)
-
-    // Stored so the download badge query can report an artist's total without walking every song,
-    // and so the artist badges use the same counts as the artist page and the shuffle queue.
+    // Counts, plays and the credited flag come from the same credit unions, so the artist badges,
+    // page, shuffle and downloads cannot disagree.
     @Query(
         "WITH credited AS (SELECT DISTINCT * FROM ($CREDITED_SONG_ROWS)), " +
             "credited_albums AS ($CREDITED_ALBUM_ROWS), " +
-            "counts AS (" +
-            "SELECT artistId AS id, COUNT(DISTINCT songId) AS songCount " +
+            "totals AS (" +
+            "SELECT artistId AS id, COUNT(DISTINCT songId) AS songCount, " +
+            "SUM(playCount) AS playCount, MAX(played) AS played " +
             "FROM credited GROUP BY artistId" +
-            "), album_counts AS (" +
+            "), album_totals AS (" +
             "SELECT artistId AS id, COUNT(DISTINCT albumId) AS albumCount " +
             "FROM credited_albums GROUP BY artistId" +
             ") " +
-            "UPDATE artists SET songCount = c.songCount, albumCount = c.albumCount, credited = c.credited " +
-            "FROM (SELECT artists.id AS id, COALESCE(counts.songCount, 0) AS songCount, " +
-            "COALESCE(album_counts.albumCount, 0) AS albumCount, " +
+            "UPDATE artists SET songCount = c.songCount, albumCount = c.albumCount, " +
+            "playCount = c.playCount, played = c.played, credited = c.credited " +
+            "FROM (SELECT artists.id AS id, COALESCE(totals.songCount, 0) AS songCount, " +
+            "COALESCE(album_totals.albumCount, 0) AS albumCount, " +
+            "COALESCE(totals.playCount, 0) AS playCount, totals.played AS played, " +
             "((NOT EXISTS (SELECT 1 FROM album_artists WHERE sourceId = artists.sourceId) " +
             "AND NOT EXISTS (SELECT 1 FROM song_artists WHERE sourceId = artists.sourceId)) " +
             "OR EXISTS (SELECT 1 FROM album_artists aa " +
             "WHERE aa.sourceId = artists.sourceId AND aa.artistId = artists.id) " +
             "OR EXISTS (SELECT 1 FROM song_artists sa " +
             "WHERE sa.sourceId = artists.sourceId AND sa.artistId = artists.id)) AS credited " +
-            "FROM artists LEFT JOIN counts ON counts.id = artists.id " +
-            "LEFT JOIN album_counts ON album_counts.id = artists.id " +
+            "FROM artists LEFT JOIN totals ON totals.id = artists.id " +
+            "LEFT JOIN album_totals ON album_totals.id = artists.id " +
             "WHERE artists.sourceId = :sourceId) c " +
             "WHERE artists.sourceId = :sourceId AND artists.id = c.id " +
             "AND (artists.songCount != c.songCount OR artists.albumCount != c.albumCount " +
+            "OR artists.playCount != c.playCount OR artists.played IS NOT c.played " +
             "OR artists.credited != c.credited)",
     )
-    suspend fun recomputeArtistSongCounts(sourceId: Long)
+    suspend fun recomputeArtistAggregates(sourceId: Long)
 
     @Transaction
-    suspend fun recomputePlayData(sourceId: Long) {
+    suspend fun recomputeAggregates(sourceId: Long) {
         recomputeAlbumPlayData(sourceId)
-        recomputeArtistPlayData(sourceId)
+        recomputeArtistAggregates(sourceId)
     }
 
     @Query(

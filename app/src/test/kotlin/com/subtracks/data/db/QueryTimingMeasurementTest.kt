@@ -134,7 +134,7 @@ class QueryTimingMeasurementTest {
         timed("home recently starred") { dao.recentlyStarredSongs(1, 20).first() }
         timed("home genres") { dao.genresByMostPlayed(1).first() }
         timed("home decades") { dao.decades(1).first() }
-        timed("recompute play data") { dao.recomputePlayData(1) }
+        timed("recompute aggregates") { dao.recomputeAggregates(1) }
     }
 
     private suspend fun <T : Any> PagingSource<Int, T>.firstPage(): List<T> =

@@ -189,8 +189,7 @@ class LibraryDaoTest {
                 ),
             )
 
-            dao.recomputeAlbumPlayData(sourceId)
-            dao.recomputeArtistPlayData(sourceId)
+            dao.recomputeAggregates(sourceId)
 
             assertEquals(3L, dao.albumOnce(sourceId, "al-1")!!.playCount)
             assertEquals(100L, dao.albumOnce(sourceId, "al-1")!!.played)

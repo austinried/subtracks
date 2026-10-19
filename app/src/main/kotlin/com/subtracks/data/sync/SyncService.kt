@@ -31,23 +31,17 @@ class SyncService(
     private var playlistSongsSynced = 0
     private var pruned = 0
 
-    private var creditsChanged = false
-
     suspend fun sync(): SyncSummary {
         val sources = db.sourcesDao()
         val wasStale = sources.creditsStale(source.id) ?: true
-        creditsChanged = false
-        val artistsBefore = dbTotalChanges()
-        syncArtists()
-        val artistsChanged = dbTotalChanges() != artistsBefore
-        syncAlbums()
-        syncSongs()
+        val artistsChanged = syncArtists()
+        val albumsChanged = syncAlbums()
+        val songsChanged = syncSongs()
         optimize()
-        if (creditsChanged || artistsChanged || wasStale) {
-            recomputeArtistSongCounts()
+        if (artistsChanged || albumsChanged || songsChanged || wasStale) {
+            recomputeAggregates()
             sources.setCreditsStale(source.id, false)
         }
-        aggregatePlayData()
         syncPlaylists()
         syncPlaylistSongs()
         return SyncSummary(
@@ -60,29 +54,35 @@ class SyncService(
         )
     }
 
-    private suspend fun syncArtists() {
+    private suspend fun syncArtists(): Boolean {
         val library = db.libraryDao()
         val seen = HashedIds()
+        var changed = false
         source.artists().collect { batch ->
             if (batch.isEmpty()) return@collect
-            write("artists", artistColumns, primaryKey, batch, preserved = setOf("albumCount")) { it.values() }
+            changed =
+                write("artists", artistColumns, primaryKey, batch, preserved = setOf("albumCount"), markStale = true) { it.values() } ||
+                changed
             batch.forEach { seen.add(idHash(it.id)) }
             artistsSynced += batch.size
         }
+        val prunedBefore = pruned
         pruned += pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, { library.deleteArtists(source.id, it) })
+        return changed || pruned > prunedBefore
     }
 
-    private suspend fun syncAlbums() {
+    private suspend fun syncAlbums(): Boolean {
         val library = db.libraryDao()
         val seenAlbums = HashedIds()
         val seenDiscs = HashedIds()
+        var changed = false
         source.albums().collect { batch ->
             if (batch.isEmpty()) return@collect
             val discs =
                 batch.flatMap { album ->
                     album.discTitles.map { (disc, title) -> Disc(album.sourceId, album.id, disc, title) }
                 }
-            writeAlbumsAndDiscs(batch, discs)
+            changed = writeAlbumsAndDiscs(batch, discs) || changed
             batch.forEach { seenAlbums.add(idHash(it.id)) }
             discs.forEach { seenDiscs.add(discHash(it.albumId, it.disc)) }
             albumsSynced += batch.size
@@ -95,19 +95,20 @@ class SyncService(
                 { library.deleteAlbums(source.id, it) },
                 markStale = { db.sourcesDao().setCreditsStale(source.id, true) },
             )
-        if (pruned > prunedBefore) creditsChanged = true
         pruned +=
             pruneStaleDiscs(seenDiscs, { albumId, disc -> library.discKeysAfter(source.id, albumId, disc, PRUNE_PAGE) }) {
                 deleteStaleDiscs(it)
             }
+        return changed || pruned > prunedBefore
     }
 
-    private suspend fun syncSongs() {
+    private suspend fun syncSongs(): Boolean {
         val library = db.libraryDao()
         val seen = HashedIds()
+        var changed = false
         source.songs().collect { batch ->
             if (batch.isEmpty()) return@collect
-            writeSongs(batch)
+            changed = writeSongs(batch) || changed
             batch.forEach { seen.add(idHash(it.id)) }
             songsSynced += batch.size
         }
@@ -119,10 +120,10 @@ class SyncService(
                 { library.deleteSongs(source.id, it) },
                 markStale = { db.sourcesDao().setCreditsStale(source.id, true) },
             )
-        if (pruned > prunedBefore) creditsChanged = true
+        return changed || pruned > prunedBefore
     }
 
-    private suspend fun writeSongs(batch: List<Song>) {
+    private suspend fun writeSongs(batch: List<Song>): Boolean {
         val names = batch.associate { it.id to it.genreNames() }
         val genres =
             batch.flatMap { song ->
@@ -132,10 +133,9 @@ class SyncService(
             batch.flatMap { song ->
                 song.artistPositions().map { (position, ref) -> SongArtistRef(song.sourceId, song.id, position, ref.id, ref.name) }
             }
-        db.useWriterConnection { connection ->
+        return db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val songCreditsChanged = connection.songCreditsChanged(batch)
-                if (songCreditsChanged) creditsChanged = true
+                val before = connection.totalChanges()
                 val resolved = connection.resolveSongSortNames(batch)
                 connection.upsertChanged("songs", songColumns, primaryKey, resolved) { it.values() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
@@ -149,7 +149,6 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_genres", songGenreColumns, songGenreKey, genres) { it.values() }
-                val artistRowsBefore = connection.totalChanges()
                 connection.usePrepared("DELETE FROM song_artists WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
@@ -161,21 +160,15 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
-                val artistRowsChanged = connection.totalChanges() != artistRowsBefore
-                if (songCreditsChanged || artistRowsChanged) {
-                    connection.markCreditsStale(batch.first().sourceId)
-                    creditsChanged = true
+                (connection.totalChanges() != before).also { changed ->
+                    if (changed) connection.markCreditsStale(batch.first().sourceId)
                 }
             }
         }
     }
 
-    private suspend fun aggregatePlayData() {
-        db.libraryDao().recomputePlayData(source.id)
-    }
-
-    private suspend fun recomputeArtistSongCounts() {
-        db.libraryDao().recomputeArtistSongCounts(source.id)
+    private suspend fun recomputeAggregates() {
+        db.libraryDao().recomputeAggregates(source.id)
     }
 
     private suspend fun PooledConnection.totalChanges(): Long {
@@ -187,58 +180,11 @@ class SyncService(
         return value
     }
 
-    private suspend fun dbTotalChanges(): Long = db.useWriterConnection { it.totalChanges() }
-
     private suspend fun PooledConnection.markCreditsStale(sourceId: Long) {
         usePrepared("UPDATE sources SET creditsStale = 1 WHERE id = ? AND creditsStale = 0") { statement ->
             statement.bindLong(1, sourceId)
             statement.step()
         }
-    }
-
-    private suspend fun PooledConnection.songCreditsChanged(batch: List<Song>): Boolean {
-        val expected = batch.associate { it.id to (it.albumId to it.artistId) }.toMutableMap()
-        if (expected.isEmpty()) return false
-        var changed = false
-        batch
-            .map { it.sourceId to it.id }
-            .chunked(SQL_VARIABLES)
-            .forEach { chunk ->
-                val placeholders = chunk.joinToString(",") { "?" }
-                usePrepared("SELECT id, albumId, artistId FROM songs WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
-                    statement.bindLong(1, chunk.first().first)
-                    chunk.forEachIndexed { index, (_, id) -> statement.bindText(index + 2, id) }
-                    while (statement.step()) {
-                        val id = statement.getText(0)
-                        val albumId = if (statement.isNull(1)) null else statement.getText(1)
-                        val artistId = if (statement.isNull(2)) null else statement.getText(2)
-                        if (expected.remove(id) != (albumId to artistId)) changed = true
-                    }
-                }
-            }
-        return changed || expected.isNotEmpty()
-    }
-
-    private suspend fun PooledConnection.albumLeadsChanged(batch: List<Album>): Boolean {
-        val expected = batch.associate { it.id to it.artistId }.toMutableMap()
-        if (expected.isEmpty()) return false
-        var changed = false
-        batch
-            .map { it.sourceId to it.id }
-            .chunked(SQL_VARIABLES)
-            .forEach { chunk ->
-                val placeholders = chunk.joinToString(",") { "?" }
-                usePrepared("SELECT id, artistId FROM albums WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
-                    statement.bindLong(1, chunk.first().first)
-                    chunk.forEachIndexed { index, (_, id) -> statement.bindText(index + 2, id) }
-                    while (statement.step()) {
-                        val id = statement.getText(0)
-                        val artistId = if (statement.isNull(1)) null else statement.getText(1)
-                        if (expected.remove(id) != artistId) changed = true
-                    }
-                }
-            }
-        return changed || expected.isNotEmpty()
     }
 
     private suspend fun PooledConnection.resolveSongSortNames(batch: List<Song>): List<Song> {
@@ -338,30 +284,33 @@ class SyncService(
         key: List<String>,
         rows: List<T>,
         preserved: Set<String> = emptySet(),
+        markStale: Boolean = false,
         values: (T) -> List<Any?>,
-    ) {
+    ): Boolean =
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
+                val before = connection.totalChanges()
                 connection.upsertChanged(table, columns, key, rows, preserved, values)
+                (connection.totalChanges() != before).also { changed ->
+                    if (changed && markStale) connection.markCreditsStale(source.id)
+                }
             }
         }
-    }
 
     private suspend fun writeAlbumsAndDiscs(
         albums: List<Album>,
         discs: List<Disc>,
-    ) {
+    ): Boolean {
         val artists =
             albums.flatMap { album ->
                 album.artistPositions().map { (position, ref) -> AlbumArtistRef(album.sourceId, album.id, position, ref.id, ref.name) }
             }
-        db.useWriterConnection { connection ->
+        return db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val leadsChanged = connection.albumLeadsChanged(albums)
+                val before = connection.totalChanges()
                 val resolved = connection.resolveAlbumSortNames(albums)
                 connection.upsertChanged("albums", albumColumns, primaryKey, resolved) { it.values() }
                 connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
-                val artistRowsBefore = connection.totalChanges()
                 connection.usePrepared("DELETE FROM album_artists WHERE sourceId = ? AND albumId = ? AND position >= ?") { statement ->
                     albums.forEach { album ->
                         statement.bind(1, album.sourceId)
@@ -373,9 +322,8 @@ class SyncService(
                     }
                 }
                 connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
-                if (leadsChanged || connection.totalChanges() != artistRowsBefore) {
-                    connection.markCreditsStale(albums.first().sourceId)
-                    creditsChanged = true
+                (connection.totalChanges() != before).also { changed ->
+                    if (changed) connection.markCreditsStale(albums.first().sourceId)
                 }
             }
         }
