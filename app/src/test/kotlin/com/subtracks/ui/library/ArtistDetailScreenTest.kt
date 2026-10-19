@@ -70,7 +70,6 @@ class ArtistDetailScreenTest {
         )
 
         composeRule.onNodeWithText("Album artist · 1 album").assertExists()
-        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("ALBUMS"))
         composeRule.onNodeWithContentDescription("More options").assertExists()
     }
 

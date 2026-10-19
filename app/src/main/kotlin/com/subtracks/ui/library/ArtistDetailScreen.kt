@@ -33,6 +33,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.Star
@@ -64,6 +66,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -256,8 +259,12 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
-    val actionsInHeader = albums.albumCredits.isNotEmpty() || albums.appearances.isNotEmpty()
-    val actions: @Composable () -> Unit = { ArtistActions(artist, starred, onToggleStar, onMore) }
+    val metaTop =
+        TITLE_INSET +
+            with(density) {
+                MaterialTheme.typography.labelLarge.lineHeight
+                    .toDp()
+            }
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -387,10 +394,10 @@ fun ArtistDetailScreen(
                                 }
                             }
                             Column(
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = metaTop),
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
@@ -399,14 +406,14 @@ fun ArtistDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    if (!actionsInHeader) actions()
+                                    ArtistActions(artist, starred, onToggleStar, onMore)
                                 }
                             }
                         }
                     }
                     if (albums.albumCredits.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ArtistSectionHeader(stringResource(R.string.artist_section_albums), trailing = actions)
+                            ArtistSectionHeader(stringResource(R.string.artist_section_albums), Icons.Rounded.Album)
                         }
                         itemsIndexed(albums.albumCredits, key = { _, album -> album.id }) { index, album ->
                             ArtistAlbumCard(
@@ -424,10 +431,7 @@ fun ArtistDetailScreen(
                     }
                     if (albums.appearances.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ArtistSectionHeader(
-                                stringResource(R.string.artist_section_appearances),
-                                trailing = if (albums.albumCredits.isEmpty()) actions else null,
-                            )
+                            ArtistSectionHeader(stringResource(R.string.artist_section_appearances), Icons.Rounded.Mic)
                         }
                         itemsIndexed(albums.appearances, key = { _, album -> album.id }) { index, album ->
                             ArtistAlbumCard(
@@ -488,21 +492,26 @@ fun ArtistDetailScreen(
 @Composable
 private fun ArtistSectionHeader(
     text: String,
-    trailing: (@Composable () -> Unit)? = null,
+    icon: ImageVector,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(16.dp))
         Text(
             text = text.uppercase(),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
         )
-        trailing?.invoke()
     }
 }
 
