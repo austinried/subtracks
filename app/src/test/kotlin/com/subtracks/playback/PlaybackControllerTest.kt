@@ -480,6 +480,67 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun albumTracksAndQueuedSinglesCarryDifferentGainContexts() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await { handle.items.any { it.id == "s1" } }
+        assertTrue(handle.items.first { it.id == "s1" }.albumContext)
+
+        controller.playNext(1, QueueKind.Song, "x1")
+        await { handle.items.any { it.id == "x1" } }
+
+        assertFalse(handle.items.first { it.id == "x1" }.albumContext)
+    }
+
+    @Test
+    fun queuedAlbumsCarryAlbumGain() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await { handle.items.any { it.id == "s1" } }
+
+        controller.playNext(1, QueueKind.Album, "al2")
+        await { handle.items.any { it.id == "x1" } }
+
+        assertTrue(handle.items.first { it.id == "x1" }.albumContext)
+    }
+
+    @Test
+    fun movingAnAlbumTrackKeepsItsAlbumGainContext() {
+        seedAlbum(4, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await { handle.items.any { it.id == "s1" } }
+
+        runBlocking { controller.move(0, 2) }
+        await { controller.state.value.position == 2L }
+
+        assertTrue(handle.items.first { it.id == "s1" }.albumContext)
+        val (entry, _) = runBlocking { queues.snapshot().locate(2)!! }
+        assertEquals(QueueKind.Album, entry.kind)
+        assertEquals("al1", entry.refId)
+    }
+
+    @Test
+    fun undoingARemovalRestoresTheTracksAlbumGainContext() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.playAlbum(1, "al1", 0)
+        await { handle.items.any { it.id == "s2" } }
+
+        runBlocking { controller.removeAt(1) }
+        await { handle.items.none { it.id == "s2" } }
+
+        runBlocking { controller.undo() }
+        await { handle.items.any { it.id == "s2" } }
+
+        assertTrue(handle.items.first { it.id == "s2" }.albumContext)
+    }
+
+    @Test
     fun tappingAContextTrackWhileAQueuedTrackPlaysKeepsTheQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("x1", "al2")
@@ -1268,6 +1329,25 @@ class PlaybackControllerTest {
     @Test
     fun movingThePlayingContextTrackStillResolvesAnAlbumTitle() {
         seedAlbum(3, sourceId = 1)
+        runBlocking {
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    Album(
+                        sourceId = 1,
+                        id = "al1",
+                        artistId = "ar1",
+                        name = "Album",
+                        albumArtist = "Artist",
+                        created = 0,
+                        coverArt = null,
+                        genre = null,
+                        year = null,
+                        starred = null,
+                        songCount = 3,
+                    ),
+                ),
+            )
+        }
 
         controller.playAlbum(1, "al1", 1)
         await {

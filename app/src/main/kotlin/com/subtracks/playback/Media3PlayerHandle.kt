@@ -235,6 +235,7 @@ class Media3PlayerHandle(
                     ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
                     ?.getLong(EXTRA_DURATION_MS),
             replayGain = mediaItem.replayGain(),
+            albumContext = mediaItem.albumContext(),
         )
 }
 
@@ -244,6 +245,7 @@ private const val EXTRA_REPLAY_GAIN_TRACK_GAIN = "replayGainTrackGain"
 private const val EXTRA_REPLAY_GAIN_ALBUM_GAIN = "replayGainAlbumGain"
 private const val EXTRA_REPLAY_GAIN_TRACK_PEAK = "replayGainTrackPeak"
 private const val EXTRA_REPLAY_GAIN_ALBUM_PEAK = "replayGainAlbumPeak"
+private const val EXTRA_ALBUM_CONTEXT = "albumContext"
 
 internal fun MediaItem?.replayGain(): ReplayGain {
     val extras = this?.mediaMetadata?.extras ?: return ReplayGain()
@@ -254,6 +256,8 @@ internal fun MediaItem?.replayGain(): ReplayGain {
         albumPeak = extras.gain(EXTRA_REPLAY_GAIN_ALBUM_PEAK),
     )
 }
+
+internal fun MediaItem?.albumContext(): Boolean = this?.mediaMetadata?.extras?.getBoolean(EXTRA_ALBUM_CONTEXT) ?: false
 
 private fun Bundle.putGain(
     key: String,
@@ -288,6 +292,7 @@ internal fun queueMediaItem(
                     putGain(EXTRA_REPLAY_GAIN_ALBUM_GAIN, item.replayGain.albumGain)
                     putGain(EXTRA_REPLAY_GAIN_TRACK_PEAK, item.replayGain.trackPeak)
                     putGain(EXTRA_REPLAY_GAIN_ALBUM_PEAK, item.replayGain.albumPeak)
+                    putBoolean(EXTRA_ALBUM_CONTEXT, item.albumContext)
                 },
             ).build()
     val builder =

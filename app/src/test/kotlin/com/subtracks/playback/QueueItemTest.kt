@@ -36,6 +36,28 @@ class QueueItemTest {
     }
 
     @Test
+    fun carriesTheAlbumsGainContextWhenAsked() {
+        val song =
+            Song(
+                sourceId = 1,
+                id = "s1",
+                albumId = "al1",
+                artistId = "ar1",
+                title = "Song",
+                album = "Album",
+                artist = "Artist",
+                duration = 100,
+                track = 1,
+                disc = 1,
+                starred = null,
+            )
+
+        val item = AlbumSongItem(song, coverArt = null).toQueueItem(albumContext = true)
+
+        assertEquals(true, item.albumContext)
+    }
+
+    @Test
     fun aSongWithoutGainCarriesNoGain() {
         val item =
             AlbumSongItem(

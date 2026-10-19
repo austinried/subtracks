@@ -485,6 +485,43 @@ class QueueRepositoryTest {
             repository.move(repository.snapshot(), from = 2, to = 1)
 
             assertEquals(listOf("s1", "s5", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
+            val (entry, _) = repository.snapshot().locate(1)!!
+            assertEquals(QueueKind.Song, entry.kind)
+        }
+
+    @Test
+    fun movingAQueuedAlbumTrackKeepsItsAlbumEntry() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
+
+            repository.move(repository.snapshot(), from = 2, to = 1)
+
+            val (entry, _) = repository.snapshot().locate(1)!!
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals("al2", entry.refId)
+            assertEquals(1L, entry.rangeStart)
+            assertEquals(1L, entry.rangeEnd)
+        }
+
+    @Test
+    fun movingAPlaylistTrackKeepsItAPinnedSong() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(1, "p1", "s1", 0),
+                    PlaylistSong(1, "p1", "s4", 1),
+                ),
+            )
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+
+            repository.move(repository.snapshot(), from = 0, to = 1)
+
+            val (entry, _) = repository.snapshot().locate(1)!!
+            assertEquals(QueueKind.Song, entry.kind)
+            assertEquals("s1", entry.refId)
         }
 
     @Test
@@ -853,9 +890,28 @@ class QueueRepositoryTest {
             repository.move(repository.snapshot(), from = 0, to = 2)
 
             val (entry, _) = repository.snapshot().locate(2)!!
-            assertEquals(QueueKind.Song, entry.kind)
-            assertEquals("s1", entry.refId)
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals("al1", entry.refId)
+            assertEquals(0L, entry.rangeStart)
+            assertEquals(0L, entry.rangeEnd)
             assertEquals("First Album", repository.sourceName(entry.kind, entry.sourceId, entry.refId))
+        }
+
+    @Test
+    fun movingAnAlbumTrackBackCompactsTheAlbumEntry() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+
+            repository.move(repository.snapshot(), from = 0, to = 2)
+            repository.move(repository.snapshot(), from = 2, to = 0)
+
+            val snapshot = repository.snapshot()
+            assertEquals(listOf("s1", "s2", "s3"), resolveAll(snapshot))
+            val entry = snapshot.entries.single().entry
+            assertEquals(QueueKind.Album, entry.kind)
+            assertEquals(0L, entry.rangeStart)
+            assertEquals(2L, entry.rangeEnd)
         }
 
     @Test

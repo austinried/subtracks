@@ -71,6 +71,20 @@ class MediaItemTest {
     }
 
     @Test
+    fun theItemCarriesItsGainContext() {
+        val item =
+            queueMediaItem(
+                song.copy(albumContext = true),
+                local = null,
+                stream = "http://server/stream?s=s1",
+                transcode = false,
+            )
+
+        assertEquals(true, item.albumContext())
+        assertEquals(false, queueMediaItem(song, local = null, stream = "http://server/stream?s=s1", transcode = false).albumContext())
+    }
+
+    @Test
     fun anItemWithoutGainReadsBackAsNoGain() {
         val item = queueMediaItem(song, local = null, stream = "http://server/stream?s=s1", transcode = false)
 

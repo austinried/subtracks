@@ -39,6 +39,17 @@ class ReplayGainControllerTest {
     }
 
     @Test
+    fun dynamicModeFollowsTheItemsGainContext() {
+        controller.setSettings(ReplayGainSettings(ReplayGainMode.Dynamic, 0f))
+
+        controller.applyItem(item("a", trackGain = -6.0206f, albumGain = -1f))
+        assertEquals(0.5f, applied.last(), TOLERANCE)
+
+        controller.applyItem(item("b", trackGain = -1f, albumGain = -6.0206f, albumContext = true))
+        assertEquals(0.5f, applied.last(), TOLERANCE)
+    }
+
+    @Test
     fun anItemWithoutGainPlaysAtUnity() {
         controller.setSettings(ReplayGainSettings(ReplayGainMode.Track, 0f))
         controller.applyItem(item("a", trackGain = -6.0206f))
@@ -65,6 +76,8 @@ class ReplayGainControllerTest {
         id: String,
         trackGain: Float?,
         trackPeak: Float? = null,
+        albumGain: Float? = null,
+        albumContext: Boolean = false,
     ) = queueMediaItem(
         QueueItem(
             id = id,
@@ -72,7 +85,8 @@ class ReplayGainControllerTest {
             artist = null,
             album = null,
             coverArtId = null,
-            replayGain = ReplayGain(trackGain = trackGain, trackPeak = trackPeak),
+            replayGain = ReplayGain(trackGain = trackGain, albumGain = albumGain, trackPeak = trackPeak),
+            albumContext = albumContext,
         ),
         local = null,
         stream = "http://server/$id",

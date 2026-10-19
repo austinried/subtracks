@@ -164,6 +164,8 @@ data class QueueSnapshot(
     }
 
     fun locateContext(contextPlay: Long): Pair<QueueEntry, Long>? = locateIn(entries, flatContext(contextPlay) ?: return null)
+
+    fun isAlbumContext(position: Long): Boolean = locate(position)?.first?.kind == QueueKind.Album
 }
 
 private fun entryIndexAfter(
@@ -295,8 +297,8 @@ class QueueRepository(
                     ?.takeIf { it.isNotBlank() }
             }
 
-            // An explicit song entry in the middle of a queue is a reordered context track, so
-            // label it by its album rather than losing the context name.
+            // A song entry can be a single or a track reordered out of a playlist, artist or
+            // genre, so label it by its album rather than losing the context name.
             QueueKind.Song -> {
                 library
                     .song(sourceId, refId)
@@ -581,9 +583,9 @@ class QueueRepository(
         val toUpNext = snapshot.isUpNext(to)
         if (fromUpNext && toUpNext) {
             val song = itemAt(snapshot, from) ?: return false
-            val sourceId = snapshot.locate(from)?.first?.sourceId ?: return false
+            val located = snapshot.locate(from) ?: return false
             val removed = removeEntry(snapshot.upNext, snapshot.upNextIndex(from))
-            val moved = ResolvedQueueEntry(songEntry(sourceId, song.song.id), 1L)
+            val moved = ResolvedQueueEntry(movedEntry(located.first, song.song.id, located.second), 1L)
             writeUpNext(compact(insertEntry(removed, snapshot.upNextIndex(to), moved)).map { it.entry })
             return true
         }
@@ -597,7 +599,7 @@ class QueueRepository(
         val located = snapshot.locateContext(playFrom) ?: return false
         val song = itemAt(snapshot, from) ?: return false
         val removed = removeEntry(snapshot.entries, playFrom)
-        val moved = ResolvedQueueEntry(songEntry(located.first.sourceId, song.song.id), 1L)
+        val moved = ResolvedQueueEntry(movedEntry(located.first, song.song.id, located.second), 1L)
         val insertAt = playTo.coerceIn(0, removed.sumOf { it.length })
         write(compact(insertEntry(removed, insertAt, moved)).map { it.entry })
         adjustAnchorOnMove(playFrom, insertAt)
@@ -928,6 +930,18 @@ class QueueRepository(
         val available = (total - offset).coerceAtLeast(0)
         return count?.coerceAtMost(available) ?: available
     }
+
+    private fun movedEntry(
+        source: QueueEntry,
+        songId: String,
+        offsetInEntry: Long,
+    ): QueueEntry =
+        if (source.kind == QueueKind.Album) {
+            val offset = source.offset + offsetInEntry
+            source.range(offset, offset)
+        } else {
+            songEntry(source.sourceId, songId)
+        }
 
     private fun QueueEntry.range(
         start: Long,

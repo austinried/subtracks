@@ -32,6 +32,7 @@ internal fun replayGainModeLabel(
         ReplayGainMode.Off -> resources.getString(R.string.settings_replay_gain_mode_off)
         ReplayGainMode.Track -> resources.getString(R.string.settings_replay_gain_mode_track)
         ReplayGainMode.Album -> resources.getString(R.string.settings_replay_gain_mode_album)
+        ReplayGainMode.Dynamic -> resources.getString(R.string.settings_replay_gain_mode_dynamic)
     }
 
 internal fun replayGainPreampLabel(

@@ -2,7 +2,7 @@ package com.subtracks.playback
 
 import com.subtracks.data.model.SongItem
 
-fun SongItem.toQueueItem() =
+fun SongItem.toQueueItem(albumContext: Boolean = false) =
     QueueItem(
         id = song.id,
         title = song.title,
@@ -11,4 +11,5 @@ fun SongItem.toQueueItem() =
         coverArtId = coverArt,
         durationMs = song.duration?.let { it * 1000 },
         replayGain = song.replayGain(),
+        albumContext = albumContext,
     )

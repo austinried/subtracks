@@ -54,6 +54,40 @@ class ReplayGainTest {
     }
 
     @Test
+    fun dynamicModeAppliesTheAlbumGainInAnAlbumContext() {
+        assertEquals(
+            0.5f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = -1f, albumGain = -6.0206f, trackPeak = 1f, albumPeak = 1f),
+                ReplayGainSettings(ReplayGainMode.Dynamic, 0f),
+                albumContext = true,
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun dynamicModeAppliesTheTrackGainInAMixedContext() {
+        assertEquals(
+            0.5f,
+            replayGainLinearGain(
+                ReplayGain(trackGain = -6.0206f, albumGain = -1f, trackPeak = 1f, albumPeak = 1f),
+                ReplayGainSettings(ReplayGainMode.Dynamic, 0f),
+                albumContext = false,
+            ),
+            TOLERANCE,
+        )
+    }
+
+    @Test
+    fun dynamicModeFallsBackInEitherContext() {
+        val settings = ReplayGainSettings(ReplayGainMode.Dynamic, 0f)
+
+        assertEquals(0.5f, replayGainLinearGain(ReplayGain(trackGain = -6.0206f), settings, albumContext = true), TOLERANCE)
+        assertEquals(0.5f, replayGainLinearGain(ReplayGain(albumGain = -6.0206f), settings, albumContext = false), TOLERANCE)
+    }
+
+    @Test
     fun offAppliesUnityGain() {
         assertEquals(
             1f,

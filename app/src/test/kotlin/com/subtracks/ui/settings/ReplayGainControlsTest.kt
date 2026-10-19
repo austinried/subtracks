@@ -19,6 +19,7 @@ class ReplayGainControlsTest {
         assertEquals("Off", replayGainModeLabel(resources, ReplayGainMode.Off))
         assertEquals("Track gain", replayGainModeLabel(resources, ReplayGainMode.Track))
         assertEquals("Album gain", replayGainModeLabel(resources, ReplayGainMode.Album))
+        assertEquals("Dynamic", replayGainModeLabel(resources, ReplayGainMode.Dynamic))
     }
 
     @Test

@@ -7,11 +7,13 @@ internal class ReplayGainController(
     private val apply: (Float) -> Unit,
 ) {
     private var track = ReplayGain()
+    private var albumContext = false
     private var settings = ReplayGainSettings(ReplayGainMode.Track, 0f)
 
     @Synchronized
     fun applyItem(item: MediaItem) {
         track = item.replayGain()
+        albumContext = item.albumContext()
         applyGain()
     }
 
@@ -22,6 +24,6 @@ internal class ReplayGainController(
     }
 
     private fun applyGain() {
-        apply(replayGainLinearGain(track, settings))
+        apply(replayGainLinearGain(track, settings, albumContext))
     }
 }
