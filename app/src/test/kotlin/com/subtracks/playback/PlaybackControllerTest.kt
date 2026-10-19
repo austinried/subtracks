@@ -622,6 +622,50 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun draggingWithinTheContextRunsAroundTheBlockKeepsPlayerAndQueueInSync() {
+        seedAlbum(5, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 2)
+        await {
+            controller.state.value.item
+                ?.id == "s3"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        runBlocking { controller.move(0, 1) }
+
+        var expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, handle.items.map { it.id })
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(expected.indexOf("s3").toLong(), controller.state.value.position)
+
+        runBlocking { controller.move(4, 5) }
+
+        expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, handle.items.map { it.id })
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(expected.indexOf("s3").toLong(), controller.state.value.position)
+    }
+
+    @Test
     fun movingThePlayingUpNextTrackInTheBlockKeepsPlayerAndQueueInSync() {
         seedAlbum(5, sourceId = 1)
         seedSong("x1", "al2")
