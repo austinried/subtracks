@@ -80,7 +80,7 @@ sealed interface MenuTarget {
     ) : MenuTarget {
         override val title: String get() = song.title
 
-        override val subtitle: String? get() = song.artist
+        override val subtitle: String? get() = song.artistSubtitle()
     }
 
     data class Album(

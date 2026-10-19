@@ -61,6 +61,7 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.artistSubtitle
 
 private val TRACK_COLUMN_WIDTH = 24.dp
 private val TIME_COLUMN_WIDTH = 36.dp
@@ -146,7 +147,7 @@ fun SongRow(
         },
         supportingContent = {
             Text(
-                text = song.artist.orEmpty().ifEmpty { "\u00A0" },
+                text = song.artistSubtitle().orEmpty().ifEmpty { "\u00A0" },
                 color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

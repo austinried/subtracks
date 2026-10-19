@@ -54,7 +54,7 @@ fun SongInfoDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 InfoRow(stringResource(R.string.resources_sort_by_title), song.title)
-                InfoRow(stringResource(R.string.resources_filter_artist), song.artist)
+                InfoRow(stringResource(R.string.resources_filter_artist), song.artistSubtitle())
                 InfoRow(stringResource(R.string.resources_filter_album), song.album)
                 InfoRow(stringResource(R.string.info_duration), song.duration?.let(DateUtils::formatElapsedTime))
                 InfoRow(
