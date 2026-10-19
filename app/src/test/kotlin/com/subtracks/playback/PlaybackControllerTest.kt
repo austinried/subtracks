@@ -578,6 +578,154 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun contextDragsWithAnUpNextBlockKeepPlayerAndQueueInSync() {
+        seedAlbum(5, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+
+        val pairs =
+            listOf(
+                0L to 3L,
+                3L to 0L,
+                0L to 6L,
+                6L to 0L,
+                3L to 4L,
+                4L to 3L,
+                4L to 6L,
+                6L to 4L,
+                1L to 2L,
+                2L to 1L,
+            )
+
+        for ((from, to) in pairs) {
+            controller.playAlbum(1, "al1", 0)
+            await { handle.items.map { it.id } == listOf("s1", "s2", "s3", "s4", "s5") }
+            controller.addToQueue(1, QueueKind.Song, "x1")
+            controller.addToQueue(1, QueueKind.Song, "x2")
+            await { handle.items.map { it.id } == listOf("s1", "x1", "x2", "s2", "s3", "s4", "s5") }
+
+            runBlocking { controller.move(from, to) }
+
+            val expected =
+                runBlocking {
+                    val snapshot = queues.snapshot()
+                    (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+                }
+            assertEquals(expected, handle.items.map { it.id })
+            assertEquals(
+                "s1",
+                controller.state.value.item
+                    ?.id,
+            )
+            assertEquals(expected.indexOf("s1").toLong(), controller.state.value.position)
+        }
+    }
+
+    @Test
+    fun movingThePlayingUpNextTrackInTheBlockKeepsPlayerAndQueueInSync() {
+        seedAlbum(5, sourceId = 1)
+        seedSong("x1", "al2")
+        seedSong("x2", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        controller.addToQueue(1, QueueKind.Song, "x2")
+        await { handle.items.map { it.id } == listOf("s1", "x1", "x2", "s2", "s3", "s4", "s5") }
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        runBlocking { controller.move(1, 2) }
+
+        val expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, handle.items.map { it.id })
+        assertEquals(
+            "x1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(expected.indexOf("x1").toLong(), controller.state.value.position)
+    }
+
+    @Test
+    fun draggingAContextTrackWhileAnUpNextTrackPlaysKeepsPlayerAndQueueInSync() {
+        seedAlbum(5, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { controller.upcomingItem()?.id } == "x1" }
+
+        controller.next()
+        await {
+            controller.state.value.item
+                ?.id == "x1"
+        }
+
+        runBlocking { controller.move(0, 6) }
+
+        val expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        assertEquals(expected, handle.items.map { it.id })
+        assertEquals(
+            "x1",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(expected.indexOf("x1").toLong(), controller.state.value.position)
+    }
+
+    @Test
+    fun movingAContextTrackAcrossUpNextFarFromTheWindowKeepsPlayerAndQueueInSync() {
+        seedAlbum(60, sourceId = 1)
+        seedSong("x1", "al2")
+
+        controller.playAlbum(1, "al1", 30)
+        await {
+            controller.state.value.item
+                ?.id == "s31"
+        }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { handle.items.any { it.id == "x1" } }
+
+        runBlocking { controller.move(0, 59) }
+
+        val expected =
+            runBlocking {
+                val snapshot = queues.snapshot()
+                (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
+            }
+        val current = expected.indexOf("s31")
+        await { controller.state.value.position == current.toLong() }
+
+        val first = (current - 25).coerceAtLeast(0)
+        val last = (current + 25).coerceAtMost(expected.lastIndex)
+        assertEquals(expected.subList(first, last + 1), handle.items.map { it.id })
+        assertEquals(
+            "s31",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
     fun tappingAContextTrackWhileAQueuedTrackPlaysKeepsTheQueue() {
         seedAlbum(3, sourceId = 1)
         seedSong("x1", "al2")
