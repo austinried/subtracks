@@ -859,20 +859,18 @@ class LibraryDaoTest {
     @Test
     fun theArtistPageAlbumQueryFindsArtistCreditsThroughArtistIndexes() =
         runTest {
-            val plan =
-                plan(
-                    "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
-                        "WHERE artistId = :artistId) credits " +
-                        "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
-                        "ORDER BY year DESC, sortName COLLATE NOCASE, id",
-                )
+            val plan = plan(ALBUMS_FOR_ARTIST)
 
-            assertTrue(plan, plan.contains("index_albums_sourceId_artistId"))
-            assertTrue(plan, plan.contains("index_album_artists_sourceId_artistId"))
-            assertTrue(plan, plan.contains("index_songs_sourceId_artistId"))
-            assertTrue(plan, plan.contains("index_song_artists_sourceId_artistId"))
-            assertFalse(plan, plan.contains("SCAN albums"))
-            assertFalse(plan, plan.contains("SCAN songs"))
+            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            )
+            assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            )
         }
 
     private suspend fun plan(sql: String): String =

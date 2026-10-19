@@ -114,6 +114,11 @@ internal const val CREDITED_ALBUM_ROWS =
 
 // Download visibility follows the credit path: an album credit includes the album when any song is
 // downloaded, while a track credit includes it only when the credited track is downloaded.
+internal const val ALBUMS_FOR_ARTIST =
+    "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId) credits " +
+        "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+        "ORDER BY year DESC, sortName COLLATE NOCASE, id"
+
 private const val DOWNLOADED_ARTIST_ALBUMS =
     "SELECT albums.id FROM albums " +
         "WHERE albums.sourceId = :sourceId AND albums.artistId = artists.id " +
@@ -129,15 +134,17 @@ private const val DOWNLOADED_ARTIST_ALBUMS =
         "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
         "UNION " +
         "SELECT songs.albumId FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = :sourceId AND songs.artistId = artists.id " +
-        "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL " +
+        "AND sd.status = 'Completed' " +
         "UNION " +
         "SELECT songs.albumId FROM song_artists " +
         "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
-        "AND sd.status = 'Completed' AND songs.albumId IS NOT NULL"
+        "AND sd.status = 'Completed'"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
@@ -253,8 +260,8 @@ interface LibraryDao {
     )
     suspend fun recomputeAlbumPlayData(sourceId: Long)
 
-    // Counts, plays and the credited flag come from the same credit unions, so the artist badges,
-    // page, shuffle and downloads cannot disagree.
+    // Counts, plays and the credited flag come from the shared credit unions. The download-aware
+    // queries are separate because their visibility follows the credit path.
     @Query(
         "WITH credited AS (SELECT DISTINCT * FROM ($CREDITED_SONG_ROWS)), " +
             "credited_albums AS ($CREDITED_ALBUM_ROWS), " +
@@ -1052,11 +1059,7 @@ interface LibraryDao {
         songId: String,
     ): Flow<List<String>>
 
-    @Query(
-        "SELECT albums.* FROM (SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId) credits " +
-            "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
-            "ORDER BY year DESC, sortName COLLATE NOCASE, id",
-    )
+    @Query(ALBUMS_FOR_ARTIST)
     fun albumsForArtist(
         sourceId: Long,
         artistId: String,

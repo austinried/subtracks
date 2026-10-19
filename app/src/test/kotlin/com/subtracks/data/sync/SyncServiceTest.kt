@@ -7,6 +7,8 @@ import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.db.LoggingSQLiteDriver
+import com.subtracks.data.db.SqlExecution
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.artistsDefaultQuery
 import com.subtracks.data.model.Album
@@ -29,9 +31,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Collections
 
 @RunWith(AndroidJUnit4::class)
 class SyncServiceTest {
@@ -1678,6 +1682,7 @@ class SyncServiceTest {
             SyncService(db, source).sync()
             db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
             db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s4", DownloadStatus.Completed))
 
             for (artistId in listOf("a1", "a2", "a3")) {
                 val artist = db.libraryDao().artistOnce(1, artistId)!!
@@ -1695,6 +1700,20 @@ class SyncServiceTest {
                 assertEquals("$artistId length", songIds.size.toLong(), db.queueDao().artistLength(1, artistId))
                 assertEquals("$artistId total", songIds.size.toLong(), status.total)
                 assertEquals("$artistId downloaded", downloaded.toLong(), status.downloaded)
+            }
+
+            val downloadedArtists = db.libraryDao().artistsByName(1, 0, "", downloadedFilter = 1).allRows()
+            for (artist in downloadedArtists) {
+                assertEquals(
+                    "${artist.id} downloaded albums",
+                    db
+                        .libraryDao()
+                        .albumsForArtistDownloaded(1, artist.id)
+                        .first()
+                        .size
+                        .toLong(),
+                    artist.albumCount,
+                )
             }
         }
 
@@ -1743,6 +1762,38 @@ class SyncServiceTest {
             assertEquals(0L, db.libraryDao().artistOnce(1, "a1")!!.albumCount)
             assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.songCount)
             assertEquals(1L, db.libraryDao().artistOnce(1, "a2")!!.albumCount)
+        }
+
+    @Test
+    fun anIdenticalSyncSkipsTheArtistAggregateQuery() =
+        runTest {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
+            val loggingDb =
+                Room
+                    .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
+                    .setDriver(LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it })
+                    .build()
+            try {
+                loggingDb.sourcesDao().upsertSource(
+                    Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+                )
+                val source =
+                    FakeMusicSource(
+                        artists = listOf(artist("a1", "Artist")),
+                        albums = listOf(album("al1")),
+                        songs = listOf(song("s1")),
+                    )
+
+                SyncService(loggingDb, source).sync()
+                synchronized(executions) { executions.clear() }
+                SyncService(loggingDb, source).sync()
+
+                val secondSyncExecutions = synchronized(executions) { executions.toList() }
+                assertTrue(secondSyncExecutions.none { it.sql.contains("credited_albums") })
+            } finally {
+                loggingDb.close()
+            }
         }
 
     private suspend fun totalChanges(): Long =

@@ -21,7 +21,7 @@ internal const val ARTIST_DOWNLOAD_ROWS =
         "AND song_downloads.songId = credits.songId"
 
 // Starts from downloads so lists and filters over partially downloaded libraries do not scan songs.
-// This is the one hand-written copy of the credit paths, kept for that query plan.
+// Kept hand-written for that plan.
 internal const val DOWNLOADED_ARTIST_ROWS =
     "SELECT albums.artistId AS id, song_downloads.songId AS songId, " +
         "song_downloads.downloadedAt AS downloadedAt, song_downloads.status AS status " +
