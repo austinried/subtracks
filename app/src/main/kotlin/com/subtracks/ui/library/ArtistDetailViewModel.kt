@@ -29,9 +29,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-
-private const val BIO_REFRESH_TIMEOUT_MS = 15_000L
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArtistDetailViewModel(
@@ -102,8 +99,7 @@ class ArtistDetailViewModel(
                 }
                 _bioLoading.value = true
                 try {
-                    val result = withTimeoutOrNull(BIO_REFRESH_TIMEOUT_MS) { libraryRepository.refreshArtistBio(id, artistId) }
-                    _bioUnavailable.value = result == null || result.isFailure
+                    _bioUnavailable.value = libraryRepository.refreshArtistBio(id, artistId).isFailure
                 } finally {
                     _bioLoading.value = false
                 }

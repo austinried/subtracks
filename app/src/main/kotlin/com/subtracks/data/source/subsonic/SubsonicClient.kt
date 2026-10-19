@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 
 open class SubsonicException(
     val code: Int,
@@ -55,11 +56,12 @@ class SubsonicClient(
     fun <T> stream(
         method: String,
         params: Map<String, String> = emptyMap(),
+        timeoutMs: Long? = null,
         body: (InputStream) -> T,
     ): T {
         val usedTokenAuth = useTokenAuth
         return try {
-            execute(method, params, body)
+            execute(method, params, timeoutMs, body)
         } catch (failure: SubsonicException) {
             if (failure.code !in TOKEN_AUTH_UNSUPPORTED_CODES || !usedTokenAuth) {
                 Log.w("http", "$method failed: server code ${failure.code} \"${failure.message}\"")
@@ -67,13 +69,14 @@ class SubsonicClient(
             }
             Log.w("http", "$method: token auth unsupported (server code ${failure.code}), retrying with plaintext")
             disableTokenAuth()
-            execute(method, params, body)
+            execute(method, params, timeoutMs, body)
         }
     }
 
     private fun <T> execute(
         method: String,
         params: Map<String, String>,
+        timeoutMs: Long?,
         body: (InputStream) -> T,
     ): T {
         val request =
@@ -81,7 +84,9 @@ class SubsonicClient(
                 .Builder()
                 .url(uri(method, params))
                 .build()
-        http.newCall(request).execute().use { response ->
+        val call = http.newCall(request)
+        timeoutMs?.let { call.timeout().timeout(it, TimeUnit.MILLISECONDS) }
+        call.execute().use { response ->
             if (!response.isSuccessful) {
                 throw SubsonicException(-1, "HTTP ${response.code}", UiMessage(R.string.error_http, listOf(response.code)))
             }

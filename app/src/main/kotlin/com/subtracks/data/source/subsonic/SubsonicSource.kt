@@ -87,7 +87,7 @@ class SubsonicSource(
 
     override suspend fun artistBiography(artistId: String): String? =
         withContext(Dispatchers.IO) {
-            client.stream("getArtistInfo2", mapOf("id" to artistId)) { input ->
+            client.stream("getArtistInfo2", mapOf("id" to artistId), timeoutMs = ARTIST_BIO_TIMEOUT_MS) { input ->
                 SubsonicXml.artistBiography(input)
             }
         }
@@ -372,6 +372,7 @@ class SubsonicSource(
         const val PAGE_SIZE = 500
         const val MAX_PAGES = 20_000
         const val THUMBNAIL_SIZE = 384
+        const val ARTIST_BIO_TIMEOUT_MS = 15_000L
     }
 }
 
