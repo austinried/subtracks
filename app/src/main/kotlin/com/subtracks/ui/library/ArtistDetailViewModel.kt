@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+
+private const val BIO_REFRESH_TIMEOUT_MS = 15_000L
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArtistDetailViewModel(
@@ -73,6 +76,9 @@ class ArtistDetailViewModel(
     private val _bioLoading = MutableStateFlow(true)
     val bioLoading: StateFlow<Boolean> = _bioLoading
 
+    private val _bioUnavailable = MutableStateFlow(false)
+    val bioUnavailable: StateFlow<Boolean> = _bioUnavailable
+
     private val _bioExpanded = MutableStateFlow(false)
     val bioExpanded: StateFlow<Boolean> = _bioExpanded
 
@@ -82,18 +88,22 @@ class ArtistDetailViewModel(
         if (bioRefresh?.isActive == true) return
         bioRefresh =
             viewModelScope.launch {
+                _bioUnavailable.value = false
                 if (sourceRepository.offline.value) {
                     _bioLoading.value = false
+                    _bioUnavailable.value = true
                     return@launch
                 }
                 val id = sourceRepository.activeSourceIdOnce()
                 if (id == null) {
                     _bioLoading.value = false
+                    _bioUnavailable.value = true
                     return@launch
                 }
                 _bioLoading.value = true
                 try {
-                    libraryRepository.refreshArtistBio(id, artistId)
+                    val result = withTimeoutOrNull(BIO_REFRESH_TIMEOUT_MS) { libraryRepository.refreshArtistBio(id, artistId) }
+                    _bioUnavailable.value = result == null || result.isFailure
                 } finally {
                     _bioLoading.value = false
                 }

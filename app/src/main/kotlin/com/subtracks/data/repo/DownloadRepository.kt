@@ -432,18 +432,19 @@ class DownloadRepository(
         artistId: String,
     ) {
         if (db.libraryDao().artistBioOnce(sourceId, artistId) != null) return
-        if (!attemptedBios.add(sourceId to artistId)) return
-        val biography =
-            try {
-                sourceRepository.artistBiography(sourceId, artistId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                return
-            }
-        db.libraryDao().upsertArtistBio(
-            ArtistBio(sourceId, artistId, biography?.trim()?.takeIf { it.isNotEmpty() }),
-        )
+        val key = sourceId to artistId
+        if (!attemptedBios.add(key)) return
+        try {
+            val biography = sourceRepository.artistBiography(sourceId, artistId)
+            db.libraryDao().upsertArtistBio(
+                ArtistBio(sourceId, artistId, normalizeBiography(biography)),
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+        } finally {
+            attemptedBios.remove(key)
+        }
     }
 
     private suspend fun fetchArtistBiosSafely(
@@ -451,13 +452,8 @@ class DownloadRepository(
         artistIds: Set<String>,
     ) {
         if (artistIds.isEmpty()) return
-        try {
-            withTimeoutOrNull(BIO_TIMEOUT_MS) {
-                artistIds.forEach { fetchArtistBio(sourceId, it) }
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
+        withTimeoutOrNull(BIO_TIMEOUT_MS) {
+            artistIds.forEach { fetchArtistBio(sourceId, it) }
         }
     }
 

@@ -116,6 +116,7 @@ import com.subtracks.ui.theme.heroBarColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -155,6 +156,12 @@ private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 internal const val ARTIST_BIO_MORE_TAG = "artistBioMore"
 
+private data class BioSnapshot(
+    val known: Boolean,
+    val present: Boolean,
+    val biography: String?,
+)
+
 @Composable
 fun ArtistDetailRoute(
     artistId: String,
@@ -170,8 +177,16 @@ fun ArtistDetailRoute(
     val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
     val artistName by viewModel.artistName.collectAsStateWithLifecycle(initialValue = null)
     val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = null)
-    val artistBio by viewModel.artistBio.collectAsStateWithLifecycle(initialValue = null)
+    val bioSnapshots =
+        remember(viewModel) {
+            viewModel.artistBio.map { BioSnapshot(known = true, present = it != null, biography = it?.biography) }
+        }
+    val bioSnapshot by
+        bioSnapshots.collectAsStateWithLifecycle(
+            initialValue = BioSnapshot(known = false, present = false, biography = null),
+        )
     val bioLoading by viewModel.bioLoading.collectAsStateWithLifecycle()
+    val bioUnavailable by viewModel.bioUnavailable.collectAsStateWithLifecycle()
     val bioExpanded by viewModel.bioExpanded.collectAsStateWithLifecycle()
     LaunchedEffect(artistId) { viewModel.refreshBio() }
     val art by viewModel.art.collectAsStateWithLifecycle()
@@ -208,8 +223,10 @@ fun ArtistDetailRoute(
         artistName = artistName.orEmpty(),
         albums = albums ?: ArtistAlbums(),
         albumsLoaded = albums != null,
-        bio = artistBio?.biography,
-        bioLoading = bioLoading && artistBio == null,
+        bio = bioSnapshot.biography,
+        bioLoading = bioLoading && !bioSnapshot.present,
+        bioUnavailable = bioUnavailable && !bioSnapshot.present,
+        bioPending = !bioSnapshot.known,
         bioExpanded = bioExpanded,
         art = art,
         artThumbnail = artThumbnail,
@@ -246,6 +263,8 @@ fun ArtistDetailScreen(
     albumsLoaded: Boolean = true,
     bio: String? = null,
     bioLoading: Boolean = false,
+    bioUnavailable: Boolean = false,
+    bioPending: Boolean = false,
     bioExpanded: Boolean = false,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
@@ -284,8 +303,10 @@ fun ArtistDetailScreen(
     val bioCollapsed = hasBio && !bioExpanded
     val bioText =
         when {
+            bioPending -> ""
             hasBio -> bio.orEmpty()
             bioLoading -> stringResource(R.string.artist_bio_loading)
+            bioUnavailable -> stringResource(R.string.artist_bio_unavailable)
             else -> stringResource(R.string.artist_bio_empty)
         }
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
@@ -654,6 +675,9 @@ internal fun splitBioCollapsed(
         if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
             first = candidate
             index++
+        } else if (first.isEmpty()) {
+            first = words[index]
+            index++
         } else {
             break
         }
@@ -661,19 +685,9 @@ internal fun splitBioCollapsed(
     if (index >= words.size) return BioLines(listOf(AnnotatedString(first)), more = false)
 
     val secondStart = index
-    var second = ""
-    var secondIndex = secondStart
-    while (secondIndex < words.size) {
-        val candidate = if (second.isEmpty()) words[secondIndex] else "$second ${words[secondIndex]}"
-        if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
-            second = candidate
-            secondIndex++
-        } else {
-            break
-        }
-    }
-    if (secondIndex >= words.size) {
-        return BioLines(listOf(AnnotatedString(first), AnnotatedString(second)), more = false)
+    val remaining = words.drop(secondStart).joinToString(" ")
+    if (measurer.measure(AnnotatedString(remaining), style, maxLines = 1).size.width <= available) {
+        return BioLines(listOf(AnnotatedString(first), AnnotatedString(remaining)), more = false)
     }
 
     val more =

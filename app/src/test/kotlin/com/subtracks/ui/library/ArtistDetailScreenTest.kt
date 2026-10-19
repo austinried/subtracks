@@ -44,6 +44,8 @@ class ArtistDetailScreenTest {
         albumsLoaded: Boolean = true,
         bio: String? = null,
         bioLoading: Boolean = false,
+        bioUnavailable: Boolean = false,
+        bioPending: Boolean = false,
     ) {
         composeRule.setContent {
             var expanded by remember { mutableStateOf(false) }
@@ -55,6 +57,8 @@ class ArtistDetailScreenTest {
                     albumsLoaded = albumsLoaded,
                     bio = bio,
                     bioLoading = bioLoading,
+                    bioUnavailable = bioUnavailable,
+                    bioPending = bioPending,
                     bioExpanded = expanded,
                     art = null,
                     coverArt = { _, _ -> null },
@@ -152,6 +156,32 @@ class ArtistDetailScreenTest {
     }
 
     @Test
+    fun theBioAreaWaitsForTheStoredValueBeforeChoosingAText() {
+        render(
+            artist = Artist(sourceId = 1, id = "ar-1", name = "Radiohead", albumCount = 1, starred = null),
+            artistName = "Radiohead",
+            bioLoading = true,
+            bioPending = true,
+        )
+
+        composeRule.onNodeWithText("Loading artist bio…").assertDoesNotExist()
+        composeRule.onNodeWithText("No artist bio available.").assertDoesNotExist()
+        composeRule.onNodeWithText("Artist bio unavailable.").assertDoesNotExist()
+    }
+
+    @Test
+    fun aFailedRefreshIsNotMistakenForAnArtistWithoutABio() {
+        render(
+            artist = Artist(sourceId = 1, id = "ar-1", name = "Radiohead", albumCount = 1, starred = null),
+            artistName = "Radiohead",
+            bioUnavailable = true,
+        )
+
+        composeRule.onNodeWithText("Artist bio unavailable.").assertExists()
+        composeRule.onNodeWithText("No artist bio available.").assertDoesNotExist()
+    }
+
+    @Test
     fun aMissingBioShowsTheEmptyStateAfterTheRefresh() {
         render(
             artist = Artist(sourceId = 1, id = "ar-1", name = "Radiohead", albumCount = 1, starred = null),
@@ -215,6 +245,33 @@ class ArtistDetailScreenTest {
         assertTrue(
             "expected the second line to continue with $next, was ${lines.lines[1].text}",
             lines.lines[1].text.startsWith(next),
+        )
+    }
+
+    @Test
+    fun anOversizedFirstWordIsStillShown() {
+        var result: BioLines? = null
+        composeRule.setContent {
+            val measurer = rememberTextMeasurer()
+            result =
+                splitBioCollapsed(
+                    measurer,
+                    "Supercalifragilisticexpialidocious and the rest",
+                    TextStyle(fontSize = 14.sp),
+                    20,
+                    0,
+                    "More",
+                )
+        }
+        composeRule.waitForIdle()
+
+        val lines = requireNotNull(result)
+        assertTrue(lines.more)
+        assertTrue(
+            lines.lines
+                .first()
+                .text
+                .isNotBlank(),
         )
     }
 

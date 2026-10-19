@@ -365,22 +365,20 @@ class LibraryRepository(
     suspend fun refreshArtistBio(
         sourceId: Long,
         artistId: String,
-    ): Result<Unit> {
-        val biography =
-            try {
-                sourceRepository.artistBiography(sourceId, artistId)?.trim()?.takeIf { it.isNotEmpty() }
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (failure: Exception) {
-                Log.w("artist", "failed to refresh bio for $artistId", failure)
-                return Result.failure(failure)
+    ): Result<Unit> =
+        try {
+            val biography = normalizeBiography(sourceRepository.artistBiography(sourceId, artistId))
+            val current = db.libraryDao().artistBioOnce(sourceId, artistId)
+            if (current == null || current.biography != biography) {
+                db.libraryDao().upsertArtistBio(ArtistBio(sourceId, artistId, biography))
             }
-        val current = db.libraryDao().artistBioOnce(sourceId, artistId)
-        if (current == null || current.biography != biography) {
-            db.libraryDao().upsertArtistBio(ArtistBio(sourceId, artistId, biography))
+            Result.success(Unit)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Log.w("artist", "failed to refresh bio for $artistId", failure)
+            Result.failure(failure)
         }
-        return Result.success(Unit)
-    }
 
     fun song(
         sourceId: Long,
@@ -554,5 +552,7 @@ class LibraryRepository(
 const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
 
 const val SEARCH_RESULT_LIMIT = 50
+
+internal fun normalizeBiography(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
 
 fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS
