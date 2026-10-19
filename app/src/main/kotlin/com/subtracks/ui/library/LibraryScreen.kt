@@ -445,13 +445,6 @@ fun LibraryScreen(
         }
     }
 
-    fun dismissSearch() {
-        if (searchActive) {
-            searchActive = false
-            onSearchChange("")
-        }
-    }
-
     val density = LocalDensity.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || listQuery.downloaded || search.isNotEmpty()
@@ -502,10 +495,7 @@ fun LibraryScreen(
                             albums.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            {
-                                dismissSearch()
-                                onAlbumClick(it)
-                            },
+                            onAlbumClick,
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -522,10 +512,7 @@ fun LibraryScreen(
                             artists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            {
-                                dismissSearch()
-                                onArtistClick(it)
-                            },
+                            onArtistClick,
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -542,10 +529,7 @@ fun LibraryScreen(
                             playlists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            {
-                                dismissSearch()
-                                onPlaylistClick(it)
-                            },
+                            onPlaylistClick,
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,

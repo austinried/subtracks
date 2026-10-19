@@ -46,6 +46,29 @@ class ArtistChooserSheetTest {
     }
 
     @Test
+    fun opensTheChosenArtistBeforeTheSheetFinishesClosing() {
+        var opened: ArtistRef? = null
+        composeRule.setContent {
+            SubtracksTheme {
+                ArtistChooserSheet(
+                    artists = listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+                    onArtistClick = { opened = it },
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithText("B").performClick()
+
+        assertEquals(ArtistRef("ar2", "B"), opened)
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+    }
+
+    @Test
     fun longListsScrollToTheLastArtist() {
         var opened: ArtistRef? = null
         val artists = (1..20).map { ArtistRef("ar$it", "Artist $it") }

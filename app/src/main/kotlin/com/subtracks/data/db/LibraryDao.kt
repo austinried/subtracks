@@ -163,6 +163,40 @@ internal const val ARTISTS_FILTER =
         "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
         "OR instr(lower(sortName), lower(:search)) > 0))) "
 
+internal const val ARTIST_ALBUM_CREDIT_ART =
+    "SELECT albums.coverArt FROM (" +
+        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM albums INDEXED BY index_albums_sourceId_artistId " +
+        "WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id " +
+        "UNION " +
+        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM album_artists " +
+        "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id" +
+        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
+
+internal const val ARTIST_TRACK_CREDIT_ART =
+    "SELECT albums.coverArt FROM (" +
+        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = artists.sourceId AND songs.artistId = artists.id " +
+        "UNION " +
+        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM song_artists " +
+        "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_artists.sourceId = artists.sourceId AND song_artists.artistId = artists.id" +
+        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
+
+internal const val ARTIST_COVER_ART =
+    "COALESCE(artists.coverArt, CASE " +
+        "WHEN EXISTS (SELECT 1 FROM albums WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id) " +
+        "OR EXISTS (SELECT 1 FROM album_artists " +
+        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id) " +
+        "THEN ($ARTIST_ALBUM_CREDIT_ART) ELSE ($ARTIST_TRACK_CREDIT_ART) END)"
+
+internal const val ARTIST_COLUMNS =
+    "artists.sourceId, artists.id, artists.name, artists.albumCount, artists.starred, " +
+        "$ARTIST_COVER_ART AS coverArt, artists.playCount, artists.played, artists.songCount, " +
+        "artists.sortName, artists.credited"
+
 // With the Downloaded filter on, count the albums that actually have a download so the number under
 // an artist matches the albums its detail screen lists.
 internal const val ARTISTS_SELECT =
@@ -170,8 +204,8 @@ internal const val ARTISTS_SELECT =
         "CASE WHEN :downloadedFilter = 1 THEN (" +
         "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt, artists.playCount, artists.played, artists.songCount, artists.sortName, " +
-        "artists.credited "
+        "artists.starred, $ARTIST_COVER_ART AS coverArt, artists.playCount, artists.played, artists.songCount, " +
+        "artists.sortName, artists.credited "
 
 internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
@@ -377,7 +411,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
+        "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
             "ORDER BY played DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun recentlyPlayedArtists(
@@ -395,7 +429,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
+        "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
             "ORDER BY playCount DESC, sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun mostPlayedArtists(
@@ -444,7 +478,7 @@ interface LibraryDao {
     ): Flow<List<Album>>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER AND $ARTIST_CREDITED " +
+        "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER AND $ARTIST_CREDITED " +
             "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
     )
     fun searchArtists(
@@ -856,13 +890,13 @@ interface LibraryDao {
     fun homeRecentlyAddedAlbums(sourceId: Long): PagingSource<Int, Album>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
+        "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND played IS NOT NULL AND $ARTIST_CREDITED " +
             "ORDER BY played DESC, sortName COLLATE NOCASE, id",
     )
     fun homeRecentlyPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
 
     @Query(
-        "SELECT * FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
+        "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND playCount > 0 AND $ARTIST_CREDITED " +
             "ORDER BY playCount DESC, sortName COLLATE NOCASE, id",
     )
     fun homeMostPlayedArtists(sourceId: Long): PagingSource<Int, Artist>
@@ -921,7 +955,7 @@ interface LibraryDao {
     fun downloadedAlbums(sourceId: Long): PagingSource<Int, Album>
 
     @Query(
-        "SELECT artists.* FROM artists " +
+        "SELECT $ARTIST_COLUMNS FROM artists " +
             "JOIN (SELECT id, MAX(downloadedAt) AS lastDownloadedAt FROM ($DOWNLOADED_ARTIST_ROWS) " +
             "WHERE status = 'Completed' GROUP BY id) dl ON dl.id = artists.id " +
             "WHERE artists.sourceId = :sourceId AND $ARTIST_CREDITED " +
@@ -1020,13 +1054,13 @@ interface LibraryDao {
         albumId: String,
     ): Album?
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND id = :artistId")
+    @Query("SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND id = :artistId")
     suspend fun artistOnce(
         sourceId: Long,
         artistId: String,
     ): Artist?
 
-    @Query("SELECT * FROM artists WHERE sourceId = :sourceId AND id = :artistId")
+    @Query("SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND id = :artistId")
     fun artist(
         sourceId: Long,
         artistId: String,

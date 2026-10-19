@@ -1,10 +1,15 @@
 package com.subtracks.ui.search
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.subtracks.data.model.Album
@@ -82,6 +87,30 @@ class SearchScreenTest {
         }
 
         composeRule.onNodeWithText("No results", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun typingResumesAtTheEndOfTheQueryAfterTheScreenIsRecreated() {
+        var query by mutableStateOf("road")
+        var show by mutableStateOf(true)
+        composeRule.setContent {
+            if (show) {
+                SubtracksTheme {
+                    SearchScreen(query = query, onQueryChange = { query = it }, results = SearchResults())
+                }
+            }
+        }
+
+        composeRule.onNode(hasSetTextAction()).performTextInput("s")
+        assertEquals("roads", query)
+
+        composeRule.runOnIdle { show = false }
+        composeRule.runOnIdle { show = true }
+        composeRule.onNode(hasSetTextAction()).performTextInput("!")
+        assertEquals("roads!", query)
+
+        composeRule.runOnIdle { show = false }
+        composeRule.waitForIdle()
     }
 
     @Test

@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -542,6 +543,74 @@ class LibraryDaoTest {
                     .first()
                     .map { it.id }
                     .sorted(),
+            )
+        }
+
+    @Test
+    fun artistArtFallsBackToTheFirstAlbumCreditThenTheFirstTrackCredit() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-own", "Own", albumCount = 1).copy(coverArt = "own-art"),
+                    artist(sourceId, "ar-album", "Album", albumCount = 2),
+                    artist(sourceId, "ar-track", "Track", albumCount = 1),
+                    artist(sourceId, "ar-null-art", "Null Art", albumCount = 2),
+                    artist(sourceId, "ar-none", "None", albumCount = 0),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "own", "Own", year = 2020, starred = null).copy(coverArt = "own-album"),
+                    album(sourceId, "album-new", "New", year = 2020, starred = null)
+                        .copy(artistId = "ar-album", coverArt = "new-art"),
+                    album(sourceId, "album-old", "Old", year = 2000, starred = null)
+                        .copy(artistId = "ar-album", coverArt = "old-art"),
+                    album(sourceId, "track", "Track", year = 2021, starred = null)
+                        .copy(artistId = "ar-other", coverArt = "track-art"),
+                    album(sourceId, "null-new", "Null New", year = 2022, starred = null)
+                        .copy(artistId = "ar-null-art", coverArt = null),
+                    album(sourceId, "null-old", "Null Old", year = 1990, starred = null)
+                        .copy(artistId = "ar-null-art", coverArt = "later-art"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s-own", "Own", starred = null).copy(albumId = "own", artistId = "ar-own"),
+                    song(sourceId, "s-album", "Album", starred = null).copy(albumId = "album-new", artistId = "ar-album"),
+                    song(sourceId, "s-track", "Track", starred = null).copy(albumId = "track", artistId = "ar-track"),
+                    song(sourceId, "s-null-new", "Null New", starred = null)
+                        .copy(albumId = "null-new", artistId = "ar-null-art"),
+                    song(sourceId, "s-null-old", "Null Old", starred = null)
+                        .copy(albumId = "null-old", artistId = "ar-null-art"),
+                ),
+            )
+
+            val artists = dao.artistsByName(sourceId, 0, "").page().associateBy { it.id }
+
+            assertEquals("own-art", artists.getValue("ar-own").coverArt)
+            assertEquals("new-art", artists.getValue("ar-album").coverArt)
+            assertEquals("track-art", artists.getValue("ar-track").coverArt)
+            assertNull(artists.getValue("ar-null-art").coverArt)
+            assertNull(artists.getValue("ar-none").coverArt)
+            assertEquals("new-art", dao.artistOnce(sourceId, "ar-album")!!.coverArt)
+        }
+
+    @Test
+    fun artistArtFallbackFindsCreditsThroughArtistIndexes() =
+        runTest {
+            val plan = plan("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME LIMIT 20")
+
+            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            )
+            assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
             )
         }
 

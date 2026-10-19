@@ -68,10 +68,8 @@ fun ArtistChooserSheet(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier =
                         Modifier.clickable {
-                            scope.launch {
-                                sheetState.hide()
-                                onArtistClick(artist)
-                            }
+                            onArtistClick(artist)
+                            scope.launch { sheetState.hide() }
                         },
                 )
             }

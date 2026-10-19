@@ -90,7 +90,7 @@ internal fun artistsDefaultQuery(
     descending: Boolean,
 ): RoomRawQuery {
     val order = artistOrder(sort, descending)
-    return RoomRawQuery("SELECT * $ARTISTS_FILTER_BASE ORDER BY $order") { stmt ->
+    return RoomRawQuery("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER_BASE ORDER BY $order") { stmt ->
         stmt.bindLong(1, sourceId)
         stmt.bindInt(2, starredFilter)
         stmt.bindInt(3, starredFilter)

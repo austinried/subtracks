@@ -233,6 +233,46 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun openingAResultKeepsTheListSearchQuery() {
+        val search = mutableStateOf("xyz")
+        val show = mutableStateOf(true)
+        var opened: Album? = null
+        composeRule.setContent {
+            if (show.value) {
+                SubtracksTheme {
+                    LibraryScreen(
+                        selectedTab = LibraryTab.Albums,
+                        onTabSelected = {},
+                        albums = remember { flowOf(PagingData.from(albums())) },
+                        artists = remember { flowOf(PagingData.empty<Artist>()) },
+                        playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                        coverArt = { _, _ -> null },
+                        onAlbumClick = { opened = it },
+                        onArtistClick = {},
+                        onPlaylistClick = {},
+                        onSync = {},
+                        onOpenSettings = {},
+                        search = search.value,
+                        onSearchChange = { search.value = it },
+                    )
+                }
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ALBUM_COVER_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithTag(ALBUM_COVER_TAG)[0].performClick()
+        composeRule.waitForIdle()
+
+        assertEquals("al-1", opened?.id)
+        assertEquals("xyz", search.value)
+
+        composeRule.runOnIdle { show.value = false }
+        composeRule.waitForIdle()
+    }
+
+    @Test
     fun theTabRowReflowsInOneDirectionDuringASwitch() {
         val pagerState = PagerState(currentPage = 1, pageCount = { LibraryTab.entries.size })
         composeRule.setContent {
