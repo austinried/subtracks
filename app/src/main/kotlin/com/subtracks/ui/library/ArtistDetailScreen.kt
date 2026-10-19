@@ -450,7 +450,7 @@ fun ArtistDetailScreen(
                     }
                     if (albums.appearances.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ArtistSectionHeader(stringResource(R.string.artist_section_appearances), Icons.Rounded.Mic)
+                            ArtistSectionHeader(stringResource(R.string.artist_section_appearances), Icons.Rounded.Mic, topGap = 16.dp)
                         }
                         itemsIndexed(albums.appearances, key = { _, album -> album.id }) { index, album ->
                             ArtistAlbumCard(
@@ -654,10 +654,14 @@ internal fun splitBioCollapsed(
 private fun ArtistSectionHeader(
     text: String,
     icon: ImageVector,
+    topGap: Dp = 0.dp,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = topGap, bottom = 4.dp),
     ) {
         Icon(
             imageVector = icon,
