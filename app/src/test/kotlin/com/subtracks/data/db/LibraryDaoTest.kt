@@ -677,6 +677,32 @@ class LibraryDaoTest {
 
             dao.upsertSongs(listOf(song(sourceId, "s-1", "Song", starred = null)))
             awaitUntil("artist paging observes song writes") { songInvalidated.get() }
+
+            val albumCreditInvalidated = AtomicBoolean(false)
+            val albumCreditPaging = dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+            albumCreditPaging.registerInvalidatedCallback { albumCreditInvalidated.set(true) }
+            albumCreditPaging.page()
+
+            db.useWriterConnection { connection ->
+                connection.usePrepared(
+                    "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
+                        "VALUES ($sourceId, 'al-1', 0, 'ar-1', 'Artist')",
+                ) { it.step() }
+            }
+            awaitUntil("artist paging observes album artist writes") { albumCreditInvalidated.get() }
+
+            val songCreditInvalidated = AtomicBoolean(false)
+            val songCreditPaging = dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+            songCreditPaging.registerInvalidatedCallback { songCreditInvalidated.set(true) }
+            songCreditPaging.page()
+
+            db.useWriterConnection { connection ->
+                connection.usePrepared(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES ($sourceId, 's-1', 0, 'ar-1', 'Artist')",
+                ) { it.step() }
+            }
+            awaitUntil("artist paging observes song artist writes") { songCreditInvalidated.get() }
         }
 
     @Test

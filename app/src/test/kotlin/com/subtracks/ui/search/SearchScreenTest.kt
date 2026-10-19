@@ -6,7 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -91,7 +94,7 @@ class SearchScreenTest {
     }
 
     @Test
-    fun typingResumesAtTheEndOfTheQueryAfterTheScreenIsRecreated() {
+    fun typingKeepsTheCursorAtTheEndAfterTheFieldIsRecreated() {
         var query by mutableStateOf("road")
         var show by mutableStateOf(true)
         composeRule.setContent {
@@ -118,6 +121,21 @@ class SearchScreenTest {
         composeRule.activity
             .getSystemService(InputMethodManager::class.java)
             .hideSoftInputFromWindow(composeRule.activity.window.decorView.windowToken, 0)
+    }
+
+    @Test
+    fun restoringTheScreenDoesNotStealFocus() {
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            SubtracksTheme {
+                SearchScreen(query = "road", onQueryChange = {}, results = SearchResults())
+            }
+        }
+
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
     }
 
     @Test

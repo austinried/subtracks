@@ -46,7 +46,7 @@ class ArtistChooserSheetTest {
     }
 
     @Test
-    fun opensTheChosenArtistBeforeTheSheetFinishesClosing() {
+    fun opensTheChosenArtistImmediately() {
         var opened: ArtistRef? = null
         composeRule.setContent {
             SubtracksTheme {

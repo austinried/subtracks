@@ -57,7 +57,7 @@ fun SearchField(
         }
     }
     var focusRequested by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(focusRequested) {
+    LaunchedEffect(Unit) {
         if (!focusRequested) {
             focusRequester.requestFocus()
             focusRequested = true

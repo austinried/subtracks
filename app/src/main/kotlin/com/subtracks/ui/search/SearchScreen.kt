@@ -124,7 +124,10 @@ fun SearchRoute(
             focusManager.clearFocus()
             viewModel.play(it)
         },
-        onLongClick = { contextMenuHost?.show(it, actions) },
+        onLongClick = {
+            focusManager.clearFocus()
+            contextMenuHost?.show(it, actions)
+        },
     )
 }
 

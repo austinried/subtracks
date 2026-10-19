@@ -273,6 +273,7 @@ fun LibraryRoute(
     val downloadsState = listTab?.let { viewModel.downloads(it).collectAsStateWithLifecycle() }
     val downloads = downloadsState?.value ?: emptyMap()
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
     var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
     DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
     val itemActions =
@@ -312,7 +313,10 @@ fun LibraryRoute(
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
         onOpenSearch = onOpenSearch,
-        onItemLongClick = { contextMenuHost?.show(it, itemActions) },
+        onItemLongClick = {
+            focusManager.clearFocus()
+            contextMenuHost?.show(it, itemActions)
+        },
         listQuery = displayQuery,
         resetKeys = resetKeys,
         offline = offline,
