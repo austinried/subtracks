@@ -387,10 +387,8 @@ class LibraryRepository(
             }
         return combine(albums, db.libraryDao().albumCreditAlbumIds(sourceId, artistId)) { list, creditIds ->
             val credits = creditIds.toHashSet()
-            ArtistAlbums(
-                albumCredits = list.filter { it.id in credits },
-                appearances = list.filterNot { it.id in credits },
-            )
+            val (albumCredits, appearances) = list.partition { it.id in credits }
+            ArtistAlbums(albumCredits = albumCredits, appearances = appearances)
         }
     }
 

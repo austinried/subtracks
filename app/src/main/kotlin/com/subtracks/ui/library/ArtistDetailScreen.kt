@@ -252,13 +252,8 @@ fun ArtistDetailScreen(
         stringResource(
             if (albums.albumCredits.isNotEmpty()) R.string.artist_type_album_artist else R.string.artist_type_artist,
         )
-    val albumCountText =
-        if (albumsLoaded) {
-            pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
-        } else {
-            ""
-        }
-    val metaText = if (albumsLoaded) "$artistType · $albumCountText" else ""
+    val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
+    val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =

@@ -12,7 +12,9 @@ import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.StarredFilter
@@ -229,6 +231,37 @@ class LibraryRepositoryTest {
             assertEquals(listOf("al-0001"), albums.albumCredits.map { it.id })
             assertEquals(listOf("al-0002"), albums.appearances.map { it.id })
             assertEquals(2, albums.count)
+        }
+
+    @Test
+    fun downloadedArtistAlbumsKeepPerCreditVisibility() =
+        runBlocking {
+            val sourceId = 1L
+            db.sourcesDao().upsertSource(
+                Source(id = sourceId, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+            )
+            db.libraryDao().upsertAlbums(
+                listOf(
+                    seedAlbum(sourceId, 1),
+                    seedAlbum(sourceId, 2).copy(artistId = "ar2"),
+                ),
+            )
+            db.libraryDao().upsertSongs(
+                listOf(
+                    seedSong(sourceId).copy(albumId = "al-0001"),
+                    seedSong(sourceId).copy(id = "s2", albumId = "al-0002"),
+                ),
+            )
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            val before = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
+            assertEquals(listOf("al-0001"), before.albumCredits.map { it.id })
+            assertEquals(emptyList<String>(), before.appearances.map { it.id })
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
+            val after = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
+            assertEquals(listOf("al-0001"), after.albumCredits.map { it.id })
+            assertEquals(listOf("al-0002"), after.appearances.map { it.id })
         }
 
     private suspend fun awaitRefreshes(

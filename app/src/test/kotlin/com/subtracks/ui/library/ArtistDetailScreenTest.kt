@@ -104,9 +104,8 @@ class ArtistDetailScreenTest {
             albumsLoaded = false,
         )
 
-        composeRule.onNodeWithText("Artist").assertDoesNotExist()
-        composeRule.onNodeWithText("Album artist").assertDoesNotExist()
-        composeRule.onNodeWithText("0 albums").assertDoesNotExist()
+        composeRule.onNodeWithText("Artist · 0 albums").assertDoesNotExist()
+        composeRule.onNodeWithText("Album artist · 0 albums").assertDoesNotExist()
     }
 
     private fun album(

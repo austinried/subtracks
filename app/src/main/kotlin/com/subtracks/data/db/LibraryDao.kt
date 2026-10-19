@@ -118,6 +118,10 @@ internal const val ALBUMS_FOR_ARTIST =
         "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
         "ORDER BY year DESC, sortName COLLATE NOCASE, id"
 
+internal const val ALBUM_CREDIT_ALBUM_IDS =
+    "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
+        "WHERE artistId = :artistId AND albumCredit = 1"
+
 // Download visibility follows the credit path: an album credit includes the album when any song is
 // downloaded, while a track credit includes it only when the credited track is downloaded.
 private const val DOWNLOADED_ARTIST_ALBUMS =
@@ -1066,10 +1070,7 @@ interface LibraryDao {
         artistId: String,
     ): Flow<List<Album>>
 
-    @Query(
-        "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
-            "WHERE artistId = :artistId AND albumCredit = 1",
-    )
+    @Query(ALBUM_CREDIT_ALBUM_IDS)
     fun albumCreditAlbumIds(
         sourceId: Long,
         artistId: String,

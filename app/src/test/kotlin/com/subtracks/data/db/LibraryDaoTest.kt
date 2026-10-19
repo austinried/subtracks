@@ -548,16 +548,17 @@ class LibraryDaoTest {
     @Test
     fun albumCreditIdsFindCreditsThroughArtistIndexes() =
         runTest {
-            val plan =
-                plan(
-                    "SELECT DISTINCT albumId FROM ($CREDITED_ALBUM_ROWS) " +
-                        "WHERE artistId = :artistId AND albumCredit = 1",
-                )
+            val plan = plan(ALBUM_CREDIT_ALBUM_IDS)
 
             assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
             assertTrue(
                 plan,
                 plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            )
+            assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
+            assertTrue(
+                plan,
+                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
             )
             assertFalse(plan, plan.contains("SCAN albums"))
             assertFalse(plan, plan.contains("SCAN songs"))

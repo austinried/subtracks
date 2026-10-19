@@ -1641,6 +1641,71 @@ class SyncServiceTest {
         }
 
     @Test
+    fun albumCreditIdsFollowPluralCredits() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1", "A"), artist("a2", "B")),
+                    albums =
+                        listOf(
+                            album("al1").copy(artistId = "a1", artists = listOf(ArtistRef("a1", "A"))),
+                            album("al2").copy(artistId = "a2", artists = listOf(ArtistRef("a2", "B"))),
+                            album("al3").copy(
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(
+                                albumId = "al1",
+                                artistId = "a1",
+                                artists = listOf(ArtistRef("a1", "A")),
+                            ),
+                            song("s2").copy(
+                                albumId = "al2",
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a2", "B"), ArtistRef("a1", "A")),
+                            ),
+                            song("s3").copy(
+                                albumId = "al3",
+                                artistId = "a2",
+                                artists = listOf(ArtistRef("a1", "A"), ArtistRef("a2", "B")),
+                            ),
+                        ),
+                )
+
+            SyncService(db, source).sync()
+
+            assertEquals(
+                listOf("al1", "al3"),
+                db
+                    .libraryDao()
+                    .albumCreditAlbumIds(1, "a1")
+                    .first()
+                    .sorted(),
+            )
+            assertEquals(
+                listOf("al2", "al3"),
+                db
+                    .libraryDao()
+                    .albumCreditAlbumIds(1, "a2")
+                    .first()
+                    .sorted(),
+            )
+            assertEquals(
+                listOf("al1", "al2", "al3"),
+                db
+                    .libraryDao()
+                    .albumsForArtist(1, "a1")
+                    .first()
+                    .map { it.id }
+                    .sorted(),
+            )
+        }
+
+    @Test
     fun everyArtistConsumerAgreesOnTheCreditedSet() =
         runTest {
             insertSource()
