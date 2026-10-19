@@ -5,6 +5,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -20,6 +21,7 @@ import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.subtracks.R
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Playlist
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -270,6 +273,42 @@ class LibraryScreenTest {
 
         composeRule.runOnIdle { show.value = false }
         composeRule.waitForIdle()
+    }
+
+    @Test
+    fun backClosesTheListSearchInsteadOfLeavingTheApp() {
+        val search = mutableStateOf("xyz")
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Albums,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.from(albums())) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    search = search.value,
+                    onSearchChange = { search.value = it },
+                )
+            }
+        }
+
+        val closeLabel = composeRule.activity.getString(R.string.close_search)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithContentDescription(closeLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.runOnIdle { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        assertEquals("back should clear the list search", "", search.value)
+        composeRule.onNodeWithContentDescription(closeLabel).assertDoesNotExist()
+        assertFalse("back should not leave the app", composeRule.activity.isFinishing)
     }
 
     @Test

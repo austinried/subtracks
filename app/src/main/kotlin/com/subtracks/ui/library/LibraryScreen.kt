@@ -1,5 +1,6 @@
 package com.subtracks.ui.library
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -429,9 +430,14 @@ fun LibraryScreen(
     var searchActive by rememberSaveable { mutableStateOf(false) }
     var topRequest by remember { mutableIntStateOf(0) }
     val searchFocus = remember { FocusRequester() }
+    val closeSearch = {
+        searchActive = false
+        onSearchChange("")
+    }
 
     // Search mode is left open so the typed query survives; MainNavigation dismisses the keyboard.
     DismissOnRequest(dismissals) { showOptions = false }
+    BackHandler(enabled = searchActive, onBack = closeSearch)
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { page ->
@@ -594,10 +600,7 @@ fun LibraryScreen(
             SearchField(
                 value = search,
                 onValueChange = onSearchChange,
-                onClose = {
-                    searchActive = false
-                    onSearchChange("")
-                },
+                onClose = closeSearch,
                 focusRequester = searchFocus,
                 modifier =
                     Modifier
