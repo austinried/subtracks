@@ -367,8 +367,11 @@ class LibraryRepository(
         artistId: String,
     ): Result<Unit> =
         try {
-            val biography = normalizeBiography(sourceRepository.artistBiography(sourceId, artistId))
+            val fetched = normalizeBiography(sourceRepository.artistBiography(sourceId, artistId))
             val current = db.libraryDao().artistBioOnce(sourceId, artistId)
+            // An empty response can mean the metadata provider is temporarily down, so keep the
+            // cached biography instead of erasing it.
+            val biography = fetched ?: current?.biography
             if (current == null || current.biography != biography) {
                 db.libraryDao().upsertArtistBio(ArtistBio(sourceId, artistId, biography))
             }

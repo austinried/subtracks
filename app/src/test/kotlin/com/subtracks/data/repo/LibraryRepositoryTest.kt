@@ -312,6 +312,24 @@ class LibraryRepositoryTest {
         }
 
     @Test
+    fun anEmptyRefreshKeepsTheStoredBio() =
+        runBlocking {
+            withSource { server ->
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                db.libraryDao().upsertArtistBio(ArtistBio(sourceId, "ar1", "Kept"))
+                server.enqueue(
+                    MockResponse().setBody(
+                        "<subsonic-response status=\"ok\"><artistInfo2/></subsonic-response>",
+                    ),
+                )
+
+                assertTrue(repository.refreshArtistBio(sourceId, "ar1").isSuccess)
+
+                assertEquals("Kept", repository.artistBio(sourceId, "ar1").first()?.biography)
+            }
+        }
+
+    @Test
     fun aFailedRefreshKeepsTheStoredBio() =
         runBlocking {
             withSource { server ->
