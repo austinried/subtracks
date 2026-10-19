@@ -35,8 +35,8 @@
     <string name="resources_filter_artist">Artist</string>
     <string name="artist_type_artist">Artist</string>
     <string name="artist_type_album_artist">Album artist</string>
-    <string name="artist_section_albums">Albums (%1$d)</string>
-    <string name="artist_section_appearances">Appears on (%1$d)</string>
+    <string name="artist_section_albums">Albums</string>
+    <string name="artist_section_appearances">Appears on</string>
     <string name="artist_meta">%1$s · %2$s</string>
     <string name="resources_filter_genre">Genre</string>
     <string name="resources_filter_starred">Starred</string>

@@ -70,6 +70,7 @@ class ArtistDetailScreenTest {
         )
 
         composeRule.onNodeWithText("Album artist · 1 album").assertExists()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Albums"))
         composeRule.onNodeWithContentDescription("More options").assertExists()
     }
 
@@ -87,12 +88,12 @@ class ArtistDetailScreenTest {
 
         composeRule.onNodeWithText("Album artist · 2 albums").assertExists()
 
-        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Albums (1)"))
-        composeRule.onNodeWithText("Albums (1)").assertExists()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Albums"))
+        composeRule.onNodeWithText("Albums").assertExists()
         composeRule.onNodeWithText("Kid A").assertExists()
 
-        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Appears on (1)"))
-        composeRule.onNodeWithText("Appears on (1)").assertExists()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Appears on"))
+        composeRule.onNodeWithText("Appears on").assertExists()
         composeRule.onNodeWithText("Guest Album").assertExists()
     }
 

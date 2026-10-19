@@ -254,6 +254,8 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
+    val actionsInHeader = albums.albumCredits.isNotEmpty() || albums.appearances.isNotEmpty()
+    val actions: @Composable () -> Unit = { ArtistActions(artist, starred, onToggleStar, onMore) }
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -386,7 +388,7 @@ fun ArtistDetailScreen(
                                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = TITLE_INSET),
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
@@ -395,36 +397,14 @@ fun ArtistDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    if (artist != null) {
-                                        IconButton(
-                                            onClick = { onToggleStar?.invoke() },
-                                            enabled = onToggleStar != null,
-                                        ) {
-                                            Icon(
-                                                imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                                                contentDescription =
-                                                    stringResource(
-                                                        if (starred) R.string.actions_unstar else R.string.actions_star,
-                                                    ),
-                                                tint =
-                                                    if (starred) {
-                                                        MaterialTheme.colorScheme.primary
-                                                    } else {
-                                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                                    },
-                                            )
-                                        }
-                                        IconButton(onClick = onMore) {
-                                            Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
-                                        }
-                                    }
+                                    if (!actionsInHeader) actions()
                                 }
                             }
                         }
                     }
                     if (albums.albumCredits.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ArtistSectionHeader(stringResource(R.string.artist_section_albums, albums.albumCredits.size))
+                            ArtistSectionHeader(stringResource(R.string.artist_section_albums), trailing = actions)
                         }
                         itemsIndexed(albums.albumCredits, key = { _, album -> album.id }) { index, album ->
                             ArtistAlbumCard(
@@ -442,7 +422,10 @@ fun ArtistDetailScreen(
                     }
                     if (albums.appearances.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ArtistSectionHeader(stringResource(R.string.artist_section_appearances, albums.appearances.size))
+                            ArtistSectionHeader(
+                                stringResource(R.string.artist_section_appearances),
+                                trailing = if (albums.albumCredits.isEmpty()) actions else null,
+                            )
                         }
                         itemsIndexed(albums.appearances, key = { _, album -> album.id }) { index, album ->
                             ArtistAlbumCard(
@@ -501,13 +484,53 @@ fun ArtistDetailScreen(
 }
 
 @Composable
-private fun ArtistSectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
-    )
+private fun ArtistSectionHeader(
+    text: String,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.invoke()
+    }
+}
+
+@Composable
+private fun ArtistActions(
+    artist: Artist?,
+    starred: Boolean,
+    onToggleStar: (() -> Unit)?,
+    onMore: () -> Unit,
+) {
+    if (artist == null) return
+    IconButton(
+        onClick = { onToggleStar?.invoke() },
+        enabled = onToggleStar != null,
+    ) {
+        Icon(
+            imageVector = if (starred) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+            contentDescription =
+                stringResource(
+                    if (starred) R.string.actions_unstar else R.string.actions_star,
+                ),
+            tint =
+                if (starred) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+        )
+    }
+    IconButton(onClick = onMore) {
+        Icon(Icons.Rounded.MoreHoriz, contentDescription = stringResource(R.string.more_options))
+    }
 }
 
 @Composable
