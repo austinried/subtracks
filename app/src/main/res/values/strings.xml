@@ -37,6 +37,7 @@
     <string name="artist_type_album_artist">Album artist</string>
     <string name="artist_section_albums">Albums</string>
     <string name="artist_section_appearances">Appears on</string>
+    <string name="artist_bio_empty">No artist bio available.</string>
     <string name="artist_meta">%1$s · %2$s</string>
     <string name="resources_filter_genre">Genre</string>
     <string name="resources_filter_starred">Starred</string>

@@ -133,7 +133,6 @@ private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 private val BIO_ACTION_RESERVE = 104.dp
 private val BIO_ACTION_HEIGHT = 48.dp
 private val BIO_TOP_GAP = 8.dp
-private const val ARTIST_BIO_EMPTY = "No artist bio available."
 
 internal fun estimateScrollPx(
     index: Int,
@@ -267,11 +266,12 @@ fun ArtistDetailScreen(
         )
     val albumCountText = pluralStringResource(R.plurals.resources_album_count, albumCount.toInt(), albumCount)
     val metaText = if (albumsLoaded) stringResource(R.string.artist_meta, artistType, albumCountText) else ""
-    // No server biography is mirrored yet, so the page ships with the empty state. The collapsed
-    // and expanded paths below are ready for it: collapsed keeps two lines and ends with a bold
-    // More, expanded shows the full flow and leaves extra room before the first section.
+    // No server biography is mirrored yet, so the page ships with the empty state. When the bio is
+    // wired, set bioIsEmpty and bioText from it and use bioCollapsed for the two-line preview; the
+    // collapsed line ends with a bold More that should expand the block.
     val bioCollapsed = true
-    val bioText = ARTIST_BIO_EMPTY
+    val bioIsEmpty = true
+    val bioText = stringResource(R.string.artist_bio_empty)
     var titleHeightPx by remember { mutableFloatStateOf(0f) }
     val titleHeight = if (titleHeightPx > 0f) with(density) { titleHeightPx.toDp() } else lineHeight
     val titleMaxLines =
@@ -412,7 +412,7 @@ fun ArtistDetailScreen(
                                 ArtistBio(
                                     text = bioText,
                                     color =
-                                        if (bioText == ARTIST_BIO_EMPTY) {
+                                        if (bioIsEmpty) {
                                             MaterialTheme.colorScheme.outline
                                         } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -424,7 +424,7 @@ fun ArtistDetailScreen(
                                     onMore = onMore,
                                     modifier =
                                         Modifier.padding(
-                                            bottom = if (!bioCollapsed && bioText != ARTIST_BIO_EMPTY) 8.dp else 0.dp,
+                                            bottom = if (!bioCollapsed && !bioIsEmpty) 8.dp else 0.dp,
                                         ),
                                 )
                             }
