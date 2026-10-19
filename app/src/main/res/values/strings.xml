@@ -83,7 +83,7 @@
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
     <string name="settings_music_options_scrobble_title">Scrobble to server</string>
     <string name="settings_replay_gain_mode_album">Album gain</string>
-    <string name="settings_replay_gain_mode_dynamic">Dynamic</string>
+    <string name="settings_replay_gain_mode_auto">Auto</string>
     <string name="settings_replay_gain_mode_off">Off</string>
     <string name="settings_replay_gain_mode_track">Track gain</string>
     <string name="settings_replay_gain_preamp_decrease">Lower preamp</string>

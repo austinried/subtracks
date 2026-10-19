@@ -37,7 +37,7 @@ internal fun replayGainLinearGain(
     // headroom without a peak, so a peakless track is only ever attenuated.
     val trackPeak = gain.trackPeak?.takeIf { it.isFinite() && it > 0f }
     val albumPeak = gain.albumPeak?.takeIf { it.isFinite() && it > 0f }
-    val album = settings.mode == ReplayGainMode.Album || (settings.mode == ReplayGainMode.Dynamic && albumContext)
+    val album = settings.mode == ReplayGainMode.Album || (settings.mode == ReplayGainMode.Auto && albumContext)
     val (requestedDb, peak) =
         if (album) {
             (gain.albumGain ?: gain.trackGain) to (albumPeak ?: trackPeak)

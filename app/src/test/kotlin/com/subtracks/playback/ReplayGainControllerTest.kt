@@ -39,8 +39,8 @@ class ReplayGainControllerTest {
     }
 
     @Test
-    fun dynamicModeFollowsTheItemsGainContext() {
-        controller.setSettings(ReplayGainSettings(ReplayGainMode.Dynamic, 0f))
+    fun autoModeFollowsTheItemsGainContext() {
+        controller.setSettings(ReplayGainSettings(ReplayGainMode.Auto, 0f))
 
         controller.applyItem(item("a", trackGain = -6.0206f, albumGain = -1f))
         assertEquals(0.5f, applied.last(), TOLERANCE)

@@ -57,7 +57,7 @@ const val MAX_REPLAY_GAIN_PREAMP_DB = 15f
 
 enum class SyncMode { Off, WifiOnly, Always }
 
-enum class ReplayGainMode { Off, Track, Album, Dynamic }
+enum class ReplayGainMode { Off, Track, Album, Auto }
 
 data class ArtworkSeedValue(
     val cacheKey: String,

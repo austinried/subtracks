@@ -225,8 +225,8 @@ class UserPreferencesTest {
             assertEquals(ReplayGainMode.Album, prefs.replayGainMode().first())
             assertEquals(3.5f, prefs.replayGainPreampDb().first(), 0f)
 
-            prefs.setReplayGainMode(ReplayGainMode.Dynamic)
-            assertEquals(ReplayGainMode.Dynamic, prefs.replayGainMode().first())
+            prefs.setReplayGainMode(ReplayGainMode.Auto)
+            assertEquals(ReplayGainMode.Auto, prefs.replayGainMode().first())
 
             prefs.setReplayGainPreampDb(99f)
             assertEquals(MAX_REPLAY_GAIN_PREAMP_DB, prefs.replayGainPreampDb().first(), 0f)

@@ -54,12 +54,12 @@ class ReplayGainTest {
     }
 
     @Test
-    fun dynamicModeAppliesTheAlbumGainInAnAlbumContext() {
+    fun autoModeAppliesTheAlbumGainInAnAlbumContext() {
         assertEquals(
             0.5f,
             replayGainLinearGain(
                 ReplayGain(trackGain = -1f, albumGain = -6.0206f, trackPeak = 1f, albumPeak = 1f),
-                ReplayGainSettings(ReplayGainMode.Dynamic, 0f),
+                ReplayGainSettings(ReplayGainMode.Auto, 0f),
                 albumContext = true,
             ),
             TOLERANCE,
@@ -67,12 +67,12 @@ class ReplayGainTest {
     }
 
     @Test
-    fun dynamicModeAppliesTheTrackGainInAMixedContext() {
+    fun autoModeAppliesTheTrackGainInAMixedContext() {
         assertEquals(
             0.5f,
             replayGainLinearGain(
                 ReplayGain(trackGain = -6.0206f, albumGain = -1f, trackPeak = 1f, albumPeak = 1f),
-                ReplayGainSettings(ReplayGainMode.Dynamic, 0f),
+                ReplayGainSettings(ReplayGainMode.Auto, 0f),
                 albumContext = false,
             ),
             TOLERANCE,
@@ -80,8 +80,8 @@ class ReplayGainTest {
     }
 
     @Test
-    fun dynamicModeFallsBackInEitherContext() {
-        val settings = ReplayGainSettings(ReplayGainMode.Dynamic, 0f)
+    fun autoModeFallsBackInEitherContext() {
+        val settings = ReplayGainSettings(ReplayGainMode.Auto, 0f)
 
         assertEquals(0.5f, replayGainLinearGain(ReplayGain(trackGain = -6.0206f), settings, albumContext = true), TOLERANCE)
         assertEquals(0.5f, replayGainLinearGain(ReplayGain(albumGain = -6.0206f), settings, albumContext = false), TOLERANCE)
