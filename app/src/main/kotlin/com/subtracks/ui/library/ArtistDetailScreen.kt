@@ -133,7 +133,7 @@ private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 private val BIO_ACTION_RESERVE = 104.dp
 private val BIO_ACTION_HEIGHT = 48.dp
 private val BIO_TOP_GAP = 8.dp
-private const val ARTIST_BIO_EMPTY = "No artist bio available"
+private const val ARTIST_BIO_EMPTY = "No artist bio available."
 
 internal fun estimateScrollPx(
     index: Int,
