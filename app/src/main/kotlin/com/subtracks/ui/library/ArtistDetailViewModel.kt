@@ -110,6 +110,10 @@ class ArtistDetailViewModel(
         _bioExpanded.value = true
     }
 
+    fun collapseBio() {
+        _bioExpanded.value = false
+    }
+
     suspend fun downloadedBytes(
         list: DownloadList,
         refId: String,

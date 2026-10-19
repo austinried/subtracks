@@ -556,6 +556,12 @@ const val REDISCOVER_WINDOW_MS = 60L * 24 * 60 * 60 * 1000
 
 const val SEARCH_RESULT_LIMIT = 50
 
-internal fun normalizeBiography(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
+internal fun normalizeBiography(value: String?): String? =
+    value
+        ?.replace("\r\n", "\n")
+        ?.replace('\r', '\n')
+        ?.replace(Regex(" {3,}"), "\n\n")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
 
 fun rediscoverCutoff(): Long = System.currentTimeMillis() - REDISCOVER_WINDOW_MS

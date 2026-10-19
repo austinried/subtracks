@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
@@ -25,6 +26,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistAlbums
 import com.subtracks.ui.theme.SubtracksTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -65,6 +67,7 @@ class ArtistDetailScreenTest {
                     onBack = {},
                     onAlbumClick = {},
                     onExpandBio = { expanded = true },
+                    onCollapseBio = { expanded = false },
                 )
             }
         }
@@ -219,6 +222,12 @@ class ArtistDetailScreenTest {
         composeRule.onNodeWithTag(ARTIST_BIO_MORE_TAG).performClick()
 
         composeRule.onNodeWithTag(ARTIST_BIO_MORE_TAG).assertDoesNotExist()
+        composeRule.onNodeWithTag(ARTIST_BIO_LESS_TAG).performScrollTo().assertExists()
+
+        composeRule.onNodeWithTag(ARTIST_BIO_LESS_TAG).performClick()
+
+        composeRule.onNodeWithTag(ARTIST_BIO_LESS_TAG).assertDoesNotExist()
+        composeRule.onNodeWithTag(ARTIST_BIO_MORE_TAG).performScrollTo().assertExists()
     }
 
     @Test
@@ -273,6 +282,43 @@ class ArtistDetailScreenTest {
                 .text
                 .isNotBlank(),
         )
+    }
+
+    @Test
+    fun sourceLineAndParagraphBreaksArePreserved() {
+        var lineBreak: List<String>? = null
+        var paragraphBreak: List<String>? = null
+        composeRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val style = TextStyle(fontSize = 14.sp)
+            lineBreak = splitBio(measurer, "First line.\nSecond line.", style, 400, 0, 2)
+            paragraphBreak = splitBio(measurer, "First paragraph.\n\nSecond paragraph.", style, 400, 0, 2)
+        }
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("First line.", "Second line."), lineBreak)
+        assertEquals(listOf("First paragraph.", "", "Second paragraph."), paragraphBreak)
+    }
+
+    @Test
+    fun aJustifiedLineFillsTheAvailableWidth() {
+        val style = TextStyle(fontSize = 14.sp)
+        var plainWidth = 0
+        var justifiedWidth = 0
+        var justified = ""
+        composeRule.setContent {
+            val measurer = rememberTextMeasurer()
+            val line = AnnotatedString("one two three four five")
+            plainWidth = measurer.measure(line, style, maxLines = 1).size.width
+            val result = justifyBioLine(line, measurer, style, 400)
+            justifiedWidth = measurer.measure(result, style, maxLines = 1).size.width
+            justified = result.text
+        }
+        composeRule.waitForIdle()
+
+        assertTrue(justifiedWidth > plainWidth)
+        assertTrue(justifiedWidth <= 400)
+        assertTrue(justified.contains("  "))
     }
 
     private fun album(

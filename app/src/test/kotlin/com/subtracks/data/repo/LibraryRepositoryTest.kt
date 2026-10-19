@@ -330,6 +330,15 @@ class LibraryRepositoryTest {
         }
 
     @Test
+    fun biographiesKeepLineAndParagraphBreaks() {
+        assertEquals("Line one\nLine two", normalizeBiography("Line one\r\nLine two"))
+        assertEquals("Line one\nLine two", normalizeBiography("Line one\nLine two"))
+        assertEquals("One\n\nTwo", normalizeBiography("One   Two"))
+        assertEquals("One\n\nTwo", normalizeBiography("One\n\nTwo"))
+        assertNull(normalizeBiography("   "))
+    }
+
+    @Test
     fun aFailedRefreshKeepsTheStoredBio() =
         runBlocking {
             withSource { server ->

@@ -41,6 +41,7 @@
     <string name="artist_bio_loading">Loading artist bio…</string>
     <string name="artist_bio_unavailable">Artist bio unavailable.</string>
     <string name="artist_bio_more">More</string>
+    <string name="artist_bio_less">Less</string>
     <string name="artist_meta">%1$s · %2$s</string>
     <string name="resources_filter_genre">Genre</string>
     <string name="resources_filter_starred">Starred</string>

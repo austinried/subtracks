@@ -155,6 +155,7 @@ private const val THEME_TRANSITION_MS = 100
 private const val SCRIM_FADE_MS = 180
 internal const val ARTIST_NAME_SCRIM_TAG = "artistNameScrim"
 internal const val ARTIST_BIO_MORE_TAG = "artistBioMore"
+internal const val ARTIST_BIO_LESS_TAG = "artistBioLess"
 
 private data class BioSnapshot(
     val known: Boolean,
@@ -240,6 +241,7 @@ fun ArtistDetailRoute(
         starred = artist?.starred != null,
         onToggleStar = artist?.let { a -> { setStar(StarType.Artist, a.id, a.starred == null) } },
         onExpandBio = viewModel::expandBio,
+        onCollapseBio = viewModel::collapseBio,
         onShuffle = viewModel::shuffle,
     )
 
@@ -278,6 +280,7 @@ fun ArtistDetailScreen(
     starred: Boolean = false,
     onToggleStar: (() -> Unit)? = null,
     onExpandBio: () -> Unit = {},
+    onCollapseBio: () -> Unit = {},
     onShuffle: () -> Unit = {},
 ) {
     val listState = rememberLazyGridState()
@@ -455,11 +458,13 @@ fun ArtistDetailScreen(
                                             MaterialTheme.colorScheme.outline
                                         },
                                     collapsed = bioCollapsed,
+                                    expanded = hasBio && bioExpanded,
                                     artist = artist,
                                     starred = starred,
                                     onToggleStar = onToggleStar,
                                     onMore = onMore,
                                     onExpand = onExpandBio,
+                                    onCollapse = onCollapseBio,
                                     modifier =
                                         Modifier.padding(
                                             bottom = if (hasBio && !bioCollapsed) 8.dp else 0.dp,
@@ -553,17 +558,20 @@ private fun ArtistBio(
     text: String,
     color: Color,
     collapsed: Boolean,
+    expanded: Boolean,
     artist: Artist?,
     starred: Boolean,
     onToggleStar: (() -> Unit)?,
     onMore: () -> Unit,
     onExpand: () -> Unit,
+    onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val style = MaterialTheme.typography.bodyMedium
     val moreText = stringResource(R.string.artist_bio_more)
+    val lessText = stringResource(R.string.artist_bio_less)
     BoxWithConstraints(modifier.fillMaxWidth().padding(top = BIO_TOP_GAP)) {
         val fullWidth = with(density) { maxWidth.roundToPx() }
         val reserve = with(density) { BIO_ACTION_RESERVE.roundToPx() }
@@ -573,33 +581,49 @@ private fun ArtistBio(
             }.coerceAtLeast(1)
         val reserveLines = ceil(with(density) { BIO_ACTION_HEIGHT.toPx() } / lineHeightPx).toInt().coerceAtLeast(1)
         val bioLines =
-            remember(text, fullWidth, reserve, reserveLines, collapsed, moreText) {
-                if (collapsed) {
-                    splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText)
-                } else {
-                    BioLines(
-                        splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
-                            AnnotatedString(it.ifEmpty { " " })
-                        },
-                        more = false,
-                    )
+            remember(text, fullWidth, reserve, reserveLines, collapsed, expanded, moreText, lessText) {
+                when {
+                    collapsed -> {
+                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, moreText)
+                    }
+
+                    expanded -> {
+                        splitBioExpanded(measurer, text, style, fullWidth, reserve, reserveLines, lessText)
+                    }
+
+                    else -> {
+                        BioLines(
+                            splitBio(measurer, text, style, fullWidth, reserve, reserveLines).map {
+                                AnnotatedString(it.ifEmpty { " " })
+                            },
+                            more = false,
+                        )
+                    }
                 }
             }
         Box {
             Column(Modifier.fillMaxWidth()) {
                 bioLines.lines.forEachIndexed { index, line ->
-                    val more = bioLines.more && index == bioLines.lines.lastIndex
+                    val isControl = index == bioLines.lines.lastIndex && (bioLines.more || bioLines.less)
+                    val nextBlank = index == bioLines.lines.lastIndex || bioLines.lines[index + 1].text.isBlank()
+                    val available = bioLineWidth(index, fullWidth, reserve, reserveLines)
+                    val displayLine =
+                        if (!nextBlank && line.text.isNotBlank() && line.spanStyles.isEmpty()) {
+                            justifyBioLine(line, measurer, style, available)
+                        } else {
+                            line
+                        }
                     Text(
-                        text = line,
+                        text = displayLine,
                         style = style,
                         color = color,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier =
-                            if (more) {
-                                Modifier.testTag(ARTIST_BIO_MORE_TAG).clickable(onClick = onExpand)
-                            } else {
-                                Modifier
+                            when {
+                                isControl && bioLines.more -> Modifier.testTag(ARTIST_BIO_MORE_TAG).clickable(onClick = onExpand)
+                                isControl && bioLines.less -> Modifier.testTag(ARTIST_BIO_LESS_TAG).clickable(onClick = onCollapse)
+                                else -> Modifier
                             },
                     )
                 }
@@ -611,7 +635,14 @@ private fun ArtistBio(
     }
 }
 
-/** Splits text into lines, narrowing the lines that would overlap the actions. */
+private fun bioLineWidth(
+    index: Int,
+    fullWidth: Int,
+    reserve: Int,
+    reserveLines: Int,
+): Int = if (index < reserveLines) fullWidth - reserve else fullWidth
+
+/** Splits text at every source line break, then wraps it to the width left by the actions. */
 internal fun splitBio(
     measurer: TextMeasurer,
     text: String,
@@ -620,35 +651,125 @@ internal fun splitBio(
     reserve: Int,
     reserveLines: Int,
 ): List<String> {
-    if (text.isBlank()) return listOf("")
     val lines = mutableListOf<String>()
-    text.split("\n\n").forEachIndexed { paragraphIndex, paragraph ->
-        if (paragraphIndex > 0) lines += ""
-        val words = paragraph.replace('\n', ' ').split(' ').filter { it.isNotEmpty() }
+    text.split('\n').forEach { sourceLine ->
+        val words = sourceLine.trim().split(' ').filter { it.isNotEmpty() }
+        if (words.isEmpty()) {
+            lines += ""
+            return@forEach
+        }
         var current = ""
-        var index = 0
-        while (index < words.size) {
-            val candidate = if (current.isEmpty()) words[index] else "$current ${words[index]}"
-            val available = if (lines.size < reserveLines) fullWidth - reserve else fullWidth
+        for (word in words) {
+            val candidate = if (current.isEmpty()) word else "$current $word"
+            val available = bioLineWidth(lines.size, fullWidth, reserve, reserveLines)
             if (measurer.measure(AnnotatedString(candidate), style, maxLines = 1).size.width <= available) {
                 current = candidate
-                index++
             } else if (current.isEmpty()) {
                 lines += candidate
-                index++
             } else {
                 lines += current
-                current = ""
+                current = word
             }
         }
         if (current.isNotEmpty()) lines += current
     }
-    return lines
+    while (lines.isNotEmpty() && lines.last().isBlank()) lines.removeAt(lines.lastIndex)
+    return lines.ifEmpty { listOf("") }
+}
+
+internal fun splitBioExpanded(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    fullWidth: Int,
+    reserve: Int,
+    reserveLines: Int,
+    lessText: String,
+): BioLines {
+    val lines = splitBio(measurer, text, style, fullWidth, reserve, reserveLines).mapTo(mutableListOf()) { AnnotatedString(it) }
+    appendBioControl(lines, lessText, measurer, style, fullWidth, reserve, reserveLines)
+    return BioLines(lines, more = false, less = true)
+}
+
+private fun appendBioControl(
+    lines: MutableList<AnnotatedString>,
+    label: String,
+    measurer: TextMeasurer,
+    style: TextStyle,
+    fullWidth: Int,
+    reserve: Int,
+    reserveLines: Int,
+) {
+    while (lines.isNotEmpty() && lines.last().text.isBlank()) lines.removeAt(lines.lastIndex)
+    val control =
+        buildAnnotatedString {
+            append("  ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(label) }
+        }
+    if (lines.isEmpty()) {
+        lines += control
+        return
+    }
+    val lastIndex = lines.lastIndex
+    val available = bioLineWidth(lastIndex, fullWidth, reserve, reserveLines)
+    val combined =
+        buildAnnotatedString {
+            append(lines[lastIndex])
+            append(control)
+        }
+    if (measurer.measure(combined, style, maxLines = 1).size.width <= available) {
+        lines[lastIndex] = combined
+        return
+    }
+    val words = lines[lastIndex].text.split(' ').filter { it.isNotEmpty() }
+    if (words.size > 1) {
+        val tailLine =
+            buildAnnotatedString {
+                append(words.last())
+                append(control)
+            }
+        if (measurer.measure(tailLine, style, maxLines = 1).size.width <= available) {
+            lines[lastIndex] = AnnotatedString(words.dropLast(1).joinToString(" "))
+            lines += tailLine
+            return
+        }
+    }
+    lines += control
+}
+
+internal fun justifyBioLine(
+    line: AnnotatedString,
+    measurer: TextMeasurer,
+    style: TextStyle,
+    available: Int,
+): AnnotatedString {
+    if (line.spanStyles.isNotEmpty()) return line
+    val parts = line.text.split(' ')
+    if (parts.size < 2) return line
+    val spaceWidth = measurer.measure(AnnotatedString(" "), style, maxLines = 1).size.width
+    if (spaceWidth <= 0) return line
+    val extra = available - measurer.measure(line, style, maxLines = 1).size.width
+    val spaces = extra / spaceWidth
+    if (spaces <= 0) return line
+    val gaps = parts.size - 1
+    val perGap = spaces / gaps
+    val remainder = spaces % gaps
+    return AnnotatedString(
+        buildString {
+            parts.forEachIndexed { index, part ->
+                append(part)
+                if (index < gaps) {
+                    repeat(1 + perGap + if (index < remainder) 1 else 0) { append(' ') }
+                }
+            }
+        },
+    )
 }
 
 internal data class BioLines(
     val lines: List<AnnotatedString>,
     val more: Boolean,
+    val less: Boolean = false,
 )
 
 /** Collapses text to two lines, appending a bold More only when it does not fit. */
