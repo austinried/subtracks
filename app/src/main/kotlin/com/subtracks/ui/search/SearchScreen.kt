@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -85,6 +86,7 @@ fun SearchRoute(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.results.collectAsStateWithLifecycle()
     val playback by playbackController.state.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
     var filterMask by rememberSaveable { mutableIntStateOf(allFilterMask()) }
     val actions =
         ItemActions(
@@ -106,10 +108,22 @@ fun SearchRoute(
         coverArt = viewModel::coverArt,
         playingSongId = playback.item?.id,
         onBack = onBack,
-        onAlbumClick = onAlbumClick,
-        onArtistClick = onArtistClick,
-        onPlaylistClick = onPlaylistClick,
-        onSongClick = viewModel::play,
+        onAlbumClick = {
+            focusManager.clearFocus()
+            onAlbumClick(it)
+        },
+        onArtistClick = {
+            focusManager.clearFocus()
+            onArtistClick(it)
+        },
+        onPlaylistClick = {
+            focusManager.clearFocus()
+            onPlaylistClick(it)
+        },
+        onSongClick = {
+            focusManager.clearFocus()
+            viewModel.play(it)
+        },
         onLongClick = { contextMenuHost?.show(it, actions) },
     )
 }

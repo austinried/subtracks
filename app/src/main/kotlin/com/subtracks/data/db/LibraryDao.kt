@@ -10,6 +10,7 @@ import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumArtistRef
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.Disc
@@ -18,6 +19,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongArtistRef
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.Flow
 
@@ -163,34 +165,28 @@ internal const val ARTISTS_FILTER =
         "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
         "OR instr(lower(sortName), lower(:search)) > 0))) "
 
-internal const val ARTIST_ALBUM_CREDIT_ART =
-    "SELECT albums.coverArt FROM (" +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM albums INDEXED BY index_albums_sourceId_artistId " +
+internal const val ARTIST_COVER_ART =
+    "COALESCE(artists.coverArt, (" +
+        "SELECT credit_albums.coverArt FROM (" +
+        "SELECT 0 AS creditRank, albums.id, albums.coverArt, albums.year, albums.sortName FROM albums " +
+        "INDEXED BY index_albums_sourceId_artistId " +
         "WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id " +
         "UNION " +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM album_artists " +
+        "SELECT 0, albums.id, albums.coverArt, albums.year, albums.sortName FROM album_artists " +
         "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
-        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id" +
-        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
-
-internal const val ARTIST_TRACK_CREDIT_ART =
-    "SELECT albums.coverArt FROM (" +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM songs " +
+        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id " +
+        "UNION " +
+        "SELECT 1, albums.id, albums.coverArt, albums.year, albums.sortName FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = artists.sourceId AND songs.artistId = artists.id " +
         "UNION " +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM song_artists " +
+        "SELECT 1, albums.id, albums.coverArt, albums.year, albums.sortName FROM song_artists " +
         "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE song_artists.sourceId = artists.sourceId AND song_artists.artistId = artists.id" +
-        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
-
-internal const val ARTIST_COVER_ART =
-    "COALESCE(artists.coverArt, CASE " +
-        "WHEN EXISTS (SELECT 1 FROM albums WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id) " +
-        "OR EXISTS (SELECT 1 FROM album_artists " +
-        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id) " +
-        "THEN ($ARTIST_ALBUM_CREDIT_ART) ELSE ($ARTIST_TRACK_CREDIT_ART) END)"
+        ") credit_albums " +
+        "ORDER BY credit_albums.creditRank, credit_albums.year DESC, credit_albums.sortName COLLATE NOCASE, " +
+        "credit_albums.id LIMIT 1))"
 
 internal const val ARTIST_COLUMNS =
     "artists.sourceId, artists.id, artists.name, artists.albumCount, artists.starred, " +
@@ -640,7 +636,16 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Album::class])
     fun albumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
 
-    @RawQuery(observedEntities = [Artist::class, Source::class])
+    @RawQuery(
+        observedEntities = [
+            Artist::class,
+            Source::class,
+            Album::class,
+            AlbumArtistRef::class,
+            Song::class,
+            SongArtistRef::class,
+        ],
+    )
     fun artistsPaging(query: RoomRawQuery): PagingSource<Int, Artist>
 
     @RawQuery(observedEntities = [Playlist::class])

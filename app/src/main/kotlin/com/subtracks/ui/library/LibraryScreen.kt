@@ -92,6 +92,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -446,6 +447,7 @@ fun LibraryScreen(
     }
 
     val density = LocalDensity.current
+    val focusManager = LocalFocusManager.current
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val filtersActive = listQuery.starred != StarredFilter.Any || listQuery.downloaded || search.isNotEmpty()
     var tabBarHeightPx by remember { mutableFloatStateOf(with(density) { (TAB_BAR_CONTENT_HEIGHT + bottomInset).toPx() }) }
@@ -495,7 +497,10 @@ fun LibraryScreen(
                             albums.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            onAlbumClick,
+                            {
+                                focusManager.clearFocus()
+                                onAlbumClick(it)
+                            },
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -512,7 +517,10 @@ fun LibraryScreen(
                             artists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            onArtistClick,
+                            {
+                                focusManager.clearFocus()
+                                onArtistClick(it)
+                            },
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,
@@ -529,7 +537,10 @@ fun LibraryScreen(
                             playlists.collectAsLazyPagingItems(),
                             coverArt,
                             listBottomInset,
-                            onPlaylistClick,
+                            {
+                                focusManager.clearFocus()
+                                onPlaylistClick(it)
+                            },
                             onLongClick = onItemLongClick,
                             filtered = filtersActive,
                             onClearFilters = onClearFilters,

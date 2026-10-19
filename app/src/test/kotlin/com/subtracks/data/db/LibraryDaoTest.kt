@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.paging.PagingSource
 import androidx.room3.Room
 import androidx.room3.useReaderConnection
+import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -556,6 +557,8 @@ class LibraryDaoTest {
                     artist(sourceId, "ar-own", "Own", albumCount = 1).copy(coverArt = "own-art"),
                     artist(sourceId, "ar-album", "Album", albumCount = 2),
                     artist(sourceId, "ar-track", "Track", albumCount = 1),
+                    artist(sourceId, "ar-album-ref", "Album Ref", albumCount = 1),
+                    artist(sourceId, "ar-track-ref", "Track Ref", albumCount = 1),
                     artist(sourceId, "ar-null-art", "Null Art", albumCount = 2),
                     artist(sourceId, "ar-none", "None", albumCount = 0),
                 ),
@@ -569,6 +572,10 @@ class LibraryDaoTest {
                         .copy(artistId = "ar-album", coverArt = "old-art"),
                     album(sourceId, "track", "Track", year = 2021, starred = null)
                         .copy(artistId = "ar-other", coverArt = "track-art"),
+                    album(sourceId, "album-ref", "Album Ref", year = 2021, starred = null)
+                        .copy(artistId = "ar-other", coverArt = "album-ref-art"),
+                    album(sourceId, "track-ref", "Track Ref", year = 2019, starred = null)
+                        .copy(artistId = "ar-other", coverArt = "track-ref-art"),
                     album(sourceId, "null-new", "Null New", year = 2022, starred = null)
                         .copy(artistId = "ar-null-art", coverArt = null),
                     album(sourceId, "null-old", "Null Old", year = 1990, starred = null)
@@ -580,6 +587,10 @@ class LibraryDaoTest {
                     song(sourceId, "s-own", "Own", starred = null).copy(albumId = "own", artistId = "ar-own"),
                     song(sourceId, "s-album", "Album", starred = null).copy(albumId = "album-new", artistId = "ar-album"),
                     song(sourceId, "s-track", "Track", starred = null).copy(albumId = "track", artistId = "ar-track"),
+                    song(sourceId, "s-album-ref", "Album Ref", starred = null)
+                        .copy(albumId = "album-ref", artistId = "ar-other"),
+                    song(sourceId, "s-track-ref", "Track Ref", starred = null)
+                        .copy(albumId = "track-ref", artistId = "ar-other"),
                     song(sourceId, "s-null-new", "Null New", starred = null)
                         .copy(albumId = "null-new", artistId = "ar-null-art"),
                     song(sourceId, "s-null-old", "Null Old", starred = null)
@@ -587,14 +598,41 @@ class LibraryDaoTest {
                 ),
             )
 
+            db.useWriterConnection { connection ->
+                connection.usePrepared(
+                    "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
+                        "VALUES (?, 'album-ref', 0, 'ar-album-ref', 'Album Ref')",
+                ) { statement ->
+                    statement.bindLong(1, sourceId)
+                    statement.step()
+                }
+                connection.usePrepared(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (?, 's-track-ref', 0, 'ar-track-ref', 'Track Ref')",
+                ) { statement ->
+                    statement.bindLong(1, sourceId)
+                    statement.step()
+                }
+            }
+
             val artists = dao.artistsByName(sourceId, 0, "").page().associateBy { it.id }
 
             assertEquals("own-art", artists.getValue("ar-own").coverArt)
             assertEquals("new-art", artists.getValue("ar-album").coverArt)
             assertEquals("track-art", artists.getValue("ar-track").coverArt)
+            assertEquals("album-ref-art", artists.getValue("ar-album-ref").coverArt)
+            assertEquals("track-ref-art", artists.getValue("ar-track-ref").coverArt)
             assertNull(artists.getValue("ar-null-art").coverArt)
             assertNull(artists.getValue("ar-none").coverArt)
             assertEquals("new-art", dao.artistOnce(sourceId, "ar-album")!!.coverArt)
+            assertEquals(
+                "album-ref-art",
+                dao
+                    .artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+                    .page()
+                    .first { it.id == "ar-album-ref" }
+                    .coverArt,
+            )
         }
 
     @Test
@@ -612,6 +650,33 @@ class LibraryDaoTest {
                 plan,
                 plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
             )
+        }
+
+    @Test
+    fun artistArtChangesInvalidateTheArtistPagingSource() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 1)))
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Album", year = null, starred = null)))
+
+            val albumInvalidated = AtomicBoolean(false)
+            val albumPaging = dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+            albumPaging.registerInvalidatedCallback { albumInvalidated.set(true) }
+            albumPaging.page()
+
+            dao.upsertAlbums(
+                listOf(album(sourceId, "al-1", "Album", year = null, starred = null).copy(coverArt = "cover")),
+            )
+            awaitUntil("artist paging observes album writes") { albumInvalidated.get() }
+
+            val songInvalidated = AtomicBoolean(false)
+            val songPaging = dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+            songPaging.registerInvalidatedCallback { songInvalidated.set(true) }
+            songPaging.page()
+
+            dao.upsertSongs(listOf(song(sourceId, "s-1", "Song", starred = null)))
+            awaitUntil("artist paging observes song writes") { songInvalidated.get() }
         }
 
     @Test

@@ -20,7 +20,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -28,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.subtracks.R
 import com.subtracks.data.model.ArtistRef
-import kotlinx.coroutines.launch
 
 const val ARTIST_CHOOSER_TAG = "artistChooser"
 
@@ -40,7 +38,6 @@ fun ArtistChooserSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -66,11 +63,7 @@ fun ArtistChooserSheet(
                     headlineContent = { Text(artist.name.ifBlank { stringResource(R.string.resources_filter_artist) }) },
                     leadingContent = { Icon(Icons.Rounded.Person, contentDescription = null) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    modifier =
-                        Modifier.clickable {
-                            onArtistClick(artist)
-                            scope.launch { sheetState.hide() }
-                        },
+                    modifier = Modifier.clickable { onArtistClick(artist) },
                 )
             }
         }

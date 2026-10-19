@@ -1,5 +1,6 @@
 package com.subtracks.ui.search
 
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -109,8 +110,14 @@ class SearchScreenTest {
         composeRule.onNode(hasSetTextAction()).performTextInput("!")
         assertEquals("roads!", query)
 
+        composeRule.runOnIdle { composeRule.activity.currentFocus?.clearFocus() }
         composeRule.runOnIdle { show = false }
         composeRule.waitForIdle()
+        // performTextInput opens the IME; close it after the field is gone so later tests in the JVM
+        // do not inherit a visible keyboard.
+        composeRule.activity
+            .getSystemService(InputMethodManager::class.java)
+            .hideSoftInputFromWindow(composeRule.activity.window.decorView.windowToken, 0)
     }
 
     @Test
