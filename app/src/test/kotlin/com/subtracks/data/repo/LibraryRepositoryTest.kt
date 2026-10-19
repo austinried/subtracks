@@ -250,18 +250,25 @@ class LibraryRepositoryTest {
                 listOf(
                     seedSong(sourceId).copy(albumId = "al-0001"),
                     seedSong(sourceId).copy(id = "s2", albumId = "al-0002"),
+                    seedSong(sourceId).copy(id = "s3", albumId = "al-0002", artistId = "ar2"),
+                    seedSong(sourceId).copy(id = "s4", albumId = "al-0001", artistId = "ar2"),
                 ),
             )
 
-            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
-            val before = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
-            assertEquals(listOf("al-0001"), before.albumCredits.map { it.id })
-            assertEquals(emptyList<String>(), before.appearances.map { it.id })
+            db.downloadDao().upsert(SongDownload(sourceId, "s4", DownloadStatus.Completed))
+            val otherOnAlbumCredit = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
+            assertEquals(listOf("al-0001"), otherOnAlbumCredit.albumCredits.map { it.id })
+            assertEquals(emptyList<String>(), otherOnAlbumCredit.appearances.map { it.id })
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s3", DownloadStatus.Completed))
+            val otherOnTrackCredit = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
+            assertEquals(listOf("al-0001"), otherOnTrackCredit.albumCredits.map { it.id })
+            assertEquals(emptyList<String>(), otherOnTrackCredit.appearances.map { it.id })
 
             db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
-            val after = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
-            assertEquals(listOf("al-0001"), after.albumCredits.map { it.id })
-            assertEquals(listOf("al-0002"), after.appearances.map { it.id })
+            val creditedTrack = repository.artistAlbums(sourceId, "ar1", downloaded = true).first()
+            assertEquals(listOf("al-0001"), creditedTrack.albumCredits.map { it.id })
+            assertEquals(listOf("al-0002"), creditedTrack.appearances.map { it.id })
         }
 
     private suspend fun awaitRefreshes(
