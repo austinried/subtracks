@@ -11,6 +11,7 @@ import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
+import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
@@ -33,6 +34,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -281,6 +283,26 @@ class SourceRepositoryTest {
             val ref = awaitCoverArt("art-1")
 
             assertTrue("expected the stored file, was ${ref.url}", ref.url.startsWith("file:"))
+        }
+
+    @Test
+    fun artistImageUsesTheNetworkOnlineAndOnlyCachedFilesOffline() =
+        runBlocking {
+            repository.addSource("nav", "http://a.example/", "u", "p", false)
+            val sourceId = awaitActiveSourceId()
+            val url = "https://img.example/ar1.jpg"
+            val online = withTimeout(TEST_TIMEOUT_MS) { repository.artistImage("ar1", url) }
+            assertEquals(url, online?.url)
+
+            val key = artistImageKey(sourceId, "ar1")
+            artwork.write(sourceId, key, byteArrayOf(1, 2, 3))
+            assertEquals(artwork.uri(sourceId, key), repository.artistImage("ar1", url)?.url)
+
+            repository.setOfflineMode(true)
+            withTimeout(TEST_TIMEOUT_MS) { repository.offline.first { it } }
+
+            assertEquals(artwork.uri(sourceId, key), repository.artistImage("ar1", url)?.url)
+            assertNull(repository.artistImage("ar2", "https://img.example/ar2.jpg"))
         }
 
     private suspend fun awaitActiveSourceId(): Long = withTimeout(TEST_TIMEOUT_MS) { repository.activeSourceId().first { it != null }!! }

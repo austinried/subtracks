@@ -57,6 +57,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
@@ -109,7 +110,7 @@ fun HomeListRoute(
         genres = genres,
         decades = decades,
         coverArt = viewModel::coverArt,
-        artistCovers = viewModel::artistArtCovers,
+        artistArt = { viewModel.artistArt(it) },
         playingSongId = playback.item?.id,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
@@ -135,7 +136,7 @@ fun HomeListScreen(
     genres: List<String> = emptyList(),
     decades: List<Long> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     playingSongId: String? = null,
     onBack: () -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
@@ -194,8 +195,7 @@ fun HomeListScreen(
                 OfflineListKind.Artists -> {
                     ArtistsList(
                         artists = artists,
-                        coverArt = coverArt,
-                        artistCovers = artistCovers,
+                        artistArt = artistArt,
                         info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
@@ -249,8 +249,7 @@ fun HomeListScreen(
                 HomeSection.RecentlyPlayedArtists, HomeSection.MostPlayedArtists -> {
                     ArtistsList(
                         artists = artists,
-                        coverArt = coverArt,
-                        artistCovers = artistCovers,
+                        artistArt = artistArt,
                         info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
@@ -448,8 +447,7 @@ internal fun AlbumListRow(
 @Composable
 private fun ArtistsList(
     artists: LazyPagingItems<Artist>,
-    coverArt: (String?, Boolean) -> CoverArtRef?,
-    artistCovers: suspend (String) -> List<CoverArtRef>,
+    artistArt: (Artist) -> ArtistArt,
     info: (Artist) -> String?,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
@@ -466,13 +464,13 @@ private fun ArtistsList(
         items(count = artists.itemCount, key = artists.itemKey { it.id }) { index ->
             val artist = artists[index]
             if (artist != null) {
+                val art = artistArt(artist)
                 ArtistListRow(
                     artist = artist,
-                    coverArt = coverArt,
-                    artistCovers = artistCovers,
+                    art = art,
                     info = info(artist),
                     onClick = { onArtistClick(artist) },
-                    onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },
+                    onLongClick = { onLongClick(MenuTarget.Artist(artist, art.primary)) },
                 )
             }
         }
@@ -482,11 +480,10 @@ private fun ArtistsList(
 @Composable
 internal fun ArtistListRow(
     artist: Artist,
-    coverArt: (String?, Boolean) -> CoverArtRef?,
+    art: ArtistArt,
     info: String?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
 ) {
     Row(
         modifier =
@@ -498,8 +495,7 @@ internal fun ArtistListRow(
     ) {
         ArtistIcon(
             artist = artist,
-            fallback = coverArt(artist.coverArt, true),
-            loadCovers = artistCovers,
+            art = art,
             modifier = Modifier.size(ALBUM_ROW_COVER).clip(CircleShape),
         )
         Spacer(Modifier.width(12.dp))

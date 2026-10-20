@@ -11,6 +11,7 @@ import com.subtracks.data.download.EngineDownload
 import com.subtracks.data.download.EngineRequest
 import com.subtracks.data.download.EngineStatus
 import com.subtracks.data.download.looksLikeAudio
+import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.DownloadError
@@ -19,6 +20,7 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.DownloadedSong
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.SongDownload
+import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
@@ -350,6 +352,9 @@ class DownloadRepository(
         rows.groupBy { it.sourceId }.forEach { (sourceId, group) ->
             group.forEach { file(sourceId, it.songId).delete() }
             group.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
+            if (group.any { it.status == DownloadStatus.Completed }) {
+                refreshDownloadedArtistArt(sourceId, group.map { it.songId })
+            }
         }
         sweep(db.downloadDao().all())
     }
@@ -413,17 +418,49 @@ class DownloadRepository(
     ) {
         val song = db.libraryDao().songOnce(sourceId, songId)
         val album = song?.albumId?.let { db.libraryDao().albumOnce(sourceId, it) }
+        val songArtist = song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it) }
+        val albumArtist = album?.artistId?.let { db.libraryDao().artistOnce(sourceId, it) }
         listOfNotNull(song?.artistId, album?.artistId).forEach(artistIds::add)
+        listOfNotNull(songArtist, albumArtist).forEach { storeArtistImage(sourceId, it) }
+        val artistFallbackCovers =
+            listOfNotNull(songArtist, albumArtist)
+                .filter { it.artistImageUrl.isNullOrBlank() }
+                .mapNotNull { it.coverArt }
         val coverArt =
             (
-                listOfNotNull(
-                    album?.coverArt,
-                    song?.artistId?.let { db.libraryDao().artistOnce(sourceId, it)?.coverArt },
-                ) + db.downloadDao().playlistCoversForSong(sourceId, songId)
+                listOfNotNull(album?.coverArt) + artistFallbackCovers +
+                    db.downloadDao().playlistCoversForSong(sourceId, songId)
             ).distinct()
         coverArt.forEach { cover ->
             storeArtwork(sourceId, cover, thumbnail = false)
             storeArtwork(sourceId, cover, thumbnail = true)
+        }
+    }
+
+    private suspend fun storeArtistImage(
+        sourceId: Long,
+        artist: Artist,
+    ) {
+        val imageUrl = artist.artistImageUrl
+        if (!imageUrl.isNullOrBlank()) {
+            val cacheKey = artistImageKey(sourceId, artist.id)
+            if (artworkStore.file(sourceId, cacheKey).exists()) return
+            val bytes =
+                try {
+                    artworkFetcher.fetch(imageUrl)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    null
+                }
+            if (bytes != null && bytes.isNotEmpty()) {
+                artworkStore.write(sourceId, cacheKey, bytes)
+                return
+            }
+        }
+        artist.coverArt?.let {
+            storeArtwork(sourceId, it, thumbnail = false)
+            storeArtwork(sourceId, it, thumbnail = true)
         }
     }
 
@@ -491,11 +528,15 @@ class DownloadRepository(
             .mapValues { (sourceId, rows) ->
                 if (rows.any { it.hasMissingLibraryRow }) return@mapValues null
                 val covers =
-                    rows.flatMap { row -> listOfNotNull(row.albumCoverArt, row.artistCoverArt) } +
-                        playlistCovers[sourceId].orEmpty()
-                covers
-                    .flatMap { cover -> listOf(false, true).map { thumbnail -> coverArtKey(sourceId, cover, thumbnail) } }
-                    .toSet()
+                    rows.flatMap { row ->
+                        listOfNotNull(row.albumCoverArt, row.artistCoverArt, row.albumArtistCoverArt)
+                    } + playlistCovers[sourceId].orEmpty()
+                val artistImages = rows.flatMap { row -> listOfNotNull(row.artistId, row.albumArtistId) }
+                (
+                    covers.flatMap { cover ->
+                        listOf(false, true).map { thumbnail -> coverArtKey(sourceId, cover, thumbnail) }
+                    } + artistImages.map { artistImageKey(sourceId, it) }
+                ).toSet()
             }
     }
 
@@ -545,6 +586,7 @@ class DownloadRepository(
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(sourceId, songId).delete()
         db.downloadDao().delete(sourceId, songId)
+        if (row.status == DownloadStatus.Completed) refreshDownloadedArtistArt(sourceId, listOf(songId))
         return true
     }
 
@@ -625,6 +667,11 @@ class DownloadRepository(
                     },
             )
         if (updated != row) db.downloadDao().upsert(updated)
+        if (updated.status != row.status &&
+            (updated.status == DownloadStatus.Completed || row.status == DownloadStatus.Completed)
+        ) {
+            refreshDownloadedArtistArt(row.sourceId, listOf(row.songId))
+        }
         if (updated.status != row.status) {
             when (updated.status) {
                 DownloadStatus.Completed -> Log.i("download", "completed ${row.songId} (${updated.total} bytes)")
@@ -642,7 +689,20 @@ class DownloadRepository(
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = error))
+        if (row.status == DownloadStatus.Completed) {
+            refreshDownloadedArtistArt(row.sourceId, listOf(row.songId))
+        }
         Log.w("download", "failed ${row.songId}: $error")
+    }
+
+    private suspend fun refreshDownloadedArtistArt(
+        sourceId: Long,
+        songIds: Collection<String>,
+    ) {
+        songIds.chunked(500).forEach { songs ->
+            val artistIds = db.libraryDao().creditedArtistIdsForSongs(sourceId, songs).distinct()
+            artistIds.chunked(500).forEach { db.libraryDao().recomputeDownloadedArtistArt(sourceId, it) }
+        }
     }
 
     private fun ensurePolling() {

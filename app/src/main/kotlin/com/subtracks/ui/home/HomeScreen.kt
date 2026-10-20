@@ -72,6 +72,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
@@ -138,7 +139,7 @@ fun HomeRoute(
             playlists = viewModel.downloadedPlaylists.collectAsLazyPagingItems(),
             songs = viewModel.downloadedSongs.collectAsStateWithLifecycle(initialValue = emptyList()).value,
             coverArt = viewModel::coverArt,
-            artistCovers = viewModel::artistArtCovers,
+            artistArt = { viewModel.artistArt(it) },
             playingSongId = playback.item?.id,
             topInset = topInset,
             bottomInset = bottomInset,
@@ -154,7 +155,7 @@ fun HomeRoute(
         HomeScreen(
             feed = feed,
             coverArt = viewModel::coverArt,
-            artistCovers = viewModel::artistArtCovers,
+            artistArt = { viewModel.artistArt(it) },
             playingSongId = playback.item?.id,
             topInset = topInset,
             bottomInset = bottomInset,
@@ -176,7 +177,7 @@ fun HomeScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
     modifier: Modifier = Modifier,
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -219,7 +220,7 @@ fun HomeScreen(
                 HomeSection.RecentlyPlayedArtists,
                 feed.recentlyPlayedArtists,
                 coverArt,
-                artistCovers,
+                artistArt,
                 onArtistClick,
                 onLongClick,
                 onMore,
@@ -254,7 +255,7 @@ fun HomeScreen(
                 HomeSection.MostPlayedArtists,
                 feed.mostPlayedArtists,
                 coverArt,
-                artistCovers,
+                artistArt,
                 onArtistClick,
                 onLongClick,
                 onMore,
@@ -302,7 +303,7 @@ fun OfflineHomeScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
     modifier: Modifier = Modifier,
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -319,7 +320,7 @@ fun OfflineHomeScreen(
         ) {
             homeTitle()
             downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick) { onMore(OfflineListKind.Albums) }
-            downloadedArtistRow(artists, coverArt, artistCovers, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
+            downloadedArtistRow(artists, coverArt, artistArt, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
             downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick) { onMore(OfflineListKind.Playlists) }
             songList(
                 key = "downloaded-songs",
@@ -372,7 +373,7 @@ private fun LazyListScope.downloadedAlbumRow(
 private fun LazyListScope.downloadedArtistRow(
     artists: LazyPagingItems<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
-    artistCovers: suspend (String) -> List<CoverArtRef>,
+    artistArt: (Artist) -> ArtistArt,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: () -> Unit,
@@ -390,13 +391,12 @@ private fun LazyListScope.downloadedArtistRow(
             items(count = artists.itemCount, key = artists.itemKey { it.id }) { index ->
                 val artist = artists[index]
                 if (artist != null) {
-                    val ref = coverArt(artist.coverArt, true)
+                    val art = artistArt(artist)
                     ArtistTile(
                         artist = artist,
-                        ref = ref,
-                        artistCovers = artistCovers,
+                        art = art,
                         onClick = { onArtistClick(artist) },
-                        onLongClick = { onLongClick(MenuTarget.Artist(artist, ref)) },
+                        onLongClick = { onLongClick(MenuTarget.Artist(artist, art.primary)) },
                     )
                 }
             }
@@ -616,7 +616,7 @@ private fun LazyListScope.artistRow(
     section: HomeSection,
     artists: List<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
-    artistCovers: suspend (String) -> List<CoverArtRef>,
+    artistArt: (Artist) -> ArtistArt,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
@@ -635,13 +635,12 @@ private fun LazyListScope.artistRow(
             modifier = Modifier.padding(top = SECTION_CONTENT_TOP),
         ) {
             items(artists, key = { it.id }) { artist ->
-                val ref = coverArt(artist.coverArt, true)
+                val art = artistArt(artist)
                 ArtistTile(
                     artist = artist,
-                    ref = ref,
-                    artistCovers = artistCovers,
+                    art = art,
                     onClick = { onArtistClick(artist) },
-                    onLongClick = { onLongClick(MenuTarget.Artist(artist, ref)) },
+                    onLongClick = { onLongClick(MenuTarget.Artist(artist, art.primary)) },
                 )
             }
         }
@@ -790,8 +789,7 @@ private fun AlbumTile(
 @Composable
 private fun ArtistTile(
     artist: Artist,
-    ref: CoverArtRef?,
-    artistCovers: suspend (String) -> List<CoverArtRef>,
+    art: ArtistArt,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -801,8 +799,7 @@ private fun ArtistTile(
     ) {
         ArtistIcon(
             artist = artist,
-            fallback = ref,
-            loadCovers = artistCovers,
+            art = art,
             modifier = Modifier.size(ARTIST_TILE_SIZE).clip(CircleShape),
         )
         Spacer(Modifier.height(6.dp))

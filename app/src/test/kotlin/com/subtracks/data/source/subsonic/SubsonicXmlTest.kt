@@ -74,7 +74,8 @@ class SubsonicXmlTest {
                 """
                 <subsonic-response status="ok">
                   <artists>
-                    <artist id="ar1" name="Radiohead" albumCount="9" starred="2020-01-02T03:04:05.000Z"/>
+                    <artist id="ar1" name="Radiohead" albumCount="9" starred="2020-01-02T03:04:05.000Z"
+                      artistImageUrl="https://img.example/radiohead.jpg"/>
                     <artist id="ar2" name="Portishead" albumCount="3"/>
                   </artists>
                 </subsonic-response>
@@ -88,6 +89,8 @@ class SubsonicXmlTest {
         assertEquals(7L, artists[0].sourceId)
         assertEquals(9L, artists[0].albumCount)
         assertEquals(1577934245L, artists[0].starred)
+        assertEquals("https://img.example/radiohead.jpg", artists[0].artistImageUrl)
+        assertEquals(null, artists[1].artistImageUrl)
         assertEquals(null, artists[1].starred)
     }
 

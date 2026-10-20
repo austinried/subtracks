@@ -17,7 +17,8 @@ import com.subtracks.data.repo.rediscoverCutoff
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
-import com.subtracks.ui.components.loadArtistArtCovers
+import com.subtracks.ui.components.ArtistArt
+import com.subtracks.ui.components.artistArt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -128,7 +129,10 @@ class HomeViewModel(
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
 
-    suspend fun artistArtCovers(artistId: String): List<CoverArtRef> = loadArtistArtCovers(libraryRepository, sourceRepository, artistId)
+    fun artistArt(
+        artist: Artist,
+        forIcon: Boolean = true,
+    ): ArtistArt = sourceRepository.artistArt(artist, forIcon)
 
     fun playStarred(song: Song) {
         viewModelScope.playStarredList(libraryRepository, playbackController, song)

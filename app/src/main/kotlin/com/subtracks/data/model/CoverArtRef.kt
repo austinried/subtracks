@@ -10,3 +10,8 @@ fun coverArtKey(
     coverArt: String,
     thumbnail: Boolean,
 ): String = "$sourceId:$coverArt:$thumbnail"
+
+fun artistImageKey(
+    sourceId: Long,
+    artistId: String,
+): String = "$sourceId:artist-image:$artistId"

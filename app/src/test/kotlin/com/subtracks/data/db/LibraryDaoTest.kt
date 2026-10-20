@@ -548,7 +548,7 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun artistArtFallsBackToTheFirstAlbumCreditThenTheFirstTrackCredit() =
+    fun artistArtIsMaterializedFromAlbumCreditsThenTrackCredits() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
@@ -615,40 +615,121 @@ class LibraryDaoTest {
                 }
             }
 
+            dao.recomputeArtistArt(sourceId)
+
             val artists = dao.artistsByName(sourceId, 0, "").page().associateBy { it.id }
 
             assertEquals("own-art", artists.getValue("ar-own").coverArt)
-            assertEquals("new-art", artists.getValue("ar-album").coverArt)
-            assertEquals("track-art", artists.getValue("ar-track").coverArt)
-            assertEquals("album-ref-art", artists.getValue("ar-album-ref").coverArt)
-            assertEquals("track-ref-art", artists.getValue("ar-track-ref").coverArt)
+            assertNull(artists.getValue("ar-album").coverArt)
+            assertNull(artists.getValue("ar-track").coverArt)
+            assertNull(artists.getValue("ar-album-ref").coverArt)
+            assertNull(artists.getValue("ar-track-ref").coverArt)
             assertNull(artists.getValue("ar-null-art").coverArt)
             assertNull(artists.getValue("ar-none").coverArt)
-            assertEquals("new-art", dao.artistOnce(sourceId, "ar-album")!!.coverArt)
+            assertEquals(listOf("own-album"), artists.getValue("ar-own").coverArts)
+            assertEquals(listOf("new-art", "old-art"), artists.getValue("ar-album").coverArts)
+            assertEquals(listOf("track-art"), artists.getValue("ar-track").coverArts)
+            assertEquals(listOf("album-ref-art"), artists.getValue("ar-album-ref").coverArts)
+            assertEquals(listOf("track-ref-art"), artists.getValue("ar-track-ref").coverArts)
+            assertEquals(listOf("later-art"), artists.getValue("ar-null-art").coverArts)
+            assertEquals(emptyList<String>(), artists.getValue("ar-none").coverArts)
+            assertEquals(listOf("new-art", "old-art"), dao.artistOnce(sourceId, "ar-album")!!.coverArts)
             assertEquals(
-                "album-ref-art",
+                listOf("album-ref-art"),
                 dao
                     .artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
                     .page()
                     .first { it.id == "ar-album-ref" }
-                    .coverArt,
+                    .coverArts,
             )
         }
 
     @Test
-    fun artistArtFallbackFindsCreditsThroughArtistIndexes() =
+    fun downloadedArtistArtUsesOnlyDownloadedAlbums() =
         runTest {
-            val plan = plan("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME LIMIT 20")
-
-            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 3)))
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "One", year = 2020, starred = null)
+                        .copy(artistId = "ar-1", coverArt = "art-1"),
+                    album(sourceId, "al-2", "Two", year = 2021, starred = null)
+                        .copy(artistId = "ar-1", coverArt = "art-2"),
+                    album(sourceId, "al-3", "Three", year = 2022, starred = null)
+                        .copy(artistId = "ar-1", coverArt = "art-3"),
+                ),
             )
-            assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1", artistId = "ar-1"),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2", artistId = "ar-1"),
+                    song(sourceId, "s3", "Three", starred = null).copy(albumId = "al-3", artistId = "ar-1"),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Queued))
+
+            dao.recomputeArtistArt(sourceId)
+
+            val artist = dao.artistOnce(sourceId, "ar-1")!!
+            assertEquals(listOf("art-3", "art-2", "art-1"), artist.coverArts)
+            assertEquals(listOf("art-1"), artist.downloadedCoverArts)
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
+            dao.recomputeDownloadedArtistArt(sourceId, listOf("ar-1"))
+
+            assertEquals(listOf("art-2", "art-1"), dao.artistOnce(sourceId, "ar-1")!!.downloadedCoverArts)
+        }
+
+    @Test
+    fun artistArtMaterializationUsesTheCreditIndexes() =
+        runTest {
+            val plan = plan(ARTIST_ART_UPDATE_SQL)
+
+            assertTrue(plan, plan.contains("index_albums_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_album_artists_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_songs_sourceId_artistId"))
+            assertTrue(plan, plan.contains("index_song_artists_sourceId_artistId"))
+        }
+
+    @Test
+    fun creditedSongArtistsIncludeTheAlbumArtistAndTrackCredits() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-album", "Album Artist", albumCount = 1),
+                    artist(sourceId, "ar-track", "Track Artist", albumCount = 0),
+                    artist(sourceId, "ar-guest", "Guest", albumCount = 0),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Album", year = null, starred = null)
+                        .copy(artistId = "ar-album"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "Song", starred = null)
+                        .copy(albumId = "al-1", artistId = "ar-track"),
+                ),
+            )
+            db.useWriterConnection { connection ->
+                connection.usePrepared(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (?, 's1', 0, 'ar-guest', 'Guest')",
+                ) { statement ->
+                    statement.bindLong(1, sourceId)
+                    statement.step()
+                }
+            }
+
+            assertEquals(
+                setOf("ar-album", "ar-track", "ar-guest"),
+                dao.creditedArtistIdsForSongs(sourceId, listOf("s1")).toSet(),
             )
         }
 

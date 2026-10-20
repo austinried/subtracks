@@ -26,6 +26,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicSource
+import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.CoroutineScope
@@ -70,11 +71,12 @@ class DownloadRepositoryTest {
     private val requestedArt = CopyOnWriteArrayList<String>()
     private val artFetchedAfterTheEngineRequest = CopyOnWriteArrayList<Boolean>()
     private var failArtworkFetch = false
+    private val failingArtUrls = CopyOnWriteArrayList<String>()
     private val fetcher =
         ArtworkFetcher { url ->
             requestedArt += url
             artFetchedAfterTheEngineRequest += engine.requests.isNotEmpty()
-            if (failArtworkFetch) throw IOException("boom")
+            if (failArtworkFetch || url in failingArtUrls) throw IOException("boom")
             byteArrayOf(1, 2, 3)
         }
 
@@ -379,6 +381,95 @@ class DownloadRepositoryTest {
                     assertNotNull("expected stored art for $key", artwork.uri(1, key))
                 }
             }
+        }
+
+    @Test
+    fun startingADownloadStoresTheProviderArtistImageAndKeepsItUntilTheDownloadGoes() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertArtists(listOf(artist(ARTIST_ART, artistImageUrl = "https://img.example/ar1.jpg")))
+            }
+
+            runBlocking { repository.download(1, "s1") }
+
+            assertTrue(requestedArt.contains("https://img.example/ar1.jpg"))
+            val key = artistImageKey(1, "ar1")
+            assertNotNull(artwork.uri(1, key))
+
+            runBlocking { repository.reconcile() }
+            assertNotNull(artwork.uri(1, key))
+
+            runBlocking { repository.remove(1, "s1") }
+            assertNull(artwork.uri(1, key))
+        }
+
+    @Test
+    fun providerArtworkForTheAlbumArtistSurvivesASweepAndGoesWithTheDownload() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertArtists(
+                    listOf(
+                        artist(ARTIST_ART, "https://img.example/track.jpg").copy(id = "ar-track"),
+                        artist(ARTIST_ART, "https://img.example/album.jpg").copy(id = "ar-album"),
+                    ),
+                )
+                db.libraryDao().upsertAlbums(listOf(album(ALBUM_ART).copy(artistId = "ar-album")))
+                db.libraryDao().upsertSongs(listOf(db.libraryDao().songOnce(1, "s1")!!.copy(artistId = "ar-track")))
+            }
+
+            runBlocking { repository.download(1, "s1") }
+            val trackKey = artistImageKey(1, "ar-track")
+            val albumKey = artistImageKey(1, "ar-album")
+            assertNotNull(artwork.uri(1, trackKey))
+            assertNotNull(artwork.uri(1, albumKey))
+
+            runBlocking { repository.reconcile() }
+            assertNotNull(artwork.uri(1, trackKey))
+            assertNotNull(artwork.uri(1, albumKey))
+
+            runBlocking { repository.remove(1, "s1") }
+            assertNull(artwork.uri(1, trackKey))
+            assertNull(artwork.uri(1, albumKey))
+        }
+
+    @Test
+    fun aFailedProviderImageFetchCachesTheArtistCoverFallback() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.libraryDao().upsertArtists(listOf(artist(ARTIST_ART, artistImageUrl = "https://img.example/ar1.jpg")))
+            }
+            failingArtUrls += "https://img.example/ar1.jpg"
+
+            runBlocking { repository.download(1, "s1") }
+
+            assertNull(artwork.uri(1, artistImageKey(1, "ar1")))
+            assertNotNull(artwork.uri(1, coverArtKey(1, ARTIST_ART, false)))
+            assertNotNull(artwork.uri(1, coverArtKey(1, ARTIST_ART, true)))
+        }
+
+    @Test
+    fun completingADownloadMaterializesOnlyItsAlbumForOfflineArtistArt() =
+        runTest {
+            seedLibrary()
+            repository.start()
+            runBlocking { repository.download(1, "s1") }
+            val id = engine.requests.single().first
+
+            engine.complete(id, total = 100)
+            writeFile(1, "s1", "audio")
+            runBlocking { repository.reconcile() }
+
+            await { row(1, "s1")?.status == DownloadStatus.Completed }
+            assertEquals(
+                listOf(ALBUM_ART),
+                db.libraryDao().artistOnce(1, "ar1")!!.downloadedCoverArts,
+            )
+
+            runBlocking { repository.remove(1, "s1") }
+            assertEquals(emptyList<String>(), db.libraryDao().artistOnce(1, "ar1")!!.downloadedCoverArts)
         }
 
     @Test
@@ -1282,8 +1373,19 @@ class DownloadRepositoryTest {
             songCount = 2,
         )
 
-    private fun artist(coverArt: String?) =
-        Artist(sourceId = 1, id = "ar1", name = "Artist", albumCount = 1, starred = null, coverArt = coverArt, songCount = 2)
+    private fun artist(
+        coverArt: String?,
+        artistImageUrl: String? = null,
+    ) = Artist(
+        sourceId = 1,
+        id = "ar1",
+        name = "Artist",
+        albumCount = 1,
+        starred = null,
+        coverArt = coverArt,
+        artistImageUrl = artistImageUrl,
+        songCount = 2,
+    )
 
     private fun seedLibrary(address: String = "http://localhost:4533/") {
         runBlocking {

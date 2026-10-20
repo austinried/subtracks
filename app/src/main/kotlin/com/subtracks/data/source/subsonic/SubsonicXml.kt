@@ -32,6 +32,7 @@ object SubsonicXml {
             albumCount = attrs.longAttr("albumCount") ?: 0L,
             starred = attrs.dateAttr("starred"),
             coverArt = attrs.attr("coverArt").ifEmpty { null },
+            artistImageUrl = attrs.attr("artistImageUrl").ifEmpty { null },
             sortName = attrs.attr("sortName").takeIf { it.isNotBlank() } ?: attrs.attr("name"),
         )
 

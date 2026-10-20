@@ -695,6 +695,29 @@ private suspend fun createSearchIndex(
     connection.execSQL("INSERT INTO `$table`(`$table`) VALUES('rebuild')")
 }
 
+val MIGRATION_35_36 =
+    object : Migration(35, 36) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `artistImageUrl` TEXT")
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `coverArts` TEXT NOT NULL DEFAULT ''")
+            connection.execSQL("ALTER TABLE `artists` ADD COLUMN `downloadedCoverArts` TEXT NOT NULL DEFAULT ''")
+            backfillArtistArt(connection)
+        }
+    }
+
+private suspend fun backfillArtistArt(connection: SQLiteConnection) {
+    val sourceIds = mutableListOf<Long>()
+    connection.prepare("SELECT id FROM sources").use { statement ->
+        while (statement.step()) sourceIds += statement.getLong(0)
+    }
+    sourceIds.forEach { sourceId ->
+        connection.prepare(ARTIST_ART_UPDATE_SQL).use { statement ->
+            statement.bindLong(1, sourceId)
+            statement.step()
+        }
+    }
+}
+
 val MIGRATIONS: Array<Migration> =
     arrayOf(
         MIGRATION_1_2,
@@ -731,4 +754,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_32_33,
         MIGRATION_33_34,
         MIGRATION_34_35,
+        MIGRATION_35_36,
     )

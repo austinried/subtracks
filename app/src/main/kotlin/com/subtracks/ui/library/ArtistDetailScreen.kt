@@ -102,7 +102,8 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
-import com.subtracks.ui.components.ArtistArtGrid
+import com.subtracks.ui.components.ArtistArt
+import com.subtracks.ui.components.ArtistHeroArt
 import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
@@ -205,7 +206,7 @@ fun ArtistDetailRoute(
     LaunchedEffect(artistId) { viewModel.refreshBio() }
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
-    val artCovers by viewModel.artCovers.collectAsStateWithLifecycle()
+    val heroArt by viewModel.heroArt.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
@@ -245,7 +246,7 @@ fun ArtistDetailRoute(
         bioExpanded = bioExpanded,
         art = art,
         artThumbnail = artThumbnail,
-        artCovers = artCovers,
+        heroArt = heroArt,
         artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artistName),
         coverArt = viewModel::coverArt,
         onBack = onBack,
@@ -286,6 +287,7 @@ fun ArtistDetailScreen(
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
     artCovers: List<CoverArtRef> = emptyList(),
+    heroArt: ArtistArt? = null,
     artwork: ArtworkColors? = null,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
@@ -403,22 +405,16 @@ fun ArtistDetailScreen(
                                 .onSizeChanged { imageHeightPx = it.height.toFloat() },
                         ) {
                             Box(Modifier.fillMaxWidth()) {
-                                if (artCovers.isNotEmpty()) {
-                                    ArtistArtGrid(
-                                        covers = artCovers,
-                                        name = displayName,
-                                        singleThumbnail = artThumbnail,
-                                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                                    )
-                                } else {
-                                    CoverArt(
-                                        ref = art,
-                                        name = displayName,
-                                        thumbnailRef = artThumbnail,
-                                        showPlaceholder = art == null,
-                                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                                    )
-                                }
+                                ArtistHeroArt(
+                                    art =
+                                        heroArt ?: ArtistArt(
+                                            image = art.takeIf { artCovers.isEmpty() },
+                                            covers = artCovers,
+                                        ),
+                                    name = displayName,
+                                    thumbnail = artThumbnail,
+                                    modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                                )
                                 if (nameScrimAlpha > 0f) {
                                     Box(
                                         modifier =

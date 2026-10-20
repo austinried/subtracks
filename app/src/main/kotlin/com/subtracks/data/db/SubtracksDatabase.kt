@@ -28,6 +28,7 @@ import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.SongGenre
 import com.subtracks.data.model.SongSearch
 import com.subtracks.data.model.Source
+import com.subtracks.data.model.StringListConverter
 import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.UpNextEntry
 
@@ -56,7 +57,7 @@ import com.subtracks.data.model.UpNextEntry
         SongDownload::class,
         PendingAction::class,
     ],
-    version = 35,
+    version = 36,
     exportSchema = true,
 )
 @ColumnTypeConverters(
@@ -65,6 +66,7 @@ import com.subtracks.data.model.UpNextEntry
     DownloadErrorConverter::class,
     PendingActionKindConverter::class,
     ArtistRefsConverter::class,
+    StringListConverter::class,
 )
 abstract class SubtracksDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao

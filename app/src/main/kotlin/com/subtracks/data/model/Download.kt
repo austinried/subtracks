@@ -106,10 +106,12 @@ data class DownloadArtwork(
     val sourceId: Long,
     val albumId: String?,
     val artistId: String?,
+    val albumArtistId: String?,
     val albumRow: String?,
     val artistRow: String?,
     val albumCoverArt: String?,
     val artistCoverArt: String?,
+    val albumArtistCoverArt: String?,
 ) {
     val hasMissingLibraryRow: Boolean
         get() = (albumId != null && albumRow == null) || (artistId != null && artistRow == null)

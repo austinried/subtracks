@@ -124,32 +124,125 @@ internal const val ALBUM_CREDIT_ALBUM_IDS =
 
 // Download visibility follows the credit path: an album credit includes the album when any song is
 // downloaded, while a track credit includes it only when the credited track is downloaded.
-private const val DOWNLOADED_ARTIST_ALBUMS =
-    "SELECT albums.id FROM albums " +
-        "WHERE albums.sourceId = :sourceId AND albums.artistId = artists.id " +
+internal const val DOWNLOADED_ALBUM_ROWS =
+    "SELECT albums.id AS albumId, albums.artistId AS artistId FROM albums " +
+        "WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
         "AND EXISTS (SELECT 1 FROM songs " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
         "UNION " +
-        "SELECT albums.id FROM album_artists " +
+        "SELECT albums.id, album_artists.artistId FROM album_artists " +
         "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
-        "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = artists.id " +
+        "WHERE album_artists.sourceId = :sourceId " +
         "AND EXISTS (SELECT 1 FROM songs " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
         "UNION " +
-        "SELECT songs.albumId FROM songs " +
+        "SELECT songs.albumId, songs.artistId FROM songs " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-        "WHERE songs.sourceId = :sourceId AND songs.artistId = artists.id " +
-        "AND sd.status = 'Completed' " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL AND sd.status = 'Completed' " +
         "UNION " +
-        "SELECT songs.albumId FROM song_artists " +
+        "SELECT songs.albumId, song_artists.artistId FROM song_artists " +
         "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-        "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = artists.id " +
-        "AND sd.status = 'Completed'"
+        "WHERE song_artists.sourceId = :sourceId AND sd.status = 'Completed'"
+
+private const val DOWNLOADED_ARTIST_ALBUMS =
+    "SELECT albumId AS id FROM ($DOWNLOADED_ALBUM_ROWS) WHERE artistId = artists.id"
+
+private const val DOWNLOADED_COVER_ALBUM_ROWS =
+    "SELECT albums.id AS albumId, albums.artistId AS artistId FROM albums " +
+        "WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL AND albums.coverArt IS NOT NULL " +
+        "AND EXISTS (SELECT 1 FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+        "UNION " +
+        "SELECT albums.id, album_artists.artistId FROM album_artists " +
+        "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL " +
+        "AND EXISTS (SELECT 1 FROM songs " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed') " +
+        "UNION " +
+        "SELECT songs.albumId, songs.artistId FROM songs " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL AND albums.coverArt IS NOT NULL " +
+        "AND sd.status = 'Completed' " +
+        "UNION " +
+        "SELECT songs.albumId, song_artists.artistId FROM song_artists " +
+        "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
+        "WHERE song_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL AND sd.status = 'Completed'"
+
+// Cover art only needs credited albums that actually have a cover, so filter before the window sort.
+private const val ARTIST_COVER_CREDITS =
+    "SELECT albums.artistId AS artistId, albums.id AS albumId, 'album' AS creditType " +
+        "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId IS NOT NULL " +
+        "AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT album_artists.artistId, albums.id, 'album' " +
+        "FROM album_artists JOIN albums " +
+        "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT songs.artistId, songs.albumId, 'track' " +
+        "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId IS NOT NULL AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId, songs.albumId, 'track' " +
+        "FROM song_artists JOIN songs " +
+        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL"
+
+internal const val ARTIST_ART_UPDATE_SQL =
+    "WITH credits AS (SELECT artistId, albumId, " +
+        "MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
+        "FROM ($ARTIST_COVER_CREDITS) GROUP BY artistId, albumId), " +
+        "ranked AS (SELECT credits.artistId AS artistId, albums.coverArt AS coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY credits.artistId " +
+        "ORDER BY credits.creditRank, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id) AS coverRank " +
+        "FROM credits JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+        "WHERE albums.coverArt IS NOT NULL), " +
+        "unique_ranked AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM ranked GROUP BY artistId, coverArt), " +
+        "covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
+        "SELECT artistId, coverArt, coverRank FROM unique_ranked WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        ") GROUP BY artistId), " +
+        "downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS)), " +
+        "downloaded AS (SELECT dl.artistId AS artistId, albums.coverArt AS coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY dl.artistId " +
+        "ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id) AS coverRank " +
+        "FROM downloaded_albums dl JOIN albums ON albums.sourceId = :sourceId AND albums.id = dl.albumId " +
+        "WHERE albums.coverArt IS NOT NULL), " +
+        "unique_downloaded AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM downloaded GROUP BY artistId, coverArt), " +
+        "downloaded_covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
+        "SELECT artistId, coverArt, coverRank FROM unique_downloaded WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        ") GROUP BY artistId) " +
+        "UPDATE artists SET " +
+        "coverArts = COALESCE((SELECT coverArts FROM covers WHERE covers.artistId = artists.id), ''), " +
+        "downloadedCoverArts = COALESCE((SELECT coverArts FROM downloaded_covers " +
+        "WHERE downloaded_covers.artistId = artists.id), '') " +
+        "WHERE sourceId = :sourceId"
+
+internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
+    "WITH downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS) " +
+        "WHERE artistId IN (:artistIds)), " +
+        "downloaded AS (SELECT dl.artistId AS artistId, albums.coverArt AS coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY dl.artistId " +
+        "ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id) AS coverRank " +
+        "FROM downloaded_albums dl JOIN albums ON albums.sourceId = :sourceId AND albums.id = dl.albumId " +
+        "WHERE albums.coverArt IS NOT NULL), " +
+        "unique_downloaded AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM downloaded GROUP BY artistId, coverArt), " +
+        "downloaded_covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
+        "SELECT artistId, coverArt, coverRank FROM unique_downloaded WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        ") GROUP BY artistId) " +
+        "UPDATE artists SET downloadedCoverArts = COALESCE((SELECT coverArts FROM downloaded_covers " +
+        "WHERE downloaded_covers.artistId = artists.id), '') " +
+        "WHERE sourceId = :sourceId AND id IN (:artistIds)"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +
@@ -164,40 +257,10 @@ internal const val ARTISTS_FILTER =
         "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
         "OR instr(lower(sortName), lower(:search)) > 0))) "
 
-internal const val ARTIST_ALBUM_CREDIT_ART =
-    "SELECT albums.coverArt FROM (" +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM albums " +
-        "INDEXED BY index_albums_sourceId_artistId " +
-        "WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id " +
-        "UNION ALL " +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM album_artists " +
-        "JOIN albums ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
-        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id" +
-        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
-
-internal const val ARTIST_TRACK_CREDIT_ART =
-    "SELECT albums.coverArt FROM (" +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM songs " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE songs.sourceId = artists.sourceId AND songs.artistId = artists.id " +
-        "UNION ALL " +
-        "SELECT albums.id, albums.coverArt, albums.year, albums.sortName FROM song_artists " +
-        "JOIN songs ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
-        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-        "WHERE song_artists.sourceId = artists.sourceId AND song_artists.artistId = artists.id" +
-        ") albums ORDER BY albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 1"
-
-internal const val ARTIST_COVER_ART =
-    "COALESCE(artists.coverArt, CASE " +
-        "WHEN EXISTS (SELECT 1 FROM albums WHERE albums.sourceId = artists.sourceId AND albums.artistId = artists.id) " +
-        "OR EXISTS (SELECT 1 FROM album_artists " +
-        "WHERE album_artists.sourceId = artists.sourceId AND album_artists.artistId = artists.id) " +
-        "THEN ($ARTIST_ALBUM_CREDIT_ART) ELSE ($ARTIST_TRACK_CREDIT_ART) END)"
-
 internal const val ARTIST_COLUMNS =
     "artists.sourceId, artists.id, artists.name, artists.albumCount, artists.starred, " +
-        "$ARTIST_COVER_ART AS coverArt, artists.playCount, artists.played, artists.songCount, " +
-        "artists.sortName, artists.credited"
+        "artists.coverArt, artists.artistImageUrl, artists.coverArts, artists.downloadedCoverArts, " +
+        "artists.playCount, artists.played, artists.songCount, artists.sortName, artists.credited"
 
 // With the Downloaded filter on, count the albums that actually have a download so the number under
 // an artist matches the albums its detail screen lists.
@@ -206,8 +269,8 @@ internal const val ARTISTS_SELECT =
         "CASE WHEN :downloadedFilter = 1 THEN (" +
         "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
         ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, $ARTIST_COVER_ART AS coverArt, artists.playCount, artists.played, artists.songCount, " +
-        "artists.sortName, artists.credited "
+        "artists.starred, artists.coverArt, artists.artistImageUrl, artists.coverArts, artists.downloadedCoverArts, " +
+        "artists.playCount, artists.played, artists.songCount, artists.sortName, artists.credited "
 
 internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
@@ -334,10 +397,20 @@ interface LibraryDao {
     )
     suspend fun recomputeArtistAggregates(sourceId: Long)
 
+    @Query(ARTIST_ART_UPDATE_SQL)
+    suspend fun recomputeArtistArt(sourceId: Long)
+
+    @Query(DOWNLOADED_ARTIST_ART_UPDATE_SQL)
+    suspend fun recomputeDownloadedArtistArt(
+        sourceId: Long,
+        artistIds: List<String>,
+    )
+
     @Transaction
     suspend fun recomputeAggregates(sourceId: Long) {
         recomputeAlbumPlayData(sourceId)
         recomputeArtistAggregates(sourceId)
+        recomputeArtistArt(sourceId)
     }
 
     @Query(
@@ -380,6 +453,12 @@ interface LibraryDao {
         sourceId: Long,
         songId: String,
     ): String?
+
+    @Query("SELECT DISTINCT artistId FROM ($CREDITED_SONG_ROWS) WHERE songId IN (:songIds)")
+    suspend fun creditedArtistIdsForSongs(
+        sourceId: Long,
+        songIds: List<String>,
+    ): List<String>
 
     // Counted locally when a scrobble is submitted, so the play sorts move before the next sync; the
     // sync then overwrites with the server's own number.
@@ -1069,26 +1148,6 @@ interface LibraryDao {
         sourceId: Long,
         artistId: String,
     ): Flow<Artist?>
-
-    @Query("SELECT coverArt FROM artists WHERE sourceId = :sourceId AND id = :artistId")
-    suspend fun artistOwnCoverArt(
-        sourceId: Long,
-        artistId: String,
-    ): String?
-
-    @Query(
-        "SELECT albums.coverArt FROM (" +
-            "SELECT albumId, MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
-            "FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId GROUP BY albumId" +
-            ") credits " +
-            "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
-            "WHERE albums.coverArt IS NOT NULL " +
-            "ORDER BY credits.creditRank, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 4",
-    )
-    suspend fun artistFallbackCoverArts(
-        sourceId: Long,
-        artistId: String,
-    ): List<String>
 
     @Query("SELECT * FROM artist_bios WHERE sourceId = :sourceId AND artistId = :artistId")
     fun artistBio(

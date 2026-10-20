@@ -438,7 +438,7 @@ private fun discHash(
 
 private val primaryKey = listOf("sourceId", "id")
 
-private val artistColumns = listOf("sourceId", "id", "name", "albumCount", "starred", "coverArt", "sortName")
+private val artistColumns = listOf("sourceId", "id", "name", "albumCount", "starred", "coverArt", "artistImageUrl", "sortName")
 
 private val albumColumns =
     listOf(
@@ -515,7 +515,7 @@ private val playlistSongColumns = listOf("sourceId", "playlistId", "songId", "po
 
 private val playlistSongKey = listOf("sourceId", "playlistId", "position")
 
-private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt, sortName)
+private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt, artistImageUrl, sortName)
 
 private fun Album.values() =
     listOf<Any?>(

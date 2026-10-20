@@ -120,6 +120,7 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.StarredFilter
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.DismissOnRequest
@@ -308,7 +309,7 @@ fun LibraryRoute(
         artists = viewModel.artists,
         playlists = viewModel.playlists,
         coverArt = viewModel::coverArt,
-        artistCovers = viewModel::artistArtCovers,
+        artistArt = { viewModel.artistArt(it) },
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onPlaylistClick = onPlaylistClick,
@@ -397,7 +398,7 @@ fun LibraryScreen(
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     onOpenSearch: () -> Unit = {},
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
@@ -541,7 +542,7 @@ fun LibraryScreen(
                             onSync = onSync,
                             downloadStatuses = artistDownloads,
                             scrollToTopKey = scrollToTopKey,
-                            artistCovers = artistCovers,
+                            artistArt = artistArt,
                         )
                     }
 

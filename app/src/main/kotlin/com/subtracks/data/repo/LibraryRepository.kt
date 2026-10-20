@@ -353,16 +353,6 @@ class LibraryRepository(
         artistId: String,
     ): Flow<Artist?> = db.libraryDao().artist(sourceId, artistId)
 
-    suspend fun artistOwnCoverArt(
-        sourceId: Long,
-        artistId: String,
-    ): String? = db.libraryDao().artistOwnCoverArt(sourceId, artistId)
-
-    suspend fun artistFallbackCoverArts(
-        sourceId: Long,
-        artistId: String,
-    ): List<String> = db.libraryDao().artistFallbackCoverArts(sourceId, artistId)
-
     fun artistName(
         sourceId: Long,
         artistId: String,

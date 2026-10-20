@@ -46,6 +46,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.ItemActions
@@ -106,7 +107,7 @@ fun SearchRoute(
             if (next != 0) filterMask = next
         },
         coverArt = viewModel::coverArt,
-        artistCovers = viewModel::artistArtCovers,
+        artistArt = { viewModel.artistArt(it) },
         playingSongId = playback.item?.id,
         onBack = onBack,
         onAlbumClick = {
@@ -147,7 +148,7 @@ fun SearchScreen(
     filters: Set<SearchFilter> = ALL_FILTERS,
     onToggleFilter: (SearchFilter) -> Unit = {},
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     playingSongId: String? = null,
     onBack: () -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
@@ -217,7 +218,7 @@ fun SearchScreen(
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
                     if (showPlaylists) playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
-                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, artistCovers, onArtistClick, onLongClick)
+                    if (showArtists) artistResults(results.artists, artistsLabel, artistArt, onArtistClick, onLongClick)
                     if (showAlbums) albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
                     if (showSongs) songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
                 }
@@ -310,21 +311,20 @@ private fun LazyListScope.albumResults(
 private fun LazyListScope.artistResults(
     artists: List<Artist>,
     header: String,
-    coverArt: (String?, Boolean) -> CoverArtRef?,
-    artistCovers: suspend (String) -> List<CoverArtRef>,
+    artistArt: (Artist) -> ArtistArt,
     onClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
     if (artists.isEmpty()) return
     resultHeader(header)
     items(artists, key = { "artist-${it.id}" }) { artist ->
+        val art = artistArt(artist)
         ArtistListRow(
             artist = artist,
-            coverArt = coverArt,
-            artistCovers = artistCovers,
+            art = art,
             info = null,
             onClick = { onClick(artist) },
-            onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },
+            onLongClick = { onLongClick(MenuTarget.Artist(artist, art.primary)) },
         )
     }
 }

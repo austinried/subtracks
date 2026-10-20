@@ -29,6 +29,7 @@ import com.subtracks.R
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
@@ -55,7 +56,7 @@ fun ArtistsContent(
     onSync: () -> Unit = {},
     downloadStatuses: Map<String, ListDownloadStatus> = emptyMap(),
     scrollToTopKey: Any? = null,
-    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
+    artistArt: (Artist) -> ArtistArt = { ArtistArt() },
 ) {
     when {
         items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {
@@ -83,7 +84,8 @@ fun ArtistsContent(
                 items(count = items.itemCount, key = items.itemKey { it.id }) { index ->
                     val artist = items[index]
                     if (artist != null) {
-                        PrefetchArtworkSeeds(coverArt(artist.coverArt, true))
+                        val art = artistArt(artist)
+                        PrefetchArtworkSeeds(art.primary)
                         ListItem(
                             headlineContent = {
                                 Text(
@@ -107,8 +109,7 @@ fun ArtistsContent(
                             leadingContent = {
                                 ArtistIcon(
                                     artist = artist,
-                                    fallback = coverArt(artist.coverArt, true),
-                                    loadCovers = artistCovers,
+                                    art = art,
                                     modifier = Modifier.size(48.dp).clip(CircleShape),
                                 )
                             },
@@ -119,7 +120,7 @@ fun ArtistsContent(
                                 Modifier.combinedClickable(
                                     onClick = { onArtistClick(artist) },
                                     onLongClick = {
-                                        onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true), downloadStatuses[artist.id]))
+                                        onLongClick(MenuTarget.Artist(artist, art.primary, downloadStatuses[artist.id]))
                                     },
                                 ),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),

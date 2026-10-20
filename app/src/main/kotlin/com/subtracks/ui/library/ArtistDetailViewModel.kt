@@ -13,6 +13,8 @@ import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArt
+import com.subtracks.ui.components.artistArt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -136,39 +138,20 @@ class ArtistDetailViewModel(
     private val _artThumbnail = MutableStateFlow<CoverArtRef?>(null)
     val artThumbnail: StateFlow<CoverArtRef?> = _artThumbnail
 
-    private val _artCovers = MutableStateFlow<List<CoverArtRef>>(emptyList())
-    val artCovers: StateFlow<List<CoverArtRef>> = _artCovers
+    private val _heroArt = MutableStateFlow<ArtistArt?>(null)
+    val heroArt: StateFlow<ArtistArt?> = _heroArt
 
     init {
         viewModelScope.launch {
-            artist
-                .filterNotNull()
+            combine(artist.filterNotNull(), sourceRepository.offline) { loaded, _ -> loaded }
                 .collectLatest { loaded ->
-                    val (full, thumbnail, covers) = resolveArt(loaded)
-                    _art.value = full
-                    _artThumbnail.value = thumbnail
-                    _artCovers.value = covers
+                    val hero = sourceRepository.artistArt(loaded, forIcon = false)
+                    val icon = sourceRepository.artistArt(loaded, forIcon = true)
+                    _art.value = hero.image ?: hero.covers.firstOrNull()
+                    _artThumbnail.value = icon.image ?: icon.covers.firstOrNull()
+                    _heroArt.value = hero
                 }
         }
-    }
-
-    private suspend fun resolveArt(artist: Artist): Triple<CoverArtRef?, CoverArtRef?, List<CoverArtRef>> {
-        val id = sourceId.first()
-        val own = libraryRepository.artistOwnCoverArt(id, artistId)
-        val coverIds =
-            if (own != null) {
-                listOf(own)
-            } else {
-                libraryRepository.artistFallbackCoverArts(id, artistId).distinct()
-            }
-        if (coverIds.isEmpty()) return Triple(null, null, emptyList())
-
-        val thumbnails = coverIds.mapNotNull { sourceRepository.coverArt(it, thumbnail = true) }
-        val fulls = coverIds.mapNotNull { sourceRepository.coverArt(it) }
-        val full = fulls.firstOrNull()
-        val thumbnail = thumbnails.firstOrNull()
-        val covers = if (coverIds.size == 1) listOfNotNull(full ?: thumbnail) else thumbnails
-        return Triple(full ?: thumbnail, thumbnail, covers)
     }
 
     fun coverArt(

@@ -88,6 +88,9 @@ data class Artist(
     val albumCount: Long,
     val starred: Long?,
     val coverArt: String? = null,
+    val artistImageUrl: String? = null,
+    @ColumnInfo(defaultValue = "''") val coverArts: List<String> = emptyList(),
+    @ColumnInfo(defaultValue = "''") val downloadedCoverArts: List<String> = emptyList(),
     @ColumnInfo(defaultValue = "0") val playCount: Long = 0,
     val played: Long? = null,
     @ColumnInfo(defaultValue = "0") val songCount: Long = 0,
@@ -591,6 +594,16 @@ class ArtistRefsConverter {
     @ColumnTypeConverter
     fun toArtistRefs(value: String): List<ArtistRef> = ArtistRefsCodec.decode(value)
 }
+
+class StringListConverter {
+    @ColumnTypeConverter
+    fun fromList(values: List<String>): String = values.joinToString(LIST_SEPARATOR)
+
+    @ColumnTypeConverter
+    fun toList(value: String): List<String> = if (value.isEmpty()) emptyList() else value.split(LIST_SEPARATOR)
+}
+
+private const val LIST_SEPARATOR = "\u001F"
 
 object ArtistRefsCodec {
     fun encode(refs: List<ArtistRef>): String =

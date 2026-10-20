@@ -154,6 +154,70 @@ class MigrationsTest {
         }
 
     @Test
+    fun theArtistArtColumnsDefaultToEmptyAndAcceptValues() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 35)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, starred) " +
+                        "VALUES (1, 'ar1', 'Artist', 0, NULL)",
+                )
+
+                MIGRATION_35_36.migrate(migrated)
+
+                assertEquals(1L, long(migrated, "SELECT artistImageUrl IS NULL FROM artists WHERE id = 'ar1'"))
+                assertEquals("", text(migrated, "SELECT coverArts FROM artists WHERE id = 'ar1'"))
+                assertEquals("", text(migrated, "SELECT downloadedCoverArts FROM artists WHERE id = 'ar1'"))
+                migrated.execSQL(
+                    "UPDATE artists SET artistImageUrl = 'http://img', coverArts = 'a\u001fb', " +
+                        "downloadedCoverArts = 'c' WHERE id = 'ar1'",
+                )
+                assertEquals("http://img", text(migrated, "SELECT artistImageUrl FROM artists WHERE id = 'ar1'"))
+                assertEquals("a\u001fb", text(migrated, "SELECT coverArts FROM artists WHERE id = 'ar1'"))
+                assertEquals("c", text(migrated, "SELECT downloadedCoverArts FROM artists WHERE id = 'ar1'"))
+            }
+        }
+
+    @Test
+    fun theArtistArtMigrationBackfillsExistingLibraries() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 35)
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, starred) " +
+                        "VALUES (1, 'ar1', 'Artist', 3, NULL)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO albums (sourceId, id, artistId, name, albumArtist, created, coverArt, genre, " +
+                        "year, starred, songCount) VALUES " +
+                        "(1, 'al1', 'ar1', 'Shared', 'Artist', 0, 'shared', NULL, 2020, NULL, 1), " +
+                        "(1, 'al2', 'ar1', 'Shared Newer', 'Artist', 0, 'shared', NULL, 2021, NULL, 1), " +
+                        "(1, 'al3', 'ar1', 'Other', 'Artist', 0, 'other', NULL, 2019, NULL, 1)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, albumId, artistId, title) VALUES " +
+                        "(1, 's1', 'al1', 'ar1', 'One'), (1, 's2', 'al2', 'ar1', 'Two'), " +
+                        "(1, 's3', 'al3', 'ar1', 'Three')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO song_downloads (sourceId, songId, status, bytes, total) VALUES " +
+                        "(1, 's1', 'Completed', 1, 1), (1, 's2', 'Completed', 1, 1)",
+                )
+
+                MIGRATION_35_36.migrate(migrated)
+
+                assertEquals("shared\u001fother", text(migrated, "SELECT coverArts FROM artists WHERE id = 'ar1'"))
+                assertEquals("shared", text(migrated, "SELECT downloadedCoverArts FROM artists WHERE id = 'ar1'"))
+            }
+        }
+
+    @Test
     fun theGenreBackfillTrimsAndSkipsBlankSingularGenres() =
         runTest {
             driver.open(":memory:").use { migrated ->

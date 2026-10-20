@@ -375,7 +375,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onPlaylistClick = { playlist ->
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
@@ -418,7 +426,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onPlaylistClick = { playlist ->
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
@@ -514,7 +530,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->
@@ -538,7 +562,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->
@@ -562,7 +594,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->
@@ -588,7 +628,15 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.ALBUM_DETAIL, "albumId", album.id, Routes.album(album.id, album.coverArt))
                             },
                             onArtistClick = { artist ->
-                                navigateDetail(Routes.ARTIST_DETAIL, "artistId", artist.id, Routes.artist(artist.id, artist.coverArt))
+                                navigateDetail(
+                                    Routes.ARTIST_DETAIL,
+                                    "artistId",
+                                    artist.id,
+                                    Routes.artist(
+                                        artist.id,
+                                        artist.coverArt ?: artist.coverArts.firstOrNull(),
+                                    ),
+                                )
                             },
                             onPlaylistClick = { playlist ->
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))

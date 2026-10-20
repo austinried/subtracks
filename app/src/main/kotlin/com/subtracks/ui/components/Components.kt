@@ -85,10 +85,12 @@ fun CoverArt(
     square: Boolean = true,
     elevation: Dp = 0.dp,
     colorFilter: ColorFilter? = null,
+    onError: (() -> Unit)? = null,
 ) {
     val context = LocalPlatformContext.current
     val refKey = ref?.cacheKey
     val thumbnailKey = thumbnailRef?.cacheKey
+    val hasThumbnailFallback = thumbnailRef != null && thumbnailRef != ref
     var failed by remember(refKey, thumbnailKey) { mutableStateOf(false) }
     var thumbnailLoaded by remember(refKey, thumbnailKey) { mutableStateOf(false) }
     var thumbnailRatio by remember(refKey, thumbnailKey) { mutableStateOf(thumbnailKey?.let(ArtworkRatioCache::get)) }
@@ -131,7 +133,10 @@ fun CoverArt(
                                 .ratioOrNull()
                                 ?.let { ArtworkRatioCache.put(ref.cacheKey, it) }
                         },
-                        onError = { failed = true },
+                        onError = {
+                            failed = true
+                            if (!hasThumbnailFallback) onError?.invoke()
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -160,7 +165,10 @@ fun CoverArt(
                                 )
                             }
                         },
-                    onError = { failed = true },
+                    onError = {
+                        failed = true
+                        if (!hasThumbnailFallback) onError?.invoke()
+                    },
                     contentScale = ContentScale.Fit,
                     filterQuality = FilterQuality.High,
                 )

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -19,49 +21,120 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
-import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
-import kotlinx.coroutines.flow.first
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-internal suspend fun loadArtistArtCovers(
-    library: LibraryRepository,
-    source: SourceRepository,
-    artistId: String,
-): List<CoverArtRef> {
-    val sourceId = library.activeSourceId.first() ?: return emptyList()
-    val own = library.artistOwnCoverArt(sourceId, artistId)
-    val ids =
-        if (own != null) {
-            listOf(own)
-        } else {
-            library.artistFallbackCoverArts(sourceId, artistId)
-        }
-    return ids.take(4).mapNotNull { source.coverArt(it, thumbnail = true) }
+data class ArtistArt(
+    val image: CoverArtRef? = null,
+    val covers: List<CoverArtRef> = emptyList(),
+    val fallback: ArtistArt? = null,
+) {
+    val primary: CoverArtRef? get() = image ?: covers.firstOrNull()
+}
+
+fun SourceRepository.artistArt(
+    artist: Artist,
+    forIcon: Boolean = true,
+): ArtistArt =
+    resolveArtistArt(
+        artist = artist,
+        coverArt = this::coverArt,
+        artistImage = this::artistImage,
+        offline = offline.value,
+        forIcon = forIcon,
+    )
+
+internal fun resolveArtistArt(
+    artist: Artist,
+    coverArt: (String?, Boolean) -> CoverArtRef?,
+    artistImage: (String, String?) -> CoverArtRef?,
+    offline: Boolean,
+    forIcon: Boolean,
+): ArtistArt {
+    val coverIds = if (offline) artist.downloadedCoverArts else artist.coverArts
+    val grid =
+        ArtistArt(
+            covers = coverIds.mapNotNull { coverArt(it, forIcon || coverIds.size > 1) },
+        )
+    val own =
+        artist.coverArt
+            ?.let { coverArt(it, forIcon) }
+            ?.let { ArtistArt(image = it, fallback = grid) }
+    return artist.artistImageUrl
+        ?.let { artistImage(artist.id, it) }
+        ?.let { ArtistArt(image = it, fallback = own ?: grid) }
+        ?: own
+        ?: grid
 }
 
 @Composable
 fun ArtistIcon(
     artist: Artist,
-    fallback: CoverArtRef?,
-    loadCovers: suspend (String) -> List<CoverArtRef>,
+    art: ArtistArt,
     modifier: Modifier = Modifier,
 ) {
-    val covers by produceState(initialValue = emptyList<CoverArtRef>(), artist.id) {
-        value = loadCovers(artist.id)
+    var shown by remember(artist.id, art) { mutableStateOf(art) }
+    val showFallback = {
+        shown.fallback?.let { shown = it } ?: run { shown = shown.copy(image = null) }
     }
-    if (covers.size >= 2) {
-        ArtistArtGrid(covers = covers, name = artist.name, modifier = modifier)
-    } else {
-        CoverArt(
-            ref = covers.firstOrNull() ?: fallback,
-            name = artist.name,
-            showPlaceholder = covers.isEmpty() && fallback == null,
-            modifier = modifier,
-        )
+    when {
+        shown.image != null -> {
+            CoverArt(
+                ref = shown.image,
+                name = artist.name,
+                modifier = modifier,
+                onError = showFallback,
+            )
+        }
+
+        shown.covers.size >= 2 -> {
+            ArtistArtGrid(covers = shown.covers, name = artist.name, modifier = modifier)
+        }
+
+        else -> {
+            CoverArt(ref = shown.covers.firstOrNull(), name = artist.name, modifier = modifier)
+        }
+    }
+}
+
+@Composable
+fun ArtistHeroArt(
+    art: ArtistArt,
+    name: String,
+    thumbnail: CoverArtRef?,
+    modifier: Modifier = Modifier,
+) {
+    var shown by remember(art) { mutableStateOf(art) }
+    val showFallback = {
+        shown.fallback?.let { shown = it } ?: run { shown = shown.copy(image = null) }
+    }
+    when {
+        shown.image != null -> {
+            CoverArt(
+                ref = shown.image,
+                name = name,
+                thumbnailRef = thumbnail,
+                showPlaceholder = false,
+                modifier = modifier,
+                onError = showFallback,
+            )
+        }
+
+        shown.covers.isNotEmpty() -> {
+            ArtistArtGrid(
+                covers = shown.covers,
+                name = name,
+                singleThumbnail = thumbnail,
+                modifier = modifier,
+            )
+        }
+
+        else -> {
+            CoverArt(ref = null, name = name, modifier = modifier)
+        }
     }
 }
 

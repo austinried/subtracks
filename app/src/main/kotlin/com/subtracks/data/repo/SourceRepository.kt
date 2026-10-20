@@ -9,6 +9,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.Source
 import com.subtracks.data.model.SubsonicConfig
 import com.subtracks.data.model.SubsonicSource
+import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.StreamQuality
@@ -140,6 +141,18 @@ class SourceRepository(
         artworkStore.uri(current.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
         if (_offline.value) return null
         val url = current.source.coverArtUri(coverArt, thumbnail)?.toString() ?: return null
+        return CoverArtRef(url = url, cacheKey = cacheKey)
+    }
+
+    fun artistImage(
+        artistId: String,
+        url: String?,
+    ): CoverArtRef? {
+        val current = active ?: return null
+        if (url.isNullOrBlank()) return null
+        val cacheKey = artistImageKey(current.id, artistId)
+        artworkStore.uri(current.id, cacheKey)?.let { return CoverArtRef(url = it, cacheKey = cacheKey) }
+        if (_offline.value) return null
         return CoverArtRef(url = url, cacheKey = cacheKey)
     }
 
