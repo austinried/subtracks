@@ -39,7 +39,12 @@ class QueryTimingMeasurementTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val driver = LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it }
-        db = Room.inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java).setDriver(driver).build()
+        db =
+            Room
+                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
+                .setDriver(driver)
+                .addCallback(ArtistSearchTriggerOptimization)
+                .build()
     }
 
     @After

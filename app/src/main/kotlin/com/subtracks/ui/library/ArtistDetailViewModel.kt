@@ -17,7 +17,6 @@ import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.artistArt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -143,8 +142,13 @@ class ArtistDetailViewModel(
 
     init {
         viewModelScope.launch {
-            combine(artist.filterNotNull(), sourceRepository.offline) { loaded, _ -> loaded }
-                .collectLatest { loaded ->
+            combine(
+                artist.filterNotNull(),
+                sourceRepository.offline,
+                sourceRepository.activeSource,
+            ) { loaded, _, activeSource -> loaded to activeSource }
+                .collectLatest { (loaded, activeSource) ->
+                    if (activeSource == null) return@collectLatest
                     val hero = sourceRepository.artistArt(loaded, forIcon = false)
                     val icon = sourceRepository.artistArt(loaded, forIcon = true)
                     _art.value = hero.image ?: hero.covers.firstOrNull()

@@ -286,6 +286,15 @@ class SourceRepositoryTest {
         }
 
     @Test
+    fun activeSourceBecomesReadyAfterThePreferencesLoad() =
+        runBlocking {
+            repository.addSource("nav", "http://a.example/", "u", "p", false)
+
+            val active = withTimeout(TEST_TIMEOUT_MS) { repository.activeSource.first { it != null } }
+            assertEquals(repository.activeSourceId().first(), active)
+        }
+
+    @Test
     fun artistImageUsesTheNetworkOnlineAndOnlyCachedFilesOffline() =
         runBlocking {
             repository.addSource("nav", "http://a.example/", "u", "p", false)

@@ -70,6 +70,9 @@ class SourceRepository(
     private val _offline = MutableStateFlow(false)
     val offline: StateFlow<Boolean> = _offline
 
+    private val _activeSource = MutableStateFlow<Long?>(null)
+    val activeSource: StateFlow<Long?> = _activeSource
+
     fun downloadsAllowedOverMetered(): Boolean = allowMeteredDownloads
 
     fun setOfflineMode(enabled: Boolean) {
@@ -110,6 +113,7 @@ class SourceRepository(
                     Log.i("net", "active source -> ${config?.name ?: "none"}")
                 }
                 active = config?.let { ActiveSource(it.id, it.toMusicSource(quality, concurrency)) }
+                _activeSource.value = config?.id
                 _quality.value = quality
                 if (sourceChanged && config != null && config.useTokenAuth && !_offline.value) {
                     scope.launch {

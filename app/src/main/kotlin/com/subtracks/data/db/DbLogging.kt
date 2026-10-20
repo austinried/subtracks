@@ -118,6 +118,10 @@ internal object ArtistSearchTriggerOptimization : RoomDatabase.Callback() {
     override suspend fun onCreate(connection: SQLiteConnection) {
         optimizeArtistSearchTriggers(connection)
     }
+
+    override suspend fun onOpen(connection: SQLiteConnection) {
+        if (!artistSearchTriggersOptimized(connection)) optimizeArtistSearchTriggers(connection)
+    }
 }
 
 internal object SqliteLifecycleLogging : RoomDatabase.Callback() {

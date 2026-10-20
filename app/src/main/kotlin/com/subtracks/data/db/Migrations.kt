@@ -701,16 +701,20 @@ val MIGRATION_35_36 =
             connection.execSQL("ALTER TABLE `artists` ADD COLUMN `artistImageUrl` TEXT")
             connection.execSQL("ALTER TABLE `artists` ADD COLUMN `coverArts` TEXT NOT NULL DEFAULT ''")
             connection.execSQL("ALTER TABLE `artists` ADD COLUMN `downloadedCoverArts` TEXT NOT NULL DEFAULT ''")
+            optimizeArtistSearchTriggers(connection)
             backfillArtistArt(connection)
         }
     }
 
-val MIGRATION_36_37 =
-    object : Migration(36, 37) {
-        override suspend fun migrate(connection: SQLiteConnection) {
-            optimizeArtistSearchTriggers(connection)
-        }
+internal fun artistSearchTriggersOptimized(connection: SQLiteConnection): Boolean {
+    val triggers = mutableListOf<String>()
+    connection.prepare("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name IN (?, ?)").use { statement ->
+        statement.bindText(1, "room_fts_content_sync_artist_search_BEFORE_UPDATE")
+        statement.bindText(2, "room_fts_content_sync_artist_search_AFTER_UPDATE")
+        while (statement.step()) triggers += statement.getText(0)
     }
+    return triggers.size == 2 && triggers.all { it.contains("UPDATE OF `name`, `sortName`") }
+}
 
 internal fun optimizeArtistSearchTriggers(connection: SQLiteConnection) {
     connection.execSQL("DROP TRIGGER IF EXISTS room_fts_content_sync_artist_search_BEFORE_UPDATE")
@@ -778,5 +782,4 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_33_34,
         MIGRATION_34_35,
         MIGRATION_35_36,
-        MIGRATION_36_37,
     )

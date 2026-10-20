@@ -222,9 +222,10 @@ class MigrationsTest {
     fun theArtistSearchTriggersIgnoreArtOnlyUpdates() =
         runTest {
             driver.open(":memory:").use { migrated ->
-                applySchema(migrated, 36)
-                MIGRATION_36_37.migrate(migrated)
+                applySchema(migrated, 35)
+                MIGRATION_35_36.migrate(migrated)
 
+                assertTrue(artistSearchTriggersOptimized(migrated))
                 assertTrue(
                     triggerSql(migrated, "room_fts_content_sync_artist_search_BEFORE_UPDATE")
                         .contains("UPDATE OF `name`, `sortName`"),
@@ -240,7 +241,7 @@ class MigrationsTest {
     fun theFreshDatabaseCallbackOptimizesTheArtistSearchTriggers() =
         runTest {
             driver.open(":memory:").use { connection ->
-                applySchema(connection, 37)
+                applySchema(connection, 36)
                 connection.execSQL(
                     "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
                 )
@@ -249,15 +250,12 @@ class MigrationsTest {
                         "VALUES (1, 'ar1', 'Artist', 0, NULL)",
                 )
 
-                ArtistSearchTriggerOptimization.onCreate(connection)
+                ArtistSearchTriggerOptimization.onOpen(connection)
+                assertTrue(artistSearchTriggersOptimized(connection))
                 val before = long(connection, "SELECT total_changes()")
                 connection.execSQL("UPDATE artists SET coverArts = 'a' WHERE id = 'ar1'")
 
                 assertEquals(before + 1, long(connection, "SELECT total_changes()"))
-                assertTrue(
-                    triggerSql(connection, "room_fts_content_sync_artist_search_AFTER_UPDATE")
-                        .contains("UPDATE OF `name`, `sortName`"),
-                )
             }
         }
 
@@ -545,6 +543,10 @@ class MigrationsTest {
             val indices = entity.optJSONArray("indices") ?: continue
             for (i in 0 until indices.length()) {
                 connection.execSQL(indices.getJSONObject(i).getString("createSql").replace("\${TABLE_NAME}", name))
+            }
+            val triggers = entity.optJSONArray("contentSyncTriggers") ?: continue
+            for (i in 0 until triggers.length()) {
+                connection.execSQL(triggers.getString(i))
             }
         }
     }

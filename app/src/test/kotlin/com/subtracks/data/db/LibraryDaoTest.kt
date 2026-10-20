@@ -683,6 +683,24 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun artistNameUpdatesKeepTheSearchIndexValid() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 0)))
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Renamed", albumCount = 0)))
+
+            val hits =
+                db.useReaderConnection { connection ->
+                    connection.usePrepared("SELECT COUNT(*) FROM artist_search WHERE artist_search MATCH 'Renamed'") {
+                        it.step()
+                        it.getLong(0)
+                    }
+                }
+            assertEquals(1L, hits)
+        }
+
+    @Test
     fun artistArtDeduplicatesCoversBeforeApplyingTheFourCoverBudget() =
         runTest {
             val sourceId = source()
