@@ -413,13 +413,15 @@ class LibraryDaoTest {
                 )
             for ((order, index) in orders) {
                 val plan =
-                    topLevelPlan(
+                    plan(
                         "SELECT $ARTIST_COLUMNS_DOWNLOADED $ARTISTS_FILTER_DOWNLOADED " +
                             "ORDER BY $order LIMIT 20 OFFSET 0",
+                        topLevelOnly = true,
                     )
                 if (order == ARTIST_ORDER_BY_ALBUM_COUNT || order == ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED) {
                     // The displayed count comes from song_downloads, so this order cannot use
                     // index_artists_albumCount; the hand-written statement sorted in memory too.
+                    assertTrue("$order\n$plan", plan.contains("USING INDEX index_artists_sourceId"))
                     assertTrue("$order\n$plan", plan.contains("USE TEMP B-TREE FOR ORDER BY"))
                 } else {
                     assertTrue("$order\n$plan", plan.contains("USING INDEX $index"))
@@ -446,9 +448,10 @@ class LibraryDaoTest {
                 assertFalse(defaultPlan, defaultPlan.contains("TEMP B-TREE"))
 
                 val downloadedPlan =
-                    topLevelPlan(
+                    plan(
                         "SELECT $PLAYLISTS_COLUMNS_DOWNLOADED $PLAYLISTS_FILTER_DOWNLOADED " +
                             "ORDER BY $order LIMIT 20 OFFSET 0",
+                        topLevelOnly = true,
                     )
                 assertTrue(downloadedPlan, downloadedPlan.contains("USING INDEX $index"))
                 assertFalse(downloadedPlan, downloadedPlan.contains("USE TEMP B-TREE FOR ORDER BY"))
@@ -1366,21 +1369,15 @@ class LibraryDaoTest {
             assertFalse(plan, plan.contains("SCAN songs"))
         }
 
-    private suspend fun plan(sql: String): String =
-        db.useReaderConnection { connection ->
-            connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->
-                val details = mutableListOf<String>()
-                while (statement.step()) details += statement.getText(3)
-                details.joinToString("\n")
-            }
-        }
-
-    private suspend fun topLevelPlan(sql: String): String =
+    private suspend fun plan(
+        sql: String,
+        topLevelOnly: Boolean = false,
+    ): String =
         db.useReaderConnection { connection ->
             connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->
                 val details = mutableListOf<String>()
                 while (statement.step()) {
-                    if (statement.getLong(1) == 0L) details += statement.getText(3)
+                    if (!topLevelOnly || statement.getLong(1) == 0L) details += statement.getText(3)
                 }
                 details.joinToString("\n")
             }
