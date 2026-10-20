@@ -136,28 +136,39 @@ class ArtistDetailViewModel(
     private val _artThumbnail = MutableStateFlow<CoverArtRef?>(null)
     val artThumbnail: StateFlow<CoverArtRef?> = _artThumbnail
 
+    private val _artCovers = MutableStateFlow<List<CoverArtRef>>(emptyList())
+    val artCovers: StateFlow<List<CoverArtRef>> = _artCovers
+
     init {
         viewModelScope.launch {
             artist
                 .filterNotNull()
                 .collectLatest { loaded ->
-                    val (full, thumbnail) = resolveArt(loaded)
+                    val (full, thumbnail, covers) = resolveArt(loaded)
                     _art.value = full
                     _artThumbnail.value = thumbnail
+                    _artCovers.value = covers
                 }
         }
     }
 
-    private suspend fun resolveArt(artist: Artist): Pair<CoverArtRef?, CoverArtRef?> {
-        if (artist.coverArt == null) return null to null
-        repeat(3) { attempt ->
-            val full = sourceRepository.coverArt(artist.coverArt)
-            if (full != null) {
-                return full to sourceRepository.coverArt(artist.coverArt, thumbnail = true)
+    private suspend fun resolveArt(artist: Artist): Triple<CoverArtRef?, CoverArtRef?, List<CoverArtRef>> {
+        val id = sourceId.first()
+        val own = libraryRepository.artistOwnCoverArt(id, artistId)
+        val coverIds =
+            if (own != null) {
+                listOf(own)
+            } else {
+                libraryRepository.artistFallbackCoverArts(id, artistId).distinct()
             }
-            if (attempt < 2) delay(300)
-        }
-        return null to null
+        if (coverIds.isEmpty()) return Triple(null, null, emptyList())
+
+        val thumbnails = coverIds.mapNotNull { sourceRepository.coverArt(it, thumbnail = true) }
+        val fulls = coverIds.mapNotNull { sourceRepository.coverArt(it) }
+        val full = fulls.firstOrNull()
+        val thumbnail = thumbnails.firstOrNull()
+        val covers = if (coverIds.size == 1) listOfNotNull(full ?: thumbnail) else thumbnails
+        return Triple(full ?: thumbnail, thumbnail, covers)
     }
 
     fun coverArt(

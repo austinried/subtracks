@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -63,9 +64,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
@@ -82,7 +87,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -121,7 +128,11 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.PI
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 private val ART_HEIGHT = 420.dp
 private val TITLE_INSET = 16.dp
@@ -193,6 +204,7 @@ fun ArtistDetailRoute(
     LaunchedEffect(artistId) { viewModel.refreshBio() }
     val art by viewModel.art.collectAsStateWithLifecycle()
     val artThumbnail by viewModel.artThumbnail.collectAsStateWithLifecycle()
+    val artCovers by viewModel.artCovers.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
@@ -232,6 +244,7 @@ fun ArtistDetailRoute(
         bioExpanded = bioExpanded,
         art = art,
         artThumbnail = artThumbnail,
+        artCovers = artCovers,
         artwork = rememberArtworkColors(shortcutArt ?: artThumbnail ?: art, THEME_TRANSITION_MS, fallbackName = artistName),
         coverArt = viewModel::coverArt,
         onBack = onBack,
@@ -271,6 +284,7 @@ fun ArtistDetailScreen(
     bioExpanded: Boolean = false,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
+    artCovers: List<CoverArtRef> = emptyList(),
     artwork: ArtworkColors? = null,
     coverArt: (String?, Boolean) -> CoverArtRef?,
     onBack: () -> Unit,
@@ -388,11 +402,11 @@ fun ArtistDetailScreen(
                                 .onSizeChanged { imageHeightPx = it.height.toFloat() },
                         ) {
                             Box(Modifier.fillMaxWidth()) {
-                                CoverArt(
-                                    ref = art,
+                                ArtistHeroArt(
+                                    covers = artCovers,
+                                    fallback = art,
+                                    fallbackThumbnail = artThumbnail,
                                     name = displayName,
-                                    thumbnailRef = artThumbnail,
-                                    showPlaceholder = art == null,
                                     modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                                 )
                                 if (nameScrimAlpha > 0f) {
@@ -817,6 +831,181 @@ internal fun splitBioCollapsed(
         }
     lines += lastLine
     return BioLines(lines, more = true)
+}
+
+@Composable
+private fun ArtistHeroArt(
+    covers: List<CoverArtRef>,
+    fallback: CoverArtRef?,
+    fallbackThumbnail: CoverArtRef?,
+    name: String,
+    modifier: Modifier = Modifier,
+) {
+    when {
+        covers.size >= 4 -> {
+            Column(modifier) {
+                Row(Modifier.weight(1f).fillMaxWidth()) {
+                    covers.take(2).forEach { ref ->
+                        CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
+                    }
+                }
+                Row(Modifier.weight(1f).fillMaxWidth()) {
+                    covers.drop(2).take(2).forEach { ref ->
+                        CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
+                    }
+                }
+            }
+        }
+
+        covers.size == 3 -> {
+            Box(modifier) {
+                covers.forEachIndexed { index, ref ->
+                    CoverArt(
+                        ref = ref,
+                        name = name,
+                        modifier = Modifier.matchParentSize().clip(YRegionShape(index)),
+                    )
+                }
+            }
+        }
+
+        covers.size == 2 -> {
+            Row(modifier) {
+                covers.forEach { ref ->
+                    CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
+                }
+            }
+        }
+
+        covers.size == 1 -> {
+            CoverArt(
+                ref = covers.first(),
+                name = name,
+                thumbnailRef = fallbackThumbnail,
+                showPlaceholder = false,
+                modifier = modifier,
+            )
+        }
+
+        else -> {
+            CoverArt(
+                ref = fallback,
+                name = name,
+                thumbnailRef = fallbackThumbnail,
+                showPlaceholder = fallback == null,
+                modifier = modifier,
+            )
+        }
+    }
+}
+
+private class YRegionShape(
+    private val region: Int,
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val left = rayPoint(size, 210.0)
+        val right = rayPoint(size, 330.0)
+        val bottom = Offset(size.width / 2f, size.height)
+        val path = Path()
+        when (region) {
+            0 -> {
+                path.moveTo(center.x, center.y)
+                path.lineTo(left.x, left.y)
+                addClockwise(path, size, left, right)
+            }
+
+            1 -> {
+                path.moveTo(center.x, center.y)
+                path.lineTo(bottom.x, bottom.y)
+                addClockwise(path, size, bottom, left)
+            }
+
+            else -> {
+                path.moveTo(center.x, center.y)
+                path.lineTo(right.x, right.y)
+                addClockwise(path, size, right, bottom)
+            }
+        }
+        path.lineTo(center.x, center.y)
+        path.close()
+        return Outline.Generic(path)
+    }
+}
+
+private fun rayPoint(
+    size: Size,
+    angleDegrees: Double,
+): Offset {
+    val cx = size.width / 2.0
+    val cy = size.height / 2.0
+    val radians = angleDegrees * PI / 180.0
+    val dx = cos(radians)
+    val dy = sin(radians)
+    val tx =
+        when {
+            dx > 0 -> (size.width - cx) / dx
+            dx < 0 -> -cx / dx
+            else -> Double.POSITIVE_INFINITY
+        }
+    val ty =
+        when {
+            dy > 0 -> (size.height - cy) / dy
+            dy < 0 -> -cy / dy
+            else -> Double.POSITIVE_INFINITY
+        }
+    val t = min(tx, ty)
+    return Offset((cx + dx * t).toFloat(), (cy + dy * t).toFloat())
+}
+
+private fun addClockwise(
+    path: Path,
+    size: Size,
+    from: Offset,
+    to: Offset,
+) {
+    val w = size.width
+    val h = size.height
+    val corners =
+        listOf(
+            Offset(0f, 0f),
+            Offset(w, 0f),
+            Offset(w, h),
+            Offset(0f, h),
+        )
+    val fromParam = perimeterParam(from, size)
+    val toParam = perimeterParam(to, size)
+    if (fromParam <= toParam) {
+        corners
+            .filter { perimeterParam(it, size) > fromParam && perimeterParam(it, size) < toParam }
+            .forEach { path.lineTo(it.x, it.y) }
+    } else {
+        corners
+            .filter { perimeterParam(it, size) > fromParam }
+            .forEach { path.lineTo(it.x, it.y) }
+        corners
+            .filter { perimeterParam(it, size) < toParam }
+            .forEach { path.lineTo(it.x, it.y) }
+    }
+    path.lineTo(to.x, to.y)
+}
+
+private fun perimeterParam(
+    point: Offset,
+    size: Size,
+): Float {
+    val w = size.width
+    val h = size.height
+    return when {
+        point.y <= 0f -> point.x
+        point.x >= w -> w + point.y
+        point.y >= h -> w + h + (w - point.x)
+        else -> 2f * w + h + (h - point.y)
+    }
 }
 
 @Composable

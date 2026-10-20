@@ -1070,6 +1070,26 @@ interface LibraryDao {
         artistId: String,
     ): Flow<Artist?>
 
+    @Query("SELECT coverArt FROM artists WHERE sourceId = :sourceId AND id = :artistId")
+    suspend fun artistOwnCoverArt(
+        sourceId: Long,
+        artistId: String,
+    ): String?
+
+    @Query(
+        "SELECT albums.coverArt FROM (" +
+            "SELECT albumId, MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
+            "FROM ($CREDITED_ALBUM_ROWS) WHERE artistId = :artistId GROUP BY albumId" +
+            ") credits " +
+            "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+            "WHERE albums.coverArt IS NOT NULL " +
+            "ORDER BY credits.creditRank, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id LIMIT 4",
+    )
+    suspend fun artistFallbackCoverArts(
+        sourceId: Long,
+        artistId: String,
+    ): List<String>
+
     @Query("SELECT * FROM artist_bios WHERE sourceId = :sourceId AND artistId = :artistId")
     fun artistBio(
         sourceId: Long,
