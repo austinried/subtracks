@@ -683,6 +683,27 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun artistArtDeduplicatesCoversBeforeApplyingTheFourCoverBudget() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 6)))
+            dao.upsertAlbums(
+                listOf("A", "A", "O", "B", "C", "D").mapIndexed { index, cover ->
+                    album(sourceId, "al-$index", "Album $index", year = 2021L - index, starred = null)
+                        .copy(artistId = "ar-1", coverArt = cover)
+                },
+            )
+
+            dao.recomputeArtistArt(sourceId)
+
+            assertEquals(
+                listOf("A", "O", "B", "C"),
+                dao.artistOnce(sourceId, "ar-1")!!.coverArts,
+            )
+        }
+
+    @Test
     fun artistArtMaterializationUsesTheCreditIndexes() =
         runTest {
             val plan = plan(ARTIST_ART_UPDATE_SQL)

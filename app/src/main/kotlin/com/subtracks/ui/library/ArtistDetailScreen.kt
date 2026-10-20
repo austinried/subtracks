@@ -286,7 +286,6 @@ fun ArtistDetailScreen(
     bioExpanded: Boolean = false,
     art: CoverArtRef?,
     artThumbnail: CoverArtRef? = null,
-    artCovers: List<CoverArtRef> = emptyList(),
     heroArt: ArtistArt? = null,
     artwork: ArtworkColors? = null,
     coverArt: (String?, Boolean) -> CoverArtRef?,
@@ -406,13 +405,8 @@ fun ArtistDetailScreen(
                         ) {
                             Box(Modifier.fillMaxWidth()) {
                                 ArtistHeroArt(
-                                    art =
-                                        heroArt ?: ArtistArt(
-                                            image = art.takeIf { artCovers.isEmpty() },
-                                            covers = artCovers,
-                                        ),
+                                    art = heroArt ?: ArtistArt(image = art, thumbnail = artThumbnail),
                                     name = displayName,
-                                    thumbnail = artThumbnail,
                                     modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
                                 )
                                 if (nameScrimAlpha > 0f) {

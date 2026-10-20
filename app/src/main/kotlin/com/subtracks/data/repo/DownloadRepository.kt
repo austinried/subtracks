@@ -68,6 +68,7 @@ class DownloadRepository(
 
     private val statesFlow = MutableStateFlow<Map<String, SongDownload>>(emptyMap())
     private val attemptedBios = ConcurrentHashMap.newKeySet<Pair<Long, String>>()
+    private val failedArtistImages = ConcurrentHashMap.newKeySet<String>()
 
     fun start() {
         if (started) return
@@ -377,6 +378,7 @@ class DownloadRepository(
                     .mapNotNull { it.engineId }
                     .let(engine::cancel)
                 db.downloadDao().deleteSource(sourceId)
+                db.libraryDao().clearDownloadedArtistArt(sourceId)
                 dir(sourceId).deleteRecursively()
             }
         }
@@ -422,13 +424,9 @@ class DownloadRepository(
         val albumArtist = album?.artistId?.let { db.libraryDao().artistOnce(sourceId, it) }
         listOfNotNull(song?.artistId, album?.artistId).forEach(artistIds::add)
         listOfNotNull(songArtist, albumArtist).forEach { storeArtistImage(sourceId, it) }
-        val artistFallbackCovers =
-            listOfNotNull(songArtist, albumArtist)
-                .filter { it.artistImageUrl.isNullOrBlank() }
-                .mapNotNull { it.coverArt }
         val coverArt =
             (
-                listOfNotNull(album?.coverArt) + artistFallbackCovers +
+                listOfNotNull(album?.coverArt) +
                     db.downloadDao().playlistCoversForSong(sourceId, songId)
             ).distinct()
         coverArt.forEach { cover ->
@@ -445,17 +443,21 @@ class DownloadRepository(
         if (!imageUrl.isNullOrBlank()) {
             val cacheKey = artistImageKey(sourceId, artist.id)
             if (artworkStore.file(sourceId, cacheKey).exists()) return
-            val bytes =
-                try {
-                    artworkFetcher.fetch(imageUrl)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    null
+            val attemptKey = "$sourceId:${artist.id}:$imageUrl"
+            if (attemptKey !in failedArtistImages) {
+                val bytes =
+                    try {
+                        artworkFetcher.fetch(imageUrl)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        null
+                    }
+                if (bytes != null && bytes.isNotEmpty()) {
+                    artworkStore.write(sourceId, cacheKey, bytes)
+                    return
                 }
-            if (bytes != null && bytes.isNotEmpty()) {
-                artworkStore.write(sourceId, cacheKey, bytes)
-                return
+                failedArtistImages += attemptKey
             }
         }
         artist.coverArt?.let {

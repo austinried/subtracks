@@ -209,8 +209,10 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "FROM credits JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
         "WHERE albums.coverArt IS NOT NULL), " +
         "unique_ranked AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM ranked GROUP BY artistId, coverArt), " +
+        "deduped AS (SELECT artistId, coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_ranked), " +
         "covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
-        "SELECT artistId, coverArt, coverRank FROM unique_ranked WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        "SELECT artistId, coverArt, coverRank FROM deduped WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
         ") GROUP BY artistId), " +
         "downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS)), " +
         "downloaded AS (SELECT dl.artistId AS artistId, albums.coverArt AS coverArt, " +
@@ -219,8 +221,10 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "FROM downloaded_albums dl JOIN albums ON albums.sourceId = :sourceId AND albums.id = dl.albumId " +
         "WHERE albums.coverArt IS NOT NULL), " +
         "unique_downloaded AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM downloaded GROUP BY artistId, coverArt), " +
+        "downloaded_deduped AS (SELECT artistId, coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_downloaded), " +
         "downloaded_covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
-        "SELECT artistId, coverArt, coverRank FROM unique_downloaded WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        "SELECT artistId, coverArt, coverRank FROM downloaded_deduped WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
         ") GROUP BY artistId) " +
         "UPDATE artists SET " +
         "coverArts = COALESCE((SELECT coverArts FROM covers WHERE covers.artistId = artists.id), ''), " +
@@ -237,8 +241,10 @@ internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
         "FROM downloaded_albums dl JOIN albums ON albums.sourceId = :sourceId AND albums.id = dl.albumId " +
         "WHERE albums.coverArt IS NOT NULL), " +
         "unique_downloaded AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM downloaded GROUP BY artistId, coverArt), " +
+        "downloaded_deduped AS (SELECT artistId, coverArt, " +
+        "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_downloaded), " +
         "downloaded_covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
-        "SELECT artistId, coverArt, coverRank FROM unique_downloaded WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
+        "SELECT artistId, coverArt, coverRank FROM downloaded_deduped WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
         ") GROUP BY artistId) " +
         "UPDATE artists SET downloadedCoverArts = COALESCE((SELECT coverArts FROM downloaded_covers " +
         "WHERE downloaded_covers.artistId = artists.id), '') " +
@@ -405,6 +411,9 @@ interface LibraryDao {
         sourceId: Long,
         artistIds: List<String>,
     )
+
+    @Query("UPDATE artists SET downloadedCoverArts = '' WHERE sourceId = :sourceId AND downloadedCoverArts != ''")
+    suspend fun clearDownloadedArtistArt(sourceId: Long)
 
     @Transaction
     suspend fun recomputeAggregates(sourceId: Long) {

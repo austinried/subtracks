@@ -76,8 +76,16 @@ class ArtistArtTest {
         }
         val artistImage: (String, String?) -> CoverArtRef? = { _, _ -> null }
 
-        resolveArtistArt(artist(coverArts = listOf("a")), coverArt, artistImage, offline = false, forIcon = false)
-        assertEquals(listOf(false), thumbnails)
+        val single =
+            resolveArtistArt(
+                artist(coverArts = listOf("a")),
+                coverArt,
+                artistImage,
+                offline = false,
+                forIcon = false,
+            )
+        assertEquals(listOf(true, false), thumbnails)
+        assertEquals("a", single.thumbnail?.url)
 
         thumbnails.clear()
         resolveArtistArt(artist(coverArts = listOf("a", "b")), coverArt, artistImage, offline = false, forIcon = false)

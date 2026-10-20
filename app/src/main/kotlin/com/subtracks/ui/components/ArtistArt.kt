@@ -29,6 +29,7 @@ import kotlin.math.sin
 
 data class ArtistArt(
     val image: CoverArtRef? = null,
+    val thumbnail: CoverArtRef? = null,
     val covers: List<CoverArtRef> = emptyList(),
     val fallback: ArtistArt? = null,
 ) {
@@ -57,15 +58,22 @@ internal fun resolveArtistArt(
     val coverIds = if (offline) artist.downloadedCoverArts else artist.coverArts
     val grid =
         ArtistArt(
-            covers = coverIds.mapNotNull { coverArt(it, forIcon || coverIds.size > 1) },
+            thumbnail = coverIds.singleOrNull()?.let { coverArt(it, true) },
+            covers = coverIds.take(4).mapNotNull { coverArt(it, forIcon || coverIds.size > 1) },
         )
     val own =
-        artist.coverArt
-            ?.let { coverArt(it, forIcon) }
-            ?.let { ArtistArt(image = it, fallback = grid) }
+        artist.coverArt?.let { coverId ->
+            coverArt(coverId, forIcon)?.let { image ->
+                ArtistArt(
+                    image = image,
+                    thumbnail = if (forIcon) image else coverArt(coverId, true),
+                    fallback = grid,
+                )
+            }
+        }
     return artist.artistImageUrl
         ?.let { artistImage(artist.id, it) }
-        ?.let { ArtistArt(image = it, fallback = own ?: grid) }
+        ?.let { ArtistArt(image = it, thumbnail = it, fallback = own ?: grid) }
         ?: own
         ?: grid
 }
@@ -104,7 +112,6 @@ fun ArtistIcon(
 fun ArtistHeroArt(
     art: ArtistArt,
     name: String,
-    thumbnail: CoverArtRef?,
     modifier: Modifier = Modifier,
 ) {
     var shown by remember(art) { mutableStateOf(art) }
@@ -116,7 +123,7 @@ fun ArtistHeroArt(
             CoverArt(
                 ref = shown.image,
                 name = name,
-                thumbnailRef = thumbnail,
+                thumbnailRef = shown.thumbnail,
                 showPlaceholder = false,
                 modifier = modifier,
                 onError = showFallback,
@@ -127,7 +134,7 @@ fun ArtistHeroArt(
             ArtistArtGrid(
                 covers = shown.covers,
                 name = name,
-                singleThumbnail = thumbnail,
+                singleThumbnail = shown.thumbnail,
                 modifier = modifier,
             )
         }

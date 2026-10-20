@@ -93,6 +93,7 @@ fun CoverArt(
     val hasThumbnailFallback = thumbnailRef != null && thumbnailRef != ref
     var failed by remember(refKey, thumbnailKey) { mutableStateOf(false) }
     var thumbnailLoaded by remember(refKey, thumbnailKey) { mutableStateOf(false) }
+    var thumbnailFailed by remember(refKey, thumbnailKey) { mutableStateOf(false) }
     var thumbnailRatio by remember(refKey, thumbnailKey) { mutableStateOf(thumbnailKey?.let(ArtworkRatioCache::get)) }
     val letterScheme =
         if (showPlaceholder || (failed && !thumbnailLoaded)) {
@@ -117,6 +118,10 @@ fun CoverArt(
                 thumbnailLoaded = thumbnailLoaded,
                 onThumbnailLoaded = { thumbnailLoaded = true },
                 onThumbnailRatio = { thumbnailRatio = it },
+                onThumbnailError = {
+                    thumbnailFailed = true
+                    if (failed) onError?.invoke()
+                },
                 contentScale = ContentScale.Crop,
                 colorFilter = colorFilter,
                 placeholderContentColor = letterScheme?.onPrimaryContainer,
@@ -135,7 +140,7 @@ fun CoverArt(
                         },
                         onError = {
                             failed = true
-                            if (!hasThumbnailFallback) onError?.invoke()
+                            if (!hasThumbnailFallback || thumbnailFailed) onError?.invoke()
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -167,7 +172,7 @@ fun CoverArt(
                         },
                     onError = {
                         failed = true
-                        if (!hasThumbnailFallback) onError?.invoke()
+                        if (!hasThumbnailFallback || thumbnailFailed) onError?.invoke()
                     },
                     contentScale = ContentScale.Fit,
                     filterQuality = FilterQuality.High,
@@ -187,6 +192,10 @@ fun CoverArt(
                     thumbnailLoaded = thumbnailLoaded,
                     onThumbnailLoaded = { thumbnailLoaded = true },
                     onThumbnailRatio = { thumbnailRatio = it },
+                    onThumbnailError = {
+                        thumbnailFailed = true
+                        if (failed) onError?.invoke()
+                    },
                     contentScale = ContentScale.Fit,
                     colorFilter = colorFilter,
                     placeholderContentColor = letterScheme?.onPrimaryContainer,
@@ -216,6 +225,7 @@ private fun BoxScope.CoverArtContent(
     thumbnailLoaded: Boolean,
     onThumbnailLoaded: () -> Unit,
     onThumbnailRatio: (Float) -> Unit,
+    onThumbnailError: () -> Unit,
     contentScale: ContentScale,
     colorFilter: ColorFilter?,
     placeholderContentColor: Color?,
@@ -254,6 +264,7 @@ private fun BoxScope.CoverArtContent(
                         ArtworkRatioCache.put(thumbnailRef.cacheKey, it)
                     }
             },
+            onError = { onThumbnailError() },
             modifier = Modifier.fillMaxSize(),
         )
     }

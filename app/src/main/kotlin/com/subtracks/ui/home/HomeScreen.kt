@@ -320,7 +320,7 @@ fun OfflineHomeScreen(
         ) {
             homeTitle()
             downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick) { onMore(OfflineListKind.Albums) }
-            downloadedArtistRow(artists, coverArt, artistArt, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
+            downloadedArtistRow(artists, artistArt, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
             downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick) { onMore(OfflineListKind.Playlists) }
             songList(
                 key = "downloaded-songs",
@@ -372,7 +372,6 @@ private fun LazyListScope.downloadedAlbumRow(
 
 private fun LazyListScope.downloadedArtistRow(
     artists: LazyPagingItems<Artist>,
-    coverArt: (String?, Boolean) -> CoverArtRef?,
     artistArt: (Artist) -> ArtistArt,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,

@@ -346,7 +346,10 @@ class DownloadRepositoryTest {
         runTest {
             seedLibrary()
             writeFile(1, "s1", "audio")
-            runBlocking { repository.download(1, "s1") }
+            runBlocking {
+                repository.download(1, "s1")
+                db.libraryDao().upsertArtists(listOf(artist(ARTIST_ART).copy(downloadedCoverArts = listOf(ALBUM_ART))))
+            }
             val id = engine.requests.single().first
 
             runBlocking { repository.removeSource(1) }
@@ -354,6 +357,13 @@ class DownloadRepositoryTest {
             assertTrue(engine.cancelled.contains(id))
             assertFalse(file(1, "s1").exists())
             assertTrue(allRows().isEmpty())
+            assertTrue(
+                db
+                    .libraryDao()
+                    .artistOnce(1, "ar1")!!
+                    .downloadedCoverArts
+                    .isEmpty(),
+            )
         }
 
     @Test

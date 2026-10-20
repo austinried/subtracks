@@ -334,11 +334,14 @@ class AppScreenshotTest {
                         ),
                     art = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
                     artThumbnail = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
-                    artCovers =
-                        Fixtures.albums
-                            .take(3)
-                            .mapNotNull { it.coverArt }
-                            .map { CoverArtRef(it, "test:$it") },
+                    heroArt =
+                        ArtistArt(
+                            covers =
+                                Fixtures.albums
+                                    .take(3)
+                                    .mapNotNull { it.coverArt }
+                                    .map { CoverArtRef(it, "test:$it") },
+                        ),
                     artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
                     onBack = {},
