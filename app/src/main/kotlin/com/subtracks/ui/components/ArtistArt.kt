@@ -209,27 +209,27 @@ private class YRegionShape(
         density: Density,
     ): Outline {
         val center = Offset(size.width / 2f, size.height / 2f)
-        val left = rayPoint(size, 210.0)
-        val right = rayPoint(size, 330.0)
-        val bottom = Offset(size.width / 2f, size.height)
+        val left = rayPoint(size, 150.0)
+        val right = rayPoint(size, 30.0)
+        val top = Offset(size.width / 2f, 0f)
         val path = Path()
         when (region) {
             0 -> {
                 path.moveTo(center.x, center.y)
-                path.lineTo(left.x, left.y)
-                addClockwise(path, size, left, right)
+                path.lineTo(right.x, right.y)
+                addClockwise(path, size, right, left)
             }
 
             1 -> {
                 path.moveTo(center.x, center.y)
-                path.lineTo(bottom.x, bottom.y)
-                addClockwise(path, size, bottom, left)
+                path.lineTo(left.x, left.y)
+                addClockwise(path, size, left, top)
             }
 
             else -> {
                 path.moveTo(center.x, center.y)
-                path.lineTo(right.x, right.y)
-                addClockwise(path, size, right, bottom)
+                path.lineTo(top.x, top.y)
+                addClockwise(path, size, top, right)
             }
         }
         path.lineTo(center.x, center.y)
