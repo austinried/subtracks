@@ -570,8 +570,7 @@ fun ArtistDetailScreen(
     }
 }
 
-// The collapsed layout narrows all three lines so the More control stays clear of the action
-// buttons. Expanded lines only reserve the rows the buttons actually overlap.
+// Only the lines that overlap the action buttons are narrowed; later lines use the full width.
 @Composable
 private fun ArtistBio(
     text: String,
@@ -602,14 +601,12 @@ private fun ArtistBio(
             ceil(with(density) { (BIO_ACTION_HEIGHT - BIO_ACTION_OFFSET).toPx() } / lineHeightPx)
                 .toInt()
                 .coerceAtLeast(1)
-        val collapsedReserveLines = maxOf(reserveLines, 3)
         val bioLines =
             remember(
                 text,
                 fullWidth,
                 reserve,
                 reserveLines,
-                collapsedReserveLines,
                 collapsed,
                 expanded,
                 moreText,
@@ -623,7 +620,7 @@ private fun ArtistBio(
                             style,
                             fullWidth,
                             reserve,
-                            collapsedReserveLines,
+                            reserveLines,
                             moreText,
                             maxLines = 3,
                         )
