@@ -147,8 +147,9 @@ private val SHUFFLE_RESERVE = 86.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 private val BIO_ACTION_RESERVE = 104.dp
 private val BIO_ACTION_HEIGHT = 48.dp
-private val BIO_ACTION_OFFSET = 8.dp
+private val BIO_ACTION_OFFSET = 16.dp
 private val BIO_TOP_GAP = 8.dp
+private val BIO_BOTTOM_GAP = 8.dp
 
 internal fun estimateScrollPx(
     index: Int,
@@ -484,7 +485,7 @@ fun ArtistDetailScreen(
                                     onCollapse = onCollapseBio,
                                     modifier =
                                         Modifier.padding(
-                                            bottom = if (hasBio && !bioCollapsed) 8.dp else 0.dp,
+                                            bottom = if (hasBio) BIO_BOTTOM_GAP else 0.dp,
                                         ),
                                 )
                             }
@@ -568,8 +569,8 @@ fun ArtistDetailScreen(
     }
 }
 
-// The expanded layout narrows only the lines that overlap the action buttons; later lines use the
-// full width.
+// The collapsed layout narrows all three lines so the More control stays clear of the action
+// buttons. Expanded lines only reserve the rows the buttons actually overlap.
 @Composable
 private fun ArtistBio(
     text: String,
@@ -600,11 +601,31 @@ private fun ArtistBio(
             ceil(with(density) { (BIO_ACTION_HEIGHT - BIO_ACTION_OFFSET).toPx() } / lineHeightPx)
                 .toInt()
                 .coerceAtLeast(1)
+        val collapsedReserveLines = maxOf(reserveLines, 3)
         val bioLines =
-            remember(text, fullWidth, reserve, reserveLines, collapsed, expanded, moreText, lessText) {
+            remember(
+                text,
+                fullWidth,
+                reserve,
+                reserveLines,
+                collapsedReserveLines,
+                collapsed,
+                expanded,
+                moreText,
+                lessText,
+            ) {
                 when {
                     collapsed -> {
-                        splitBioCollapsed(measurer, text, style, fullWidth, reserve, reserveLines, moreText, maxLines = 3)
+                        splitBioCollapsed(
+                            measurer,
+                            text,
+                            style,
+                            fullWidth,
+                            reserve,
+                            collapsedReserveLines,
+                            moreText,
+                            maxLines = 3,
+                        )
                     }
 
                     expanded -> {
