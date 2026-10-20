@@ -998,7 +998,7 @@ private fun DownloadProgressIcon(
 ) {
     val description = stringResource(R.string.downloads_in_progress)
     Box(
-        modifier = Modifier.size(28.dp).semantics { contentDescription = description },
+        modifier = Modifier.size(32.dp).semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         val fraction = progress.fraction
@@ -1007,13 +1007,13 @@ private fun DownloadProgressIcon(
                 progress = { fraction },
                 color = color,
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeWidth = 2.5.dp,
+                strokeWidth = 2.dp,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
             CircularProgressIndicator(
                 color = color,
-                strokeWidth = 2.5.dp,
+                strokeWidth = 2.dp,
                 modifier = Modifier.fillMaxSize(),
             )
         }
