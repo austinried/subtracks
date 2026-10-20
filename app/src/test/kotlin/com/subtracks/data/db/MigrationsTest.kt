@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -214,6 +215,49 @@ class MigrationsTest {
 
                 assertEquals("shared\u001fother", text(migrated, "SELECT coverArts FROM artists WHERE id = 'ar1'"))
                 assertEquals("shared", text(migrated, "SELECT downloadedCoverArts FROM artists WHERE id = 'ar1'"))
+            }
+        }
+
+    @Test
+    fun theArtistSearchTriggersIgnoreArtOnlyUpdates() =
+        runTest {
+            driver.open(":memory:").use { migrated ->
+                applySchema(migrated, 36)
+                MIGRATION_36_37.migrate(migrated)
+
+                assertTrue(
+                    triggerSql(migrated, "room_fts_content_sync_artist_search_BEFORE_UPDATE")
+                        .contains("UPDATE OF `name`, `sortName`"),
+                )
+                assertTrue(
+                    triggerSql(migrated, "room_fts_content_sync_artist_search_AFTER_UPDATE")
+                        .contains("UPDATE OF `name`, `sortName`"),
+                )
+            }
+        }
+
+    @Test
+    fun theFreshDatabaseCallbackOptimizesTheArtistSearchTriggers() =
+        runTest {
+            driver.open(":memory:").use { connection ->
+                applySchema(connection, 37)
+                connection.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 's', 'http://x', 1, 0)",
+                )
+                connection.execSQL(
+                    "INSERT INTO artists (sourceId, id, name, albumCount, starred) " +
+                        "VALUES (1, 'ar1', 'Artist', 0, NULL)",
+                )
+
+                ArtistSearchTriggerOptimization.onCreate(connection)
+                val before = long(connection, "SELECT total_changes()")
+                connection.execSQL("UPDATE artists SET coverArts = 'a' WHERE id = 'ar1'")
+
+                assertEquals(before + 1, long(connection, "SELECT total_changes()"))
+                assertTrue(
+                    triggerSql(connection, "room_fts_content_sync_artist_search_AFTER_UPDATE")
+                        .contains("UPDATE OF `name`, `sortName`"),
+                )
             }
         }
 
@@ -457,6 +501,16 @@ class MigrationsTest {
         connection.prepare(sql).use { statement ->
             check(statement.step()) { "No row for $sql" }
             statement.getLong(0)
+        }
+
+    private fun triggerSql(
+        connection: SQLiteConnection,
+        trigger: String,
+    ): String =
+        connection.prepare("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?").use { statement ->
+            statement.bindText(1, trigger)
+            check(statement.step()) { "No trigger $trigger" }
+            statement.getText(0)
         }
 
     private fun indexColumn(

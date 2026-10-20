@@ -114,6 +114,12 @@ class LoggedMigration(
     }
 }
 
+internal object ArtistSearchTriggerOptimization : RoomDatabase.Callback() {
+    override suspend fun onCreate(connection: SQLiteConnection) {
+        optimizeArtistSearchTriggers(connection)
+    }
+}
+
 internal object SqliteLifecycleLogging : RoomDatabase.Callback() {
     override suspend fun onCreate(connection: SQLiteConnection) {
         Log.i("sql", "created fresh database")

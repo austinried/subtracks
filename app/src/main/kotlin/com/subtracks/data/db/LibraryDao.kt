@@ -230,7 +230,10 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "coverArts = COALESCE((SELECT coverArts FROM covers WHERE covers.artistId = artists.id), ''), " +
         "downloadedCoverArts = COALESCE((SELECT coverArts FROM downloaded_covers " +
         "WHERE downloaded_covers.artistId = artists.id), '') " +
-        "WHERE sourceId = :sourceId"
+        "WHERE sourceId = :sourceId AND (" +
+        "coverArts != COALESCE((SELECT coverArts FROM covers WHERE covers.artistId = artists.id), '') " +
+        "OR downloadedCoverArts != COALESCE((SELECT coverArts FROM downloaded_covers " +
+        "WHERE downloaded_covers.artistId = artists.id), ''))"
 
 internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
     "WITH downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS) " +
@@ -248,7 +251,9 @@ internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
         ") GROUP BY artistId) " +
         "UPDATE artists SET downloadedCoverArts = COALESCE((SELECT coverArts FROM downloaded_covers " +
         "WHERE downloaded_covers.artistId = artists.id), '') " +
-        "WHERE sourceId = :sourceId AND id IN (:artistIds)"
+        "WHERE sourceId = :sourceId AND id IN (:artistIds) AND " +
+        "downloadedCoverArts != COALESCE((SELECT coverArts FROM downloaded_covers " +
+        "WHERE downloaded_covers.artistId = artists.id), '')"
 
 internal const val ARTISTS_FILTER =
     "FROM artists WHERE sourceId = :sourceId " +

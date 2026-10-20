@@ -705,6 +705,29 @@ val MIGRATION_35_36 =
         }
     }
 
+val MIGRATION_36_37 =
+    object : Migration(36, 37) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            optimizeArtistSearchTriggers(connection)
+        }
+    }
+
+internal fun optimizeArtistSearchTriggers(connection: SQLiteConnection) {
+    connection.execSQL("DROP TRIGGER IF EXISTS room_fts_content_sync_artist_search_BEFORE_UPDATE")
+    connection.execSQL("DROP TRIGGER IF EXISTS room_fts_content_sync_artist_search_AFTER_UPDATE")
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_artist_search_BEFORE_UPDATE " +
+            "BEFORE UPDATE OF `name`, `sortName` ON `artists` BEGIN " +
+            "DELETE FROM `artist_search` WHERE `rowid`=OLD.`rowid`; END",
+    )
+    connection.execSQL(
+        "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_artist_search_AFTER_UPDATE " +
+            "AFTER UPDATE OF `name`, `sortName` ON `artists` BEGIN " +
+            "INSERT INTO `artist_search`(`rowid`, `name`, `sortName`) " +
+            "VALUES (NEW.`rowid`, NEW.`name`, NEW.`sortName`); END",
+    )
+}
+
 private suspend fun backfillArtistArt(connection: SQLiteConnection) {
     val sourceIds = mutableListOf<Long>()
     connection.prepare("SELECT id FROM sources").use { statement ->
@@ -755,4 +778,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_33_34,
         MIGRATION_34_35,
         MIGRATION_35_36,
+        MIGRATION_36_37,
     )

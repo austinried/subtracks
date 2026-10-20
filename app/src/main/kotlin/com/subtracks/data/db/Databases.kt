@@ -11,6 +11,7 @@ fun createAndroidDatabase(context: Context): SubtracksDatabase {
         .databaseBuilder<SubtracksDatabase>(context, "subtracks.db")
         .setDriver(driver)
         .addMigrations(*MIGRATIONS.map(::LoggedMigration).toTypedArray())
+        .addCallback(ArtistSearchTriggerOptimization)
         .addCallback(SqliteLifecycleLogging)
         .build()
 }
