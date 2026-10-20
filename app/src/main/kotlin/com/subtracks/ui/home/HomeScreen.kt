@@ -72,6 +72,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.EmptyState
@@ -137,6 +138,7 @@ fun HomeRoute(
             playlists = viewModel.downloadedPlaylists.collectAsLazyPagingItems(),
             songs = viewModel.downloadedSongs.collectAsStateWithLifecycle(initialValue = emptyList()).value,
             coverArt = viewModel::coverArt,
+            artistCovers = viewModel::artistArtCovers,
             playingSongId = playback.item?.id,
             topInset = topInset,
             bottomInset = bottomInset,
@@ -152,6 +154,7 @@ fun HomeRoute(
         HomeScreen(
             feed = feed,
             coverArt = viewModel::coverArt,
+            artistCovers = viewModel::artistArtCovers,
             playingSongId = playback.item?.id,
             topInset = topInset,
             bottomInset = bottomInset,
@@ -173,6 +176,7 @@ fun HomeScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
     modifier: Modifier = Modifier,
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -215,6 +219,7 @@ fun HomeScreen(
                 HomeSection.RecentlyPlayedArtists,
                 feed.recentlyPlayedArtists,
                 coverArt,
+                artistCovers,
                 onArtistClick,
                 onLongClick,
                 onMore,
@@ -249,6 +254,7 @@ fun HomeScreen(
                 HomeSection.MostPlayedArtists,
                 feed.mostPlayedArtists,
                 coverArt,
+                artistCovers,
                 onArtistClick,
                 onLongClick,
                 onMore,
@@ -296,6 +302,7 @@ fun OfflineHomeScreen(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     playingSongId: String?,
     modifier: Modifier = Modifier,
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
     topInset: Dp = 0.dp,
     bottomInset: Dp = 0.dp,
     onAlbumClick: (Album) -> Unit = {},
@@ -312,7 +319,7 @@ fun OfflineHomeScreen(
         ) {
             homeTitle()
             downloadedAlbumRow(albums, coverArt, onAlbumClick, onLongClick) { onMore(OfflineListKind.Albums) }
-            downloadedArtistRow(artists, coverArt, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
+            downloadedArtistRow(artists, coverArt, artistCovers, onArtistClick, onLongClick) { onMore(OfflineListKind.Artists) }
             downloadedPlaylistRow(playlists, coverArt, onPlaylistClick, onLongClick) { onMore(OfflineListKind.Playlists) }
             songList(
                 key = "downloaded-songs",
@@ -365,6 +372,7 @@ private fun LazyListScope.downloadedAlbumRow(
 private fun LazyListScope.downloadedArtistRow(
     artists: LazyPagingItems<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
+    artistCovers: suspend (String) -> List<CoverArtRef>,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: () -> Unit,
@@ -386,6 +394,7 @@ private fun LazyListScope.downloadedArtistRow(
                     ArtistTile(
                         artist = artist,
                         ref = ref,
+                        artistCovers = artistCovers,
                         onClick = { onArtistClick(artist) },
                         onLongClick = { onLongClick(MenuTarget.Artist(artist, ref)) },
                     )
@@ -607,6 +616,7 @@ private fun LazyListScope.artistRow(
     section: HomeSection,
     artists: List<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
+    artistCovers: suspend (String) -> List<CoverArtRef>,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
     onMore: (HomeSection) -> Unit,
@@ -629,6 +639,7 @@ private fun LazyListScope.artistRow(
                 ArtistTile(
                     artist = artist,
                     ref = ref,
+                    artistCovers = artistCovers,
                     onClick = { onArtistClick(artist) },
                     onLongClick = { onLongClick(MenuTarget.Artist(artist, ref)) },
                 )
@@ -780,6 +791,7 @@ private fun AlbumTile(
 private fun ArtistTile(
     artist: Artist,
     ref: CoverArtRef?,
+    artistCovers: suspend (String) -> List<CoverArtRef>,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -787,9 +799,10 @@ private fun ArtistTile(
         modifier = Modifier.width(ARTIST_TILE_SIZE).combinedClickable(onClick = onClick, onLongClick = onLongClick),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        CoverArt(
-            ref = ref,
-            name = artist.name,
+        ArtistIcon(
+            artist = artist,
+            fallback = ref,
+            loadCovers = artistCovers,
             modifier = Modifier.size(ARTIST_TILE_SIZE).clip(CircleShape),
         )
         Spacer(Modifier.height(6.dp))

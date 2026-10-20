@@ -308,6 +308,7 @@ fun LibraryRoute(
         artists = viewModel.artists,
         playlists = viewModel.playlists,
         coverArt = viewModel::coverArt,
+        artistCovers = viewModel::artistArtCovers,
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onPlaylistClick = onPlaylistClick,
@@ -396,6 +397,7 @@ fun LibraryScreen(
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
     onOpenSearch: () -> Unit = {},
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
@@ -539,6 +541,7 @@ fun LibraryScreen(
                             onSync = onSync,
                             downloadStatuses = artistDownloads,
                             scrollToTopKey = scrollToTopKey,
+                            artistCovers = artistCovers,
                         )
                     }
 

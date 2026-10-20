@@ -12,6 +12,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.loadArtistArtCovers
 import com.subtracks.ui.home.playSongInContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,6 +74,8 @@ class SearchViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
+
+    suspend fun artistArtCovers(artistId: String): List<CoverArtRef> = loadArtistArtCovers(libraryRepository, sourceRepository, artistId)
 
     fun play(song: Song) {
         viewModelScope.playSongInContext(libraryRepository, playbackController, song)

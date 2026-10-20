@@ -29,7 +29,7 @@ import com.subtracks.R
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
-import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.EmptyState
 import com.subtracks.ui.components.FilteredEmptyState
 import com.subtracks.ui.components.ListDownloadIndicator
@@ -55,6 +55,7 @@ fun ArtistsContent(
     onSync: () -> Unit = {},
     downloadStatuses: Map<String, ListDownloadStatus> = emptyMap(),
     scrollToTopKey: Any? = null,
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
 ) {
     when {
         items.itemCount == 0 && items.loadState.refresh is LoadState.Loading -> {
@@ -104,9 +105,10 @@ fun ArtistsContent(
                                 )
                             },
                             leadingContent = {
-                                CoverArt(
-                                    ref = coverArt(artist.coverArt, true),
-                                    name = artist.name,
+                                ArtistIcon(
+                                    artist = artist,
+                                    fallback = coverArt(artist.coverArt, true),
+                                    loadCovers = artistCovers,
                                     modifier = Modifier.size(48.dp).clip(CircleShape),
                                 )
                             },

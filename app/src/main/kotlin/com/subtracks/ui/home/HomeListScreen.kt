@@ -57,6 +57,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistIcon
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
@@ -108,6 +109,7 @@ fun HomeListRoute(
         genres = genres,
         decades = decades,
         coverArt = viewModel::coverArt,
+        artistCovers = viewModel::artistArtCovers,
         playingSongId = playback.item?.id,
         onBack = onBack,
         onAlbumClick = onAlbumClick,
@@ -133,6 +135,7 @@ fun HomeListScreen(
     genres: List<String> = emptyList(),
     decades: List<Long> = emptyList(),
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
     playingSongId: String? = null,
     onBack: () -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
@@ -192,6 +195,7 @@ fun HomeListScreen(
                     ArtistsList(
                         artists = artists,
                         coverArt = coverArt,
+                        artistCovers = artistCovers,
                         info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
@@ -246,6 +250,7 @@ fun HomeListScreen(
                     ArtistsList(
                         artists = artists,
                         coverArt = coverArt,
+                        artistCovers = artistCovers,
                         info = { artistListInfo(request, it, now, resources) },
                         onArtistClick = onArtistClick,
                         onLongClick = onLongClick,
@@ -444,6 +449,7 @@ internal fun AlbumListRow(
 private fun ArtistsList(
     artists: LazyPagingItems<Artist>,
     coverArt: (String?, Boolean) -> CoverArtRef?,
+    artistCovers: suspend (String) -> List<CoverArtRef>,
     info: (Artist) -> String?,
     onArtistClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
@@ -463,6 +469,7 @@ private fun ArtistsList(
                 ArtistListRow(
                     artist = artist,
                     coverArt = coverArt,
+                    artistCovers = artistCovers,
                     info = info(artist),
                     onClick = { onArtistClick(artist) },
                     onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },
@@ -479,6 +486,7 @@ internal fun ArtistListRow(
     info: String?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
 ) {
     Row(
         modifier =
@@ -488,9 +496,10 @@ internal fun ArtistListRow(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CoverArt(
-            ref = coverArt(artist.coverArt, true),
-            name = artist.name,
+        ArtistIcon(
+            artist = artist,
+            fallback = coverArt(artist.coverArt, true),
+            loadCovers = artistCovers,
             modifier = Modifier.size(ALBUM_ROW_COVER).clip(CircleShape),
         )
         Spacer(Modifier.width(12.dp))

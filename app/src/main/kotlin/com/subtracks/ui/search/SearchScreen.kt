@@ -106,6 +106,7 @@ fun SearchRoute(
             if (next != 0) filterMask = next
         },
         coverArt = viewModel::coverArt,
+        artistCovers = viewModel::artistArtCovers,
         playingSongId = playback.item?.id,
         onBack = onBack,
         onAlbumClick = {
@@ -146,6 +147,7 @@ fun SearchScreen(
     filters: Set<SearchFilter> = ALL_FILTERS,
     onToggleFilter: (SearchFilter) -> Unit = {},
     coverArt: (String?, Boolean) -> CoverArtRef? = { _, _ -> null },
+    artistCovers: suspend (String) -> List<CoverArtRef> = { emptyList() },
     playingSongId: String? = null,
     onBack: () -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
@@ -215,7 +217,7 @@ fun SearchScreen(
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
                     if (showPlaylists) playlistResults(results.playlists, playlistsLabel, coverArt, onPlaylistClick, onLongClick)
-                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, onArtistClick, onLongClick)
+                    if (showArtists) artistResults(results.artists, artistsLabel, coverArt, artistCovers, onArtistClick, onLongClick)
                     if (showAlbums) albumResults(results.albums, albumsLabel, coverArt, onAlbumClick, onLongClick)
                     if (showSongs) songResults(results.songs, songsLabel, coverArt, playingSongId, onSongClick, onLongClick)
                 }
@@ -309,6 +311,7 @@ private fun LazyListScope.artistResults(
     artists: List<Artist>,
     header: String,
     coverArt: (String?, Boolean) -> CoverArtRef?,
+    artistCovers: suspend (String) -> List<CoverArtRef>,
     onClick: (Artist) -> Unit,
     onLongClick: (MenuTarget) -> Unit,
 ) {
@@ -318,6 +321,7 @@ private fun LazyListScope.artistResults(
         ArtistListRow(
             artist = artist,
             coverArt = coverArt,
+            artistCovers = artistCovers,
             info = null,
             onClick = { onClick(artist) },
             onLongClick = { onLongClick(MenuTarget.Artist(artist, coverArt(artist.coverArt, true))) },

@@ -613,6 +613,13 @@ class AppScreenshotTest {
                     artists = remember { flowOf(PagingData.from(Fixtures.artists)) },
                     playlists = remember { flowOf(PagingData.from(Fixtures.playlists)) },
                     coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    artistCovers = { id ->
+                        Fixtures.albums
+                            .filter { it.artistId == id }
+                            .take(4)
+                            .mapNotNull { it.coverArt }
+                            .map { CoverArtRef(it, "test:$it") }
+                    },
                     onAlbumClick = {},
                     onArtistClick = {},
                     onPlaylistClick = {},

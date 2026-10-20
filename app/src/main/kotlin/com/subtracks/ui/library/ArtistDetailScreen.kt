@@ -102,6 +102,7 @@ import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.ArtistArtGrid
 import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
@@ -402,13 +403,22 @@ fun ArtistDetailScreen(
                                 .onSizeChanged { imageHeightPx = it.height.toFloat() },
                         ) {
                             Box(Modifier.fillMaxWidth()) {
-                                ArtistHeroArt(
-                                    covers = artCovers,
-                                    fallback = art,
-                                    fallbackThumbnail = artThumbnail,
-                                    name = displayName,
-                                    modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
-                                )
+                                if (artCovers.isNotEmpty()) {
+                                    ArtistArtGrid(
+                                        covers = artCovers,
+                                        name = displayName,
+                                        singleThumbnail = artThumbnail,
+                                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                                    )
+                                } else {
+                                    CoverArt(
+                                        ref = art,
+                                        name = displayName,
+                                        thumbnailRef = artThumbnail,
+                                        showPlaceholder = art == null,
+                                        modifier = Modifier.fillMaxWidth().height(ART_HEIGHT),
+                                    )
+                                }
                                 if (nameScrimAlpha > 0f) {
                                     Box(
                                         modifier =
@@ -831,181 +841,6 @@ internal fun splitBioCollapsed(
         }
     lines += lastLine
     return BioLines(lines, more = true)
-}
-
-@Composable
-private fun ArtistHeroArt(
-    covers: List<CoverArtRef>,
-    fallback: CoverArtRef?,
-    fallbackThumbnail: CoverArtRef?,
-    name: String,
-    modifier: Modifier = Modifier,
-) {
-    when {
-        covers.size >= 4 -> {
-            Column(modifier) {
-                Row(Modifier.weight(1f).fillMaxWidth()) {
-                    covers.take(2).forEach { ref ->
-                        CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
-                    }
-                }
-                Row(Modifier.weight(1f).fillMaxWidth()) {
-                    covers.drop(2).take(2).forEach { ref ->
-                        CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
-                    }
-                }
-            }
-        }
-
-        covers.size == 3 -> {
-            Box(modifier) {
-                covers.forEachIndexed { index, ref ->
-                    CoverArt(
-                        ref = ref,
-                        name = name,
-                        modifier = Modifier.matchParentSize().clip(YRegionShape(index)),
-                    )
-                }
-            }
-        }
-
-        covers.size == 2 -> {
-            Row(modifier) {
-                covers.forEach { ref ->
-                    CoverArt(ref = ref, name = name, modifier = Modifier.weight(1f).fillMaxHeight())
-                }
-            }
-        }
-
-        covers.size == 1 -> {
-            CoverArt(
-                ref = covers.first(),
-                name = name,
-                thumbnailRef = fallbackThumbnail,
-                showPlaceholder = false,
-                modifier = modifier,
-            )
-        }
-
-        else -> {
-            CoverArt(
-                ref = fallback,
-                name = name,
-                thumbnailRef = fallbackThumbnail,
-                showPlaceholder = fallback == null,
-                modifier = modifier,
-            )
-        }
-    }
-}
-
-private class YRegionShape(
-    private val region: Int,
-) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density,
-    ): Outline {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val left = rayPoint(size, 210.0)
-        val right = rayPoint(size, 330.0)
-        val bottom = Offset(size.width / 2f, size.height)
-        val path = Path()
-        when (region) {
-            0 -> {
-                path.moveTo(center.x, center.y)
-                path.lineTo(left.x, left.y)
-                addClockwise(path, size, left, right)
-            }
-
-            1 -> {
-                path.moveTo(center.x, center.y)
-                path.lineTo(bottom.x, bottom.y)
-                addClockwise(path, size, bottom, left)
-            }
-
-            else -> {
-                path.moveTo(center.x, center.y)
-                path.lineTo(right.x, right.y)
-                addClockwise(path, size, right, bottom)
-            }
-        }
-        path.lineTo(center.x, center.y)
-        path.close()
-        return Outline.Generic(path)
-    }
-}
-
-private fun rayPoint(
-    size: Size,
-    angleDegrees: Double,
-): Offset {
-    val cx = size.width / 2.0
-    val cy = size.height / 2.0
-    val radians = angleDegrees * PI / 180.0
-    val dx = cos(radians)
-    val dy = sin(radians)
-    val tx =
-        when {
-            dx > 0 -> (size.width - cx) / dx
-            dx < 0 -> -cx / dx
-            else -> Double.POSITIVE_INFINITY
-        }
-    val ty =
-        when {
-            dy > 0 -> (size.height - cy) / dy
-            dy < 0 -> -cy / dy
-            else -> Double.POSITIVE_INFINITY
-        }
-    val t = min(tx, ty)
-    return Offset((cx + dx * t).toFloat(), (cy + dy * t).toFloat())
-}
-
-private fun addClockwise(
-    path: Path,
-    size: Size,
-    from: Offset,
-    to: Offset,
-) {
-    val w = size.width
-    val h = size.height
-    val corners =
-        listOf(
-            Offset(0f, 0f),
-            Offset(w, 0f),
-            Offset(w, h),
-            Offset(0f, h),
-        )
-    val fromParam = perimeterParam(from, size)
-    val toParam = perimeterParam(to, size)
-    if (fromParam <= toParam) {
-        corners
-            .filter { perimeterParam(it, size) > fromParam && perimeterParam(it, size) < toParam }
-            .forEach { path.lineTo(it.x, it.y) }
-    } else {
-        corners
-            .filter { perimeterParam(it, size) > fromParam }
-            .forEach { path.lineTo(it.x, it.y) }
-        corners
-            .filter { perimeterParam(it, size) < toParam }
-            .forEach { path.lineTo(it.x, it.y) }
-    }
-    path.lineTo(to.x, to.y)
-}
-
-private fun perimeterParam(
-    point: Offset,
-    size: Size,
-): Float {
-    val w = size.width
-    val h = size.height
-    return when {
-        point.y <= 0f -> point.x
-        point.x >= w -> w + point.y
-        point.y >= h -> w + h + (w - point.x)
-        else -> 2f * w + h + (h - point.y)
-    }
 }
 
 @Composable

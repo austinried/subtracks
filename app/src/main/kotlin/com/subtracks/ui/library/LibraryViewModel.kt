@@ -23,6 +23,7 @@ import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
 import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.loadArtistArtCovers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -210,6 +211,8 @@ class LibraryViewModel(
         coverArt: String?,
         thumbnail: Boolean,
     ): CoverArtRef? = sourceRepository.coverArt(coverArt, thumbnail)
+
+    suspend fun artistArtCovers(artistId: String): List<CoverArtRef> = loadArtistArtCovers(libraryRepository, sourceRepository, artistId)
 
     fun sync() {
         if (syncManager.status.value !is SyncStatus.Running) syncManager.requestSync()
