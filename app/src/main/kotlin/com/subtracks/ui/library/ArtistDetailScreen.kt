@@ -147,9 +147,9 @@ private val SHUFFLE_RESERVE = 86.dp
 private val SHUFFLE_HANG = SHUFFLE_HEIGHT / 2
 private val BIO_ACTION_RESERVE = 104.dp
 private val BIO_ACTION_HEIGHT = 48.dp
-private val BIO_ACTION_OFFSET = 8.dp
+private val BIO_ACTION_OFFSET = 16.dp
+private val BIO_ACTION_END_OFFSET = 8.dp
 private val BIO_TOP_GAP = 8.dp
-private val BIO_LINES_TOP_GAP = 8.dp
 private val BIO_BOTTOM_GAP = 8.dp
 
 internal fun estimateScrollPx(
@@ -644,7 +644,7 @@ private fun ArtistBio(
                 }
             }
         Box {
-            Column(Modifier.fillMaxWidth().padding(top = BIO_LINES_TOP_GAP)) {
+            Column(Modifier.fillMaxWidth()) {
                 bioLines.lines.forEachIndexed { index, line ->
                     val isControl = index == bioLines.lines.lastIndex && (bioLines.more || bioLines.less)
                     Text(
@@ -662,7 +662,11 @@ private fun ArtistBio(
                     )
                 }
             }
-            Row(Modifier.align(Alignment.TopEnd).offset(y = -BIO_ACTION_OFFSET)) {
+            Row(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = BIO_ACTION_END_OFFSET, y = -BIO_ACTION_OFFSET),
+            ) {
                 ArtistActions(artist, starred, onToggleStar, onMore)
             }
         }
