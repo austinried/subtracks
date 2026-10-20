@@ -321,6 +321,35 @@ class AppScreenshotTest {
         composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail_bio_expanded.png")
     }
 
+    @Test
+    fun artistDetailArtGrid() {
+        composeRule.setContent {
+            SubtracksTheme {
+                ArtistDetailScreen(
+                    artist = Fixtures.artists.first(),
+                    albums =
+                        ArtistAlbums(
+                            albumCredits = Fixtures.albums.filter { it.artistId == Fixtures.artists.first().id },
+                        ),
+                    art = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    artThumbnail = CoverArtRef("art-al-kid-a", "test:art-al-kid-a"),
+                    artCovers =
+                        Fixtures.albums
+                            .take(3)
+                            .mapNotNull { it.coverArt }
+                            .map { CoverArtRef(it, "test:$it") },
+                    artwork = artworkColorsFromSeed(Color.rgb(120, 80, 200)),
+                    coverArt = { id, _ -> id?.let { CoverArtRef(it, "test:$it") } },
+                    onBack = {},
+                    onAlbumClick = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        awaitText("Kid A")
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/artist_detail_art_grid.png")
+    }
+
     private fun renderArtistDetail(bioExpanded: Boolean) {
         composeRule.setContent {
             SubtracksTheme {
