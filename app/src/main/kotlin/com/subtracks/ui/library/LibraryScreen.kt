@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.FilterAltOff
 import androidx.compose.material.icons.rounded.Home
@@ -997,7 +998,7 @@ private fun DownloadProgressIcon(
 ) {
     val description = stringResource(R.string.downloads_in_progress)
     Box(
-        modifier = Modifier.size(24.dp).semantics { contentDescription = description },
+        modifier = Modifier.size(28.dp).semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         val fraction = progress.fraction
@@ -1016,6 +1017,12 @@ private fun DownloadProgressIcon(
                 modifier = Modifier.fillMaxSize(),
             )
         }
+        Icon(
+            imageVector = Icons.Rounded.Download,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 
