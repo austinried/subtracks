@@ -389,10 +389,41 @@ class LibraryDaoTest {
                     ARTIST_ORDER_BY_RECENT_REVERSED to "index_artists_recent",
                 )
             for ((order, index) in orders) {
-                for (filter in listOf(ARTISTS_FILTER, ARTISTS_FILTER_DOWNLOADED)) {
-                    val plan = plan("SELECT * $filter ORDER BY $order LIMIT 20 OFFSET 0")
-                    assertTrue(plan, plan.contains("USING INDEX $index"))
-                    assertFalse(plan, plan.contains("TEMP B-TREE"))
+                val plan = plan("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
+                assertTrue(plan, plan.contains("USING INDEX $index"))
+                assertFalse(plan, plan.contains("TEMP B-TREE"))
+            }
+        }
+
+    @Test
+    fun downloadedArtistOrdersUseTheIndexesTheirSortColumnsHave() =
+        runTest {
+            val orders =
+                listOf(
+                    ARTIST_ORDER_BY_NAME to "index_artists_name",
+                    ARTIST_ORDER_BY_NAME_REVERSED to "index_artists_name",
+                    ARTIST_ORDER_BY_ALBUM_COUNT to "index_artists_albumCount",
+                    ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED to "index_artists_albumCount",
+                    ARTIST_ORDER_BY_STARRED to "index_artists_starred",
+                    ARTIST_ORDER_BY_STARRED_REVERSED to "index_artists_starred",
+                    ARTIST_ORDER_BY_FREQUENT to "index_artists_frequent",
+                    ARTIST_ORDER_BY_FREQUENT_REVERSED to "index_artists_frequent",
+                    ARTIST_ORDER_BY_RECENT to "index_artists_recent",
+                    ARTIST_ORDER_BY_RECENT_REVERSED to "index_artists_recent",
+                )
+            for ((order, index) in orders) {
+                val plan =
+                    topLevelPlan(
+                        "SELECT $ARTIST_COLUMNS_DOWNLOADED $ARTISTS_FILTER_DOWNLOADED " +
+                            "ORDER BY $order LIMIT 20 OFFSET 0",
+                    )
+                if (order == ARTIST_ORDER_BY_ALBUM_COUNT || order == ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED) {
+                    // The displayed count comes from song_downloads, so this order cannot use
+                    // index_artists_albumCount; the hand-written statement sorted in memory too.
+                    assertTrue("$order\n$plan", plan.contains("USE TEMP B-TREE FOR ORDER BY"))
+                } else {
+                    assertTrue("$order\n$plan", plan.contains("USING INDEX $index"))
+                    assertFalse("$order\n$plan", plan.contains("USE TEMP B-TREE FOR ORDER BY"))
                 }
             }
         }
@@ -410,11 +441,17 @@ class LibraryDaoTest {
                     PLAYLIST_ORDER_BY_UPDATED_REVERSED to "index_playlists_updated",
                 )
             for ((order, index) in orders) {
-                for (filter in listOf(PLAYLISTS_FILTER, PLAYLISTS_FILTER_DOWNLOADED)) {
-                    val plan = plan("SELECT * $filter ORDER BY $order LIMIT 20 OFFSET 0")
-                    assertTrue(plan, plan.contains("USING INDEX $index"))
-                    assertFalse(plan, plan.contains("TEMP B-TREE"))
-                }
+                val defaultPlan = plan("SELECT * $PLAYLISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
+                assertTrue(defaultPlan, defaultPlan.contains("USING INDEX $index"))
+                assertFalse(defaultPlan, defaultPlan.contains("TEMP B-TREE"))
+
+                val downloadedPlan =
+                    topLevelPlan(
+                        "SELECT $PLAYLISTS_COLUMNS_DOWNLOADED $PLAYLISTS_FILTER_DOWNLOADED " +
+                            "ORDER BY $order LIMIT 20 OFFSET 0",
+                    )
+                assertTrue(downloadedPlan, downloadedPlan.contains("USING INDEX $index"))
+                assertFalse(downloadedPlan, downloadedPlan.contains("USE TEMP B-TREE FOR ORDER BY"))
             }
         }
 
@@ -478,6 +515,74 @@ class LibraryDaoTest {
                 dao.playlistPages(sourceId, "", downloaded = true).page().map { it.id },
             )
             assertEquals(3, dao.albumPages(sourceId, 0, "").page().size)
+        }
+
+    @Test
+    fun downloadedFiltersHonourSearchAndStarred() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Artist", albumCount = 2).copy(starred = 5),
+                    artist(sourceId, "ar-2", "Other", albumCount = 1),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Downloaded One", year = 2000, starred = 5),
+                    album(sourceId, "al-2", "Downloaded Two", year = 2001, starred = null),
+                    album(sourceId, "al-3", "Missing", year = 2002, starred = 5),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2"),
+                    song(sourceId, "s3", "Three", starred = null).copy(albumId = "al-3", artistId = "ar-2"),
+                ),
+            )
+            dao.upsertPlaylists(
+                listOf(
+                    playlist(sourceId, "pl-1", "Has download", created = 0, changed = 0),
+                    playlist(sourceId, "pl-2", "No download", created = 1, changed = 1),
+                ),
+            )
+            dao.upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(sourceId, "pl-1", "s1", 0),
+                    PlaylistSong(sourceId, "pl-2", "s2", 0),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            assertEquals(
+                listOf("Downloaded One"),
+                dao.albumPages(sourceId, 0, "one", downloaded = true).page().map { it.name },
+            )
+            assertTrue(dao.albumPages(sourceId, 0, "missing", downloaded = true).page().isEmpty())
+            assertEquals(
+                listOf("Downloaded One"),
+                dao.albumPages(sourceId, 1, "", downloaded = true).page().map { it.name },
+            )
+            assertTrue(dao.albumPages(sourceId, 2, "", downloaded = true).page().isEmpty())
+
+            assertEquals(
+                listOf("ar-1"),
+                dao.artistPages(sourceId, 0, "art", downloaded = true).page().map { it.id },
+            )
+            assertTrue(dao.artistPages(sourceId, 0, "other", downloaded = true).page().isEmpty())
+            assertEquals(
+                listOf("ar-1"),
+                dao.artistPages(sourceId, 1, "", downloaded = true).page().map { it.id },
+            )
+            assertTrue(dao.artistPages(sourceId, 2, "", downloaded = true).page().isEmpty())
+
+            assertEquals(
+                listOf("pl-1"),
+                dao.playlistPages(sourceId, "has", downloaded = true).page().map { it.id },
+            )
+            assertTrue(dao.playlistPages(sourceId, "no", downloaded = true).page().isEmpty())
         }
 
     @Test
@@ -1270,6 +1375,17 @@ class LibraryDaoTest {
             }
         }
 
+    private suspend fun topLevelPlan(sql: String): String =
+        db.useReaderConnection { connection ->
+            connection.usePrepared("EXPLAIN QUERY PLAN $sql") { statement ->
+                val details = mutableListOf<String>()
+                while (statement.step()) {
+                    if (statement.getLong(1) == 0L) details += statement.getText(3)
+                }
+                details.joinToString("\n")
+            }
+        }
+
     @Test
     fun defaultPagingQueriesMatchTheDownloadFreeFilters() =
         runTest {
@@ -1382,6 +1498,52 @@ class LibraryDaoTest {
 
             dao.upsertAlbums(listOf(album(sourceId, "a", "Renamed", year = null, starred = null)))
             awaitUntil("the default list observes album writes") { defaultInvalidated.get() }
+        }
+
+    @Test
+    fun downloadWritesInvalidateTheDownloadedArtistAndPlaylistPagingSources() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 1)))
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Album", year = null, starred = null)))
+            dao.upsertSongs(listOf(song(sourceId, "s1", "One", starred = null)))
+            dao.upsertPlaylists(listOf(playlist(sourceId, "pl-1", "Playlist", created = 0, changed = 0)))
+            dao.upsertPlaylistSongs(listOf(PlaylistSong(sourceId, "pl-1", "s1", 0)))
+
+            val artistInvalidated = AtomicBoolean(false)
+            val artists = dao.artistPages(sourceId, downloaded = true)
+            artists.registerInvalidatedCallback { artistInvalidated.set(true) }
+            artists.page()
+
+            val playlistInvalidated = AtomicBoolean(false)
+            val playlists = dao.playlistPages(sourceId, downloaded = true)
+            playlists.registerInvalidatedCallback { playlistInvalidated.set(true) }
+            playlists.page()
+
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            awaitUntil("the downloaded artists observe download writes") { artistInvalidated.get() }
+            awaitUntil("the downloaded playlists observe download writes") { playlistInvalidated.get() }
+        }
+
+    @Test
+    fun songWritesInvalidateTheDownloadedArtistPagingSource() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 1)))
+            dao.upsertAlbums(listOf(album(sourceId, "al-1", "Album", year = null, starred = null)))
+            dao.upsertSongs(listOf(song(sourceId, "s1", "One", starred = null)))
+
+            val invalidated = AtomicBoolean(false)
+            val artists = dao.artistPages(sourceId, downloaded = true)
+            artists.registerInvalidatedCallback { invalidated.set(true) }
+            artists.page()
+
+            dao.upsertSongs(listOf(song(sourceId, "s2", "Two", starred = null)))
+
+            awaitUntil("the downloaded artists observe song writes") { invalidated.get() }
         }
 
     @Test

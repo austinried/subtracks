@@ -219,8 +219,9 @@ internal fun rawQuery(
                 index++
             }
         }
+    val values = names.map(bindings::getValue)
     return RoomRawQuery(positional) { statement ->
-        names.forEachIndexed { index, name -> statement.bind(index + 1, bindings.getValue(name)) }
+        values.forEachIndexed { index, value -> statement.bind(index + 1, value) }
     }
 }
 
