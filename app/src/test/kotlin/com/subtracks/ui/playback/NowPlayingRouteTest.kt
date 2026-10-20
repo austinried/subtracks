@@ -98,7 +98,7 @@ class NowPlayingRouteTest {
                 artworkFetcher = { ByteArray(0) },
                 scope = repoScope,
             ).also { it.start() }
-        library = LibraryRepository(db, sources, serverActions, scope = repoScope)
+        library = LibraryRepository(db, sources, serverActions, prefs, scope = repoScope)
         handle = FakePlayerHandle()
         controller =
             PlaybackController(

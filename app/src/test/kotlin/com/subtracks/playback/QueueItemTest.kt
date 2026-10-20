@@ -1,6 +1,7 @@
 package com.subtracks.playback
 
 import com.subtracks.data.model.AlbumSongItem
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.Song
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -55,6 +56,29 @@ class QueueItemTest {
         val item = AlbumSongItem(song, coverArt = null).toQueueItem(albumContext = true)
 
         assertEquals(true, item.albumContext)
+    }
+
+    @Test
+    fun carriesEveryArtist() {
+        val song =
+            Song(
+                sourceId = 1,
+                id = "s1",
+                albumId = "al1",
+                artistId = "ar1",
+                title = "Song",
+                album = "Album",
+                artist = "A • B",
+                duration = 100,
+                track = 1,
+                disc = 1,
+                starred = null,
+                artists = listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B")),
+            )
+
+        val item = AlbumSongItem(song, coverArt = null).toQueueItem()
+
+        assertEquals(listOf("A", "B"), item.artists.map { it.name })
     }
 
     @Test

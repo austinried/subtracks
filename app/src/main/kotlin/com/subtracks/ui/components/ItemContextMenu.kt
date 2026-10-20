@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Cancel
@@ -50,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.subtracks.R
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
@@ -197,7 +199,8 @@ fun ItemContextMenu(
     target: MenuTarget,
     actions: ItemActions,
     onDismiss: () -> Unit,
-    onInfo: ((SongModel) -> Unit)? = null,
+    onInfo: ((MenuTarget) -> Unit)? = null,
+    onChooseArtists: ((List<ArtistRef>) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -207,6 +210,14 @@ fun ItemContextMenu(
         scope.launch {
             sheetState.hide()
             onDismiss()
+        }
+    }
+
+    fun dismissThen(after: () -> Unit) {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+            after()
         }
     }
 
@@ -256,18 +267,9 @@ fun ItemContextMenu(
                             }
                         }
                     }
-                    target.song.artistRefs.forEach { artist ->
-                        actions.viewArtist?.let { view ->
-                            MenuItem(
-                                Icons.Rounded.Person,
-                                artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
-                            ) {
-                                dismiss { view(artist.id) }
-                            }
-                        }
-                    }
+                    ArtistItems(target.song.artistRefs, actions, onChooseArtists, ::dismiss, ::dismissThen)
                     onInfo?.let { info ->
-                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target.song) } }
+                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
                     }
                 }
 
@@ -279,15 +281,9 @@ fun ItemContextMenu(
                         onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
                         onDismiss = { dismiss() },
                     )
-                    target.album.artistRefs.forEach { artist ->
-                        actions.viewArtist?.let { view ->
-                            MenuItem(
-                                Icons.Rounded.Person,
-                                artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
-                            ) {
-                                dismiss { view(artist.id) }
-                            }
-                        }
+                    ArtistItems(target.album.artistRefs, actions, onChooseArtists, ::dismiss, ::dismissThen)
+                    onInfo?.let { info ->
+                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
                     }
                 }
 
@@ -298,6 +294,9 @@ fun ItemContextMenu(
                         onSet = { starring -> actions.setStar(StarType.Artist, target.artist.id, starring) },
                         onDismiss = { dismiss() },
                     )
+                    onInfo?.let { info ->
+                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
+                    }
                 }
 
                 is MenuTarget.Playlist -> {
@@ -337,6 +336,55 @@ private fun MenuHeader(target: MenuTarget) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtistItems(
+    artists: List<ArtistRef>,
+    actions: ItemActions,
+    onChooseArtists: ((List<ArtistRef>) -> Unit)?,
+    dismiss: (() -> Unit) -> Unit,
+    dismissThen: (() -> Unit) -> Unit,
+) {
+    val view = actions.viewArtist ?: return
+    val distinct = artists.distinctBy { it.id }
+    when (distinct.size) {
+        0 -> {
+            Unit
+        }
+
+        1 -> {
+            val artist = distinct.first()
+            MenuItem(
+                Icons.Rounded.Person,
+                artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+            ) {
+                dismiss { view(artist.id) }
+            }
+        }
+
+        else -> {
+            if (onChooseArtists == null) {
+                distinct.forEach { artist ->
+                    MenuItem(
+                        Icons.Rounded.Person,
+                        artist.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.resources_filter_artist),
+                    ) {
+                        dismiss { view(artist.id) }
+                    }
+                }
+            } else {
+                val fallback = stringResource(R.string.resources_filter_artist)
+                MenuItem(
+                    Icons.Rounded.Person,
+                    distinct.joinToString(" \u00B7 ") { it.name.ifBlank { fallback } },
+                    trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
+                ) {
+                    dismissThen { onChooseArtists(distinct) }
+                }
             }
         }
     }
@@ -439,11 +487,19 @@ private fun MenuItem(
     icon: ImageVector,
     label: String,
     tint: Color? = null,
+    trailing: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     ListItem(
-        headlineContent = { Text(label) },
+        headlineContent = {
+            Text(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
         leadingContent = { Icon(icon, contentDescription = null, tint = tint ?: LocalContentColor.current) },
+        trailingContent = trailing,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable(onClick = onClick),
     )

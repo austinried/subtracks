@@ -74,6 +74,7 @@ import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.MAX_REPLAY_GAIN_PREAMP_DB
 import com.subtracks.data.prefs.MIN_REPLAY_GAIN_PREAMP_DB
 import com.subtracks.data.prefs.ReplayGainMode
+import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
 import com.subtracks.log.Log
@@ -101,6 +102,7 @@ private enum class SettingsDialog {
     SyncMode,
     ReplayGain,
     ReplayGainPreamp,
+    SortNames,
 }
 
 @Composable
@@ -128,6 +130,7 @@ fun SettingsRoute(
     val verboseLogging by viewModel.verboseLogging.collectAsStateWithLifecycle()
     val replayGainMode by viewModel.replayGainMode.collectAsStateWithLifecycle()
     val replayGainPreamp by viewModel.replayGainPreamp.collectAsStateWithLifecycle()
+    val sortNameMode by viewModel.sortNameMode.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     SettingsScreen(
@@ -143,6 +146,7 @@ fun SettingsRoute(
         scrobbling = scrobbling,
         replayGainMode = replayGainMode,
         replayGainPreamp = replayGainPreamp,
+        sortNameMode = sortNameMode,
         keepScreenOn = keepScreenOn,
         offline = offline,
         verboseLogging = verboseLogging,
@@ -158,6 +162,7 @@ fun SettingsRoute(
         onScrobblingChange = viewModel::setScrobbling,
         onReplayGainModeChange = viewModel::setReplayGainMode,
         onReplayGainPreampChange = viewModel::setReplayGainPreamp,
+        onSortNameModeChange = viewModel::setSortNameMode,
         onKeepScreenOnChange = viewModel::setKeepScreenOn,
         onOfflineChange = viewModel::setOfflineMode,
         onVerboseLoggingChange = viewModel::setVerboseLogging,
@@ -205,6 +210,7 @@ fun SettingsScreen(
     syncInterval: Int = DEFAULT_SYNC_INTERVAL_MINUTES,
     replayGainMode: ReplayGainMode = ReplayGainMode.Auto,
     replayGainPreamp: Float = 0f,
+    sortNameMode: SortNameMode = SortNameMode.SortName,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -217,6 +223,7 @@ fun SettingsScreen(
     onScrobblingChange: (Boolean) -> Unit,
     onReplayGainModeChange: (ReplayGainMode) -> Unit = {},
     onReplayGainPreampChange: (Float) -> Unit = {},
+    onSortNameModeChange: (SortNameMode) -> Unit = {},
     onKeepScreenOnChange: (Boolean) -> Unit = {},
     onOfflineChange: (Boolean) -> Unit = {},
     onVerboseLoggingChange: (Boolean) -> Unit = {},
@@ -345,6 +352,15 @@ fun SettingsScreen(
                     headlineContent = { Text(stringResource(R.string.sync_concurrency)) },
                     supportingContent = { Text(concurrencyLabel(LocalResources.current, syncConcurrency)) },
                     modifier = Modifier.clickable { dialog = SettingsDialog.SyncConcurrency },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item { SectionHeader(stringResource(R.string.settings_library_name)) }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_sort_names_title)) },
+                    supportingContent = { Text(sortNameModeLabel(LocalResources.current, sortNameMode)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SortNames },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -603,6 +619,14 @@ fun SettingsScreen(
             )
         }
 
+        SettingsDialog.SortNames -> {
+            SortNameModeDialog(
+                selected = sortNameMode,
+                onSelect = onSortNameModeChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
         null -> {
             Unit
         }
@@ -738,6 +762,49 @@ private fun SyncModeDialog(
             ChoiceGroup(
                 header = stringResource(R.string.sync_mode_prompt),
                 options = syncModeOptions.map { it to syncModeLabel(resources, it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
+
+private fun sortNameModeLabel(
+    resources: Resources,
+    mode: SortNameMode,
+): String =
+    when (mode) {
+        SortNameMode.SortName -> resources.getString(R.string.sort_name_mode_sort_name)
+        SortNameMode.Name -> resources.getString(R.string.sort_name_mode_name)
+        SortNameMode.NonLatin -> resources.getString(R.string.sort_name_mode_non_latin)
+    }
+
+@Composable
+private fun SortNameModeDialog(
+    selected: SortNameMode,
+    onSelect: (SortNameMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_sort_names_title)) },
+        text = {
+            ChoiceGroup(
+                header = stringResource(R.string.settings_sort_names_prompt),
+                options = SortNameMode.entries.map { it to sortNameModeLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )

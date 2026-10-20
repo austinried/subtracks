@@ -24,27 +24,32 @@ import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.StarredFilter
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.StarType
 import com.subtracks.log.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LibraryRepository(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
     private val serverActions: ServerActionSink,
+    private val userPreferences: UserPreferences,
     private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
@@ -111,12 +116,18 @@ class LibraryRepository(
     fun searchAlbums(
         sourceId: Long,
         query: String,
-    ): Flow<List<Album>> = db.libraryDao().searchAlbums(sourceId, query, SEARCH_RESULT_LIMIT)
+    ): Flow<List<Album>> =
+        userPreferences.sortNameMode().flatMapLatest { mode ->
+            db.libraryDao().searchAlbums(sourceId, query, SEARCH_RESULT_LIMIT, mode.name)
+        }
 
     fun searchArtists(
         sourceId: Long,
         query: String,
-    ): Flow<List<Artist>> = db.libraryDao().searchArtists(sourceId, query, SEARCH_RESULT_LIMIT)
+    ): Flow<List<Artist>> =
+        userPreferences.sortNameMode().flatMapLatest { mode ->
+            db.libraryDao().searchArtists(sourceId, query, SEARCH_RESULT_LIMIT, mode.name)
+        }
 
     fun searchPlaylists(
         sourceId: Long,
@@ -126,7 +137,10 @@ class LibraryRepository(
     fun searchSongs(
         sourceId: Long,
         query: String,
-    ): Flow<List<AlbumSongItem>> = db.libraryDao().searchSongs(sourceId, query, SEARCH_RESULT_LIMIT)
+    ): Flow<List<AlbumSongItem>> =
+        userPreferences.sortNameMode().flatMapLatest { mode ->
+            db.libraryDao().searchSongs(sourceId, query, SEARCH_RESULT_LIMIT, mode.name)
+        }
 
     fun downloadedAlbumsPage(sourceId: Long): Flow<PagingData<Album>> = pager(40) { db.libraryDao().downloadedAlbums(sourceId) }
 
@@ -178,66 +192,68 @@ class LibraryRepository(
         search: String,
         downloaded: Boolean,
     ): Flow<PagingData<Album>> =
-        pager(40, enablePlaceholders = true) {
-            val dao = db.libraryDao()
-            if (!downloaded) {
-                dao.albumsPaging(albumsDefaultQuery(sourceId, starred.ordinal, search, sort, descending))
-            } else {
-                val downloadedFilter = 1
-                when (sort) {
-                    AlbumSort.Name -> {
-                        if (descending) {
-                            dao.albumsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByName(sourceId, starred.ordinal, search, downloadedFilter)
+        userPreferences.sortNameMode().flatMapLatest { mode ->
+            pager(40, enablePlaceholders = true) {
+                val dao = db.libraryDao()
+                if (!downloaded) {
+                    dao.albumsPaging(albumsDefaultQuery(sourceId, starred.ordinal, search, sort, descending, mode))
+                } else {
+                    val downloadedFilter = 1
+                    when (sort) {
+                        AlbumSort.Name -> {
+                            if (descending) {
+                                dao.albumsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            } else {
+                                dao.albumsByName(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            }
                         }
-                    }
 
-                    AlbumSort.Artist -> {
-                        if (descending) {
-                            dao.albumsByArtistReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByArtist(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Artist -> {
+                            if (descending) {
+                                dao.albumsByArtistReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            } else {
+                                dao.albumsByArtist(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            }
                         }
-                    }
 
-                    AlbumSort.Year -> {
-                        if (descending) {
-                            dao.albumsByYearReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByYear(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Year -> {
+                            if (descending) {
+                                dao.albumsByYearReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.albumsByYear(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    AlbumSort.Added -> {
-                        if (descending) {
-                            dao.albumsByRecentlyAddedReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByRecentlyAdded(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Added -> {
+                            if (descending) {
+                                dao.albumsByRecentlyAddedReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.albumsByRecentlyAdded(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    AlbumSort.Starred -> {
-                        if (descending) {
-                            dao.albumsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Starred -> {
+                            if (descending) {
+                                dao.albumsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.albumsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    AlbumSort.Frequent -> {
-                        if (descending) {
-                            dao.albumsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Frequent -> {
+                            if (descending) {
+                                dao.albumsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.albumsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    AlbumSort.Recent -> {
-                        if (descending) {
-                            dao.albumsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.albumsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
+                        AlbumSort.Recent -> {
+                            if (descending) {
+                                dao.albumsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.albumsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
                     }
                 }
@@ -252,50 +268,52 @@ class LibraryRepository(
         search: String,
         downloaded: Boolean,
     ): Flow<PagingData<Artist>> =
-        pager(60) {
-            val dao = db.libraryDao()
-            if (!downloaded) {
-                dao.artistsPaging(artistsDefaultQuery(sourceId, starred.ordinal, search, sort, descending))
-            } else {
-                val downloadedFilter = 1
-                when (sort) {
-                    ArtistSort.Name -> {
-                        if (descending) {
-                            dao.artistsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.artistsByName(sourceId, starred.ordinal, search, downloadedFilter)
+        userPreferences.sortNameMode().flatMapLatest { mode ->
+            pager(60) {
+                val dao = db.libraryDao()
+                if (!downloaded) {
+                    dao.artistsPaging(artistsDefaultQuery(sourceId, starred.ordinal, search, sort, descending, mode))
+                } else {
+                    val downloadedFilter = 1
+                    when (sort) {
+                        ArtistSort.Name -> {
+                            if (descending) {
+                                dao.artistsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            } else {
+                                dao.artistsByName(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
+                            }
                         }
-                    }
 
-                    ArtistSort.AlbumCount -> {
-                        if (descending) {
-                            dao.artistsByAlbumCountReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.artistsByAlbumCount(sourceId, starred.ordinal, search, downloadedFilter)
+                        ArtistSort.AlbumCount -> {
+                            if (descending) {
+                                dao.artistsByAlbumCountReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.artistsByAlbumCount(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    ArtistSort.Starred -> {
-                        if (descending) {
-                            dao.artistsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.artistsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
+                        ArtistSort.Starred -> {
+                            if (descending) {
+                                dao.artistsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.artistsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    ArtistSort.Frequent -> {
-                        if (descending) {
-                            dao.artistsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.artistsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                        ArtistSort.Frequent -> {
+                            if (descending) {
+                                dao.artistsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.artistsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
-                    }
 
-                    ArtistSort.Recent -> {
-                        if (descending) {
-                            dao.artistsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                        } else {
-                            dao.artistsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
+                        ArtistSort.Recent -> {
+                            if (descending) {
+                                dao.artistsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
+                            } else {
+                                dao.artistsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
+                            }
                         }
                     }
                 }

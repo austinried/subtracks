@@ -59,6 +59,7 @@ data class ArtistRef(
     indices = [
         Index("sourceId"),
         Index(name = "index_artists_name", value = ["sourceId", "sortName", "id"]),
+        Index(name = "index_artists_name_plain", value = ["sourceId", "name", "id"]),
         Index(
             name = "index_artists_albumCount",
             value = ["sourceId", "albumCount", "sortName", "id"],
@@ -131,7 +132,9 @@ data class ArtistBio(
         Index("sourceId"),
         Index("sourceId", "artistId"),
         Index(name = "index_albums_name", value = ["sourceId", "sortName", "id"]),
+        Index(name = "index_albums_name_plain", value = ["sourceId", "name", "id"]),
         Index(name = "index_albums_artist", value = ["sourceId", "albumArtistSort", "year", "sortName", "id"]),
+        Index(name = "index_albums_artist_plain", value = ["sourceId", "albumArtist", "year", "name", "id"]),
         Index(
             name = "index_albums_year",
             value = ["sourceId", "year", "sortName", "id"],

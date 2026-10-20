@@ -58,8 +58,13 @@ data class SongDownload(
     @ColumnInfo(defaultValue = "0") val downloadedAt: Long = 0,
 ) {
     val progress: Float?
-        get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
+        get() = fractionOf(bytes, total)
 }
+
+internal fun fractionOf(
+    bytes: Long,
+    total: Long,
+): Float? = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
 
 enum class DownloadList { Album, Playlist, Artist }
 
@@ -71,6 +76,13 @@ data class ListDownloadStatus(
     val downloading: Long = 0,
 ) {
     val complete: Boolean get() = total > 0 && downloaded == total
+}
+
+data class DownloadProgress(
+    val bytes: Long,
+    val total: Long,
+) {
+    val fraction: Float? get() = fractionOf(bytes, total)
 }
 
 data class EntityDownloadStatus(
@@ -99,7 +111,7 @@ data class DownloadedSong(
     val songSort: String = title,
 ) {
     val progress: Float?
-        get() = total.takeIf { it > 0 }?.let { (bytes.toFloat() / it).coerceIn(0f, 1f) }
+        get() = fractionOf(bytes, total)
 }
 
 data class DownloadArtwork(

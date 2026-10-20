@@ -90,7 +90,13 @@ class DownloadsViewModelTest {
             )
         viewModel =
             DownloadsViewModel(
-                LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), scope = repoScope),
+                LibraryRepository(
+                    db,
+                    sourceRepository,
+                    NetworkServerActionSink(sourceRepository),
+                    fakeUserPreferences(),
+                    scope = repoScope,
+                ),
                 downloadRepository,
                 controller,
                 "Unknown artist",

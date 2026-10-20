@@ -5,6 +5,7 @@ import androidx.sqlite.SQLiteStatement
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.SortNameMode
 
 // These filters mirror the download-aware ones in LibraryDao but never mention song_downloads, so
 // the resulting PagingSource is not invalidated by download writes (including progress updates).
@@ -42,8 +43,9 @@ internal fun albumsDefaultQuery(
     search: String,
     sort: AlbumSort,
     descending: Boolean,
+    sortNameMode: SortNameMode = SortNameMode.SortName,
 ): RoomRawQuery {
-    val order = albumOrder(sort, descending)
+    val order = albumOrder(sort, descending, sortNameMode)
     return RoomRawQuery("SELECT * $ALBUMS_FILTER_BASE ORDER BY $order") { stmt ->
         stmt.bindAlbumFilters(sourceId, starredFilter, search)
     }
@@ -88,8 +90,9 @@ internal fun artistsDefaultQuery(
     search: String,
     sort: ArtistSort,
     descending: Boolean,
+    sortNameMode: SortNameMode = SortNameMode.SortName,
 ): RoomRawQuery {
-    val order = artistOrder(sort, descending)
+    val order = artistOrder(sort, descending, sortNameMode)
     return RoomRawQuery("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER_BASE ORDER BY $order") { stmt ->
         stmt.bindLong(1, sourceId)
         stmt.bindInt(2, starredFilter)
@@ -121,27 +124,82 @@ internal fun playlistsDefaultQuery(
     }
 }
 
+internal fun albumNameSortKey(mode: SortNameMode): String =
+    when (mode) {
+        SortNameMode.SortName -> "sortName COLLATE NOCASE"
+        SortNameMode.Name -> "name COLLATE NOCASE"
+        SortNameMode.NonLatin -> "(CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) COLLATE NOCASE"
+    }
+
+internal fun albumArtistSortKey(mode: SortNameMode): String =
+    when (mode) {
+        SortNameMode.SortName -> {
+            "albumArtistSort COLLATE NOCASE"
+        }
+
+        SortNameMode.Name -> {
+            "albumArtist COLLATE NOCASE"
+        }
+
+        SortNameMode.NonLatin -> {
+            "(CASE WHEN albumArtist GLOB '*[A-Za-z]*' THEN albumArtist ELSE albumArtistSort END) COLLATE NOCASE"
+        }
+    }
+
+internal fun artistNameSortKey(mode: SortNameMode): String =
+    when (mode) {
+        SortNameMode.SortName -> "sortName COLLATE NOCASE"
+        SortNameMode.Name -> "name COLLATE NOCASE"
+        SortNameMode.NonLatin -> "(CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) COLLATE NOCASE"
+    }
+
 private fun albumOrder(
     sort: AlbumSort,
     descending: Boolean,
+    mode: SortNameMode,
 ): String =
     when (sort) {
-        AlbumSort.Name -> if (descending) ALBUM_ORDER_BY_NAME_REVERSED else ALBUM_ORDER_BY_NAME
-        AlbumSort.Artist -> if (descending) ALBUM_ORDER_BY_ARTIST_REVERSED else ALBUM_ORDER_BY_ARTIST
-        AlbumSort.Year -> if (descending) ALBUM_ORDER_BY_YEAR_REVERSED else ALBUM_ORDER_BY_YEAR
-        AlbumSort.Added -> if (descending) ALBUM_ORDER_BY_ADDED_REVERSED else ALBUM_ORDER_BY_ADDED
-        AlbumSort.Starred -> if (descending) ALBUM_ORDER_BY_STARRED_REVERSED else ALBUM_ORDER_BY_STARRED
-        AlbumSort.Frequent -> if (descending) ALBUM_ORDER_BY_FREQUENT_REVERSED else ALBUM_ORDER_BY_FREQUENT
-        AlbumSort.Recent -> if (descending) ALBUM_ORDER_BY_RECENT_REVERSED else ALBUM_ORDER_BY_RECENT
+        AlbumSort.Name -> {
+            val name = albumNameSortKey(mode)
+            if (descending) "$name DESC, id DESC" else "$name, id"
+        }
+
+        AlbumSort.Artist -> {
+            val artist = albumArtistSortKey(mode)
+            val name = albumNameSortKey(mode)
+            if (descending) "$artist DESC, year DESC, $name DESC, id DESC" else "$artist, year, $name, id"
+        }
+
+        AlbumSort.Year -> {
+            if (descending) ALBUM_ORDER_BY_YEAR_REVERSED else ALBUM_ORDER_BY_YEAR
+        }
+
+        AlbumSort.Added -> {
+            if (descending) ALBUM_ORDER_BY_ADDED_REVERSED else ALBUM_ORDER_BY_ADDED
+        }
+
+        AlbumSort.Starred -> {
+            if (descending) ALBUM_ORDER_BY_STARRED_REVERSED else ALBUM_ORDER_BY_STARRED
+        }
+
+        AlbumSort.Frequent -> {
+            if (descending) ALBUM_ORDER_BY_FREQUENT_REVERSED else ALBUM_ORDER_BY_FREQUENT
+        }
+
+        AlbumSort.Recent -> {
+            if (descending) ALBUM_ORDER_BY_RECENT_REVERSED else ALBUM_ORDER_BY_RECENT
+        }
     }
 
 private fun artistOrder(
     sort: ArtistSort,
     descending: Boolean,
+    mode: SortNameMode,
 ): String =
     when (sort) {
         ArtistSort.Name -> {
-            if (descending) ARTIST_ORDER_BY_NAME_REVERSED else ARTIST_ORDER_BY_NAME
+            val name = artistNameSortKey(mode)
+            if (descending) "$name DESC, id DESC" else "$name, id"
         }
 
         ArtistSort.AlbumCount -> {

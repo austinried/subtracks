@@ -6,6 +6,7 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.ReplayGainMode
+import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
 import com.subtracks.data.prefs.UserPreferences
@@ -76,6 +77,11 @@ class SettingsViewModel(
             .replayGainPreampDb()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0f)
 
+    val sortNameMode: StateFlow<SortNameMode> =
+        userPreferences
+            .sortNameMode()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SortNameMode.SortName)
+
     val keepScreenOn: StateFlow<Boolean> =
         userPreferences
             .keepScreenOn()
@@ -142,5 +148,9 @@ class SettingsViewModel(
 
     fun setKeepScreenOn(enabled: Boolean) {
         viewModelScope.launch { userPreferences.setKeepScreenOn(enabled) }
+    }
+
+    fun setSortNameMode(mode: SortNameMode) {
+        viewModelScope.launch { userPreferences.setSortNameMode(mode) }
     }
 }

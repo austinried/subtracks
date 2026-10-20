@@ -12,6 +12,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.subtracks.R
 import com.subtracks.UiMessage
+import com.subtracks.data.model.ArtistRef
+import com.subtracks.data.model.ArtistRefsCodec
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.SourceRepository
@@ -229,6 +231,7 @@ class Media3PlayerHandle(
                     .orEmpty(),
             artist = mediaItem.mediaMetadata.artist?.toString(),
             album = mediaItem.mediaMetadata.albumTitle?.toString(),
+            artists = mediaItem.artistRefs(),
             coverArtId = mediaItem.mediaMetadata.extras?.getString(EXTRA_COVER_ART_ID),
             durationMs =
                 mediaItem.mediaMetadata.extras
@@ -238,7 +241,14 @@ class Media3PlayerHandle(
         )
 }
 
+internal fun MediaItem.artistRefs(): List<ArtistRef> =
+    mediaMetadata.extras
+        ?.getString(EXTRA_ARTISTS)
+        ?.let(ArtistRefsCodec::decode)
+        .orEmpty()
+
 private const val EXTRA_COVER_ART_ID = "coverArtId"
+private const val EXTRA_ARTISTS = "artists"
 private const val EXTRA_DURATION_MS = "durationMs"
 private const val EXTRA_REPLAY_GAIN_TRACK_GAIN = "replayGainTrackGain"
 private const val EXTRA_REPLAY_GAIN_ALBUM_GAIN = "replayGainAlbumGain"
@@ -286,6 +296,7 @@ internal fun queueMediaItem(
             .setExtras(
                 Bundle().apply {
                     putString(EXTRA_COVER_ART_ID, item.coverArtId)
+                    putString(EXTRA_ARTISTS, ArtistRefsCodec.encode(item.artists))
                     item.durationMs?.let { putLong(EXTRA_DURATION_MS, it) }
                     putGain(EXTRA_REPLAY_GAIN_TRACK_GAIN, item.replayGain.trackGain)
                     putGain(EXTRA_REPLAY_GAIN_ALBUM_GAIN, item.replayGain.albumGain)

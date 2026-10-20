@@ -79,6 +79,7 @@
     <string name="settings_about_verbose_logging">Verbose logging</string>
     <string name="settings_about_verbose_logging_description">Log extra detail for troubleshooting</string>
     <string name="settings_about_version">Version %1$s</string>
+    <string name="settings_library_name">Library</string>
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
     <string name="settings_music_options_scrobble_title">Scrobble to server</string>
@@ -96,6 +97,11 @@
     <string name="settings_replay_gain_title">ReplayGain</string>
     <string name="settings_music_options_keep_screen_on_description">Keep the screen on while now playing is open</string>
     <string name="settings_music_options_keep_screen_on_title">Keep screen on</string>
+    <string name="settings_sort_names_title">Sort names</string>
+    <string name="settings_sort_names_prompt">Choose how names are ordered in album and artist lists.</string>
+    <string name="sort_name_mode_sort_name">Use sort names</string>
+    <string name="sort_name_mode_name">Use regular names</string>
+    <string name="sort_name_mode_non_latin">Non-Latin names only</string>
     <string name="settings_network_name">Network</string>
     <string name="settings_network_options_max_bitrate_mobile_title">Stream quality: Mobile</string>
     <string name="settings_network_options_max_bitrate_wifi_title">Stream quality: Wi-Fi</string>
@@ -170,6 +176,7 @@
     <string name="filter_downloaded">Downloaded</string>
     <string name="close_search">Close search</string>
     <string name="offline_mode_status">Offline mode; tap to go online</string>
+    <string name="downloads_in_progress">Downloads in progress; tap to open the download manager</string>
     <string name="shuffle_artist">Shuffle artist</string>
 
     <string name="status_playing">Playing</string>
@@ -191,6 +198,18 @@
     <string name="info_sample_rate_value">%1$d Hz</string>
     <string name="info_channels">Channels</string>
     <string name="info_close">Close</string>
+    <string name="info_artists">Artists</string>
+    <string name="info_album_artists">Album artists</string>
+    <string name="info_album_artist_sort">Album artist sort</string>
+    <string name="info_sort_title">Sort title</string>
+    <string name="info_artist_sort">Artist sort</string>
+    <string name="info_sort_name">Sort name</string>
+    <string name="info_albums">Albums</string>
+    <string name="info_songs">Songs</string>
+    <string name="info_plays">Plays</string>
+    <string name="info_last_played">Last played</string>
+    <string name="info_added">Added</string>
+    <string name="info_downloaded_count">%1$d of %2$d</string>
 
     <string name="disc_header">Disc %1$d</string>
     <string name="disc_track">%1$s: Disc %2$d</string>

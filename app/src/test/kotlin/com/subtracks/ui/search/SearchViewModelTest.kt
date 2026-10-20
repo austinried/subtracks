@@ -90,7 +90,13 @@ class SearchViewModelTest {
             )
         viewModel =
             SearchViewModel(
-                LibraryRepository(db, sourceRepository, NetworkServerActionSink(sourceRepository), scope = repoScope),
+                LibraryRepository(
+                    db,
+                    sourceRepository,
+                    NetworkServerActionSink(sourceRepository),
+                    fakeUserPreferences(),
+                    scope = repoScope,
+                ),
                 sourceRepository,
                 controller,
             )

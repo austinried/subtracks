@@ -76,6 +76,7 @@ class LibraryRepositoryTest {
                 db,
                 sourceRepository,
                 NetworkServerActionSink(sourceRepository),
+                fakeUserPreferences(),
                 showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )

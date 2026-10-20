@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.ui.theme.SubtracksTheme
 import org.junit.Assert.assertEquals
@@ -31,7 +32,7 @@ class SettingsScreenTest {
     @Test
     fun theKeepScreenOnRowTurnsTheSettingOn() {
         var requested: Boolean? = null
-        renderSettings(keepScreenOn = false) { requested = it }
+        renderSettings(keepScreenOn = false, onKeepScreenOnChange = { requested = it })
 
         composeRule.onNodeWithText("Keep screen on").performClick()
         composeRule.waitForIdle()
@@ -42,7 +43,7 @@ class SettingsScreenTest {
     @Test
     fun theKeepScreenOnRowTurnsTheSettingOff() {
         var requested: Boolean? = null
-        renderSettings(keepScreenOn = true) { requested = it }
+        renderSettings(keepScreenOn = true, onKeepScreenOnChange = { requested = it })
 
         composeRule.onNodeWithText("Keep screen on").performClick()
         composeRule.waitForIdle()
@@ -53,7 +54,7 @@ class SettingsScreenTest {
     @Test
     fun theKeepScreenOnSwitchTurnsTheSettingOn() {
         var requested: Boolean? = null
-        renderSettings(keepScreenOn = false) { requested = it }
+        renderSettings(keepScreenOn = false, onKeepScreenOnChange = { requested = it })
 
         composeRule
             .onNode(isToggleable() and hasAnySibling(hasText("Keep screen on")), useUnmergedTree = true)
@@ -63,9 +64,29 @@ class SettingsScreenTest {
         assertEquals(true, requested)
     }
 
+    @Test
+    fun theSortNamesRowChangesTheSortNameMode() {
+        var requested: SortNameMode? = null
+        renderSettings(
+            keepScreenOn = false,
+            onKeepScreenOnChange = {},
+            onSortNameModeChange = { requested = it },
+            scrollTo = "Sort names",
+        )
+
+        composeRule.onNodeWithText("Sort names").performClick()
+        composeRule.onNodeWithText("Use regular names").performClick()
+        composeRule.onNodeWithText("Done").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(SortNameMode.Name, requested)
+    }
+
     private fun renderSettings(
         keepScreenOn: Boolean,
         onKeepScreenOnChange: (Boolean) -> Unit,
+        onSortNameModeChange: (SortNameMode) -> Unit = {},
+        scrollTo: String = "Keep screen on",
     ) {
         composeRule.setContent {
             SubtracksTheme {
@@ -88,6 +109,7 @@ class SettingsScreenTest {
                     onDownloadOverMeteredChange = {},
                     onScrobblingChange = {},
                     onKeepScreenOnChange = onKeepScreenOnChange,
+                    onSortNameModeChange = onSortNameModeChange,
                     onAddServer = {},
                     onOpenDownloads = {},
                     onOpenLicenses = {},
@@ -97,7 +119,7 @@ class SettingsScreenTest {
             }
         }
         awaitText("Add server")
-        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Keep screen on"))
+        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(scrollTo))
     }
 
     private fun awaitText(text: String) {

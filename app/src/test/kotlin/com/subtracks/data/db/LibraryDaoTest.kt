@@ -20,6 +20,7 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
+import com.subtracks.data.prefs.SortNameMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -332,10 +333,18 @@ class LibraryDaoTest {
         runTest {
             val orders =
                 listOf(
-                    ALBUM_ORDER_BY_NAME to "index_albums_name",
-                    ALBUM_ORDER_BY_NAME_REVERSED to "index_albums_name",
-                    ALBUM_ORDER_BY_ARTIST to "index_albums_artist",
-                    ALBUM_ORDER_BY_ARTIST_REVERSED to "index_albums_artist",
+                    "${albumNameSortKey(SortNameMode.SortName)}, id" to "index_albums_name",
+                    "${albumNameSortKey(SortNameMode.SortName)} DESC, id DESC" to "index_albums_name",
+                    "${albumNameSortKey(SortNameMode.Name)}, id" to "index_albums_name_plain",
+                    "${albumNameSortKey(SortNameMode.Name)} DESC, id DESC" to "index_albums_name_plain",
+                    "${albumArtistSortKey(SortNameMode.SortName)}, year, " +
+                        "${albumNameSortKey(SortNameMode.SortName)}, id" to "index_albums_artist",
+                    "${albumArtistSortKey(SortNameMode.SortName)} DESC, year DESC, " +
+                        "${albumNameSortKey(SortNameMode.SortName)} DESC, id DESC" to "index_albums_artist",
+                    "${albumArtistSortKey(SortNameMode.Name)}, year, " +
+                        "${albumNameSortKey(SortNameMode.Name)}, id" to "index_albums_artist_plain",
+                    "${albumArtistSortKey(SortNameMode.Name)} DESC, year DESC, " +
+                        "${albumNameSortKey(SortNameMode.Name)} DESC, id DESC" to "index_albums_artist_plain",
                     ALBUM_ORDER_BY_YEAR to "index_albums_year",
                     ALBUM_ORDER_BY_YEAR_REVERSED to "index_albums_year",
                     ALBUM_ORDER_BY_ADDED to "index_albums_added",
@@ -359,8 +368,10 @@ class LibraryDaoTest {
         runTest {
             val orders =
                 listOf(
-                    ARTIST_ORDER_BY_NAME to "index_artists_name",
-                    ARTIST_ORDER_BY_NAME_REVERSED to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.SortName)}, id" to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.SortName)} DESC, id DESC" to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.Name)}, id" to "index_artists_name_plain",
+                    "${artistNameSortKey(SortNameMode.Name)} DESC, id DESC" to "index_artists_name_plain",
                     ARTIST_ORDER_BY_ALBUM_COUNT to "index_artists_albumCount",
                     ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED to "index_artists_albumCount",
                     ARTIST_ORDER_BY_STARRED to "index_artists_starred",
@@ -1055,7 +1066,7 @@ class LibraryDaoTest {
             val plan =
                 plan(
                     "SELECT * ${ALBUMS_FILTER.replace(":search", "'abc'")} " +
-                        "ORDER BY $ALBUM_ORDER_BY_NAME LIMIT 20 OFFSET 0",
+                        "ORDER BY ${albumNameSortKey(SortNameMode.SortName)}, id LIMIT 20 OFFSET 0",
                 )
 
             assertTrue(plan, plan.contains("album_search"))
@@ -1317,6 +1328,70 @@ class LibraryDaoTest {
             assertEquals(
                 listOf("Zzz", "Aaa"),
                 dao.albumsByArtistReversed(sourceId, 0, "").page().map { it.name },
+            )
+        }
+
+    @Test
+    fun theSortNamePreferenceChoosesTheOrderKey() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "あいみょん", albumCount = 1).copy(sortName = "Zzz"),
+                    artist(sourceId, "ar-2", "宇多田ヒカル", albumCount = 1).copy(sortName = "Aaa"),
+                    artist(sourceId, "ar-3", "Beatles", albumCount = 1).copy(sortName = "Beatles, The"),
+                    artist(sourceId, "ar-4", "Zebra", albumCount = 1).copy(sortName = "Aaa"),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Zzz", year = null, starred = null)
+                        .copy(sortName = "Aaa", albumArtistSort = "Zzz", albumArtist = "Beatles"),
+                    album(sourceId, "al-2", "Aaa", year = null, starred = null)
+                        .copy(sortName = "Zzz", albumArtistSort = "Aaa", albumArtist = "Aaa"),
+                    album(sourceId, "al-3", "Beatles", year = null, starred = null)
+                        .copy(sortName = "Beatles, The", albumArtistSort = "Beatles, The", albumArtist = "Zebra"),
+                ),
+            )
+
+            assertEquals(
+                listOf("宇多田ヒカル", "Zebra", "Beatles", "あいみょん"),
+                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.SortName.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beatles", "Zebra", "あいみょん", "宇多田ヒカル"),
+                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("宇多田ヒカル", "あいみょん", "Zebra", "Beatles"),
+                dao.artistsByNameReversed(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("宇多田ヒカル", "Beatles", "Zebra", "あいみょん"),
+                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.NonLatin.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Aaa", "Beatles", "Zzz"),
+                dao.albumsByName(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Aaa", "Zzz", "Beatles"),
+                dao.albumsByArtist(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+            )
+            assertEquals(
+                listOf("Beatles", "Zebra", "あいみょん", "宇多田ヒカル"),
+                dao
+                    .artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false, SortNameMode.Name))
+                    .page()
+                    .map { it.name },
+            )
+            assertEquals(
+                listOf("Aaa", "Beatles", "Zzz"),
+                dao
+                    .albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false, SortNameMode.Name))
+                    .page()
+                    .map { it.name },
             )
         }
 

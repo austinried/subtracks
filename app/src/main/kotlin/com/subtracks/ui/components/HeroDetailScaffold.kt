@@ -291,7 +291,11 @@ fun HeroHeader(
                 modifier =
                     Modifier
                         .heightIn(min = 32.dp)
-                        .clickable(onClickLabel = stringResource(R.string.open_artist)) { onSubtitleClick() },
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClickLabel = stringResource(R.string.open_artist),
+                        ) { onSubtitleClick() },
                 contentAlignment = Alignment.TopCenter,
             ) {
                 HeroSubtitle(subtitle, Modifier.padding(top = 4.dp))

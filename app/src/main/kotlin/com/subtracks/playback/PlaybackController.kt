@@ -1,6 +1,7 @@
 package com.subtracks.playback
 
 import com.subtracks.UiMessage
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueEntry
@@ -36,6 +37,7 @@ data class QueueItem(
     val durationMs: Long? = null,
     val replayGain: ReplayGain = ReplayGain(),
     val albumContext: Boolean = false,
+    val artists: List<ArtistRef> = emptyList(),
 )
 
 data class QueueContext(

@@ -61,14 +61,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.subtracks.R
+import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
+import com.subtracks.ui.components.AlbumInfoDialog
+import com.subtracks.ui.components.ArtistChooserSheet
+import com.subtracks.ui.components.ArtistInfoDialog
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.LoadingState
+import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.SongInfoDialog
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
@@ -230,7 +235,8 @@ private fun MainNavigation() {
     var settleJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val contextMenuHost = remember { ContextMenuHost() }
-    var infoSong by remember { mutableStateOf<Song?>(null) }
+    var infoTarget by remember { mutableStateOf<MenuTarget?>(null) }
+    var artistChooser by remember { mutableStateOf<List<ArtistRef>?>(null) }
 
     val activeSourceId by libraryRepository.activeSourceId.collectAsStateWithLifecycle(initialValue = null)
     var previousSourceId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -312,7 +318,8 @@ private fun MainNavigation() {
         nowPlayingLauncher.openNowPlaying.collect {
             focusManager.clearFocus()
             contextMenuHost.dismissTransients()
-            infoSong = null
+            infoTarget = null
+            artistChooser = null
             showingQueue = false
             if (navController.currentDestination?.route in DETAIL_ROUTES) {
                 navController.popBackStack(Routes.LIBRARY, inclusive = false)
@@ -389,6 +396,7 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
                             },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                            onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
                             onOpenSearch = { navController.navigate(Routes.SEARCH) },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->
@@ -773,22 +781,61 @@ private fun MainNavigation() {
                     target = target,
                     actions = contextMenuHost.actions,
                     onDismiss = { contextMenuHost.dismiss() },
-                    onInfo = { infoSong = it },
+                    onInfo = { infoTarget = it },
+                    onChooseArtists = { artistChooser = it },
                 )
             }
 
-            infoSong?.let { song ->
-                val genres by
-                    remember(song.sourceId, song.id) { libraryRepository.songGenres(song.sourceId, song.id) }
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-                SongInfoDialog(
-                    song = song,
-                    download = downloads[song.id],
-                    localFile = downloadRepository.localFile(song.id),
-                    streamEncoding = playbackController.currentAudioEncoding().takeIf { playback.item?.id == song.id },
-                    onDismiss = { infoSong = null },
-                    genres = genres,
+            artistChooser?.let { artists ->
+                ArtistChooserSheet(
+                    artists = artists,
+                    onArtistClick = { artist ->
+                        artistChooser = null
+                        navigateDetail(
+                            Routes.ARTIST_DETAIL,
+                            "artistId",
+                            artist.id,
+                            Routes.artist(artist.id),
+                        )
+                    },
+                    onDismiss = { artistChooser = null },
                 )
+            }
+
+            when (val target = infoTarget) {
+                is MenuTarget.Song -> {
+                    val song = target.song
+                    val genres by
+                        remember(song.sourceId, song.id) { libraryRepository.songGenres(song.sourceId, song.id) }
+                            .collectAsStateWithLifecycle(initialValue = emptyList())
+                    SongInfoDialog(
+                        song = song,
+                        download = downloads[song.id],
+                        localFile = downloadRepository.localFile(song.id),
+                        streamEncoding = playbackController.currentAudioEncoding().takeIf { playback.item?.id == song.id },
+                        onDismiss = { infoTarget = null },
+                        genres = genres,
+                    )
+                }
+
+                is MenuTarget.Album -> {
+                    AlbumInfoDialog(
+                        album = target.album,
+                        download = target.download,
+                        onDismiss = { infoTarget = null },
+                    )
+                }
+
+                is MenuTarget.Artist -> {
+                    ArtistInfoDialog(
+                        artist = target.artist,
+                        onDismiss = { infoTarget = null },
+                    )
+                }
+
+                is MenuTarget.Playlist, null -> {
+                    Unit
+                }
             }
         }
     }

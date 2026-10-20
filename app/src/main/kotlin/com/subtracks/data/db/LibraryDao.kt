@@ -50,11 +50,6 @@ internal const val ALBUMS_FILTER =
         "OR instr(lower(sortName), lower(:search)) > 0 " +
         "OR instr(lower(albumArtistSort), lower(:search)) > 0))) "
 
-internal const val ALBUM_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_ARTIST = "albumArtistSort COLLATE NOCASE, year, sortName COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_ARTIST_REVERSED =
-    "albumArtistSort COLLATE NOCASE DESC, year DESC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_YEAR = "year DESC, sortName COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_ADDED = "created DESC, sortName COLLATE NOCASE, id"
@@ -69,6 +64,16 @@ internal const val ALBUM_ORDER_BY_FREQUENT = "playCount DESC, sortName COLLATE N
 internal const val ALBUM_ORDER_BY_FREQUENT_REVERSED = "playCount ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_RECENT = "played DESC NULLS LAST, sortName COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
+
+private const val ALBUM_NAME_SORT_KEY_MODE =
+    "(CASE :sortMode WHEN 'Name' THEN name WHEN 'NonLatin' THEN (CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) ELSE sortName END) COLLATE NOCASE"
+private const val ALBUM_ARTIST_SORT_KEY_MODE =
+    "(CASE :sortMode WHEN 'Name' THEN albumArtist WHEN 'NonLatin' THEN (CASE WHEN albumArtist GLOB '*[A-Za-z]*' THEN albumArtist ELSE albumArtistSort END) ELSE albumArtistSort END) COLLATE NOCASE"
+internal const val ALBUM_ORDER_BY_NAME_SORT_MODE = "$ALBUM_NAME_SORT_KEY_MODE, id"
+internal const val ALBUM_ORDER_BY_NAME_SORT_MODE_REVERSED = "$ALBUM_NAME_SORT_KEY_MODE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ARTIST_SORT_MODE = "$ALBUM_ARTIST_SORT_KEY_MODE, year, $ALBUM_NAME_SORT_KEY_MODE, id"
+internal const val ALBUM_ORDER_BY_ARTIST_SORT_MODE_REVERSED =
+    "$ALBUM_ARTIST_SORT_KEY_MODE DESC, year DESC, $ALBUM_NAME_SORT_KEY_MODE DESC, id DESC"
 
 internal const val ARTIST_CREDITED =
     "(artists.credited = 1 OR COALESCE((SELECT creditsStale FROM sources WHERE id = artists.sourceId), 1) = 1)"
@@ -285,8 +290,6 @@ internal const val ARTISTS_SELECT =
         "artists.starred, artists.coverArt, artists.artistImageUrl, artists.coverArts, artists.downloadedCoverArts, " +
         "artists.playCount, artists.played, artists.songCount, artists.sortName, artists.credited "
 
-internal const val ARTIST_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
-internal const val ARTIST_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_STARRED = "starred DESC NULLS LAST, sortName COLLATE NOCASE, id"
@@ -295,6 +298,15 @@ internal const val ARTIST_ORDER_BY_FREQUENT = "artists.playCount DESC, sortName 
 internal const val ARTIST_ORDER_BY_FREQUENT_REVERSED = "artists.playCount ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ARTIST_ORDER_BY_RECENT = "artists.played DESC NULLS LAST, sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_RECENT_REVERSED = "artists.played ASC NULLS LAST, sortName COLLATE NOCASE DESC, id DESC"
+
+private const val ARTIST_NAME_SORT_KEY_MODE =
+    "(CASE :sortMode WHEN 'Name' THEN name WHEN 'NonLatin' THEN (CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) ELSE sortName END) COLLATE NOCASE"
+internal const val ARTIST_ORDER_BY_NAME_SORT_MODE = "$ARTIST_NAME_SORT_KEY_MODE, id"
+internal const val ARTIST_ORDER_BY_NAME_SORT_MODE_REVERSED = "$ARTIST_NAME_SORT_KEY_MODE DESC, id DESC"
+
+private const val SONG_NAME_SORT_KEY_MODE =
+    "(CASE :sortMode WHEN 'Name' THEN songs.title WHEN 'NonLatin' THEN (CASE WHEN songs.title GLOB '*[A-Za-z]*' THEN songs.title ELSE songs.sortName END) ELSE songs.sortName END) COLLATE NOCASE"
+internal const val SONG_SEARCH_ORDER_SORT_MODE = "$SONG_NAME_SORT_KEY_MODE, songs.id"
 
 internal const val PLAYLISTS_FILTER =
     "FROM playlists WHERE sourceId = :sourceId " +
@@ -566,22 +578,24 @@ interface LibraryDao {
 
     @Query(
         "SELECT * FROM albums WHERE sourceId = :sourceId AND $ALBUM_SEARCH_FILTER " +
-            "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY $ALBUM_ORDER_BY_NAME_SORT_MODE LIMIT :limit",
     )
     fun searchAlbums(
         sourceId: Long,
         search: String,
         limit: Int,
+        sortMode: String = "",
     ): Flow<List<Album>>
 
     @Query(
         "SELECT $ARTIST_COLUMNS FROM artists WHERE sourceId = :sourceId AND $ARTIST_SEARCH_FILTER AND $ARTIST_CREDITED " +
-            "ORDER BY sortName COLLATE NOCASE, id LIMIT :limit",
+            "ORDER BY $ARTIST_ORDER_BY_NAME_SORT_MODE LIMIT :limit",
     )
     fun searchArtists(
         sourceId: Long,
         search: String,
         limit: Int,
+        sortMode: String = "",
     ): Flow<List<Artist>>
 
     @Query(
@@ -598,12 +612,13 @@ interface LibraryDao {
         "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
             "WHERE songs.sourceId = :sourceId AND $SONG_SEARCH_FILTER " +
-            "ORDER BY songs.sortName COLLATE NOCASE, songs.id LIMIT :limit",
+            "ORDER BY $SONG_SEARCH_ORDER_SORT_MODE LIMIT :limit",
     )
     fun searchSongs(
         sourceId: Long,
         search: String,
         limit: Int,
+        sortMode: String = "",
     ): Flow<List<AlbumSongItem>>
 
     @Query(
@@ -745,36 +760,40 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Playlist::class])
     fun playlistsPaging(query: RoomRawQuery): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME")
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_SORT_MODE")
     fun albumsByName(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Album>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_REVERSED")
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_SORT_MODE_REVERSED")
     fun albumsByNameReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Album>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST")
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_SORT_MODE")
     fun albumsByArtist(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Album>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_REVERSED")
+    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_SORT_MODE_REVERSED")
     fun albumsByArtistReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Album>
 
     @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR")
@@ -857,20 +876,22 @@ interface LibraryDao {
         downloadedFilter: Int = 0,
     ): PagingSource<Int, Album>
 
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_SORT_MODE")
     fun artistsByName(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Artist>
 
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_REVERSED")
+    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_SORT_MODE_REVERSED")
     fun artistsByNameReversed(
         sourceId: Long,
         starredFilter: Int,
         search: String,
         downloadedFilter: Int = 0,
+        sortMode: String = "",
     ): PagingSource<Int, Artist>
 
     @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")

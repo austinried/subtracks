@@ -44,6 +44,7 @@ import com.subtracks.R
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.playback.PlaybackState
 import com.subtracks.ui.components.CoverArt
+import com.subtracks.ui.components.artistSubtitle
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.playerSurfaceColor
@@ -139,7 +140,7 @@ fun MiniPlayer(
                             modifier = Modifier.basicMarquee(),
                         )
                         Text(
-                            text = item.artist ?: item.album.orEmpty(),
+                            text = artistSubtitle(item.artist, item.artists) ?: item.album.orEmpty(),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,

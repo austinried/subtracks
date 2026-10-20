@@ -2,6 +2,7 @@ package com.subtracks.playback
 
 import androidx.media3.common.C
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.model.ArtistRef
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,6 +69,21 @@ class MediaItemTest {
             )
 
         assertEquals(gain, item.replayGain())
+    }
+
+    @Test
+    fun theItemCarriesEveryArtist() {
+        val artists = listOf(ArtistRef("ar1", "A"), ArtistRef("ar2", "B"))
+
+        val item =
+            queueMediaItem(
+                song.copy(artists = artists),
+                local = null,
+                stream = "http://server/stream?s=s1",
+                transcode = false,
+            )
+
+        assertEquals(artists, item.artistRefs())
     }
 
     @Test

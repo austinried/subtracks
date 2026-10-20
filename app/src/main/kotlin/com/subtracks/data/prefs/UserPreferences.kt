@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
+enum class SortNameMode { SortName, Name, NonLatin }
+
 enum class AlbumSort { Name, Artist, Year, Added, Starred, Frequent, Recent }
 
 enum class ArtistSort { Name, AlbumCount, Starred, Frequent, Recent }
@@ -181,6 +183,17 @@ class UserPreferences(
     }
 
     private val keepScreenOnKey = booleanPreferencesKey("keep_screen_on")
+
+    fun sortNameMode(): Flow<SortNameMode> =
+        store.data.map { prefs ->
+            prefs[sortNameModeKey]?.let { stored -> SortNameMode.entries.firstOrNull { it.name == stored } } ?: SortNameMode.SortName
+        }
+
+    suspend fun setSortNameMode(mode: SortNameMode) {
+        store.edit { prefs -> prefs[sortNameModeKey] = mode.name }
+    }
+
+    private val sortNameModeKey = stringPreferencesKey("sort_name_mode")
 
     fun offlineMode(): Flow<Boolean> = store.data.map { prefs -> prefs[offlineModeKey] ?: false }
 

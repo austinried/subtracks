@@ -90,6 +90,7 @@ import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.artistSubtitle
 import com.subtracks.ui.components.prefetchArtworkRatio
 import com.subtracks.ui.theme.ArtworkColors
 import com.subtracks.ui.theme.ArtworkSeedCache
@@ -576,7 +577,10 @@ fun NowPlayingScreen(
                                 }
                                 Box(Modifier.height(subtitleHeight), contentAlignment = Alignment.CenterStart) {
                                     Text(
-                                        text = state.item?.artist.orEmpty(),
+                                        text =
+                                            state.item
+                                                ?.let { artistSubtitle(it.artist, it.artists) }
+                                                .orEmpty(),
                                         style = subtitleStyle,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1,
