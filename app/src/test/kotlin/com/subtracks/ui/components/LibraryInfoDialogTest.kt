@@ -9,6 +9,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistRef
 import com.subtracks.ui.theme.SubtracksTheme
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,6 +53,10 @@ class LibraryInfoDialogTest {
         composeRule.onNodeWithText("Album, The").assertIsDisplayed()
         composeRule.onNodeWithText("A, The").assertIsDisplayed()
         composeRule.onNodeWithText("1999").assertIsDisplayed()
+
+        val label = composeRule.onNodeWithText("Album artist sort").fetchSemanticsNode().boundsInRoot
+        val value = composeRule.onNodeWithText("A, The").fetchSemanticsNode().boundsInRoot
+        assertTrue("the value must be separated from its label", value.left > label.right)
     }
 
     @Test

@@ -5,6 +5,7 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -101,6 +102,7 @@ internal fun InfoRow(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.width(INFO_LABEL_WIDTH),
         )
+        Spacer(Modifier.width(INFO_LABEL_GAP))
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
@@ -126,4 +128,5 @@ private fun formatDate(
         DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR,
     )
 
-private val INFO_LABEL_WIDTH = 96.dp
+private val INFO_LABEL_WIDTH = 100.dp
+private val INFO_LABEL_GAP = 12.dp
