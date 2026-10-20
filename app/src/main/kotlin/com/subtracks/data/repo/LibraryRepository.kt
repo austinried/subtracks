@@ -7,9 +7,9 @@ import androidx.paging.PagingSource
 import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
-import com.subtracks.data.db.albumsDefaultQuery
-import com.subtracks.data.db.artistsDefaultQuery
-import com.subtracks.data.db.playlistsDefaultQuery
+import com.subtracks.data.db.albumsPageQuery
+import com.subtracks.data.db.artistsPageQuery
+import com.subtracks.data.db.playlistsPageQuery
 import com.subtracks.data.db.rediscoverAlbumsQuery
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.AlbumSongItem
@@ -195,68 +195,8 @@ class LibraryRepository(
         userPreferences.sortNameMode().flatMapLatest { mode ->
             pager(40, enablePlaceholders = true) {
                 val dao = db.libraryDao()
-                if (!downloaded) {
-                    dao.albumsPaging(albumsDefaultQuery(sourceId, starred.ordinal, search, sort, descending, mode))
-                } else {
-                    val downloadedFilter = 1
-                    when (sort) {
-                        AlbumSort.Name -> {
-                            if (descending) {
-                                dao.albumsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            } else {
-                                dao.albumsByName(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            }
-                        }
-
-                        AlbumSort.Artist -> {
-                            if (descending) {
-                                dao.albumsByArtistReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            } else {
-                                dao.albumsByArtist(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            }
-                        }
-
-                        AlbumSort.Year -> {
-                            if (descending) {
-                                dao.albumsByYearReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.albumsByYear(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        AlbumSort.Added -> {
-                            if (descending) {
-                                dao.albumsByRecentlyAddedReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.albumsByRecentlyAdded(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        AlbumSort.Starred -> {
-                            if (descending) {
-                                dao.albumsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.albumsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        AlbumSort.Frequent -> {
-                            if (descending) {
-                                dao.albumsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.albumsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        AlbumSort.Recent -> {
-                            if (descending) {
-                                dao.albumsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.albumsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-                    }
-                }
+                val query = albumsPageQuery(sourceId, starred.ordinal, search, sort, descending, downloaded, mode)
+                if (downloaded) dao.downloadedAlbumsPaging(query) else dao.albumsPaging(query)
             }
         }
 
@@ -271,52 +211,8 @@ class LibraryRepository(
         userPreferences.sortNameMode().flatMapLatest { mode ->
             pager(60) {
                 val dao = db.libraryDao()
-                if (!downloaded) {
-                    dao.artistsPaging(artistsDefaultQuery(sourceId, starred.ordinal, search, sort, descending, mode))
-                } else {
-                    val downloadedFilter = 1
-                    when (sort) {
-                        ArtistSort.Name -> {
-                            if (descending) {
-                                dao.artistsByNameReversed(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            } else {
-                                dao.artistsByName(sourceId, starred.ordinal, search, downloadedFilter, mode.name)
-                            }
-                        }
-
-                        ArtistSort.AlbumCount -> {
-                            if (descending) {
-                                dao.artistsByAlbumCountReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.artistsByAlbumCount(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        ArtistSort.Starred -> {
-                            if (descending) {
-                                dao.artistsByStarredReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.artistsByStarred(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        ArtistSort.Frequent -> {
-                            if (descending) {
-                                dao.artistsByFrequentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.artistsByFrequent(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-
-                        ArtistSort.Recent -> {
-                            if (descending) {
-                                dao.artistsByRecentReversed(sourceId, starred.ordinal, search, downloadedFilter)
-                            } else {
-                                dao.artistsByRecent(sourceId, starred.ordinal, search, downloadedFilter)
-                            }
-                        }
-                    }
-                }
+                val query = artistsPageQuery(sourceId, starred.ordinal, search, sort, descending, downloaded, mode)
+                if (downloaded) dao.downloadedArtistsPaging(query) else dao.artistsPaging(query)
             }
         }
 
@@ -329,36 +225,8 @@ class LibraryRepository(
     ): Flow<PagingData<Playlist>> =
         pager(40) {
             val dao = db.libraryDao()
-            if (!downloaded) {
-                dao.playlistsPaging(playlistsDefaultQuery(sourceId, search, sort, descending))
-            } else {
-                val downloadedFilter = 1
-                when (sort) {
-                    PlaylistSort.Name -> {
-                        if (descending) {
-                            dao.playlistsByNameReversed(sourceId, search, downloadedFilter)
-                        } else {
-                            dao.playlistsByName(sourceId, search, downloadedFilter)
-                        }
-                    }
-
-                    PlaylistSort.Added -> {
-                        if (descending) {
-                            dao.playlistsByAddedReversed(sourceId, search, downloadedFilter)
-                        } else {
-                            dao.playlistsByAdded(sourceId, search, downloadedFilter)
-                        }
-                    }
-
-                    PlaylistSort.Updated -> {
-                        if (descending) {
-                            dao.playlistsByUpdatedReversed(sourceId, search, downloadedFilter)
-                        } else {
-                            dao.playlistsByUpdated(sourceId, search, downloadedFilter)
-                        }
-                    }
-                }
-            }
+            val query = playlistsPageQuery(sourceId, search, sort, descending, downloaded)
+            if (downloaded) dao.downloadedPlaylistsPaging(query) else dao.playlistsPaging(query)
         }
 
     fun album(

@@ -67,17 +67,17 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsByName(sourceId, starredFilter = 0, search = "").page().map { it.name },
+                dao.albumPages(sourceId, starredFilter = 0, search = "").page().map { it.name },
             )
             assertEquals(
                 listOf("Gamma", "Beta", "Alpha"),
-                dao.albumsByNameReversed(sourceId, starredFilter = 0, search = "").page().map { it.name },
+                dao.albumPages(sourceId, starredFilter = 0, search = "", descending = true).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsByYear(sourceId, starredFilter = 0, search = "").page().map { it.name },
+                dao.albumPages(sourceId, starredFilter = 0, search = "", sort = AlbumSort.Year).page().map { it.name },
             )
-            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, starredFilter = 1, search = "").page().map { it.name })
+            assertEquals(listOf("Alpha"), dao.albumPages(sourceId, starredFilter = 1, search = "").page().map { it.name })
         }
 
     @Test
@@ -95,14 +95,14 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Beta", "Gamma", "Alpha"),
-                dao.albumsByRecentlyAdded(sourceId, starredFilter = 0, search = "").page().map { it.name },
+                dao.albumPages(sourceId, starredFilter = 0, search = "", sort = AlbumSort.Added).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Gamma", "Beta"),
-                dao.albumsByStarred(sourceId, starredFilter = 0, search = "").page().map { it.name },
+                dao.albumPages(sourceId, starredFilter = 0, search = "", sort = AlbumSort.Starred).page().map { it.name },
             )
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, starredFilter = 0, search = "gam").page().map { it.name })
-            assertEquals(listOf("Beta"), dao.albumsByName(sourceId, starredFilter = 2, search = "").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, starredFilter = 0, search = "gam").page().map { it.name })
+            assertEquals(listOf("Beta"), dao.albumPages(sourceId, starredFilter = 2, search = "").page().map { it.name })
         }
 
     @Test
@@ -148,19 +148,19 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Beta", "Alpha", "Delta", "Gamma"),
-                dao.albumsByStarred(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Starred).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma", "Delta"),
-                dao.albumsByStarredReversed(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Starred, descending = true).page().map { it.name },
             )
             assertEquals(
                 listOf("Beta", "Alpha", "Delta", "Gamma"),
-                dao.artistsByStarred(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sort = ArtistSort.Starred).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma", "Delta"),
-                dao.artistsByStarredReversed(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sort = ArtistSort.Starred, descending = true).page().map { it.name },
             )
         }
 
@@ -206,19 +206,19 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Two", "One", "Three"),
-                dao.albumsByFrequent(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Frequent).page().map { it.name },
             )
             assertEquals(
                 listOf("Two", "One", "Three"),
-                dao.albumsByRecent(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Recent).page().map { it.name },
             )
             assertEquals(
                 listOf("Many", "Few"),
-                dao.artistsByFrequent(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sort = ArtistSort.Frequent).page().map { it.name },
             )
             assertEquals(
                 listOf("Many", "Few"),
-                dao.artistsByRecent(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sort = ArtistSort.Recent).page().map { it.name },
             )
         }
 
@@ -268,12 +268,17 @@ class LibraryDaoTest {
 
             val pairs =
                 listOf(
-                    dao.albumsByName(sourceId, 0, "") to dao.albumsByNameReversed(sourceId, 0, ""),
-                    dao.albumsByArtist(sourceId, 0, "") to dao.albumsByArtistReversed(sourceId, 0, ""),
-                    dao.albumsByYear(sourceId, 0, "") to dao.albumsByYearReversed(sourceId, 0, ""),
-                    dao.albumsByRecentlyAdded(sourceId, 0, "") to dao.albumsByRecentlyAddedReversed(sourceId, 0, ""),
-                    dao.albumsByFrequent(sourceId, 0, "") to dao.albumsByFrequentReversed(sourceId, 0, ""),
-                    dao.albumsByRecent(sourceId, 0, "") to dao.albumsByRecentReversed(sourceId, 0, ""),
+                    dao.albumPages(sourceId, 0, "") to dao.albumPages(sourceId, 0, "", descending = true),
+                    dao.albumPages(sourceId, 0, "", sort = AlbumSort.Artist) to
+                        dao.albumPages(sourceId, 0, "", sort = AlbumSort.Artist, descending = true),
+                    dao.albumPages(sourceId, 0, "", sort = AlbumSort.Year) to
+                        dao.albumPages(sourceId, 0, "", sort = AlbumSort.Year, descending = true),
+                    dao.albumPages(sourceId, 0, "", sort = AlbumSort.Added) to
+                        dao.albumPages(sourceId, 0, "", sort = AlbumSort.Added, descending = true),
+                    dao.albumPages(sourceId, 0, "", sort = AlbumSort.Frequent) to
+                        dao.albumPages(sourceId, 0, "", sort = AlbumSort.Frequent, descending = true),
+                    dao.albumPages(sourceId, 0, "", sort = AlbumSort.Recent) to
+                        dao.albumPages(sourceId, 0, "", sort = AlbumSort.Recent, descending = true),
                 )
             for ((base, reversed) in pairs) {
                 val ids = base.page().map { it.id }
@@ -303,23 +308,23 @@ class LibraryDaoTest {
 
             val artistPairs =
                 listOf(
-                    dao.artistsByName(sourceId, 0, "").page().map { it.id } to
-                        dao.artistsByNameReversed(sourceId, 0, "").page().map { it.id },
-                    dao.artistsByAlbumCount(sourceId, 0, "").page().map { it.id } to
-                        dao.artistsByAlbumCountReversed(sourceId, 0, "").page().map { it.id },
-                    dao.artistsByFrequent(sourceId, 0, "").page().map { it.id } to
-                        dao.artistsByFrequentReversed(sourceId, 0, "").page().map { it.id },
-                    dao.artistsByRecent(sourceId, 0, "").page().map { it.id } to
-                        dao.artistsByRecentReversed(sourceId, 0, "").page().map { it.id },
+                    dao.artistPages(sourceId, 0, "").page().map { it.id } to
+                        dao.artistPages(sourceId, 0, "", descending = true).page().map { it.id },
+                    dao.artistPages(sourceId, 0, "", sort = ArtistSort.AlbumCount).page().map { it.id } to
+                        dao.artistPages(sourceId, 0, "", sort = ArtistSort.AlbumCount, descending = true).page().map { it.id },
+                    dao.artistPages(sourceId, 0, "", sort = ArtistSort.Frequent).page().map { it.id } to
+                        dao.artistPages(sourceId, 0, "", sort = ArtistSort.Frequent, descending = true).page().map { it.id },
+                    dao.artistPages(sourceId, 0, "", sort = ArtistSort.Recent).page().map { it.id } to
+                        dao.artistPages(sourceId, 0, "", sort = ArtistSort.Recent, descending = true).page().map { it.id },
                 )
             val playlistPairs =
                 listOf(
-                    dao.playlistsByName(sourceId, "").page().map { it.id } to
-                        dao.playlistsByNameReversed(sourceId, "").page().map { it.id },
-                    dao.playlistsByAdded(sourceId, "").page().map { it.id } to
-                        dao.playlistsByAddedReversed(sourceId, "").page().map { it.id },
-                    dao.playlistsByUpdated(sourceId, "").page().map { it.id } to
-                        dao.playlistsByUpdatedReversed(sourceId, "").page().map { it.id },
+                    dao.playlistPages(sourceId, "").page().map { it.id } to
+                        dao.playlistPages(sourceId, "", descending = true).page().map { it.id },
+                    dao.playlistPages(sourceId, "", sort = PlaylistSort.Added).page().map { it.id } to
+                        dao.playlistPages(sourceId, "", sort = PlaylistSort.Added, descending = true).page().map { it.id },
+                    dao.playlistPages(sourceId, "", sort = PlaylistSort.Updated).page().map { it.id } to
+                        dao.playlistPages(sourceId, "", sort = PlaylistSort.Updated, descending = true).page().map { it.id },
                 )
             for ((base, reversed) in artistPairs + playlistPairs) {
                 assertEquals(base.reversed(), reversed)
@@ -357,9 +362,11 @@ class LibraryDaoTest {
                     ALBUM_ORDER_BY_RECENT_REVERSED to "index_albums_recent",
                 )
             for ((order, index) in orders) {
-                val plan = plan("SELECT * $ALBUMS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
-                assertTrue(plan, plan.contains("USING INDEX $index"))
-                assertFalse(plan, plan.contains("TEMP B-TREE"))
+                for (filter in listOf(ALBUMS_FILTER, ALBUMS_FILTER_DOWNLOADED)) {
+                    val plan = plan("SELECT * $filter ORDER BY $order LIMIT 20 OFFSET 0")
+                    assertTrue(plan, plan.contains("USING INDEX $index"))
+                    assertFalse(plan, plan.contains("TEMP B-TREE"))
+                }
             }
         }
 
@@ -382,9 +389,11 @@ class LibraryDaoTest {
                     ARTIST_ORDER_BY_RECENT_REVERSED to "index_artists_recent",
                 )
             for ((order, index) in orders) {
-                val plan = plan("SELECT * $ARTISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
-                assertTrue(plan, plan.contains("USING INDEX $index"))
-                assertFalse(plan, plan.contains("TEMP B-TREE"))
+                for (filter in listOf(ARTISTS_FILTER, ARTISTS_FILTER_DOWNLOADED)) {
+                    val plan = plan("SELECT * $filter ORDER BY $order LIMIT 20 OFFSET 0")
+                    assertTrue(plan, plan.contains("USING INDEX $index"))
+                    assertFalse(plan, plan.contains("TEMP B-TREE"))
+                }
             }
         }
 
@@ -401,9 +410,11 @@ class LibraryDaoTest {
                     PLAYLIST_ORDER_BY_UPDATED_REVERSED to "index_playlists_updated",
                 )
             for ((order, index) in orders) {
-                val plan = plan("SELECT * $PLAYLISTS_FILTER ORDER BY $order LIMIT 20 OFFSET 0")
-                assertTrue(plan, plan.contains("USING INDEX $index"))
-                assertFalse(plan, plan.contains("TEMP B-TREE"))
+                for (filter in listOf(PLAYLISTS_FILTER, PLAYLISTS_FILTER_DOWNLOADED)) {
+                    val plan = plan("SELECT * $filter ORDER BY $order LIMIT 20 OFFSET 0")
+                    assertTrue(plan, plan.contains("USING INDEX $index"))
+                    assertFalse(plan, plan.contains("TEMP B-TREE"))
+                }
             }
         }
 
@@ -456,17 +467,17 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Downloaded"),
-                dao.albumsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", downloaded = true).page().map { it.name },
             )
             assertEquals(
                 listOf("ar-1"),
-                dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.id },
+                dao.artistPages(sourceId, 0, "", downloaded = true).page().map { it.id },
             )
             assertEquals(
                 listOf("pl-1"),
-                dao.playlistsByName(sourceId, "", downloadedFilter = 1).page().map { it.id },
+                dao.playlistPages(sourceId, "", downloaded = true).page().map { it.id },
             )
-            assertEquals(3, dao.albumsByName(sourceId, 0, "").page().size)
+            assertEquals(3, dao.albumPages(sourceId, 0, "").page().size)
         }
 
     @Test
@@ -628,7 +639,7 @@ class LibraryDaoTest {
 
             dao.recomputeArtistArt(sourceId)
 
-            val artists = dao.artistsByName(sourceId, 0, "").page().associateBy { it.id }
+            val artists = dao.artistPages(sourceId, 0, "").page().associateBy { it.id }
 
             assertEquals("own-art", artists.getValue("ar-own").coverArt)
             assertNull(artists.getValue("ar-album").coverArt)
@@ -648,7 +659,7 @@ class LibraryDaoTest {
             assertEquals(
                 listOf("album-ref-art"),
                 dao
-                    .artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false))
+                    .artistPages(sourceId, 0, "", ArtistSort.Name, false)
                     .page()
                     .first { it.id == "ar-album-ref" }
                     .coverArts,
@@ -904,7 +915,7 @@ class LibraryDaoTest {
             db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
             assertEquals(
                 listOf("Album Artist"),
-                dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page().map { it.name },
+                dao.artistPages(sourceId, 0, "", downloaded = true).page().map { it.name },
             )
             assertEquals(
                 listOf("Album Artist"),
@@ -913,7 +924,7 @@ class LibraryDaoTest {
 
             db.downloadDao().upsert(SongDownload(sourceId, "s2", DownloadStatus.Completed))
 
-            val filtered = dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page()
+            val filtered = dao.artistPages(sourceId, 0, "", downloaded = true).page()
             assertEquals(listOf("Album Artist", "Guest"), filtered.map { it.name })
             assertEquals(listOf(1L, 1L), filtered.map { it.albumCount })
 
@@ -961,14 +972,14 @@ class LibraryDaoTest {
             )
             db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
 
-            val filtered = dao.artistsByName(sourceId, 0, "", downloadedFilter = 1).page()
+            val filtered = dao.artistPages(sourceId, 0, "", downloaded = true).page()
             assertEquals(1, filtered.size)
             assertEquals(1L, filtered.first().albumCount)
 
             assertEquals(
                 5L,
                 dao
-                    .artistsByName(sourceId, 0, "")
+                    .artistPages(sourceId, 0, "")
                     .page()
                     .first { it.id == "ar-1" }
                     .albumCount,
@@ -1006,7 +1017,7 @@ class LibraryDaoTest {
 
             // ar-1 has two downloaded albums, ar-2 one, so the downloaded order is ar-1 first even
             // though the synced counts would put ar-2 first.
-            val filtered = dao.artistsByAlbumCount(sourceId, 0, "", downloadedFilter = 1).page()
+            val filtered = dao.artistPages(sourceId, 0, "", downloaded = true, sort = ArtistSort.AlbumCount).page()
             assertEquals(listOf("ar-1", "ar-2"), filtered.map { it.id })
             assertEquals(listOf(2L, 1L), filtered.map { it.albumCount })
         }
@@ -1036,7 +1047,7 @@ class LibraryDaoTest {
             )
             db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
 
-            val filtered = dao.playlistsByName(sourceId, "", downloadedFilter = 1).page()
+            val filtered = dao.playlistPages(sourceId, "", downloaded = true).page()
             assertEquals(1, filtered.size)
             assertEquals(1L, filtered.first().songCount)
             assertEquals("austin", filtered.first().owner)
@@ -1045,7 +1056,7 @@ class LibraryDaoTest {
             assertEquals(
                 5L,
                 dao
-                    .playlistsByName(sourceId, "")
+                    .playlistPages(sourceId, "")
                     .page()
                     .first { it.id == "pl-1" }
                     .songCount,
@@ -1064,11 +1075,11 @@ class LibraryDaoTest {
                 ),
             )
 
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "amm").page().map { it.name })
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "GAM").page().map { it.name })
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "ga").page().map { it.name })
-            assertEquals(listOf("Alpha"), dao.albumsByName(sourceId, 0, "Else").page().map { it.name })
-            assertTrue(dao.albumsByName(sourceId, 0, "zzz").page().isEmpty())
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "amm").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "GAM").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "ga").page().map { it.name })
+            assertEquals(listOf("Alpha"), dao.albumPages(sourceId, 0, "Else").page().map { it.name })
+            assertTrue(dao.albumPages(sourceId, 0, "zzz").page().isEmpty())
         }
 
     @Test
@@ -1077,17 +1088,17 @@ class LibraryDaoTest {
             val sourceId = source()
             val dao = db.libraryDao()
             dao.upsertAlbums(listOf(album(sourceId, "a", "Gamma", year = null, starred = null)))
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "gam").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "gam").page().map { it.name })
 
             dao.setAlbumStar(sourceId, "a", 7)
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "gam").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "gam").page().map { it.name })
 
             dao.upsertAlbums(listOf(album(sourceId, "a", "Delta", year = null, starred = null)))
-            assertTrue(dao.albumsByName(sourceId, 0, "gam").page().isEmpty())
-            assertEquals(listOf("Delta"), dao.albumsByName(sourceId, 0, "elt").page().map { it.name })
+            assertTrue(dao.albumPages(sourceId, 0, "gam").page().isEmpty())
+            assertEquals(listOf("Delta"), dao.albumPages(sourceId, 0, "elt").page().map { it.name })
 
             dao.deleteAlbums(sourceId, listOf("a"))
-            assertTrue(dao.albumsByName(sourceId, 0, "elt").page().isEmpty())
+            assertTrue(dao.albumPages(sourceId, 0, "elt").page().isEmpty())
         }
 
     @Test
@@ -1101,8 +1112,8 @@ class LibraryDaoTest {
             val second = source()
             dao.upsertAlbums(listOf(album(second, "a", "Beta", year = null, starred = null)))
 
-            assertEquals(listOf("Beta"), dao.albumsByName(second, 0, "eta").page().map { it.name })
-            assertTrue(dao.albumsByName(second, 0, "gam").page().isEmpty())
+            assertEquals(listOf("Beta"), dao.albumPages(second, 0, "eta").page().map { it.name })
+            assertTrue(dao.albumPages(second, 0, "gam").page().isEmpty())
         }
 
     @Test
@@ -1113,10 +1124,10 @@ class LibraryDaoTest {
             dao.upsertArtists(listOf(artist(sourceId, "r1", "The Beatles", albumCount = 1)))
             dao.upsertPlaylists(listOf(playlist(sourceId, "l1", "Road Trip", created = 0, changed = 0)))
 
-            assertEquals(listOf("r1"), dao.artistsByName(sourceId, 0, "eat").page().map { it.id })
-            assertEquals(listOf("l1"), dao.playlistsByName(sourceId, "rip").page().map { it.id })
-            assertTrue(dao.artistsByName(sourceId, 0, "rip").page().isEmpty())
-            assertTrue(dao.playlistsByName(sourceId, "eat").page().isEmpty())
+            assertEquals(listOf("r1"), dao.artistPages(sourceId, 0, "eat").page().map { it.id })
+            assertEquals(listOf("l1"), dao.playlistPages(sourceId, "rip").page().map { it.id })
+            assertTrue(dao.artistPages(sourceId, 0, "rip").page().isEmpty())
+            assertTrue(dao.playlistPages(sourceId, "eat").page().isEmpty())
         }
 
     @Test
@@ -1131,10 +1142,10 @@ class LibraryDaoTest {
                 ),
             )
 
-            assertEquals(listOf("Say \"Hello\""), dao.albumsByName(sourceId, 0, "\"Hel").page().map { it.name })
+            assertEquals(listOf("Say \"Hello\""), dao.albumPages(sourceId, 0, "\"Hel").page().map { it.name })
             assertEquals(
                 listOf("Say \"Hello\""),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "\"Hel", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "\"Hel", AlbumSort.Name, false).page().map { it.name },
             )
         }
 
@@ -1145,7 +1156,7 @@ class LibraryDaoTest {
             val dao = db.libraryDao()
             dao.upsertAlbums(listOf(album(sourceId, "a", "Gamma", year = null, starred = null).copy(albumArtist = null)))
 
-            assertEquals(listOf("Gamma"), dao.albumsByName(sourceId, 0, "amm").page().map { it.name })
+            assertEquals(listOf("Gamma"), dao.albumPages(sourceId, 0, "amm").page().map { it.name })
         }
 
     @Test
@@ -1274,35 +1285,35 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", AlbumSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Gamma", "Beta", "Alpha"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, true)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", AlbumSort.Name, true).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta", "Gamma"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Year, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", AlbumSort.Year, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Gamma", "Beta", "Alpha"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Artist, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", AlbumSort.Artist, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "alp", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "alp", AlbumSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Gamma"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "am", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 0, "am", AlbumSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 1, "", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 1, "", AlbumSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Beta", "Gamma"),
-                dao.albumsPaging(albumsDefaultQuery(sourceId, 2, "", AlbumSort.Name, false)).page().map { it.name },
+                dao.albumPages(sourceId, 2, "", AlbumSort.Name, false).page().map { it.name },
             )
         }
 
@@ -1326,23 +1337,23 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("Alpha", "Beta"),
-                dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "a", ArtistSort.Name, false)).page().map { it.name },
+                dao.artistPages(sourceId, 0, "a", ArtistSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Beta", "Alpha"),
-                dao.artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.AlbumCount, false)).page().map { it.name },
+                dao.artistPages(sourceId, 0, "", ArtistSort.AlbumCount, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta"),
-                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "a", PlaylistSort.Name, false)).page().map { it.name },
+                dao.playlistPages(sourceId, "a", PlaylistSort.Name, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Alpha", "Beta"),
-                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "", PlaylistSort.Added, false)).page().map { it.name },
+                dao.playlistPages(sourceId, "", PlaylistSort.Added, false).page().map { it.name },
             )
             assertEquals(
                 listOf("Beta", "Alpha"),
-                dao.playlistsPaging(playlistsDefaultQuery(sourceId, "", PlaylistSort.Updated, false)).page().map { it.name },
+                dao.playlistPages(sourceId, "", PlaylistSort.Updated, false).page().map { it.name },
             )
         }
 
@@ -1355,12 +1366,12 @@ class LibraryDaoTest {
             dao.upsertSongs(listOf(song(sourceId, "s1", "One", starred = null).copy(albumId = "a")))
 
             val defaultInvalidated = AtomicBoolean(false)
-            val default = dao.albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false))
+            val default = dao.albumPages(sourceId, 0, "", AlbumSort.Name, false)
             default.registerInvalidatedCallback { defaultInvalidated.set(true) }
             default.page()
 
             val downloadedInvalidated = AtomicBoolean(false)
-            val downloaded = dao.albumsByName(sourceId, 0, "", downloadedFilter = 1)
+            val downloaded = dao.albumPages(sourceId, 0, "", downloaded = true)
             downloaded.registerInvalidatedCallback { downloadedInvalidated.set(true) }
             downloaded.page()
 
@@ -1395,27 +1406,27 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("宇多田ヒカル", "あいみょん"),
-                dao.artistsByName(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "").page().map { it.name },
             )
             assertEquals(
                 listOf("あいみょん", "宇多田ヒカル"),
-                dao.artistsByNameReversed(sourceId, 0, "").page().map { it.name },
+                dao.artistPages(sourceId, 0, "", descending = true).page().map { it.name },
             )
             assertEquals(
                 listOf("Zzz", "Aaa"),
-                dao.albumsByName(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "").page().map { it.name },
             )
             assertEquals(
                 listOf("Aaa", "Zzz"),
-                dao.albumsByNameReversed(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", descending = true).page().map { it.name },
             )
             assertEquals(
                 listOf("Aaa", "Zzz"),
-                dao.albumsByArtist(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Artist).page().map { it.name },
             )
             assertEquals(
                 listOf("Zzz", "Aaa"),
-                dao.albumsByArtistReversed(sourceId, 0, "").page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sort = AlbumSort.Artist, descending = true).page().map { it.name },
             )
         }
 
@@ -1445,40 +1456,48 @@ class LibraryDaoTest {
 
             assertEquals(
                 listOf("宇多田ヒカル", "Zebra", "Beatles", "あいみょん"),
-                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.SortName.name).page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sortNameMode = SortNameMode.SortName).page().map { it.name },
             )
             assertEquals(
                 listOf("Beatles", "Zebra", "あいみょん", "宇多田ヒカル"),
-                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sortNameMode = SortNameMode.Name).page().map { it.name },
             )
             assertEquals(
                 listOf("宇多田ヒカル", "あいみょん", "Zebra", "Beatles"),
-                dao.artistsByNameReversed(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+                dao
+                    .artistPages(sourceId, 0, "", descending = true, sortNameMode = SortNameMode.Name)
+                    .page()
+                    .map { it.name },
             )
             assertEquals(
                 listOf("宇多田ヒカル", "Beatles", "Zebra", "あいみょん"),
-                dao.artistsByName(sourceId, 0, "", sortMode = SortNameMode.NonLatin.name).page().map { it.name },
+                dao.artistPages(sourceId, 0, "", sortNameMode = SortNameMode.NonLatin).page().map { it.name },
             )
             assertEquals(
                 listOf("Aaa", "Beatles", "Zzz"),
-                dao.albumsByName(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+                dao.albumPages(sourceId, 0, "", sortNameMode = SortNameMode.Name).page().map { it.name },
             )
             assertEquals(
                 listOf("Aaa", "Zzz", "Beatles"),
-                dao.albumsByArtist(sourceId, 0, "", sortMode = SortNameMode.Name.name).page().map { it.name },
+                dao
+                    .albumPages(sourceId, 0, "", sort = AlbumSort.Artist, sortNameMode = SortNameMode.Name)
+                    .page()
+                    .map { it.name },
             )
             assertEquals(
                 listOf("Beatles", "Zebra", "あいみょん", "宇多田ヒカル"),
                 dao
-                    .artistsPaging(artistsDefaultQuery(sourceId, 0, "", ArtistSort.Name, false, SortNameMode.Name))
-                    .page()
+                    .artistsPaging(
+                        artistsPageQuery(sourceId, 0, "", ArtistSort.Name, false, false, SortNameMode.Name),
+                    ).page()
                     .map { it.name },
             )
             assertEquals(
                 listOf("Aaa", "Beatles", "Zzz"),
                 dao
-                    .albumsPaging(albumsDefaultQuery(sourceId, 0, "", AlbumSort.Name, false, SortNameMode.Name))
-                    .page()
+                    .albumsPaging(
+                        albumsPageQuery(sourceId, 0, "", AlbumSort.Name, false, false, SortNameMode.Name),
+                    ).page()
                     .map { it.name },
             )
         }
@@ -1507,11 +1526,11 @@ class LibraryDaoTest {
                 ),
             )
 
-            assertEquals(listOf("宇多田ヒカル"), dao.artistsByName(sourceId, 0, "utada").page().map { it.name })
-            assertEquals(listOf("宇多田ヒカル"), dao.artistsByName(sourceId, 0, "ut").page().map { it.name })
+            assertEquals(listOf("宇多田ヒカル"), dao.artistPages(sourceId, 0, "utada").page().map { it.name })
+            assertEquals(listOf("宇多田ヒカル"), dao.artistPages(sourceId, 0, "ut").page().map { it.name })
             assertEquals(listOf("宇多田ヒカル"), dao.searchArtists(sourceId, "utada", 10).first().map { it.name })
-            assertEquals(listOf("First Love"), dao.albumsByName(sourceId, 0, "first").page().map { it.name })
-            assertEquals(listOf("First Love"), dao.albumsByName(sourceId, 0, "fi").page().map { it.name })
+            assertEquals(listOf("First Love"), dao.albumPages(sourceId, 0, "first").page().map { it.name })
+            assertEquals(listOf("First Love"), dao.albumPages(sourceId, 0, "fi").page().map { it.name })
             assertEquals(listOf("First Love"), dao.searchAlbums(sourceId, "first", 10).first().map { it.name })
             assertEquals(listOf("Automatic"), dao.searchSongs(sourceId, "utada", 10).first().map { it.song.title })
         }

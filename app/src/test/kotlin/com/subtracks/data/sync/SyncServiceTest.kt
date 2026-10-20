@@ -10,7 +10,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.LoggingSQLiteDriver
 import com.subtracks.data.db.SqlExecution
 import com.subtracks.data.db.SubtracksDatabase
-import com.subtracks.data.db.artistsDefaultQuery
+import com.subtracks.data.db.artistPages
+import com.subtracks.data.db.artistsPageQuery
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistRef
@@ -75,7 +76,7 @@ class SyncServiceTest {
                 2,
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .size,
             )
@@ -98,7 +99,7 @@ class SyncServiceTest {
                 listOf("a1"),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .map { it.id },
             )
@@ -172,7 +173,7 @@ class SyncServiceTest {
                 "Old",
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .single()
                     .name,
@@ -185,7 +186,7 @@ class SyncServiceTest {
                 "New",
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .single()
                     .name,
@@ -1107,16 +1108,16 @@ class SyncServiceTest {
                 listOf("a1"),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .map { it.id },
             )
-            val query = artistsDefaultQuery(1, 0, "alpha", ArtistSort.Name, false)
+            val query = artistsPageQuery(1, 0, "alpha", ArtistSort.Name, false, false)
             assertEquals(
                 listOf("a1"),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "alpha")
+                    .artistPages(1, 0, "alpha")
                     .allRows()
                     .map { it.id },
             )
@@ -1203,7 +1204,7 @@ class SyncServiceTest {
                 listOf("a1", "combo"),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .map { it.id },
             )
@@ -1216,7 +1217,7 @@ class SyncServiceTest {
                 listOf("a1"),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .map { it.id },
             )
@@ -1434,7 +1435,7 @@ class SyncServiceTest {
             SyncService(db, source).sync()
             db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
 
-            val filtered = db.libraryDao().artistsByName(1, 0, "", downloadedFilter = 1).allRows()
+            val filtered = db.libraryDao().artistPages(1, 0, "", downloaded = true).allRows()
             assertEquals(listOf("A", "B"), filtered.map { it.name })
             assertEquals(listOf(1L, 1L), filtered.map { it.albumCount })
             assertEquals(ListDownloadStatus(total = 1, downloaded = 1), db.downloadDao().artistStatus(1, "a2").first())
@@ -1538,7 +1539,7 @@ class SyncServiceTest {
                 albums.size.toLong(),
                 db
                     .libraryDao()
-                    .artistsByName(1, 0, "")
+                    .artistPages(1, 0, "")
                     .allRows()
                     .first { it.id == "a2" }
                     .albumCount,
@@ -1780,7 +1781,7 @@ class SyncServiceTest {
                 assertEquals("$artistId downloaded", downloaded.toLong(), status.downloaded)
             }
 
-            val downloadedArtists = db.libraryDao().artistsByName(1, 0, "", downloadedFilter = 1).allRows()
+            val downloadedArtists = db.libraryDao().artistPages(1, 0, "", downloaded = true).allRows()
             for (artist in downloadedArtists) {
                 assertEquals(
                     "${artist.id} downloaded albums",

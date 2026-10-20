@@ -10,15 +10,21 @@ import androidx.room3.Transaction
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.subtracks.data.model.Album
+import com.subtracks.data.model.AlbumArtistRef
+import com.subtracks.data.model.AlbumSearch
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistBio
+import com.subtracks.data.model.ArtistSearch
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.DiscKey
 import com.subtracks.data.model.Playlist
+import com.subtracks.data.model.PlaylistSearch
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.Song
+import com.subtracks.data.model.SongArtistRef
+import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import kotlinx.coroutines.flow.Flow
 
@@ -36,20 +42,11 @@ internal const val DOWNLOADED_SONG =
     "EXISTS (SELECT 1 FROM song_downloads sd WHERE sd.sourceId = playlist_songs.sourceId " +
         "AND sd.songId = playlist_songs.songId AND sd.status = 'Completed')"
 
-internal const val ALBUMS_FILTER =
-    "FROM albums WHERE sourceId = :sourceId " +
-        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs " +
-        "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
-        "WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed')) " +
-        "AND (:search = '' " +
-        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
-        "WHERE album_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
-        "OR instr(lower(albumArtist), lower(:search)) > 0 " +
-        "OR instr(lower(sortName), lower(:search)) > 0 " +
-        "OR instr(lower(albumArtistSort), lower(:search)) > 0))) "
-
+internal const val ALBUM_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
+internal const val ALBUM_ORDER_BY_ARTIST = "albumArtistSort COLLATE NOCASE, year, sortName COLLATE NOCASE, id"
+internal const val ALBUM_ORDER_BY_ARTIST_REVERSED =
+    "albumArtistSort COLLATE NOCASE DESC, year DESC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_YEAR = "year DESC, sortName COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_ADDED = "created DESC, sortName COLLATE NOCASE, id"
@@ -154,7 +151,7 @@ internal const val DOWNLOADED_ALBUM_ROWS =
         "JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id " +
         "WHERE song_artists.sourceId = :sourceId AND sd.status = 'Completed'"
 
-private const val DOWNLOADED_ARTIST_ALBUMS =
+internal const val DOWNLOADED_ARTIST_ALBUMS =
     "SELECT albumId AS id FROM ($DOWNLOADED_ALBUM_ROWS) WHERE artistId = artists.id"
 
 private const val DOWNLOADED_COVER_ALBUM_ROWS =
@@ -300,33 +297,13 @@ internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
         "FROM desired WHERE artists.rowid = desired.rowid AND " +
         "artists.downloadedCoverArts != desired.downloadedCoverArts"
 
-internal const val ARTISTS_FILTER =
-    "FROM artists WHERE sourceId = :sourceId " +
-        "AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL)) " +
-        "AND $ARTIST_CREDITED " +
-        "AND (:downloadedFilter = 0 OR EXISTS (" +
-        "SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl " +
-        "WHERE dl.id = artists.id AND dl.status = 'Completed')) " +
-        "AND (:search = '' " +
-        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
-        "WHERE artist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND (instr(lower(name), lower(:search)) > 0 " +
-        "OR instr(lower(sortName), lower(:search)) > 0))) "
+internal const val ARTIST_COLUMNS_TAIL =
+    "artists.starred, artists.coverArt, artists.artistImageUrl, artists.coverArts, " +
+        "artists.downloadedCoverArts, artists.playCount, artists.played, artists.songCount, " +
+        "artists.sortName, artists.credited"
 
 internal const val ARTIST_COLUMNS =
-    "artists.sourceId, artists.id, artists.name, artists.albumCount, artists.starred, " +
-        "artists.coverArt, artists.artistImageUrl, artists.coverArts, artists.downloadedCoverArts, " +
-        "artists.playCount, artists.played, artists.songCount, artists.sortName, artists.credited"
-
-// With the Downloaded filter on, count the albums that actually have a download so the number under
-// an artist matches the albums its detail screen lists.
-internal const val ARTISTS_SELECT =
-    "SELECT artists.sourceId, artists.id, artists.name, " +
-        "CASE WHEN :downloadedFilter = 1 THEN (" +
-        "SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)" +
-        ") ELSE artists.albumCount END AS albumCount, " +
-        "artists.starred, artists.coverArt, artists.artistImageUrl, artists.coverArts, artists.downloadedCoverArts, " +
-        "artists.playCount, artists.played, artists.songCount, artists.sortName, artists.credited "
+    "artists.sourceId, artists.id, artists.name, artists.albumCount, $ARTIST_COLUMNS_TAIL"
 
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT = "albumCount DESC, sortName COLLATE NOCASE, id"
 internal const val ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED = "albumCount ASC, sortName COLLATE NOCASE DESC, id DESC"
@@ -345,27 +322,6 @@ internal const val ARTIST_ORDER_BY_NAME_SORT_MODE_REVERSED = "$ARTIST_NAME_SORT_
 private const val SONG_NAME_SORT_KEY_MODE =
     "(CASE :sortMode WHEN 'Name' THEN songs.title WHEN 'NonLatin' THEN (CASE WHEN songs.title GLOB '*[A-Za-z]*' THEN songs.title ELSE songs.sortName END) ELSE songs.sortName END) COLLATE NOCASE"
 internal const val SONG_SEARCH_ORDER_SORT_MODE = "$SONG_NAME_SORT_KEY_MODE, songs.id"
-
-internal const val PLAYLISTS_FILTER =
-    "FROM playlists WHERE sourceId = :sourceId " +
-        "AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM playlist_songs ps " +
-        "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId " +
-        "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed')) " +
-        "AND (:search = '' " +
-        "OR (length(:search) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
-        "WHERE playlist_search MATCH '\"' || replace(:search, '\"', '\"\"') || '\"')) " +
-        "OR (length(:search) < 3 AND instr(lower(name), lower(:search)) > 0)) "
-
-// With the Downloaded filter on, count the songs that actually have a download so the number under
-// a playlist matches the songs its detail screen lists.
-internal const val PLAYLISTS_SELECT =
-    "SELECT playlists.sourceId, playlists.id, playlists.name, playlists.comment, playlists.coverArt, " +
-        "CASE WHEN :downloadedFilter = 1 THEN (" +
-        "SELECT COUNT(DISTINCT ps.songId) FROM playlist_songs ps " +
-        "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId AND sd.status = 'Completed' " +
-        "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id " +
-        ") ELSE playlists.songCount END AS songCount, " +
-        "playlists.created, playlists.changed, playlists.duration, playlists.owner, playlists.shared "
 
 internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"
@@ -804,245 +760,27 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Playlist::class])
     fun playlistsPaging(query: RoomRawQuery): PagingSource<Int, Playlist>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_SORT_MODE")
-    fun albumsByName(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Album>
+    // These observe every table the statement reads, matching what Room inferred for the
+    // hand-written downloaded queries, so download and library writes invalidate as before.
+    @RawQuery(observedEntities = [Album::class, Song::class, SongDownload::class, AlbumSearch::class])
+    fun downloadedAlbumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_NAME_SORT_MODE_REVERSED")
-    fun albumsByNameReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Album>
+    @RawQuery(
+        observedEntities = [
+            Album::class,
+            Song::class,
+            SongDownload::class,
+            AlbumArtistRef::class,
+            SongArtistRef::class,
+            Artist::class,
+            Source::class,
+            ArtistSearch::class,
+        ],
+    )
+    fun downloadedArtistsPaging(query: RoomRawQuery): PagingSource<Int, Artist>
 
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_SORT_MODE")
-    fun albumsByArtist(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ARTIST_SORT_MODE_REVERSED")
-    fun albumsByArtistReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR")
-    fun albumsByYear(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_YEAR_REVERSED")
-    fun albumsByYearReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED")
-    fun albumsByRecentlyAdded(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_ADDED_REVERSED")
-    fun albumsByRecentlyAddedReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED")
-    fun albumsByStarred(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_STARRED_REVERSED")
-    fun albumsByStarredReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_FREQUENT")
-    fun albumsByFrequent(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_FREQUENT_REVERSED")
-    fun albumsByFrequentReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_RECENT")
-    fun albumsByRecent(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("SELECT * $ALBUMS_FILTER ORDER BY $ALBUM_ORDER_BY_RECENT_REVERSED")
-    fun albumsByRecentReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Album>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_SORT_MODE")
-    fun artistsByName(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_NAME_SORT_MODE_REVERSED")
-    fun artistsByNameReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-        sortMode: String = "",
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT")
-    fun artistsByAlbumCount(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED")
-    fun artistsByAlbumCountReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED")
-    fun artistsByStarred(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_STARRED_REVERSED")
-    fun artistsByStarredReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_FREQUENT")
-    fun artistsByFrequent(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_FREQUENT_REVERSED")
-    fun artistsByFrequentReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_RECENT")
-    fun artistsByRecent(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$ARTISTS_SELECT $ARTISTS_FILTER ORDER BY $ARTIST_ORDER_BY_RECENT_REVERSED")
-    fun artistsByRecentReversed(
-        sourceId: Long,
-        starredFilter: Int,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Artist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME")
-    fun playlistsByName(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_NAME_REVERSED")
-    fun playlistsByNameReversed(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED")
-    fun playlistsByAdded(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_ADDED_REVERSED")
-    fun playlistsByAddedReversed(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED")
-    fun playlistsByUpdated(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
-
-    @Query("$PLAYLISTS_SELECT $PLAYLISTS_FILTER ORDER BY $PLAYLIST_ORDER_BY_UPDATED_REVERSED")
-    fun playlistsByUpdatedReversed(
-        sourceId: Long,
-        search: String,
-        downloadedFilter: Int = 0,
-    ): PagingSource<Int, Playlist>
+    @RawQuery(observedEntities = [PlaylistSong::class, SongDownload::class, Playlist::class, PlaylistSearch::class])
+    fun downloadedPlaylistsPaging(query: RoomRawQuery): PagingSource<Int, Playlist>
 
     @Query("SELECT * FROM albums WHERE sourceId = :sourceId AND played IS NOT NULL ORDER BY played DESC, sortName COLLATE NOCASE, id")
     fun homeRecentlyPlayedAlbums(sourceId: Long): PagingSource<Int, Album>

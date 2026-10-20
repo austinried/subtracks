@@ -7,49 +7,161 @@ import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SortNameMode
 
-// These filters mirror the download-aware ones in LibraryDao but never mention song_downloads, so
-// the resulting PagingSource is not invalidated by download writes (including progress updates).
-internal const val ALBUMS_FILTER_BASE =
-    "FROM albums WHERE sourceId = ? " +
-        "AND (? = 0 OR (? = 1 AND starred IS NOT NULL) OR (? = 2 AND starred IS NULL)) " +
-        "AND (? = '' " +
-        "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM album_search " +
-        "WHERE album_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
-        "OR (length(?) < 3 AND (instr(lower(name), lower(?)) > 0 " +
-        "OR instr(lower(albumArtist), lower(?)) > 0 " +
-        "OR instr(lower(sortName), lower(?)) > 0 " +
-        "OR instr(lower(albumArtistSort), lower(?)) > 0))) "
+// The default filters never mention song_downloads, so the paging sources used without the
+// Downloaded filter are not invalidated by download writes (including progress updates). The
+// downloaded variants are the same statements the hand-written queries used.
+internal const val ALBUMS_FILTER = """
+FROM albums WHERE sourceId = :sourceId
+AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM album_search
+        WHERE album_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND (instr(lower(name), lower(:search)) > 0
+        OR instr(lower(albumArtist), lower(:search)) > 0
+        OR instr(lower(sortName), lower(:search)) > 0
+        OR instr(lower(albumArtistSort), lower(:search)) > 0)))
+"""
 
-internal const val ARTISTS_FILTER_BASE =
-    "FROM artists WHERE sourceId = ? " +
-        "AND (? = 0 OR (? = 1 AND starred IS NOT NULL) OR (? = 2 AND starred IS NULL)) " +
-        "AND $ARTIST_CREDITED " +
-        "AND (? = '' " +
-        "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM artist_search " +
-        "WHERE artist_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
-        "OR (length(?) < 3 AND (instr(lower(name), lower(?)) > 0 " +
-        "OR instr(lower(sortName), lower(?)) > 0))) "
+internal const val ALBUMS_FILTER_DOWNLOADED = """
+FROM albums WHERE sourceId = :sourceId
+AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
+AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs
+    JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id
+    WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed'))
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM album_search
+        WHERE album_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND (instr(lower(name), lower(:search)) > 0
+        OR instr(lower(albumArtist), lower(:search)) > 0
+        OR instr(lower(sortName), lower(:search)) > 0
+        OR instr(lower(albumArtistSort), lower(:search)) > 0)))
+"""
 
-internal const val PLAYLISTS_FILTER_BASE =
-    "FROM playlists WHERE sourceId = ? " +
-        "AND (? = '' " +
-        "OR (length(?) >= 3 AND rowid IN (SELECT rowid FROM playlist_search " +
-        "WHERE playlist_search MATCH '\"' || replace(?, '\"', '\"\"') || '\"')) " +
-        "OR (length(?) < 3 AND instr(lower(name), lower(?)) > 0)) "
+internal const val ARTISTS_FILTER = """
+FROM artists WHERE sourceId = :sourceId
+AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
+AND $ARTIST_CREDITED
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM artist_search
+        WHERE artist_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND (instr(lower(name), lower(:search)) > 0
+        OR instr(lower(sortName), lower(:search)) > 0)))
+"""
 
-internal fun albumsDefaultQuery(
+internal const val ARTISTS_FILTER_DOWNLOADED = """
+FROM artists WHERE sourceId = :sourceId
+AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
+AND $ARTIST_CREDITED
+AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl
+    WHERE dl.id = artists.id AND dl.status = 'Completed'))
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM artist_search
+        WHERE artist_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND (instr(lower(name), lower(:search)) > 0
+        OR instr(lower(sortName), lower(:search)) > 0)))
+"""
+
+// With the Downloaded filter on, count the albums that actually have a download so the number under
+// an artist matches the albums its detail screen lists.
+internal const val ARTIST_COLUMNS_DOWNLOADED = """
+artists.sourceId, artists.id, artists.name,
+CASE WHEN :downloadedFilter = 1 THEN (SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)) ELSE artists.albumCount END AS albumCount,
+$ARTIST_COLUMNS_TAIL
+"""
+
+internal const val PLAYLISTS_FILTER = """
+FROM playlists WHERE sourceId = :sourceId
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM playlist_search
+        WHERE playlist_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND instr(lower(name), lower(:search)) > 0))
+"""
+
+internal const val PLAYLISTS_FILTER_DOWNLOADED = """
+FROM playlists WHERE sourceId = :sourceId
+AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM playlist_songs ps
+    JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId
+    WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed'))
+AND (:search = ''
+    OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM playlist_search
+        WHERE playlist_search MATCH '"' || replace(:search, '"', '""') || '"'))
+    OR (length(:search) < $SEARCH_MIN_LENGTH AND instr(lower(name), lower(:search)) > 0))
+"""
+
+// With the Downloaded filter on, count the songs that actually have a download so the number under
+// a playlist matches the songs its detail screen lists.
+internal const val PLAYLISTS_COLUMNS_DOWNLOADED = """
+playlists.sourceId, playlists.id, playlists.name, playlists.comment, playlists.coverArt,
+CASE WHEN :downloadedFilter = 1 THEN (SELECT COUNT(DISTINCT ps.songId)
+    FROM playlist_songs ps
+    JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId AND sd.status = 'Completed'
+    WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id
+) ELSE playlists.songCount END AS songCount,
+playlists.created, playlists.changed, playlists.duration, playlists.owner, playlists.shared
+"""
+
+internal fun albumsPageQuery(
     sourceId: Long,
     starredFilter: Int,
     search: String,
     sort: AlbumSort,
     descending: Boolean,
+    downloaded: Boolean,
     sortNameMode: SortNameMode = SortNameMode.SortName,
-): RoomRawQuery {
-    val order = albumOrder(sort, descending, sortNameMode)
-    return RoomRawQuery("SELECT * $ALBUMS_FILTER_BASE ORDER BY $order") { stmt ->
-        stmt.bindAlbumFilters(sourceId, starredFilter, search)
-    }
-}
+): RoomRawQuery =
+    rawQuery(
+        sql = "SELECT * ${if (downloaded) ALBUMS_FILTER_DOWNLOADED else ALBUMS_FILTER} ORDER BY ${albumOrder(sort, descending, sortNameMode)}",
+        bindings =
+            mapOf(
+                "sourceId" to sourceId,
+                "starredFilter" to starredFilter,
+                "downloadedFilter" to if (downloaded) 1 else 0,
+                "search" to search,
+            ),
+    )
+
+internal fun artistsPageQuery(
+    sourceId: Long,
+    starredFilter: Int,
+    search: String,
+    sort: ArtistSort,
+    descending: Boolean,
+    downloaded: Boolean,
+    sortNameMode: SortNameMode = SortNameMode.SortName,
+): RoomRawQuery =
+    rawQuery(
+        sql =
+            "SELECT ${if (downloaded) ARTIST_COLUMNS_DOWNLOADED else ARTIST_COLUMNS} " +
+                "${if (downloaded) ARTISTS_FILTER_DOWNLOADED else ARTISTS_FILTER} " +
+                "ORDER BY ${artistOrder(sort, descending, sortNameMode)}",
+        bindings =
+            mapOf(
+                "sourceId" to sourceId,
+                "starredFilter" to starredFilter,
+                "downloadedFilter" to if (downloaded) 1 else 0,
+                "search" to search,
+            ),
+    )
+
+internal fun playlistsPageQuery(
+    sourceId: Long,
+    search: String,
+    sort: PlaylistSort,
+    descending: Boolean,
+    downloaded: Boolean,
+): RoomRawQuery =
+    rawQuery(
+        sql =
+            "SELECT ${if (downloaded) PLAYLISTS_COLUMNS_DOWNLOADED else "*"} " +
+                "${if (downloaded) PLAYLISTS_FILTER_DOWNLOADED else PLAYLISTS_FILTER} " +
+                "ORDER BY ${playlistOrder(sort, descending)}",
+        bindings =
+            mapOf(
+                "sourceId" to sourceId,
+                "downloadedFilter" to if (downloaded) 1 else 0,
+                "search" to search,
+            ),
+    )
 
 internal fun rediscoverAlbumsQuery(
     sourceId: Long,
@@ -57,70 +169,71 @@ internal fun rediscoverAlbumsQuery(
     search: String,
     cutoff: Long,
 ): RoomRawQuery =
-    RoomRawQuery(
-        "SELECT * $ALBUMS_FILTER_BASE AND played IS NOT NULL AND played < ? " +
-            "ORDER BY played ASC, sortName COLLATE NOCASE, id",
-    ) { stmt ->
-        stmt.bindAlbumFilters(sourceId, starredFilter, search)
-        stmt.bindLong(13, cutoff)
-    }
+    rawQuery(
+        sql =
+            "SELECT * $ALBUMS_FILTER AND played IS NOT NULL AND played < :cutoff " +
+                "ORDER BY played ASC, sortName COLLATE NOCASE, id",
+        bindings =
+            mapOf(
+                "sourceId" to sourceId,
+                "starredFilter" to starredFilter,
+                "search" to search,
+                "cutoff" to cutoff,
+            ),
+    )
 
-private fun SQLiteStatement.bindAlbumFilters(
-    sourceId: Long,
-    starredFilter: Int,
-    search: String,
+// RoomRawQuery binds by position, so the named fragments are rewritten once here instead of
+// every caller carrying an index for each repeated :sourceId.
+internal fun rawQuery(
+    sql: String,
+    bindings: Map<String, Any?>,
+): RoomRawQuery {
+    val names = mutableListOf<String>()
+    val positional =
+        buildString(sql.length) {
+            var index = 0
+            var quote: Char? = null
+            while (index < sql.length) {
+                val char = sql[index]
+                if (quote != null) {
+                    append(char)
+                    if (char == quote) quote = null
+                    index++
+                    continue
+                }
+                if (char == '\'' || char == '"') {
+                    quote = char
+                    append(char)
+                    index++
+                    continue
+                }
+                if (char == ':' && sql.getOrNull(index + 1).let { it != null && (it.isLetter() || it == '_') }) {
+                    var end = index + 1
+                    while (end < sql.length && (sql[end].isLetterOrDigit() || sql[end] == '_')) end++
+                    names += sql.substring(index + 1, end)
+                    append('?')
+                    index = end
+                    continue
+                }
+                append(char)
+                index++
+            }
+        }
+    return RoomRawQuery(positional) { statement ->
+        names.forEachIndexed { index, name -> statement.bind(index + 1, bindings.getValue(name)) }
+    }
+}
+
+private fun SQLiteStatement.bind(
+    index: Int,
+    value: Any?,
 ) {
-    bindLong(1, sourceId)
-    bindInt(2, starredFilter)
-    bindInt(3, starredFilter)
-    bindInt(4, starredFilter)
-    bindText(5, search)
-    bindText(6, search)
-    bindText(7, search)
-    bindText(8, search)
-    bindText(9, search)
-    bindText(10, search)
-    bindText(11, search)
-    bindText(12, search)
-}
-
-internal fun artistsDefaultQuery(
-    sourceId: Long,
-    starredFilter: Int,
-    search: String,
-    sort: ArtistSort,
-    descending: Boolean,
-    sortNameMode: SortNameMode = SortNameMode.SortName,
-): RoomRawQuery {
-    val order = artistOrder(sort, descending, sortNameMode)
-    return RoomRawQuery("SELECT $ARTIST_COLUMNS $ARTISTS_FILTER_BASE ORDER BY $order") { stmt ->
-        stmt.bindLong(1, sourceId)
-        stmt.bindInt(2, starredFilter)
-        stmt.bindInt(3, starredFilter)
-        stmt.bindInt(4, starredFilter)
-        stmt.bindText(5, search)
-        stmt.bindText(6, search)
-        stmt.bindText(7, search)
-        stmt.bindText(8, search)
-        stmt.bindText(9, search)
-        stmt.bindText(10, search)
-    }
-}
-
-internal fun playlistsDefaultQuery(
-    sourceId: Long,
-    search: String,
-    sort: PlaylistSort,
-    descending: Boolean,
-): RoomRawQuery {
-    val order = playlistOrder(sort, descending)
-    return RoomRawQuery("SELECT * $PLAYLISTS_FILTER_BASE ORDER BY $order") { stmt ->
-        stmt.bindLong(1, sourceId)
-        stmt.bindText(2, search)
-        stmt.bindText(3, search)
-        stmt.bindText(4, search)
-        stmt.bindText(5, search)
-        stmt.bindText(6, search)
+    when (value) {
+        null -> bindNull(index)
+        is Int -> bindLong(index, value.toLong())
+        is Long -> bindLong(index, value)
+        is String -> bindText(index, value)
+        else -> error("Unsupported SQL parameter: ${value::class.qualifiedName}")
     }
 }
 
