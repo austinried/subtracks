@@ -510,7 +510,7 @@ class LibraryScreenTest {
 
     @Test
     @Config(qualifiers = "de-rDE-w320dp-h640dp-xhdpi")
-    fun theOfflineStripExplainsTheModeAndGoesOnline() {
+    fun theOfflineIndicatorGoesOnline() {
         var exited = false
         composeRule.setContent {
             SubtracksTheme {
@@ -533,11 +533,10 @@ class LibraryScreenTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText(composeRule.activity.getString(R.string.offline_mode_banner)).performClick()
-        assertTrue("the offline strip should leave offline mode", exited)
         composeRule
-            .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))
-            .assertWidthIsEqualTo(40.dp)
+            .onNodeWithContentDescription(composeRule.activity.getString(R.string.offline_mode_status))
+            .performClick()
+        assertTrue("the offline indicator should leave offline mode", exited)
     }
 
     private fun tabBounds(tab: LibraryTab) =

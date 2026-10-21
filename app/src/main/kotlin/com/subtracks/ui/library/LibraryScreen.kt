@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,6 +45,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -90,7 +90,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
@@ -100,7 +99,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -593,9 +591,6 @@ fun LibraryScreen(
                         .onSizeChanged { tabBarHeightPx = it.height.toFloat() }
                         .padding(bottom = bottomInset),
             ) {
-                if (offline) {
-                    OfflineStrip(onGoOnline = onExitOffline, headerColor = headerColor)
-                }
                 LibraryTabs(
                     pagerState = pagerState,
                     onTabSelected = { tab ->
@@ -623,6 +618,20 @@ fun LibraryScreen(
         }
 
         if (!searchActive) {
+            if (offline) {
+                FilledTonalIconButton(
+                    onClick = onExitOffline,
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 16.dp, bottom = tabBarHeight + 16.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CloudOff,
+                        contentDescription = stringResource(R.string.offline_mode_status),
+                    )
+                }
+            }
             val searchFab = selectedTab == LibraryTab.Home
             FloatingActionButton(
                 onClick = { if (searchFab) onOpenSearch() else showOptions = true },
@@ -837,7 +846,6 @@ private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 private val TOUCH_TARGET = 48.dp
 private const val LIST_OPTIONS_WEIGHT = 0.11f
-private const val OFFLINE_STRIP_TINT = 0.10f
 private val LIST_OPTIONS_BAR_WIDTHS = listOf(1f, 0.62f, 0.34f)
 
 @Composable
@@ -1012,44 +1020,6 @@ internal fun LibraryTabs(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun OfflineStrip(
-    onGoOnline: () -> Unit,
-    headerColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(lerp(headerColor, MaterialTheme.colorScheme.primary, OFFLINE_STRIP_TINT))
-                .heightIn(min = 48.dp)
-                .clickable(role = Role.Button, onClick = onGoOnline)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.CloudOff,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp),
-        )
-        Text(
-            text = stringResource(R.string.offline_mode_banner),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 2,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(R.string.offline_go_online),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }
 
