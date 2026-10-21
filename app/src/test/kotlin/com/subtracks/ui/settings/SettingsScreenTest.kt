@@ -75,11 +75,11 @@ class SettingsScreenTest {
         )
 
         composeRule.onNodeWithText("Sort names").performClick()
-        composeRule.onNodeWithText("Use regular names").performClick()
+        composeRule.onNodeWithText("Use sort names").performClick()
         composeRule.onNodeWithText("Done").performClick()
         composeRule.waitForIdle()
 
-        assertEquals(SortNameMode.Name, requested)
+        assertEquals(SortNameMode.SortName, requested)
     }
 
     private fun renderSettings(

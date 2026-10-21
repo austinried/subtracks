@@ -780,6 +780,9 @@ private fun SyncModeDialog(
     )
 }
 
+private val sortNameModeOptions =
+    listOf(SortNameMode.Name, SortNameMode.SortName, SortNameMode.NonLatin)
+
 private fun sortNameModeLabel(
     resources: Resources,
     mode: SortNameMode,
@@ -804,7 +807,7 @@ private fun SortNameModeDialog(
         text = {
             ChoiceGroup(
                 header = stringResource(R.string.settings_sort_names_prompt),
-                options = SortNameMode.entries.map { it to sortNameModeLabel(resources, it) },
+                options = sortNameModeOptions.map { it to sortNameModeLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )
