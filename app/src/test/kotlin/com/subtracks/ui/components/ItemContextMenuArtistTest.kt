@@ -82,9 +82,9 @@ class ItemContextMenuArtistTest {
 
         composeRule.mainClock.autoAdvance = false
         entry.performClick()
-        composeRule.mainClock.advanceTimeBy(1_000)
 
         assertEquals(listOf("ar1", "ar2"), opened?.map { it.id })
+        composeRule.mainClock.advanceTimeBy(1_000)
     }
 
     @Test
@@ -132,8 +132,8 @@ class ItemContextMenuArtistTest {
 
         composeRule.mainClock.autoAdvance = false
         entry.performClick()
-        composeRule.mainClock.advanceTimeBy(1_000)
 
         assertEquals(20, opened?.size)
+        composeRule.mainClock.advanceTimeBy(1_000)
     }
 }

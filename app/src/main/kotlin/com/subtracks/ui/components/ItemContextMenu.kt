@@ -213,12 +213,9 @@ fun ItemContextMenu(
         }
     }
 
-    fun dismissThen(after: () -> Unit) {
-        scope.launch {
-            sheetState.hide()
-            onDismiss()
-            after()
-        }
+    fun replaceWith(after: () -> Unit) {
+        onDismiss()
+        after()
     }
 
     val queueRef = target.queueRef()
@@ -267,7 +264,7 @@ fun ItemContextMenu(
                             }
                         }
                     }
-                    ArtistItems(target.song.artistRefs, actions, onChooseArtists, ::dismiss, ::dismissThen)
+                    ArtistItems(target.song.artistRefs, actions, onChooseArtists, ::dismiss, ::replaceWith)
                     onInfo?.let { info ->
                         MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
                     }
@@ -281,7 +278,7 @@ fun ItemContextMenu(
                         onSet = { starring -> actions.setStar(StarType.Album, target.album.id, starring) },
                         onDismiss = { dismiss() },
                     )
-                    ArtistItems(target.album.artistRefs, actions, onChooseArtists, ::dismiss, ::dismissThen)
+                    ArtistItems(target.album.artistRefs, actions, onChooseArtists, ::dismiss, ::replaceWith)
                     onInfo?.let { info ->
                         MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
                     }
@@ -347,7 +344,7 @@ private fun ArtistItems(
     actions: ItemActions,
     onChooseArtists: ((List<ArtistRef>) -> Unit)?,
     dismiss: (() -> Unit) -> Unit,
-    dismissThen: (() -> Unit) -> Unit,
+    replaceWith: (() -> Unit) -> Unit,
 ) {
     val view = actions.viewArtist ?: return
     val distinct = artists.distinctBy { it.id }
@@ -383,7 +380,7 @@ private fun ArtistItems(
                     distinct.joinToString(" \u00B7 ") { it.name.ifBlank { fallback } },
                     trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
                 ) {
-                    dismissThen { onChooseArtists(distinct) }
+                    replaceWith { onChooseArtists(distinct) }
                 }
             }
         }
