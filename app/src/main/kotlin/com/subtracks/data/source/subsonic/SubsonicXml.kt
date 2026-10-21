@@ -129,6 +129,8 @@ object SubsonicXml {
             created = attrs.dateAttr("created") ?: 0L,
             changed = attrs.dateAttr("changed") ?: 0L,
             duration = attrs.longAttr("duration") ?: 0L,
+            owner = attrs.attr("owner").ifEmpty { null },
+            shared = attrs.boolAttr("public"),
         )
 
     internal fun playlistSong(
@@ -364,6 +366,8 @@ private fun displayName(
 internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
 
 internal fun Attributes.longAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
+
+internal fun Attributes.boolAttr(name: String): Boolean = attr(name).equals("true", ignoreCase = true)
 
 internal fun Attributes.floatAttr(name: String): Float? = attr(name).takeIf { it.isNotEmpty() }?.toFloatOrNull()?.takeIf { it.isFinite() }
 

@@ -254,6 +254,8 @@ data class Playlist(
     val created: Long,
     @ColumnInfo(defaultValue = "0") val changed: Long = 0,
     @ColumnInfo(defaultValue = "0") val duration: Long = 0,
+    val owner: String? = null,
+    @ColumnInfo(defaultValue = "0") val shared: Boolean = false,
 )
 
 @Entity(

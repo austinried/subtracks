@@ -259,6 +259,19 @@ class SyncServiceTest {
         }
 
     @Test
+    fun syncStoresPlaylistOwnerAndSharing() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(playlists = listOf(playlist("p1").copy(owner = "austin", shared = true)))
+
+            SyncService(db, source).sync()
+
+            val stored = db.libraryDao().playlist(1, "p1").first()
+            assertEquals("austin", stored?.owner)
+            assertEquals(true, stored?.shared)
+        }
+
+    @Test
     fun syncStoresSongGenresInOrder() =
         runTest {
             insertSource()

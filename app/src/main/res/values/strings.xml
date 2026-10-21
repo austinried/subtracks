@@ -198,6 +198,7 @@
     <string name="info_channels">Channels</string>
     <string name="info_close">Close</string>
     <string name="info_artists">Artists</string>
+    <string name="info_artists_sort">Artists sort</string>
     <string name="info_album_artists">Album artists</string>
     <string name="info_album_artist_sort">Album artist sort</string>
     <string name="info_sort_title">Sort title</string>
@@ -208,6 +209,11 @@
     <string name="info_plays">Plays</string>
     <string name="info_last_played">Last played</string>
     <string name="info_added">Added</string>
+    <string name="info_created">Created</string>
+    <string name="info_updated">Updated</string>
+    <string name="info_owner">Owner</string>
+    <string name="info_shared">Shared</string>
+    <string name="info_length">Length</string>
     <string name="info_downloaded_count">%1$d of %2$d</string>
 
     <string name="disc_header">Disc %1$d</string>

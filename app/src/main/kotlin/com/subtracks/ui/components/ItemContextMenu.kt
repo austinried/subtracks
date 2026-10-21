@@ -299,6 +299,9 @@ fun ItemContextMenu(
                 is MenuTarget.Playlist -> {
                     queueItems()
                     BulkDownloadItem(target, actions, ::dismiss)
+                    onInfo?.let { info ->
+                        MenuItem(Icons.Rounded.Info, stringResource(R.string.info)) { dismiss { info(target) } }
+                    }
                 }
             }
             Spacer(Modifier.height(16.dp))

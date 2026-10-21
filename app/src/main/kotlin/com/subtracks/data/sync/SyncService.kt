@@ -487,7 +487,8 @@ private val songColumns =
         "artistSort",
     )
 
-private val playlistColumns = listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration")
+private val playlistColumns =
+    listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration", "owner", "shared")
 
 private fun Song.genreNames(): List<String> =
     genres
@@ -577,7 +578,7 @@ private fun Song.artistPositions(): List<Pair<Long, ArtistRef>> = artistRefs.pos
 
 private fun SongGenre.values() = listOf<Any?>(sourceId, songId, position, genre)
 
-private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration)
+private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration, owner, shared)
 
 private fun PlaylistSong.values() = listOf<Any?>(sourceId, playlistId, songId, position)
 

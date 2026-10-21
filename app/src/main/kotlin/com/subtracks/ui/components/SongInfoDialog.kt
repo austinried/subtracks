@@ -46,15 +46,25 @@ fun SongInfoDialog(
         title = { Text(stringResource(R.string.info)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                val multipleArtists =
+                    song.artistRefs
+                        .map { it.name }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+                        .size > 1
+                val regularArtistSort = song.artist?.takeIf { it.isNotBlank() } ?: song.artistRefs.firstOrNull()?.name
                 InfoRow(stringResource(R.string.resources_sort_by_title), song.title)
-                InfoRow(stringResource(R.string.info_sort_title), song.sortName)
+                InfoRow(stringResource(R.string.info_sort_title), song.sortName.takeIfDifferentFrom(song.title))
                 InfoRow(
                     stringResource(
-                        if (song.artistRefs.size > 1) R.string.info_artists else R.string.resources_filter_artist,
+                        if (multipleArtists) R.string.info_artists else R.string.resources_filter_artist,
                     ),
                     song.artistSubtitle(),
                 )
-                InfoRow(stringResource(R.string.info_artist_sort), song.artistSort)
+                InfoRow(
+                    stringResource(if (multipleArtists) R.string.info_artists_sort else R.string.info_artist_sort),
+                    song.artistSort.takeIfDifferentFrom(regularArtistSort),
+                )
                 InfoRow(stringResource(R.string.resources_filter_album), song.album)
                 InfoRow(stringResource(R.string.info_duration), song.duration?.let(DateUtils::formatElapsedTime))
                 InfoRow(

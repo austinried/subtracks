@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
+import com.subtracks.data.model.Playlist
 import com.subtracks.ui.theme.SubtracksTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -82,5 +83,36 @@ class ItemContextMenuInfoTest {
         composeRule.mainClock.advanceTimeBy(1_000)
 
         assertEquals("ar1", (opened as? MenuTarget.Artist)?.artist?.id)
+    }
+
+    @Test
+    fun aPlaylistMenuOpensItsInfo() {
+        var opened: MenuTarget? = null
+        composeRule.setContent {
+            SubtracksTheme {
+                ItemContextMenu(
+                    target =
+                        MenuTarget.Playlist(
+                            Playlist(
+                                sourceId = 1,
+                                id = "pl1",
+                                name = "Playlist",
+                                comment = null,
+                                coverArt = null,
+                                songCount = 1,
+                                created = 0,
+                            ),
+                        ),
+                    actions = ItemActions(),
+                    onDismiss = {},
+                    onInfo = { opened = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Info").performClick()
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        assertEquals("pl1", (opened as? MenuTarget.Playlist)?.playlist?.id)
     }
 }

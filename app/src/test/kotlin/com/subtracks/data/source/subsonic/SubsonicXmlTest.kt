@@ -745,6 +745,27 @@ class SubsonicXmlTest {
         assertEquals(true, failure.exceptionOrNull() is SubsonicException)
     }
 
+    @Test
+    fun mapsPlaylistOwnerAndSharing() {
+        val playlists =
+            parse(
+                """
+                <subsonic-response status="ok">
+                  <playlists>
+                    <playlist id="pl1" name="Shared" owner="austin" public="true" songCount="2" duration="120"/>
+                    <playlist id="pl2" name="Private" owner="austin" public="false" songCount="1" duration="60"/>
+                  </playlists>
+                </subsonic-response>
+                """.trimIndent(),
+                tag = "playlist",
+                create = { SubsonicXml.playlist(1, it) },
+            )
+
+        assertEquals("austin", playlists[0].owner)
+        assertTrue(playlists[0].shared)
+        assertEquals(false, playlists[1].shared)
+    }
+
     private class CountingInputStream(
         input: InputStream,
     ) : FilterInputStream(input) {

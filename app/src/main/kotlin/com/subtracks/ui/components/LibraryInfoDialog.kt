@@ -24,6 +24,7 @@ import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.ListDownloadStatus
+import com.subtracks.data.model.Playlist
 
 private const val ARTIST_SEPARATOR = " \u00B7 "
 
@@ -40,9 +41,9 @@ fun AlbumInfoDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 InfoRow(stringResource(R.string.resources_sort_by_title), album.name)
-                InfoRow(stringResource(R.string.info_sort_title), album.sortName)
+                InfoRow(stringResource(R.string.info_sort_title), album.sortName.takeIfDifferentFrom(album.name))
                 InfoRow(stringResource(R.string.info_album_artists), album.artistRefs.names())
-                InfoRow(stringResource(R.string.info_album_artist_sort), album.albumArtistSort)
+                InfoRow(stringResource(R.string.info_album_artist_sort), album.albumArtistSort.takeIfDifferentFrom(album.albumArtist))
                 InfoRow(stringResource(R.string.resources_sort_by_year), album.year?.takeIf { it > 0 }?.toString())
                 InfoRow(stringResource(R.string.resources_filter_genre), album.genre)
                 InfoRow(stringResource(R.string.info_songs), album.songCount.takeIf { it > 0 }?.toString())
@@ -53,8 +54,8 @@ fun AlbumInfoDialog(
                     )
                 }
                 InfoRow(stringResource(R.string.info_added), album.created.takeIf { it > 0 }?.let { formatDate(context, it) })
-                InfoRow(stringResource(R.string.info_plays), album.playCount.takeIf { it > 0 }?.toString())
                 InfoRow(stringResource(R.string.info_last_played), album.played?.let { formatDate(context, it) })
+                InfoRow(stringResource(R.string.info_plays), album.playCount.takeIf { it > 0 }?.toString())
                 InfoRow(stringResource(R.string.info_starred), if (album.starred != null) stringResource(R.string.info_yes) else null)
             }
         },
@@ -74,7 +75,7 @@ fun ArtistInfoDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 InfoRow(stringResource(R.string.resources_filter_artist), artist.name)
-                InfoRow(stringResource(R.string.info_sort_name), artist.sortName)
+                InfoRow(stringResource(R.string.info_sort_name), artist.sortName.takeIfDifferentFrom(artist.name))
                 InfoRow(stringResource(R.string.info_albums), artist.albumCount.takeIf { it > 0 }?.toString())
                 InfoRow(stringResource(R.string.info_songs), artist.songCount.takeIf { it > 0 }?.toString())
                 InfoRow(stringResource(R.string.info_plays), artist.playCount.takeIf { it > 0 }?.toString())
@@ -85,6 +86,33 @@ fun ArtistInfoDialog(
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.info_close)) } },
     )
 }
+
+@Composable
+fun PlaylistInfoDialog(
+    playlist: Playlist,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.info)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                InfoRow(stringResource(R.string.resources_sort_by_title), playlist.name)
+                InfoRow(stringResource(R.string.info_owner), playlist.owner)
+                InfoRow(stringResource(R.string.info_shared), if (playlist.shared) stringResource(R.string.info_yes) else null)
+                InfoRow(stringResource(R.string.info_songs), playlist.songCount.takeIf { it > 0 }?.toString())
+                InfoRow(stringResource(R.string.info_length), playlist.duration.takeIf { it > 0 }?.let(DateUtils::formatElapsedTime))
+                InfoRow(stringResource(R.string.info_created), playlist.created.takeIf { it > 0 }?.let { formatDate(context, it) })
+                InfoRow(stringResource(R.string.info_updated), playlist.changed.takeIf { it > 0 }?.let { formatDate(context, it) })
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.info_close)) } },
+    )
+}
+
+internal fun String?.takeIfDifferentFrom(regular: String?): String? =
+    this?.trim()?.takeIf { value -> value.isNotEmpty() && !value.equals(regular?.trim(), ignoreCase = true) }
 
 @Composable
 internal fun InfoRow(

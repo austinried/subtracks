@@ -74,6 +74,7 @@ import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.ItemContextMenu
 import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
+import com.subtracks.ui.components.PlaylistInfoDialog
 import com.subtracks.ui.components.SongInfoDialog
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
@@ -832,7 +833,14 @@ private fun MainNavigation() {
                     )
                 }
 
-                is MenuTarget.Playlist, null -> {
+                is MenuTarget.Playlist -> {
+                    PlaylistInfoDialog(
+                        playlist = target.playlist,
+                        onDismiss = { infoTarget = null },
+                    )
+                }
+
+                null -> {
                     Unit
                 }
             }
