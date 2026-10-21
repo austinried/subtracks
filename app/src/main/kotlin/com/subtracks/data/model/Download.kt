@@ -78,13 +78,6 @@ data class ListDownloadStatus(
     val complete: Boolean get() = total > 0 && downloaded == total
 }
 
-data class DownloadProgress(
-    val bytes: Long,
-    val total: Long,
-) {
-    val fraction: Float? get() = fractionOf(bytes, total)
-}
-
 data class EntityDownloadStatus(
     val id: String,
     val total: Long = 0,

@@ -396,7 +396,6 @@ private fun MainNavigation() {
                                 navigateDetail(Routes.PLAYLIST_DETAIL, "playlistId", playlist.id, Routes.playlist(playlist.id))
                             },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                            onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
                             onOpenSearch = { navController.navigate(Routes.SEARCH) },
                             onViewAlbum = { albumId -> navigateDetail(Routes.ALBUM_DETAIL, "albumId", albumId, Routes.album(albumId)) },
                             onViewArtist = { artistId ->

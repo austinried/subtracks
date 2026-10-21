@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.FilterAltOff
 import androidx.compose.material.icons.rounded.Home
@@ -111,7 +110,6 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
-import com.subtracks.data.model.DownloadProgress
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.prefs.AlbumSort
@@ -230,7 +228,6 @@ fun LibraryRoute(
     onArtistClick: (Artist) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onOpenSettings: () -> Unit,
-    onOpenDownloads: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onViewAlbum: (String) -> Unit,
     onViewArtist: (String) -> Unit,
@@ -261,7 +258,6 @@ fun LibraryRoute(
     val listQueryState = listTab?.let { viewModel.listQuery(it).collectAsStateWithLifecycle() }
     val listQuery = listQueryState?.value ?: ListQuery("")
     val offline by viewModel.offline.collectAsStateWithLifecycle()
-    val downloadProgress by viewModel.downloadProgress.collectAsStateWithLifecycle()
     val playSort by viewModel.playSortAvailability.collectAsStateWithLifecycle()
     val displayQuery = if (offline) listQuery.copy(downloaded = true) else listQuery
     val searchState = listTab?.let { viewModel.search(it).collectAsStateWithLifecycle() }
@@ -319,7 +315,6 @@ fun LibraryRoute(
         onPlaylistClick = onPlaylistClick,
         onSync = viewModel::sync,
         onOpenSettings = onOpenSettings,
-        onOpenDownloads = onOpenDownloads,
         onOpenSearch = onOpenSearch,
         onItemLongClick = {
             focusManager.clearFocus()
@@ -329,7 +324,6 @@ fun LibraryRoute(
         resetKeys = resetKeys,
         offline = offline,
         onExitOffline = { viewModel.setOffline(false) },
-        downloadProgress = downloadProgress,
         sortOptions = sortOptionsFor(selectedTab, playSort),
         starredSupported = listTab?.supportsStarred == true,
         onSortChange = { sort -> listTab?.let { viewModel.setListQuery(it, listQuery.copy(sort = sort)) } },
@@ -404,12 +398,10 @@ fun LibraryScreen(
     onSync: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenDownloads: () -> Unit = {},
     artistArt: (Artist) -> ArtistArt = { ArtistArt() },
     onOpenSearch: () -> Unit = {},
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
-    downloadProgress: DownloadProgress? = null,
     onItemLongClick: (MenuTarget) -> Unit = {},
     syncing: Boolean = false,
     refreshing: Boolean = false,
@@ -602,8 +594,6 @@ fun LibraryScreen(
                     onOpenSettings = onOpenSettings,
                     offline = offline,
                     onExitOffline = onExitOffline,
-                    downloadProgress = downloadProgress,
-                    onOpenDownloads = onOpenDownloads,
                     artwork = artwork,
                     syncing = syncing,
                 )
@@ -868,8 +858,6 @@ internal fun LibraryTabs(
     onOpenSettings: () -> Unit,
     offline: Boolean = false,
     onExitOffline: () -> Unit = {},
-    downloadProgress: DownloadProgress? = null,
-    onOpenDownloads: () -> Unit = {},
     artwork: ArtworkColors?,
     syncing: Boolean = false,
 ) {
@@ -953,14 +941,7 @@ internal fun LibraryTabs(
                         )
                     }
                     Spacer(Modifier.weight(1f))
-                    if (downloadProgress != null) {
-                        IconButton(onClick = onOpenDownloads) {
-                            DownloadProgressIcon(
-                                progress = downloadProgress,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    } else if (offline) {
+                    if (offline) {
                         IconButton(onClick = onExitOffline) {
                             Icon(
                                 imageVector = Icons.Rounded.CloudOff,
@@ -988,41 +969,6 @@ internal fun LibraryTabs(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DownloadProgressIcon(
-    progress: DownloadProgress,
-    color: Color,
-) {
-    val description = stringResource(R.string.downloads_in_progress)
-    Box(
-        modifier = Modifier.size(32.dp).semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        val fraction = progress.fraction
-        if (fraction != null) {
-            CircularProgressIndicator(
-                progress = { fraction },
-                color = color,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeWidth = 2.dp,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            CircularProgressIndicator(
-                color = color,
-                strokeWidth = 2.dp,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        Icon(
-            imageVector = Icons.Rounded.Download,
-            contentDescription = null,
-            tint = color,
-            modifier = Modifier.size(16.dp),
-        )
     }
 }
 

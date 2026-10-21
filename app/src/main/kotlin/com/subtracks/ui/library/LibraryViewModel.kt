@@ -9,11 +9,8 @@ import com.subtracks.data.model.Artist
 import com.subtracks.data.model.BulkDownloadAction
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.DownloadList
-import com.subtracks.data.model.DownloadProgress
-import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
-import com.subtracks.data.model.SongDownload
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
 import com.subtracks.data.prefs.LibraryListTab
@@ -117,13 +114,6 @@ class LibraryViewModel(
             }.cachedIn(viewModelScope)
 
     val offline: StateFlow<Boolean> = sourceRepository.offline
-
-    val downloadProgress: StateFlow<DownloadProgress?> =
-        combine(
-            downloadRepository.activeDownloads(),
-            sourceRepository.activeSourceId(),
-        ) { rows, sourceId -> downloadProgress(rows, sourceId) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun setOffline(enabled: Boolean) = sourceRepository.setOfflineMode(enabled)
 
@@ -231,21 +221,6 @@ class LibraryViewModel(
     fun sync() {
         if (syncManager.status.value !is SyncStatus.Running) syncManager.requestSync()
     }
-}
-
-internal fun downloadProgress(
-    rows: List<SongDownload>,
-    sourceId: Long?,
-): DownloadProgress? {
-    if (sourceId == null) return null
-    val active = rows.filter { it.sourceId == sourceId }
-    if (active.isEmpty()) return null
-    val running = active.filter { it.status == DownloadStatus.Running }
-    if (running.isEmpty() || running.any { it.total <= 0 }) return DownloadProgress(bytes = 0, total = 0)
-    return DownloadProgress(
-        bytes = running.sumOf { it.bytes },
-        total = running.sumOf { it.total },
-    )
 }
 
 internal fun ListQuery.albumSort(): AlbumSort = AlbumSort.entries.firstOrNull { it.name == sort } ?: AlbumSort.Name

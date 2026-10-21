@@ -176,7 +176,6 @@
     <string name="filter_downloaded">Downloaded</string>
     <string name="close_search">Close search</string>
     <string name="offline_mode_status">Offline mode; tap to go online</string>
-    <string name="downloads_in_progress">Downloads in progress; tap to open the download manager</string>
     <string name="shuffle_artist">Shuffle artist</string>
 
     <string name="status_playing">Playing</string>
