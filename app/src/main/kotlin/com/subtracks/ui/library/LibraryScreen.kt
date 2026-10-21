@@ -658,7 +658,7 @@ fun LibraryScreen(
                                 modifier =
                                     Modifier
                                         .align(Alignment.TopEnd)
-                                        .offset(x = 1.dp, y = 3.dp)
+                                        .offset(x = 1.dp, y = 2.5.dp)
                                         .size(11.dp)
                                         .background(fabContainerColor, CircleShape),
                                 contentAlignment = Alignment.Center,
