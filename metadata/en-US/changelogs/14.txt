@@ -1,0 +1,12 @@
+- ReplayGain: loudness from server tags, with Auto, track, album, off, preamp
+- Artist pages: bio, art, credits and appearances
+- Sort lists: regular names or sort names
+- Improved handling for multi-artist albums/tracks
+- Keep the screen on while now playing is open setting, off by default (thanks @chiangww!)
+
+Fixed
+
+- Notification progress for unknown-length streams (Opus/Ogg)
+- Now playing artwork and shadow fixes
+
+Release notes: https://github.com/austinried/subtracks/releases/tag/v3.1.0

@@ -36,8 +36,8 @@ android {
         applicationId = "com.subtracks"
         minSdk = 24
         targetSdk = 37
-        versionCode = 13
-        versionName = "3.0.0"
+        versionCode = 14
+        versionName = "3.1.0"
         buildConfigField("String", "COMMIT_HASH", "\"$commitHash\"")
     }
 
