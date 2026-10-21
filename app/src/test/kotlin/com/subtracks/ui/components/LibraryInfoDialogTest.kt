@@ -303,18 +303,64 @@ class LibraryInfoDialogTest {
         composeRule.onNodeWithText("Artist sort").assertDoesNotExist()
     }
 
+    @Test
+    fun aMixedArtistTrackWithoutASortShowsOnlyTheArtistsRow() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SongInfoDialog(
+                    song =
+                        song(
+                            artists = listOf(ArtistRef("ar1", "Artist A"), ArtistRef("ar2", "Artist B")),
+                            artistSort = "",
+                        ),
+                    download = null,
+                    localFile = null,
+                    streamEncoding = null,
+                    onDismiss = {},
+                    genres = emptyList(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Artists").assertIsDisplayed()
+        composeRule.onNodeWithText("Artist A · Artist B").assertIsDisplayed()
+        composeRule.onNodeWithText("Artists sort").assertDoesNotExist()
+    }
+
+    @Test
+    fun aTrackWithOnlyAnArtistSortShowsOnlyTheSortRow() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SongInfoDialog(
+                    song = song(artists = emptyList(), artist = null, artistSort = "Alpha"),
+                    download = null,
+                    localFile = null,
+                    streamEncoding = null,
+                    onDismiss = {},
+                    genres = emptyList(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Artist sort").assertIsDisplayed()
+        composeRule.onNodeWithText("Alpha").assertIsDisplayed()
+        composeRule.onNodeWithText("Artist").assertDoesNotExist()
+        composeRule.onNodeWithText("Artists").assertDoesNotExist()
+    }
+
     private fun song(
         artists: List<ArtistRef>,
+        artist: String? = artists.firstOrNull()?.name,
         sortName: String = "Song",
-        artistSort: String = "Artist",
+        artistSort: String = artist.orEmpty(),
     ) = Song(
         sourceId = 1,
         id = "s1",
         albumId = "al1",
-        artistId = artists.first().id,
+        artistId = artists.firstOrNull()?.id,
         title = "Song",
         album = "Album",
-        artist = artists.first().name,
+        artist = artist,
         duration = 200,
         track = 1,
         disc = 1,
