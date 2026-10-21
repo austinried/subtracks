@@ -754,6 +754,7 @@ class SubsonicXmlTest {
                   <playlists>
                     <playlist id="pl1" name="Shared" owner="austin" public="true" songCount="2" duration="120"/>
                     <playlist id="pl2" name="Private" owner="austin" public="false" songCount="1" duration="60"/>
+                    <playlist id="pl3" name="Numeric" owner="austin" public="1" songCount="1" duration="60"/>
                   </playlists>
                 </subsonic-response>
                 """.trimIndent(),
@@ -764,6 +765,7 @@ class SubsonicXmlTest {
         assertEquals("austin", playlists[0].owner)
         assertTrue(playlists[0].shared)
         assertEquals(false, playlists[1].shared)
+        assertTrue(playlists[2].shared)
     }
 
     private class CountingInputStream(

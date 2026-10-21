@@ -367,7 +367,7 @@ internal fun Attributes.attr(name: String): String = getValue(name) ?: ""
 
 internal fun Attributes.longAttr(name: String): Long? = attr(name).takeIf { it.isNotEmpty() }?.toLongOrNull()
 
-internal fun Attributes.boolAttr(name: String): Boolean = attr(name).equals("true", ignoreCase = true)
+internal fun Attributes.boolAttr(name: String): Boolean = attr(name).let { it == "1" || it.equals("true", ignoreCase = true) }
 
 internal fun Attributes.floatAttr(name: String): Float? = attr(name).takeIf { it.isNotEmpty() }?.toFloatOrNull()?.takeIf { it.isFinite() }
 

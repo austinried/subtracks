@@ -365,7 +365,7 @@ internal const val PLAYLISTS_SELECT =
         "JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId AND sd.status = 'Completed' " +
         "WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id " +
         ") ELSE playlists.songCount END AS songCount, " +
-        "playlists.created, playlists.changed, playlists.duration "
+        "playlists.created, playlists.changed, playlists.duration, playlists.owner, playlists.shared "
 
 internal const val PLAYLIST_ORDER_BY_NAME = "name COLLATE NOCASE, id"
 internal const val PLAYLIST_ORDER_BY_NAME_REVERSED = "name COLLATE NOCASE DESC, id DESC"

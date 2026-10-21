@@ -11,6 +11,7 @@ import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.Song
 import com.subtracks.ui.theme.SubtracksTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -171,6 +172,12 @@ class LibraryInfoDialogTest {
         val plays = composeRule.onNodeWithText("Plays").fetchSemanticsNode().boundsInRoot
         assertTrue("last played must follow added", lastPlayed.top >= added.bottom)
         assertTrue("plays must not sit between the dates", plays.top >= lastPlayed.bottom)
+        assertEquals(
+            "no row may sit between added and last played",
+            lastPlayed.top - added.top,
+            plays.top - lastPlayed.top,
+            0.5f,
+        )
     }
 
     @Test
@@ -226,6 +233,29 @@ class LibraryInfoDialogTest {
         composeRule.onNodeWithText("Artist sort").assertIsDisplayed()
         composeRule.onNodeWithText("Artists").assertDoesNotExist()
         composeRule.onNodeWithText("Artists sort").assertDoesNotExist()
+    }
+
+    @Test
+    fun duplicateAndBlankArtistRefsStaySingular() {
+        composeRule.setContent {
+            SubtracksTheme {
+                SongInfoDialog(
+                    song =
+                        song(
+                            artists = listOf(ArtistRef("ar1", "Alpha"), ArtistRef("ar2", "Alpha"), ArtistRef("ar3", "")),
+                            artistSort = "Beta",
+                        ),
+                    download = null,
+                    localFile = null,
+                    streamEncoding = null,
+                    onDismiss = {},
+                    genres = emptyList(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Artist").assertIsDisplayed()
+        composeRule.onNodeWithText("Artists").assertDoesNotExist()
     }
 
     @Test

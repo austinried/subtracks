@@ -1016,7 +1016,12 @@ class LibraryDaoTest {
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
-            dao.upsertPlaylists(listOf(playlist(sourceId, "pl-1", "List", created = 0, changed = 0).copy(songCount = 5)))
+            dao.upsertPlaylists(
+                listOf(
+                    playlist(sourceId, "pl-1", "List", created = 0, changed = 0)
+                        .copy(songCount = 5, owner = "austin", shared = true),
+                ),
+            )
             dao.upsertSongs(
                 listOf(
                     song(sourceId, "s1", "One", starred = null),
@@ -1034,6 +1039,8 @@ class LibraryDaoTest {
             val filtered = dao.playlistsByName(sourceId, "", downloadedFilter = 1).page()
             assertEquals(1, filtered.size)
             assertEquals(1L, filtered.first().songCount)
+            assertEquals("austin", filtered.first().owner)
+            assertEquals(true, filtered.first().shared)
 
             assertEquals(
                 5L,
