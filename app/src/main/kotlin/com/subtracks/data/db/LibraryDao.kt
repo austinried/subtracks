@@ -748,8 +748,8 @@ interface LibraryDao {
     @RawQuery(observedEntities = [Playlist::class])
     fun playlistsPaging(query: RoomRawQuery): PagingSource<Int, Playlist>
 
-    // These observe every table the statement reads, matching what Room inferred for the
-    // hand-written downloaded queries, so download and library writes invalidate as before.
+    // These observe every table the statements read; the sets match what Room inferred for the
+    // old downloaded @Query methods, so download and library writes invalidate as before.
     @RawQuery(observedEntities = [Album::class, Song::class, SongDownload::class, AlbumSearch::class])
     fun downloadedAlbumsPaging(query: RoomRawQuery): PagingSource<Int, Album>
 

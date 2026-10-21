@@ -8,7 +8,7 @@ import com.subtracks.data.prefs.PlaylistSort
 import com.subtracks.data.prefs.SortNameMode
 
 // The default filters intentionally omit song_downloads: the unfiltered lists do not need the
-// join, and their paging sources must not invalidate on download progress updates.
+// join, and their paging sources do not observe download writes (including progress updates).
 internal const val ALBUMS_FILTER = """
 FROM albums WHERE sourceId = :sourceId
 AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
