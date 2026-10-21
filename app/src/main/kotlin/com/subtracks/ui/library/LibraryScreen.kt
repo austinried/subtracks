@@ -50,7 +50,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -928,7 +927,7 @@ internal fun LibraryTabs(
                 Modifier
                     .fillMaxWidth()
                     .background(headerColor)
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                    .padding(top = 2.dp, end = 8.dp, bottom = 2.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1015,41 +1014,38 @@ private fun OfflineStrip(
     onGoOnline: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth()) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Surface(
-            onClick = onGoOnline,
-            color = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.fillMaxWidth(),
+    Surface(
+        onClick = onGoOnline,
+        color = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 44.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 44.dp)
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.CloudOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(
-                    text = stringResource(R.string.offline_mode_banner),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(R.string.offline_go_online),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            Icon(
+                imageVector = Icons.Rounded.CloudOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = stringResource(R.string.offline_mode_banner),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.offline_go_online),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
