@@ -240,6 +240,13 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "FROM desired WHERE artists.rowid = desired.rowid AND " +
         "(artists.coverArts != desired.coverArts OR artists.downloadedCoverArts != desired.downloadedCoverArts)"
 
+internal const val ARTIST_COVER_ARTS_SQL =
+    "SELECT DISTINCT albums.coverArt FROM ($ARTIST_COVER_CREDITS) credits " +
+        "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
+        "WHERE credits.artistId = :artistId AND albums.coverArt IS NOT NULL " +
+        "ORDER BY CASE credits.creditType WHEN 'album' THEN 0 ELSE 1 END, albums.year DESC, " +
+        "albums.sortName COLLATE NOCASE, albums.id LIMIT 4"
+
 internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
     "WITH downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS) " +
         "WHERE artistId IN (:artistIds)), " +
@@ -424,6 +431,18 @@ interface LibraryDao {
 
     @Query(ARTIST_ART_UPDATE_SQL)
     suspend fun recomputeArtistArt(sourceId: Long)
+
+    @Query(ARTIST_COVER_ARTS_SQL)
+    suspend fun artistCoverArts(
+        sourceId: Long,
+        artistId: String,
+    ): List<String>
+
+    @Query(ARTIST_COVER_ARTS_SQL)
+    fun artistCoverArtsFlow(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<List<String>>
 
     @Query(DOWNLOADED_ARTIST_ART_UPDATE_SQL)
     suspend fun recomputeDownloadedArtistArt(

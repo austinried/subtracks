@@ -656,6 +656,52 @@ class LibraryDaoTest {
         }
 
     @Test
+    fun coverArtFallbackFindsTrackCreditsWithoutAnArtistRow() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Album", year = 2020, starred = null)
+                        .copy(artistId = "ar-other", coverArt = "track-art"),
+                    album(sourceId, "al-2", "Featured", year = 2021, starred = null)
+                        .copy(artistId = "ar-other", coverArt = "featured-art"),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s-1", "Song", starred = null)
+                        .copy(albumId = "al-1", artistId = "ar-missing"),
+                    song(sourceId, "s-2", "Featured", starred = null)
+                        .copy(albumId = "al-2", artistId = "ar-other"),
+                ),
+            )
+            db.useWriterConnection { connection ->
+                connection.usePrepared(
+                    "INSERT INTO album_artists (sourceId, albumId, position, artistId, name) " +
+                        "VALUES (?, 'al-2', 0, 'ar-featured', 'Featured')",
+                ) { statement ->
+                    statement.bindLong(1, sourceId)
+                    statement.step()
+                }
+                connection.usePrepared(
+                    "INSERT INTO song_artists (sourceId, songId, position, artistId, name) " +
+                        "VALUES (?, 's-2', 0, 'ar-guest', 'Guest')",
+                ) { statement ->
+                    statement.bindLong(1, sourceId)
+                    statement.step()
+                }
+            }
+
+            assertNull(dao.artistOnce(sourceId, "ar-missing"))
+            assertNull(dao.artistOnce(sourceId, "ar-featured"))
+            assertNull(dao.artistOnce(sourceId, "ar-guest"))
+            assertEquals(listOf("track-art"), dao.artistCoverArts(sourceId, "ar-missing"))
+            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-featured"))
+            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-guest"))
+        }
+
+    @Test
     fun downloadedArtistArtUsesOnlyDownloadedAlbums() =
         runTest {
             val sourceId = source()

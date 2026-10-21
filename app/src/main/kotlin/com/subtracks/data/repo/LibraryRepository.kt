@@ -442,6 +442,11 @@ class LibraryRepository(
         }
     }
 
+    fun artistCoverArts(
+        sourceId: Long,
+        artistId: String,
+    ): Flow<List<String>> = db.libraryDao().artistCoverArtsFlow(sourceId, artistId)
+
     fun albumDiscs(
         sourceId: Long,
         albumId: String,

@@ -146,14 +146,57 @@ class ArtistDetailViewModel(
     init {
         viewModelScope.launch {
             combine(
-                artist.filterNotNull(),
+                artist,
                 sourceRepository.offline,
                 sourceRepository.activeSource,
-            ) { loaded, _, activeSource -> loaded to activeSource }
-                .collectLatest { (loaded, activeSource) ->
-                    if (activeSource == null) return@collectLatest
-                    val hero = sourceRepository.artistArt(loaded, forIcon = false)
-                    val icon = sourceRepository.artistArt(loaded, forIcon = true)
+                sourceRepository.activeSource.filterNotNull().flatMapLatest {
+                    libraryRepository.artistCoverArts(it, artistId)
+                },
+            ) { loaded, offline, activeSource, covers -> ArtistArtInput(loaded, offline, activeSource, covers) }
+                .collectLatest { input ->
+                    if (input.sourceId == null) return@collectLatest
+                    val resolved =
+                        if (input.covers.isEmpty()) {
+                            input.artist
+                        } else {
+                            when {
+                                input.artist == null -> {
+                                    Artist(
+                                        sourceId = input.sourceId,
+                                        id = artistId,
+                                        name = "",
+                                        albumCount = 0,
+                                        starred = null,
+                                        coverArts = input.covers,
+                                        downloadedCoverArts = if (input.offline) input.covers else emptyList(),
+                                    )
+                                }
+
+                                input.offline -> {
+                                    if (input.artist.downloadedCoverArts.isNullOrEmpty()) {
+                                        input.artist.copy(downloadedCoverArts = input.covers)
+                                    } else {
+                                        input.artist
+                                    }
+                                }
+
+                                input.artist.coverArts == input.covers -> {
+                                    input.artist
+                                }
+
+                                else -> {
+                                    input.artist.copy(coverArts = input.covers)
+                                }
+                            }
+                        }
+                    if (resolved == null) {
+                        _art.value = null
+                        _artThumbnail.value = null
+                        _heroArt.value = null
+                        return@collectLatest
+                    }
+                    val hero = sourceRepository.artistArt(resolved, forIcon = false)
+                    val icon = sourceRepository.artistArt(resolved, forIcon = true)
                     _art.value = hero.image ?: hero.covers.firstOrNull()
                     _artThumbnail.value = icon.image ?: icon.covers.firstOrNull()
                     _heroArt.value = hero
@@ -172,3 +215,10 @@ class ArtistDetailViewModel(
         }
     }
 }
+
+private data class ArtistArtInput(
+    val artist: Artist?,
+    val offline: Boolean,
+    val sourceId: Long?,
+    val covers: List<String>,
+)
