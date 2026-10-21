@@ -353,8 +353,8 @@ fun ArtistDetailScreen(
             }
         }
     }
-    var imageHeightPx by remember { mutableFloatStateOf(0f) }
-    var albumHeightPx by remember { mutableFloatStateOf(0f) }
+    var imageHeightPx by rememberSaveable { mutableFloatStateOf(0f) }
+    var albumHeightPx by rememberSaveable { mutableFloatStateOf(0f) }
     val albumRowGapPx = with(density) { ROW_GAP.toPx() }
     val scrollPx by remember {
         derivedStateOf {

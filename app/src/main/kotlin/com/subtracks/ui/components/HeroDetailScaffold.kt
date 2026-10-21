@@ -121,9 +121,9 @@ fun HeroDetailScaffold(
                 val barHeightPx = statusBarTop + with(density) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
                 val fadeDistancePx = with(density) { FADE_DISTANCE_DP.dp.toPx() }
 
-                var headerHeightPx by remember { mutableFloatStateOf(0f) }
-                var rowHeightPx by remember { mutableFloatStateOf(0f) }
-                var controlsTopPx by remember { mutableFloatStateOf(0f) }
+                var headerHeightPx by rememberSaveable { mutableFloatStateOf(0f) }
+                var rowHeightPx by rememberSaveable { mutableFloatStateOf(0f) }
+                var controlsTopPx by rememberSaveable { mutableFloatStateOf(0f) }
                 val scrollPx by remember {
                     derivedStateOf {
                         val index = listState.firstVisibleItemIndex
