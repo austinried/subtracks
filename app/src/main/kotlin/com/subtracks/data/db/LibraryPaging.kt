@@ -110,7 +110,11 @@ internal fun albumsPageQuery(
     sortNameMode: SortNameMode = SortNameMode.SortName,
 ): RoomRawQuery =
     rawQuery(
-        sql = "SELECT * ${if (downloaded) ALBUMS_FILTER_DOWNLOADED else ALBUMS_FILTER} ORDER BY ${albumOrder(sort, descending, sortNameMode)}",
+        sql = "SELECT * ${if (downloaded) ALBUMS_FILTER_DOWNLOADED else ALBUMS_FILTER} ORDER BY ${albumOrder(
+            sort,
+            descending,
+            sortNameMode,
+        )}",
         bindings =
             mapOf(
                 "sourceId" to sourceId,

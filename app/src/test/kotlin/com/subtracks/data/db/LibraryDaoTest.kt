@@ -400,8 +400,10 @@ class LibraryDaoTest {
         runTest {
             val orders =
                 listOf(
-                    ARTIST_ORDER_BY_NAME to "index_artists_name",
-                    ARTIST_ORDER_BY_NAME_REVERSED to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.SortName)}, id" to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.SortName)} DESC, id DESC" to "index_artists_name",
+                    "${artistNameSortKey(SortNameMode.Name)}, id" to "index_artists_name_plain",
+                    "${artistNameSortKey(SortNameMode.Name)} DESC, id DESC" to "index_artists_name_plain",
                     ARTIST_ORDER_BY_ALBUM_COUNT to "index_artists_albumCount",
                     ARTIST_ORDER_BY_ALBUM_COUNT_REVERSED to "index_artists_albumCount",
                     ARTIST_ORDER_BY_STARRED to "index_artists_starred",
@@ -1657,6 +1659,70 @@ class LibraryDaoTest {
                     .albumsPaging(
                         albumsPageQuery(sourceId, 0, "", AlbumSort.Name, false, false, SortNameMode.Name),
                     ).page()
+                    .map { it.name },
+            )
+        }
+
+    @Test
+    fun downloadedSortsHonourTheSortNamePreference() =
+        runTest {
+            val sourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(
+                listOf(
+                    artist(sourceId, "ar-1", "Beatles", albumCount = 1).copy(sortName = "Beatles, The"),
+                    artist(sourceId, "ar-2", "Zebra", albumCount = 1).copy(sortName = "Aaa"),
+                ),
+            )
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "al-1", "Beatles", year = null, starred = null)
+                        .copy(sortName = "Beatles, The", albumArtistSort = "Beatles, The", albumArtist = "Beatles"),
+                    album(sourceId, "al-2", "Zebra", year = null, starred = null)
+                        .copy(
+                            sortName = "Aaa",
+                            albumArtistSort = "Aaa",
+                            albumArtist = "Zebra",
+                            artistId = "ar-2",
+                        ),
+                ),
+            )
+            dao.upsertSongs(
+                listOf(
+                    song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1"),
+                    song(sourceId, "s2", "Two", starred = null).copy(albumId = "al-2", artistId = "ar-2"),
+                ),
+            )
+            listOf("s1", "s2").forEach {
+                db.downloadDao().upsert(SongDownload(sourceId, it, DownloadStatus.Completed))
+            }
+
+            assertEquals(
+                listOf("Zebra", "Beatles"),
+                dao
+                    .artistPages(sourceId, 0, "", downloaded = true, sortNameMode = SortNameMode.SortName)
+                    .page()
+                    .map { it.name },
+            )
+            assertEquals(
+                listOf("Beatles", "Zebra"),
+                dao
+                    .artistPages(sourceId, 0, "", downloaded = true, sortNameMode = SortNameMode.Name)
+                    .page()
+                    .map { it.name },
+            )
+            assertEquals(
+                listOf("Zebra", "Beatles"),
+                dao
+                    .albumPages(sourceId, 0, "", downloaded = true, sortNameMode = SortNameMode.SortName)
+                    .page()
+                    .map { it.name },
+            )
+            assertEquals(
+                listOf("Beatles", "Zebra"),
+                dao
+                    .albumPages(sourceId, 0, "", downloaded = true, sortNameMode = SortNameMode.Name)
+                    .page()
                     .map { it.name },
             )
         }
