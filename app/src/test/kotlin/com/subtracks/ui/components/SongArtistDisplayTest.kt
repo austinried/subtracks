@@ -48,7 +48,7 @@ class SongArtistDisplayTest {
     }
 
     @Test
-    fun theInfoDialogShowsTheSingularArtistAndThePluralArtistsSeparately() {
+    fun theInfoDialogListsThePluralArtistsWithTheSingularArtistFirst() {
         composeRule.setContent {
             SubtracksTheme {
                 SongInfoDialog(
@@ -62,7 +62,6 @@ class SongArtistDisplayTest {
             }
         }
 
-        composeRule.onNodeWithText("Two").assertIsDisplayed()
-        composeRule.onNodeWithText("One · Two · Three").assertIsDisplayed()
+        composeRule.onNodeWithText("Two · One · Three").assertIsDisplayed()
     }
 }

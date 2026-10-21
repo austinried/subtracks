@@ -215,7 +215,7 @@ class LibraryInfoDialogTest {
     }
 
     @Test
-    fun aSingleArtistTrackHidesTheDuplicateArtistsRow() {
+    fun aSingleArtistTrackUsesSingularLabels() {
         composeRule.setContent {
             SubtracksTheme {
                 SongInfoDialog(
@@ -236,7 +236,7 @@ class LibraryInfoDialogTest {
     }
 
     @Test
-    fun duplicateAndBlankArtistRefsDoNotAddAnArtistsRow() {
+    fun duplicateAndBlankArtistRefsStaySingular() {
         composeRule.setContent {
             SubtracksTheme {
                 SongInfoDialog(
@@ -259,7 +259,7 @@ class LibraryInfoDialogTest {
     }
 
     @Test
-    fun aMixedArtistTrackShowsBothTheArtistAndArtistsRows() {
+    fun aMixedArtistTrackUsesPluralLabelsForBothRows() {
         composeRule.setContent {
             SubtracksTheme {
                 SongInfoDialog(
@@ -277,12 +277,10 @@ class LibraryInfoDialogTest {
             }
         }
 
-        composeRule.onNodeWithText("Artist").assertIsDisplayed()
         composeRule.onNodeWithText("Artists").assertIsDisplayed()
-        composeRule.onNodeWithText("Artist A").assertIsDisplayed()
-        composeRule.onNodeWithText("Artist A · Artist B").assertIsDisplayed()
-        composeRule.onNodeWithText("Artist sort").assertIsDisplayed()
-        composeRule.onNodeWithText("Artists sort").assertDoesNotExist()
+        composeRule.onNodeWithText("Artists sort").assertIsDisplayed()
+        composeRule.onNodeWithText("Artist").assertDoesNotExist()
+        composeRule.onNodeWithText("Artist sort").assertDoesNotExist()
         composeRule.onNodeWithText("Alpha").assertIsDisplayed()
     }
 
@@ -306,7 +304,7 @@ class LibraryInfoDialogTest {
     }
 
     @Test
-    fun aMixedArtistTrackWithoutASortStillShowsBothArtistRows() {
+    fun aMixedArtistTrackWithoutASortShowsOnlyTheArtistsRow() {
         composeRule.setContent {
             SubtracksTheme {
                 SongInfoDialog(
@@ -324,11 +322,9 @@ class LibraryInfoDialogTest {
             }
         }
 
-        composeRule.onNodeWithText("Artist").assertIsDisplayed()
         composeRule.onNodeWithText("Artists").assertIsDisplayed()
-        composeRule.onNodeWithText("Artist A").assertIsDisplayed()
         composeRule.onNodeWithText("Artist A · Artist B").assertIsDisplayed()
-        composeRule.onNodeWithText("Artist sort").assertDoesNotExist()
+        composeRule.onNodeWithText("Artists sort").assertDoesNotExist()
     }
 
     @Test

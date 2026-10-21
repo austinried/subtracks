@@ -9,14 +9,6 @@ internal fun Song.artistSubtitle(): String? = artistSubtitle(artist, artists)
 
 internal fun Song.artistNames(): List<String> = artistNames(artist, artists)
 
-internal fun Song.artistList(): String? =
-    artists
-        .map { it.name }
-        .filter { it.isNotBlank() }
-        .distinct()
-        .joinToString(ARTIST_SEPARATOR)
-        .takeIf { it.isNotEmpty() }
-
 internal fun artistNames(
     artist: String?,
     artists: List<ArtistRef>,
