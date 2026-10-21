@@ -42,11 +42,6 @@ internal const val DOWNLOADED_SONG =
     "EXISTS (SELECT 1 FROM song_downloads sd WHERE sd.sourceId = playlist_songs.sourceId " +
         "AND sd.songId = playlist_songs.songId AND sd.status = 'Completed')"
 
-internal const val ALBUM_ORDER_BY_NAME = "sortName COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_NAME_REVERSED = "sortName COLLATE NOCASE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_ARTIST = "albumArtistSort COLLATE NOCASE, year, sortName COLLATE NOCASE, id"
-internal const val ALBUM_ORDER_BY_ARTIST_REVERSED =
-    "albumArtistSort COLLATE NOCASE DESC, year DESC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_YEAR = "year DESC, sortName COLLATE NOCASE, id"
 internal const val ALBUM_ORDER_BY_YEAR_REVERSED = "year ASC, sortName COLLATE NOCASE DESC, id DESC"
 internal const val ALBUM_ORDER_BY_ADDED = "created DESC, sortName COLLATE NOCASE, id"
@@ -64,13 +59,7 @@ internal const val ALBUM_ORDER_BY_RECENT_REVERSED = "played ASC NULLS LAST, sort
 
 private const val ALBUM_NAME_SORT_KEY_MODE =
     "(CASE :sortMode WHEN 'Name' THEN name WHEN 'NonLatin' THEN (CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) ELSE sortName END) COLLATE NOCASE"
-private const val ALBUM_ARTIST_SORT_KEY_MODE =
-    "(CASE :sortMode WHEN 'Name' THEN albumArtist WHEN 'NonLatin' THEN (CASE WHEN albumArtist GLOB '*[A-Za-z]*' THEN albumArtist ELSE albumArtistSort END) ELSE albumArtistSort END) COLLATE NOCASE"
 internal const val ALBUM_ORDER_BY_NAME_SORT_MODE = "$ALBUM_NAME_SORT_KEY_MODE, id"
-internal const val ALBUM_ORDER_BY_NAME_SORT_MODE_REVERSED = "$ALBUM_NAME_SORT_KEY_MODE DESC, id DESC"
-internal const val ALBUM_ORDER_BY_ARTIST_SORT_MODE = "$ALBUM_ARTIST_SORT_KEY_MODE, year, $ALBUM_NAME_SORT_KEY_MODE, id"
-internal const val ALBUM_ORDER_BY_ARTIST_SORT_MODE_REVERSED =
-    "$ALBUM_ARTIST_SORT_KEY_MODE DESC, year DESC, $ALBUM_NAME_SORT_KEY_MODE DESC, id DESC"
 
 internal const val ARTIST_CREDITED =
     "(artists.credited = 1 OR COALESCE((SELECT creditsStale FROM sources WHERE id = artists.sourceId), 1) = 1)"
@@ -317,7 +306,6 @@ internal const val ARTIST_ORDER_BY_RECENT_REVERSED = "artists.played ASC NULLS L
 private const val ARTIST_NAME_SORT_KEY_MODE =
     "(CASE :sortMode WHEN 'Name' THEN name WHEN 'NonLatin' THEN (CASE WHEN name GLOB '*[A-Za-z]*' THEN name ELSE sortName END) ELSE sortName END) COLLATE NOCASE"
 internal const val ARTIST_ORDER_BY_NAME_SORT_MODE = "$ARTIST_NAME_SORT_KEY_MODE, id"
-internal const val ARTIST_ORDER_BY_NAME_SORT_MODE_REVERSED = "$ARTIST_NAME_SORT_KEY_MODE DESC, id DESC"
 
 private const val SONG_NAME_SORT_KEY_MODE =
     "(CASE :sortMode WHEN 'Name' THEN songs.title WHEN 'NonLatin' THEN (CASE WHEN songs.title GLOB '*[A-Za-z]*' THEN songs.title ELSE songs.sortName END) ELSE songs.sortName END) COLLATE NOCASE"
