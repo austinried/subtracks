@@ -2,8 +2,10 @@ package com.subtracks.ui
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -16,6 +18,9 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
@@ -342,6 +347,170 @@ class LibraryScreenTest {
         assertTrue("the tab row should reflow in one direction, but the icons moved $samples", monotonic)
     }
 
+    @Test
+    @Config(qualifiers = "de-rDE-w320dp-h640dp-xhdpi")
+    fun aLongTabKeepsTheGearFullSizeAndScrollsIntoView() {
+        var labelWidth = 0f
+        composeRule.setContent {
+            SubtracksTheme {
+                labelWidth =
+                    rememberTextMeasurer()
+                        .measure(
+                            AnnotatedString(composeRule.activity.getString(LibraryTab.Playlists.label)),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            softWrap = false,
+                        ).size.width
+                        .toFloat()
+                LibraryTabs(
+                    pagerState =
+                        remember {
+                            PagerState(
+                                currentPage = LibraryTab.Playlists.ordinal,
+                                pageCount = { LibraryTab.entries.size },
+                            )
+                        },
+                    onTabSelected = {},
+                    onOpenSettings = {},
+                    artwork = null,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule
+            .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))
+            .assertWidthIsEqualTo(40.dp)
+        assertTabFullyVisible(LibraryTab.Playlists, labelWidth)
+    }
+
+    @Test
+    @Config(qualifiers = "ar-rEG-w320dp-h640dp-xhdpi")
+    fun aLongTabScrollsIntoViewInRtl() {
+        var labelWidth = 0f
+        composeRule.setContent {
+            SubtracksTheme {
+                labelWidth =
+                    rememberTextMeasurer()
+                        .measure(
+                            AnnotatedString(composeRule.activity.getString(LibraryTab.Playlists.label)),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            softWrap = false,
+                        ).size.width
+                        .toFloat()
+                LibraryTabs(
+                    pagerState =
+                        remember {
+                            PagerState(
+                                currentPage = LibraryTab.Playlists.ordinal,
+                                pageCount = { LibraryTab.entries.size },
+                            )
+                        },
+                    onTabSelected = {},
+                    onOpenSettings = {},
+                    artwork = null,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule
+            .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))
+            .assertWidthIsEqualTo(40.dp)
+        assertTabFullyVisible(LibraryTab.Playlists, labelWidth)
+    }
+
+    @Test
+    @Config(qualifiers = "de-rDE-w320dp-h640dp-xhdpi")
+    fun movingToALongTabScrollsItIntoView() {
+        val selectedTab = mutableStateOf(LibraryTab.Home)
+        var labelWidth = 0f
+        composeRule.setContent {
+            SubtracksTheme {
+                labelWidth =
+                    rememberTextMeasurer()
+                        .measure(
+                            AnnotatedString(composeRule.activity.getString(LibraryTab.Playlists.label)),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            softWrap = false,
+                        ).size.width
+                        .toFloat()
+                LibraryScreen(
+                    selectedTab = selectedTab.value,
+                    onTabSelected = { selectedTab.value = it },
+                    albums = remember { flowOf(PagingData.empty<Album>()) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { selectedTab.value = LibraryTab.Playlists }
+        val expected = with(composeRule.density) { TAB_LABEL_CHROME.toPx() } + labelWidth
+        composeRule.waitUntil(5_000) { tabBounds(LibraryTab.Playlists).width >= expected - 1f }
+
+        composeRule
+            .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))
+            .assertWidthIsEqualTo(40.dp)
+        assertTabFullyVisible(LibraryTab.Playlists, labelWidth)
+    }
+
+    private fun assertTabFullyVisible(
+        tab: LibraryTab,
+        labelWidth: Float,
+    ) {
+        val bounds = tabBounds(tab)
+        val expected = with(composeRule.density) { TAB_LABEL_CHROME.toPx() } + labelWidth
+        assertEquals("the selected tab should be shown in full, but was $bounds", expected, bounds.width, 1f)
+    }
+
+    @Test
+    @Config(qualifiers = "de-rDE-w320dp-h640dp-xhdpi")
+    fun theOfflineStripExplainsTheModeAndGoesOnline() {
+        var exited = false
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = LibraryTab.Playlists,
+                    onTabSelected = {},
+                    albums = remember { flowOf(PagingData.empty<Album>()) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                    offline = true,
+                    onExitOffline = { exited = true },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.offline_mode_banner)).performClick()
+        assertTrue("the offline strip should leave offline mode", exited)
+        composeRule
+            .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))
+            .assertWidthIsEqualTo(40.dp)
+    }
+
+    private fun tabBounds(tab: LibraryTab) =
+        composeRule
+            .onNodeWithContentDescription(composeRule.activity.getString(tab.label))
+            .fetchSemanticsNode()
+            .boundsInRoot
+
     private val settledLoadStates =
         LoadStates(
             refresh = LoadState.NotLoading(endOfPaginationReached = true),
@@ -378,3 +547,5 @@ class LibraryScreenTest {
             )
         }
 }
+
+private val TAB_LABEL_CHROME = 56.dp

@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,6 +50,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -94,12 +98,14 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
@@ -586,14 +592,15 @@ fun LibraryScreen(
                         .onSizeChanged { tabBarHeightPx = it.height.toFloat() }
                         .padding(bottom = bottomInset),
             ) {
+                if (offline) {
+                    OfflineStrip(onGoOnline = onExitOffline)
+                }
                 LibraryTabs(
                     pagerState = pagerState,
                     onTabSelected = { tab ->
                         if (tab == selectedTab) topRequest++ else onTabSelected(tab)
                     },
                     onOpenSettings = onOpenSettings,
-                    offline = offline,
-                    onExitOffline = onExitOffline,
                     artwork = artwork,
                     syncing = syncing,
                 )
@@ -856,13 +863,12 @@ internal fun LibraryTabs(
     pagerState: PagerState,
     onTabSelected: (LibraryTab) -> Unit,
     onOpenSettings: () -> Unit,
-    offline: Boolean = false,
-    onExitOffline: () -> Unit = {},
     artwork: ArtworkColors?,
     syncing: Boolean = false,
 ) {
     val indicatorStretch = 18.dp
     val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
     val bounds = remember { mutableStateMapOf<Int, Rect>() }
     val page = pagerState.currentPage
     val fraction = pagerState.currentPageOffsetFraction
@@ -894,6 +900,28 @@ internal fun LibraryTabs(
     val indicatorColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.onBackground
     val tabContentHeightPx = with(density) { (TAB_ICON_SIZE + TAB_VERTICAL_PADDING * 2).toPx() }
 
+    val scrollState = rememberScrollState()
+    var viewportWidth by remember { mutableIntStateOf(0) }
+    var contentWidth by remember { mutableIntStateOf(0) }
+    var revealed by remember { mutableStateOf(false) }
+    LaunchedEffect(pagerState.settledPage, viewportWidth, contentWidth, layoutDirection, bounds[pagerState.settledPage]) {
+        if (viewportWidth == 0) return@LaunchedEffect
+        val settled = bounds[pagerState.settledPage] ?: return@LaunchedEffect
+        val start = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.right else settled.left
+        val end = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.left else settled.right
+        val target =
+            when {
+                start < scrollState.value -> start
+                end > scrollState.value + viewportWidth -> end - viewportWidth
+                else -> null
+            }
+        if (target != null) {
+            val offset = target.roundToInt().coerceIn(0, scrollState.maxValue)
+            if (revealed) scrollState.animateScrollTo(offset) else scrollState.scrollTo(offset)
+        }
+        revealed = true
+    }
+
     Box(Modifier.fillMaxWidth()) {
         Box(
             modifier =
@@ -902,71 +930,125 @@ internal fun LibraryTabs(
                     .background(headerColor)
                     .padding(horizontal = 8.dp, vertical = 2.dp),
         ) {
-            Box(
-                modifier =
-                    Modifier.drawBehind {
-                        if (current != null && indicatorLeft != null && indicatorRight != null && indicatorRight > indicatorLeft) {
-                            val height = tabContentHeightPx.coerceAtMost(current.height)
-                            drawRoundRect(
-                                color = indicatorColor,
-                                topLeft = Offset(indicatorLeft, current.top + (current.height - height) / 2f),
-                                size = Size(indicatorRight - indicatorLeft, height),
-                                cornerRadius = CornerRadius(8.dp.toPx()),
-                            )
-                        }
-                    },
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .onSizeChanged { viewportWidth = it.width }
+                            .horizontalScroll(scrollState),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    LibraryTab.entries.forEachIndexed { index, tab ->
-                        TabButton(
-                            tab = tab,
-                            artwork = artwork,
-                            progress =
-                                when (index) {
-                                    page -> 1f - transition
-                                    page + (if (fraction >= 0f) 1 else -1) -> transition
-                                    else -> 0f
+                    Box(
+                        modifier =
+                            Modifier
+                                .onSizeChanged { contentWidth = it.width }
+                                .drawBehind {
+                                    if (current != null &&
+                                        indicatorLeft != null &&
+                                        indicatorRight != null &&
+                                        indicatorRight > indicatorLeft
+                                    ) {
+                                        val height = tabContentHeightPx.coerceAtMost(current.height)
+                                        drawRoundRect(
+                                            color = indicatorColor,
+                                            topLeft = Offset(indicatorLeft, current.top + (current.height - height) / 2f),
+                                            size = Size(indicatorRight - indicatorLeft, height),
+                                            cornerRadius = CornerRadius(8.dp.toPx()),
+                                        )
+                                    }
                                 },
-                            indicatorLeft = indicatorLeft,
-                            indicatorRight = indicatorRight,
-                            onClick = { onTabSelected(tab) },
-                            modifier =
-                                Modifier.onGloballyPositioned { coordinates ->
-                                    bounds[index] = coordinates.boundsInParent()
-                                },
-                        )
-                    }
-                    Spacer(Modifier.weight(1f))
-                    if (offline) {
-                        IconButton(onClick = onExitOffline) {
-                            Icon(
-                                imageVector = Icons.Rounded.CloudOff,
-                                contentDescription = stringResource(R.string.offline_mode_status),
-                                tint = MaterialTheme.colorScheme.onBackground,
-                            )
-                        }
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Settings,
-                                contentDescription = stringResource(R.string.navigation_tabs_settings),
-                                tint = MaterialTheme.colorScheme.onBackground,
-                            )
-                            if (syncing) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary,
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            LibraryTab.entries.forEachIndexed { index, tab ->
+                                TabButton(
+                                    tab = tab,
+                                    artwork = artwork,
+                                    progress =
+                                        when (index) {
+                                            page -> 1f - transition
+                                            page + (if (fraction >= 0f) 1 else -1) -> transition
+                                            else -> 0f
+                                        },
+                                    indicatorLeft = indicatorLeft,
+                                    indicatorRight = indicatorRight,
+                                    onClick = { onTabSelected(tab) },
+                                    modifier =
+                                        Modifier.onGloballyPositioned { coordinates ->
+                                            bounds[index] = coordinates.boundsInParent()
+                                        },
                                 )
                             }
                         }
                     }
                 }
+                IconButton(onClick = onOpenSettings) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = stringResource(R.string.navigation_tabs_settings),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                        )
+                        if (syncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OfflineStrip(
+    onGoOnline: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.fillMaxWidth()) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Surface(
+            onClick = onGoOnline,
+            color = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 44.dp)
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.CloudOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = stringResource(R.string.offline_mode_banner),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.offline_go_online),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
         }
     }
