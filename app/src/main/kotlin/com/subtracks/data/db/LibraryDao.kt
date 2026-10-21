@@ -204,11 +204,30 @@ private const val ARTIST_COVER_CREDITS =
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE song_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL"
 
-private const val ARTIST_COVER_RANKS =
-    "credits AS (SELECT artistId, albumId, " +
-        "MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
-        "FROM ($ARTIST_COVER_CREDITS) GROUP BY artistId, albumId), " +
-        "ranked AS (SELECT credits.artistId AS artistId, albums.coverArt AS coverArt, " +
+private const val ARTIST_COVER_CREDITS_FOR_ARTIST =
+    "SELECT albums.artistId AS artistId, albums.id AS albumId, 'album' AS creditType " +
+        "FROM albums WHERE albums.sourceId = :sourceId AND albums.artistId = :artistId " +
+        "AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT album_artists.artistId, albums.id, 'album' " +
+        "FROM album_artists JOIN albums " +
+        "ON albums.sourceId = album_artists.sourceId AND albums.id = album_artists.albumId " +
+        "WHERE album_artists.sourceId = :sourceId AND album_artists.artistId = :artistId " +
+        "AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT songs.artistId, songs.albumId, 'track' " +
+        "FROM songs JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE songs.sourceId = :sourceId AND songs.artistId = :artistId AND albums.coverArt IS NOT NULL " +
+        "UNION ALL " +
+        "SELECT song_artists.artistId, songs.albumId, 'track' " +
+        "FROM song_artists JOIN songs " +
+        "ON songs.sourceId = song_artists.sourceId AND songs.id = song_artists.songId " +
+        "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
+        "WHERE song_artists.sourceId = :sourceId AND song_artists.artistId = :artistId " +
+        "AND albums.coverArt IS NOT NULL"
+
+private const val ARTIST_COVER_RANKS_TAIL =
+    "ranked AS (SELECT credits.artistId AS artistId, albums.coverArt AS coverArt, " +
         "ROW_NUMBER() OVER (PARTITION BY credits.artistId " +
         "ORDER BY credits.creditRank, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id) AS coverRank " +
         "FROM credits JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
@@ -216,6 +235,18 @@ private const val ARTIST_COVER_RANKS =
         "unique_ranked AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM ranked GROUP BY artistId, coverArt), " +
         "deduped AS (SELECT artistId, coverArt, " +
         "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_ranked)"
+
+private const val ARTIST_COVER_RANKS =
+    "credits AS (SELECT artistId, albumId, " +
+        "MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
+        "FROM ($ARTIST_COVER_CREDITS) GROUP BY artistId, albumId), " +
+        ARTIST_COVER_RANKS_TAIL
+
+private const val ARTIST_COVER_RANKS_FOR_ARTIST =
+    "credits AS (SELECT artistId, albumId, " +
+        "MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
+        "FROM ($ARTIST_COVER_CREDITS_FOR_ARTIST) GROUP BY artistId, albumId), " +
+        ARTIST_COVER_RANKS_TAIL
 
 internal const val ARTIST_ART_UPDATE_SQL =
     "WITH $ARTIST_COVER_RANKS, " +
@@ -244,8 +275,8 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "(artists.coverArts != desired.coverArts OR artists.downloadedCoverArts != desired.downloadedCoverArts)"
 
 internal const val ARTIST_COVER_ARTS_SQL =
-    "WITH $ARTIST_COVER_RANKS " +
-        "SELECT coverArt FROM deduped WHERE artistId = :artistId AND coverRank <= 4 ORDER BY coverRank"
+    "WITH $ARTIST_COVER_RANKS_FOR_ARTIST " +
+        "SELECT coverArt FROM deduped WHERE coverRank <= 4 ORDER BY coverRank"
 
 internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
     "WITH downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS) " +
