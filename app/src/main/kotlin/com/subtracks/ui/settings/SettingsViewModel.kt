@@ -80,7 +80,7 @@ class SettingsViewModel(
     val sortNameMode: StateFlow<SortNameMode> =
         userPreferences
             .sortNameMode()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SortNameMode.SortName)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SortNameMode.Name)
 
     val keepScreenOn: StateFlow<Boolean> =
         userPreferences

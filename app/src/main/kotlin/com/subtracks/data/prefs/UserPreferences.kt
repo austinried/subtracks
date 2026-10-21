@@ -186,7 +186,7 @@ class UserPreferences(
 
     fun sortNameMode(): Flow<SortNameMode> =
         store.data.map { prefs ->
-            prefs[sortNameModeKey]?.let { stored -> SortNameMode.entries.firstOrNull { it.name == stored } } ?: SortNameMode.SortName
+            prefs[sortNameModeKey]?.let { stored -> SortNameMode.entries.firstOrNull { it.name == stored } } ?: SortNameMode.Name
         }
 
     suspend fun setSortNameMode(mode: SortNameMode) {

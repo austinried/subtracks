@@ -210,7 +210,7 @@ fun SettingsScreen(
     syncInterval: Int = DEFAULT_SYNC_INTERVAL_MINUTES,
     replayGainMode: ReplayGainMode = ReplayGainMode.Auto,
     replayGainPreamp: Float = 0f,
-    sortNameMode: SortNameMode = SortNameMode.SortName,
+    sortNameMode: SortNameMode = SortNameMode.Name,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,

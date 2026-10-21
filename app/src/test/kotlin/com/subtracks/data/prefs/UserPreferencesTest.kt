@@ -58,7 +58,7 @@ class UserPreferencesTest {
             val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { file }
             val prefs = UserPreferences(store)
 
-            assertEquals(SortNameMode.SortName, prefs.sortNameMode().first())
+            assertEquals(SortNameMode.Name, prefs.sortNameMode().first())
 
             prefs.setSortNameMode(SortNameMode.NonLatin)
 
