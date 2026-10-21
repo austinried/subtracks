@@ -5,6 +5,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -533,7 +534,7 @@ class LibraryScreenTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText(composeRule.activity.getString(R.string.offline_mode_banner)).performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.offline_mode_banner)).assertHeightIsEqualTo(36.dp).performClick()
         assertTrue("the offline strip should leave offline mode", exited)
         composeRule
             .onNodeWithContentDescription(composeRule.activity.getString(R.string.navigation_tabs_settings))

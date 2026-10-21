@@ -99,6 +99,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -708,7 +709,7 @@ private fun ListOptionsSheet(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(stringResource(R.string.search_this_list), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1019,38 +1020,34 @@ private fun OfflineStrip(
     headerColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        onClick = onGoOnline,
-        color = lerp(headerColor, MaterialTheme.colorScheme.primary, OFFLINE_STRIP_TINT),
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        modifier = modifier.fillMaxWidth(),
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(lerp(headerColor, MaterialTheme.colorScheme.primary, OFFLINE_STRIP_TINT))
+                .clickable(role = Role.Button, onClick = onGoOnline)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.CloudOff,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = stringResource(R.string.offline_mode_banner),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(R.string.offline_go_online),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
+        Icon(
+            imageVector = Icons.Rounded.CloudOff,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = stringResource(R.string.offline_mode_banner),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = stringResource(R.string.offline_go_online),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 
