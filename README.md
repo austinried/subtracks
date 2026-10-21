@@ -37,6 +37,7 @@ See [signing/README.md](signing/README.md) for the fingerprints and the commands
 - **Adaptive Theming:** Colours drawn from the current song's artwork.
 - **Search:** Fast search across the whole library, with per-list sort and filter controls.
 - **Playback:** Gapless playback, an editable queue you can reorder and jump through, plus loop and shuffle modes.
+- **ReplayGain:** Loudness normalization from the tags your server reports, with Auto, track and album modes and a preamp.
 - **Up Next:** Add items into the currently playing queue without rewriting it.
 - **Multiple Servers:** Connect several servers and switch between them quickly.
 - **Stream Quality:** Bitrate and format settings for Wi-Fi and mobile, with automatic switching.
