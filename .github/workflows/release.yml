@@ -85,7 +85,9 @@ jobs:
             echo "value=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Check release notes exist
-        run: test -f "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
+        run: |
+          test -f "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt"
+          test -f "docs/releases/$GITHUB_REF_NAME.md"
       - name: Write Play service account
         if: steps.stable.outputs.value == 'true'
         env:
@@ -123,7 +125,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file "metadata/en-US/changelogs/${{ needs.build.outputs.version-code }}.txt")
+          args=(--verify-tag --title "$GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md")
           if [ "${{ steps.stable.outputs.value }}" != "true" ]; then
             args+=(--prerelease)
           fi
