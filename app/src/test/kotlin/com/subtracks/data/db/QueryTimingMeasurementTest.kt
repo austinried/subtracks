@@ -113,17 +113,21 @@ class QueryTimingMeasurementTest {
 
     private suspend fun measureReads() {
         val dao = db.libraryDao()
-        timed("albums first page (name)") { dao.albumPages(1, 0, "", sort = AlbumSort.Name, downloaded = true).firstPage() }
-        timed("albums first page (name, default)") { dao.albumPages(1, 0, "", sort = AlbumSort.Name).firstPage() }
-        timed("albums first page (artist)") { dao.albumPages(1, 0, "", sort = AlbumSort.Artist, downloaded = true).firstPage() }
-        timed("albums first page (year)") { dao.albumPages(1, 0, "", sort = AlbumSort.Year, downloaded = true).firstPage() }
-        timed("albums first page (added)") { dao.albumPages(1, 0, "", sort = AlbumSort.Added, downloaded = true).firstPage() }
-        timed("albums first page (starred)") { dao.albumPages(1, 0, "", sort = AlbumSort.Starred, downloaded = true).firstPage() }
-        timed("albums first page (frequent)") { dao.albumPages(1, 0, "", sort = AlbumSort.Frequent, downloaded = true).firstPage() }
-        timed("albums first page (recent)") { dao.albumPages(1, 0, "", sort = AlbumSort.Recent, downloaded = true).firstPage() }
-        timed("artists first page (name)") { dao.artistPages(1, 0, "", sort = ArtistSort.Name, downloaded = true).firstPage() }
-        timed("artists first page (name, default)") { dao.artistPages(1, 0, "", sort = ArtistSort.Name).firstPage() }
-        timed("artists first page (frequent)") { dao.artistPages(1, 0, "", sort = ArtistSort.Frequent, downloaded = true).firstPage() }
+        timed("albums first page (name)") { dao.albumPages(1, 0, "", sort = AlbumSort.Name).firstPage() }
+        timed("albums first page (name, downloaded)") {
+            dao.albumPages(1, 0, "", sort = AlbumSort.Name, downloaded = true).firstPage()
+        }
+        timed("albums first page (artist)") { dao.albumPages(1, 0, "", sort = AlbumSort.Artist).firstPage() }
+        timed("albums first page (year)") { dao.albumPages(1, 0, "", sort = AlbumSort.Year).firstPage() }
+        timed("albums first page (added)") { dao.albumPages(1, 0, "", sort = AlbumSort.Added).firstPage() }
+        timed("albums first page (starred)") { dao.albumPages(1, 0, "", sort = AlbumSort.Starred).firstPage() }
+        timed("albums first page (frequent)") { dao.albumPages(1, 0, "", sort = AlbumSort.Frequent).firstPage() }
+        timed("albums first page (recent)") { dao.albumPages(1, 0, "", sort = AlbumSort.Recent).firstPage() }
+        timed("artists first page (name)") { dao.artistPages(1, 0, "", sort = ArtistSort.Name).firstPage() }
+        timed("artists first page (name, downloaded)") {
+            dao.artistPages(1, 0, "", sort = ArtistSort.Name, downloaded = true).firstPage()
+        }
+        timed("artists first page (frequent)") { dao.artistPages(1, 0, "", sort = ArtistSort.Frequent).firstPage() }
         timed("artist albums") { dao.albumsForArtist(1, "ar0").first() }
         timed("artist name") { dao.artistName(1, "ar0").first() }
         timed("artist songs") { db.queueDao().artistSongs(1, "ar0", 0, 100) }
@@ -133,11 +137,13 @@ class QueryTimingMeasurementTest {
         timed("artists downloaded filter") { dao.artistPages(1, 0, "", downloaded = true).firstPage() }
         timed("artist statuses") { db.downloadDao().artistStatuses(1).first() }
         timed("artist status") { db.downloadDao().artistStatus(1, "ar0").first() }
-        timed("playlists first page (name)") { dao.playlistPages(1, "", sort = PlaylistSort.Name, downloaded = true).firstPage() }
-        timed("playlists first page (name, default)") { dao.playlistPages(1, "", sort = PlaylistSort.Name).firstPage() }
-        timed("albums deep page") { dao.albumPages(1, 0, "", sort = AlbumSort.Name, downloaded = true).deepPage(1000) }
-        timed("albums search FTS") { dao.albumPages(1, 0, "Album 1", sort = AlbumSort.Name, downloaded = true).firstPage() }
-        timed("albums search short") { dao.albumPages(1, 0, "al", sort = AlbumSort.Name, downloaded = true).firstPage() }
+        timed("playlists first page (name)") { dao.playlistPages(1, "", sort = PlaylistSort.Name).firstPage() }
+        timed("playlists first page (name, downloaded)") {
+            dao.playlistPages(1, "", sort = PlaylistSort.Name, downloaded = true).firstPage()
+        }
+        timed("albums deep page") { dao.albumPages(1, 0, "", sort = AlbumSort.Name).deepPage(1000) }
+        timed("albums search FTS") { dao.albumPages(1, 0, "Album 1", sort = AlbumSort.Name).firstPage() }
+        timed("albums search short") { dao.albumPages(1, 0, "al", sort = AlbumSort.Name).firstPage() }
         timed("songs search FTS") { dao.searchSongs(1, "Song", 50).first() }
         timed("home recently played") { dao.recentlyPlayedAlbums(1, 20).first() }
         timed("home most played") { dao.mostPlayedAlbums(1, 20).first() }

@@ -195,7 +195,16 @@ class LibraryRepository(
         userPreferences.sortNameMode().flatMapLatest { mode ->
             pager(40, enablePlaceholders = true) {
                 val dao = db.libraryDao()
-                val query = albumsPageQuery(sourceId, starred.ordinal, search, sort, descending, downloaded, mode)
+                val query =
+                    albumsPageQuery(
+                        sourceId = sourceId,
+                        starredFilter = starred.ordinal,
+                        search = search,
+                        sort = sort,
+                        descending = descending,
+                        downloaded = downloaded,
+                        sortNameMode = mode,
+                    )
                 if (downloaded) dao.downloadedAlbumsPaging(query) else dao.albumsPaging(query)
             }
         }
@@ -211,7 +220,16 @@ class LibraryRepository(
         userPreferences.sortNameMode().flatMapLatest { mode ->
             pager(60) {
                 val dao = db.libraryDao()
-                val query = artistsPageQuery(sourceId, starred.ordinal, search, sort, descending, downloaded, mode)
+                val query =
+                    artistsPageQuery(
+                        sourceId = sourceId,
+                        starredFilter = starred.ordinal,
+                        search = search,
+                        sort = sort,
+                        descending = descending,
+                        downloaded = downloaded,
+                        sortNameMode = mode,
+                    )
                 if (downloaded) dao.downloadedArtistsPaging(query) else dao.artistsPaging(query)
             }
         }
@@ -225,7 +243,14 @@ class LibraryRepository(
     ): Flow<PagingData<Playlist>> =
         pager(40) {
             val dao = db.libraryDao()
-            val query = playlistsPageQuery(sourceId, search, sort, descending, downloaded)
+            val query =
+                playlistsPageQuery(
+                    sourceId = sourceId,
+                    search = search,
+                    sort = sort,
+                    descending = descending,
+                    downloaded = downloaded,
+                )
             if (downloaded) dao.downloadedPlaylistsPaging(query) else dao.playlistsPaging(query)
         }
 

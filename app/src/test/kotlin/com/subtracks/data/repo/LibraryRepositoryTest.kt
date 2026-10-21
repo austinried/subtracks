@@ -209,6 +209,42 @@ class LibraryRepositoryTest {
         }
 
     @Test
+    fun theDownloadedAlbumGridOnlyPresentsDownloadedRows() =
+        runBlocking {
+            val sourceId = sourceRepository.addSource("nav", "http://localhost/", "u", "p", false)
+            db.libraryDao().upsertAlbums(listOf(seedAlbum(sourceId, 1), seedAlbum(sourceId, 2)))
+            db.libraryDao().upsertSongs(
+                listOf(
+                    seedSong(sourceId).copy(id = "s1", albumId = "al-0001"),
+                    seedSong(sourceId).copy(id = "s2", albumId = "al-0002"),
+                ),
+            )
+            db.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+
+            val presenterDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+            val presenter = RecordingPresenter(presenterDispatcher)
+            val job =
+                launch {
+                    repository
+                        .albums(
+                            sourceId = sourceId,
+                            sort = AlbumSort.Name,
+                            descending = false,
+                            starred = StarredFilter.Any,
+                            search = "",
+                            downloaded = true,
+                        ).collect { presenter.collectFrom(it) }
+                }
+            try {
+                awaitRefreshes(presenter, 1)
+                assertEquals(1, presented(presenter, presenterDispatcher))
+            } finally {
+                job.cancelAndJoin()
+                presenterDispatcher.close()
+            }
+        }
+
+    @Test
     fun artistAlbumsSeparatesAlbumCreditsFromTrackAppearances() =
         runBlocking {
             val sourceId = 1L

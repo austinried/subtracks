@@ -19,9 +19,29 @@ internal fun LibraryDao.albumPages(
     sortNameMode: SortNameMode = SortNameMode.SortName,
 ): PagingSource<Int, Album> =
     if (downloaded) {
-        downloadedAlbumsPaging(albumsPageQuery(sourceId, starredFilter, search, sort, descending, true, sortNameMode))
+        downloadedAlbumsPaging(
+            albumsPageQuery(
+                sourceId = sourceId,
+                starredFilter = starredFilter,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = true,
+                sortNameMode = sortNameMode,
+            ),
+        )
     } else {
-        albumsPaging(albumsPageQuery(sourceId, starredFilter, search, sort, descending, false, sortNameMode))
+        albumsPaging(
+            albumsPageQuery(
+                sourceId = sourceId,
+                starredFilter = starredFilter,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = false,
+                sortNameMode = sortNameMode,
+            ),
+        )
     }
 
 internal fun LibraryDao.artistPages(
@@ -34,9 +54,29 @@ internal fun LibraryDao.artistPages(
     sortNameMode: SortNameMode = SortNameMode.SortName,
 ): PagingSource<Int, Artist> =
     if (downloaded) {
-        downloadedArtistsPaging(artistsPageQuery(sourceId, starredFilter, search, sort, descending, true, sortNameMode))
+        downloadedArtistsPaging(
+            artistsPageQuery(
+                sourceId = sourceId,
+                starredFilter = starredFilter,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = true,
+                sortNameMode = sortNameMode,
+            ),
+        )
     } else {
-        artistsPaging(artistsPageQuery(sourceId, starredFilter, search, sort, descending, false, sortNameMode))
+        artistsPaging(
+            artistsPageQuery(
+                sourceId = sourceId,
+                starredFilter = starredFilter,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = false,
+                sortNameMode = sortNameMode,
+            ),
+        )
     }
 
 internal fun LibraryDao.playlistPages(
@@ -47,7 +87,23 @@ internal fun LibraryDao.playlistPages(
     downloaded: Boolean = false,
 ): PagingSource<Int, Playlist> =
     if (downloaded) {
-        downloadedPlaylistsPaging(playlistsPageQuery(sourceId, search, sort, descending, true))
+        downloadedPlaylistsPaging(
+            playlistsPageQuery(
+                sourceId = sourceId,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = true,
+            ),
+        )
     } else {
-        playlistsPaging(playlistsPageQuery(sourceId, search, sort, descending, false))
+        playlistsPaging(
+            playlistsPageQuery(
+                sourceId = sourceId,
+                search = search,
+                sort = sort,
+                descending = descending,
+                downloaded = false,
+            ),
+        )
     }

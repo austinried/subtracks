@@ -186,45 +186,20 @@ internal fun rediscoverAlbumsQuery(
             ),
     )
 
-// RoomRawQuery binds by position, so the named fragments are rewritten once here instead of
-// every caller carrying an index for each repeated :sourceId.
+// RoomRawQuery takes a positional bind function, but SQLite gives a repeated named parameter one
+// index, so the SQL can keep its names and only the first-appearance order needs binding.
 internal fun rawQuery(
     sql: String,
     bindings: Map<String, Any?>,
 ): RoomRawQuery {
-    val names = mutableListOf<String>()
-    val positional =
-        buildString(sql.length) {
-            var index = 0
-            var quote: Char? = null
-            while (index < sql.length) {
-                val char = sql[index]
-                if (quote != null) {
-                    append(char)
-                    if (char == quote) quote = null
-                    index++
-                    continue
-                }
-                if (char == '\'' || char == '"') {
-                    quote = char
-                    append(char)
-                    index++
-                    continue
-                }
-                if (char == ':' && sql.getOrNull(index + 1).let { it != null && (it.isLetter() || it == '_') }) {
-                    var end = index + 1
-                    while (end < sql.length && (sql[end].isLetterOrDigit() || sql[end] == '_')) end++
-                    names += sql.substring(index + 1, end)
-                    append('?')
-                    index = end
-                    continue
-                }
-                append(char)
-                index++
-            }
-        }
-    val values = names.map(bindings::getValue)
-    return RoomRawQuery(positional) { statement ->
+    val values =
+        Regex(":(\\w+)")
+            .findAll(sql)
+            .map { it.groupValues[1] }
+            .distinct()
+            .map(bindings::getValue)
+            .toList()
+    return RoomRawQuery(sql) { statement ->
         values.forEachIndexed { index, value -> statement.bind(index + 1, value) }
     }
 }
