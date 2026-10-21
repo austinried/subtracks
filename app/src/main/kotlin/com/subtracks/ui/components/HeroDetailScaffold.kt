@@ -84,7 +84,6 @@ import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val FADE_DISTANCE_DP = 64
@@ -105,12 +104,13 @@ fun HeroDetailScaffold(
     header: @Composable (controlsModifier: Modifier, topInset: Dp) -> Unit,
     content: LazyListScope.(rowModifier: Modifier) -> Unit,
     modifier: Modifier = Modifier,
+    contentReady: Boolean = true,
 ) {
     val effectiveArtwork = artwork ?: baseArtworkColors()
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                val listState = rememberRestorableLazyListState()
+                val listState = rememberRestorableLazyListState(contentReady)
                 val scope = rememberCoroutineScope()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
@@ -214,16 +214,15 @@ fun HeroDetailScaffold(
 }
 
 @Composable
-private fun rememberRestorableLazyListState(): LazyListState {
+private fun rememberRestorableLazyListState(contentReady: Boolean): LazyListState {
     val state = rememberLazyListState()
     var index by rememberSaveable { mutableIntStateOf(state.firstVisibleItemIndex) }
     var offset by rememberSaveable { mutableIntStateOf(state.firstVisibleItemScrollOffset) }
-    var pending by remember { mutableStateOf(index > 0) }
-    LaunchedEffect(state) {
-        if (pending) {
-            state.requestScrollToItem(index, offset)
-            snapshotFlow { state.layoutInfo.totalItemsCount }.first { it > index }
-            state.scrollToItem(index, offset)
+    var pending by remember { mutableStateOf(index > 0 || offset > 0) }
+    LaunchedEffect(contentReady) {
+        if (contentReady && pending) {
+            val target = index.coerceAtMost((state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+            state.scrollToItem(target, offset)
             pending = false
         }
     }

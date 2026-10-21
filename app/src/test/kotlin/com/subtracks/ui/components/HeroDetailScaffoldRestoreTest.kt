@@ -46,6 +46,7 @@ class HeroDetailScaffoldRestoreTest {
                             onBack = {},
                             header = { _, _ -> Box(Modifier.height(200.dp)) },
                             content = { rowModifier -> rowItems(rows, rowModifier) },
+                            contentReady = rows > 0,
                         )
                     }
                 }

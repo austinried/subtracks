@@ -37,7 +37,10 @@ class PlaylistDetailViewModel(
 ) : ViewModel() {
     private val sourceId = libraryRepository.activeSourceId.filterNotNull()
 
-    val playlist: Flow<Playlist?> = sourceId.flatMapLatest { libraryRepository.playlist(it, playlistId) }
+    val playlist: StateFlow<Playlist?> =
+        sourceId
+            .flatMapLatest { libraryRepository.playlist(it, playlistId) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val songs: Flow<PagingData<PlaylistSongItem>> =
         combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }

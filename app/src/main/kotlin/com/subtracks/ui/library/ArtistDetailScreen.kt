@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -55,10 +56,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -302,7 +306,7 @@ fun ArtistDetailScreen(
     onCollapseBio: () -> Unit = {},
     onShuffle: () -> Unit = {},
 ) {
-    val listState = rememberLazyGridState()
+    val listState = rememberRestorableLazyGridState(albumsLoaded)
     val fill = rememberViewportFill(listState)
     val density = LocalDensity.current
     val lineHeight =
@@ -568,6 +572,31 @@ fun ArtistDetailScreen(
             }
         }
     }
+}
+
+@Composable
+private fun rememberRestorableLazyGridState(contentReady: Boolean): LazyGridState {
+    val state = rememberLazyGridState()
+    var index by rememberSaveable { mutableIntStateOf(state.firstVisibleItemIndex) }
+    var offset by rememberSaveable { mutableIntStateOf(state.firstVisibleItemScrollOffset) }
+    var pending by remember { mutableStateOf(index > 0 || offset > 0) }
+    LaunchedEffect(contentReady) {
+        if (contentReady && pending) {
+            val target = index.coerceAtMost((state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+            state.scrollToItem(target, offset)
+            pending = false
+        }
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.firstVisibleItemIndex to state.firstVisibleItemScrollOffset }
+            .collect { (currentIndex, currentOffset) ->
+                if (!pending) {
+                    index = currentIndex
+                    offset = currentOffset
+                }
+            }
+    }
+    return state
 }
 
 // Only the lines that overlap the action buttons are narrowed; later lines use the full width.

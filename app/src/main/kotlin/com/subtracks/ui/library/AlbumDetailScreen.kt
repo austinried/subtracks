@@ -215,6 +215,7 @@ fun AlbumDetailScreen(
         artwork = artwork,
         title = album?.name.orEmpty(),
         onBack = onBack,
+        contentReady = songs.isNotEmpty(),
         header = { controlsModifier, topInset ->
             val artistName = album?.albumArtist?.takeIf { it.isNotBlank() }
             HeroHeader(

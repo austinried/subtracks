@@ -55,7 +55,7 @@ fun PlaylistDetailRoute(
     viewModel: PlaylistDetailViewModel = koinViewModel(key = playlistId) { parametersOf(playlistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
-    val playlist by viewModel.playlist.collectAsStateWithLifecycle(initialValue = null)
+    val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
@@ -138,6 +138,7 @@ fun PlaylistDetailScreen(
         artwork = artwork,
         title = playlist?.name.orEmpty(),
         onBack = onBack,
+        contentReady = songs.itemCount > 0,
         header = { controlsModifier, topInset ->
             HeroHeader(
                 art = coverArt(playlist?.coverArt, false),
