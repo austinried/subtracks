@@ -74,7 +74,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -618,25 +617,29 @@ fun LibraryScreen(
         }
 
         if (!searchActive) {
+            val fabContainerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh
+            val fabContentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground
             if (offline) {
                 FilledTonalIconButton(
                     onClick = onExitOffline,
                     modifier =
                         Modifier
                             .align(Alignment.BottomStart)
-                            .padding(start = 16.dp, bottom = tabBarHeight + 16.dp),
+                            .padding(start = 16.dp, bottom = tabBarHeight + 16.dp)
+                            .size(48.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.CloudOff,
                         contentDescription = stringResource(R.string.offline_mode_status),
+                        modifier = Modifier.size(24.dp).offset(y = (-0.75).dp),
                     )
                 }
             }
             val searchFab = selectedTab == LibraryTab.Home
             FloatingActionButton(
                 onClick = { if (searchFab) onOpenSearch() else showOptions = true },
-                containerColor = artwork?.scheme?.primary ?: MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.onBackground,
+                containerColor = fabContainerColor,
+                contentColor = fabContentColor,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 12.dp),
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = tabBarHeight + 16.dp),
             ) {
@@ -655,11 +658,18 @@ fun LibraryScreen(
                                 modifier =
                                     Modifier
                                         .align(Alignment.TopEnd)
-                                        .offset(x = 4.dp, y = (-4).dp)
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(artwork?.scheme?.onPrimary ?: MaterialTheme.colorScheme.primary),
-                            )
+                                        .offset(x = 1.dp, y = 3.dp)
+                                        .size(11.dp)
+                                        .background(fabContainerColor, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(7.dp)
+                                            .background(fabContentColor, CircleShape),
+                                )
+                            }
                         }
                     }
                 }
