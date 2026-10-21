@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1025,6 +1026,7 @@ private fun OfflineStrip(
             modifier
                 .fillMaxWidth()
                 .background(lerp(headerColor, MaterialTheme.colorScheme.primary, OFFLINE_STRIP_TINT))
+                .heightIn(min = 48.dp)
                 .clickable(role = Role.Button, onClick = onGoOnline)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
