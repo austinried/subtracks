@@ -145,50 +145,16 @@ class ArtistDetailViewModel(
 
     init {
         viewModelScope.launch {
-            combine(
-                artist,
-                sourceRepository.offline,
-                sourceRepository.activeSource,
-                sourceRepository.activeSource.filterNotNull().flatMapLatest {
-                    libraryRepository.artistCoverArts(it, artistId)
-                },
-            ) { loaded, offline, activeSource, covers -> ArtistArtInput(loaded, offline, activeSource, covers) }
-                .collectLatest { input ->
-                    if (input.sourceId == null) return@collectLatest
-                    val resolved =
-                        if (input.covers.isEmpty()) {
-                            input.artist
-                        } else {
-                            when {
-                                input.artist == null -> {
-                                    Artist(
-                                        sourceId = input.sourceId,
-                                        id = artistId,
-                                        name = "",
-                                        albumCount = 0,
-                                        starred = null,
-                                        coverArts = input.covers,
-                                        downloadedCoverArts = if (input.offline) input.covers else emptyList(),
-                                    )
-                                }
-
-                                input.offline -> {
-                                    if (input.artist.downloadedCoverArts.isNullOrEmpty()) {
-                                        input.artist.copy(downloadedCoverArts = input.covers)
-                                    } else {
-                                        input.artist
-                                    }
-                                }
-
-                                input.artist.coverArts == input.covers -> {
-                                    input.artist
-                                }
-
-                                else -> {
-                                    input.artist.copy(coverArts = input.covers)
-                                }
-                            }
-                        }
+            sourceRepository.activeSource
+                .filterNotNull()
+                .flatMapLatest { sourceId ->
+                    combine(
+                        libraryRepository.artist(sourceId, artistId),
+                        libraryRepository.artistCoverArts(sourceId, artistId),
+                        sourceRepository.offline,
+                    ) { loaded, covers, offline -> ArtistArtInput(loaded, artistId, offline, sourceId, covers) }
+                }.collectLatest { input ->
+                    val resolved = resolveArtistArtInput(input)
                     if (resolved == null) {
                         _art.value = null
                         _artThumbnail.value = null
@@ -216,9 +182,34 @@ class ArtistDetailViewModel(
     }
 }
 
-private data class ArtistArtInput(
+internal data class ArtistArtInput(
     val artist: Artist?,
+    val artistId: String,
     val offline: Boolean,
-    val sourceId: Long?,
+    val sourceId: Long,
     val covers: List<String>,
 )
+
+internal fun resolveArtistArtInput(input: ArtistArtInput): Artist? {
+    val artist = input.artist
+    if (input.covers.isEmpty()) return artist
+    if (artist == null) {
+        return Artist(
+            sourceId = input.sourceId,
+            id = input.artistId,
+            name = "",
+            albumCount = 0,
+            starred = null,
+            coverArts = input.covers,
+            downloadedCoverArts = if (input.offline) input.covers else emptyList(),
+        )
+    }
+    return if (input.offline) {
+        artist.copy(
+            coverArts = input.covers,
+            downloadedCoverArts = artist.downloadedCoverArts.ifEmpty { input.covers },
+        )
+    } else {
+        artist.copy(coverArts = input.covers)
+    }
+}

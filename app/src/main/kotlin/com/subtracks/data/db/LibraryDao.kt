@@ -204,8 +204,8 @@ private const val ARTIST_COVER_CREDITS =
         "JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE song_artists.sourceId = :sourceId AND albums.coverArt IS NOT NULL"
 
-internal const val ARTIST_ART_UPDATE_SQL =
-    "WITH credits AS (SELECT artistId, albumId, " +
+private const val ARTIST_COVER_RANKS =
+    "credits AS (SELECT artistId, albumId, " +
         "MIN(CASE creditType WHEN 'album' THEN 0 ELSE 1 END) AS creditRank " +
         "FROM ($ARTIST_COVER_CREDITS) GROUP BY artistId, albumId), " +
         "ranked AS (SELECT credits.artistId AS artistId, albums.coverArt AS coverArt, " +
@@ -215,7 +215,10 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "WHERE albums.coverArt IS NOT NULL), " +
         "unique_ranked AS (SELECT artistId, coverArt, MIN(coverRank) AS coverRank FROM ranked GROUP BY artistId, coverArt), " +
         "deduped AS (SELECT artistId, coverArt, " +
-        "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_ranked), " +
+        "ROW_NUMBER() OVER (PARTITION BY artistId ORDER BY coverRank) AS coverRank FROM unique_ranked)"
+
+internal const val ARTIST_ART_UPDATE_SQL =
+    "WITH $ARTIST_COVER_RANKS, " +
         "covers AS (SELECT artistId, group_concat(coverArt, char(31)) AS coverArts FROM (" +
         "SELECT artistId, coverArt, coverRank FROM deduped WHERE coverRank <= 4 ORDER BY artistId, coverRank" +
         ") GROUP BY artistId), " +
@@ -241,11 +244,8 @@ internal const val ARTIST_ART_UPDATE_SQL =
         "(artists.coverArts != desired.coverArts OR artists.downloadedCoverArts != desired.downloadedCoverArts)"
 
 internal const val ARTIST_COVER_ARTS_SQL =
-    "SELECT DISTINCT albums.coverArt FROM ($ARTIST_COVER_CREDITS) credits " +
-        "JOIN albums ON albums.sourceId = :sourceId AND albums.id = credits.albumId " +
-        "WHERE credits.artistId = :artistId AND albums.coverArt IS NOT NULL " +
-        "ORDER BY CASE credits.creditType WHEN 'album' THEN 0 ELSE 1 END, albums.year DESC, " +
-        "albums.sortName COLLATE NOCASE, albums.id LIMIT 4"
+    "WITH $ARTIST_COVER_RANKS " +
+        "SELECT coverArt FROM deduped WHERE artistId = :artistId AND coverRank <= 4 ORDER BY coverRank"
 
 internal const val DOWNLOADED_ARTIST_ART_UPDATE_SQL =
     "WITH downloaded_albums AS (SELECT DISTINCT artistId, albumId FROM ($DOWNLOADED_COVER_ALBUM_ROWS) " +
@@ -433,13 +433,7 @@ interface LibraryDao {
     suspend fun recomputeArtistArt(sourceId: Long)
 
     @Query(ARTIST_COVER_ARTS_SQL)
-    suspend fun artistCoverArts(
-        sourceId: Long,
-        artistId: String,
-    ): List<String>
-
-    @Query(ARTIST_COVER_ARTS_SQL)
-    fun artistCoverArtsFlow(
+    fun artistCoverArts(
         sourceId: Long,
         artistId: String,
     ): Flow<List<String>>

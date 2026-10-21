@@ -656,7 +656,7 @@ class LibraryDaoTest {
         }
 
     @Test
-    fun coverArtFallbackFindsTrackCreditsWithoutAnArtistRow() =
+    fun coverArtFallbackFindsEveryCreditPath() =
         runTest {
             val sourceId = source()
             val dao = db.libraryDao()
@@ -696,9 +696,44 @@ class LibraryDaoTest {
             assertNull(dao.artistOnce(sourceId, "ar-missing"))
             assertNull(dao.artistOnce(sourceId, "ar-featured"))
             assertNull(dao.artistOnce(sourceId, "ar-guest"))
-            assertEquals(listOf("track-art"), dao.artistCoverArts(sourceId, "ar-missing"))
-            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-featured"))
-            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-guest"))
+            assertEquals(listOf("track-art"), dao.artistCoverArts(sourceId, "ar-missing").first())
+            assertEquals(listOf("featured-art", "track-art"), dao.artistCoverArts(sourceId, "ar-other").first())
+            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-featured").first())
+            assertEquals(listOf("featured-art"), dao.artistCoverArts(sourceId, "ar-guest").first())
+        }
+
+    @Test
+    fun artistCoverArtsRanksDeduplicatesCapsAndStaysInSource() =
+        runTest {
+            val sourceId = source()
+            val otherSourceId = source()
+            val dao = db.libraryDao()
+            dao.upsertArtists(listOf(artist(sourceId, "ar-rank", "Rank", albumCount = 0)))
+            dao.upsertAlbums(
+                listOf(
+                    album(sourceId, "a-new", "New", year = 2020, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "shared"),
+                    album(sourceId, "a-mid", "Mid", year = 2015, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "other"),
+                    album(sourceId, "a-old", "Old", year = 2010, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "shared"),
+                    album(sourceId, "a-4", "Four", year = 2012, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "c4"),
+                    album(sourceId, "a-5", "Five", year = 2011, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "c5"),
+                    album(sourceId, "a-6", "Six", year = 2009, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "c6"),
+                    album(otherSourceId, "a-leak", "Leak", year = 2025, starred = null)
+                        .copy(artistId = "ar-rank", coverArt = "leak"),
+                ),
+            )
+
+            val expected = listOf("shared", "other", "c4", "c5")
+            assertEquals(expected, dao.artistCoverArts(sourceId, "ar-rank").first())
+
+            dao.recomputeArtistArt(sourceId)
+
+            assertEquals(expected, dao.artistOnce(sourceId, "ar-rank")!!.coverArts)
         }
 
     @Test
