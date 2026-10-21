@@ -25,9 +25,9 @@ AND (:search = ''
 internal const val ALBUMS_FILTER_DOWNLOADED = """
 FROM albums WHERE sourceId = :sourceId
 AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
-AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM songs
+AND EXISTS (SELECT 1 FROM songs
     JOIN song_downloads sd ON sd.sourceId = songs.sourceId AND sd.songId = songs.id
-    WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed'))
+    WHERE songs.sourceId = albums.sourceId AND songs.albumId = albums.id AND sd.status = 'Completed')
 AND (:search = ''
     OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM album_search
         WHERE album_search MATCH '"' || replace(:search, '"', '""') || '"'))
@@ -52,8 +52,8 @@ internal const val ARTISTS_FILTER_DOWNLOADED = """
 FROM artists WHERE sourceId = :sourceId
 AND (:starredFilter = 0 OR (:starredFilter = 1 AND starred IS NOT NULL) OR (:starredFilter = 2 AND starred IS NULL))
 AND $ARTIST_CREDITED
-AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl
-    WHERE dl.id = artists.id AND dl.status = 'Completed'))
+AND EXISTS (SELECT 1 FROM ($ARTIST_DOWNLOAD_ROWS) dl
+    WHERE dl.id = artists.id AND dl.status = 'Completed')
 AND (:search = ''
     OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM artist_search
         WHERE artist_search MATCH '"' || replace(:search, '"', '""') || '"'))
@@ -61,11 +61,11 @@ AND (:search = ''
         OR instr(lower(sortName), lower(:search)) > 0)))
 """
 
-// With the Downloaded filter on, count the albums that actually have a download so the number under
-// an artist matches the albums its detail screen lists.
+// The downloaded list counts the albums that actually have a download so the number under an artist
+// matches the albums its detail screen lists.
 internal const val ARTIST_COLUMNS_DOWNLOADED = """
 artists.sourceId, artists.id, artists.name,
-CASE WHEN :downloadedFilter = 1 THEN (SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)) ELSE artists.albumCount END AS albumCount,
+(SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)) AS albumCount,
 $ARTIST_COLUMNS_TAIL
 """
 
@@ -79,24 +79,24 @@ AND (:search = ''
 
 internal const val PLAYLISTS_FILTER_DOWNLOADED = """
 FROM playlists WHERE sourceId = :sourceId
-AND (:downloadedFilter = 0 OR EXISTS (SELECT 1 FROM playlist_songs ps
+AND EXISTS (SELECT 1 FROM playlist_songs ps
     JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId
-    WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed'))
+    WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id AND sd.status = 'Completed')
 AND (:search = ''
     OR (length(:search) >= $SEARCH_MIN_LENGTH AND rowid IN (SELECT rowid FROM playlist_search
         WHERE playlist_search MATCH '"' || replace(:search, '"', '""') || '"'))
     OR (length(:search) < $SEARCH_MIN_LENGTH AND instr(lower(name), lower(:search)) > 0))
 """
 
-// With the Downloaded filter on, count the songs that actually have a download so the number under
-// a playlist matches the songs its detail screen lists.
+// The downloaded list counts the songs that actually have a download so the number under a
+// playlist matches the songs its detail screen lists.
 internal const val PLAYLISTS_COLUMNS_DOWNLOADED = """
 playlists.sourceId, playlists.id, playlists.name, playlists.comment, playlists.coverArt,
-CASE WHEN :downloadedFilter = 1 THEN (SELECT COUNT(DISTINCT ps.songId)
+(SELECT COUNT(DISTINCT ps.songId)
     FROM playlist_songs ps
     JOIN song_downloads sd ON sd.sourceId = ps.sourceId AND sd.songId = ps.songId AND sd.status = 'Completed'
     WHERE ps.sourceId = playlists.sourceId AND ps.playlistId = playlists.id
-) ELSE playlists.songCount END AS songCount,
+) AS songCount,
 playlists.created, playlists.changed, playlists.duration, playlists.owner, playlists.shared
 """
 
@@ -119,7 +119,6 @@ internal fun albumsPageQuery(
             mapOf(
                 "sourceId" to sourceId,
                 "starredFilter" to starredFilter,
-                "downloadedFilter" to if (downloaded) 1 else 0,
                 "search" to search,
             ),
     )
@@ -142,7 +141,6 @@ internal fun artistsPageQuery(
             mapOf(
                 "sourceId" to sourceId,
                 "starredFilter" to starredFilter,
-                "downloadedFilter" to if (downloaded) 1 else 0,
                 "search" to search,
             ),
     )
@@ -162,7 +160,6 @@ internal fun playlistsPageQuery(
         bindings =
             mapOf(
                 "sourceId" to sourceId,
-                "downloadedFilter" to if (downloaded) 1 else 0,
                 "search" to search,
             ),
     )
