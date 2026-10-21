@@ -49,7 +49,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -90,6 +89,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
@@ -592,7 +592,7 @@ fun LibraryScreen(
                         .padding(bottom = bottomInset),
             ) {
                 if (offline) {
-                    OfflineStrip(onGoOnline = onExitOffline)
+                    OfflineStrip(onGoOnline = onExitOffline, headerColor = headerColor)
                 }
                 LibraryTabs(
                     pagerState = pagerState,
@@ -835,6 +835,7 @@ private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 private val TOUCH_TARGET = 48.dp
 private const val LIST_OPTIONS_WEIGHT = 0.11f
+private const val OFFLINE_STRIP_TINT = 0.10f
 private val LIST_OPTIONS_BAR_WIDTHS = listOf(1f, 0.62f, 0.34f)
 
 @Composable
@@ -1015,43 +1016,41 @@ internal fun LibraryTabs(
 @Composable
 private fun OfflineStrip(
     onGoOnline: () -> Unit,
+    headerColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth()) {
-        Surface(
-            onClick = onGoOnline,
-            color = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.fillMaxWidth(),
+    Surface(
+        onClick = onGoOnline,
+        color = lerp(headerColor, MaterialTheme.colorScheme.primary, OFFLINE_STRIP_TINT),
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.CloudOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(
-                    text = stringResource(R.string.offline_mode_banner),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(R.string.offline_go_online),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            Icon(
+                imageVector = Icons.Rounded.CloudOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = stringResource(R.string.offline_mode_banner),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.offline_go_online),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
