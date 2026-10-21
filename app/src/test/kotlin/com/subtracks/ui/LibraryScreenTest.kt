@@ -464,6 +464,41 @@ class LibraryScreenTest {
         assertTabFullyVisible(LibraryTab.Playlists, labelWidth)
     }
 
+    @Test
+    @Config(qualifiers = "de-rDE-w320dp-h640dp-xhdpi")
+    fun returningToTheFirstTabLeavesAGapAtTheEdge() {
+        val selectedTab = mutableStateOf(LibraryTab.Playlists)
+        composeRule.setContent {
+            SubtracksTheme {
+                LibraryScreen(
+                    selectedTab = selectedTab.value,
+                    onTabSelected = { selectedTab.value = it },
+                    albums = remember { flowOf(PagingData.empty<Album>()) },
+                    artists = remember { flowOf(PagingData.empty<Artist>()) },
+                    playlists = remember { flowOf(PagingData.empty<Playlist>()) },
+                    coverArt = { _, _ -> null },
+                    onAlbumClick = {},
+                    onArtistClick = {},
+                    onPlaylistClick = {},
+                    onSync = {},
+                    onOpenSettings = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle { selectedTab.value = LibraryTab.Home }
+        val expectedGap = with(composeRule.density) { TAB_EDGE_GAP.toPx() }
+        composeRule.waitUntil(5_000) { tabBounds(LibraryTab.Home).left <= expectedGap + 1f }
+
+        assertEquals(
+            "the first tab should keep a gap from the screen edge",
+            expectedGap,
+            tabBounds(LibraryTab.Home).left,
+            1f,
+        )
+    }
+
     private fun assertTabFullyVisible(
         tab: LibraryTab,
         labelWidth: Float,
@@ -549,3 +584,4 @@ class LibraryScreenTest {
 }
 
 private val TAB_LABEL_CHROME = 56.dp
+private val TAB_EDGE_GAP = 8.dp

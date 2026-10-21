@@ -830,6 +830,7 @@ private fun ListOptionsSheet(
 
 private val BOTTOM_CLEARANCE = 80.dp
 private val TAB_BAR_CONTENT_HEIGHT = 52.dp
+private val TAB_STRIP_LEADING_GAP = 8.dp
 private val TAB_ICON_SIZE = 24.dp
 private val TAB_VERTICAL_PADDING = 6.dp
 private val TOUCH_TARGET = 48.dp
@@ -903,14 +904,15 @@ internal fun LibraryTabs(
     var viewportWidth by remember { mutableIntStateOf(0) }
     var contentWidth by remember { mutableIntStateOf(0) }
     var revealed by remember { mutableStateOf(false) }
+    val leadingGap = with(density) { TAB_STRIP_LEADING_GAP.toPx() }
     LaunchedEffect(pagerState.settledPage, viewportWidth, contentWidth, layoutDirection, bounds[pagerState.settledPage]) {
         if (viewportWidth == 0) return@LaunchedEffect
         val settled = bounds[pagerState.settledPage] ?: return@LaunchedEffect
-        val start = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.right else settled.left
-        val end = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.left else settled.right
+        val start = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.right else leadingGap + settled.left
+        val end = if (layoutDirection == LayoutDirection.Rtl) contentWidth - settled.left else leadingGap + settled.right
         val target =
             when {
-                start < scrollState.value -> start
+                start - leadingGap < scrollState.value -> start - leadingGap
                 end > scrollState.value + viewportWidth -> end - viewportWidth
                 else -> null
             }
@@ -939,13 +941,14 @@ internal fun LibraryTabs(
                         Modifier
                             .weight(1f)
                             .onSizeChanged { viewportWidth = it.width }
-                            .horizontalScroll(scrollState),
+                            .horizontalScroll(scrollState)
+                            .onSizeChanged { contentWidth = it.width },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Spacer(Modifier.width(TAB_STRIP_LEADING_GAP))
                     Box(
                         modifier =
                             Modifier
-                                .onSizeChanged { contentWidth = it.width }
                                 .drawBehind {
                                     if (current != null &&
                                         indicatorLeft != null &&
