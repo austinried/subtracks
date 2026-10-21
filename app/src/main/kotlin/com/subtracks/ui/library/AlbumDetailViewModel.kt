@@ -15,7 +15,6 @@ import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -35,13 +34,20 @@ class AlbumDetailViewModel(
 ) : ViewModel() {
     private val sourceId = libraryRepository.activeSourceId.filterNotNull()
 
-    val album: Flow<Album?> = sourceId.flatMapLatest { libraryRepository.album(it, albumId) }
+    val album: StateFlow<Album?> =
+        sourceId
+            .flatMapLatest { libraryRepository.album(it, albumId) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val songs: Flow<List<Song>> =
+    val songs: StateFlow<List<Song>> =
         combine(sourceId, sourceRepository.offline) { id, offline -> id to offline }
             .flatMapLatest { (id, offline) -> libraryRepository.albumSongs(id, albumId, offline) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val discs: Flow<List<Disc>> = sourceId.flatMapLatest { libraryRepository.albumDiscs(it, albumId) }
+    val discs: StateFlow<List<Disc>> =
+        sourceId
+            .flatMapLatest { libraryRepository.albumDiscs(it, albumId) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val downloads: StateFlow<Map<String, SongDownload>> = downloadRepository.states()
 

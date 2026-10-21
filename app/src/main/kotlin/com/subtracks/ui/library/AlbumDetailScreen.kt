@@ -67,9 +67,9 @@ fun AlbumDetailRoute(
     viewModel: AlbumDetailViewModel = koinViewModel(key = albumId) { parametersOf(albumId) },
     playbackController: PlaybackController = koinInject(),
 ) {
-    val album by viewModel.album.collectAsStateWithLifecycle(initialValue = null)
-    val songs by viewModel.songs.collectAsStateWithLifecycle(initialValue = emptyList())
-    val discs by viewModel.discs.collectAsStateWithLifecycle(initialValue = emptyList())
+    val album by viewModel.album.collectAsStateWithLifecycle()
+    val songs by viewModel.songs.collectAsStateWithLifecycle()
+    val discs by viewModel.discs.collectAsStateWithLifecycle()
     val downloads by viewModel.downloads.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()

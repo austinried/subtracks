@@ -191,9 +191,9 @@ fun ArtistDetailRoute(
     viewModel: ArtistDetailViewModel = koinViewModel(key = artistId) { parametersOf(artistId) },
     playbackController: PlaybackController = koinInject(),
 ) {
-    val artist by viewModel.artist.collectAsStateWithLifecycle(initialValue = null)
-    val artistName by viewModel.artistName.collectAsStateWithLifecycle(initialValue = null)
-    val albums by viewModel.albums.collectAsStateWithLifecycle(initialValue = null)
+    val artist by viewModel.artist.collectAsStateWithLifecycle()
+    val artistName by viewModel.artistName.collectAsStateWithLifecycle()
+    val albums by viewModel.albums.collectAsStateWithLifecycle()
     val bioSnapshots =
         remember(viewModel) {
             viewModel.artistBio.map { BioSnapshot(known = true, present = it != null, biography = it?.biography) }
