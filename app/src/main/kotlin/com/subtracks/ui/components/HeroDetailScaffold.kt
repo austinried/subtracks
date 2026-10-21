@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,12 +48,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +84,7 @@ import com.subtracks.ui.theme.ArtworkTheme
 import com.subtracks.ui.theme.HeroGradient
 import com.subtracks.ui.theme.baseArtworkColors
 import com.subtracks.ui.theme.heroBarColor
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val FADE_DISTANCE_DP = 64
@@ -103,7 +110,7 @@ fun HeroDetailScaffold(
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         ArtworkTheme(effectiveArtwork) {
             BoxWithConstraints(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                val listState = rememberLazyListState()
+                val listState = rememberRestorableLazyListState()
                 val scope = rememberCoroutineScope()
                 val fill = rememberViewportFill(listState)
                 val density = LocalDensity.current
@@ -204,6 +211,32 @@ fun HeroDetailScaffold(
             }
         }
     }
+}
+
+@Composable
+private fun rememberRestorableLazyListState(): LazyListState {
+    val state = rememberLazyListState()
+    var index by rememberSaveable { mutableIntStateOf(state.firstVisibleItemIndex) }
+    var offset by rememberSaveable { mutableIntStateOf(state.firstVisibleItemScrollOffset) }
+    var pending by remember { mutableStateOf(index > 0) }
+    LaunchedEffect(state) {
+        if (pending) {
+            state.requestScrollToItem(index, offset)
+            snapshotFlow { state.layoutInfo.totalItemsCount }.first { it > index }
+            state.scrollToItem(index, offset)
+            pending = false
+        }
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.firstVisibleItemIndex to state.firstVisibleItemScrollOffset }
+            .collect { (currentIndex, currentOffset) ->
+                if (!pending) {
+                    index = currentIndex
+                    offset = currentOffset
+                }
+            }
+    }
+    return state
 }
 
 @Composable
