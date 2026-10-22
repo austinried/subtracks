@@ -40,12 +40,14 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.ListQuery
 import com.subtracks.data.repo.SEARCH_RESULT_LIMIT
+import com.subtracks.data.repo.normalizeBiography
 import com.subtracks.data.source.subsonic.SubsonicSource
 import com.subtracks.data.source.subsonic.TestServer
 import com.subtracks.data.source.subsonic.TestServers
 import com.subtracks.data.sync.SyncService
 import com.subtracks.playback.PlaybackState
 import com.subtracks.playback.QueueItem
+import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.home.HomeFeed
 import com.subtracks.ui.home.HomeScreen
 import com.subtracks.ui.library.AlbumDetailScreen
@@ -82,11 +84,15 @@ import javax.imageio.ImageIO
  * by `:*UnitTest` or the integration suite; run it explicitly with `gradle :app:demoScreenshots`.
  * The synced database is rebuilt each run; downloaded cover art is cached under the system temp dir
  * so reruns do not re-fetch it.
+ *
+ * The device is a 393x786 dp phone at 440 dpi, which renders 1080x2161. A capture one pixel over
+ * 1080x2160 breaks the stores' 2:1 limit, so the captures are cropped to 1080x2160 afterwards, with
+ * the last row taken from the row above it.
  */
 @OptIn(DelicateCoilApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.PixelXL)
+@Config(qualifiers = "w393dp-h786dp-normal-long-notround-any-440dpi-keyshidden-nonav")
 class DemoScreenshotTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
@@ -123,6 +129,7 @@ class DemoScreenshotTest {
                                 HomeScreen(
                                     feed = demo.feed,
                                     coverArt = demo.coverArt,
+                                    artistArt = demo::artistArt,
                                     playingSongId = demo.homePlayingSong.id,
                                     modifier = Modifier.fillMaxSize(),
                                 )
@@ -178,6 +185,7 @@ class DemoScreenshotTest {
                             ArtistDetailScreen(
                                 artist = demo.artist,
                                 artistName = demo.artist.name,
+                                bio = demo.artistBio,
                                 albums =
                                     ArtistAlbums(
                                         albumCredits =
@@ -216,6 +224,7 @@ class DemoScreenshotTest {
                                     onSync = {},
                                     onOpenSettings = {},
                                     artwork = demo.artwork(demo.nowPlayingAlbum.coverArt),
+                                    artistArt = demo::artistArt,
                                     modifier = Modifier.weight(1f),
                                 )
                                 demo.MiniPlayerOverlay(demo.nowPlayingSong, demo.nowPlayingAlbum, progressInset = true)
@@ -228,6 +237,7 @@ class DemoScreenshotTest {
                                 onQueryChange = {},
                                 results = demo.search,
                                 coverArt = demo.coverArt,
+                                artistArt = demo::artistArt,
                                 playingSongId = demo.nowPlayingSong.id,
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -288,7 +298,7 @@ class DemoScreenshotTest {
 
     private fun reencodeOpaqueRgb(file: File) {
         val decoded = ImageIO.read(file)
-        val rgb = BufferedImage(decoded.width, decoded.height, BufferedImage.TYPE_INT_RGB)
+        val rgb = BufferedImage(decoded.width, decoded.width * 2, BufferedImage.TYPE_INT_RGB)
         rgb.createGraphics().run {
             drawImage(decoded, 0, 0, null)
             dispose()
@@ -329,6 +339,7 @@ class DemoScreenshotTest {
         val homePlayingAlbum: Album,
         val homePlayingSong: Song,
         val artist: Artist,
+        val artistBio: String?,
         val artistAlbums: List<Album>,
         val search: SearchResults,
         val coverArt: (String?, Boolean) -> CoverArtRef?,
@@ -369,6 +380,15 @@ class DemoScreenshotTest {
                     ?: palette.mutedSwatch
                     ?: palette.dominantSwatch
             return artworkColorsFromSeeds(primary?.rgb ?: FALLBACK_SEED, null)
+        }
+
+        fun artistArt(artist: Artist): ArtistArt {
+            val thumbnail = artist.coverArt?.let { coverArt(it, true) }
+            return ArtistArt(
+                image = thumbnail,
+                thumbnail = thumbnail,
+                covers = artist.coverArts.take(4).mapNotNull { coverArt(it, true) },
+            )
         }
 
         companion object {
@@ -417,9 +437,11 @@ class DemoScreenshotTest {
                     val homePlayingAlbum = allAlbums.firstOrNull { it.name == "Shaking The Habitual" } ?: allAlbums.last()
                     val homePlayingSong = songsOf(homePlayingAlbum).first()
                     val artist =
-                        allArtists.firstOrNull { it.name == "Ugress" }
+                        allArtists.firstOrNull { it.name == "Nine Inch Nails" }
+                            ?: allArtists.firstOrNull { it.name == "pornophonique" }
                             ?: allArtists.maxByOrNull { it.albumCount }
                             ?: error("demo library has no artists")
+                    val artistBio = normalizeBiography(source.artistBiography(artist.id))
                     val artistAlbums = dao.albumsForArtist(1, artist.id).first()
 
                     val coverArtIds =
@@ -509,6 +531,7 @@ class DemoScreenshotTest {
                         homePlayingAlbum = homePlayingAlbum,
                         homePlayingSong = homePlayingSong,
                         artist = artist,
+                        artistBio = artistBio,
                         artistAlbums = artistAlbums.filter { it.coverArt != null },
                         search = search,
                         coverArt = coverArt,
