@@ -119,7 +119,7 @@ android {
     }
 
     sourceSets {
-        getByName("debug").res.srcDir("src/nightly/res")
+        getByName("debug").res.directories.add("src/nightly/res")
     }
 
     buildTypes {
