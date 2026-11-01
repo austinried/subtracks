@@ -93,7 +93,7 @@ class PruneSyncIntegrationTest {
             ?: error("$name is not set; run the integration harness (tools/integration-test.nu)")
 
     private companion object {
-        const val REMOVED_ALBUM_DIR = "197"
+        const val REMOVED_ALBUM_DIR = "7GZYpfn8wypaTR00LWeNI4"
         const val REMOVED_ALBUM_NAME = "Retroconnaissance"
     }
 }

@@ -12,9 +12,9 @@ export const LIB = ".integration/music"
 export const ports = [$NAV_PORT $GONIC_PORT $LMS_PORT $NC_PORT $PRUNE_PORT]
 
 const MUSIC = [
-    { id: 197, remoteId: "7GZYpfn8wypaTR00LWeNI4", name: "Ugress - Retroconnaissance", songs: 4 }
-    { id: 199, remoteId: "5gMe1SlZZzuOMkRVWJaodV", name: "Ugress - Kosmonaut", songs: 4 }
-    { id: 321, remoteId: "0JnRLI5lo4eNU1pOePqfcG", name: "Brad Sucks - I Don't Know What I'm Doing", songs: 12 }
+    { id: "7GZYpfn8wypaTR00LWeNI4", name: "Ugress - Retroconnaissance", songs: 4 }
+    { id: "5gMe1SlZZzuOMkRVWJaodV", name: "Ugress - Kosmonaut", songs: 4 }
+    { id: "0JnRLI5lo4eNU1pOePqfcG", name: "Brad Sucks - I Don't Know What I'm Doing", songs: 12 }
 ]
 
 const MUSIC_DOWNLOAD = "https://demo.navidrome.org/rest/download.view?u=demo&p=demo&v=1.16.1&c=subtracks-test&id="
@@ -46,9 +46,9 @@ export def ensure-music [] {
     let tmp = (^mktemp -d | str trim)
     for m in $MUSIC {
         print $"($m.name)..."
-        ^curl -fsS -o $"($tmp)/($m.id).zip" $"($MUSIC_DOWNLOAD)($m.remoteId)"
+        ^curl -fsS -o $"($tmp)/($m.id).zip" $"($MUSIC_DOWNLOAD)($m.id)"
         ^unzip -j -q -o $"($tmp)/($m.id).zip" -d $"($LIB)/($m.id)"
-        ^curl -fsS -o $"($LIB)/($m.id)/folder.jpg" $"($MUSIC_ART)($m.remoteId)"
+        ^curl -fsS -o $"($LIB)/($m.id)/folder.jpg" $"($MUSIC_ART)($m.id)"
     }
     rm -rf $tmp
 }
@@ -168,8 +168,9 @@ export def start-prune [work: string] {
     let music = ($dir | path join "music")
     mkdir ($dir | path join "data")
     mkdir $music
-    ^cp -r $"((pwd) | path join $LIB)/197" $music
-    ^cp -r $"((pwd) | path join $LIB)/199" $music
+    for m in ($MUSIC | first 2) {
+        ^cp -r $"((pwd) | path join $LIB)/($m.id)" $music
+    }
 
     let daemon = (job spawn { ^navidrome --address 127.0.0.1 --port $PRUNE_PORT --musicfolder $music --datafolder ($dir | path join "data") --loglevel warn out+err> ($dir | path join "navidrome.log") })
     let ready = (try {
