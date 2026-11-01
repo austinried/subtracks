@@ -12,10 +12,14 @@ export const LIB = ".integration/music"
 export const ports = [$NAV_PORT $GONIC_PORT $LMS_PORT $NC_PORT $PRUNE_PORT]
 
 const MUSIC = [
-    { id: 197, name: "Ugress - Retroconnaissance EP", songs: 4 }
-    { id: 199, name: "Ugress - Kosmonaut", songs: 4 }
-    { id: 321, name: "Brad Sucks - I Don't Know What I'm Doing", songs: 12 }
+    { id: 197, remoteId: "7GZYpfn8wypaTR00LWeNI4", name: "Ugress - Retroconnaissance", songs: 4 }
+    { id: 199, remoteId: "5gMe1SlZZzuOMkRVWJaodV", name: "Ugress - Kosmonaut", songs: 4 }
+    { id: 321, remoteId: "0JnRLI5lo4eNU1pOePqfcG", name: "Brad Sucks - I Don't Know What I'm Doing", songs: 12 }
 ]
+
+const MUSIC_DOWNLOAD = "https://demo.navidrome.org/rest/download.view?u=demo&p=demo&v=1.16.1&c=subtracks-test&id="
+
+const MUSIC_ART = "https://demo.navidrome.org/rest/getCoverArt.view?u=demo&p=demo&v=1.16.1&c=subtracks-test&id="
 
 # Keep in step with TestServers.kt.
 export def test-servers [] {
@@ -33,17 +37,18 @@ def song-count [dir: string] {
 }
 
 export def ensure-music [] {
-    if ($MUSIC | all {|m| (song-count $"($LIB)/($m.id)") == $m.songs }) {
+    if ($MUSIC | all {|m| (song-count $"($LIB)/($m.id)") == $m.songs and ($"($LIB)/($m.id)/folder.jpg" | path exists) }) {
         print $"using test music in ($LIB)"
         return
     }
-    print "downloading test music from demo.subsonic.org (one-time)"
+    print "downloading test music from demo.navidrome.org (one-time)"
     mkdir $LIB
     let tmp = (^mktemp -d | str trim)
     for m in $MUSIC {
         print $"($m.name)..."
-        ^curl -fsS -o $"($tmp)/($m.id).zip" $"http://demo.subsonic.org/rest/download.view?u=guest1&p=guest&v=1.13.0&c=subtracks-test&id=($m.id)"
-        ^unzip -q -o $"($tmp)/($m.id).zip" -d $"($LIB)/($m.id)"
+        ^curl -fsS -o $"($tmp)/($m.id).zip" $"($MUSIC_DOWNLOAD)($m.remoteId)"
+        ^unzip -j -q -o $"($tmp)/($m.id).zip" -d $"($LIB)/($m.id)"
+        ^curl -fsS -o $"($LIB)/($m.id)/folder.jpg" $"($MUSIC_ART)($m.remoteId)"
     }
     rm -rf $tmp
 }
@@ -198,12 +203,12 @@ export def prepare-fixtures [server: record] {
 
     let albums = (poll "albums" {||
         let items = (sub-get $base $user $pass "getAlbumList2" [["type" "newest"]] | get albumList2.album)
-        if (["Kosmonaut" "Retroconnaissance EP" "I Don't Know What I'm Doing"] | all {|name| $items | any {|i| $i.name == $name } }) { $items } else { null }
+        if (["Kosmonaut" "Retroconnaissance" "I Don't Know What I'm Doing"] | all {|name| $items | any {|i| $i.name == $name } }) { $items } else { null }
     })
 
     let ugress = (named-id $artists "Ugress")
     let kosmo = (named-id $albums "Kosmonaut")
-    let retro = (named-id $albums "Retroconnaissance EP")
+    let retro = (named-id $albums "Retroconnaissance")
     let dunno = (named-id $albums "I Don't Know What I'm Doing")
 
     poll "album songs" {||

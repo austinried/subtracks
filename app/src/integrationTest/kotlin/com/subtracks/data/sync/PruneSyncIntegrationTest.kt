@@ -94,6 +94,6 @@ class PruneSyncIntegrationTest {
 
     private companion object {
         const val REMOVED_ALBUM_DIR = "197"
-        const val REMOVED_ALBUM_NAME = "Retroconnaissance EP"
+        const val REMOVED_ALBUM_NAME = "Retroconnaissance"
     }
 }

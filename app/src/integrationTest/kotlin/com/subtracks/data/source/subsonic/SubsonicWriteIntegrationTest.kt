@@ -22,7 +22,7 @@ class SubsonicWriteIntegrationTest(
                     .albums()
                     .toList()
                     .flatten()
-                    .first { it.name == "Retroconnaissance EP" }
+                    .first { it.name == "Retroconnaissance" }
 
             source.setStar(StarType.Album, album.id, true)
             try {
@@ -94,7 +94,7 @@ class SubsonicWriteIntegrationTest(
                     .songs()
                     .toList()
                     .flatten()
-                    .first { it.album == "Retroconnaissance EP" }
+                    .first { it.album == "Retroconnaissance" }
 
             source.setStar(StarType.Song, song.id, true)
             try {

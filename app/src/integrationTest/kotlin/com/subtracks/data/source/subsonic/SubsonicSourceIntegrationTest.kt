@@ -56,7 +56,7 @@ class SubsonicSourceIntegrationTest(
             assertNotNull(kosmo.starred)
             assertTrue(kosmo.created <= System.currentTimeMillis() / 1000)
 
-            assertNull(albums.first { it.name == "Retroconnaissance EP" }.starred)
+            assertNull(albums.first { it.name == "Retroconnaissance" }.starred)
             assertNull(albums.first { it.name == "I Don't Know What I'm Doing" }.starred)
         }
 
@@ -92,7 +92,7 @@ class SubsonicSourceIntegrationTest(
                     .filter { it.artistId == artists.first { a -> a.name == "Ugress" }.id }
                     .map { it.name }
                     .sorted()
-            assertEquals(listOf("Kosmonaut", "Retroconnaissance EP"), ugressAlbums)
+            assertEquals(listOf("Kosmonaut", "Retroconnaissance"), ugressAlbums)
 
             val bradAlbums =
                 albums

@@ -50,5 +50,5 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: .integration/music
-          key: integration-music-v1
+          key: integration-music-v2
       - run: nix develop .#integration --command nu tools/integration-test.nu
