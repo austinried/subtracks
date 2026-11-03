@@ -61,7 +61,7 @@ class SyncService(
         source.artists().collect { batch ->
             if (batch.isEmpty()) return@collect
             changed =
-                write("artists", artistColumns, primaryKey, batch, preserved = setOf("albumCount"), markStale = true) { it.values() } ||
+                write("artists", primaryKey, batch, preserved = setOf("albumCount"), markStale = true) { it.columns() } ||
                 changed
             batch.forEach { seen.add(idHash(it.id)) }
             artistsSynced += batch.size
@@ -137,7 +137,7 @@ class SyncService(
             connection.immediateTransaction {
                 val before = connection.totalChanges()
                 val resolved = connection.resolveSongSortNames(batch)
-                connection.upsertChanged("songs", songColumns, primaryKey, resolved) { it.values() }
+                connection.upsertChanged("songs", primaryKey, resolved) { it.columns() }
                 connection.usePrepared("DELETE FROM song_genres WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
@@ -148,7 +148,7 @@ class SyncService(
                         statement.clearBindings()
                     }
                 }
-                connection.upsertChanged("song_genres", songGenreColumns, songGenreKey, genres) { it.values() }
+                connection.upsertChanged("song_genres", songGenreKey, genres) { it.columns() }
                 connection.usePrepared("DELETE FROM song_artists WHERE sourceId = ? AND songId = ? AND position >= ?") { statement ->
                     batch.forEach { song ->
                         statement.bind(1, song.sourceId)
@@ -159,7 +159,7 @@ class SyncService(
                         statement.clearBindings()
                     }
                 }
-                connection.upsertChanged("song_artists", songArtistColumns, songArtistKey, artists) { it.values() }
+                connection.upsertChanged("song_artists", songArtistKey, artists) { it.columns() }
                 (connection.totalChanges() != before).also { changed ->
                     if (changed) connection.markCreditsStale(batch.first().sourceId)
                 }
@@ -256,7 +256,7 @@ class SyncService(
         val seen = HashedIds()
         source.playlists().collect { batch ->
             if (batch.isEmpty()) return@collect
-            write("playlists", playlistColumns, primaryKey, batch) { it.values() }
+            write("playlists", primaryKey, batch) { it.columns() }
             batch.forEach { seen.add(idHash(it.id)) }
             playlistsSynced += batch.size
         }
@@ -269,7 +269,7 @@ class SyncService(
         val counts = HashMap<String, Long>()
         source.playlistSongs(playlistIds).collect { batch ->
             if (batch.isEmpty()) return@collect
-            write("playlist_songs", playlistSongColumns, playlistSongKey, batch) { it.values() }
+            write("playlist_songs", playlistSongKey, batch) { it.columns() }
             batch.forEach { counts[it.playlistId] = (counts[it.playlistId] ?: 0L) + 1L }
             playlistSongsSynced += batch.size
         }
@@ -280,17 +280,16 @@ class SyncService(
     // One commit per batch, so Room notifies paged observers once per batch rather than per row.
     private suspend fun <T> write(
         table: String,
-        columns: List<String>,
         key: List<String>,
         rows: List<T>,
         preserved: Set<String> = emptySet(),
         markStale: Boolean = false,
-        values: (T) -> List<Any?>,
+        columns: (T) -> List<Pair<String, Any?>>,
     ): Boolean =
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val before = connection.totalChanges()
-                connection.upsertChanged(table, columns, key, rows, preserved, values)
+                connection.upsertChanged(table, key, rows, preserved, columns)
                 (connection.totalChanges() != before).also { changed ->
                     if (changed && markStale) connection.markCreditsStale(source.id)
                 }
@@ -309,8 +308,8 @@ class SyncService(
             connection.immediateTransaction {
                 val before = connection.totalChanges()
                 val resolved = connection.resolveAlbumSortNames(albums)
-                connection.upsertChanged("albums", albumColumns, primaryKey, resolved) { it.values() }
-                connection.upsertChanged("discs", discColumns, discKey, discs) { it.values() }
+                connection.upsertChanged("albums", primaryKey, resolved) { it.columns() }
+                connection.upsertChanged("discs", discKey, discs) { it.columns() }
                 connection.usePrepared("DELETE FROM album_artists WHERE sourceId = ? AND albumId = ? AND position >= ?") { statement ->
                     albums.forEach { album ->
                         statement.bind(1, album.sourceId)
@@ -321,7 +320,7 @@ class SyncService(
                         statement.clearBindings()
                     }
                 }
-                connection.upsertChanged("album_artists", albumArtistColumns, albumArtistKey, artists) { it.values() }
+                connection.upsertChanged("album_artists", albumArtistKey, artists) { it.columns() }
                 (connection.totalChanges() != before).also { changed ->
                     if (changed) connection.markCreditsStale(albums.first().sourceId)
                 }
@@ -438,57 +437,7 @@ private fun discHash(
 
 private val primaryKey = listOf("sourceId", "id")
 
-private val artistColumns = listOf("sourceId", "id", "name", "albumCount", "starred", "coverArt", "artistImageUrl", "sortName")
-
-private val albumColumns =
-    listOf(
-        "sourceId",
-        "id",
-        "artistId",
-        "name",
-        "albumArtist",
-        "created",
-        "coverArt",
-        "genre",
-        "year",
-        "starred",
-        "songCount",
-        "artists",
-        "sortName",
-        "albumArtistSort",
-    )
-
 private val discKey = listOf("sourceId", "albumId", "disc")
-
-private val discColumns = listOf("sourceId", "albumId", "disc", "title")
-
-private val songColumns =
-    listOf(
-        "sourceId",
-        "id",
-        "albumId",
-        "artistId",
-        "title",
-        "album",
-        "artist",
-        "duration",
-        "track",
-        "disc",
-        "starred",
-        "created",
-        "playCount",
-        "played",
-        "trackGain",
-        "albumGain",
-        "trackPeak",
-        "albumPeak",
-        "artists",
-        "sortName",
-        "artistSort",
-    )
-
-private val playlistColumns =
-    listOf("sourceId", "id", "name", "comment", "coverArt", "songCount", "created", "changed", "duration", "owner", "shared")
 
 private fun Song.genreNames(): List<String> =
     genres
@@ -500,71 +449,93 @@ private fun Song.genreNames(): List<String> =
 // Navidrome's default genre tag split (resources/mappings.yaml): semicolon, slash, comma.
 private fun String.genreParts(): List<String> = split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }
 
-private val songGenreColumns = listOf("sourceId", "songId", "position", "genre")
-
 private val songGenreKey = listOf("sourceId", "songId", "position")
-
-private val albumArtistColumns = listOf("sourceId", "albumId", "position", "artistId", "name")
 
 private val albumArtistKey = listOf("sourceId", "albumId", "position")
 
-private val songArtistColumns = listOf("sourceId", "songId", "position", "artistId", "name")
-
 private val songArtistKey = listOf("sourceId", "songId", "position")
-
-private val playlistSongColumns = listOf("sourceId", "playlistId", "songId", "position")
 
 private val playlistSongKey = listOf("sourceId", "playlistId", "position")
 
-private fun Artist.values() = listOf<Any?>(sourceId, id, name, albumCount, starred, coverArt, artistImageUrl, sortName)
-
-private fun Album.values() =
-    listOf<Any?>(
-        sourceId,
-        id,
-        artistId,
-        name,
-        albumArtist,
-        created,
-        coverArt,
-        genre,
-        year,
-        starred,
-        songCount,
-        ArtistRefsCodec.encode(artistRefs),
-        sortName,
-        albumArtistSort,
+private fun Artist.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "id" to id,
+        "name" to name,
+        "albumCount" to albumCount,
+        "starred" to starred,
+        "coverArt" to coverArt,
+        "artistImageUrl" to artistImageUrl,
+        "sortName" to sortName,
     )
 
-private fun AlbumArtistRef.values() = listOf<Any?>(sourceId, albumId, position, artistId, name)
+private fun Album.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "id" to id,
+        "artistId" to artistId,
+        "name" to name,
+        "albumArtist" to albumArtist,
+        "created" to created,
+        "coverArt" to coverArt,
+        "genre" to genre,
+        "year" to year,
+        "starred" to starred,
+        "songCount" to songCount,
+        "artists" to ArtistRefsCodec.encode(artistRefs),
+        "sortName" to sortName,
+        "albumArtistSort" to albumArtistSort,
+    )
 
-private fun SongArtistRef.values() = listOf<Any?>(sourceId, songId, position, artistId, name)
+private fun AlbumArtistRef.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "albumId" to albumId,
+        "position" to position,
+        "artistId" to artistId,
+        "name" to name,
+    )
 
-private fun Disc.values() = listOf<Any?>(sourceId, albumId, disc, title)
+private fun SongArtistRef.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "songId" to songId,
+        "position" to position,
+        "artistId" to artistId,
+        "name" to name,
+    )
 
-private fun Song.values() =
-    listOf<Any?>(
-        sourceId,
-        id,
-        albumId,
-        artistId,
-        title,
-        album,
-        artist,
-        duration,
-        track,
-        disc,
-        starred,
-        created,
-        playCount,
-        played,
-        trackGain,
-        albumGain,
-        trackPeak,
-        albumPeak,
-        ArtistRefsCodec.encode(artistRefs),
-        sortName,
-        artistSort,
+private fun Disc.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "albumId" to albumId,
+        "disc" to disc,
+        "title" to title,
+    )
+
+private fun Song.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "id" to id,
+        "albumId" to albumId,
+        "artistId" to artistId,
+        "title" to title,
+        "album" to album,
+        "artist" to artist,
+        "duration" to duration,
+        "track" to track,
+        "disc" to disc,
+        "starred" to starred,
+        "created" to created,
+        "playCount" to playCount,
+        "played" to played,
+        "trackGain" to trackGain,
+        "albumGain" to albumGain,
+        "trackPeak" to trackPeak,
+        "albumPeak" to albumPeak,
+        "artists" to ArtistRefsCodec.encode(artistRefs),
+        "sortName" to sortName,
+        "artistSort" to artistSort,
     )
 
 private fun List<ArtistRef>.positions(): List<Pair<Long, ArtistRef>> =
@@ -576,32 +547,56 @@ private fun Album.artistPositions(): List<Pair<Long, ArtistRef>> = artistRefs.po
 
 private fun Song.artistPositions(): List<Pair<Long, ArtistRef>> = artistRefs.positions()
 
-private fun SongGenre.values() = listOf<Any?>(sourceId, songId, position, genre)
+private fun SongGenre.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "songId" to songId,
+        "position" to position,
+        "genre" to genre,
+    )
 
-private fun Playlist.values() = listOf<Any?>(sourceId, id, name, comment, coverArt, songCount, created, changed, duration, owner, shared)
+private fun Playlist.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "id" to id,
+        "name" to name,
+        "comment" to comment,
+        "coverArt" to coverArt,
+        "songCount" to songCount,
+        "created" to created,
+        "changed" to changed,
+        "duration" to duration,
+        "owner" to owner,
+        "shared" to shared,
+    )
 
-private fun PlaylistSong.values() = listOf<Any?>(sourceId, playlistId, songId, position)
+private fun PlaylistSong.columns(): List<Pair<String, Any?>> =
+    listOf(
+        "sourceId" to sourceId,
+        "playlistId" to playlistId,
+        "songId" to songId,
+        "position" to position,
+    )
 
 private suspend fun <T> PooledConnection.upsertChanged(
     table: String,
-    columns: List<String>,
     key: List<String>,
     rows: List<T>,
     preserved: Set<String> = emptySet(),
-    values: (T) -> List<Any?>,
+    columns: (T) -> List<Pair<String, Any?>>,
 ) {
     if (rows.isEmpty()) return
-    check(values(rows.first()).size == columns.size) { "column/value mismatch for $table" }
-    val updates = columns.filterNot { it in key || it in preserved }
+    val columnNames = columns(rows.first()).map { it.first }
+    val updates = columnNames.filterNot { it in key || it in preserved }
     val sql =
-        "INSERT INTO $table (${columns.joinToString()}) VALUES (${columns.joinToString { "?" }}) " +
+        "INSERT INTO $table (${columnNames.joinToString()}) VALUES (${columnNames.joinToString { "?" }}) " +
             "ON CONFLICT(${key.joinToString()}) DO UPDATE SET " +
             updates.joinToString { "$it = excluded.$it" } +
             " WHERE " +
             updates.joinToString(" OR ") { "$table.$it COLLATE BINARY IS NOT excluded.$it" }
     usePrepared(sql) { statement ->
         rows.forEach { row ->
-            values(row).forEachIndexed { index, value -> statement.bind(index + 1, value) }
+            columns(row).forEachIndexed { index, (_, value) -> statement.bind(index + 1, value) }
             statement.step()
             statement.reset()
             statement.clearBindings()
