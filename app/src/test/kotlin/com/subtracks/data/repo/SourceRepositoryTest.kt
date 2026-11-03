@@ -314,7 +314,7 @@ class SourceRepositoryTest {
             assertNull(repository.artistImage("ar2", "https://img.example/ar2.jpg"))
         }
 
-    private suspend fun awaitActiveSourceId(): Long = withTimeout(TEST_TIMEOUT_MS) { repository.activeSourceId().first { it != null }!! }
+    private suspend fun awaitActiveSourceId(): Long = withTimeout(TEST_TIMEOUT_MS) { repository.activeSource.first { it != null }!! }
 
     private suspend fun awaitCoverArt(coverArt: String): CoverArtRef =
         withTimeout(TEST_TIMEOUT_MS) {
