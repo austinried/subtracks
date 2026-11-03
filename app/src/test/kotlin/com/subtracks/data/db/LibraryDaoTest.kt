@@ -990,18 +990,7 @@ class LibraryDaoTest {
         runTest {
             val plan = plan(ALBUM_CREDIT_ALBUM_IDS)
 
-            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
-            )
-            assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
-            )
-            assertFalse(plan, plan.contains("SCAN albums"))
-            assertFalse(plan, plan.contains("SCAN songs"))
+            assertArtistCreditIndexes(plan)
         }
 
     @Test
@@ -1357,19 +1346,37 @@ class LibraryDaoTest {
         runTest {
             val plan = plan(ALBUMS_FOR_ARTIST)
 
-            assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
-            )
+            assertArtistCreditIndexes(plan)
+        }
+
+    @Test
+    fun downloadedArtistAlbumsFindCreditsThroughArtistIndexes() =
+        runTest {
+            val plan = plan(ALBUMS_FOR_ARTIST_DOWNLOADED)
+            assertTrue(plan, plan.contains("SEARCH albums USING INDEX sqlite_autoindex_albums_1"))
+            assertTrue(plan, plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"))
             assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
-            assertTrue(
-                plan,
-                plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
-            )
+            assertTrue(plan, plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"))
             assertFalse(plan, plan.contains("SCAN albums"))
             assertFalse(plan, plan.contains("SCAN songs"))
+            assertFalse(plan, plan.contains("SCAN album_artists"))
+            assertFalse(plan, plan.contains("SCAN song_artists"))
         }
+
+    private fun assertArtistCreditIndexes(plan: String) {
+        assertTrue(plan, plan.contains("USING INDEX index_albums_sourceId_artistId (sourceId=? AND artistId=?)"))
+        assertTrue(
+            plan,
+            plan.contains("USING INDEX index_album_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+        )
+        assertTrue(plan, plan.contains("USING INDEX index_songs_sourceId_artistId (sourceId=? AND artistId=?)"))
+        assertTrue(
+            plan,
+            plan.contains("USING INDEX index_song_artists_sourceId_artistId (sourceId=? AND artistId=?)"),
+        )
+        assertFalse(plan, plan.contains("SCAN albums"))
+        assertFalse(plan, plan.contains("SCAN songs"))
+    }
 
     private suspend fun plan(
         sql: String,

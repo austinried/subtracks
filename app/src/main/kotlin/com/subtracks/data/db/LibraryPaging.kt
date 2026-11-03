@@ -62,7 +62,7 @@ AND (:search = ''
 
 // The downloaded list counts the albums that actually have a download so the number under an artist
 // matches the albums its detail screen lists.
-internal const val ARTIST_COLUMNS_DOWNLOADED = """
+internal val ARTIST_COLUMNS_DOWNLOADED = """
 artists.sourceId, artists.id, artists.name,
 (SELECT COUNT(*) FROM ($DOWNLOADED_ARTIST_ALBUMS)) AS albumCount,
 $ARTIST_COLUMNS_TAIL
