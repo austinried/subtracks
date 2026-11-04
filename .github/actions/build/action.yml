@@ -40,6 +40,11 @@ runs:
         path: ~/.gradle/caches
         key: gradle-v2-${{ hashFiles('**/*.gradle*', '**/gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
         restore-keys: gradle-v2-
+    - uses: actions/cache@v6
+      with:
+        path: ~/.m2/repository/org/robolectric
+        key: robolectric-m2-v1-${{ hashFiles('gradle/libs.versions.toml', 'app/src/test/resources/robolectric.properties') }}
+        restore-keys: robolectric-m2-v1-
     - id: signing
       if: inputs.sign == 'true'
       shell: bash

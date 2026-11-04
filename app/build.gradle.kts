@@ -181,6 +181,8 @@ val demoScreenshotClass = "com.subtracks.ui.DemoScreenshotTest"
 val queryTimingClass = "com.subtracks.data.db.QueryTimingMeasurementTest"
 
 tasks.withType<Test>().configureEach {
+    // Robolectric fetches its Android SDK jar itself, outside Gradle's repositories.
+    systemProperty("robolectric.dependency.repo.url", providers.gradleProperty("mavenCentralMirrorUrl").get())
     if (name.endsWith("UnitTest")) {
         filter {
             (integrationTestClasses + demoScreenshotClass + queryTimingClass).forEach { excludeTestsMatching(it) }

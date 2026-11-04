@@ -1,4 +1,5 @@
 pluginManagement {
+    val mavenCentralMirrorUrl = providers.gradleProperty("mavenCentralMirrorUrl").get()
     repositories {
         google {
             content {
@@ -7,7 +8,7 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+        maven(mavenCentralMirrorUrl) {
             name = "MavenCentralMirror"
         }
         mavenCentral()
@@ -19,7 +20,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
-        maven("https://maven-central.storage-download.googleapis.com/maven2/") {
+        maven(providers.gradleProperty("mavenCentralMirrorUrl").get()) {
             name = "MavenCentralMirror"
         }
         mavenCentral()
