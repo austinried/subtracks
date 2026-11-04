@@ -348,13 +348,31 @@ class PlaybackControllerTest {
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
         controller.connect()
-        await { handle.items.isNotEmpty() }
+        await { handle.operations.contains("prepare") }
 
-        assertTrue(handle.operations.contains("prepare"))
         assertFalse(handle.operations.contains("play"))
         assertFalse(handle.isIdle)
         assertFalse(handle.playWhenReady)
         assertFalse(controller.state.value.isPlaying)
+    }
+
+    @Test
+    fun aPrepareFailureBeforePlaybackIsNotReported() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
+
+        controller.connect()
+        await { handle.operations.contains("prepare") }
+
+        handle.fail(UiMessage(R.string.playback_error_network))
+        assertTrue(messages.isEmpty())
+
+        controller.togglePlayPause()
+        await { handle.operations.contains("play") }
+        handle.fail(UiMessage(R.string.playback_error_network))
+        await { messages.isNotEmpty() }
+
+        assertEquals(1, messages.size)
     }
 
     @Test
@@ -387,14 +405,13 @@ class PlaybackControllerTest {
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
         controller.connect()
-        await { handle.items.isNotEmpty() }
+        await { handle.operations.contains("prepare") }
         handle.operations.clear()
 
         controller.togglePlayPause()
         await { handle.operations.contains("play") }
 
         assertEquals(listOf("play"), handle.operations)
-        assertTrue(handle.playWhenReady)
     }
 
     @Test

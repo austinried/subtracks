@@ -1452,7 +1452,7 @@ class PlaybackController(
             }
 
             override fun onError(message: UiMessage) {
-                showMessage(message)
+                if (player?.playWhenReady == true) showMessage(message)
                 refresh()
             }
         }
