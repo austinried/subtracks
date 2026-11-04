@@ -2,13 +2,12 @@ package com.subtracks.data.repo
 
 import android.content.Context
 import android.content.res.Resources
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.TEST_TIMEOUT_MS
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.artistImageKey
@@ -58,11 +57,7 @@ class SourceRepositoryTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         resources = context.resources
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
         prefs = fakeUserPreferences()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

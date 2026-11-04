@@ -1,12 +1,9 @@
 package com.subtracks.data.repo
 
-import android.content.Context
-import androidx.room3.Room
 import androidx.room3.useReaderConnection
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.Song
@@ -26,12 +23,7 @@ class QueueKeysetTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         repository = QueueRepository(db)
     }
 

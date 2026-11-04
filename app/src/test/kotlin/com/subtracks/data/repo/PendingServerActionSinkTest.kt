@@ -1,13 +1,10 @@
 package com.subtracks.data.repo
 
-import android.content.Context
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.model.PendingActionKind
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.ServerActionSink
@@ -82,12 +79,7 @@ class PendingServerActionSinkTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         sourceId = runBlocking { db.sourcesDao().insertSource(Source(name = "server", address = "http://x/", createdAt = 0)) }
         delegate = RecordingSink()

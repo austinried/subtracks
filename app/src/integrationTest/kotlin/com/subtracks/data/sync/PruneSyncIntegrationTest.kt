@@ -1,11 +1,7 @@
 package com.subtracks.data.sync
 
-import android.content.Context
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.model.Source
 import com.subtracks.data.source.subsonic.SubsonicClient
 import com.subtracks.data.source.subsonic.SubsonicSource
@@ -28,12 +24,7 @@ class PruneSyncIntegrationTest {
             val removed = File(musicDir, REMOVED_ALBUM_DIR)
             check(removed.isDirectory) { "$removed is missing; the harness must prepare the prune library" }
 
-            val context = ApplicationProvider.getApplicationContext<Context>()
-            val db =
-                Room
-                    .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                    .setDriver(BundledSQLiteDriver())
-                    .build()
+            val db = createTestDatabase()
             try {
                 db.sourcesDao().upsertSource(
                     Source(id = 1, name = "prune", address = baseUrl, isActive = true, createdAt = 0),

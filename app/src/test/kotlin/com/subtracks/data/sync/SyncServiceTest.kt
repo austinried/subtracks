@@ -1,17 +1,15 @@
 package com.subtracks.data.sync
 
-import android.content.Context
 import androidx.paging.PagingSource
-import androidx.room3.Room
 import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.db.LoggingSQLiteDriver
 import com.subtracks.data.db.SqlExecution
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.artistPages
 import com.subtracks.data.db.artistsPageQuery
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
 import com.subtracks.data.model.ArtistRef
@@ -44,12 +42,7 @@ class SyncServiceTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
     }
 
     @After
@@ -1846,13 +1839,8 @@ class SyncServiceTest {
     @Test
     fun anIdenticalSyncSkipsTheAggregateQueries() =
         runTest {
-            val context = ApplicationProvider.getApplicationContext<Context>()
             val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
-            val loggingDb =
-                Room
-                    .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                    .setDriver(LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it })
-                    .build()
+            val loggingDb = createTestDatabase(LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it })
             try {
                 loggingDb.sourcesDao().upsertSource(
                     Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),

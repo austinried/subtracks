@@ -1,40 +1,16 @@
 package com.subtracks.ui.downloads
 
-import android.content.Context
 import androidx.lifecycle.viewModelScope
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
-import com.subtracks.cancelAndJoinBlocking
-import com.subtracks.data.db.SubtracksDatabase
-import com.subtracks.data.download.ArtworkStore
-import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
-import com.subtracks.data.prefs.fakeUserPreferences
-import com.subtracks.data.repo.DownloadRepository
-import com.subtracks.data.repo.LibraryRepository
-import com.subtracks.data.repo.NetworkServerActionSink
-import com.subtracks.data.repo.QueueRepository
-import com.subtracks.data.repo.SourceRepository
-import com.subtracks.playback.FakePlayerConnection
-import com.subtracks.playback.FakePlayerHandle
-import com.subtracks.playback.PlaybackController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.subtracks.ui.ViewModelRepositoryFixture
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -42,61 +18,23 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
-import java.util.concurrent.Executors
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class DownloadsViewModelTest {
-    private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-
-    private lateinit var db: SubtracksDatabase
-    private lateinit var sourceRepository: SourceRepository
-    private lateinit var downloadRepository: DownloadRepository
-    private lateinit var controller: PlaybackController
+    private lateinit var fixture: ViewModelRepositoryFixture
+    private val db get() = fixture.db
+    private val sourceRepository get() = fixture.sourceRepository
+    private val downloadRepository get() = fixture.downloadRepository
+    private val controller get() = fixture.controller
     private lateinit var viewModel: DownloadsViewModel
-    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val controllerScope = CoroutineScope(SupervisorJob() + dispatcher)
     private var sourceId: Long = 0
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(dispatcher)
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
-        val artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
-        sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artwork, scope = repoScope)
-        downloadRepository =
-            DownloadRepository(
-                db,
-                sourceRepository,
-                FakeDownloadEngine(),
-                File(context.cacheDir, "downloads-${System.nanoTime()}"),
-                artworkStore = artwork,
-                artworkFetcher = { ByteArray(0) },
-                scope = repoScope,
-            )
-        controller =
-            PlaybackController(
-                sourceRepository,
-                QueueRepository(db),
-                FakePlayerConnection(FakePlayerHandle()),
-                downloadRepository,
-                scope = controllerScope,
-            )
+        fixture = ViewModelRepositoryFixture()
         viewModel =
             DownloadsViewModel(
-                LibraryRepository(
-                    db,
-                    sourceRepository,
-                    NetworkServerActionSink(sourceRepository),
-                    fakeUserPreferences(),
-                    scope = repoScope,
-                ),
+                fixture.libraryRepository,
                 downloadRepository,
                 controller,
                 "Unknown artist",
@@ -107,10 +45,7 @@ class DownloadsViewModelTest {
     @After
     fun tearDown() {
         runBlocking { viewModel.viewModelScope.coroutineContext[Job]?.cancelAndJoin() }
-        cancelAndJoinBlocking(controllerScope, repoScope)
-        db.close()
-        Dispatchers.resetMain()
-        dispatcher.close()
+        fixture.close()
     }
 
     @Test

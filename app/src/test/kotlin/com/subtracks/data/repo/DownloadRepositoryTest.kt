@@ -3,13 +3,12 @@ package com.subtracks.data.repo
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkFetcher
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
@@ -84,11 +83,7 @@ class DownloadRepositoryTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         resources = context.resources
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         artwork = ArtworkStore(File(context.cacheDir, "art-${System.nanoTime()}"))
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         sources = SourceRepository(db, OkHttpClient(), prefs, artwork, scope = scope)

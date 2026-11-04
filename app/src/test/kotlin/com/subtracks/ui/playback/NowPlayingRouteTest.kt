@@ -5,14 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.TEST_TIMEOUT_MS
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Song
@@ -81,11 +80,7 @@ class NowPlayingRouteTest {
     private fun setUpState() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val artworkStore = ArtworkStore(File(context.cacheDir, "art"))
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         val sources = SourceRepository(db, OkHttpClient(), prefs, artworkStore, scope = repoScope)
         val queues = QueueRepository(db)
         downloads =

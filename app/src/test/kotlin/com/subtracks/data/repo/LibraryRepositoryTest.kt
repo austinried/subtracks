@@ -4,12 +4,11 @@ import android.content.Context
 import android.content.res.Resources
 import androidx.paging.PagingDataEvent
 import androidx.paging.PagingDataPresenter
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.ArtistBio
@@ -63,11 +62,7 @@ class LibraryRepositoryTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         resources = context.resources
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         sourceRepository =
             SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)

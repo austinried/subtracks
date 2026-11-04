@@ -1,9 +1,5 @@
 package com.subtracks.data.db
 
-import android.content.Context
-import androidx.room3.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.ArtworkSeed
 import com.subtracks.data.model.Source
@@ -22,12 +18,7 @@ class ArtworkSeedDaoTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
     }
 
     @After

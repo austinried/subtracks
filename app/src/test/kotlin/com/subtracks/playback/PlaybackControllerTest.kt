@@ -3,9 +3,7 @@ package com.subtracks.playback
 import android.content.Context
 import android.content.res.Resources
 import androidx.media3.common.PlaybackException
-import androidx.room3.Room
 import androidx.room3.useWriterConnection
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.R
@@ -14,6 +12,7 @@ import com.subtracks.UiMessage
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkStore
 import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.Album
@@ -83,11 +82,7 @@ class PlaybackControllerTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         resources = context.resources
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
         prefs = fakeUserPreferences()
         networkMode = MutableStateFlow(NetworkMode.Wifi)
         sources =

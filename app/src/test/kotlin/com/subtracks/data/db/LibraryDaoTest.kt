@@ -1,12 +1,8 @@
 package com.subtracks.data.db
 
-import android.content.Context
 import androidx.paging.PagingSource
-import androidx.room3.Room
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
 import com.subtracks.data.model.Album
@@ -39,12 +35,7 @@ class LibraryDaoTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(BundledSQLiteDriver())
-                .build()
+        db = createTestDatabase()
     }
 
     @After
@@ -893,6 +884,26 @@ class LibraryDaoTest {
             dao.recomputeDownloadedArtistArt(sourceId, listOf("ar-1"))
 
             assertEquals(listOf("art-2", "art-1"), dao.artistOnce(sourceId, "ar-1")!!.downloadedCoverArts)
+        }
+
+    @Test
+    fun freshDatabaseOptimizesArtistSearchTriggers() =
+        runTest {
+            val triggers =
+                db.useReaderConnection { connection ->
+                    connection.usePrepared(
+                        "SELECT sql FROM sqlite_master WHERE type = 'trigger' " +
+                            "AND name IN ('room_fts_content_sync_artist_search_BEFORE_UPDATE', " +
+                            "'room_fts_content_sync_artist_search_AFTER_UPDATE')",
+                    ) { statement ->
+                        buildList {
+                            while (statement.step()) add(statement.getText(0))
+                        }
+                    }
+                }
+
+            assertEquals(2, triggers.size)
+            assertTrue(triggers.all { it.contains("UPDATE OF `name`, `sortName`") })
         }
 
     @Test

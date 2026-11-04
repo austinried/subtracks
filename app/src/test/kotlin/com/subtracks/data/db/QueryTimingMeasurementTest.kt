@@ -1,12 +1,9 @@
 package com.subtracks.data.db
 
-import android.content.Context
 import androidx.paging.PagingSource
-import androidx.room3.Room
 import androidx.room3.immediateTransaction
 import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.Album
 import com.subtracks.data.model.Artist
@@ -40,14 +37,8 @@ class QueryTimingMeasurementTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val driver = LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it }
-        db =
-            Room
-                .inMemoryDatabaseBuilder(context, SubtracksDatabase::class.java)
-                .setDriver(driver)
-                .addCallback(ArtistSearchTriggerOptimization)
-                .build()
+        db = createTestDatabase(driver)
     }
 
     @After
