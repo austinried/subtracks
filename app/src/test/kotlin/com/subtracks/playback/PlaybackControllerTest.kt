@@ -343,7 +343,46 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun togglingPlayOnARestoredQueuePreparesBeforePlaying() {
+    fun restoringAPreviousQueuePreparesTheSessionWithoutPlaying() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
+
+        controller.connect()
+        await { handle.items.isNotEmpty() }
+
+        assertTrue(handle.operations.contains("prepare"))
+        assertFalse(handle.operations.contains("play"))
+        assertFalse(handle.isIdle)
+        assertFalse(handle.playWhenReady)
+        assertFalse(controller.state.value.isPlaying)
+    }
+
+    @Test
+    fun restoringAnEmptyQueueDoesNotPrepare() {
+        seedAlbum(3, sourceId = 1)
+
+        controller.connect()
+        await { controller.ready.value }
+
+        assertTrue(handle.items.isEmpty())
+        assertFalse(handle.operations.contains("prepare"))
+    }
+
+    @Test
+    fun restoringAnOfflineQueueWithoutDownloadsDoesNotPrepare() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
+        setOffline()
+
+        controller.connect()
+        await { controller.ready.value }
+
+        assertTrue(handle.items.isEmpty())
+        assertFalse(handle.operations.contains("prepare"))
+    }
+
+    @Test
+    fun togglingPlayOnARestoredQueuePlaysThePreparedWindow() {
         seedAlbum(5, sourceId = 1)
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
@@ -354,7 +393,8 @@ class PlaybackControllerTest {
         controller.togglePlayPause()
         await { handle.operations.contains("play") }
 
-        assertEquals(listOf("prepare", "play"), handle.operations)
+        assertEquals(listOf("play"), handle.operations)
+        assertTrue(handle.playWhenReady)
     }
 
     @Test

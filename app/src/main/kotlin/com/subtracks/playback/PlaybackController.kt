@@ -1070,6 +1070,7 @@ class PlaybackController(
             }
             lastSavedPositionMs = savedPositionMs
             loadWindow(anchor.position, autoplay = false, startPositionMs = savedPositionMs)
+            if ((player?.itemCount ?: 0) > 0) player?.ensurePrepared()
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }
