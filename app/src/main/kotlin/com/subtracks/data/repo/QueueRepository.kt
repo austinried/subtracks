@@ -210,7 +210,7 @@ data class Reanchored(
 )
 
 private interface QueueKindResolver {
-    val supportsKeyset: Boolean get() = false
+    fun supportsKeyset(key: OrderKey): Boolean = false
 
     suspend fun length(
         dao: com.subtracks.data.db.QueueDao,
@@ -247,9 +247,9 @@ private interface QueueKindResolver {
     ): Long? = null
 }
 
-private fun resolverFor(kind: QueueKind): QueueKindResolver =
-    when (kind) {
-        QueueKind.Song -> {
+private val queueKindResolvers =
+    mapOf<QueueKind, QueueKindResolver>(
+        QueueKind.Song to
             object : QueueKindResolver {
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -268,12 +268,10 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     entry: QueueEntry,
                     songId: String,
                 ) = if (entry.refId == songId && length(dao, entry) > 0) 0L else null
-            }
-        }
-
-        QueueKind.Playlist -> {
+            },
+        QueueKind.Playlist to
             object : QueueKindResolver {
-                override val supportsKeyset = true
+                override fun supportsKeyset(key: OrderKey) = key.position != null
 
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -308,12 +306,10 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     entry: QueueEntry,
                     songId: String,
                 ) = dao.playlistRank(entry.sourceId, entry.refId, songId)
-            }
-        }
-
-        QueueKind.Album -> {
+            },
+        QueueKind.Album to
             object : QueueKindResolver {
-                override val supportsKeyset = true
+                override fun supportsKeyset(key: OrderKey) = key.disc != null && key.track != null
 
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -348,10 +344,8 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     entry: QueueEntry,
                     songId: String,
                 ) = dao.albumRank(entry.sourceId, entry.refId, songId)
-            }
-        }
-
-        QueueKind.Artist -> {
+            },
+        QueueKind.Artist to
             object : QueueKindResolver {
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -364,10 +358,8 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     offset: Long,
                     limit: Int,
                 ) = dao.artistSongs(entry.sourceId, entry.refId, offset, limit)
-            }
-        }
-
-        QueueKind.Genre -> {
+            },
+        QueueKind.Genre to
             object : QueueKindResolver {
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -380,10 +372,8 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     offset: Long,
                     limit: Int,
                 ) = dao.genreSongs(entry.sourceId, entry.refId, offset, limit)
-            }
-        }
-
-        QueueKind.Downloaded -> {
+            },
+        QueueKind.Downloaded to
             object : QueueKindResolver {
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -396,10 +386,8 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     offset: Long,
                     limit: Int,
                 ) = dao.downloadedSongs(entry.sourceId, offset, limit)
-            }
-        }
-
-        QueueKind.Starred -> {
+            },
+        QueueKind.Starred to
             object : QueueKindResolver {
                 override suspend fun length(
                     dao: com.subtracks.data.db.QueueDao,
@@ -412,9 +400,10 @@ private fun resolverFor(kind: QueueKind): QueueKindResolver =
                     offset: Long,
                     limit: Int,
                 ) = dao.starredSongs(entry.sourceId, offset, limit)
-            }
-        }
-    }
+            },
+    )
+
+private fun resolverFor(kind: QueueKind): QueueKindResolver = queueKindResolvers.getValue(kind)
 
 class QueueRepository(
     private val db: SubtracksDatabase,
@@ -858,10 +847,12 @@ class QueueRepository(
         var start = 0L
         for (resolved in entries) {
             val entry = resolved.entry
-            val rank = resolverFor(entry.kind).rank(dao, entry, songId) ?: fallbackRank(entry, songId)
+            val rank = resolverFor(entry.kind).rank(dao, entry, songId)
             if (rank != null && rank >= entry.offset && rank < entry.offset + resolved.length) {
                 return start + rank - entry.offset
             }
+            val fallback = fallbackRank(entry, resolved.length, songId)
+            if (fallback != null) return start + fallback - entry.offset
             start += resolved.length
         }
         return null
@@ -869,16 +860,20 @@ class QueueRepository(
 
     private suspend fun fallbackRank(
         entry: QueueEntry,
+        length: Long,
         songId: String,
     ): Long? {
-        var offset = 0L
-        while (true) {
-            val batch = rows(entry, offset, QUEUE_CHUNK)
+        var offset = entry.offset
+        val end = entry.offset + length
+        while (offset < end) {
+            val limit = minOf(QUEUE_CHUNK.toLong(), end - offset).toInt()
+            val batch = rows(entry, offset, limit)
             val index = batch.indexOfFirst { it.song.id == songId }
             if (index >= 0) return offset + index
-            if (batch.size < QUEUE_CHUNK) return null
+            if (batch.size < limit) return null
             offset += batch.size
         }
+        return null
     }
 
     private suspend fun contextPlayRange(
@@ -994,7 +989,7 @@ class QueueRepository(
         limit: Int,
         cursor: KeyCursor,
     ): List<SongItem>? {
-        if (!resolverFor(entry.kind).supportsKeyset) return null
+        if (!resolverFor(entry.kind).supportsKeyset(cursor.key)) return null
         val from = cursor.ordinal
         // A backward seek from a far cursor is not cheaper than the offset query: the album
         // predicate is not sargable (it has to include NULL disc/track), so it scans the partition

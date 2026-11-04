@@ -896,6 +896,24 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun contextIndexFindsADuplicateInsideTheEntryRange() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertPlaylists(listOf(playlist("duplicates", "Duplicates")))
+            db.libraryDao().upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(1, "duplicates", "s2", 10),
+                    PlaylistSong(1, "duplicates", "s1", 20),
+                    PlaylistSong(1, "duplicates", "s2", 30),
+                ),
+            )
+            val entry = repository.playlistEntry(1, "duplicates").copy(rangeStart = 1, rangeEnd = 2)
+            val snapshot = repository.snapshotAfter(listOf(entry))
+
+            assertEquals(1L, repository.combinedContextIndexOf(snapshot, "s2"))
+        }
+
+    @Test
     fun contextIndexFallsBackToBoundedRowsForGenre() =
         runTest {
             seedLibrary()

@@ -151,6 +151,18 @@ class QueueKeysetTest {
         }
 
     @Test
+    fun scanningAnAlbumWithNullDiscAndTrackForwardFallsBackToOffsetRows() =
+        runTest {
+            seedLibrary()
+            repository.replace(listOf(repository.albumEntry(1, "mixed")))
+            val snapshot = repository.snapshot()
+
+            val resolved = (0 until snapshot.size).map { repository.itemAt(snapshot, it)?.song?.id }
+
+            assertEquals(listOf("n1", "n2", "s1", "s2"), resolved)
+        }
+
+    @Test
     fun scanningAnAlbumWithNullDiscAndTrackBackwardsResolvesEveryRow() =
         runTest {
             seedLibrary()
