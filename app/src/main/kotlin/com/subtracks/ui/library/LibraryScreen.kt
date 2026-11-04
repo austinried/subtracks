@@ -68,7 +68,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -126,13 +125,12 @@ import com.subtracks.data.source.StarType
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.ArtistArt
 import com.subtracks.ui.components.ContextMenuHost
-import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.MenuTarget
-import com.subtracks.ui.components.PendingDownloadDelete
+import com.subtracks.ui.components.PendingDownloadDeleteConfirmation
 import com.subtracks.ui.components.SearchField
-import com.subtracks.ui.components.bulkRef
+import com.subtracks.ui.components.rememberPendingDownloadDelete
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.home.HomeRoute
 import com.subtracks.ui.home.HomeSection
@@ -143,7 +141,6 @@ import com.subtracks.ui.theme.playerSurfaceColor
 import com.subtracks.ui.theme.rememberArtworkColors
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.abs
@@ -278,26 +275,13 @@ fun LibraryRoute(
     val artwork = rememberArtworkColors(playbackController.coverArt(playback.item, thumbnail = true), fallbackName = playback.item?.title)
     val downloadsState = listTab?.let { viewModel.downloads(it).collectAsStateWithLifecycle() }
     val downloads = downloadsState?.value ?: emptyMap()
-    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
+    val pendingDelete = rememberPendingDownloadDelete(contextMenuHost?.dismissals ?: emptyFlow(), viewModel::downloadedBytes)
     val itemActions =
         ItemActions(
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            bulkDownload = { target, action ->
-                target.bulkRef()?.let { (list, refId) ->
-                    if (action == BulkDownloadAction.Delete) {
-                        scope.launch {
-                            pendingDelete =
-                                PendingDownloadDelete(target.title, list, refId, viewModel.downloadedBytes(list, refId))
-                        }
-                    } else {
-                        viewModel.onDownloadAction(list, refId, action)
-                    }
-                }
-            },
+            bulkDownload = { target, action -> pendingDelete.onAction(target, action, viewModel::onDownloadAction) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
             viewArtist = onViewArtist,
@@ -377,13 +361,8 @@ fun LibraryRoute(
         },
     )
 
-    pendingDelete?.let { pending ->
-        DeleteDownloadsDialog(
-            name = pending.name,
-            bytes = pending.bytes,
-            onConfirm = { viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete) },
-            onDismiss = { pendingDelete = null },
-        )
+    PendingDownloadDeleteConfirmation(pendingDelete) { pending ->
+        viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete)
     }
 }
 

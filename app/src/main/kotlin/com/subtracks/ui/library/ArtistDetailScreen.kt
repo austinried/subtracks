@@ -59,7 +59,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -111,13 +110,12 @@ import com.subtracks.ui.components.ArtistHeroArt
 import com.subtracks.ui.components.CloseWhenDownloadsGone
 import com.subtracks.ui.components.ContextMenuHost
 import com.subtracks.ui.components.CoverArt
-import com.subtracks.ui.components.DeleteDownloadsDialog
 import com.subtracks.ui.components.DismissOnRequest
 import com.subtracks.ui.components.ItemActions
 import com.subtracks.ui.components.ListDownloadIndicator
 import com.subtracks.ui.components.MenuTarget
-import com.subtracks.ui.components.PendingDownloadDelete
-import com.subtracks.ui.components.bulkRef
+import com.subtracks.ui.components.PendingDownloadDeleteConfirmation
+import com.subtracks.ui.components.rememberPendingDownloadDelete
 import com.subtracks.ui.components.rememberViewportFill
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.theme.ArtworkColors
@@ -130,7 +128,6 @@ import com.subtracks.ui.theme.rememberArtworkColors
 import com.subtracks.ui.theme.rememberOverlaidNameBusy
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -217,26 +214,13 @@ fun ArtistDetailRoute(
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     CloseWhenDownloadsGone(downloadStatus.downloaded, offline, onBack)
     val albumDownloads by viewModel.albumDownloads.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    var pendingDelete by remember { mutableStateOf<PendingDownloadDelete?>(null) }
-    DismissOnRequest(contextMenuHost?.dismissals ?: emptyFlow()) { pendingDelete = null }
+    val pendingDelete = rememberPendingDownloadDelete(contextMenuHost?.dismissals ?: emptyFlow(), viewModel::downloadedBytes)
     val shortcutArt = remember(coverArtId) { coverArtId?.let { viewModel.coverArt(it, true) } }
     val actions =
         ItemActions(
             playNext = { playbackController.playNext(it.sourceId, it.kind, it.refId) },
             addToQueue = { playbackController.addToQueue(it.sourceId, it.kind, it.refId) },
-            bulkDownload = { target, action ->
-                target.bulkRef()?.let { (list, refId) ->
-                    if (action == BulkDownloadAction.Delete) {
-                        scope.launch {
-                            pendingDelete =
-                                PendingDownloadDelete(target.title, list, refId, viewModel.downloadedBytes(list, refId))
-                        }
-                    } else {
-                        viewModel.onDownloadAction(list, refId, action)
-                    }
-                }
-            },
+            bulkDownload = { target, action -> pendingDelete.onAction(target, action, viewModel::onDownloadAction) },
             setStar = setStar,
             viewAlbum = onViewAlbum,
         )
@@ -267,13 +251,8 @@ fun ArtistDetailRoute(
         onShuffle = viewModel::shuffle,
     )
 
-    pendingDelete?.let { pending ->
-        DeleteDownloadsDialog(
-            name = pending.name,
-            bytes = pending.bytes,
-            onConfirm = { viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete) },
-            onDismiss = { pendingDelete = null },
-        )
+    PendingDownloadDeleteConfirmation(pendingDelete) { pending ->
+        viewModel.onDownloadAction(pending.list, pending.refId, BulkDownloadAction.Delete)
     }
 }
 
