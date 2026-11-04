@@ -360,10 +360,7 @@ class LibraryRepository(
         sourceId: Long,
         albumId: String,
         songId: String,
-    ): Long {
-        val index = db.queueDao().albumSongIds(sourceId, albumId).indexOf(songId)
-        return if (index < 0) 0L else index.toLong()
-    }
+    ): Long = db.queueDao().albumRank(sourceId, albumId, songId) ?: 0L
 
     fun playlist(
         sourceId: Long,

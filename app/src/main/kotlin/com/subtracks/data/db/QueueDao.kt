@@ -214,14 +214,34 @@ interface QueueDao {
     ): List<String>
 
     @Query(
-        "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
-            "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
-            "WHERE songs.sourceId = :sourceId AND songs.id IN (:ids)",
+        "SELECT CASE WHEN EXISTS (SELECT 1 FROM songs WHERE sourceId = :sourceId AND albumId = :albumId AND id = :songId) " +
+            "THEN (SELECT COUNT(*) FROM songs ranked CROSS JOIN songs target " +
+            "WHERE ranked.sourceId = :sourceId AND ranked.albumId = :albumId " +
+            "AND target.sourceId = :sourceId AND target.albumId = :albumId AND target.id = :songId " +
+            "AND ((ranked.disc IS NULL AND target.disc IS NOT NULL) OR ranked.disc < target.disc OR " +
+            "(ranked.disc IS target.disc AND ((ranked.track IS NULL AND target.track IS NOT NULL) OR ranked.track < target.track OR " +
+            "(ranked.track IS target.track AND ranked.id < target.id))))) END",
     )
-    suspend fun songsByIds(
+    suspend fun albumRank(
         sourceId: Long,
-        ids: List<String>,
-    ): List<AlbumSongItem>
+        albumId: String,
+        songId: String,
+    ): Long?
+
+    @Query(
+        "SELECT CASE WHEN firstPosition IS NULL THEN NULL ELSE " +
+            "(SELECT COUNT(*) - 1 FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId AND position <= firstPosition) END " +
+            "FROM (SELECT MIN(position) AS firstPosition FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId AND songId = :songId)",
+    )
+    suspend fun playlistRank(
+        sourceId: Long,
+        playlistId: String,
+        songId: String,
+    ): Long?
 
     @Query("SELECT COUNT(*) FROM song_genres WHERE sourceId = :sourceId AND genre = :genre")
     suspend fun genreLength(
@@ -243,17 +263,6 @@ interface QueueDao {
         limit: Int,
     ): List<AlbumSongItem>
 
-    @Query(
-        "SELECT songs.id FROM song_genres " +
-            "JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
-            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre " +
-            "ORDER BY songs.sortName COLLATE NOCASE, songs.id",
-    )
-    suspend fun genreSongIds(
-        sourceId: Long,
-        genre: String,
-    ): List<String>
-
     @Query("SELECT COUNT(*) FROM song_downloads WHERE sourceId = :sourceId AND status = 'Completed'")
     suspend fun downloadedLength(sourceId: Long): Long
 
@@ -273,12 +282,6 @@ interface QueueDao {
     ): List<AlbumSongItem>
 
     @Query(
-        "SELECT songs.id FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL " +
-            "ORDER BY starred DESC, sortName COLLATE NOCASE, id",
-    )
-    suspend fun starredSongIds(sourceId: Long): List<String>
-
-    @Query(
         "SELECT songs.*, albums.coverArt AS coverArt FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
@@ -290,12 +293,4 @@ interface QueueDao {
         offset: Long,
         limit: Int,
     ): List<AlbumSongItem>
-
-    @Query(
-        "SELECT songs.id FROM song_downloads d " +
-            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
-            "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
-            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id",
-    )
-    suspend fun downloadedSongIds(sourceId: Long): List<String>
 }

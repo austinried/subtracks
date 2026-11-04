@@ -261,6 +261,22 @@ class QueueKeysetTest {
         }
 
     @Test
+    fun thePlaylistWindowQuerySeeksThePositionIndex() =
+        runTest {
+            seedLibrary()
+            val plan =
+                queryPlan(
+                    "SELECT songs.*, playlist_songs.position AS playlistPosition, albums.coverArt AS coverArt " +
+                        "FROM playlist_songs JOIN songs ON songs.sourceId = playlist_songs.sourceId " +
+                        "AND songs.id = playlist_songs.songId LEFT JOIN albums ON albums.sourceId = songs.sourceId " +
+                        "AND albums.id = songs.albumId WHERE playlist_songs.sourceId = 1 " +
+                        "AND playlist_songs.playlistId = 'pl1' ORDER BY playlist_songs.position LIMIT 51 OFFSET 100000",
+                )
+
+            assertTrue(plan.joinToString("\n"), plan.any { it.contains("sqlite_autoindex_playlist_songs_1") })
+        }
+
+    @Test
     fun theAlbumKeysetQuerySeeksTheOrderIndex() =
         runTest {
             seedLibrary()

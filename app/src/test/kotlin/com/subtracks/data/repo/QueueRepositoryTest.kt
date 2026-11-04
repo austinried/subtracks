@@ -728,6 +728,32 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun shuffledLargeContextWindowOnlyResolvesRequestedRows() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertPlaylists(listOf(playlist("huge", "Huge")))
+            db.useWriterConnection { transactor ->
+                transactor.usePrepared(
+                    "WITH RECURSIVE n(x) AS (VALUES(0) UNION ALL SELECT x + 1 FROM n WHERE x < 199999) " +
+                        "INSERT INTO playlist_songs SELECT 1, 'huge', 's1', x FROM n",
+                ) { statement ->
+                    statement.step()
+                }
+            }
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "huge")))
+            repository.setShuffle(42L)
+            val snapshot = repository.snapshot()
+
+            val window = repository.window(snapshot, center = 100_000, radius = 25)
+
+            assertEquals(200_000L, snapshot.contextSize)
+            assertEquals(51, window.size)
+            assertEquals(51L, repository.resolvedRowCount)
+            assertEquals((99_975L..100_025L).toList(), window.map { it.position })
+            assertTrue(window.all { it.item.song.id == "s1" })
+        }
+
+    @Test
     fun shuffledRangeResolvesEntriesInPositionOrder() =
         runTest {
             seedLibrary()
@@ -849,6 +875,37 @@ class QueueRepositoryTest {
                     assertEquals(ids.distinct().size, ids.size)
                 }
             }
+        }
+
+    @Test
+    fun contextIndexUsesTheFirstDuplicateOrdinalAcrossSparsePositions() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertPlaylists(listOf(playlist("duplicates", "Duplicates")))
+            db.libraryDao().upsertPlaylistSongs(
+                listOf(
+                    PlaylistSong(1, "duplicates", "s2", 10),
+                    PlaylistSong(1, "duplicates", "s1", 20),
+                    PlaylistSong(1, "duplicates", "s2", 30),
+                ),
+            )
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "duplicates")))
+
+            assertEquals(0L, repository.combinedContextIndexOf(snapshot, "s2"))
+            assertEquals(1L, repository.combinedContextIndexOf(snapshot, "s1"))
+        }
+
+    @Test
+    fun contextIndexFallsBackToBoundedRowsForGenre() =
+        runTest {
+            seedLibrary()
+            insertGenre("s1", "Rock")
+            insertGenre("s3", "Rock")
+            insertGenre("s4", "Rock")
+            val snapshot = repository.snapshotAfter(listOf(repository.genreEntry(1, "Rock")))
+
+            assertEquals(2L, repository.combinedContextIndexOf(snapshot, "s4"))
+            assertTrue(repository.resolvedRowCount <= QUEUE_CHUNK)
         }
 
     @Test
