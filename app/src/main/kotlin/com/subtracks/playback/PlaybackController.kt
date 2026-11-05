@@ -1070,7 +1070,6 @@ class PlaybackController(
             }
             lastSavedPositionMs = savedPositionMs
             loadWindow(anchor.position, autoplay = false, startPositionMs = savedPositionMs)
-            player?.takeIf { it.itemCount > 0 }?.ensurePrepared()
         }
 
     private suspend fun stop() = startLock.withLock { stopLocked() }
@@ -1452,7 +1451,7 @@ class PlaybackController(
             }
 
             override fun onError(message: UiMessage) {
-                if (player?.playWhenReady == true) showMessage(message)
+                showMessage(message)
                 refresh()
             }
         }

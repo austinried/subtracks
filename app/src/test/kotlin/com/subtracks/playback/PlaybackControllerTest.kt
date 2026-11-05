@@ -343,75 +343,18 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun restoringAPreviousQueuePreparesTheSessionWithoutPlaying() {
-        seedAlbum(3, sourceId = 1)
-        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
-
-        controller.connect()
-        await { handle.operations.contains("prepare") }
-
-        assertFalse(handle.operations.contains("play"))
-        assertFalse(handle.isIdle)
-        assertFalse(handle.playWhenReady)
-        assertFalse(controller.state.value.isPlaying)
-    }
-
-    @Test
-    fun aPrepareFailureBeforePlaybackIsNotReported() {
-        seedAlbum(3, sourceId = 1)
-        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
-
-        controller.connect()
-        await { handle.operations.contains("prepare") }
-
-        handle.fail(UiMessage(R.string.playback_error_network))
-        assertTrue(messages.isEmpty())
-
-        controller.togglePlayPause()
-        await { handle.operations.contains("play") }
-        handle.fail(UiMessage(R.string.playback_error_network))
-        await { messages.isNotEmpty() }
-
-        assertEquals(1, messages.size)
-    }
-
-    @Test
-    fun restoringAnEmptyQueueDoesNotPrepare() {
-        seedAlbum(3, sourceId = 1)
-
-        controller.connect()
-        await { controller.ready.value }
-
-        assertTrue(handle.items.isEmpty())
-        assertFalse(handle.operations.contains("prepare"))
-    }
-
-    @Test
-    fun restoringAnOfflineQueueWithoutDownloadsDoesNotPrepare() {
-        seedAlbum(3, sourceId = 1)
-        runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
-        setOffline()
-
-        controller.connect()
-        await { controller.ready.value }
-
-        assertTrue(handle.items.isEmpty())
-        assertFalse(handle.operations.contains("prepare"))
-    }
-
-    @Test
-    fun togglingPlayOnARestoredQueuePlaysThePreparedWindow() {
+    fun togglingPlayOnARestoredQueuePreparesBeforePlaying() {
         seedAlbum(5, sourceId = 1)
         runBlocking { queues.replace(listOf(queues.albumEntry(1, "al1"))) }
 
         controller.connect()
-        await { handle.operations.contains("prepare") }
+        await { handle.items.isNotEmpty() }
         handle.operations.clear()
 
         controller.togglePlayPause()
         await { handle.operations.contains("play") }
 
-        assertEquals(listOf("play"), handle.operations)
+        assertEquals(listOf("prepare", "play"), handle.operations)
     }
 
     @Test
