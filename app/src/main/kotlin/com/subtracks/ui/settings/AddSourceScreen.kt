@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
 import com.subtracks.ui.components.DismissOnRequest
+import com.subtracks.ui.components.rememberLocalNetworkGate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -62,6 +63,7 @@ fun AddSourceRoute(
     viewModel: AddSourceViewModel = koinViewModel(key = sourceId?.toString() ?: "new") { parametersOf(sourceId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val localNetworkGate = rememberLocalNetworkGate()
     AddSourceScreen(
         state = state,
         onNameChange = viewModel::setName,
@@ -69,8 +71,20 @@ fun AddSourceRoute(
         onUsernameChange = viewModel::setUsername,
         onPasswordChange = viewModel::setPassword,
         onTokenAuthChange = viewModel::setTokenAuth,
-        onTest = viewModel::testConnection,
-        onSave = { viewModel.save(onSaved) },
+        onTest = {
+            localNetworkGate.run(
+                address = state.address,
+                onGranted = viewModel::testConnection,
+                onDenied = viewModel::localNetworkPermissionDenied,
+            )
+        },
+        onSave = {
+            localNetworkGate.run(
+                address = state.address,
+                onGranted = { viewModel.save(onSaved) },
+                onDenied = { viewModel.save(onSaved) },
+            )
+        },
         onDelete = { viewModel.delete(onSaved) },
         onBack = onBack,
         dismissals = dismissals,

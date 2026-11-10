@@ -289,6 +289,10 @@
     <string name="delete_server_body">%1$s and its downloaded songs will be removed from this device.</string>
     <string name="connection_ok">Connection OK</string>
     <string name="connection_token_fallback">Server does not support token auth; using the password instead</string>
+    <string name="local_network_permission_title">Allow local network access</string>
+    <string name="local_network_permission_body">Android blocks apps from reaching devices on your local network until you allow it. Your server is on this network, so Subtracks needs the Nearby devices permission to sync and play. Allow it on the next prompt.</string>
+    <string name="local_network_permission_continue">Continue</string>
+    <string name="local_network_permission_denied">Local network access is blocked. Allow Nearby devices for Subtracks in Android settings to reach this server.</string>
     <string name="connection_failed">Failed: %1$s</string>
     <string name="save_failed">Could not save: %1$s</string>
     <string name="active_server_delete_error">The active server can\'t be deleted; switch to another server first</string>

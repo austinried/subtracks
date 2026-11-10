@@ -12,6 +12,7 @@ import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.net.normalizeServerAddress
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.source.MusicSource
@@ -209,7 +210,7 @@ class SourceRepository(
             dao.insertSource(
                 Source(
                     name = name.trim(),
-                    address = normalizeAddress(address),
+                    address = normalizeServerAddress(address),
                     isActive = false,
                     createdAt = System.currentTimeMillis(),
                 ),
@@ -238,7 +239,7 @@ class SourceRepository(
     ) {
         val dao = db.sourcesDao()
         if (dao.sourceOnce(id) == null) return
-        dao.updateSourceDetails(id, name.trim(), normalizeAddress(address))
+        dao.updateSourceDetails(id, name.trim(), normalizeServerAddress(address))
         dao.upsertSubsonicSource(
             SubsonicSource(
                 sourceId = id,
@@ -322,22 +323,11 @@ class SourceRepository(
         useTokenAuth: Boolean,
         onTokenAuthUnsupported: () -> Unit = {},
     ) = SubsonicClient(
-        baseUrl = normalizeAddress(address).toHttpUrl(),
+        baseUrl = normalizeServerAddress(address).toHttpUrl(),
         username = username,
         password = password,
         useTokenAuth = useTokenAuth,
         http = http,
         onTokenAuthUnsupported = onTokenAuthUnsupported,
     )
-
-    private fun normalizeAddress(address: String): String {
-        val trimmed = address.trim()
-        val withScheme =
-            if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-                trimmed
-            } else {
-                "http://$trimmed"
-            }
-        return withScheme.trimEnd('/') + "/"
-    }
 }

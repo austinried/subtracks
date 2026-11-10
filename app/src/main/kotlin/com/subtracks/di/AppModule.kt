@@ -14,6 +14,7 @@ import com.subtracks.data.download.DownloadEngine
 import com.subtracks.data.download.DownloadNotifier
 import com.subtracks.data.download.OkHttpArtworkFetcher
 import com.subtracks.data.download.SystemDownloadEngine
+import com.subtracks.data.net.LocalNetworkAccess
 import com.subtracks.data.net.networkAvailable
 import com.subtracks.data.net.networkMode
 import com.subtracks.data.prefs.UserPreferences
@@ -70,6 +71,7 @@ fun appModule(
     single { createAndroidDatabase(context) }
     single { http }
     single { createUserPreferences(context) }
+    single { LocalNetworkAccess(context.applicationContext) }
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single(named("io")) { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
     single(named("playback")) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }

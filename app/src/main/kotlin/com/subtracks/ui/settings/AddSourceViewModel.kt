@@ -112,6 +112,12 @@ class AddSourceViewModel(
         }
     }
 
+    fun localNetworkPermissionDenied() {
+        _state.update {
+            it.copy(message = resources.getString(R.string.local_network_permission_denied), isError = true)
+        }
+    }
+
     fun save(onSaved: () -> Unit) {
         val validated = _state.value.validated()
         if (validated.nameError || validated.addressError) {

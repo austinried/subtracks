@@ -76,6 +76,7 @@ import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PlaylistInfoDialog
 import com.subtracks.ui.components.SongInfoDialog
+import com.subtracks.ui.components.rememberLocalNetworkGate
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.home.HomeListRequest
@@ -110,6 +111,12 @@ class RootViewModel(
         sourceRepository
             .activeSourceId()
             .map { it != null }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val serverAddress =
+        sourceRepository
+            .activeConfig()
+            .map { it?.address }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }
 
@@ -193,6 +200,11 @@ internal fun focusPops(
 
 @Composable
 fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
+    val localNetworkGate = rememberLocalNetworkGate()
+    val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
+    LaunchedEffect(serverAddress) {
+        localNetworkGate.run(address = serverAddress, onGranted = {})
+    }
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
         null -> {
             LoadingState()
