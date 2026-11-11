@@ -65,23 +65,33 @@ fun AddSourceRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
     val localNetworkGate = rememberLocalNetworkGate()
+    var gatedBusy by remember { mutableStateOf(false) }
 
     fun runGated(
         onGranted: () -> Unit,
         onDenied: () -> Unit = onGranted,
     ) {
+        if (gatedBusy) return
+        gatedBusy = true
         if (offline) {
+            gatedBusy = false
             onGranted()
         } else {
             localNetworkGate.run(
                 address = state.address,
-                onGranted = onGranted,
-                onDenied = onDenied,
+                onGranted = {
+                    gatedBusy = false
+                    onGranted()
+                },
+                onDenied = {
+                    gatedBusy = false
+                    onDenied()
+                },
             )
         }
     }
     AddSourceScreen(
-        state = state,
+        state = if (gatedBusy) state.copy(busy = true) else state,
         onNameChange = viewModel::setName,
         onAddressChange = viewModel::setAddress,
         onUsernameChange = viewModel::setUsername,

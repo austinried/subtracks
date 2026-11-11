@@ -25,6 +25,7 @@ import com.subtracks.R
 import com.subtracks.data.net.LOCAL_NETWORK_PERMISSION
 import com.subtracks.data.net.LocalNetworkAccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -32,7 +33,11 @@ class LocalNetworkGate internal constructor(
     private val scope: CoroutineScope,
     private val checker: LocalNetworkAccess,
     private val requestPermission: (address: String, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit,
+    private val clearPrompt: () -> Unit,
 ) {
+    private var generation = 0
+    private var check: Job? = null
+
     fun run(
         address: String?,
         onGranted: () -> Unit,
@@ -40,17 +45,29 @@ class LocalNetworkGate internal constructor(
         onNotNeeded: () -> Unit = onGranted,
         automatic: Boolean = false,
     ) {
+        cancel()
         if (address == null) {
             onNotNeeded()
             return
         }
-        scope.launch {
-            if (!checker.requiresPermission(address) || (automatic && checker.wasDenied(address))) {
-                onNotNeeded()
-            } else {
-                requestPermission(address, onGranted, onDenied)
+        val current = generation
+        check =
+            scope.launch {
+                val required = runCatching { checker.requiresPermission(address) }.getOrDefault(false)
+                if (current != generation) return@launch
+                if (required && !(automatic && checker.wasDenied(address))) {
+                    requestPermission(address, onGranted, onDenied)
+                } else {
+                    onNotNeeded()
+                }
             }
-        }
+    }
+
+    fun cancel() {
+        generation++
+        check?.cancel()
+        check = null
+        clearPrompt()
     }
 }
 
@@ -66,34 +83,39 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
     val scope = rememberCoroutineScope()
     var pending by remember { mutableStateOf<PendingRequest?>(null) }
     var awaitingSystemPrompt by remember { mutableStateOf(false) }
+
+    fun deny(request: PendingRequest) {
+        pending = null
+        checker.markDenied(request.address)
+        request.onDenied()
+    }
+
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             val request = pending
             pending = null
             awaitingSystemPrompt = false
             if (request != null) {
-                if (granted) {
-                    request.onGranted()
-                } else {
-                    checker.markDenied(request.address)
-                    request.onDenied()
-                }
+                if (granted) request.onGranted() else deny(request)
             }
         }
 
     val gate =
-        LocalNetworkGate(scope, checker) { address, onGranted, onDenied ->
-            if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
-        }
+        LocalNetworkGate(
+            scope = scope,
+            checker = checker,
+            requestPermission = { address, onGranted, onDenied ->
+                if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
+            },
+            clearPrompt = {
+                if (!awaitingSystemPrompt) pending = null
+            },
+        )
 
     val request = pending
     if (request != null && !awaitingSystemPrompt) {
         AlertDialog(
-            onDismissRequest = {
-                pending = null
-                checker.markDenied(request.address)
-                request.onDenied()
-            },
+            onDismissRequest = { deny(request) },
             title = { Text(stringResource(R.string.local_network_permission_title)) },
             text = { Text(stringResource(R.string.local_network_permission_body)) },
             confirmButton = {
@@ -108,11 +130,7 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
             },
             dismissButton = {
                 TextButton(
-                    onClick = {
-                        pending = null
-                        checker.markDenied(request.address)
-                        request.onDenied()
-                    },
+                    onClick = { deny(request) },
                 ) {
                     Text(stringResource(R.string.actions_cancel))
                 }
@@ -129,28 +147,29 @@ internal fun rememberNetworkRevision(): Int {
     DisposableEffect(context) {
         val manager = context.getSystemService(ConnectivityManager::class.java)
         val mainExecutor = ContextCompat.getMainExecutor(context)
+        val notifyChanged = { mainExecutor.execute { revision++ } }
         val callback =
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    mainExecutor.execute { revision++ }
+                    notifyChanged()
                 }
 
                 override fun onLost(network: Network) {
-                    mainExecutor.execute { revision++ }
+                    notifyChanged()
                 }
 
                 override fun onLinkPropertiesChanged(
                     network: Network,
                     linkProperties: LinkProperties,
                 ) {
-                    mainExecutor.execute { revision++ }
+                    notifyChanged()
                 }
 
                 override fun onCapabilitiesChanged(
                     network: Network,
                     networkCapabilities: NetworkCapabilities,
                 ) {
-                    mainExecutor.execute { revision++ }
+                    notifyChanged()
                 }
             }
         runCatching { manager?.registerNetworkCallback(NetworkRequest.Builder().build(), callback) }

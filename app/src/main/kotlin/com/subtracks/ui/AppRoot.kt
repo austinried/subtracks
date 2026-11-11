@@ -211,7 +211,10 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     val offline by root.offline.collectAsStateWithLifecycle()
     val networkRevision = rememberNetworkRevision()
     LaunchedEffect(serverAddress, networkRevision, offline) {
-        if (offline) return@LaunchedEffect
+        if (offline) {
+            localNetworkGate.cancel()
+            return@LaunchedEffect
+        }
         localNetworkGate.run(
             address = serverAddress,
             onGranted = {

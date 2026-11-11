@@ -26,9 +26,9 @@ class LocalNetworkAccess(
         if (Build.VERSION.SDK_INT < LOCAL_NETWORK_PERMISSION_SDK) return false
         if (granted()) return false
         val host = serverHost(address) ?: return false
-        if (isLocalHostname(host)) return true
         val linkAddresses = currentLinkAddresses()
         if (linkAddresses.isEmpty()) return false
+        if (isLocalHostname(host)) return true
         return withContext(Dispatchers.IO) {
             val resolved = runCatching { InetAddress.getAllByName(host).toList() }.getOrDefault(emptyList())
             resolved.any { candidate -> linkAddresses.any { it.contains(candidate) } }
