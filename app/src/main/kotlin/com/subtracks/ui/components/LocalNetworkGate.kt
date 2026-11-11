@@ -24,8 +24,10 @@ import androidx.core.content.ContextCompat
 import com.subtracks.R
 import com.subtracks.data.net.LOCAL_NETWORK_PERMISSION
 import com.subtracks.data.net.LocalNetworkAccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -53,8 +55,16 @@ class LocalNetworkGate internal constructor(
         val current = generation
         check =
             scope.launch {
-                val required = runCatching { checker.requiresPermission(address) }.getOrDefault(false)
+                val required =
+                    try {
+                        checker.requiresPermission(address)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Exception) {
+                        false
+                    }
                 if (current != generation) return@launch
+                ensureActive()
                 if (required && !(automatic && checker.wasDenied(address))) {
                     requestPermission(address, onGranted, onDenied)
                 } else {
@@ -101,16 +111,18 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
         }
 
     val gate =
-        LocalNetworkGate(
-            scope = scope,
-            checker = checker,
-            requestPermission = { address, onGranted, onDenied ->
-                if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
-            },
-            clearPrompt = {
-                if (!awaitingSystemPrompt) pending = null
-            },
-        )
+        remember(scope, checker) {
+            LocalNetworkGate(
+                scope = scope,
+                checker = checker,
+                requestPermission = { address, onGranted, onDenied ->
+                    if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
+                },
+                clearPrompt = {
+                    if (!awaitingSystemPrompt) pending = null
+                },
+            )
+        }
 
     val request = pending
     if (request != null && !awaitingSystemPrompt) {

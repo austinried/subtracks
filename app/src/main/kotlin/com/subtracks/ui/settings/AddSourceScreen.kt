@@ -64,6 +64,7 @@ fun AddSourceRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val offlineLoaded by viewModel.offlineLoaded.collectAsStateWithLifecycle()
     val localNetworkGate = rememberLocalNetworkGate()
     var gatedBusy by remember { mutableStateOf(false) }
 
@@ -73,20 +74,20 @@ fun AddSourceRoute(
     ) {
         if (gatedBusy) return
         gatedBusy = true
-        if (offline) {
+        val address = state.address
+
+        fun finish(action: () -> Unit) {
             gatedBusy = false
-            onGranted()
+            if (viewModel.state.value.address == address) action()
+        }
+
+        if (!offlineLoaded || offline) {
+            finish(onGranted)
         } else {
             localNetworkGate.run(
-                address = state.address,
-                onGranted = {
-                    gatedBusy = false
-                    onGranted()
-                },
-                onDenied = {
-                    gatedBusy = false
-                    onDenied()
-                },
+                address = address,
+                onGranted = { finish(onGranted) },
+                onDenied = { finish(onDenied) },
             )
         }
     }

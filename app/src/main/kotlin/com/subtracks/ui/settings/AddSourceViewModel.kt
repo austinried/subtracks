@@ -49,6 +49,8 @@ class AddSourceViewModel(
 
     val offline: StateFlow<Boolean> = sourceRepository.offline
 
+    val offlineLoaded: StateFlow<Boolean> = sourceRepository.offlineLoaded
+
     init {
         sourceId?.let { id ->
             viewModelScope.launch {

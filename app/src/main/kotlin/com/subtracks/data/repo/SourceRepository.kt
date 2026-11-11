@@ -71,6 +71,9 @@ class SourceRepository(
     private val _offline = MutableStateFlow(false)
     val offline: StateFlow<Boolean> = _offline
 
+    private val _offlineLoaded = MutableStateFlow(false)
+    val offlineLoaded: StateFlow<Boolean> = _offlineLoaded
+
     private val _activeSource = MutableStateFlow<Long?>(null)
     val activeSource: StateFlow<Long?> = _activeSource
 
@@ -95,6 +98,7 @@ class SourceRepository(
             // Read the persisted flag before the source config can build a source or probe it, so a
             // cold start with offline on never touches the network.
             _offline.value = prefs.offlineMode().first()
+            _offlineLoaded.value = true
             var lastMode: NetworkMode? = null
             combine(
                 db.sourcesDao().activeSubsonicConfig(),

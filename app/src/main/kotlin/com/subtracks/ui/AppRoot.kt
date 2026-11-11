@@ -123,6 +123,8 @@ class RootViewModel(
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val offline = sourceRepository.offline
+
+    val offlineLoaded = sourceRepository.offlineLoaded
 }
 
 private const val NAVIGATION_DURATION_MS = 260
@@ -209,17 +211,23 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     val syncManager = koinInject<SyncManager>()
     val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
     val offline by root.offline.collectAsStateWithLifecycle()
+    val offlineLoaded by root.offlineLoaded.collectAsStateWithLifecycle()
     val networkRevision = rememberNetworkRevision()
-    LaunchedEffect(serverAddress, networkRevision, offline) {
+    LaunchedEffect(serverAddress, networkRevision, offline, offlineLoaded) {
+        if (!offlineLoaded) return@LaunchedEffect
         if (offline) {
             localNetworkGate.cancel()
             return@LaunchedEffect
         }
+        val statusBeforePrompt = syncManager.status.value
         localNetworkGate.run(
             address = serverAddress,
             onGranted = {
                 val status = syncManager.status.value
-                if (status is SyncStatus.Running || status is SyncStatus.Failed) syncManager.requestSync()
+                val raced =
+                    status is SyncStatus.Running ||
+                        (status is SyncStatus.Failed && statusBeforePrompt !is SyncStatus.Failed)
+                if (raced) syncManager.requestSync()
             },
             onNotNeeded = {},
             automatic = true,
