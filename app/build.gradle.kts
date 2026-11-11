@@ -91,6 +91,11 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all {
+                // Robolectric's SDK 37 ApplicationSharedMemory reaches into jdk.internal.access via
+                // its FileDescriptor interceptor, which JDK 17+ does not export by default.
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
         }
     }
 

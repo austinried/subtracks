@@ -33,7 +33,8 @@ import org.koin.compose.koinInject
 
 class LocalNetworkGate internal constructor(
     private val scope: CoroutineScope,
-    private val checker: LocalNetworkAccess,
+    private val requiresPermission: suspend (String) -> Boolean,
+    private val wasDenied: (String) -> Boolean,
     private val requestPermission: (address: String, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit,
     private val clearPrompt: () -> Unit,
 ) {
@@ -57,7 +58,7 @@ class LocalNetworkGate internal constructor(
             scope.launch {
                 val required =
                     try {
-                        checker.requiresPermission(address)
+                        requiresPermission(address)
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (_: Exception) {
@@ -65,7 +66,7 @@ class LocalNetworkGate internal constructor(
                     }
                 if (current != generation) return@launch
                 ensureActive()
-                if (required && !(automatic && checker.wasDenied(address))) {
+                if (required && !(automatic && wasDenied(address))) {
                     requestPermission(address, onGranted, onDenied)
                 } else {
                     onNotNeeded()
@@ -114,7 +115,8 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
         remember(scope, checker) {
             LocalNetworkGate(
                 scope = scope,
-                checker = checker,
+                requiresPermission = checker::requiresPermission,
+                wasDenied = checker::wasDenied,
                 requestPermission = { address, onGranted, onDenied ->
                     if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
                 },
