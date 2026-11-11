@@ -67,6 +67,7 @@ import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.sync.SyncManager
+import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.AlbumInfoDialog
 import com.subtracks.ui.components.ArtistChooserSheet
@@ -120,6 +121,8 @@ class RootViewModel(
             .activeConfig()
             .map { it?.address }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val offline = sourceRepository.offline
 }
 
 private const val NAVIGATION_DURATION_MS = 260
@@ -205,11 +208,16 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     val localNetworkGate = rememberLocalNetworkGate()
     val syncManager = koinInject<SyncManager>()
     val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
+    val offline by root.offline.collectAsStateWithLifecycle()
     val networkRevision = rememberNetworkRevision()
-    LaunchedEffect(serverAddress, networkRevision) {
+    LaunchedEffect(serverAddress, networkRevision, offline) {
+        if (offline) return@LaunchedEffect
         localNetworkGate.run(
             address = serverAddress,
-            onGranted = { syncManager.requestSync() },
+            onGranted = {
+                val status = syncManager.status.value
+                if (status is SyncStatus.Running || status is SyncStatus.Failed) syncManager.requestSync()
+            },
             onNotNeeded = {},
             automatic = true,
         )

@@ -47,6 +47,8 @@ class AddSourceViewModel(
     private val _state = MutableStateFlow(AddSourceState(isEditing = sourceId != null))
     val state: StateFlow<AddSourceState> = _state
 
+    val offline: StateFlow<Boolean> = sourceRepository.offline
+
     init {
         sourceId?.let { id ->
             viewModelScope.launch {

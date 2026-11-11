@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.IpPrefix
 import android.net.LinkAddress
+import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
@@ -19,7 +20,7 @@ private const val LOCAL_NETWORK_PERMISSION_SDK = 37
 class LocalNetworkAccess(
     private val context: Context,
 ) {
-    private val promptedAddresses = mutableSetOf<String>()
+    private val deniedAddresses = mutableSetOf<String>()
 
     suspend fun requiresPermission(address: String): Boolean {
         if (Build.VERSION.SDK_INT < LOCAL_NETWORK_PERMISSION_SDK) return false
@@ -35,12 +36,12 @@ class LocalNetworkAccess(
     }
 
     @Synchronized
-    fun markPrompted(address: String) {
-        promptedAddresses += normalizeServerAddress(address)
+    fun markDenied(address: String) {
+        deniedAddresses += normalizeServerAddress(address)
     }
 
     @Synchronized
-    fun wasPrompted(address: String): Boolean = normalizeServerAddress(address) in promptedAddresses
+    fun wasDenied(address: String): Boolean = normalizeServerAddress(address) in deniedAddresses
 
     private fun granted(): Boolean =
         ContextCompat.checkSelfPermission(context, LOCAL_NETWORK_PERMISSION) == PackageManager.PERMISSION_GRANTED
@@ -48,11 +49,16 @@ class LocalNetworkAccess(
     @Suppress("DEPRECATION")
     private fun currentLinkAddresses(): List<LinkAddress> {
         val manager = context.getSystemService(ConnectivityManager::class.java) ?: return emptyList()
-        return manager.allNetworks.flatMap { network ->
-            manager.getLinkProperties(network)?.linkAddresses.orEmpty()
-        }
+        return manager.allNetworks
+            .filter { network -> manager.getNetworkCapabilities(network)?.isLocalNetworkInterface == true }
+            .flatMap { network -> manager.getLinkProperties(network)?.linkAddresses.orEmpty() }
     }
 }
+
+private val NetworkCapabilities.isLocalNetworkInterface: Boolean
+    get() =
+        !hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+            !hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
 
 internal fun isLocalHostname(host: String): Boolean {
     val normalized = host.lowercase().trimEnd('.')

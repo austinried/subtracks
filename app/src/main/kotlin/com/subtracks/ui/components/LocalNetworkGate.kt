@@ -3,6 +3,8 @@ package com.subtracks.ui.components
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
@@ -43,7 +45,7 @@ class LocalNetworkGate internal constructor(
             return
         }
         scope.launch {
-            if (!checker.requiresPermission(address) || (automatic && checker.wasPrompted(address))) {
+            if (!checker.requiresPermission(address) || (automatic && checker.wasDenied(address))) {
                 onNotNeeded()
             } else {
                 requestPermission(address, onGranted, onDenied)
@@ -53,6 +55,7 @@ class LocalNetworkGate internal constructor(
 }
 
 private class PendingRequest(
+    val address: String,
     val onGranted: () -> Unit,
     val onDenied: () -> Unit,
 )
@@ -69,16 +72,18 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
             pending = null
             awaitingSystemPrompt = false
             if (request != null) {
-                if (granted) request.onGranted() else request.onDenied()
+                if (granted) {
+                    request.onGranted()
+                } else {
+                    checker.markDenied(request.address)
+                    request.onDenied()
+                }
             }
         }
 
     val gate =
         LocalNetworkGate(scope, checker) { address, onGranted, onDenied ->
-            if (pending == null) {
-                checker.markPrompted(address)
-                pending = PendingRequest(onGranted, onDenied)
-            }
+            if (pending == null) pending = PendingRequest(address, onGranted, onDenied)
         }
 
     val request = pending
@@ -86,6 +91,7 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
         AlertDialog(
             onDismissRequest = {
                 pending = null
+                checker.markDenied(request.address)
                 request.onDenied()
             },
             title = { Text(stringResource(R.string.local_network_permission_title)) },
@@ -104,6 +110,7 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
                 TextButton(
                     onClick = {
                         pending = null
+                        checker.markDenied(request.address)
                         request.onDenied()
                     },
                 ) {
@@ -138,8 +145,15 @@ internal fun rememberNetworkRevision(): Int {
                 ) {
                     mainExecutor.execute { revision++ }
                 }
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    networkCapabilities: NetworkCapabilities,
+                ) {
+                    mainExecutor.execute { revision++ }
+                }
             }
-        runCatching { manager?.registerDefaultNetworkCallback(callback) }
+        runCatching { manager?.registerNetworkCallback(NetworkRequest.Builder().build(), callback) }
         onDispose {
             if (manager != null) runCatching { manager.unregisterNetworkCallback(callback) }
         }

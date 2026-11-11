@@ -63,7 +63,23 @@ fun AddSourceRoute(
     viewModel: AddSourceViewModel = koinViewModel(key = sourceId?.toString() ?: "new") { parametersOf(sourceId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
     val localNetworkGate = rememberLocalNetworkGate()
+
+    fun runGated(
+        onGranted: () -> Unit,
+        onDenied: () -> Unit = onGranted,
+    ) {
+        if (offline) {
+            onGranted()
+        } else {
+            localNetworkGate.run(
+                address = state.address,
+                onGranted = onGranted,
+                onDenied = onDenied,
+            )
+        }
+    }
     AddSourceScreen(
         state = state,
         onNameChange = viewModel::setName,
@@ -71,20 +87,8 @@ fun AddSourceRoute(
         onUsernameChange = viewModel::setUsername,
         onPasswordChange = viewModel::setPassword,
         onTokenAuthChange = viewModel::setTokenAuth,
-        onTest = {
-            localNetworkGate.run(
-                address = state.address,
-                onGranted = viewModel::testConnection,
-                onDenied = viewModel::localNetworkPermissionDenied,
-            )
-        },
-        onSave = {
-            localNetworkGate.run(
-                address = state.address,
-                onGranted = { viewModel.save(onSaved) },
-                onDenied = { viewModel.save(onSaved) },
-            )
-        },
+        onTest = { runGated(viewModel::testConnection, viewModel::localNetworkPermissionDenied) },
+        onSave = { runGated({ viewModel.save(onSaved) }) },
         onDelete = { viewModel.delete(onSaved) },
         onBack = onBack,
         dismissals = dismissals,
