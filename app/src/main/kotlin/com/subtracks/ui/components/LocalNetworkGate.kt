@@ -1,17 +1,24 @@
 package com.subtracks.ui.components
 
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import com.subtracks.R
 import com.subtracks.data.net.LOCAL_NETWORK_PERMISSION
 import com.subtracks.data.net.LocalNetworkAccess
@@ -22,22 +29,24 @@ import org.koin.compose.koinInject
 class LocalNetworkGate internal constructor(
     private val scope: CoroutineScope,
     private val checker: LocalNetworkAccess,
-    private val requestPermission: (onGranted: () -> Unit, onDenied: () -> Unit) -> Unit,
+    private val requestPermission: (address: String, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit,
 ) {
     fun run(
         address: String?,
         onGranted: () -> Unit,
         onDenied: () -> Unit = {},
+        onNotNeeded: () -> Unit = onGranted,
+        automatic: Boolean = false,
     ) {
         if (address == null) {
-            onGranted()
+            onNotNeeded()
             return
         }
         scope.launch {
-            if (checker.requiresPermission(address)) {
-                requestPermission(onGranted, onDenied)
+            if (!checker.requiresPermission(address) || (automatic && checker.wasPrompted(address))) {
+                onNotNeeded()
             } else {
-                onGranted()
+                requestPermission(address, onGranted, onDenied)
             }
         }
     }
@@ -65,8 +74,11 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
         }
 
     val gate =
-        LocalNetworkGate(scope, checker) { onGranted, onDenied ->
-            pending = PendingRequest(onGranted, onDenied)
+        LocalNetworkGate(scope, checker) { address, onGranted, onDenied ->
+            if (pending == null) {
+                checker.markPrompted(address)
+                pending = PendingRequest(onGranted, onDenied)
+            }
         }
 
     val request = pending
@@ -101,4 +113,36 @@ fun rememberLocalNetworkGate(): LocalNetworkGate {
         )
     }
     return gate
+}
+
+@Composable
+internal fun rememberNetworkRevision(): Int {
+    val context = LocalContext.current
+    var revision by remember { mutableIntStateOf(0) }
+    DisposableEffect(context) {
+        val manager = context.getSystemService(ConnectivityManager::class.java)
+        val mainExecutor = ContextCompat.getMainExecutor(context)
+        val callback =
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    mainExecutor.execute { revision++ }
+                }
+
+                override fun onLost(network: Network) {
+                    mainExecutor.execute { revision++ }
+                }
+
+                override fun onLinkPropertiesChanged(
+                    network: Network,
+                    linkProperties: LinkProperties,
+                ) {
+                    mainExecutor.execute { revision++ }
+                }
+            }
+        runCatching { manager?.registerDefaultNetworkCallback(callback) }
+        onDispose {
+            if (manager != null) runCatching { manager.unregisterNetworkCallback(callback) }
+        }
+    }
+    return revision
 }

@@ -66,6 +66,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.sync.SyncManager
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.AlbumInfoDialog
 import com.subtracks.ui.components.ArtistChooserSheet
@@ -77,6 +78,7 @@ import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PlaylistInfoDialog
 import com.subtracks.ui.components.SongInfoDialog
 import com.subtracks.ui.components.rememberLocalNetworkGate
+import com.subtracks.ui.components.rememberNetworkRevision
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.home.HomeListRequest
@@ -201,9 +203,16 @@ internal fun focusPops(
 @Composable
 fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     val localNetworkGate = rememberLocalNetworkGate()
+    val syncManager = koinInject<SyncManager>()
     val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
-    LaunchedEffect(serverAddress) {
-        localNetworkGate.run(address = serverAddress, onGranted = {})
+    val networkRevision = rememberNetworkRevision()
+    LaunchedEffect(serverAddress, networkRevision) {
+        localNetworkGate.run(
+            address = serverAddress,
+            onGranted = { syncManager.requestSync() },
+            onNotNeeded = {},
+            automatic = true,
+        )
     }
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
         null -> {
