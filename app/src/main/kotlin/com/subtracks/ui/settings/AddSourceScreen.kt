@@ -72,7 +72,7 @@ fun AddSourceRoute(
         onGranted: () -> Unit,
         onDenied: () -> Unit = onGranted,
     ) {
-        if (gatedBusy) return
+        if (!offlineLoaded || gatedBusy) return
         gatedBusy = true
         val address = state.address
 
@@ -81,7 +81,7 @@ fun AddSourceRoute(
             if (viewModel.state.value.address == address) action()
         }
 
-        if (!offlineLoaded || offline) {
+        if (offline) {
             finish(onGranted)
         } else {
             localNetworkGate.run(
@@ -92,7 +92,7 @@ fun AddSourceRoute(
         }
     }
     AddSourceScreen(
-        state = if (gatedBusy) state.copy(busy = true) else state,
+        state = if (gatedBusy || !offlineLoaded) state.copy(busy = true) else state,
         onNameChange = viewModel::setName,
         onAddressChange = viewModel::setAddress,
         onUsernameChange = viewModel::setUsername,

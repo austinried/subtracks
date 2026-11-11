@@ -48,6 +48,12 @@ class SyncManager(
     private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val status: StateFlow<SyncStatus> = _status
 
+    private val _runningSource = MutableStateFlow<Long?>(null)
+    val runningSource: StateFlow<Long?> = _runningSource
+
+    private val _failedSource = MutableStateFlow<Long?>(null)
+    val failedSource: StateFlow<Long?> = _failedSource
+
     init {
         scope.launch {
             for (silent in requests) {
@@ -82,9 +88,11 @@ class SyncManager(
         runCatching { preferences.setLastSyncAt(System.currentTimeMillis()) }
             .onFailure { Log.w("sync", "could not record the sync attempt", it) }
         val startedAt = System.nanoTime()
+        val source = sourceRepository.activeMusicSource()
+        _runningSource.value = source?.id
         val result =
             try {
-                val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
+                if (source == null) throw NoServerException()
                 Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
                 val resetPoint = queueRepository.captureResetPoint()
@@ -99,6 +107,7 @@ class SyncManager(
                         "${completed.playlists} playlists, ${completed.playlistSongs} playlist tracks, ${completed.pruned} pruned",
                 )
                 queueRepository.resetChangedOriginsAndClearPendingOrigins(changedOrigins, resetPoint, source.id)
+                _failedSource.value = null
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation
@@ -116,7 +125,10 @@ class SyncManager(
                         }
                     }
                 if (!silent) showMessage(message)
+                _failedSource.value = source?.id
                 SyncStatus.Failed(message)
+            } finally {
+                _runningSource.value = null
             }
         _status.value = result
     }

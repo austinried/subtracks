@@ -26,13 +26,30 @@ class LocalNetworkAccess(
         if (Build.VERSION.SDK_INT < LOCAL_NETWORK_PERMISSION_SDK) return false
         if (granted()) return false
         val host = serverHost(address) ?: return false
-        val linkAddresses = currentLinkAddresses()
-        if (linkAddresses.isEmpty()) return false
-        if (isLocalHostname(host)) return true
         return withContext(Dispatchers.IO) {
+            val linkAddresses = currentLinkAddresses()
+            if (linkAddresses.isEmpty()) return@withContext false
+            if (isLocalHostname(host)) return@withContext true
             val resolved = runCatching { InetAddress.getAllByName(host).toList() }.getOrDefault(emptyList())
-            resolved.any { candidate -> linkAddresses.any { it.contains(candidate) } }
+            if (resolved.isEmpty()) return@withContext false
+            val current = currentLinkAddresses()
+            resolved.any { candidate ->
+                !routedThroughVpn(candidate) && current.any { it.contains(candidate) }
+            }
         }
+    }
+
+    @RequiresApi(LOCAL_NETWORK_PERMISSION_SDK)
+    private fun routedThroughVpn(address: InetAddress): Boolean {
+        val manager = context.getSystemService(ConnectivityManager::class.java) ?: return false
+        val network = manager.activeNetwork ?: return false
+        val capabilities = manager.getNetworkCapabilities(network) ?: return false
+        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return false
+        return manager
+            .getLinkProperties(network)
+            ?.routes
+            .orEmpty()
+            .any { route -> route.destination.contains(address) }
     }
 
     @Synchronized

@@ -122,6 +122,11 @@ class RootViewModel(
             .map { it?.address }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val activeSourceId =
+        sourceRepository
+            .activeSourceId()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     val offline = sourceRepository.offline
 
     val offlineLoaded = sourceRepository.offlineLoaded
@@ -210,23 +215,37 @@ fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
     val localNetworkGate = rememberLocalNetworkGate()
     val syncManager = koinInject<SyncManager>()
     val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
+    val activeSourceId by root.activeSourceId.collectAsStateWithLifecycle()
     val offline by root.offline.collectAsStateWithLifecycle()
     val offlineLoaded by root.offlineLoaded.collectAsStateWithLifecycle()
     val networkRevision = rememberNetworkRevision()
-    LaunchedEffect(serverAddress, networkRevision, offline, offlineLoaded) {
+    LaunchedEffect(serverAddress, activeSourceId, networkRevision, offline, offlineLoaded) {
         if (!offlineLoaded) return@LaunchedEffect
         if (offline) {
             localNetworkGate.cancel()
             return@LaunchedEffect
         }
+        val promptedSourceId = activeSourceId
         val statusBeforePrompt = syncManager.status.value
         localNetworkGate.run(
             address = serverAddress,
             onGranted = {
                 val status = syncManager.status.value
                 val raced =
-                    status is SyncStatus.Running ||
-                        (status is SyncStatus.Failed && statusBeforePrompt !is SyncStatus.Failed)
+                    when (status) {
+                        is SyncStatus.Running -> {
+                            syncManager.runningSource.value == promptedSourceId
+                        }
+
+                        is SyncStatus.Failed -> {
+                            statusBeforePrompt !is SyncStatus.Failed &&
+                                syncManager.failedSource.value == promptedSourceId
+                        }
+
+                        else -> {
+                            false
+                        }
+                    }
                 if (raced) syncManager.requestSync()
             },
             onNotNeeded = {},
