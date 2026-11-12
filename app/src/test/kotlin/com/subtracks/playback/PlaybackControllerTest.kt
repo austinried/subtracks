@@ -25,6 +25,7 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
@@ -42,9 +43,11 @@ import com.subtracks.data.repo.setShuffle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +61,7 @@ import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -66,7 +70,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class PlaybackControllerTest {
@@ -1788,13 +1794,13 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun stateCarriesTheQueueContext() {
+    fun stateCarriesTheQueueOrigin() {
         seedAlbum(3, sourceId = 1)
 
         controller.playAlbum(1, "al1", 0)
         await { controller.state.value.item != null }
 
-        assertEquals(QueueContext(QueueKind.Album, 1, "al1"), controller.state.value.context)
+        assertEquals(QueueOrigin(QueueKind.Album, 1, "al1"), controller.state.value.context)
         assertTrue(controller.state.value.isPlaying)
         assertTrue(controller.state.value.hasNext)
         assertTrue(controller.state.value.hasPrevious)
@@ -2259,6 +2265,24 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun undoingARejectedRemovalKeepsTheShuffledOrder() {
+        seedShuffledQueue(seed = 42L)
+        val orderBefore = resolvedIds()
+        val currentPosition = controller.state.value.position!!
+        val before = runBlocking { queues.snapshot() }
+        val removePosition = (0 until before.size).first { it != currentPosition }
+
+        runBlocking { controller.removeAt(removePosition) }
+        assertEquals(orderBefore, resolvedIds())
+
+        runBlocking { controller.undo() }
+
+        await { controller.state.value.shuffle && resolvedIds() == orderBefore }
+        assertEquals(orderBefore, resolvedIds())
+        assertEquals(currentPosition, controller.state.value.position)
+    }
+
+    @Test
     fun movingContextTracksWhileShuffledIsIgnored() {
         seedAlbum(6, sourceId = 1)
 
@@ -2370,7 +2394,7 @@ class PlaybackControllerTest {
 
         controller.previous()
 
-        assertTrue(handle.operations.contains("seekTo(0)"))
+        await { handle.operations.contains("seekTo(0)") }
         assertEquals(
             "s1",
             controller.state.value.item
@@ -3432,15 +3456,673 @@ class PlaybackControllerTest {
         )
     }
 
+    @Test
+    fun aStaleEndJobCannotMoveAReplacementQueueCursor() {
+        seedAlbum(3, sourceId = 1)
+        seedAlbumTracks("al2", 2)
+        controller.playAlbum(1, "al1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+        runBlocking {
+            queues.replace(listOf(queues.albumEntry(1, "al2")))
+            queues.setCursor(1)
+        }
+        val dispatcherBlocked = CountDownLatch(1)
+        val releaseDispatcher = CountDownLatch(1)
+        controllerScope.launch {
+            dispatcherBlocked.countDown()
+            releaseDispatcher.await()
+        }
+        assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        handle.finish()
+
+        releaseDispatcher.countDown()
+        Thread.sleep(200)
+
+        assertEquals(1L, runBlocking { queues.cursor() })
+    }
+
+    @Test
+    fun anEndJobDoesNotWrapAfterRepeatIsSwitchedOff() {
+        seedAlbum(2, sourceId = 1)
+        controller.playAlbum(1, "al1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
+        val dispatcherBlocked = CountDownLatch(1)
+        val releaseDispatcher = CountDownLatch(1)
+        controllerScope.launch {
+            dispatcherBlocked.countDown()
+            releaseDispatcher.await()
+        }
+        assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        handle.finish()
+        controller.cycleRepeat()
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.Off, controller.state.value.repeat)
+
+        releaseDispatcher.countDown()
+        Thread.sleep(200)
+
+        assertEquals(1L, controller.state.value.position)
+        assertEquals(
+            "s2",
+            controller.state.value.item
+                ?.id,
+        )
+    }
+
+    @Test
+    fun aSourceResetRemapsTheCurrentSongByOrigin() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 3L }
+        assertEquals(listOf("s0", "s1", "s2", "s3", "s4", "s5"), handle.items.map { it.id })
+    }
+
+    @Test
+    fun aSourceResetLetsTheRemovedCurrentFinishBeforeTheClampedTrack() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+        assertEquals("s3", handle.currentItem?.id)
+        controller.next()
+        await { handle.currentItem?.id == "s4" }
+        assertEquals(2L, controller.state.value.position)
+    }
+
+    @Test
+    fun detachedPlaybackDoesNotPersistOffsetsOntoTheSurvivor() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 2L }
+        handle.positionMs = 42_000L
+
+        controller.seekTo(42_000L)
+        Thread.sleep(100)
+        assertEquals(0L, runBlocking { queues.cursorPositionMs() })
+        handle.positionMs = 43_000L
+        Thread.sleep(700)
+        assertEquals(0L, runBlocking { queues.cursorPositionMs() })
+        controller.togglePlayPause()
+        await { !controller.state.value.isPlaying }
+        assertEquals(0L, runBlocking { queues.cursorPositionMs() })
+
+        val restoredHandle = FakePlayerHandle()
+        val restored = controllerOn(dispatcher, restoredHandle)
+        restored.connect()
+        await {
+            restored.state.value.item
+                ?.id == "s4"
+        }
+        assertEquals(0L, restored.positionMs.value)
+    }
+
+    @Test
+    fun removingTheCurrentlyPlayingSecondOccurrenceDetachesIt() {
+        seedPlaylist(3)
+        setPlaylist("s1", "s2", "s1")
+        controller.playPlaylist(1, "p1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.position == 0L }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.playAt(2)
+        await { handle.currentItem?.id == "s1" && controller.state.value.position == 2L }
+        setPlaylist("s1", "s2")
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        assertEquals(1L, controller.state.value.position)
+    }
+
+    @Test
+    fun repeatedResetsKeepTheSecondDuplicateContextEntry() {
+        seedPlaylist(2)
+        setPlaylist("s1", "s2")
+        runBlocking { queues.replace(listOf(queues.playlistEntry(1, "p1"), queues.playlistEntry(1, "p1"))) }
+        controller.connect()
+        await { controller.state.value.item != null }
+        controller.playAt(3)
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 3L }
+
+        repeat(2) {
+            val point = runBlocking { queues.captureResetPoint() }
+            runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+            assertEquals(3L, controller.state.value.position)
+        }
+
+        assertEquals(3L, controller.state.value.position)
+    }
+
+    @Test
+    fun repeatedResetsKeepTheSecondDuplicateUpNextEntry() {
+        seedAlbum(3, sourceId = 1)
+        setPlaylist("s1", "s2")
+        controller.playAlbum(1, "al1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Playlist, "p1")
+        controller.addToQueue(1, QueueKind.Playlist, "p1")
+        await { runBlocking { queues.snapshot().upNextSize } == 4L }
+        controller.playAt(4)
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 4L }
+
+        repeat(2) {
+            val point = runBlocking { queues.captureResetPoint() }
+            runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+            assertEquals(4L, controller.state.value.position)
+        }
+
+        assertEquals(4L, controller.state.value.position)
+    }
+
+    @Test
+    fun aPositionSaveQueuedBeforeResetCannotOverwriteTheSurvivorOffset() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        val initialId =
+            runBlocking {
+                db
+                    .queueDao()
+                    .entries()
+                    .single()
+                    .id
+            }
+        val dispatcherBlocked = CountDownLatch(1)
+        val releaseDispatcher = CountDownLatch(1)
+        controllerScope.launch {
+            dispatcherBlocked.countDown()
+            releaseDispatcher.await()
+        }
+        assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        handle.positionMs = 42_000L
+        controller.seekTo(42_000L)
+        setPlaylist("s1", "s2", "s4", "s5")
+        val reset =
+            repoScope.launch {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            }
+        try {
+            await {
+                runBlocking {
+                    db
+                        .queueDao()
+                        .entries()
+                        .single()
+                        .id != initialId
+                }
+            }
+        } finally {
+            releaseDispatcher.countDown()
+        }
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
+        Thread.sleep(200)
+
+        assertEquals(0L, runBlocking { queues.cursorPositionMs() })
+    }
+
+    @Test
+    fun aResetUsesTheReplacementQueueIdentityForTheSameSongAndPosition() {
+        seedPlaylist(1)
+        controller.playAlbum(1, "al1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.position == 0L }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.playPlaylist(1, "p1", 0)
+        await {
+            handle.currentItem?.id == "s1" && controller.state.value.context
+                ?.kind == QueueKind.Playlist
+        }
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        controller.seekTo(42_000L)
+        Thread.sleep(100)
+
+        assertEquals(42_000L, runBlocking { queues.cursorPositionMs() })
+    }
+
+    private fun seedPlaylist(count: Int) {
+        runBlocking {
+            db.sourcesDao().upsertSource(Source(1, "source 1", "http://localhost:1", true, 1))
+            db.libraryDao().upsertSongs(
+                (1..count).map { track ->
+                    Song(
+                        sourceId = 1,
+                        id = "s$track",
+                        albumId = "al1",
+                        artistId = "ar1",
+                        title = "Song $track",
+                        album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = track.toLong(),
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    )
+                },
+            )
+            db.libraryDao().upsertPlaylistSongs(
+                (1..count).map { PlaylistSong(1, "p1", "s$it", (it - 1).toLong()) },
+            )
+        }
+    }
+
+    private fun setPlaylist(vararg songIds: String) {
+        runBlocking {
+            db.libraryDao().deletePlaylistSongsFrom(1, "p1", 0)
+            db.libraryDao().upsertPlaylistSongs(
+                songIds.mapIndexed { position, songId -> PlaylistSong(1, "p1", songId, position.toLong()) },
+            )
+        }
+    }
+
+    @Test
+    fun anEmptyResetPointStillDetachesTheRemovedPlayerItem() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        runBlocking { controller.removeAt(0) }
+        setPlaylist()
+        runBlocking { queues.invalidateLibraryCache() }
+        val point = runBlocking { queues.captureResetPoint() }
+        assertNull(point.current)
+        setPlaylist("s1", "s2", "s4", "s5")
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        assertEquals(listOf("s3", "s2", "s4", "s5"), handle.items.map { it.id })
+        assertEquals("s3", handle.currentItem?.id)
+        controller.next()
+        await { handle.currentItem?.id == "s2" }
+    }
+
+    @Test
+    fun aSecondResetKeepsTheDetachedTrackAndItsSurvivorPosition() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val firstPoint = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), firstPoint) }
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+        val secondPoint = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s0", "s1", "s2", "s4", "s5")
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), secondPoint) }
+
+        assertEquals("s3", handle.currentItem?.id)
+        controller.next()
+        await { handle.currentItem?.id == "s4" && controller.state.value.position == 3L }
+    }
+
+    @Test
+    fun aResetWithoutAConnectedPlayerRemapsTheSavedCursor() {
+        seedPlaylist(3)
+        seedSong("s0", "al1")
+        runBlocking {
+            queues.replace(listOf(queues.playlistEntry(1, "p1")))
+            queues.removeAt(queues.snapshot(), 0)
+            queues.setCursor(0)
+            queues.setPosition(50_000)
+        }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s0", "s1", "s2", "s3")
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        assertEquals(50_000L, runBlocking { queues.cursorPositionMs() })
+        controller.connect()
+
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 2L }
+    }
+
+    @Test
+    fun aResetFromIoReconcilesOnThePlaybackThread() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        handle.expectedThread = runBlocking { withContext(dispatcher) { Thread.currentThread() } }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            }
+        }
+
+        handle.expectedThread = null
+        assertEquals(listOf("s3", "s4", "s5"), handle.items.map { it.id })
+        assertEquals("s3", handle.currentItem?.id)
+    }
+
+    @Test
+    fun playAtJumpsFromADetachedTrackToTheResetItem() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+
+        controller.playAt(2)
+
+        await { handle.currentItem?.id == "s4" }
+        assertEquals(2L, controller.state.value.position)
+    }
+
+    @Test
+    fun aDetachedTrackSurvivesMediaRefresh() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+        handle.uris = listOf("http://stream/s3")
+
+        controller.refreshMediaItems()
+        Thread.sleep(200)
+
+        assertEquals(listOf("s3", "s4", "s5"), handle.items.map { it.id })
+        assertEquals("s3", handle.currentItem?.id)
+    }
+
+    @Test
+    fun addingUpNextWhileDetachedKeepsTheClampedTrackNext() {
+        seedPlaylist(5)
+        seedSong("x1", "al1")
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+
+        controller.addToQueue(1, QueueKind.Song, "x1")
+
+        await { handle.items.map { it.id } == listOf("s3", "s4", "x1", "s5") }
+        assertEquals("s3", handle.currentItem?.id)
+        controller.next()
+        await { handle.currentItem?.id == "s4" }
+        assertEquals(2L, controller.state.value.position)
+    }
+
+    @Test
+    fun removingATrackWhileDetachedDoesNotRemoveTheClampedPlayerItem() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
+
+        runBlocking { controller.removeAt(3) }
+
+        assertEquals(listOf("s3", "s4"), handle.items.map { it.id })
+        assertEquals("s3", handle.currentItem?.id)
+        controller.next()
+        await { handle.currentItem?.id == "s4" }
+        assertEquals(2L, controller.state.value.position)
+    }
+
+    @Test
+    fun anUpNextTransitionFromBeforeAResetDoesNotConsumeTheNewSnapshot() {
+        seedPlaylist(5)
+        controller.playAlbum(1, "al1", 4)
+        await { handle.currentItem?.id == "s5" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Playlist, "p1")
+        await { runBlocking { queues.snapshot().upNextSize } == 5L }
+        runBlocking {
+            controller.removeAt(5)
+            controller.removeAt(5)
+        }
+        controller.next()
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 5L }
+        val point = runBlocking { queues.captureResetPoint() }
+        val dispatcherBlocked = CountDownLatch(1)
+        val releaseDispatcher = CountDownLatch(1)
+        controllerScope.launch {
+            dispatcherBlocked.countDown()
+            releaseDispatcher.await()
+        }
+        assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        handle.advanceTo(handle.currentIndex + 1)
+        val reset =
+            repoScope.launch {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            }
+        await {
+            runBlocking {
+                db
+                    .queueDao()
+                    .upNextEntries()
+                    .single()
+                    .rangeStart == null
+            }
+        }
+
+        releaseDispatcher.countDown()
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
+        Thread.sleep(200)
+
+        assertEquals(listOf("s1", "s2", "s3", "s4", "s5"), resolvedIds().drop(5))
+        assertEquals("s4", handle.currentItem?.id)
+    }
+
+    @Test
+    fun aResetRemapsAContextTrackThatMovedToUpNext() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        seedSong("x1", "al1")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { queues.snapshot().upNextSize } == 1L }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.next()
+        await { handle.currentItem?.id == "x1" && controller.state.value.position == 2L }
+
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.currentItem?.id == "x1" && controller.state.value.position == 3L }
+    }
+
+    @Test
+    fun aResetRemapsAnUpNextTrackThatMovedToTheContext() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        seedSong("x1", "al1")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { queues.snapshot().upNextSize } == 1L }
+        controller.next()
+        await { handle.currentItem?.id == "x1" && controller.state.value.position == 2L }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.next()
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 2L }
+
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 3L }
+    }
+
+    @Test
+    fun aResetRemapsTheActualCurrentSongWhenItChangedDuringSync() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.next()
+        await { handle.currentItem?.id == "s3" }
+
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 3L }
+    }
+
+    @Test
+    fun aResetPreservesASameSongJumpToADifferentOrigin() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        runBlocking { controller.removeAt(0) }
+        await { controller.state.value.position == 0L }
+        controller.addToQueue(1, QueueKind.Album, "al1")
+        await { runBlocking { queues.snapshot().upNextSize } == 5L }
+        val point = runBlocking { queues.captureResetPoint() }
+        controller.playAt(2)
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 2L }
+
+        setPlaylist("s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 3L }
+    }
+
+    @Test
+    fun aResetDoesNotOverwriteANewerQueueEdit() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        runBlocking { controller.removeAt(0) }
+        val point = runBlocking { queues.captureResetPoint() }
+
+        runBlocking {
+            queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            queues.replace(listOf(queues.songEntry(1, "s5")))
+        }
+
+        await { runBlocking { queues.snapshot().entries.map { it.entry.kind } == listOf(QueueKind.Song) } }
+        assertEquals(listOf(QueueKind.Song), runBlocking { queues.snapshot().entries.map { it.entry.kind } })
+    }
+
+    @Test
+    fun removeAfterRepositoryResetCannotRestoreStaleEntries() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        runBlocking { controller.removeAt(0) }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s3", "s4", "s5")
+
+        runBlocking {
+            val locked = CountDownLatch(1)
+            val release = CountDownLatch(1)
+            val locker =
+                launch(Dispatchers.Default) {
+                    queues.withMutationLock {
+                        locked.countDown()
+                        release.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                    }
+                }
+            assertTrue(locked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+            val reset =
+                async(Dispatchers.Default) {
+                    queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+                }
+            val edit = async(start = CoroutineStart.UNDISPATCHED) { controller.removeAt(1) }
+            release.countDown()
+            reset.await()
+            edit.await()
+            locker.join()
+        }
+
+        assertNull(
+            runBlocking {
+                queues
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart
+            },
+        )
+    }
+
+    @Test
+    fun undoAfterRepositoryResetCannotRestorePreResetEntries() {
+        seedPlaylist(5)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        runBlocking {
+            controller.removeAt(0)
+            controller.removeAt(1)
+        }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s2", "s3", "s4", "s5")
+
+        runBlocking {
+            withContext(dispatcher) {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+                controller.undo()
+            }
+        }
+
+        assertNull(
+            runBlocking {
+                queues
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart
+            },
+        )
+    }
+
+    @Test
+    fun undoIsClearedByASourceReset() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        runBlocking { controller.removeAt(0) }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { runBlocking { queues.snapshot().contextSize == 6L } }
+
+        runBlocking { controller.undo() }
+
+        assertEquals(6L, runBlocking { queues.snapshot().contextSize })
+        assertEquals("s0", runBlocking { queues.itemAt(queues.snapshot(), 0) }?.song?.id)
+    }
+
     private fun markDownloaded(
         sourceId: Long,
         songId: String,
+        downloadedAt: Long = System.nanoTime(),
     ) {
         val file = File(downloadsDir, "$sourceId/$songId")
         val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (System.nanoTime() < deadline) {
             runBlocking {
-                db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed))
+                db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed, downloadedAt = downloadedAt))
                 file.parentFile?.mkdirs()
                 file.writeBytes(byteArrayOf(1))
                 downloads.reconcile()

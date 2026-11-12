@@ -3,6 +3,9 @@ package com.subtracks.playback
 import androidx.media3.common.C
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.data.model.ArtistRef
+import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
+import com.subtracks.data.repo.QueueResetItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -98,6 +101,16 @@ class MediaItemTest {
 
         assertEquals(true, item.albumContext())
         assertEquals(false, queueMediaItem(song, local = null, stream = "http://server/stream?s=s1", transcode = false).albumContext())
+    }
+
+    @Test
+    fun theItemKeepsItsResetIdentity() {
+        val resetItem =
+            QueueResetItem(QueueOrigin(QueueKind.Playlist, 1, "p1"), "s1", 2, upNext = false, entryOccurrence = 1, occurrence = 1)
+
+        val item = queueMediaItem(song.copy(resetItem = resetItem), local = null, stream = "http://server/stream?s=s1", transcode = false)
+
+        assertEquals(resetItem, queueItemFromMediaItem(item).resetItem)
     }
 
     @Test

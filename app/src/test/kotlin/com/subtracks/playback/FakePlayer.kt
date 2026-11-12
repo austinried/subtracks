@@ -42,7 +42,19 @@ class FakePlayerHandle : PlayerHandle {
     @Volatile
     private var buffering = false
 
-    override val itemCount: Int get() = items.size
+    @Volatile
+    var expectedThread: Thread? = null
+
+    private fun checkThread() {
+        val expected = expectedThread ?: return
+        check(Thread.currentThread() == expected) { "Expected $expected, was ${Thread.currentThread()}" }
+    }
+
+    override val itemCount: Int
+        get() {
+            checkThread()
+            return items.size
+        }
 
     override val currentIndex: Int get() = index
 
@@ -60,7 +72,11 @@ class FakePlayerHandle : PlayerHandle {
 
     override val currentPositionMs: Long get() = positionMs
 
-    override val currentItem: QueueItem? get() = items.getOrNull(index)
+    override val currentItem: QueueItem?
+        get() {
+            checkThread()
+            return items.getOrNull(index)
+        }
 
     /** Overrides the URIs the window reports; defaults to a stream URI per item. */
     @Volatile

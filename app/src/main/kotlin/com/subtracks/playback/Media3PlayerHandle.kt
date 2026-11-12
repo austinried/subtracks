@@ -15,7 +15,10 @@ import com.subtracks.UiMessage
 import com.subtracks.data.model.ArtistRef
 import com.subtracks.data.model.ArtistRefsCodec
 import com.subtracks.data.model.AudioEncoding
+import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.repo.DownloadRepository
+import com.subtracks.data.repo.QueueResetItem
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.log.Log
 
@@ -222,23 +225,48 @@ class Media3PlayerHandle(
         )
     }
 
-    private fun toQueueItem(mediaItem: MediaItem): QueueItem =
-        QueueItem(
-            id = mediaItem.mediaId,
-            title =
-                mediaItem.mediaMetadata.title
-                    ?.toString()
-                    .orEmpty(),
-            artist = mediaItem.mediaMetadata.artist?.toString(),
-            album = mediaItem.mediaMetadata.albumTitle?.toString(),
-            artists = mediaItem.artistRefs(),
-            coverArtId = mediaItem.mediaMetadata.extras?.getString(EXTRA_COVER_ART_ID),
-            durationMs =
-                mediaItem.mediaMetadata.extras
-                    ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
-                    ?.getLong(EXTRA_DURATION_MS),
-            replayGain = mediaItem.replayGain(),
-        )
+    private fun toQueueItem(mediaItem: MediaItem): QueueItem = queueItemFromMediaItem(mediaItem)
+}
+
+internal fun queueItemFromMediaItem(mediaItem: MediaItem): QueueItem =
+    QueueItem(
+        id = mediaItem.mediaId,
+        title =
+            mediaItem.mediaMetadata.title
+                ?.toString()
+                .orEmpty(),
+        artist = mediaItem.mediaMetadata.artist?.toString(),
+        album = mediaItem.mediaMetadata.albumTitle?.toString(),
+        artists = mediaItem.artistRefs(),
+        coverArtId = mediaItem.mediaMetadata.extras?.getString(EXTRA_COVER_ART_ID),
+        durationMs =
+            mediaItem.mediaMetadata.extras
+                ?.takeIf { it.containsKey(EXTRA_DURATION_MS) }
+                ?.getLong(EXTRA_DURATION_MS),
+        replayGain = mediaItem.replayGain(),
+        resetItem = mediaItem.resetItem(),
+    )
+
+internal fun MediaItem.resetItem(): QueueResetItem? {
+    val extras = mediaMetadata.extras ?: return null
+    val kind = extras.getString(EXTRA_RESET_KIND)?.let { runCatching { QueueKind.valueOf(it) }.getOrNull() } ?: return null
+    val refId = extras.getString(EXTRA_RESET_REF_ID) ?: return null
+    val songId = extras.getString(EXTRA_RESET_SONG_ID) ?: return null
+    if (!extras.containsKey(EXTRA_RESET_SOURCE_ID) ||
+        !extras.containsKey(EXTRA_RESET_POSITION) ||
+        !extras.containsKey(EXTRA_RESET_ENTRY_OCCURRENCE) ||
+        !extras.containsKey(EXTRA_RESET_OCCURRENCE)
+    ) {
+        return null
+    }
+    return QueueResetItem(
+        origin = QueueOrigin(kind, extras.getLong(EXTRA_RESET_SOURCE_ID), refId),
+        songId = songId,
+        position = extras.getLong(EXTRA_RESET_POSITION),
+        upNext = extras.getBoolean(EXTRA_RESET_UP_NEXT),
+        entryOccurrence = extras.getInt(EXTRA_RESET_ENTRY_OCCURRENCE),
+        occurrence = extras.getLong(EXTRA_RESET_OCCURRENCE),
+    )
 }
 
 internal fun MediaItem.artistRefs(): List<ArtistRef> =
@@ -255,6 +283,14 @@ private const val EXTRA_REPLAY_GAIN_ALBUM_GAIN = "replayGainAlbumGain"
 private const val EXTRA_REPLAY_GAIN_TRACK_PEAK = "replayGainTrackPeak"
 private const val EXTRA_REPLAY_GAIN_ALBUM_PEAK = "replayGainAlbumPeak"
 private const val EXTRA_ALBUM_CONTEXT = "albumContext"
+private const val EXTRA_RESET_KIND = "resetKind"
+private const val EXTRA_RESET_SOURCE_ID = "resetSourceId"
+private const val EXTRA_RESET_REF_ID = "resetRefId"
+private const val EXTRA_RESET_SONG_ID = "resetSongId"
+private const val EXTRA_RESET_POSITION = "resetPosition"
+private const val EXTRA_RESET_UP_NEXT = "resetUpNext"
+private const val EXTRA_RESET_ENTRY_OCCURRENCE = "resetEntryOccurrence"
+private const val EXTRA_RESET_OCCURRENCE = "resetOccurrence"
 
 internal fun MediaItem?.replayGain(): ReplayGain {
     val extras = this?.mediaMetadata?.extras ?: return ReplayGain()
@@ -303,6 +339,16 @@ internal fun queueMediaItem(
                     putGain(EXTRA_REPLAY_GAIN_TRACK_PEAK, item.replayGain.trackPeak)
                     putGain(EXTRA_REPLAY_GAIN_ALBUM_PEAK, item.replayGain.albumPeak)
                     putBoolean(EXTRA_ALBUM_CONTEXT, item.albumContext)
+                    item.resetItem?.let { reset ->
+                        putString(EXTRA_RESET_KIND, reset.origin.kind.name)
+                        putLong(EXTRA_RESET_SOURCE_ID, reset.origin.sourceId)
+                        putString(EXTRA_RESET_REF_ID, reset.origin.refId)
+                        putString(EXTRA_RESET_SONG_ID, reset.songId)
+                        putLong(EXTRA_RESET_POSITION, reset.position)
+                        putBoolean(EXTRA_RESET_UP_NEXT, reset.upNext)
+                        putInt(EXTRA_RESET_ENTRY_OCCURRENCE, reset.entryOccurrence)
+                        putLong(EXTRA_RESET_OCCURRENCE, reset.occurrence)
+                    }
                 },
             ).build()
     val builder =
