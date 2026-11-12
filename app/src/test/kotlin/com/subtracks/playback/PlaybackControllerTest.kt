@@ -2,6 +2,9 @@ package com.subtracks.playback
 
 import android.content.Context
 import android.content.res.Resources
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.media3.common.PlaybackException
 import androidx.room3.useWriterConnection
 import androidx.test.core.app.ApplicationProvider
@@ -33,14 +36,17 @@ import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -2565,6 +2571,8 @@ class PlaybackControllerTest {
     fun playAllStartsInOrderRegardlessOfTheSongTapBehavior() {
         seedAlbum(3, sourceId = 1)
         runBlocking { prefs.setSongTapBehavior(SongTapBehavior.Shuffle) }
+        controller.shuffleAlbum(1, "al1")
+        await { controller.state.value.shuffle }
 
         controller.playAlbumInOrder(1, "al1")
         await {
@@ -2573,6 +2581,36 @@ class PlaybackControllerTest {
         }
 
         assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
+    fun twoTapsKeepTheirOrderWhileThePreferenceReadIsSlow() {
+        seedAlbum(3, sourceId = 1)
+        val (slowPrefs, entered, gate) = gatedSongTapPreferences()
+        val slowController =
+            PlaybackController(
+                sources,
+                queues,
+                FakePlayerConnection(handle),
+                downloads,
+                slowPrefs,
+                scope = CoroutineScope(SupervisorJob() + dispatcher).also { extraScopes += it },
+            )
+        slowController.connect()
+        await { slowController.ready.value }
+
+        slowController.playAlbum(1, "al1", 0)
+        runBlocking { entered.await() }
+        slowController.playAlbum(1, "al1", 1)
+        gate.complete(Unit)
+        runBlocking { delay(1_000) }
+
+        assertEquals(
+            "s2",
+            slowController.state.value.item
+                ?.id,
+        )
+        assertEquals(1L, slowController.state.value.position)
     }
 
     @Test
@@ -3693,6 +3731,30 @@ class PlaybackControllerTest {
             val snapshot = queues.snapshot()
             (0 until snapshot.size).mapNotNull { queues.itemAt(snapshot, it)?.song?.id }
         }
+
+    private fun gatedSongTapPreferences(): Triple<UserPreferences, CompletableDeferred<Unit>, CompletableDeferred<Unit>> {
+        val entered = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
+        var reads = 0
+        val prefs =
+            UserPreferences(
+                object : DataStore<Preferences> {
+                    private val state = MutableStateFlow(emptyPreferences())
+
+                    override val data: Flow<Preferences> =
+                        state.onStart {
+                            if (reads++ == 0) {
+                                entered.complete(Unit)
+                                gate.await()
+                            }
+                        }
+
+                    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences =
+                        transform(state.value).also { state.value = it }
+                },
+            )
+        return Triple(prefs, entered, gate)
+    }
 
     private fun controllerOn(
         dispatcher: CoroutineDispatcher,

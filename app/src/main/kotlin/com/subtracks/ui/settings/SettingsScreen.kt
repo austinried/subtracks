@@ -849,8 +849,6 @@ private fun SortNameModeDialog(
     )
 }
 
-private val songTapBehaviorOptions = SongTapBehavior.entries
-
 private fun songTapBehaviorLabel(
     resources: Resources,
     behavior: SongTapBehavior,
@@ -875,7 +873,7 @@ private fun SongTapBehaviorDialog(
         text = {
             ChoiceGroup(
                 header = stringResource(R.string.settings_music_options_song_tap_prompt),
-                options = songTapBehaviorOptions.map { it to songTapBehaviorLabel(resources, it) },
+                options = SongTapBehavior.entries.map { it to songTapBehaviorLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )
