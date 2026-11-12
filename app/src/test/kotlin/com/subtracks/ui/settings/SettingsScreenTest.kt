@@ -90,10 +90,10 @@ class SettingsScreenTest {
             keepScreenOn = false,
             onKeepScreenOnChange = {},
             onSongTapBehaviorChange = { requested = it },
-            scrollTo = "New song tap behavior",
+            scrollTo = "Song tap behavior",
         )
 
-        composeRule.onNodeWithText("New song tap behavior").performClick()
+        composeRule.onNodeWithText("Song tap behavior").performClick()
         composeRule.onNodeWithText("Play and shuffle").performClick()
         composeRule.onNodeWithText("Done").performClick()
         composeRule.waitForIdle()

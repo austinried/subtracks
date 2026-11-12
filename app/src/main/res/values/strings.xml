@@ -87,7 +87,7 @@
     <string name="settings_music_options_song_tap_keep_shuffle">Keep current shuffle mode</string>
     <string name="settings_music_options_song_tap_prompt">When tapping a song in a list</string>
     <string name="settings_music_options_song_tap_shuffle">Play and shuffle</string>
-    <string name="settings_music_options_song_tap_title">New song tap behavior</string>
+    <string name="settings_music_options_song_tap_title">Song tap behavior</string>
     <string name="settings_replay_gain_mode_album">Album gain</string>
     <string name="settings_replay_gain_mode_auto">Auto</string>
     <string name="settings_replay_gain_mode_off">Off</string>
