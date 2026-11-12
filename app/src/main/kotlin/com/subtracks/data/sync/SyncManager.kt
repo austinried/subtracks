@@ -1,12 +1,13 @@
 package com.subtracks.data.sync
 
+import androidx.room3.deferredTransaction
+import androidx.room3.useWriterConnection
 import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.QueueRepository
-import com.subtracks.data.repo.QueueResetPoint
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.subsonic.SubsonicException
@@ -83,26 +84,28 @@ class SyncManager(
         runCatching { preferences.setLastSyncAt(System.currentTimeMillis()) }
             .onFailure { Log.w("sync", "could not record the sync attempt", it) }
         val startedAt = System.nanoTime()
-        var summary: SyncSummary? = null
-        var resetPoint: QueueResetPoint? = null
-        var syncSourceId: Long? = null
         val result =
             try {
                 val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
                 Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
-                resetPoint = queueRepository.captureResetPoint()
-                syncSourceId = source.id
+                val resetPoint = queueRepository.captureResetPoint()
                 val service = SyncService(db, source)
                 val completed = service.sync()
                 val pending = db.queueDao().pendingSyncOrigins(source.id).map { QueueOrigin(it.kind, it.sourceId, it.refId) }
-                summary = completed.copy(changedOrigins = pending.toSet() + completed.changedOrigins)
+                val changedOrigins = pending.toSet() + completed.changedOrigins
                 Log.i(
                     "sync",
                     "finished in ${elapsedMs(startedAt)}ms: " +
                         "${completed.artists} artists, ${completed.albums} albums, ${completed.songs} songs, " +
                         "${completed.playlists} playlists, ${completed.playlistSongs} playlist tracks, ${completed.pruned} pruned",
                 )
+                db.useWriterConnection { connection ->
+                    connection.deferredTransaction {
+                        queueRepository.resetChangedOrigins(changedOrigins, resetPoint)
+                        db.queueDao().clearPendingSyncOrigins(source.id)
+                    }
+                }
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation
@@ -122,14 +125,6 @@ class SyncManager(
                 if (!silent) showMessage(message)
                 SyncStatus.Failed(message)
             }
-        if (result is SyncStatus.Success) {
-            val completed = summary
-            val point = resetPoint
-            if (completed != null && point != null) {
-                queueRepository.resetChangedOrigins(completed.changedOrigins, point)
-                db.queueDao().clearPendingSyncOrigins(sourceId = checkNotNull(syncSourceId))
-            }
-        }
         _status.value = result
     }
 

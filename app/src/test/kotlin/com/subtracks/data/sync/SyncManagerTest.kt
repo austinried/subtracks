@@ -2,6 +2,7 @@ package com.subtracks.data.sync
 
 import android.content.Context
 import android.content.res.Resources
+import androidx.room3.useWriterConnection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.TEST_TIMEOUT_MS
@@ -279,6 +280,87 @@ class SyncManagerTest {
         }
 
     @Test
+    fun aPendingClearFailureRollsBackTheQueueResetAndCanBeRetried() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val resetAttempted = CountDownLatch(1)
+            queueRepository.setResetListener { resetAttempted.countDown() }
+            failPendingOriginClear()
+
+            manager.requestSync()
+            assertTrue(resetAttempted.await(10, TimeUnit.SECONDS))
+            awaitUntil("waiting for the pending-origin clear failure") { manager.status.value !is SyncStatus.Running }
+
+            assertEquals(
+                0L,
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(manager.status.value is SyncStatus.Failed)
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+
+            allowPendingOriginClear()
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.drop(1).first { it is SyncStatus.Success } }
+
+            assertNull(
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+        }
+
+    @Test
+    fun aResetListenerFailureIsReportedAndCanBeRetried() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val resetAttempted = CountDownLatch(1)
+            val resetAttempts = AtomicInteger()
+            queueRepository.setResetListener {
+                resetAttempted.countDown()
+                if (resetAttempts.incrementAndGet() == 1) throw IllegalStateException("reconciliation failed")
+            }
+
+            manager.requestSync()
+            assertTrue(resetAttempted.await(10, TimeUnit.SECONDS))
+            awaitUntil("waiting for the queue reset listener failure") { manager.status.value !is SyncStatus.Running }
+
+            assertTrue(manager.status.value is SyncStatus.Failed)
+            assertEquals(
+                0L,
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.drop(1).first { it is SyncStatus.Success } }
+
+            assertEquals(2, resetAttempts.get())
+            assertNull(
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+        }
+
+    @Test
     fun aFailedSyncPreservesResolvedQueueShuffle() =
         runBlocking {
             server.dispatcher = healthyDispatcher()
@@ -418,6 +500,21 @@ class SyncManagerTest {
             assertTrue("the coalesced sync should start", secondArtistStarted.await(10, TimeUnit.SECONDS))
             assertEquals(2, artistRequests.get())
         }
+
+    private suspend fun failPendingOriginClear() {
+        db.useWriterConnection { connection ->
+            connection.usePrepared(
+                "CREATE TRIGGER fail_pending_origin_clear BEFORE DELETE ON pending_sync_origins " +
+                    "BEGIN SELECT RAISE(FAIL, 'pending-origin clear failed'); END",
+            ) { it.step() }
+        }
+    }
+
+    private suspend fun allowPendingOriginClear() {
+        db.useWriterConnection { connection ->
+            connection.usePrepared("DROP TRIGGER fail_pending_origin_clear") { it.step() }
+        }
+    }
 
     private fun healthyDispatcher() =
         object : Dispatcher() {
