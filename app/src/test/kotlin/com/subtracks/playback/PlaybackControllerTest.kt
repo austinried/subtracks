@@ -4022,6 +4022,59 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun offlineDetachedPlaybackWithoutAForwardSurvivorCanPlayPrevious() {
+        detachOfflineTrackWithoutAForwardSurvivor()
+
+        controller.previousTrack()
+
+        await { handle.currentItem?.id == "s1" && controller.state.value.position == 0L }
+    }
+
+    @Test
+    fun offlineDetachedPlaybackWithoutAForwardSurvivorCanRemoveAnEarlierTrack() {
+        detachOfflineTrackWithoutAForwardSurvivor()
+
+        runBlocking { controller.removeAt(0) }
+
+        val snapshot = runBlocking { queues.snapshot() }
+        assertEquals(1L, snapshot.size)
+        assertEquals("s3", runBlocking { queues.itemAt(snapshot, 0) }?.song?.id)
+        assertEquals(listOf("s2"), handle.items.map { it.id })
+        assertNull(controller.state.value.position)
+    }
+
+    @Test
+    fun offlineDetachedPlaybackWithoutAForwardSurvivorReloadsWhenOnline() {
+        detachOfflineTrackWithoutAForwardSurvivor()
+
+        setOnline()
+
+        await { handle.items.map { it.id } == listOf("s2", "s3") }
+        controller.next()
+        await { handle.currentItem?.id == "s3" && controller.state.value.position == 1L }
+    }
+
+    @Test
+    fun clearingTheFinalDetachedSurvivorPublishesNoQueuePosition() {
+        seedAlbum(1, sourceId = 1)
+        seedSong("x1", "al2")
+        controller.playAlbum(1, "al1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Song, "x1")
+        await { runBlocking { queues.snapshot().upNextSize } == 1L }
+        val point = runBlocking { queues.captureResetPoint() }
+        runBlocking { db.libraryDao().deleteSongs(1, listOf("s1")) }
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point) }
+        await { handle.items.map { it.id } == listOf("s1", "x1") && controller.state.value.position == 0L }
+
+        controller.clearUpNext()
+
+        await { handle.items.map { it.id } == listOf("s1") }
+        assertEquals(0L, runBlocking { queues.snapshot().size })
+        assertNull(controller.state.value.position)
+    }
+
+    @Test
     fun aResetRemapsAContextTrackThatMovedToUpNext() {
         seedPlaylist(5)
         seedSong("s0", "al1")

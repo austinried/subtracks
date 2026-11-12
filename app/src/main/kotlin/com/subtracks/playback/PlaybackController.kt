@@ -161,6 +161,7 @@ class PlaybackController(
     private var windowFiltered = false
     private var detachedWindow = false
     private var detachedPosition: Long? = null
+    private var detachedFallbackPosition: Long? = null
 
     init {
         queueRepository.setResetListener { reset ->
@@ -1505,9 +1506,11 @@ class PlaybackController(
     private fun markDetached(
         window: List<QueueWindowItem>,
         position: Long?,
+        fallbackPosition: Long?,
     ) {
         detachedWindow = true
         detachedPosition = position
+        detachedFallbackPosition = fallbackPosition
         windowFiltered = offline
         windowPositions = LongArray(window.size + 1) { if (it == 0) DETACHED_POSITION else window[it - 1].position }
         windowStart = window.firstOrNull()?.position ?: 0L
@@ -1517,6 +1520,7 @@ class PlaybackController(
     private fun clearDetached() {
         detachedWindow = false
         detachedPosition = null
+        detachedFallbackPosition = null
         windowFiltered = offline
     }
 
@@ -1536,7 +1540,7 @@ class PlaybackController(
         windowEnd = windowPositions.lastOrNull() ?: -1L
     }
 
-    private fun currentQueuePosition(): Long? = currentPosition() ?: detachedPosition
+    private fun currentQueuePosition(): Long? = currentPosition() ?: detachedPosition ?: detachedFallbackPosition
 
     private suspend fun rebuildWindow(
         window: List<QueueWindowItem>,
@@ -1586,7 +1590,7 @@ class PlaybackController(
         if (!detachedWindow || currentPosition() != null) return false
         queueRepository.setCursor(position)
         rebuildDetachedSurvivors(snapshot, position)
-        refresh(position)
+        refresh(lastPosition)
         return true
     }
 
@@ -1608,7 +1612,7 @@ class PlaybackController(
             updating = false
         }
         val next = window.firstOrNull()?.position
-        markDetached(window, next)
+        markDetached(window, next, nearest.takeIf { snapshot.size > 0L })
         lastPosition = next
     }
 
