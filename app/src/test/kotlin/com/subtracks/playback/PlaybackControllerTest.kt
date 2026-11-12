@@ -3932,6 +3932,96 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aTransitionWaitsForARemovalToRebuildThePlayerWindow() {
+        seedAlbum(2, sourceId = 1)
+        seedSong("a1", "al2")
+        seedSong("b1", "al2")
+        controller.playAlbum(1, "al1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        controller.addToQueue(1, QueueKind.Song, "a1")
+        controller.addToQueue(1, QueueKind.Song, "b1")
+        await { runBlocking { queues.snapshot().upNextSize } == 2L }
+        controller.next()
+        await { handle.currentItem?.id == "a1" && controller.state.value.position == 1L }
+        val dispatcherBlocked = CountDownLatch(1)
+        val releaseDispatcher = CountDownLatch(1)
+        controllerScope.launch {
+            dispatcherBlocked.countDown()
+            releaseDispatcher.await()
+        }
+        assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        handle.advanceTo(handle.currentIndex + 1)
+        val rebuildStarted = CountDownLatch(1)
+        val releaseRebuild = CountDownLatch(1)
+        handle.beforeRemoveFirst = {
+            handle.beforeRemoveFirst = null
+            rebuildStarted.countDown()
+            releaseRebuild.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        }
+        val removal = repoScope.async { controller.removeAt(1) }
+
+        try {
+            assertTrue(rebuildStarted.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+            releaseDispatcher.countDown()
+            Thread.sleep(100)
+        } finally {
+            releaseDispatcher.countDown()
+            releaseRebuild.countDown()
+        }
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { removal.await() } }
+        Thread.sleep(200)
+
+        assertEquals(listOf("s1", "b1", "s2"), resolvedIds())
+        assertEquals("b1", handle.currentItem?.id)
+        assertEquals(1L, controller.state.value.position)
+    }
+
+    @Test
+    fun removingTheLastSurvivorKeepsDetachedPlaybackAndUndo() {
+        seedPlaylist(2)
+        controller.playPlaylist(1, "p1", 0)
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s2")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s1", "s2") }
+
+        runBlocking { controller.removeAt(0) }
+
+        assertEquals(listOf("s1"), handle.items.map { it.id })
+        assertEquals("s1", handle.currentItem?.id)
+        assertNull(controller.state.value.position)
+        assertEquals(0L, runBlocking { queues.cursor() })
+        runBlocking { controller.undo() }
+        assertEquals(listOf("s1", "s2"), handle.items.map { it.id })
+        assertEquals("s1", handle.currentItem?.id)
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
+    fun offlineDetachedPlaybackWithoutAForwardSurvivorWrapsOnManualNext() {
+        detachOfflineTrackWithoutAForwardSurvivor()
+
+        val upcoming = runBlocking { controller.upcomingItem()?.id }
+        controller.next()
+        Thread.sleep(200)
+
+        assertEquals("s1", handle.currentItem?.id)
+        assertEquals("s1", upcoming)
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
+    fun offlineDetachedPlaybackWithoutAForwardSurvivorWrapsWhenEnded() {
+        detachOfflineTrackWithoutAForwardSurvivor()
+
+        handle.finish()
+
+        await { handle.currentItem?.id == "s1" && controller.state.value.isPlaying }
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
     fun aResetRemapsAContextTrackThatMovedToUpNext() {
         seedPlaylist(5)
         seedSong("s0", "al1")
@@ -4111,6 +4201,21 @@ class PlaybackControllerTest {
 
         assertEquals(6L, runBlocking { queues.snapshot().contextSize })
         assertEquals("s0", runBlocking { queues.itemAt(queues.snapshot(), 0) }?.song?.id)
+    }
+
+    private fun detachOfflineTrackWithoutAForwardSurvivor() {
+        seedPlaylist(3)
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s2")
+        setOffline()
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s3")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.items.map { it.id } == listOf("s2") && controller.state.value.position == null }
+        controller.cycleRepeat()
+        assertEquals(RepeatMode.All, controller.state.value.repeat)
     }
 
     private fun markDownloaded(

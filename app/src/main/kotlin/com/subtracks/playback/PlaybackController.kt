@@ -408,6 +408,24 @@ class PlaybackController(
             if (snapshot.shuffled && !snapshot.isUpNext(position)) return@withMutationLock
             if (snapshot.size == 1L) {
                 if (!removeAt(snapshot, position)) return@withMutationLock
+                if (detachedWindow && currentPosition() == null) {
+                    val updated = readSnapshot()
+                    this@PlaybackController.snapshot = updated
+                    windowJob?.cancel()
+                    rebuildDetachedSurvivors(updated, 0)
+                    queueRepository.setCursor(0)
+                    lastEdit =
+                        ReloadUndo(
+                            entries,
+                            cursor,
+                            snapshot.shuffleSeed,
+                            upNext,
+                            snapshot.upNextAnchor,
+                            updated.version,
+                        )
+                    refresh(null)
+                    return@withMutationLock
+                }
                 stopLocked()
                 lastEdit =
                     ReloadUndo(
@@ -736,11 +754,14 @@ class PlaybackController(
                 val snapshot = readSnapshot()
                 this@PlaybackController.snapshot = snapshot
                 if (snapshot.size == 0L) return@withMutationLock
-                val current = currentQueuePosition() ?: return@withMutationLock
                 if (detachedWindow) {
-                    detachedPosition?.let { jumpToLocked(it, null) }
+                    val target =
+                        detachedPosition
+                            ?: if (offline && repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0) else null
+                    target?.let { jumpToLocked(it, null) }
                     return@withMutationLock
                 }
+                val current = currentQueuePosition() ?: return@withMutationLock
                 if (snapshot.isUpNext(current)) {
                     consumeUpNextLocked(current)
                     return@withMutationLock
@@ -776,14 +797,6 @@ class PlaybackController(
             repeatMode == RepeatMode.All -> snapshot.size - 1
             else -> null
         }
-
-    private suspend fun consumeUpNext(
-        position: Long,
-        requestedVersion: Long,
-    ) = queueRepository.withMutationLock {
-        if (this@PlaybackController.snapshot?.resetVersion != requestedVersion) return@withMutationLock
-        consumeUpNextLocked(position)
-    }
 
     private suspend fun QueueMutationScope.consumeUpNextLocked(position: Long) {
         val snapshot = this@PlaybackController.snapshot ?: return
@@ -1007,19 +1020,24 @@ class PlaybackController(
             isOffline = offline
         }
         val snapshot = current ?: return null
-        val at = position ?: return null
         val detachedNext = detachedWindow && currentPosition() == null
         if (!isOffline) {
+            val at = position ?: return null
             if (detachedNext) return queueItemAt(snapshot, at)
             return nextPosition(snapshot, at)
                 ?.takeIf { it != at }
                 ?.let { queueItemAt(snapshot, it) }
         }
         downloads.awaitLoaded()
-        val from = if (detachedNext) at else at + 1
+        val at = position
         val target =
-            downloadedAtOrAfter(snapshot, from)
-                ?: if (repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0L) else null
+            if (at == null) {
+                if (detachedNext && repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0L) else null
+            } else {
+                val from = if (detachedNext) at else at + 1
+                downloadedAtOrAfter(snapshot, from)
+                    ?: if (repeatMode != RepeatMode.Off) downloadedAtOrAfter(snapshot, 0L) else null
+            }
         return target?.takeIf { it != at || detachedNext }?.let { queueItemAt(snapshot, it) }
     }
 
@@ -1327,21 +1345,23 @@ class PlaybackController(
     }
 
     private suspend fun onPositionChanged() {
-        val player = player ?: return
-        pruneDetached(player)
-        val snapshot = snapshot ?: return
-        if (snapshot.size == 0L) return
-        val position = (currentQueuePosition() ?: return).coerceIn(0, snapshot.size - 1)
-        val previous = lastPosition
-        lastPosition = position
-        if (previous != null && previous != position && snapshot.isUpNext(previous)) {
-            consumeUpNext(previous, snapshot.resetVersion)
-            return
+        queueRepository.withMutationLock {
+            val player = player ?: return@withMutationLock
+            pruneDetached(player)
+            val snapshot = snapshot ?: return@withMutationLock
+            if (snapshot.size == 0L) return@withMutationLock
+            val position = (currentQueuePosition() ?: return@withMutationLock).coerceIn(0, snapshot.size - 1)
+            val previous = lastPosition
+            lastPosition = position
+            if (previous != null && previous != position && snapshot.isUpNext(previous)) {
+                consumeUpNextLocked(previous)
+                return@withMutationLock
+            }
+            lastSavedPositionMs = 0
+            queueRepository.setCursor(position)
+            refresh(position)
+            scheduleWindowShift(position)
         }
-        lastSavedPositionMs = 0
-        queueRepository.setCursor(position)
-        refresh(position)
-        scheduleWindowShift(position)
     }
 
     private fun scheduleWindowShift(center: Long) {
@@ -1466,30 +1486,10 @@ class PlaybackController(
             }
             return
         }
-        trimToCurrent(player)
-        if (updated.size == 0L) {
-            markDetached(emptyList(), null)
-            lastPosition = null
-            queueRepository.setCursor(0)
-            refresh(null)
-            return
-        }
-        val nearest = (current?.position ?: lastPosition ?: 0L).coerceIn(0, updated.size - 1)
-        val window =
-            queueRepository
-                .range(updated, nearest, (nearest + QUEUE_WINDOW_RADIUS).coerceAtMost(updated.size - 1))
-                .filter { !offline || downloads.localUri(it.item.song.id) != null }
-        updating = true
-        try {
-            window.forEachIndexed { index, entry -> player.insertAt(index + 1, entry.playerItem(updated)) }
-        } finally {
-            updating = false
-        }
-        val next = window.firstOrNull()?.position
-        markDetached(window, next)
-        lastPosition = next
-        queueRepository.setCursor(next ?: 0L)
-        refresh(next)
+        val nearest = (current?.position ?: lastPosition ?: 0L).coerceIn(0, (updated.size - 1).coerceAtLeast(0))
+        rebuildDetachedSurvivors(updated, nearest)
+        queueRepository.setCursor(lastPosition ?: 0L)
+        refresh(lastPosition)
     }
 
     private fun trimToCurrent(player: PlayerHandle) {
@@ -1585,7 +1585,7 @@ class PlaybackController(
     ): Boolean {
         if (!detachedWindow || currentPosition() != null) return false
         queueRepository.setCursor(position)
-        rebuildWindow(queueRepository.window(snapshot, position, QUEUE_WINDOW_RADIUS), position)
+        rebuildDetachedSurvivors(snapshot, position)
         refresh(position)
         return true
     }
@@ -1752,12 +1752,17 @@ class PlaybackController(
                 downloads.awaitLoaded()
                 queueRepository.withMutationLock {
                     if (!endJobIsCurrent(endedSnapshot, endedPosition)) return@withMutationLock
+                    val snapshot = this@PlaybackController.snapshot ?: return@withMutationLock
                     if (detachedWindow && detachedPosition == null) {
-                        stopLocked()
+                        val target = if (repeatMode == RepeatMode.All) downloadedAtOrAfter(snapshot, 0L) else null
+                        if (target != null) {
+                            jumpToLocked(target, requestedVersion)
+                        } else {
+                            stopLocked()
+                        }
                         return@withMutationLock
                     }
                     val current = endedPosition ?: return@withMutationLock
-                    val snapshot = this@PlaybackController.snapshot ?: return@withMutationLock
                     val from = if (detachedWindow) current else current + 1
                     val target =
                         downloadedAtOrAfter(snapshot, from)

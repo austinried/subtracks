@@ -45,6 +45,9 @@ class FakePlayerHandle : PlayerHandle {
     @Volatile
     var expectedThread: Thread? = null
 
+    @Volatile
+    var beforeRemoveFirst: (() -> Unit)? = null
+
     private fun checkThread() {
         val expected = expectedThread ?: return
         check(Thread.currentThread() == expected) { "Expected $expected, was ${Thread.currentThread()}" }
@@ -131,6 +134,7 @@ class FakePlayerHandle : PlayerHandle {
     }
 
     override fun removeFirst() {
+        beforeRemoveFirst?.invoke()
         operations += "removeFirst"
         items.removeAt(0)
         index--
