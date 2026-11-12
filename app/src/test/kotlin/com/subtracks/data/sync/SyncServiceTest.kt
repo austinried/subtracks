@@ -18,6 +18,8 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
+import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
@@ -1866,6 +1868,278 @@ class SyncServiceTest {
             } finally {
                 loggingDb.close()
             }
+        }
+
+    @Test
+    fun playlistMembershipChangesReportOnlyTheirOwnOrigins() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    songs = listOf(song("s1"), song("s2")),
+                    playlists = listOf(playlist("p1"), playlist("p2")),
+                    playlistSongs =
+                        listOf(
+                            PlaylistSong(1, "p1", "s1", 0),
+                            PlaylistSong(1, "p2", "s2", 0),
+                        ),
+                )
+            SyncService(db, source).sync()
+
+            source.playlistSongs =
+                listOf(
+                    PlaylistSong(1, "p1", "s2", 0),
+                    PlaylistSong(1, "p2", "s2", 0),
+                )
+
+            val summary = SyncService(db, source).sync()
+
+            assertEquals(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), summary.changedOrigins)
+
+            source.playlistSongs = listOf(PlaylistSong(1, "p2", "s2", 0))
+
+            val deletionSummary = SyncService(db, source).sync()
+
+            assertEquals(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), deletionSummary.changedOrigins)
+        }
+
+    @Test
+    fun albumAndSongChangesReportOnlyAffectedOrigins() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2"), artist("a3")),
+                    albums =
+                        listOf(
+                            album("al1"),
+                            album("al2").copy(artistId = "a2"),
+                            album("al3").copy(artistId = "a3"),
+                        ),
+                    songs =
+                        listOf(
+                            song("s1").copy(genres = listOf("Rock")),
+                            song("s2").copy(albumId = "al2", artistId = "a2", genres = listOf("Jazz")),
+                        ),
+                )
+            SyncService(db, source).sync()
+
+            source.albums =
+                listOf(
+                    album("al1").copy(name = "Renamed"),
+                    album("al2").copy(artistId = "a2"),
+                    album("al3").copy(artistId = "a3"),
+                )
+            source.songs =
+                listOf(
+                    song("s1").copy(
+                        albumId = "al3",
+                        artistId = "a3",
+                        genres = listOf("Electronic"),
+                        starred = 1234,
+                    ),
+                    song("s2").copy(albumId = "al2", artistId = "a2", genres = listOf("Jazz")),
+                )
+
+            val summary = SyncService(db, source).sync()
+
+            assertEquals(
+                setOf(
+                    QueueOrigin(QueueKind.Album, 1, "al1"),
+                    QueueOrigin(QueueKind.Album, 1, "al3"),
+                    QueueOrigin(QueueKind.Artist, 1, "a1"),
+                    QueueOrigin(QueueKind.Artist, 1, "a3"),
+                    QueueOrigin(QueueKind.Genre, 1, "Rock"),
+                    QueueOrigin(QueueKind.Genre, 1, "Electronic"),
+                    QueueOrigin(QueueKind.Starred, 1, ""),
+                    QueueOrigin(QueueKind.Song, 1, "s1"),
+                ),
+                summary.changedOrigins,
+            )
+        }
+
+    @Test
+    fun deletedSongsReportOnlyTheirPreviousOrigins() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    albums = listOf(album("al1"), album("al2").copy(artistId = "a2")),
+                    songs =
+                        listOf(
+                            song("s1").copy(genres = listOf("Rock"), starred = 1234),
+                            song("s2").copy(albumId = "al2", artistId = "a2", genres = listOf("Jazz")),
+                        ),
+                )
+            SyncService(db, source).sync()
+
+            source.songs = listOf(song("s2").copy(albumId = "al2", artistId = "a2", genres = listOf("Jazz")))
+
+            val summary = SyncService(db, source).sync()
+
+            assertEquals(
+                setOf(
+                    QueueOrigin(QueueKind.Album, 1, "al1"),
+                    QueueOrigin(QueueKind.Artist, 1, "a1"),
+                    QueueOrigin(QueueKind.Genre, 1, "Rock"),
+                    QueueOrigin(QueueKind.Starred, 1, ""),
+                    QueueOrigin(QueueKind.Song, 1, "s1"),
+                ),
+                summary.changedOrigins,
+            )
+        }
+
+    @Test
+    fun albumCreditChangesReportBothArtistOrigins() =
+        runTest {
+            insertSource()
+            val plural = listOf(ArtistRef("a2", "Artist a2"))
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2"), artist("a3")),
+                    albums = listOf(album("al1").copy(artists = plural)),
+                    songs = listOf(song("s1")),
+                )
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al1").copy(artistId = "a3", artists = plural, year = 2024))
+
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Artist, 1, "a1")))
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Artist, 1, "a3")))
+        }
+
+    @Test
+    fun songPresenceChangesReportReferencingPlaylistOrigins() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1"), song("s2")),
+                    playlists = listOf(playlist("p1")),
+                    playlistSongs = listOf(PlaylistSong(1, "p1", "s1", 0), PlaylistSong(1, "p1", "s2", 1)),
+                )
+            SyncService(db, source).sync()
+
+            source.songs = listOf(song("s2"))
+            val deleted = SyncService(db, source).sync()
+            assertTrue(deleted.changedOrigins.contains(QueueOrigin(QueueKind.Playlist, 1, "p1")))
+
+            source.songs = listOf(song("s1"), song("s2"))
+            val restored = SyncService(db, source).sync()
+            assertTrue(restored.changedOrigins.contains(QueueOrigin(QueueKind.Playlist, 1, "p1")))
+        }
+
+    @Test
+    fun downloadedSongSortChangesReportDownloadedOrigins() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(artists = listOf(artist("a1")), albums = listOf(album("al1")), songs = listOf(song("s1"), song("s2")))
+            SyncService(db, source).sync()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+
+            source.songs = listOf(song("s1").copy(title = "Zzz", sortName = "Zzz"), song("s2").copy(title = "Zulu"))
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Downloaded, 1, "")))
+        }
+
+    @Test
+    fun albumChangesReportArtistsCreditedOnlyOnTracks() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(artistId = "a2")),
+                )
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al1").copy(year = 2024))
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Artist, 1, "a2")))
+        }
+
+    @Test
+    fun albumPruningReportsArtistsCreditedOnlyOnRemainingTracks() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(artistId = "a2")),
+                )
+            SyncService(db, source).sync()
+
+            source.albums = emptyList()
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Artist, 1, "a2")))
+        }
+
+    @Test
+    fun albumChangesIgnoreSongsWithoutTrackArtists() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1")),
+                    albums = listOf(album("al1")),
+                    songs = listOf(song("s1").copy(artistId = null)),
+                )
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al1").copy(year = 2024))
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Album, 1, "al1")))
+            assertTrue(summary.changedOrigins.none { it.kind == QueueKind.Artist && it.refId.isBlank() })
+        }
+
+    @Test
+    fun committedOriginsArePersistedWithoutManagerRetention() =
+        runTest {
+            insertSource()
+            val source = FakeMusicSource(artists = listOf(artist("a1")), albums = listOf(album("al1")), songs = listOf(song("s1")))
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al1").copy(name = "Changed"))
+            SyncService(db, source).sync()
+
+            val pending = db.queueDao().pendingSyncOrigins(1)
+            assertTrue(pending.any { it.kind == QueueKind.Album && it.refId == "al1" })
+        }
+
+    @Test
+    fun albumPruningReportsArtistsCreditedOnlyByTheDeletedAlbum() =
+        runTest {
+            insertSource()
+            val source =
+                FakeMusicSource(
+                    artists = listOf(artist("a1"), artist("a2")),
+                    albums = listOf(album("al1"), album("al2")),
+                    songs =
+                        listOf(
+                            song("s1").copy(artistId = "a2"),
+                            song("s2").copy(albumId = "al2", artistId = "a2"),
+                        ),
+                )
+            SyncService(db, source).sync()
+
+            source.albums = listOf(album("al2"))
+            source.songs = listOf(song("s2").copy(albumId = "al2", artistId = "a2"))
+            val summary = SyncService(db, source).sync()
+
+            assertTrue(summary.changedOrigins.contains(QueueOrigin(QueueKind.Artist, 1, "a1")))
         }
 
     private suspend fun totalChanges(): Long =

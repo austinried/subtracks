@@ -5,18 +5,27 @@ import android.content.res.Resources
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.TEST_TIMEOUT_MS
+import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkStore
+import com.subtracks.data.download.FakeDownloadEngine
+import com.subtracks.data.model.DownloadStatus
+import com.subtracks.data.model.SongDownload
+import com.subtracks.data.model.Source
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
+import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.repo.replace
+import com.subtracks.data.repo.setShuffle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -28,6 +37,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -101,6 +111,39 @@ class SyncManagerTest {
         }
 
     @Test
+    fun aNoOpSyncPreservesTheQueueResolutionCache() =
+        runBlocking {
+            val healthy = healthyDispatcher()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/search3.view") == true -> MockResponse().setBody(TWO_SONGS)
+                            request.path?.startsWith("/rest/getPlaylists.view") == true -> MockResponse().setBody(PLAYLISTS)
+                            request.path?.startsWith("/rest/getPlaylist.view") == true -> MockResponse().setBody(PLAYLIST)
+                            else -> healthy.dispatch(request)
+                        }
+                }
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
+            queueRepository.replace(listOf(queueRepository.playlistEntry(1, "p1")))
+            val snapshot = queueRepository.snapshot()
+            assertEquals(2L, snapshot.size)
+            assertEquals(listOf("s1"), queueRepository.range(snapshot, 0, 0).map { it.item.song.id })
+            assertEquals(listOf("s2"), queueRepository.range(snapshot, 1, 1).map { it.item.song.id })
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.drop(1).first { it is SyncStatus.Success } }
+            val offsetSeeks = queueRepository.offsetSeeks
+            val keysetSeeks = queueRepository.keysetSeeks
+            assertEquals(listOf("s2"), queueRepository.range(snapshot, 1, 1).map { it.item.song.id })
+
+            assertEquals(offsetSeeks, queueRepository.offsetSeeks)
+            assertEquals(keysetSeeks + 1, queueRepository.keysetSeeks)
+        }
+
+    @Test
     fun aFailedSyncDoesNotAdvanceTheQueueContentVersion() =
         runBlocking {
             val before = queueRepository.snapshot().version
@@ -110,6 +153,19 @@ class SyncManagerTest {
 
             assertTrue(status is SyncStatus.Failed)
             assertEquals(before, queueRepository.snapshot().version)
+        }
+
+    @Test
+    fun aFailedSyncDoesNotResetTheQueue() =
+        runBlocking {
+            db.sourcesDao().upsertSource(Source(1, "Local", "http://localhost", true, 0))
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val before = queueRepository.snapshot().entries.map { it.entry }
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals(before, queueRepository.snapshot().entries.map { it.entry })
         }
 
     @Test
@@ -167,6 +223,162 @@ class SyncManagerTest {
 
             assertEquals(listOf("ar1"), db.libraryDao().artistIds(1))
             assertEquals(listOf("al1"), db.libraryDao().albumIds(1))
+        }
+
+    @Test
+    fun aFailedSyncCarriesCommittedOriginsIntoTheNextSuccessfulReset() =
+        runBlocking {
+            val healthy = healthyDispatcher()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        if (request.path?.startsWith("/rest/getPlaylists.view") == true) {
+                            MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+                        } else {
+                            healthy.dispatch(request)
+                        }
+                }
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            val edited = queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)
+            queueRepository.replace(listOf(edited))
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+            assertEquals(
+                0L,
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+            manager =
+                SyncManager(
+                    db,
+                    sourceRepository,
+                    queueRepository,
+                    NetworkServerActionSink(sourceRepository),
+                    preferences = preferences,
+                    showMessage = { messages += it.resolve(resources) },
+                    scope = scope,
+                )
+            server.dispatcher = healthy
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
+
+            assertNull(
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+        }
+
+    @Test
+    fun aFailedSyncPreservesResolvedQueueShuffle() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1")))
+            queueRepository.setShuffle(42L)
+            assertTrue(queueRepository.snapshot().shuffled)
+            val healthy = healthyDispatcher()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/search3.view") == true -> {
+                                MockResponse().setBody(TWO_SONGS)
+                            }
+
+                            request.path?.startsWith("/rest/getPlaylists.view") == true -> {
+                                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+                            }
+
+                            else -> {
+                                healthy.dispatch(request)
+                            }
+                        }
+                }
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+
+            val snapshot = queueRepository.snapshot()
+            assertTrue(snapshot.shuffled)
+            assertEquals(1L, snapshot.contextSize)
+        }
+
+    @Test
+    fun aFailedSongPruneDoesNotResetAnEditedDownloadedQueue() =
+        runBlocking {
+            val healthy = healthyDispatcher()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        if (request.path?.startsWith("/rest/search3.view") == true) {
+                            MockResponse().setBody(TWO_SONGS)
+                        } else {
+                            healthy.dispatch(request)
+                        }
+                }
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val downloadsDir = File(context.cacheDir, "sync-downloads-${System.nanoTime()}")
+            val downloads =
+                DownloadRepository(
+                    db,
+                    sourceRepository,
+                    FakeDownloadEngine(),
+                    downloadsDir,
+                    artworkStore = ArtworkStore(File(context.cacheDir, "art")),
+                    artworkFetcher = { ByteArray(0) },
+                    scope = scope,
+                )
+            File(downloadsDir, "1").mkdirs()
+            File(downloadsDir, "1/s2").writeText("audio")
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 1))
+            downloads.start()
+            downloads.awaitLoaded()
+            awaitUntil("waiting for download baseline") { downloads.localUri("s2") != null }
+            queueRepository.replace(listOf(queueRepository.downloadedEntry(1).copy(rangeStart = 1)))
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when {
+                            request.path?.startsWith("/rest/search3.view") == true -> {
+                                MockResponse().setBody(SONG)
+                            }
+
+                            request.path?.startsWith("/rest/getPlaylists.view") == true -> {
+                                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+                            }
+
+                            else -> {
+                                healthy.dispatch(request)
+                            }
+                        }
+                }
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals(
+                1L,
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
         }
 
     @Test
@@ -253,6 +465,24 @@ class SyncManagerTest {
             "<subsonic-response status=\"ok\" version=\"1.16.1\"><searchResult3>" +
                 "<song id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
                 "</searchResult3></subsonic-response>"
+
+        const val TWO_SONGS =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\"><searchResult3>" +
+                "<song id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
+                "<song id=\"s2\" title=\"Song Two\" albumId=\"al1\" artistId=\"ar1\" track=\"2\"/>" +
+                "</searchResult3></subsonic-response>"
+
+        const val PLAYLISTS =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\"><playlists>" +
+                "<playlist id=\"p1\" name=\"Playlist\" songCount=\"2\"/>" +
+                "</playlists></subsonic-response>"
+
+        const val PLAYLIST =
+            "<subsonic-response status=\"ok\" version=\"1.16.1\">" +
+                "<playlist id=\"p1\" name=\"Playlist\" songCount=\"2\">" +
+                "<entry id=\"s1\" title=\"Song One\" albumId=\"al1\" artistId=\"ar1\" track=\"1\"/>" +
+                "<entry id=\"s2\" title=\"Song Two\" albumId=\"al1\" artistId=\"ar1\" track=\"2\"/>" +
+                "</playlist></subsonic-response>"
     }
 
     @Test

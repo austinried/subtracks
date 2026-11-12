@@ -3,8 +3,10 @@ package com.subtracks.data.sync
 import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.QueueRepository
+import com.subtracks.data.repo.QueueResetPoint
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.source.ServerActionSink
 import com.subtracks.data.source.subsonic.SubsonicException
@@ -81,17 +83,25 @@ class SyncManager(
         runCatching { preferences.setLastSyncAt(System.currentTimeMillis()) }
             .onFailure { Log.w("sync", "could not record the sync attempt", it) }
         val startedAt = System.nanoTime()
+        var summary: SyncSummary? = null
+        var resetPoint: QueueResetPoint? = null
+        var syncSourceId: Long? = null
         val result =
             try {
                 val source = sourceRepository.activeMusicSource() ?: throw NoServerException()
                 Log.i("sync", "started (source ${source.id})")
                 serverActions.flush()
-                val summary = SyncService(db, source).sync()
+                resetPoint = queueRepository.captureResetPoint()
+                syncSourceId = source.id
+                val service = SyncService(db, source)
+                val completed = service.sync()
+                val pending = db.queueDao().pendingSyncOrigins(source.id).map { QueueOrigin(it.kind, it.sourceId, it.refId) }
+                summary = completed.copy(changedOrigins = pending.toSet() + completed.changedOrigins)
                 Log.i(
                     "sync",
                     "finished in ${elapsedMs(startedAt)}ms: " +
-                        "${summary.artists} artists, ${summary.albums} albums, ${summary.songs} songs, " +
-                        "${summary.playlists} playlists, ${summary.playlistSongs} playlist tracks, ${summary.pruned} pruned",
+                        "${completed.artists} artists, ${completed.albums} albums, ${completed.songs} songs, " +
+                        "${completed.playlists} playlists, ${completed.playlistSongs} playlist tracks, ${completed.pruned} pruned",
                 )
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
@@ -112,7 +122,14 @@ class SyncManager(
                 if (!silent) showMessage(message)
                 SyncStatus.Failed(message)
             }
-        queueRepository.invalidateLibraryCache()
+        if (result is SyncStatus.Success) {
+            val completed = summary
+            val point = resetPoint
+            if (completed != null && point != null) {
+                queueRepository.resetChangedOrigins(completed.changedOrigins, point)
+                db.queueDao().clearPendingSyncOrigins(sourceId = checkNotNull(syncSourceId))
+            }
+        }
         _status.value = result
     }
 
