@@ -11,13 +11,18 @@ import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -77,6 +82,20 @@ class QueueRepositoryTest {
 
             assertEquals(2, snapshot.size)
             assertEquals(listOf("s1", "s3"), resolveAll(snapshot))
+        }
+
+    @Test
+    fun downloadedEntryIgnoresRetainedRowsWhoseSongsArePruned() =
+        runTest {
+            seedLibrary()
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed))
+            db.libraryDao().deleteSongs(1, listOf("s2"))
+
+            val snapshot = repository.snapshotAfter(listOf(repository.downloadedEntry(1)))
+
+            assertEquals(1, snapshot.size)
+            assertEquals(listOf("s1"), resolveAll(snapshot))
         }
 
     @Test
@@ -417,12 +436,391 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun aChangedOriginResetMergesEditsAndRemapsTheCurrentItem() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(listOf(song("s0", "al1", track = 0, album = "First Album")))
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 1)
+            repository.setCursor(1)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p1", "s0", "s1", "s2", "s3")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            val entry = updated.entries.single().entry
+            assertEquals(QueueKind.Playlist, entry.kind)
+            assertEquals("p1", entry.refId)
+            assertNull(entry.rangeStart)
+            assertNull(entry.rangeEnd)
+            assertEquals(3L, repository.remapPosition(updated, point.current!!))
+        }
+
+    @Test
+    fun anUnrelatedOriginResetRemapsWithinTheSecondUnchangedFragment() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(listOf(song("s0", "al1", track = 0, album = "First Album")))
+            setPlaylist("p2", "s4")
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p2"), repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 2)
+            repository.setCursor(2)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p2", "s0", "s4")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p2")), point)
+
+            assertEquals(3L, repository.remapPosition(repository.snapshot(), point.current!!))
+            assertEquals(3L, repository.cursor())
+        }
+
+    @Test
+    fun anUnrelatedOriginResetPreservesInterleavedFragmentStarts() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.albumEntry(1, "al2")))
+            repository.move(snapshot, 3, 1)
+            repository.setCursor(3)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al2")), point)
+
+            assertEquals(4L, repository.remapPosition(repository.snapshot(), point.current!!))
+            assertEquals(4L, repository.cursor())
+        }
+
+    @Test
+    fun aMovedPlaylistOccurrenceSurvivesReconstructionAndReset() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s1")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.move(snapshot, 2, 0)
+            repository.setCursor(0)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(2L, repository.remapPosition(repository.snapshot(), point.current!!))
+            assertEquals(2L, repository.cursor())
+        }
+
+    @Test
+    fun aRemovedDuplicateOccurrenceDoesNotLeaveItsOffsetOnTheSurvivor() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s1")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.setCursor(1)
+            repository.setPosition(42_000L)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p1", "s1")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(0L, repository.cursorPositionMs())
+        }
+
+    @Test
+    fun anUnrelatedOriginResetKeepsTheEditedQueue() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 1)
+            val edited = repository.snapshot().entries.map { it.entry }
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p2")), point)
+
+            assertEquals(edited, repository.snapshot().entries.map { it.entry })
+        }
+
+    @Test
+    fun anOriginResetRebuildsOnlyTheChangedUpNextBlock() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.playlistEntry(1, "p1").copy(rangeStart = 0, rangeEnd = 1), playNext = false)
+            repository.addUpNext(
+                0,
+                repository.albumEntry(1, "al2").copy(rangeStart = 1, rangeEnd = 1),
+                playNext = false,
+            )
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val upNext = repository.snapshot().upNext.map { it.entry }
+            assertEquals(QueueKind.Playlist, upNext[0].kind)
+            assertNull(upNext[0].rangeStart)
+            assertEquals(QueueKind.Album, upNext[1].kind)
+            assertEquals(1L, upNext[1].rangeStart)
+            assertEquals(1L, upNext[1].rangeEnd)
+        }
+
+    @Test
+    fun anOriginResetPreservesDuplicateWholeUpNextEntries() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            assertEquals(2, updated.upNext.size)
+            assertEquals(6L, updated.upNextSize)
+            assertTrue(updated.upNext.all { it.entry.rangeStart == null && it.entry.rangeEnd == null })
+        }
+
+    @Test
+    fun aResetRemapsCurrentWithinTheSecondDuplicateUpNextEntry() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+            repository.setCursor(4)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(4L, repository.cursor())
+        }
+
+    @Test
+    fun aResetRemapsCurrentAndAnchorWithinTheSecondDuplicateContextEntry() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1"), repository.playlistEntry(1, "p1")))
+            repository.addUpNext(3, repository.songEntry(1, "s4"), playNext = false)
+            repository.setCursor(3)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(3L, repository.cursor())
+            assertEquals(3L, repository.snapshot().upNextAnchor)
+        }
+
+    @Test
+    fun aResetRemapsTheSecondOccurrenceOfASongWithinAPlaylist() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s1")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.setCursor(2)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(2L, repository.cursor())
+        }
+
+    @Test
+    fun aRemovedShuffledAnchorFallbackStaysInPlayCoordinates() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3", "s4", "s5")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.addUpNext(2, repository.songEntry(1, "s4"), playNext = false)
+            val seed = (1L..100L).first { Shuffle.toSequence(it, 4, 2) != 2L }
+            repository.setShuffle(seed)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p1", "s1", "s2", "s4", "s5")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            repository.setShuffle(seed)
+
+            val updated = repository.snapshot()
+            assertEquals(updated.flatContext(point.anchor!!.position), updated.upNextAnchor)
+        }
+
+    @Test
+    fun aResetDoesNotRestoreShuffleAfterTheUserDisablesIt() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 1)
+            repository.setShuffle(42L)
+            val point = repository.captureResetPoint()
+            repository.setShuffle(null)
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertFalse(repository.snapshot().shuffled)
+        }
+
+    @Test
+    fun aResetPreservesShuffleEnabledDuringSync() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 1)
+            val point = repository.captureResetPoint()
+            repository.setShuffle(99L)
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertTrue(repository.snapshot().shuffled)
+            assertEquals(99L, repository.snapshot().shuffleSeed)
+        }
+
+    @Test
+    fun aConcurrentUpNextEditSurvivesAReset() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 1)
+            val point = repository.captureResetPoint()
+
+            val reset = launch { repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+            val edit = launch { repository.addUpNext(0, repository.songEntry(1, "s4"), playNext = false) }
+            reset.join()
+            edit.join()
+
+            assertEquals(1L, repository.snapshot().upNextSize)
+        }
+
+    @Test
+    fun staleContextEditsCannotOverwriteACompletedReset() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val initial = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(initial, 1)
+            val stale = repository.snapshot()
+            val point = repository.captureResetPoint()
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            val canonical = repository.snapshot().entries.map { it.entry }
+
+            repository.removeAt(stale, 0)
+            assertFalse(repository.move(stale, 0, 1))
+
+            assertEquals(canonical, repository.snapshot().entries.map { it.entry })
+        }
+
+    @Test
+    fun staleUpNextRemovalCannotOverwriteACompletedReset() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.playlistEntry(1, "p1").copy(rangeStart = 0, rangeEnd = 1), playNext = false)
+            val stale = repository.snapshot()
+            val point = repository.captureResetPoint()
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+            val canonical = repository.snapshot().upNext.map { it.entry }
+
+            repository.removeUpNextAt(stale, 0)
+
+            assertEquals(canonical, repository.snapshot().upNext.map { it.entry })
+        }
+
+    @Test
+    fun cacheInvalidationDoesNotAdvanceTheQueueContentVersion() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            val before = repository.snapshot().version
+
+            repository.invalidateLibraryCache()
+
+            assertEquals(before, repository.snapshot().version)
+        }
+
+    @Test
+    fun aResetPrefersTheLatestUpNextAnchorOverTheCapturedOne() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.albumEntry(1, "al2").copy(rangeStart = 0, rangeEnd = 0), playNext = false)
+            val point = repository.captureResetPoint()
+            val navigated = repository.snapshot()
+            repository.reanchorFor(navigated, 2)
+            repository.setCursor(repository.snapshot().anchorPlay + 1)
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al2")), point)
+
+            assertEquals(1L, repository.snapshot().upNextAnchor)
+        }
+
+    @Test
+    fun aResetPreservesANewBeforeFirstUpNextAnchor() =
+        runTest {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.albumEntry(1, "al2").copy(rangeStart = 0, rangeEnd = 0), playNext = false)
+            val point = repository.captureResetPoint()
+            repository.removeAt(repository.snapshot(), 0)
+            assertEquals(-1L, repository.snapshot().upNextAnchor)
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al2")), point)
+
+            assertEquals(-1L, repository.snapshot().upNextAnchor)
+        }
+
+    @Test
+    fun aDeletedCurrentSongDoesNotLeaveItsPositionOnTheSuccessor() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1").copy(rangeStart = 0, rangeEnd = 2)))
+            repository.setCursor(0)
+            repository.setPosition(50_000)
+            val point = repository.captureResetPoint()
+            setPlaylist("p1", "s2", "s3")
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(0L, repository.cursorPositionMs())
+        }
+
+    @Test
+    fun resetWaitsForCursorUpdatesBeforeWritingItsCursor() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.removeAt(snapshot, 0)
+            val point = repository.captureResetPoint()
+
+            repository.cursorMutex.lock()
+            val reset = launch { repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+            val repeat = launch { repository.setRepeat(2) }
+            try {
+                yield()
+                assertFalse(reset.isCompleted)
+                assertFalse(repeat.isCompleted)
+            } finally {
+                repository.cursorMutex.unlock()
+            }
+            reset.join()
+            repeat.join()
+
+            assertEquals(2, repository.modes().repeat)
+        }
+
+    @Test
     fun upNextResolvesAfterTheCurrentTrack() =
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
 
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             val updated = repository.snapshot()
             assertEquals(4, updated.size)
@@ -430,14 +828,34 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun reAddingUpNextAfterItsLibraryOriginChangedResolvesFreshRows() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+            val initial = repository.snapshot()
+            assertEquals(listOf("s1", "s2"), (1L..2L).map { repository.itemAt(initial, it)?.song?.id })
+            repository.clearUpNext()
+            setPlaylist("p1", "s1", "s2", "s3")
+            val point = repository.captureResetPoint()
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            repository.addUpNext(0, repository.playlistEntry(1, "p1"), playNext = false)
+
+            val updated = repository.snapshot()
+            assertEquals(3L, updated.upNextSize)
+            assertEquals(listOf("s1", "s2", "s3"), (1L..3L).map { repository.itemAt(updated, it)?.song?.id })
+        }
+
+    @Test
     fun playNextGoesToTheFrontOfTheUpNextQueue() =
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             repository.addUpNext(
-                repository.snapshot(),
                 currentPosition = 0,
                 entry = repository.songEntry(1, "s5"),
                 playNext = true,
@@ -451,7 +869,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             repository.removeAt(repository.snapshot(), 1)
 
@@ -465,9 +883,8 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
             repository.addUpNext(
-                repository.snapshot(),
                 currentPosition = 0,
                 entry = repository.songEntry(1, "s5"),
                 playNext = false,
@@ -486,7 +903,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
 
             repository.move(repository.snapshot(), from = 2, to = 1)
 
@@ -509,9 +926,8 @@ class QueueRepositoryTest {
                 ),
             )
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al2")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = albumRange(1, 4), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = albumRange(1, 4), playNext = false)
             repository.addUpNext(
-                repository.snapshot(),
                 currentPosition = 0,
                 entry = repository.songEntry(1, "x1"),
                 playNext = false,
@@ -562,7 +978,7 @@ class QueueRepositoryTest {
             val shuffled = repository.snapshot()
             val contextBefore = (0 until shuffled.contextSize).mapNotNull { repository.itemAt(shuffled, it)?.song?.id }
 
-            repository.addUpNext(shuffled, currentPosition = 0, entry = repository.songEntry(1, "s5"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s5"), playNext = false)
 
             val updated = repository.snapshot()
             assertEquals(4, updated.size)
@@ -580,7 +996,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.albumEntry(1, "al2"), playNext = false)
             assertEquals(listOf("s1", "s4", "s5", "s2", "s3"), resolveAll(repository.snapshot()))
 
             repository.removeAt(repository.snapshot(), 2)
@@ -593,7 +1009,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
             assertEquals(listOf("s1", "s4", "s2", "s3"), resolveAll(repository.snapshot()))
 
             repository.removeAt(repository.snapshot(), 0)
@@ -606,7 +1022,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 2, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 2, entry = repository.songEntry(1, "s4"), playNext = false)
             assertEquals(listOf("s1", "s2", "s3", "s4"), resolveAll(repository.snapshot()))
 
             repository.removeAt(repository.snapshot(), 2)
@@ -621,7 +1037,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
             assertEquals(listOf("s1", "s2", "s4", "s3"), resolveAll(repository.snapshot()))
 
             repository.removeAt(repository.snapshot(), 0)
@@ -634,7 +1050,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             repository.replace(listOf(repository.songEntry(1, "s5")))
 
@@ -783,98 +1199,22 @@ class QueueRepositoryTest {
         }
 
     @Test
-    fun removingAContextTrackWhileShuffledKeepsTheRemainingOrder() =
+    fun removingAContextTrackWhileShuffledIsRejected() =
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
             repository.setShuffle(42L)
             val before = repository.snapshot()
+            val entriesBefore = before.entries.map { it.entry }
             val orderBefore = (0 until before.contextSize).mapNotNull { repository.itemAt(before, it)?.song?.id }
 
             repository.removeAt(before, 1)
 
             val after = repository.snapshot()
             assertTrue(after.shuffled)
-            assertEquals(2L, after.contextSize)
-            val orderAfter = (0 until after.contextSize).mapNotNull { repository.itemAt(after, it)?.song?.id }
-            assertEquals(orderBefore.filterIndexed { index, _ -> index != 1 }, orderAfter)
-        }
-
-    @Test
-    fun severalRemovalsWhileShuffledKeepTheRemainingOrder() =
-        runTest {
-            seedLibrary()
-            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.setShuffle(42L)
-            val before = repository.snapshot()
-            val orderBefore = (0 until before.contextSize).mapNotNull { repository.itemAt(before, it)?.song?.id }
-
-            repository.removeAt(before, 0)
-            repository.removeAt(repository.snapshot(), 0)
-
-            val after = repository.snapshot()
-            assertTrue(after.shuffled)
-            assertEquals(1L, after.contextSize)
-            val orderAfter = (0 until after.contextSize).mapNotNull { repository.itemAt(after, it)?.song?.id }
-            assertEquals(orderBefore.drop(2), orderAfter)
-        }
-
-    @Test
-    fun removingWhileShuffledKeepsTheOrderInverse() =
-        runTest {
-            seedLibrary()
-            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1"), repository.songEntry(1, "s4")))
-            repository.setShuffle(9L)
-            repository.removeAt(repository.snapshot(), 2)
-
-            val after = repository.snapshot()
-            assertEquals(3L, after.contextSize)
-            for (play in 0 until after.contextSize) {
-                assertEquals(play, after.playContext(after.flatContext(play)!!))
-            }
-            assertEquals((0L until after.contextSize).toList(), (0 until after.contextSize).map { after.flatContext(it)!! }.sorted())
-        }
-
-    @Test
-    fun removingAnyPositionWhileShuffledKeepsTheCoordinatesConsistent() =
-        runTest {
-            seedLibrary()
-            for (seed in listOf(1L, 42L, 999L)) {
-                for (position in 0L..4L) {
-                    repository.replace(listOf(repository.albumEntry(1, "al1")))
-                    repository.setShuffle(seed)
-                    repository.addUpNext(
-                        repository.snapshot(),
-                        currentPosition = 0,
-                        entry = repository.songEntry(1, "s4"),
-                        playNext = false,
-                    )
-                    val before = repository.snapshot()
-                    if (position >= before.size) continue
-
-                    repository.removeAt(before, position)
-
-                    val after = repository.snapshot()
-                    assertTrue("seed=$seed position=$position stopped being shuffled", after.shuffled)
-                    assertEquals(before.size - 1, after.size)
-                    val flats = (0 until after.contextSize).map { after.flatContext(it)!! }
-                    assertEquals((0L until after.contextSize).toList(), flats.sorted())
-                    for (play in 0 until after.contextSize) {
-                        assertEquals(play, after.playContext(after.flatContext(play)!!))
-                    }
-                    for (p in 0 until after.size) {
-                        if (after.isUpNext(p)) continue
-                        assertEquals(p, after.combined(after.contextPlay(p)))
-                    }
-                    val block = (0 until after.size).filter { after.isUpNext(it) }
-                    assertEquals(
-                        (after.anchorPlay + 1..after.anchorPlay + after.upNextSize).toList(),
-                        block,
-                    )
-                    val ids = (0 until after.size).mapNotNull { repository.itemAt(after, it)?.song?.id }
-                    assertEquals(ids.distinct().size, ids.size)
-                }
-            }
+            assertEquals(before.contextSize, after.contextSize)
+            assertEquals(entriesBefore, after.entries.map { it.entry })
+            assertEquals(orderBefore, (0 until after.contextSize).mapNotNull { repository.itemAt(after, it)?.song?.id })
         }
 
     @Test
@@ -932,7 +1272,7 @@ class QueueRepositoryTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
 
-            repository.addUpNext(snapshot, currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 1, entry = repository.songEntry(1, "s4"), playNext = false)
 
             val updated = repository.snapshot()
             assertEquals(1L, updated.anchorPlay)
@@ -947,13 +1287,13 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             val before = repository.snapshot()
             assertEquals(0L, before.anchorPlay)
             assertEquals(3L, repository.combinedContextIndexOf(before, "s3"))
 
-            repository.setUpNextAnchor(2)
+            repository.reanchorFor(before, 3)
 
             val after = repository.snapshot()
             assertEquals(2L, after.anchorPlay)
@@ -966,7 +1306,7 @@ class QueueRepositoryTest {
         runTest {
             seedLibrary()
             val snapshot = repository.snapshotAfter(listOf(repository.songEntry(1, "s4")))
-            repository.addUpNext(snapshot, currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
+            repository.addUpNext(currentPosition = 0, entry = repository.songEntry(1, "s4"), playNext = false)
 
             val updated = repository.snapshot()
             assertEquals(0L, repository.combinedContextIndexOf(updated, "s4"))
@@ -1104,6 +1444,16 @@ class QueueRepositoryTest {
         songCount = 0,
         created = 0,
     )
+
+    private suspend fun setPlaylist(
+        id: String,
+        vararg songIds: String,
+    ) {
+        db.libraryDao().deletePlaylistSongsFrom(1, id, 0)
+        db.libraryDao().upsertPlaylistSongs(
+            songIds.mapIndexed { position, songId -> PlaylistSong(1, id, songId, position.toLong()) },
+        )
+    }
 
     private suspend fun seedLibrary() {
         db.sourcesDao().upsertSource(

@@ -5,6 +5,7 @@ import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import com.subtracks.data.model.AlbumSongItem
+import com.subtracks.data.model.PendingSyncOrigin
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.PlaylistSongItem
 import com.subtracks.data.model.QueueEntry
@@ -37,6 +38,12 @@ private const val SONG_SQL =
 
 @Dao
 interface QueueDao {
+    @Query("SELECT * FROM pending_sync_origins WHERE sourceId = :sourceId")
+    suspend fun pendingSyncOrigins(sourceId: Long): List<PendingSyncOrigin>
+
+    @Query("DELETE FROM pending_sync_origins WHERE sourceId = :sourceId")
+    suspend fun clearPendingSyncOrigins(sourceId: Long)
+
     @Query("DELETE FROM queue_entries")
     suspend fun clear()
 
@@ -243,6 +250,44 @@ interface QueueDao {
         songId: String,
     ): Long?
 
+    @Query(
+        "SELECT COUNT(*) FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+            "AND playlist_songs.songId = :songId AND playlist_songs.position < :position",
+    )
+    suspend fun playlistOccurrenceRank(
+        sourceId: Long,
+        playlistId: String,
+        songId: String,
+        position: Long,
+    ): Long
+
+    @Query(
+        "SELECT playlist_songs.position FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+            "AND playlist_songs.songId = :songId ORDER BY playlist_songs.position LIMIT 1 OFFSET :occurrence",
+    )
+    suspend fun playlistPositionForOccurrence(
+        sourceId: Long,
+        playlistId: String,
+        songId: String,
+        occurrence: Long,
+    ): Long?
+
+    @Query(
+        "SELECT COUNT(*) - 1 FROM playlist_songs " +
+            "JOIN songs ON songs.sourceId = playlist_songs.sourceId AND songs.id = playlist_songs.songId " +
+            "WHERE playlist_songs.sourceId = :sourceId AND playlist_songs.playlistId = :playlistId " +
+            "AND playlist_songs.position <= :position",
+    )
+    suspend fun playlistRankAtPosition(
+        sourceId: Long,
+        playlistId: String,
+        position: Long,
+    ): Long
+
     @Query("SELECT COUNT(*) FROM song_genres WHERE sourceId = :sourceId AND genre = :genre")
     suspend fun genreLength(
         sourceId: Long,
@@ -263,7 +308,11 @@ interface QueueDao {
         limit: Int,
     ): List<AlbumSongItem>
 
-    @Query("SELECT COUNT(*) FROM song_downloads WHERE sourceId = :sourceId AND status = 'Completed'")
+    @Query(
+        "SELECT COUNT(*) FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed'",
+    )
     suspend fun downloadedLength(sourceId: Long): Long
 
     @Query("SELECT COUNT(*) FROM songs WHERE sourceId = :sourceId AND starred IS NOT NULL")

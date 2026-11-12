@@ -730,6 +730,35 @@ val MIGRATION_37_38 =
         }
     }
 
+val MIGRATION_38_39 =
+    object : Migration(38, 39) {
+        override suspend fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originKind` TEXT")
+            connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originRefId` TEXT")
+            connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originOccurrence` INTEGER")
+            connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originKind` TEXT")
+            connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originRefId` TEXT")
+            connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originOccurrence` INTEGER")
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS `pending_sync_origins` (`sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, " +
+                    "`refId` TEXT NOT NULL, PRIMARY KEY(`sourceId`, `kind`, `refId`), " +
+                    "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_pending_sync_origins_sourceId` ON `pending_sync_origins` (`sourceId`)")
+            connection.execSQL(
+                "CREATE TABLE `song_downloads_new` (`sourceId` INTEGER NOT NULL, `songId` TEXT NOT NULL, `status` TEXT NOT NULL, " +
+                    "`engineId` INTEGER, `bytes` INTEGER NOT NULL DEFAULT 0, `total` INTEGER NOT NULL DEFAULT 0, `error` TEXT, " +
+                    "`downloadedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`sourceId`, `songId`), " +
+                    "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            )
+            connection.execSQL("INSERT INTO `song_downloads_new` SELECT * FROM `song_downloads`")
+            connection.execSQL("DROP TABLE `song_downloads`")
+            connection.execSQL("ALTER TABLE `song_downloads_new` RENAME TO `song_downloads`")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_song_downloads_sourceId` ON `song_downloads` (`sourceId`)")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS `index_song_downloads_engineId` ON `song_downloads` (`engineId`)")
+        }
+    }
+
 internal fun artistSearchTriggersOptimized(connection: SQLiteConnection): Boolean {
     val triggers = mutableListOf<String>()
     connection.prepare("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name IN (?, ?)").use { statement ->
@@ -808,4 +837,5 @@ val MIGRATIONS: Array<Migration> =
         MIGRATION_35_36,
         MIGRATION_36_37,
         MIGRATION_37_38,
+        MIGRATION_38_39,
     )

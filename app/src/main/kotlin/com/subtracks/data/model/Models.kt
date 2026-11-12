@@ -448,6 +448,31 @@ data class DiscKey(
 
 enum class QueueKind { Playlist, Album, Song, Artist, Genre, Downloaded, Starred }
 
+data class QueueOrigin(
+    val kind: QueueKind,
+    val sourceId: Long,
+    val refId: String,
+)
+
+@Entity(
+    tableName = "pending_sync_origins",
+    primaryKeys = ["sourceId", "kind", "refId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["sourceId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("sourceId")],
+)
+data class PendingSyncOrigin(
+    val sourceId: Long,
+    val kind: QueueKind,
+    val refId: String,
+)
+
 @Entity(
     tableName = "queue_entries",
     foreignKeys = [
@@ -468,10 +493,15 @@ data class QueueEntry(
     val refId: String,
     val rangeStart: Long? = null,
     val rangeEnd: Long? = null,
+    val originKind: QueueKind? = null,
+    val originRefId: String? = null,
+    val originOccurrence: Long? = null,
 ) {
     val offset: Long get() = rangeStart ?: 0
 
     val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
+
+    val origin: QueueOrigin get() = QueueOrigin(originKind ?: kind, sourceId, originRefId ?: refId)
 }
 
 @Entity(
@@ -494,16 +524,31 @@ data class UpNextEntry(
     val refId: String,
     val rangeStart: Long? = null,
     val rangeEnd: Long? = null,
+    val originKind: QueueKind? = null,
+    val originRefId: String? = null,
+    val originOccurrence: Long? = null,
 ) {
     val offset: Long get() = rangeStart ?: 0
 
     val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
 
-    fun toQueueEntry(): QueueEntry = QueueEntry(id, position, sourceId, kind, refId, rangeStart, rangeEnd)
+    fun toQueueEntry(): QueueEntry =
+        QueueEntry(id, position, sourceId, kind, refId, rangeStart, rangeEnd, originKind, originRefId, originOccurrence)
 
     companion object {
         fun from(entry: QueueEntry) =
-            UpNextEntry(entry.id, entry.position, entry.sourceId, entry.kind, entry.refId, entry.rangeStart, entry.rangeEnd)
+            UpNextEntry(
+                entry.id,
+                entry.position,
+                entry.sourceId,
+                entry.kind,
+                entry.refId,
+                entry.rangeStart,
+                entry.rangeEnd,
+                entry.originKind,
+                entry.originRefId,
+                entry.originOccurrence,
+            )
     }
 }
 

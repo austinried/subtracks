@@ -161,7 +161,7 @@ interface DownloadDao {
     fun downloadedSongs(sourceId: Long): Flow<List<DownloadedSong>>
 
     @Query(
-        "SELECT d.sourceId AS sourceId, s.albumId AS albumId, s.artistId AS artistId, " +
+        "SELECT d.sourceId AS sourceId, s.id AS songRow, s.albumId AS albumId, s.artistId AS artistId, " +
             "al.artistId AS albumArtistId, " +
             "al.id AS albumRow, al.coverArt AS albumCoverArt, " +
             "ar.id AS artistRow, ar.coverArt AS artistCoverArt, " +

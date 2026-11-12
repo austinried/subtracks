@@ -101,7 +101,7 @@ class SyncManagerTest {
         }
 
     @Test
-    fun aFailedSyncStillInvalidatesTheLibraryCache() =
+    fun aFailedSyncDoesNotAdvanceTheQueueContentVersion() =
         runBlocking {
             val before = queueRepository.snapshot().version
 
@@ -109,7 +109,7 @@ class SyncManagerTest {
             val status = withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertTrue(status is SyncStatus.Failed)
-            assertEquals(before + 1, queueRepository.snapshot().version)
+            assertEquals(before, queueRepository.snapshot().version)
         }
 
     @Test

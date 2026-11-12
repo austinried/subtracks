@@ -38,12 +38,6 @@ enum class DownloadError(
             childColumns = ["sourceId"],
             onDelete = ForeignKey.CASCADE,
         ),
-        ForeignKey(
-            entity = Song::class,
-            parentColumns = ["sourceId", "id"],
-            childColumns = ["sourceId", "songId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
     ],
     indices = [Index("sourceId"), Index("engineId")],
 )
@@ -109,6 +103,7 @@ data class DownloadedSong(
 
 data class DownloadArtwork(
     val sourceId: Long,
+    val songRow: String?,
     val albumId: String?,
     val artistId: String?,
     val albumArtistId: String?,
@@ -119,7 +114,7 @@ data class DownloadArtwork(
     val albumArtistCoverArt: String?,
 ) {
     val hasMissingLibraryRow: Boolean
-        get() = (albumId != null && albumRow == null) || (artistId != null && artistRow == null)
+        get() = songRow == null || (albumId != null && albumRow == null) || (artistId != null && artistRow == null)
 }
 
 data class SourceCoverArt(

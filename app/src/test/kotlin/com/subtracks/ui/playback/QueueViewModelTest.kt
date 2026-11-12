@@ -21,6 +21,8 @@ import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.SourceRepository
+import com.subtracks.data.repo.replace
+import com.subtracks.data.repo.setShuffle
 import com.subtracks.playback.FakePlayerConnection
 import com.subtracks.playback.FakePlayerHandle
 import com.subtracks.playback.PlaybackController

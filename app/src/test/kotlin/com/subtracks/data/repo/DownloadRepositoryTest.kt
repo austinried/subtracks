@@ -313,14 +313,14 @@ class DownloadRepositoryTest {
         }
 
     @Test
-    fun aSongRemovedFromTheServerTakesItsDownloadRowWithIt() =
+    fun aSongRemovedFromTheServerKeepsItsDownloadRowForRecovery() =
         runTest {
             seedLibrary()
             runBlocking { repository.download(1, "s1") }
 
             runBlocking { db.libraryDao().deleteSongs(1, listOf("s1")) }
 
-            assertNull(row(1, "s1"))
+            assertEquals(DownloadStatus.Queued, row(1, "s1")?.status)
         }
 
     @Test

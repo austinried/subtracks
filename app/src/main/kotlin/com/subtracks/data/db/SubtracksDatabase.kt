@@ -16,6 +16,7 @@ import com.subtracks.data.model.DownloadErrorConverter
 import com.subtracks.data.model.DownloadStatusConverter
 import com.subtracks.data.model.PendingAction
 import com.subtracks.data.model.PendingActionKindConverter
+import com.subtracks.data.model.PendingSyncOrigin
 import com.subtracks.data.model.PlaybackCursor
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSearch
@@ -56,8 +57,9 @@ import com.subtracks.data.model.UpNextEntry
         ArtworkSeed::class,
         SongDownload::class,
         PendingAction::class,
+        PendingSyncOrigin::class,
     ],
-    version = 38,
+    version = 39,
     exportSchema = true,
 )
 @ColumnTypeConverters(
