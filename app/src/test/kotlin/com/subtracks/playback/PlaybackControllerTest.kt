@@ -1899,7 +1899,7 @@ class PlaybackControllerTest {
                 ?.id == "s1"
         }
 
-        runBlocking { controller.removeAt(3) }
+        assertTrue(runBlocking { controller.removeAt(3) })
         await { handle.itemCount == 4 }
 
         assertEquals(
@@ -1920,7 +1920,7 @@ class PlaybackControllerTest {
                 ?.id == "s1"
         }
 
-        runBlocking { controller.move(0, 2) }
+        assertTrue(runBlocking { controller.move(0, 2) })
         await { controller.state.value.position == 2L }
 
         assertEquals(listOf("s2", "s3", "s1", "s4"), handle.items.map { it.id })
@@ -1929,6 +1929,23 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id,
         )
+    }
+
+    @Test
+    fun staleMoveAndRemovalReturnFalseWithoutChangingTheQueue() {
+        seedAlbum(3, sourceId = 1)
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        val before = resolvedIds()
+        val staleVersion = runBlocking { queues.snapshot().resetVersion } + 1
+
+        assertFalse(runBlocking { controller.move(0, 1, staleVersion) })
+        assertFalse(runBlocking { controller.removeAt(1, staleVersion) })
+
+        assertEquals(before, resolvedIds())
     }
 
     @Test
@@ -4005,7 +4022,7 @@ class PlaybackControllerTest {
         runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
         await { handle.items.map { it.id } == listOf("s3", "s4", "s5") }
 
-        runBlocking { controller.removeAt(3) }
+        assertTrue(runBlocking { controller.removeAt(3) })
 
         assertEquals(listOf("s3", "s4"), handle.items.map { it.id })
         assertEquals("s3", handle.currentItem?.id)

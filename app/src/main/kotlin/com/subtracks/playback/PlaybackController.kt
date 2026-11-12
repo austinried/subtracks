@@ -423,8 +423,9 @@ class PlaybackController(
     suspend fun removeAt(
         position: Long,
         resetVersion: Long? = null,
-    ) {
-        val requestedVersion = resetVersion ?: snapshot?.resetVersion ?: return
+    ): Boolean {
+        val requestedVersion = resetVersion ?: snapshot?.resetVersion ?: return false
+        var applied = false
         queueRepository.withMutationLock {
             val snapshot = this@PlaybackController.snapshot ?: return@withMutationLock
             if (snapshot.resetVersion != requestedVersion) return@withMutationLock
@@ -436,6 +437,7 @@ class PlaybackController(
             if (snapshot.shuffled && !snapshot.isUpNext(position)) return@withMutationLock
             if (snapshot.size == 1L) {
                 if (!removeAt(snapshot, position)) return@withMutationLock
+                applied = true
                 if (detachedWindow && currentPosition() == null) {
                     val updated = readSnapshot()
                     this@PlaybackController.snapshot = updated
@@ -471,6 +473,7 @@ class PlaybackController(
             val wasUpNext = snapshot.isUpNext(current)
             val removed = if (position == current) null else queueItemAt(snapshot, position)
             if (!removeAt(snapshot, position)) return@withMutationLock
+            applied = true
             var updated = readSnapshot()
             this@PlaybackController.snapshot = updated
             windowJob?.cancel()
@@ -576,15 +579,17 @@ class PlaybackController(
             queueRepository.setCursor(target)
             refresh(target)
         }
+        return applied
     }
 
     suspend fun move(
         from: Long,
         to: Long,
         resetVersion: Long? = null,
-    ) {
-        if (from == to) return
-        val requestedVersion = resetVersion ?: snapshot?.resetVersion ?: return
+    ): Boolean {
+        if (from == to) return false
+        val requestedVersion = resetVersion ?: snapshot?.resetVersion ?: return false
+        var applied = false
         queueRepository.withMutationLock {
             val snapshot = this@PlaybackController.snapshot ?: return@withMutationLock
             if (snapshot.resetVersion != requestedVersion) return@withMutationLock
@@ -596,6 +601,7 @@ class PlaybackController(
             val upNext = snapshot.upNext.map { it.entry }
             val wasUpNext = snapshot.isUpNext(current)
             if (!move(snapshot, from, to)) return@withMutationLock
+            applied = true
             val updated = readSnapshot()
             this@PlaybackController.snapshot = updated
             // The current track still exists, so derive its new position from the edit instead of
@@ -669,6 +675,7 @@ class PlaybackController(
             queueRepository.setCursor(target)
             refresh(target)
         }
+        return applied
     }
 
     suspend fun undo() =
