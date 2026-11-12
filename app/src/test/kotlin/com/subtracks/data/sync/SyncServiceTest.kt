@@ -2111,6 +2111,7 @@ class SyncServiceTest {
             insertSource()
             val source = FakeMusicSource(artists = listOf(artist("a1")), albums = listOf(album("al1")), songs = listOf(song("s1")))
             SyncService(db, source).sync()
+            db.queueDao().clearPendingSyncOrigins(1)
 
             source.albums = listOf(album("al1").copy(name = "Changed"))
             SyncService(db, source).sync()
