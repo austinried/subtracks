@@ -42,6 +42,7 @@ class ViewModelRepositoryFixture {
     val downloadEngine = FakeDownloadEngine()
     val downloadsDir = File(context.cacheDir, "downloads-${System.nanoTime()}")
     val sourceRepository = SourceRepository(db, OkHttpClient(), fakeUserPreferences(), artworkStore, scope = repoScope)
+    val queueRepository = QueueRepository(db)
     val downloadRepository =
         DownloadRepository(
             db,
@@ -50,9 +51,9 @@ class ViewModelRepositoryFixture {
             downloadsDir,
             artworkStore = artworkStore,
             artworkFetcher = { ByteArray(0) },
+            queueRepository = queueRepository,
             scope = repoScope,
         )
-    val queueRepository = QueueRepository(db)
     val controller =
         PlaybackController(
             sourceRepository,
@@ -68,6 +69,7 @@ class ViewModelRepositoryFixture {
             sourceRepository,
             NetworkServerActionSink(sourceRepository),
             fakeUserPreferences(),
+            queueRepository = queueRepository,
             scope = repoScope,
         )
 

@@ -19,6 +19,8 @@ import com.subtracks.data.model.ArtistBio
 import com.subtracks.data.model.Disc
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSongItem
+import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.prefs.AlbumSort
 import com.subtracks.data.prefs.ArtistSort
@@ -50,6 +52,7 @@ class LibraryRepository(
     private val sourceRepository: SourceRepository,
     private val serverActions: ServerActionSink,
     private val userPreferences: UserPreferences,
+    private val queueRepository: QueueRepository,
     private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
@@ -452,10 +455,18 @@ class LibraryRepository(
         starred: Long?,
     ) {
         val dao = db.libraryDao()
-        when (type) {
-            StarType.Song -> dao.setSongStar(sourceId, id, starred)
-            StarType.Album -> dao.setAlbumStar(sourceId, id, starred)
-            StarType.Artist -> dao.setArtistStar(sourceId, id, starred)
+        if (type == StarType.Song) {
+            val previous = song(sourceId, id).first()?.starred
+            if (previous == starred) return
+            val point = queueRepository.captureResetPoint()
+            dao.setSongStar(sourceId, id, starred)
+            queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Starred, sourceId, "")), point)
+        } else {
+            when (type) {
+                StarType.Album -> dao.setAlbumStar(sourceId, id, starred)
+                StarType.Artist -> dao.setArtistStar(sourceId, id, starred)
+                StarType.Song -> Unit
+            }
         }
     }
 

@@ -119,6 +119,7 @@ class PlaybackControllerTest {
                 downloadsDir,
                 artworkStore = ArtworkStore(File(context.cacheDir, "art")),
                 artworkFetcher = { ByteArray(0) },
+                queueRepository = queues,
                 scope = repoScope,
             ).also { it.start() }
         handle = FakePlayerHandle()
@@ -3929,6 +3930,34 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aDownloadInsertedBeforeCurrentKeepsTheActualCurrentSong() {
+        seedAlbum(3, sourceId = 1)
+        seedSong("s0", "al1")
+        markDownloaded(1, "s1", downloadedAt = 200)
+        markDownloaded(1, "s2", downloadedAt = 100)
+        controller.playDownloaded(1, 1)
+        await { handle.currentItem?.id == "s2" }
+
+        markDownloaded(1, "s0", downloadedAt = 300)
+
+        await { controller.state.value.position == 2L && handle.currentItem?.id == "s2" }
+    }
+
+    @Test
+    fun deletingTheCurrentDownloadDetachesThatSong() {
+        seedAlbum(3, sourceId = 1)
+        markDownloaded(1, "s1", downloadedAt = 200)
+        markDownloaded(1, "s2", downloadedAt = 100)
+        controller.playDownloaded(1, 1)
+        await { handle.currentItem?.id == "s2" }
+
+        runBlocking { downloads.remove(1, "s2") }
+
+        await { handle.items.take(2).map { it.id } == listOf("s2", "s1") }
+        assertEquals("s2", handle.currentItem?.id)
+    }
+
+    @Test
     fun aDetachedTrackSurvivesMediaRefresh() {
         seedPlaylist(5)
         controller.playPlaylist(1, "p1", 2)
@@ -4369,6 +4398,7 @@ class PlaybackControllerTest {
         val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
         while (System.nanoTime() < deadline) {
             runBlocking {
+                downloads.captureForReset(sourceId)
                 db.downloadDao().upsert(SongDownload(sourceId, songId, DownloadStatus.Completed, downloadedAt = downloadedAt))
                 file.parentFile?.mkdirs()
                 file.writeBytes(byteArrayOf(1))

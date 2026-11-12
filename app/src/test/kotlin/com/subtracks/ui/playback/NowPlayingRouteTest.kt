@@ -91,9 +91,10 @@ class NowPlayingRouteTest {
                 File(context.cacheDir, "downloads-${System.nanoTime()}"),
                 artworkStore = artworkStore,
                 artworkFetcher = { ByteArray(0) },
+                queueRepository = queues,
                 scope = repoScope,
             ).also { it.start() }
-        library = LibraryRepository(db, sources, serverActions, prefs, scope = repoScope)
+        library = LibraryRepository(db, sources, serverActions, prefs, queueRepository = queues, scope = repoScope)
         handle = FakePlayerHandle()
         controller =
             PlaybackController(

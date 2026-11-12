@@ -538,6 +538,7 @@ class SyncManagerTest {
                     downloadsDir,
                     artworkStore = ArtworkStore(File(context.cacheDir, "art")),
                     artworkFetcher = { ByteArray(0) },
+                    queueRepository = queueRepository,
                     scope = scope,
                 )
             File(downloadsDir, "1").mkdirs()

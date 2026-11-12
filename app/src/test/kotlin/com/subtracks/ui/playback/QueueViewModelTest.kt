@@ -83,6 +83,7 @@ class QueueViewModelTest {
                 downloadsDir,
                 artworkStore = artwork,
                 artworkFetcher = { ByteArray(0) },
+                queueRepository = queues,
                 scope = repoScope,
             ).also { it.start() }
         controller =

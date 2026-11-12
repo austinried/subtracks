@@ -21,6 +21,7 @@ import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.ListDownloadStatus
 import com.subtracks.data.model.Playlist
 import com.subtracks.data.model.PlaylistSong
+import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
@@ -61,6 +62,7 @@ class DownloadRepositoryTest {
     private lateinit var sources: SourceRepository
     private lateinit var engine: FakeDownloadEngine
     private lateinit var repository: DownloadRepository
+    private lateinit var queues: QueueRepository
     private lateinit var artwork: ArtworkStore
     private lateinit var dir: File
     private lateinit var scope: CoroutineScope
@@ -89,6 +91,7 @@ class DownloadRepositoryTest {
         sources = SourceRepository(db, OkHttpClient(), prefs, artwork, scope = scope)
         engine = FakeDownloadEngine()
         dir = File(context.cacheDir, "downloads-${System.nanoTime()}")
+        queues = QueueRepository(db)
         repository =
             DownloadRepository(
                 db,
@@ -97,6 +100,7 @@ class DownloadRepositoryTest {
                 dir,
                 artworkStore = artwork,
                 artworkFetcher = fetcher,
+                queueRepository = queues,
                 showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )
@@ -362,6 +366,34 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun deleteAllCapturesTheCurrentQueuePositionBeforeRemovingDownloads() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..3)
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                queues.replace(listOf(queues.downloadedEntry(1), queues.albumEntry(1, "al1")))
+            }
+            writeFile(1, "s1", "audio")
+            writeFile(1, "s2", "audio")
+            repository.start()
+            await { repository.localUri("s1") != null && repository.localUri("s2") != null }
+            runBlocking { repository.awaitLoaded() }
+            runBlocking {
+                queues.setCursor(4)
+                queues.setPosition(42_000L)
+            }
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+
+            runBlocking { repository.removeSource(1) }
+            await { runBlocking { queues.snapshot().resetVersion > beforeReset } }
+
+            assertEquals(2L, runBlocking { queues.cursor() })
+            assertEquals(42_000L, runBlocking { queues.cursorPositionMs() })
+        }
+
+    @Test
     fun reconcileDeletesFilesThatBelongToNoDownload() =
         runTest {
             seedLibrary()
@@ -608,6 +640,19 @@ class DownloadRepositoryTest {
             assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
 
             runBlocking { db.libraryDao().deleteAlbums(1, listOf("al1")) }
+            runBlocking { repository.reconcile() }
+
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
+        }
+
+    @Test
+    fun artworkSurvivesTheDownloadedSongGoingMissing() =
+        runTest {
+            seedLibrary()
+            runBlocking { repository.download(1, "s1") }
+            assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
+
+            runBlocking { db.libraryDao().deleteSongs(1, listOf("s1")) }
             runBlocking { repository.reconcile() }
 
             assertNotNull(artwork.uri(1, coverArtKey(1, ALBUM_ART, false)))
@@ -1353,6 +1398,213 @@ class DownloadRepositoryTest {
             )
         }
     }
+
+    @Test
+    fun switchingSourcesDoesNotResetAnEditedDownloadedQueue() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(2, "other", "http://other/", isActive = false, createdAt = 1))
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(
+                            2,
+                            "o1",
+                            "other-album",
+                            "other-artist",
+                            "Other",
+                            "Other Album",
+                            "Other Artist",
+                            100,
+                            track = 1,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Completed, downloadedAt = 1))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            writeFile(2, "o1", "other")
+            repository.start()
+            await { repository.localUri("s1") != null }
+            runBlocking {
+                queues.replace(listOf(queues.downloadedEntry(1)))
+                queues.removeAt(queues.snapshot(), 1)
+            }
+            val edited = runBlocking { queues.snapshot().entries.map { it.entry } }
+            assertEquals(1, edited.size)
+            assertNotNull(edited.single().rangeStart)
+
+            runBlocking { sources.selectSource(2) }
+            await { repository.localUri("o1") != null }
+
+            assertEquals(edited, runBlocking { queues.snapshot().entries.map { it.entry } })
+        }
+
+    @Test
+    fun aDownloadCompletedWhileItsSourceIsInactiveResetsOnReturn() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(2, "other", "http://other/", isActive = false, createdAt = 1))
+                db.libraryDao().upsertSongs(
+                    listOf(
+                        Song(1, "s3", "al1", "ar1", "Song 3", "Album", "Artist", 100, track = 3, disc = 1, starred = null, genre = null),
+                        Song(
+                            2,
+                            "o1",
+                            "other-album",
+                            "other-artist",
+                            "Other",
+                            "Other Album",
+                            "Other Artist",
+                            100,
+                            track = 1,
+                            disc = 1,
+                            starred = null,
+                            genre = null,
+                        ),
+                    ),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                db.downloadDao().upsert(SongDownload(2, "o1", DownloadStatus.Completed, downloadedAt = 1))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            writeFile(2, "o1", "other")
+            repository.start()
+            await { repository.localUri("s1") != null }
+            runBlocking {
+                queues.replace(listOf(queues.downloadedEntry(1)))
+                queues.removeAt(queues.snapshot(), 1)
+                sources.selectSource(2)
+            }
+            await { repository.localUri("o1") != null }
+            assertNotNull(
+                runBlocking {
+                    queues
+                        .snapshot()
+                        .entries
+                        .single()
+                        .entry.rangeStart
+                },
+            )
+
+            runBlocking {
+                repository.captureForReset(1)
+                db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed, downloadedAt = 3))
+                writeFile(1, "s3", "three")
+                repository.reconcile()
+                sources.selectSource(1)
+            }
+
+            await { repository.localUri("s3") != null }
+            assertNull(
+                runBlocking {
+                    queues
+                        .snapshot()
+                        .entries
+                        .single()
+                        .entry.rangeStart
+                },
+            )
+        }
+
+    @Test
+    fun backfillingDownloadTimeResetsAnEditedDownloadedQueue() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, engineId = 42, downloadedAt = 0))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 1))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            repository.start()
+            await { repository.localUri("s1") != null && repository.localUri("s2") != null }
+            runBlocking {
+                queues.replace(listOf(queues.downloadedEntry(1)))
+                queues.removeAt(queues.snapshot(), 0)
+            }
+            assertNotNull(
+                runBlocking {
+                    queues
+                        .snapshot()
+                        .entries
+                        .single()
+                        .entry.rangeStart
+                },
+            )
+
+            engine.complete(42, total = 10)
+            runBlocking { repository.reconcile() }
+            await { runBlocking { (row(1, "s1")?.downloadedAt ?: 0L) > 0L } }
+            Thread.sleep(200)
+
+            assertNull(
+                runBlocking {
+                    queues
+                        .snapshot()
+                        .entries
+                        .single()
+                        .entry.rangeStart
+                },
+            )
+        }
+
+    @Test
+    fun aMultiRowRecoveryKeepsTheResetPointFromBeforeTheWholeBatch() =
+        runTest {
+            seedLibrary()
+            seedSongs(3..3)
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed, downloadedAt = 1))
+                queues.replace(listOf(queues.downloadedEntry(1)))
+                queues.setCursor(0)
+                repository.captureForReset(1)
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 2))
+                repository.captureForReset(1)
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 3))
+                repository.captureForReset(1)
+            }
+            val field = DownloadRepository::class.java.getDeclaredField("pendingResetPoints")
+            field.isAccessible = true
+            val pending = field.get(repository) as Map<*, *>
+            val point = pending[1L] as QueueResetPoint
+
+            assertEquals("s3", point.current?.songId)
+        }
+
+    @Test
+    fun startupRecoveryResetsAnEditedDownloadedQueueWhenAFileIsMissing() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 1)))
+            }
+            writeFile(1, "s1", "one")
+
+            repository.start()
+            runBlocking { repository.reconcile() }
+
+            await {
+                runBlocking {
+                    queues
+                        .snapshot()
+                        .entries
+                        .single()
+                        .entry.rangeStart == null
+                }
+            }
+        }
 
     private fun seedPlaylist(songIds: List<String>) {
         runBlocking {

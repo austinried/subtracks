@@ -67,6 +67,7 @@ class AddSourceViewModelTest {
                 File(context.cacheDir, "downloads-${System.nanoTime()}"),
                 artworkStore = artwork,
                 artworkFetcher = { ByteArray(0) },
+                queueRepository = QueueRepository(db),
                 scope = repoScope,
             )
         server = MockWebServer()

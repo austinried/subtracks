@@ -96,7 +96,7 @@ fun appModule(
             scope = get(),
         )
     }
-    single { LibraryRepository(get(), get(), get(), get(), toast, scope = get(named("io"))) }
+    single { LibraryRepository(get(), get(), get(), get(), get(), toast, scope = get(named("io"))) }
     single<ArtworkSeedStore> { ArtworkSeedRepository(get()) }
     single { SyncManager(get(), get(), get(), get(), preferences = get(), showMessage = toast, scope = get()) }
     single {
@@ -120,6 +120,7 @@ fun appModule(
             downloadsDir = downloadsRoot(context),
             artworkStore = get(),
             artworkFetcher = get(),
+            queueRepository = get(),
             showMessage = toast,
             dispatcher = Dispatchers.IO,
             scope = get(named("io")),
