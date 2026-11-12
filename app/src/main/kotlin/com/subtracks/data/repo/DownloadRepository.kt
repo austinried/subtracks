@@ -88,12 +88,16 @@ class DownloadRepository(
                 statesFlow.value = rows
                 if (sourceId != null) {
                     val completed = completedDownloads(rows)
-                    completedBaselineMutex.withLock {
-                        val previous = completedBySource[sourceId]
-                        if (previous != null && completed != previous) {
-                            val point = pendingResetPoints.remove(sourceId) ?: resetPoint
-                            queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")), point)
-                            completedBySource[sourceId] = completed
+                    mutex.withLock {
+                        completedBaselineMutex.withLock {
+                            val previous = completedBySource[sourceId]
+                            if (previous == null) {
+                                completedBySource[sourceId] = completed
+                            } else if (completed != previous) {
+                                val point = pendingResetPoints.remove(sourceId) ?: resetPoint
+                                queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")), point)
+                                completedBySource[sourceId] = completed
+                            }
                         }
                     }
                 }
@@ -712,14 +716,9 @@ class DownloadRepository(
                         row.downloadedAt
                     },
             )
-        if (updated != row &&
-            (
-                updated.status == DownloadStatus.Completed || row.status == DownloadStatus.Completed ||
-                    updated.downloadedAt != row.downloadedAt
-            )
-        ) {
-            captureForReset(row.sourceId)
-        }
+        val completedBefore = row.takeIf { it.status == DownloadStatus.Completed }?.let { it.songId to it.downloadedAt }
+        val completedAfter = updated.takeIf { it.status == DownloadStatus.Completed }?.let { it.songId to it.downloadedAt }
+        if (completedBefore != completedAfter) captureForReset(row.sourceId)
         if (updated != row) db.downloadDao().upsert(updated)
         if (updated.status != row.status &&
             (updated.status == DownloadStatus.Completed || row.status == DownloadStatus.Completed)

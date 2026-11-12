@@ -54,6 +54,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -1559,26 +1560,123 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun aFreshSourceResetsAnEditedDownloadedQueueOnTheSecondCompletion() =
+        runTest {
+            seedLibrary()
+            repository.start()
+            runBlocking {
+                repository.awaitLoaded()
+                repository.download(1, "s1")
+            }
+            var engineId = engine.requests.single().first
+            writeFile(1, "s1", "one")
+            engine.complete(engineId, total = 10)
+            await { repository.localUri("s1") != null }
+            runBlocking {
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 0)))
+                repository.download(1, "s2")
+            }
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            engineId = engine.requests.last().first
+            writeFile(1, "s2", "two")
+            engine.complete(engineId, total = 10)
+
+            await { runBlocking { queues.snapshot().resetVersion > beforeReset } }
+
+            val snapshot = runBlocking { queues.snapshot() }
+            assertNull(
+                snapshot.entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertEquals(2L, snapshot.size)
+        }
+
+    @Test
+    fun metadataOnlyUpdatesDoNotReuseAStaleResetPointForALaterCompletion() =
+        runTest {
+            seedLibrary()
+            seedSongs(0..0)
+            runBlocking {
+                db.downloadDao().upsert(
+                    SongDownload(1, "s2", DownloadStatus.Completed, engineId = 42, bytes = 10, total = 10, downloadedAt = 1),
+                )
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, bytes = 10, total = 10, downloadedAt = 2))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            repository.start()
+            await { repository.localUri("s1") != null && repository.localUri("s2") != null }
+            runBlocking {
+                repository.awaitLoaded()
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 1)))
+                queues.setCursor(0)
+            }
+            engine.complete(42, total = 20)
+            runBlocking { repository.reconcile() }
+            await { row(1, "s2")?.total == 20L }
+            runBlocking {
+                queues.setCursor(1)
+                repository.download(1, "s0")
+            }
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            val engineId = engine.requests.single().first
+            engine.complete(engineId, total = 10)
+            writeFile(1, "s0", "zero")
+            runBlocking { repository.reconcile() }
+
+            await { runBlocking { queues.snapshot().resetVersion > beforeReset } }
+
+            assertEquals(2L, runBlocking { queues.cursor() })
+        }
+
+    @Test
     fun aMultiRowRecoveryKeepsTheResetPointFromBeforeTheWholeBatch() =
         runTest {
             seedLibrary()
-            seedSongs(3..3)
+            seedSongs(3..5)
             runBlocking {
-                db.downloadDao().upsert(SongDownload(1, "s3", DownloadStatus.Completed, downloadedAt = 1))
-                queues.replace(listOf(queues.downloadedEntry(1)))
-                queues.setCursor(0)
-                repository.captureForReset(1)
-                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 2))
-                repository.captureForReset(1)
-                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 3))
-                repository.captureForReset(1)
+                (1..5).forEach { track ->
+                    val engineId =
+                        if (track == 2) {
+                            102L
+                        } else if (track == 3) {
+                            103L
+                        } else {
+                            null
+                        }
+                    db.downloadDao().upsert(
+                        SongDownload(1, "s$track", DownloadStatus.Completed, engineId = engineId, downloadedAt = (6 - track).toLong()),
+                    )
+                }
             }
-            val field = DownloadRepository::class.java.getDeclaredField("pendingResetPoints")
-            field.isAccessible = true
-            val pending = field.get(repository) as Map<*, *>
-            val point = pending[1L] as QueueResetPoint
+            (1..5).forEach { writeFile(1, "s$it", "audio$it") }
+            repository.start()
+            await { (1..5).all { repository.localUri("s$it") != null } }
+            runBlocking {
+                repository.awaitLoaded()
+                repository.reconcile()
+            }
+            val beforeReset =
+                runBlocking {
+                    queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 4)))
+                    queues.setCursor(2)
+                    queues.snapshot().resetVersion
+                }
+            val firstReset = CountDownLatch(1)
+            queues.setResetListener { firstReset.countDown() }
+            file(1, "s2").delete()
+            file(1, "s3").delete()
+            engine.beforeDownload = { engineId ->
+                if (engineId == 103L) firstReset.await(1, TimeUnit.SECONDS)
+            }
 
-            assertEquals("s3", point.current?.songId)
+            runBlocking { repository.reconcile() }
+
+            await { runBlocking { queues.snapshot().resetVersion > beforeReset && queues.snapshot().size == 3L } }
+            val (snapshot, cursor) = runBlocking { queues.snapshot() to queues.cursor() }
+            assertEquals(2L, cursor)
+            assertEquals("s5", runBlocking { queues.itemAt(snapshot, cursor)?.song?.id })
         }
 
     @Test
