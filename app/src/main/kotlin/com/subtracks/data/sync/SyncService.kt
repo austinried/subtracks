@@ -394,15 +394,6 @@ class SyncService(
         return value
     }
 
-    private suspend fun PooledConnection.changes(): Long {
-        var value = 0L
-        usePrepared("SELECT changes()") { statement ->
-            statement.step()
-            value = statement.getLong(0)
-        }
-        return value
-    }
-
     private suspend fun PooledConnection.markCreditsStale(sourceId: Long) {
         usePrepared("UPDATE sources SET creditsStale = 1 WHERE id = ? AND creditsStale = 0") { statement ->
             statement.bindLong(1, sourceId)
@@ -520,15 +511,9 @@ class SyncService(
         commitOrigins {
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
-                    connection.usePrepared(
-                        "DELETE FROM playlist_songs WHERE sourceId = ? AND playlistId = ? AND position >= ?",
-                    ) { statement ->
-                        statement.bindLong(1, source.id)
-                        statement.bindText(2, playlistId)
-                        statement.bindLong(3, position)
-                        statement.step()
-                    }
-                    val changed = connection.changes() > 0
+                    val before = connection.totalChanges()
+                    db.libraryDao().deletePlaylistSongsFrom(source.id, playlistId, position)
+                    val changed = connection.totalChanges() != before
                     if (changed) {
                         changedOrigins += origin(QueueKind.Playlist, playlistId)
                         connection.persistPendingOrigins()
