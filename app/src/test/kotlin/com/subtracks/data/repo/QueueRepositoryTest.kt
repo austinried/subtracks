@@ -614,6 +614,59 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun aChangedOriginResetRestoresFullyFragmentedDuplicateEntries() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            val initial =
+                repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1"), repository.playlistEntry(1, "p1")))
+            repository.removeAt(initial, 0)
+            repository.removeAt(repository.snapshot(), 1)
+            repository = QueueRepository(db)
+            repository.setCursor(1)
+            repository.setPosition(42_000L)
+            val point = repository.captureResetPoint()
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            assertEquals(2, updated.entries.size)
+            assertTrue(updated.entries.all { it.entry.rangeStart == null && it.entry.rangeEnd == null })
+            assertEquals(listOf("s1", "s2", "s1", "s2"), resolveAll(updated))
+            assertEquals(3L, repository.remapPosition(updated, point.current!!))
+            assertEquals(3L, repository.cursor())
+            assertEquals(42_000L, repository.cursorPositionMs())
+        }
+
+    @Test
+    fun anUnrelatedOriginResetRemapsWithinTheSecondFullyFragmentedDuplicateEntry() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(listOf(song("s0", "al1", track = 0, album = "First Album")))
+            setPlaylist("p1", "s1", "s2")
+            setPlaylist("p2", "s4")
+            val initial =
+                repository.snapshotAfter(
+                    listOf(
+                        repository.playlistEntry(1, "p2"),
+                        repository.playlistEntry(1, "p1"),
+                        repository.playlistEntry(1, "p1"),
+                    ),
+                )
+            repository.removeAt(initial, 1)
+            repository.removeAt(repository.snapshot(), 2)
+            repository.setCursor(2)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p2", "s0", "s4")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p2")), point)
+
+            val updated = repository.snapshot()
+            assertEquals(3L, repository.remapPosition(updated, point.current!!))
+            assertEquals(3L, repository.cursor())
+        }
+
+    @Test
     fun aResetRemapsTheSecondOccurrenceOfASongWithinAPlaylist() =
         runTest {
             seedLibrary()

@@ -496,6 +496,7 @@ data class QueueEntry(
     val originKind: QueueKind? = null,
     val originRefId: String? = null,
     val originOccurrence: Long? = null,
+    val originEntryId: Long? = null,
 ) {
     val offset: Long get() = rangeStart ?: 0
 
@@ -527,13 +528,26 @@ data class UpNextEntry(
     val originKind: QueueKind? = null,
     val originRefId: String? = null,
     val originOccurrence: Long? = null,
+    val originEntryId: Long? = null,
 ) {
     val offset: Long get() = rangeStart ?: 0
 
     val count: Long? get() = rangeEnd?.let { (it - offset + 1).coerceAtLeast(0) }
 
     fun toQueueEntry(): QueueEntry =
-        QueueEntry(id, position, sourceId, kind, refId, rangeStart, rangeEnd, originKind, originRefId, originOccurrence)
+        QueueEntry(
+            id,
+            position,
+            sourceId,
+            kind,
+            refId,
+            rangeStart,
+            rangeEnd,
+            originKind,
+            originRefId,
+            originOccurrence,
+            originEntryId,
+        )
 
     companion object {
         fun from(entry: QueueEntry) =
@@ -548,6 +562,7 @@ data class UpNextEntry(
                 entry.originKind,
                 entry.originRefId,
                 entry.originOccurrence,
+                entry.originEntryId,
             )
     }
 }

@@ -519,10 +519,9 @@ class QueueRepository(
         val loaded =
             db.useReaderConnection { transactor ->
                 transactor.deferredTransaction {
-                    val entries = dao.entries().map { ResolvedQueueEntry(it, lengthOf(it, libraryRevision)) }
+                    val entries = withOriginEntryIds(dao.entries()).map { ResolvedQueueEntry(it, lengthOf(it, libraryRevision)) }
                     val upNext =
-                        dao.upNextEntries().map {
-                            val entry = it.toQueueEntry()
+                        withOriginEntryIds(dao.upNextEntries().map { it.toQueueEntry() }).map { entry ->
                             ResolvedQueueEntry(entry, lengthOf(entry, libraryRevision))
                         }
                     val row = dao.cursor()
@@ -637,10 +636,16 @@ class QueueRepository(
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
                     dao.clear()
-                    dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
+                    dao.insert(
+                        withOriginEntryIds(entries).mapIndexed { index, entry ->
+                            entry.copy(id = 0, position = index.toLong())
+                        },
+                    )
                     dao.clearUpNext()
                     dao.insertUpNext(
-                        upNext.mapIndexed { index, entry -> UpNextEntry.from(entry).copy(id = 0, position = index.toLong()) },
+                        withOriginEntryIds(upNext).mapIndexed { index, entry ->
+                            UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
+                        },
                     )
                     dao.setCursor(
                         row.copy(
@@ -718,27 +723,26 @@ class QueueRepository(
         return QueueResetItem(origin, resolvedSongId, position, upNext, entryOccurrence, occurrence)
     }
 
+    private data class OriginEntryKey(
+        val origin: QueueOrigin,
+        val entryId: Long?,
+    )
+
+    private fun QueueEntry.originEntryKey() = OriginEntryKey(origin, originEntryId)
+
     private fun resetEntryOccurrence(
         entries: List<ResolvedQueueEntry>,
         targetIndex: Int,
     ): Int {
-        val origin = entries[targetIndex].entry.origin
-        val targetWhole = entries[targetIndex].entry.isWholeOrigin()
-        var occurrence = 0
-        var fragmentSeen = false
+        val targetKey = entries[targetIndex].entry.originEntryKey()
+        val groups = mutableListOf<OriginEntryKey>()
         for (index in 0..targetIndex) {
             val entry = entries[index].entry
-            if (entry.origin != origin) continue
-            if (entry.isWholeOrigin()) {
-                if (index == targetIndex) return occurrence
-                occurrence++
-            } else if (!fragmentSeen) {
-                fragmentSeen = true
-                if (!targetWhole) return occurrence
-                occurrence++
-            }
+            if (entry.origin != targetKey.origin) continue
+            val key = entry.originEntryKey()
+            if (key !in groups) groups += key
         }
-        return occurrence
+        return groups.indexOf(targetKey)
     }
 
     private fun QueueEntry.isWholeOrigin(): Boolean {
@@ -746,19 +750,47 @@ class QueueRepository(
         return kind == origin.kind && refId == origin.refId && rangeStart == null && rangeEnd == null
     }
 
+    private fun withOriginEntryIds(entries: List<QueueEntry>): List<QueueEntry> {
+        if (entries.all { it.originEntryId != null }) return entries
+        val nextIds = mutableMapOf<QueueOrigin, Long>()
+        for (entry in entries) {
+            val id = entry.originEntryId ?: continue
+            nextIds[entry.origin] = maxOf(nextIds[entry.origin] ?: 0L, id + 1)
+        }
+        val fragmentIds = mutableMapOf<QueueOrigin, Long>()
+        return entries.map { entry ->
+            if (entry.originEntryId != null) return@map entry
+            val origin = entry.origin
+            val whole = entry.isWholeOrigin()
+            val existingId = if (whole) null else fragmentIds[origin]
+            val id = existingId ?: (nextIds[origin] ?: 0L)
+            if (existingId == null) {
+                nextIds[origin] = id + 1
+                if (!whole) fragmentIds[origin] = id
+            }
+            entry.copy(originEntryId = id)
+        }
+    }
+
     private fun canonicalEntries(
         entries: List<QueueEntry>,
         changed: Set<QueueOrigin>,
     ): List<QueueEntry> {
         val result = mutableListOf<QueueEntry>()
-        val reset = mutableSetOf<QueueOrigin>()
+        val reset = mutableSetOf<OriginEntryKey>()
         for (entry in entries) {
             val origin = entry.origin
-            val whole = entry.isWholeOrigin()
             if (origin !in changed) {
                 result += entry
-            } else if (whole || reset.add(origin)) {
-                result += QueueEntry(position = 0, sourceId = origin.sourceId, kind = origin.kind, refId = origin.refId)
+            } else if (reset.add(entry.originEntryKey())) {
+                result +=
+                    QueueEntry(
+                        position = 0,
+                        sourceId = origin.sourceId,
+                        kind = origin.kind,
+                        refId = origin.refId,
+                        originEntryId = entry.originEntryId,
+                    )
             }
         }
         return result
@@ -774,24 +806,21 @@ class QueueRepository(
         origin: QueueOrigin,
     ): List<OriginEntryGroup> {
         val groups = mutableListOf<OriginEntryGroup>()
-        var fragmentIndex: Int? = null
+        val groupIndices = mutableMapOf<OriginEntryKey, Int>()
         var start = 0L
         for (resolved in entries) {
             if (resolved.entry.origin == origin) {
-                if (resolved.entry.isWholeOrigin()) {
+                val key = resolved.entry.originEntryKey()
+                val index = groupIndices[key]
+                if (index == null) {
+                    groupIndices[key] = groups.size
                     groups += OriginEntryGroup(listOf(start), listOf(resolved))
                 } else {
-                    val index = fragmentIndex
-                    if (index == null) {
-                        fragmentIndex = groups.size
-                        groups += OriginEntryGroup(listOf(start), listOf(resolved))
-                    } else {
-                        groups[index] =
-                            groups[index].copy(
-                                starts = groups[index].starts + start,
-                                entries = groups[index].entries + resolved,
-                            )
-                    }
+                    groups[index] =
+                        groups[index].copy(
+                            starts = groups[index].starts + start,
+                            entries = groups[index].entries + resolved,
+                        )
                 }
             }
             start += resolved.length
@@ -1041,7 +1070,11 @@ class QueueRepository(
         db.useWriterConnection { transactor ->
             transactor.immediateTransaction {
                 dao.clear()
-                dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
+                dao.insert(
+                    withOriginEntryIds(entries).mapIndexed { index, entry ->
+                        entry.copy(id = 0, position = index.toLong())
+                    },
+                )
             }
         }
         queueVersion.incrementAndGet()
@@ -1052,7 +1085,7 @@ class QueueRepository(
             transactor.immediateTransaction {
                 dao.clearUpNext()
                 dao.insertUpNext(
-                    entries.mapIndexed { index, entry ->
+                    withOriginEntryIds(entries).mapIndexed { index, entry ->
                         UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
                     },
                 )
@@ -1348,6 +1381,7 @@ class QueueRepository(
                 originKind = source.origin.kind,
                 originRefId = source.origin.refId,
                 originOccurrence = resetItem?.occurrence ?: source.originOccurrence,
+                originEntryId = source.originEntryId,
             )
         }
 
@@ -1447,5 +1481,8 @@ class QueueRepository(
         entry.kind == next.entry.kind &&
             entry.sourceId == next.entry.sourceId &&
             entry.refId == next.entry.refId &&
+            entry.origin == next.entry.origin &&
+            entry.originOccurrence == next.entry.originOccurrence &&
+            entry.originEntryId == next.entry.originEntryId &&
             entry.offset + length == next.entry.offset
 }

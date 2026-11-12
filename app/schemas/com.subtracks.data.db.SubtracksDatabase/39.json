@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 39,
-    "identityHash": "ee91ebd8ca8608584ff44c68b6d9f224",
+    "identityHash": "6e9243b8186efefb9a63425559da6cdc",
     "entities": [
       {
         "tableName": "sources",
@@ -1515,7 +1515,7 @@
       },
       {
         "tableName": "queue_entries",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `position` INTEGER NOT NULL, `sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `refId` TEXT NOT NULL, `rangeStart` INTEGER, `rangeEnd` INTEGER, `originKind` TEXT, `originRefId` TEXT, `originOccurrence` INTEGER, FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `position` INTEGER NOT NULL, `sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `refId` TEXT NOT NULL, `rangeStart` INTEGER, `rangeEnd` INTEGER, `originKind` TEXT, `originRefId` TEXT, `originOccurrence` INTEGER, `originEntryId` INTEGER, FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1570,6 +1570,11 @@
           {
             "fieldPath": "originOccurrence",
             "columnName": "originOccurrence",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "originEntryId",
+            "columnName": "originEntryId",
             "affinity": "INTEGER"
           }
         ],
@@ -1615,7 +1620,7 @@
       },
       {
         "tableName": "up_next_entries",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `position` INTEGER NOT NULL, `sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `refId` TEXT NOT NULL, `rangeStart` INTEGER, `rangeEnd` INTEGER, `originKind` TEXT, `originRefId` TEXT, `originOccurrence` INTEGER, FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `position` INTEGER NOT NULL, `sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `refId` TEXT NOT NULL, `rangeStart` INTEGER, `rangeEnd` INTEGER, `originKind` TEXT, `originRefId` TEXT, `originOccurrence` INTEGER, `originEntryId` INTEGER, FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1670,6 +1675,11 @@
           {
             "fieldPath": "originOccurrence",
             "columnName": "originOccurrence",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "originEntryId",
+            "columnName": "originEntryId",
             "affinity": "INTEGER"
           }
         ],
@@ -2076,7 +2086,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ee91ebd8ca8608584ff44c68b6d9f224')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6e9243b8186efefb9a63425559da6cdc')"
     ]
   }
 }

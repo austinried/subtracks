@@ -736,9 +736,11 @@ val MIGRATION_38_39 =
             connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originKind` TEXT")
             connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originRefId` TEXT")
             connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originOccurrence` INTEGER")
+            connection.execSQL("ALTER TABLE `queue_entries` ADD COLUMN `originEntryId` INTEGER")
             connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originKind` TEXT")
             connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originRefId` TEXT")
             connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originOccurrence` INTEGER")
+            connection.execSQL("ALTER TABLE `up_next_entries` ADD COLUMN `originEntryId` INTEGER")
             connection.execSQL(
                 "CREATE TABLE IF NOT EXISTS `pending_sync_origins` (`sourceId` INTEGER NOT NULL, `kind` TEXT NOT NULL, " +
                     "`refId` TEXT NOT NULL, PRIMARY KEY(`sourceId`, `kind`, `refId`), " +
