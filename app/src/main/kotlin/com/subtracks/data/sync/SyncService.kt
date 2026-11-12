@@ -101,7 +101,12 @@ class SyncService(
         pruned +=
             pruneStaleIds(seen, { library.artistIdsAfter(source.id, it, PRUNE_PAGE) }, {
                 it.forEach { id -> changedOrigins += origin(QueueKind.Artist, id) }
-                deleteSyncedIds("artists", it)
+                db.useWriterConnection { connection ->
+                    connection.immediateTransaction {
+                        library.deleteArtists(source.id, it)
+                        connection.persistPendingOrigins()
+                    }
+                }
             })
         return changed || pruned > prunedBefore
     }
@@ -134,7 +139,7 @@ class SyncService(
                             val artistIds = connection.albumArtistIds(it.toSet()).values.flatten()
                             val trackArtistIds = connection.songArtistIds(it.toSet()).values.flatten()
                             changedOrigins += (artistIds + trackArtistIds).map { id -> origin(QueueKind.Artist, id) }
-                            connection.deleteIds("albums", it)
+                            library.deleteAlbums(source.id, it)
                             connection.persistPendingOrigins()
                         }
                     }
@@ -239,7 +244,7 @@ class SyncService(
             connection.immediateTransaction {
                 connection.storedSongSyncStates(ids.toList()).values.forEach { recordSongOrigins(it, null) }
                 if (connection.completedDownloadIds(ids.toList()).isNotEmpty()) changedOrigins += origin(QueueKind.Downloaded, "")
-                connection.deleteIds("songs", ids)
+                db.libraryDao().deleteSongs(source.id, ids)
                 connection.persistPendingOrigins()
             }
         }
@@ -376,32 +381,6 @@ class SyncService(
         }
     }
 
-    private suspend fun PooledConnection.deleteIds(
-        table: String,
-        ids: Collection<String>,
-    ) {
-        ids.chunked(SQL_VARIABLES).forEach { chunk ->
-            val placeholders = chunk.joinToString(",") { "?" }
-            usePrepared("DELETE FROM $table WHERE sourceId = ? AND id IN ($placeholders)") { statement ->
-                statement.bindLong(1, source.id)
-                chunk.forEachIndexed { index, id -> statement.bindText(index + 2, id) }
-                statement.step()
-            }
-        }
-    }
-
-    private suspend fun deleteSyncedIds(
-        table: String,
-        ids: Collection<String>,
-    ) {
-        db.useWriterConnection { connection ->
-            connection.immediateTransaction {
-                connection.deleteIds(table, ids)
-                connection.persistPendingOrigins()
-            }
-        }
-    }
-
     private suspend fun recomputeAggregates() {
         db.libraryDao().recomputeAggregates(source.id)
     }
@@ -507,7 +486,12 @@ class SyncService(
         pruned +=
             pruneStaleIds(seen, { library.playlistIdsAfter(source.id, it, PRUNE_PAGE) }, {
                 it.forEach { id -> changedOrigins += origin(QueueKind.Playlist, id) }
-                deleteSyncedIds("playlists", it)
+                db.useWriterConnection { connection ->
+                    connection.immediateTransaction {
+                        library.deletePlaylists(source.id, it)
+                        connection.persistPendingOrigins()
+                    }
+                }
             })
     }
 
@@ -532,7 +516,7 @@ class SyncService(
     private suspend fun deletePlaylistSongsFrom(
         playlistId: String,
         position: Long,
-    ): Boolean =
+    ): Unit =
         commitOrigins {
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
@@ -549,7 +533,6 @@ class SyncService(
                         changedOrigins += origin(QueueKind.Playlist, playlistId)
                         connection.persistPendingOrigins()
                     }
-                    changed
                 }
             }
         }
