@@ -87,6 +87,7 @@ data class QueueRow(
     val position: Long,
     val song: SongItem,
     val upNext: Boolean = false,
+    val resetVersion: Long = 0,
 )
 
 // Both must match: the position alone can transiently point at the row above while the list
@@ -118,7 +119,10 @@ class QueueViewModel(
     private var nextId = 0L
     private val mutex = Mutex()
 
-    private fun newRow(item: QueueWindowItem) = QueueRow(nextId++, item.position, item.item, item.upNext)
+    private fun newRow(
+        item: QueueWindowItem,
+        resetVersion: Long,
+    ) = QueueRow(nextId++, item.position, item.item, item.upNext, resetVersion)
 
     private fun visible(item: QueueWindowItem): Boolean = !sourceRepository.offline.value || downloads.localUri(item.item.song.id) != null
 
@@ -128,10 +132,11 @@ class QueueViewModel(
     private fun rowFor(
         item: QueueWindowItem,
         reused: Map<String, MutableList<Long>>,
+        resetVersion: Long,
     ): QueueRow {
         val ids = reused[item.item.song.id]
         val id = if (!ids.isNullOrEmpty()) ids.removeAt(0) else nextId++
-        return QueueRow(id, item.position, item.item, item.upNext)
+        return QueueRow(id, item.position, item.item, item.upNext, resetVersion)
     }
 
     fun open() {
@@ -147,7 +152,9 @@ class QueueViewModel(
                         }?.coerceIn(0, snapshot.size - 1) ?: 0L
                     val start = (cursor - OLDER_LOAD).coerceAtLeast(0)
                     val end = (start + QUEUE_CHUNK - 1).coerceAtMost(snapshot.size - 1)
-                    rows.addAll(queueRepository.range(snapshot, start, end).filter(::visible).map { rowFor(it, reused) })
+                    rows.addAll(
+                        queueRepository.range(snapshot, start, end).filter(::visible).map { rowFor(it, reused, snapshot.resetVersion) },
+                    )
                     initialIndex = rows.indexOfFirst { it.position == cursor }.coerceAtLeast(0)
                 }
                 ready = true
@@ -172,7 +179,7 @@ class QueueViewModel(
         val end = rawEnd.coerceAtMost(start + MAX_SCAN_POSITIONS - 1)
         val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
         val reused = reusedIds()
-        val updated = loaded.map { rowFor(it, reused) }
+        val updated = loaded.map { rowFor(it, reused, snapshot.resetVersion) }
         if (end >= rawEnd) {
             if (updated.size == rows.size) {
                 updated.forEachIndexed { index, row -> if (rows[index] != row) rows[index] = row }
@@ -207,7 +214,7 @@ class QueueViewModel(
                     end = start - 1
                 }
                 if (collected.isEmpty()) return@withLock
-                rows.addAll(0, collected.map(::newRow))
+                rows.addAll(0, collected.map { newRow(it, snapshot.resetVersion) })
                 while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(rows.size - 1)
             }
         }
@@ -228,7 +235,7 @@ class QueueViewModel(
                     start = to + 1
                 }
                 if (collected.isEmpty()) return@withLock
-                rows.addAll(collected.map(::newRow))
+                rows.addAll(collected.map { newRow(it, snapshot.resetVersion) })
                 while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(0)
             }
         }
@@ -241,23 +248,34 @@ class QueueViewModel(
         if (fromIndex == toIndex) return
         if (fromIndex !in rows.indices || toIndex !in rows.indices) return
         if (rows[fromIndex].upNext != rows[toIndex].upNext) return
+        if (rows[fromIndex].resetVersion != rows[toIndex].resetVersion) return
         rows.add(toIndex, rows.removeAt(fromIndex))
     }
 
     fun play(position: Long) {
-        viewModelScope.launch { playbackController.playAt(position) }
+        val resetVersion = rows.firstOrNull { it.position == position }?.resetVersion ?: return
+        viewModelScope.launch { playbackController.playAt(position, resetVersion) }
+    }
+
+    private fun rejectMove(): Boolean {
+        viewModelScope.launch { mutex.withLock { reconcileLocked() } }
+        return false
     }
 
     fun move(
         from: Long,
         to: Long,
+        targetResetVersion: Long? = null,
     ): Boolean {
         if (from == to) return false
         if (reorderPending) return false
+        val resetVersion = rows.firstOrNull { it.position == from }?.resetVersion ?: return rejectMove()
+        val targetResetVersion = targetResetVersion ?: rows.firstOrNull { it.position == to }?.resetVersion ?: resetVersion
+        if (resetVersion != targetResetVersion) return rejectMove()
         reorderPending = true
         viewModelScope.launch {
             try {
-                playbackController.move(from, to)
+                playbackController.move(from, to, resetVersion)
                 mutex.withLock { reconcileLocked() }
             } finally {
                 reorderPending = false
@@ -270,8 +288,9 @@ class QueueViewModel(
         viewModelScope.launch {
             mutex.withLock {
                 val index = rows.indexOfFirst { it.position == position }
-                if (index >= 0) rows.removeAt(index)
-                playbackController.removeAt(position)
+                if (index < 0 || (playbackController.state.value.shuffle && !rows[index].upNext)) return@withLock
+                val row = rows.removeAt(index)
+                playbackController.removeAt(position, row.resetVersion)
                 reconcileLocked()
             }
         }
@@ -320,7 +339,7 @@ fun QueueRoute(
         onPlay = viewModel::play,
         onRemove = viewModel::remove,
         onReorder = viewModel::reorder,
-        onMove = viewModel::move,
+        onMove = { move -> viewModel.move(move.from, move.to, move.resetVersion) },
         onLoadOlder = viewModel::loadOlder,
         onLoadNewer = viewModel::loadNewer,
         onUndo = viewModel::undo,
@@ -340,7 +359,7 @@ fun QueueScreen(
     onPlay: (Long) -> Unit,
     onRemove: (Long) -> Unit,
     onReorder: (Int, Int) -> Unit,
-    onMove: (Long, Long) -> Boolean,
+    onMove: (QueueMove) -> Boolean,
     onLoadOlder: () -> Unit,
     onLoadNewer: () -> Unit,
     onUndo: () -> Unit,
@@ -482,7 +501,7 @@ fun QueueScreen(
                                                 onDragStopped = {
                                                     dragId?.let { id ->
                                                         rows.dropMoveFor(id)?.let { move ->
-                                                            if (onMove(move.from, move.to)) showUndo(queueReordered)
+                                                            if (onMove(move)) showUndo(queueReordered)
                                                         }
                                                     }
                                                     dragId = null
@@ -562,9 +581,10 @@ internal fun dropTarget(
     return (before - if (before > from) 1 else 0) + 1
 }
 
-internal data class QueueMove(
+data class QueueMove(
     val from: Long,
     val to: Long,
+    val resetVersion: Long? = null,
 )
 
 internal fun List<QueueRow>.dropMoveFor(draggedId: Long): QueueMove? {
@@ -572,7 +592,8 @@ internal fun List<QueueRow>.dropMoveFor(draggedId: Long): QueueMove? {
     if (index < 0) return null
     val from = this[index].position
     val to = dropTarget(this, index, from)
-    return if (to == from) null else QueueMove(from, to)
+    val resetVersion = this.getOrNull(index + 1)?.resetVersion ?: this.getOrNull(index - 1)?.resetVersion ?: this[index].resetVersion
+    return if (to == from) null else QueueMove(from, to, resetVersion)
 }
 
 @Suppress("ModifierParameter")

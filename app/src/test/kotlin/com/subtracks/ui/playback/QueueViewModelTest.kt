@@ -14,6 +14,7 @@ import com.subtracks.data.download.FakeDownloadEngine
 import com.subtracks.data.model.AlbumSongItem
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
@@ -164,7 +165,7 @@ class QueueViewModelTest {
     }
 
     @Test
-    fun removingWhileShuffledReconcilesTheRows() {
+    fun removingWhileShuffledIsRejectedWithoutChangingTheRows() {
         runBlocking { seedSongs(20) }
         runBlocking {
             queues.replace(listOf(queues.albumEntry(1, "al1")))
@@ -179,15 +180,13 @@ class QueueViewModelTest {
         val before = runBlocking { queues.snapshot() }
         val currentPosition = controller.state.value.position!!
         val removePosition = (0 until before.size).first { it != currentPosition }
+        val beforeIds = rowsSnapshot().map { it.song.song.id }
 
         viewModel.remove(removePosition)
+        Thread.sleep(200)
 
-        await {
-            val snapshot = runBlocking { queues.snapshot() }
-            val rows = rowsSnapshot()
-            rows.isNotEmpty() &&
-                runBlocking { rows.all { queues.itemAt(snapshot, it.position)?.song?.id == it.song.song.id } }
-        }
+        assertEquals(before.contextSize, runBlocking { queues.snapshot() }.contextSize)
+        assertEquals(beforeIds, rowsSnapshot().map { it.song.song.id })
     }
 
     @Test
@@ -436,6 +435,124 @@ class QueueViewModelTest {
     }
 
     private fun assertContiguous() = assertTrue(isContiguous())
+
+    @Test
+    fun staleRowRemovalIsRejectedAfterControllerReconciliation() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        resetAlbumWith("s0", 0)
+        assertEquals("s2", rowsSnapshot()[1].song.song.id)
+
+        viewModel.remove(1)
+        Thread.sleep(200)
+
+        assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
+        assertEquals(listOf("s0", "s1", "s2"), rowsSnapshot().map { it.song.song.id })
+    }
+
+    @Test
+    fun staleRowMoveIsRejectedAfterControllerReconciliation() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        resetAlbumWith("s0", 0)
+        assertEquals("s2", rowsSnapshot()[1].song.song.id)
+
+        viewModel.move(1, 2)
+        Thread.sleep(200)
+
+        assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
+    }
+
+    @Test
+    fun moveRejectsRowsFromDifferentResetGenerations() {
+        runOnMain {
+            viewModel.rows += row(0).copy(resetVersion = 0)
+            viewModel.rows += row(1).copy(resetVersion = 1)
+        }
+
+        viewModel.reorder(0, 1)
+        assertFalse(viewModel.move(0, 1))
+        assertEquals(listOf(0L, 1L), rowsSnapshot().map { it.position })
+    }
+
+    @Test
+    fun sparseOfflineDropUsesTheAdjacentRowsGeneration() {
+        runOnMain {
+            viewModel.rows += row(1)
+            viewModel.rows += row(3)
+            viewModel.rows += row(5)
+        }
+        val draggedId = viewModel.rows[0].id
+        viewModel.reorder(0, 1)
+        val move = viewModel.rows.dropMoveFor(draggedId)!!
+
+        assertEquals(4L, move.to)
+        assertTrue(viewModel.move(move.from, move.to, move.resetVersion))
+    }
+
+    @Test
+    fun staleRowPlayIsRejectedAfterControllerReconciliation() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 2)
+        await { controller.state.value.position == 2L }
+        viewModel.open()
+        await { viewModel.ready }
+        resetAlbumWith("s0", 0)
+        assertEquals("s2", rowsSnapshot()[1].song.song.id)
+        assertEquals(3L, controller.state.value.position)
+
+        viewModel.play(1)
+        Thread.sleep(200)
+
+        assertEquals(
+            "s3",
+            controller.state.value.item
+                ?.id,
+        )
+        assertEquals(3L, controller.state.value.position)
+    }
+
+    private fun resetAlbumWith(
+        songId: String,
+        track: Long,
+    ) {
+        val layout = controller.state.value.layout
+        runBlocking {
+            val point = queues.captureResetPoint()
+            db.libraryDao().upsertSongs(
+                listOf(
+                    Song(
+                        sourceId = 1,
+                        id = songId,
+                        albumId = "al1",
+                        artistId = "ar1",
+                        title = "Song $songId",
+                        album = "Album",
+                        artist = "Artist",
+                        duration = 100,
+                        track = track,
+                        disc = 1,
+                        starred = null,
+                        genre = null,
+                    ),
+                ),
+            )
+            queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point)
+        }
+        await { controller.state.value.layout > layout }
+    }
+
+    private fun resolvedQueueIds(): List<String> =
+        runBlocking {
+            val snapshot = queues.snapshot()
+            queues.range(snapshot, 0, snapshot.size - 1).map { it.item.song.id }
+        }
 
     private fun isContiguous(): Boolean {
         val positions = rowsSnapshot().map { it.position }

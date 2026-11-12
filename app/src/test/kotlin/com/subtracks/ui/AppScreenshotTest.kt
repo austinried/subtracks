@@ -573,7 +573,7 @@ class AppScreenshotTest {
                     onPlay = {},
                     onRemove = {},
                     onReorder = { _, _ -> },
-                    onMove = { _, _ -> true },
+                    onMove = { true },
                     onLoadOlder = {},
                     onLoadNewer = {},
                     onUndo = {},
