@@ -120,7 +120,7 @@ class QueueViewModel(
         private set
 
     private var reorderPending = false
-    private var lastReorder: ReorderRollback? = null
+    private var dragRollback: ReorderRollback? = null
 
     private var nextId = 0L
     private val mutex = Mutex()
@@ -251,14 +251,13 @@ class QueueViewModel(
         fromIndex: Int,
         toIndex: Int,
     ) {
-        lastReorder = null
         if (fromIndex == toIndex) return
         if (fromIndex !in rows.indices || toIndex !in rows.indices) return
         if (rows[fromIndex].upNext != rows[toIndex].upNext) return
         if (rows[fromIndex].resetVersion != rows[toIndex].resetVersion) return
-        val before = rows.map { it.id }
+        val before = dragRollback?.before ?: rows.map { it.id }
         rows.add(toIndex, rows.removeAt(fromIndex))
-        lastReorder = ReorderRollback(before, rows.map { it.id })
+        dragRollback = ReorderRollback(before, rows.map { it.id })
     }
 
     fun play(position: Long) {
@@ -275,7 +274,7 @@ class QueueViewModel(
 
     private fun rejectMove(
         edit: ReorderRollback?,
-        onComplete: (Boolean) -> Unit,
+        onComplete: (Boolean) -> Unit = {},
     ): Boolean {
         viewModelScope.launch {
             mutex.withLock {
@@ -287,27 +286,28 @@ class QueueViewModel(
         return false
     }
 
+    fun cancelMove() {
+        val edit = dragRollback ?: return
+        dragRollback = null
+        rejectMove(edit)
+    }
+
     fun move(
         from: Long,
         to: Long,
         targetResetVersion: Long? = null,
         onComplete: (Boolean) -> Unit = {},
     ): Boolean {
-        val edit = lastReorder
-        lastReorder = null
-        if (from == to || reorderPending) {
-            onComplete(false)
-            return false
-        }
+        val edit = dragRollback
+        dragRollback = null
+        if (from == to || reorderPending) return rejectMove(edit, onComplete)
         val resetVersion = rows.firstOrNull { it.position == from }?.resetVersion ?: return rejectMove(edit, onComplete)
         val targetResetVersion = targetResetVersion ?: rows.firstOrNull { it.position == to }?.resetVersion ?: resetVersion
         if (resetVersion != targetResetVersion) return rejectMove(edit, onComplete)
         reorderPending = true
         viewModelScope.launch {
             try {
-                val contentVersion = queueRepository.contentVersion()
-                playbackController.move(from, to, resetVersion)
-                val applied = queueRepository.contentVersion() != contentVersion
+                val applied = playbackController.move(from, to, resetVersion)
                 mutex.withLock {
                     if (!applied) rollbackReorder(edit)
                     reconcileLocked()
@@ -340,10 +340,14 @@ class QueueViewModel(
                         reconcileLocked()
                         return@withLock false
                     }
-                    val contentVersion = queueRepository.contentVersion()
-                    playbackController.removeAt(expected.position, expected.resetVersion)
-                    val applied = queueRepository.contentVersion() != contentVersion
-                    if (applied) rows.removeAt(index)
+                    val applied = playbackController.removeAt(expected.position, expected.resetVersion)
+                    if (applied) {
+                        val currentIndex =
+                            rows.indexOfFirst {
+                                it.id == expected.id && it.position == expected.position && it.resetVersion == expected.resetVersion
+                            }
+                        if (currentIndex >= 0) rows.removeAt(currentIndex)
+                    }
                     reconcileLocked()
                     applied
                 }
@@ -395,6 +399,7 @@ fun QueueRoute(
         onRemove = { position, onComplete -> viewModel.remove(position, onComplete) },
         onReorder = viewModel::reorder,
         onMove = { move, onComplete -> viewModel.move(move.from, move.to, move.resetVersion, onComplete) },
+        onCancelMove = viewModel::cancelMove,
         onLoadOlder = viewModel::loadOlder,
         onLoadNewer = viewModel::loadNewer,
         onUndo = viewModel::undo,
@@ -414,7 +419,8 @@ fun QueueScreen(
     onPlay: (Long) -> Unit,
     onRemove: (Long, (Boolean) -> Unit) -> Unit,
     onReorder: (Int, Int) -> Unit,
-    onMove: (QueueMove, (Boolean) -> Unit) -> Boolean,
+    onMove: (QueueMove, (Boolean) -> Unit) -> Unit,
+    onCancelMove: () -> Unit,
     onLoadOlder: () -> Unit,
     onLoadNewer: () -> Unit,
     onUndo: () -> Unit,
@@ -554,10 +560,11 @@ fun QueueScreen(
                                             Modifier.draggableHandle(
                                                 onDragStarted = { dragId = row.id },
                                                 onDragStopped = {
-                                                    dragId?.let { id ->
-                                                        rows.dropMoveFor(id)?.let { move ->
-                                                            onMove(move) { applied -> if (applied) showUndo(queueReordered) }
-                                                        }
+                                                    val move = dragId?.let { id -> rows.dropMoveFor(id) }
+                                                    if (move == null) {
+                                                        onCancelMove()
+                                                    } else {
+                                                        onMove(move) { applied -> if (applied) showUndo(queueReordered) }
                                                     }
                                                     dragId = null
                                                 },

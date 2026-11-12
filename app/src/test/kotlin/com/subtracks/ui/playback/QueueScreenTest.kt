@@ -78,10 +78,7 @@ class QueueScreenTest {
         visible: List<QueueRow> = rows,
         shuffle: Boolean = false,
         onRemove: (Long, (Boolean) -> Unit) -> Unit = { _, onComplete -> onComplete(false) },
-        onMove: (QueueMove, (Boolean) -> Unit) -> Boolean = { _, onComplete ->
-            onComplete(false)
-            true
-        },
+        onMove: (QueueMove, (Boolean) -> Unit) -> Unit = { _, onComplete -> onComplete(false) },
         onUndo: () -> Unit = {},
     ) {
         val visibleRows = mutableStateListOf<QueueRow>().also { it.addAll(visible) }
@@ -99,6 +96,7 @@ class QueueScreenTest {
                     onRemove = onRemove,
                     onReorder = { from, to -> visibleRows.add(to, visibleRows.removeAt(from)) },
                     onMove = onMove,
+                    onCancelMove = {},
                     onLoadOlder = {},
                     onLoadNewer = {},
                     onUndo = onUndo,

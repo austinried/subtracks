@@ -29,6 +29,7 @@ import com.subtracks.playback.FakePlayerHandle
 import com.subtracks.playback.PlaybackController
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -36,11 +37,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -50,7 +53,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -537,6 +542,164 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun moveWaitingForQueuedResetDoesNotReportTheResetAsApplied() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        val point = prepareAlbumReset("s0", 0)
+        val paused = pauseQueueMutation()
+        val reset =
+            repoScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point)
+            }
+        val completion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.reorder(1, 2)
+                assertTrue(viewModel.move(1, 2, onComplete = completion::complete))
+                yield()
+            }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertFalse(awaitCompletion(completion))
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
+        assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
+    }
+
+    @Test
+    fun removalWaitingForQueuedResetDoesNotReportTheResetAsApplied() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        val point = prepareAlbumReset("s0", 0)
+        val paused = pauseQueueMutation()
+        val reset =
+            repoScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point)
+            }
+        val completion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.remove(2, completion::complete)
+                yield()
+            }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertFalse(awaitCompletion(completion))
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
+        assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
+    }
+
+    @Test
+    fun rejectedTwoCallbackSparseTailDragRestoresTheDragBaseline() {
+        openReconciledSparseOfflineQueue(includeFarTail = true)
+        val canonical = resolvedQueueIds()
+        val before = rowsSnapshot()
+        val dragged = before[1]
+        val completion = CompletableDeferred<Boolean>()
+        runOnMain {
+            viewModel.reorder(1, 2)
+            viewModel.reorder(2, 3)
+            val move = viewModel.rows.dropMoveFor(dragged.id)!!
+            assertTrue(viewModel.move(move.from, move.to, move.resetVersion, completion::complete))
+        }
+
+        assertFalse(awaitCompletion(completion))
+        assertEquals(canonical, resolvedQueueIds())
+        assertEquals(before.map { it.id }, rowsSnapshot().map { it.id })
+        assertEquals(before.map { it.position }, rowsSnapshot().map { it.position })
+    }
+
+    @Test
+    fun rejectedMixedGenerationCrossingRestoresTheWholeDrag() {
+        runOnMain {
+            viewModel.rows += row(0)
+            viewModel.rows += row(1)
+            viewModel.rows += row(2)
+        }
+        val before = rowsSnapshot()
+        val dragged = before[0]
+        val completion = CompletableDeferred<Boolean>()
+        runOnMain {
+            viewModel.reorder(0, 1)
+            viewModel.rows[2] = viewModel.rows[2].copy(resetVersion = 1)
+            viewModel.reorder(1, 2)
+            val move = viewModel.rows.dropMoveFor(dragged.id)!!
+            assertFalse(viewModel.move(move.from, move.to, move.resetVersion, completion::complete))
+        }
+
+        assertFalse(awaitCompletion(completion))
+        assertEquals(before.map { it.id }, rowsSnapshot().map { it.id })
+        assertEquals(before.map { it.position }, rowsSnapshot().map { it.position })
+    }
+
+    @Test
+    fun secondOptimisticDragRejectedWhileMovePendingRollsBack() {
+        openSparseOfflineQueue()
+        val before = rowsSnapshot()
+        val visibleIds = before.map { it.song.song.id }.toSet()
+        val expectedFirst = before.toMutableList().also { it.add(1, it.removeAt(0)) }.map { it.song.song.id }
+        val expectedSecond =
+            before
+                .toMutableList()
+                .also { it.add(1, it.removeAt(0)) }
+                .also { it.add(1, it.removeAt(2)) }
+                .map { it.song.song.id }
+        val paused = pauseQueueMutation()
+        val firstCompletion = CompletableDeferred<Boolean>()
+        val secondCompletion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.reorder(0, 1)
+                val firstMove = viewModel.rows.dropMoveFor(before[0].id)!!
+                assertTrue(viewModel.move(firstMove.from, firstMove.to, firstMove.resetVersion, firstCompletion::complete))
+                yield()
+                viewModel.reorder(2, 1)
+                assertEquals(expectedSecond, viewModel.rows.map { it.song.song.id })
+                val secondMove = viewModel.rows.dropMoveFor(before[2].id)!!
+                assertFalse(viewModel.move(secondMove.from, secondMove.to, secondMove.resetVersion, secondCompletion::complete))
+            }
+            await { rowsSnapshot().map { it.song.song.id } == expectedFirst }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertTrue(awaitCompletion(firstCompletion))
+        assertFalse(awaitCompletion(secondCompletion))
+        assertEquals(expectedFirst, resolvedQueueIds().filter { it in visibleIds })
+    }
+
+    @Test
+    fun removalAfterInterleavedReorderRemovesTheCapturedRow() {
+        openSparseOfflineQueue()
+        val before = rowsSnapshot()
+        val paused = pauseQueueMutation()
+        val completion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.remove(before[2].position, completion::complete)
+                yield()
+                viewModel.reorder(0, 2)
+            }
+            assertEquals(listOf("s801", "s901", "s1"), rowsSnapshot().map { it.song.song.id })
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertTrue(awaitCompletion(completion))
+        assertEquals(listOf("s1", "s801"), rowsSnapshot().map { it.song.song.id })
+        assertEquals(listOf("s1", "s801"), resolvedQueueIds().filter { it in setOf("s1", "s801", "s901") })
+    }
+
+    @Test
     fun moveRejectsRowsFromDifferentResetGenerations() {
         runOnMain {
             viewModel.rows += row(0).copy(resetVersion = 0)
@@ -594,11 +757,12 @@ class QueueViewModelTest {
         assertEquals(3L, controller.state.value.position)
     }
 
-    private fun openReconciledSparseOfflineQueue() {
-        runBlocking { seedSongs(901) }
+    private fun openSparseOfflineQueue(includeFarTail: Boolean = false) {
+        runBlocking { seedSongs(if (includeFarTail) 1001 else 901) }
         markDownloaded(1, "s1")
         markDownloaded(1, "s801")
         markDownloaded(1, "s901")
+        if (includeFarTail) markDownloaded(1, "s1001")
         setOffline()
         controller.playAlbum(1, "al1", 0)
         await {
@@ -608,12 +772,17 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
         viewModel.loadNewer()
-        await { rowsSnapshot().map { it.position } == listOf(0L, 800L, 900L) }
+        val expected = if (includeFarTail) listOf(0L, 800L, 900L, 1000L) else listOf(0L, 800L, 900L)
+        await { rowsSnapshot().map { it.position } == expected }
+    }
 
+    private fun openReconciledSparseOfflineQueue(includeFarTail: Boolean = false) {
+        openSparseOfflineQueue(includeFarTail)
         resetAlbumWith("s0", 0)
         viewModel.reconcile()
         await { rowsSnapshot().firstOrNull()?.resetVersion == 1L }
-        assertEquals(listOf(1L, 800L, 900L), rowsSnapshot().map { it.position })
+        val expected = if (includeFarTail) listOf(1L, 800L, 900L, 1000L) else listOf(1L, 800L, 900L)
+        assertEquals(expected, rowsSnapshot().map { it.position })
     }
 
     private fun resetAlbumWith(
@@ -621,29 +790,35 @@ class QueueViewModelTest {
         track: Long,
     ) {
         val layout = controller.state.value.layout
-        runBlocking {
-            val point = queues.captureResetPoint()
-            db.libraryDao().upsertSongs(
-                listOf(
-                    Song(
-                        sourceId = 1,
-                        id = songId,
-                        albumId = "al1",
-                        artistId = "ar1",
-                        title = "Song $songId",
-                        album = "Album",
-                        artist = "Artist",
-                        duration = 100,
-                        track = track,
-                        disc = 1,
-                        starred = null,
-                        genre = null,
-                    ),
-                ),
-            )
-            queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point)
-        }
+        val point = prepareAlbumReset(songId, track)
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point) }
         await { controller.state.value.layout > layout }
+    }
+
+    private fun prepareAlbumReset(
+        songId: String,
+        track: Long,
+    ) = runBlocking {
+        val point = queues.captureResetPoint()
+        db.libraryDao().upsertSongs(
+            listOf(
+                Song(
+                    sourceId = 1,
+                    id = songId,
+                    albumId = "al1",
+                    artistId = "ar1",
+                    title = "Song $songId",
+                    album = "Album",
+                    artist = "Artist",
+                    duration = 100,
+                    track = track,
+                    disc = 1,
+                    starred = null,
+                    genre = null,
+                ),
+            ),
+        )
+        point
     }
 
     private fun resolvedQueueIds(): List<String> =
@@ -770,11 +945,32 @@ class QueueViewModelTest {
         )
     }
 
+    private fun pauseQueueMutation(): Pair<CountDownLatch, Job> {
+        val locked = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val locker =
+            repoScope.launch {
+                queues.withMutationLock {
+                    locked.countDown()
+                    release.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                }
+            }
+        assertTrue(locked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        return release to locker
+    }
+
+    private fun resumeQueueMutation(paused: Pair<CountDownLatch, Job>) {
+        paused.first.countDown()
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { paused.second.join() } }
+    }
+
     // `rows` is a snapshot list mutated on the main dispatcher, so read it there rather than from
     // the test thread (otherwise iterating it races the view model and throws or reads torn state).
     private fun rowsSnapshot(): List<QueueRow> = runBlocking { withContext(dispatcher) { viewModel.rows.toList() } }
 
     private fun runOnMain(block: () -> Unit) = runBlocking { withContext(dispatcher) { block() } }
+
+    private fun runOnMainSuspending(block: suspend () -> Unit) = runBlocking { withContext(dispatcher) { block() } }
 
     private fun awaitCompletion(completion: CompletableDeferred<Boolean>): Boolean =
         runBlocking { withTimeout(TEST_TIMEOUT_MS) { completion.await() } }
