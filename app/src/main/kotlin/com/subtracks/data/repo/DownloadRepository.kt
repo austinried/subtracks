@@ -71,7 +71,8 @@ class DownloadRepository(
     private var started = false
 
     private val statesFlow = MutableStateFlow<Map<String, SongDownload>>(emptyMap())
-    private val completedBySource = mutableMapOf<Long, Map<String, Long>>()
+    private val completedBySource = mutableMapOf<Long, List<Pair<String, Long>>>()
+    private val completedRowsBySource = mutableMapOf<Long, Map<String, Long>>()
     private val completedBaselineMutex = Mutex()
     private val pendingResetPoints = mutableMapOf<Long, QueueResetPoint>()
     private val attemptedBios = ConcurrentHashMap.newKeySet<Pair<Long, String>>()
@@ -87,17 +88,33 @@ class DownloadRepository(
             downloadStates().collect { (sourceId, rows) ->
                 statesFlow.value = rows
                 if (sourceId != null) {
-                    val completed = completedDownloads(rows)
                     mutex.withLock {
+                        val completed = completedDownloads(sourceId)
+                        val completedRows = completedDownloadKeys(rows)
                         completedBaselineMutex.withLock {
                             val previous = completedBySource[sourceId]
-                            if (previous == null) {
-                                completedBySource[sourceId] = completed
-                            } else if (completed != previous) {
-                                val point = pendingResetPoints.remove(sourceId) ?: resetPoint
-                                queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")), point)
-                                completedBySource[sourceId] = completed
+                            val previousRows = completedRowsBySource[sourceId]
+                            val pending = pendingResetPoints[sourceId]
+                            when {
+                                pending != null -> {
+                                    pendingResetPoints.remove(sourceId)
+                                    if (previous == null || completed != previous) {
+                                        queueRepository.resetChangedOrigins(
+                                            setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
+                                            pending,
+                                        )
+                                    }
+                                }
+
+                                previous != null && completed != previous && completedRows != previousRows -> {
+                                    queueRepository.resetChangedOrigins(
+                                        setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
+                                        resetPoint,
+                                    )
+                                }
                             }
+                            completedBySource[sourceId] = completed
+                            completedRowsBySource[sourceId] = completedRows
                         }
                     }
                 }
@@ -125,16 +142,34 @@ class DownloadRepository(
             if (sourceId !in pendingResetPoints) pendingResetPoints[sourceId] = queueRepository.captureResetPoint()
         }
 
+    private suspend fun captureForReset(
+        sourceId: Long,
+        songIds: Collection<String>,
+    ) {
+        if (songIds.isEmpty()) return
+        if (db.downloadDao().queueVisibleSongIds(sourceId, songIds).isNotEmpty()) {
+            captureForReset(sourceId)
+        } else {
+            completedBaselineMutex.withLock {
+                if (sourceId !in pendingResetPoints) completedBySource[sourceId] = completedDownloads(sourceId)
+            }
+        }
+    }
+
     private suspend fun ensureCompletedBaselines(rows: List<SongDownload>) =
         completedBaselineMutex.withLock {
             rows.groupBy { it.sourceId }.forEach { (sourceId, sourceRows) ->
-                if (sourceId !in completedBySource) {
-                    completedBySource[sourceId] = completedDownloads(sourceRows.associateBy { it.songId })
+                if (sourceId !in completedBySource && sourceId !in pendingResetPoints) {
+                    completedBySource[sourceId] = completedDownloads(sourceId)
+                    completedRowsBySource[sourceId] = completedDownloadKeys(sourceRows.associateBy { it.songId })
                 }
             }
         }
 
-    private fun completedDownloads(rows: Map<String, SongDownload>): Map<String, Long> =
+    private suspend fun completedDownloads(sourceId: Long): List<Pair<String, Long>> =
+        db.downloadDao().completedDownloads(sourceId).map { it.songId to it.downloadedAt }
+
+    private fun completedDownloadKeys(rows: Map<String, SongDownload>): Map<String, Long> =
         rows.values
             .filter { it.status == DownloadStatus.Completed }
             .associate { it.songId to it.downloadedAt }
@@ -394,7 +429,7 @@ class DownloadRepository(
         val engineIds = rows.mapNotNull { it.engineId }
         if (engineIds.isNotEmpty()) engine.cancel(engineIds)
         rows.groupBy { it.sourceId }.forEach { (sourceId, group) ->
-            if (group.any { it.status == DownloadStatus.Completed }) captureForReset(sourceId)
+            captureForReset(sourceId, group.filter { it.status == DownloadStatus.Completed }.map { it.songId })
             group.forEach { file(sourceId, it.songId).delete() }
             group.map { it.songId }.chunked(DELETE_CHUNK).forEach { db.downloadDao().deleteSongs(sourceId, it) }
             if (group.any { it.status == DownloadStatus.Completed }) {
@@ -416,7 +451,7 @@ class DownloadRepository(
         withContext(dispatcher) {
             mutex.withLock {
                 val rows = db.downloadDao().all().filter { it.sourceId == sourceId }
-                if (rows.any { it.status == DownloadStatus.Completed }) captureForReset(sourceId)
+                captureForReset(sourceId, rows.filter { it.status == DownloadStatus.Completed }.map { it.songId })
                 rows.mapNotNull { it.engineId }.let(engine::cancel)
                 db.downloadDao().deleteSource(sourceId)
                 db.libraryDao().clearDownloadedArtistArt(sourceId)
@@ -632,7 +667,7 @@ class DownloadRepository(
         songId: String,
     ): Boolean {
         val row = db.downloadDao().find(sourceId, songId) ?: return false
-        if (row.status == DownloadStatus.Completed) captureForReset(sourceId)
+        if (row.status == DownloadStatus.Completed) captureForReset(sourceId, listOf(songId))
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(sourceId, songId).delete()
         db.downloadDao().delete(sourceId, songId)
@@ -718,7 +753,7 @@ class DownloadRepository(
             )
         val completedBefore = row.takeIf { it.status == DownloadStatus.Completed }?.let { it.songId to it.downloadedAt }
         val completedAfter = updated.takeIf { it.status == DownloadStatus.Completed }?.let { it.songId to it.downloadedAt }
-        if (completedBefore != completedAfter) captureForReset(row.sourceId)
+        if (completedBefore != completedAfter) captureForReset(row.sourceId, listOf(row.songId))
         if (updated != row) db.downloadDao().upsert(updated)
         if (updated.status != row.status &&
             (updated.status == DownloadStatus.Completed || row.status == DownloadStatus.Completed)
@@ -739,7 +774,7 @@ class DownloadRepository(
         row: SongDownload,
         error: DownloadError,
     ) {
-        if (row.status == DownloadStatus.Completed) captureForReset(row.sourceId)
+        if (row.status == DownloadStatus.Completed) captureForReset(row.sourceId, listOf(row.songId))
         row.engineId?.let { engine.cancel(listOf(it)) }
         file(row.sourceId, row.songId).delete()
         db.downloadDao().upsert(row.copy(status = DownloadStatus.Failed, engineId = null, error = error))

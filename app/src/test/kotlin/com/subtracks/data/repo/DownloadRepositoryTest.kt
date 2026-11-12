@@ -29,9 +29,11 @@ import com.subtracks.data.model.SubsonicSource
 import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -55,6 +57,7 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -1375,6 +1378,46 @@ class DownloadRepositoryTest {
             )
         }
 
+    private fun useRepository(
+        scope: CoroutineScope,
+        dispatcher: CoroutineDispatcher,
+    ) {
+        repository =
+            DownloadRepository(
+                db,
+                sources,
+                engine,
+                dir,
+                artworkStore = artwork,
+                artworkFetcher = fetcher,
+                queueRepository = queues,
+                showMessage = { messages += it.resolve(resources) },
+                dispatcher = dispatcher,
+                scope = scope,
+            )
+    }
+
+    private fun withBlockedCollector(block: (CountDownLatch) -> Unit) {
+        val releaseCollector = CountDownLatch(1)
+        val executor = Executors.newSingleThreadExecutor()
+        val dispatcher = executor.asCoroutineDispatcher()
+        val collectorScope = CoroutineScope(SupervisorJob() + dispatcher)
+        val collectorBlocked = CountDownLatch(1)
+        executor.execute {
+            collectorBlocked.countDown()
+            releaseCollector.await()
+        }
+        assertTrue(collectorBlocked.await(5, TimeUnit.SECONDS))
+        useRepository(collectorScope, Dispatchers.Default)
+        try {
+            block(releaseCollector)
+        } finally {
+            releaseCollector.countDown()
+            cancelAndJoinBlocking(collectorScope)
+            dispatcher.close()
+        }
+    }
+
     private fun requestedSongIds(): List<String> = engine.requests.map { it.second.path.substringAfterLast('/') }
 
     private fun seedSongs(tracks: IntRange) {
@@ -1703,6 +1746,165 @@ class DownloadRepositoryTest {
                 }
             }
         }
+
+    @Test
+    fun aCapturedDeletionBeforeTheFirstEmissionResetsAnEditedDownloadedQueue() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 1)))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            withBlockedCollector { releaseCollector ->
+                repository.start()
+                runBlocking {
+                    repository.remove(1, "s2")
+                    repository.reconcile()
+                }
+                releaseCollector.countDown()
+                runBlocking { repository.awaitLoaded() }
+
+                val snapshot = runBlocking { queues.snapshot() }
+                assertEquals(beforeReset + 1, snapshot.resetVersion)
+                assertNull(
+                    snapshot.entries
+                        .single()
+                        .entry.rangeStart,
+                )
+            }
+        }
+
+    @Test
+    fun aCapturedCompletionBeforeTheFirstEmissionResetsAnEditedDownloadedQueue() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 0)))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            withBlockedCollector { releaseCollector ->
+                repository.start()
+                runBlocking {
+                    repository.captureForReset(1)
+                    db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                    repository.reconcile()
+                }
+                releaseCollector.countDown()
+                runBlocking { repository.awaitLoaded() }
+
+                val snapshot = runBlocking { queues.snapshot() }
+                assertEquals(beforeReset + 1, snapshot.resetVersion)
+                assertNull(
+                    snapshot.entries
+                        .single()
+                        .entry.rangeStart,
+                )
+                assertEquals(2L, snapshot.size)
+            }
+        }
+
+    @Test
+    fun aPrunedDownloadCompletingDoesNotResetAnEditedDownloadedQueue() =
+        runTest {
+            val beforeReset = preparePrunedDownload(DownloadStatus.Running)
+            writeFile(1, "s3", "three")
+            engine.complete(42, total = 10)
+
+            runBlocking { repository.reconcile() }
+            await { repository.states().value["s3"]?.status == DownloadStatus.Completed }
+            Thread.sleep(200)
+
+            val snapshot = runBlocking { queues.snapshot() }
+            assertEquals(beforeReset, snapshot.resetVersion)
+            assertEquals(
+                1L,
+                snapshot.entries
+                    .single()
+                    .entry.rangeStart,
+            )
+        }
+
+    @Test
+    fun aPrunedCompletedDownloadFailingDoesNotResetAnEditedDownloadedQueue() =
+        runTest {
+            val beforeReset = preparePrunedDownload(DownloadStatus.Completed)
+            file(1, "s3").delete()
+
+            runBlocking { repository.reconcile() }
+            await { repository.states().value["s3"]?.status == DownloadStatus.Failed }
+            Thread.sleep(200)
+
+            val snapshot = runBlocking { queues.snapshot() }
+            assertEquals(beforeReset, snapshot.resetVersion)
+            assertEquals(
+                1L,
+                snapshot.entries
+                    .single()
+                    .entry.rangeStart,
+            )
+        }
+
+    @Test
+    fun removingAPrunedCompletedDownloadDoesNotResetAnEditedDownloadedQueue() =
+        runTest {
+            val beforeReset = preparePrunedDownload(DownloadStatus.Completed)
+
+            runBlocking { repository.remove(1, "s3") }
+            await { repository.states().value["s3"] == null }
+            Thread.sleep(200)
+
+            val snapshot = runBlocking { queues.snapshot() }
+            assertEquals(beforeReset, snapshot.resetVersion)
+            assertEquals(
+                1L,
+                snapshot.entries
+                    .single()
+                    .entry.rangeStart,
+            )
+        }
+
+    private fun preparePrunedDownload(status: DownloadStatus): Long {
+        seedLibrary()
+        seedSongs(3..3)
+        runBlocking {
+            db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+            db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+            db.downloadDao().upsert(
+                SongDownload(
+                    1,
+                    "s3",
+                    status,
+                    engineId = 42L.takeIf { status == DownloadStatus.Running },
+                    downloadedAt = if (status == DownloadStatus.Completed) 3L else 0L,
+                ),
+            )
+        }
+        writeFile(1, "s1", "one")
+        writeFile(1, "s2", "two")
+        writeFile(1, "s3", "three")
+        if (status == DownloadStatus.Running) engine.running(42, bytes = 1, total = 10)
+        repository.start()
+        await {
+            repository.localUri("s1") != null &&
+                repository.localUri("s2") != null &&
+                (status != DownloadStatus.Completed || repository.localUri("s3") != null)
+        }
+        return runBlocking {
+            repository.awaitLoaded()
+            repository.reconcile()
+            queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 1)))
+            db.libraryDao().deleteSongs(1, listOf("s3"))
+            queues.invalidateLibraryCache()
+            queues.snapshot().resetVersion
+        }
+    }
 
     private fun seedPlaylist(songIds: List<String>) {
         runBlocking {

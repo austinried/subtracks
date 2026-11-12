@@ -56,6 +56,24 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
     fun downloads(sourceId: Long): Flow<List<SongDownload>>
 
+    @Query(
+        "SELECT d.* FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed' " +
+            "ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id",
+    )
+    suspend fun completedDownloads(sourceId: Long): List<SongDownload>
+
+    @Query(
+        "SELECT d.songId FROM song_downloads d " +
+            "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.songId IN (:songIds)",
+    )
+    suspend fun queueVisibleSongIds(
+        sourceId: Long,
+        songIds: Collection<String>,
+    ): List<String>
+
     @Query("SELECT * FROM song_downloads WHERE status IN ('Queued', 'Running') AND (engineId IS NOT NULL OR sourceId = :sourceId)")
     fun activeDownloads(sourceId: Long): Flow<List<SongDownload>>
 
