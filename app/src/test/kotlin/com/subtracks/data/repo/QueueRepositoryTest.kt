@@ -15,9 +15,13 @@ import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -27,6 +31,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class QueueRepositoryTest {
@@ -920,6 +926,53 @@ class QueueRepositoryTest {
             repeat.join()
 
             assertEquals(2, repository.modes().repeat)
+        }
+
+    @Test
+    fun aConcurrentPositionWriteDoesNotDeadlockAPendingOriginReset() =
+        runBlocking {
+            seedLibrary()
+            repository.snapshotAfter(listOf(repository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val point = repository.captureResetPoint()
+            val positionStarted = CountDownLatch(1)
+            var cursorLocked = true
+            repository.cursorMutex.lock()
+            try {
+                withTimeout(5_000) {
+                    val position =
+                        launch(Dispatchers.Default) {
+                            repository.withMutationLock {
+                                positionStarted.countDown()
+                                repository.setPosition(42_000L)
+                            }
+                        }
+                    assertTrue(positionStarted.await(5, TimeUnit.SECONDS))
+                    val reset =
+                        launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                            repository.resetChangedOriginsAndClearPendingOrigins(
+                                setOf(QueueOrigin(QueueKind.Album, 1, "al1")),
+                                point,
+                                sourceId = 1,
+                            )
+                        }
+                    yield()
+                    repository.cursorMutex.unlock()
+                    cursorLocked = false
+                    position.join()
+                    reset.join()
+                }
+            } finally {
+                if (cursorLocked) repository.cursorMutex.unlock()
+            }
+
+            assertNull(
+                repository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertEquals(42_000L, repository.cursorPositionMs())
         }
 
     @Test

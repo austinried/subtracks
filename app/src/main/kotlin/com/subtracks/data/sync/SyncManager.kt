@@ -1,7 +1,5 @@
 package com.subtracks.data.sync
 
-import androidx.room3.deferredTransaction
-import androidx.room3.useWriterConnection
 import com.subtracks.R
 import com.subtracks.UiMessage
 import com.subtracks.data.db.SubtracksDatabase
@@ -100,12 +98,7 @@ class SyncManager(
                         "${completed.artists} artists, ${completed.albums} albums, ${completed.songs} songs, " +
                         "${completed.playlists} playlists, ${completed.playlistSongs} playlist tracks, ${completed.pruned} pruned",
                 )
-                db.useWriterConnection { connection ->
-                    connection.deferredTransaction {
-                        queueRepository.resetChangedOrigins(changedOrigins, resetPoint)
-                        db.queueDao().clearPendingSyncOrigins(source.id)
-                    }
-                }
+                queueRepository.resetChangedOriginsAndClearPendingOrigins(changedOrigins, resetPoint, source.id)
                 SyncStatus.Success
             } catch (cancellation: CancellationException) {
                 throw cancellation

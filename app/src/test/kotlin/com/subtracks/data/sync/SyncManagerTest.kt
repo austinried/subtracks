@@ -285,13 +285,14 @@ class SyncManagerTest {
             server.dispatcher = healthyDispatcher()
             sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
             queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
-            val resetAttempted = CountDownLatch(1)
-            queueRepository.setResetListener { resetAttempted.countDown() }
+            val before = queueRepository.snapshot()
+            val cacheVersion = queueRepository.libraryCacheVersion()
+            val resetAttempts = AtomicInteger()
+            queueRepository.setResetListener { resetAttempts.incrementAndGet() }
             failPendingOriginClear()
 
             manager.requestSync()
-            assertTrue(resetAttempted.await(10, TimeUnit.SECONDS))
-            awaitUntil("waiting for the pending-origin clear failure") { manager.status.value !is SyncStatus.Running }
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
 
             assertEquals(
                 0L,
@@ -301,8 +302,16 @@ class SyncManagerTest {
                     .single()
                     .entry.rangeStart,
             )
-            assertTrue(manager.status.value is SyncStatus.Failed)
             assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+            assertEquals(
+                listOf(0L, before.version, before.resetVersion, cacheVersion),
+                listOf(
+                    resetAttempts.get().toLong(),
+                    queueRepository.contentVersion(),
+                    queueRepository.snapshot().resetVersion,
+                    queueRepository.libraryCacheVersion(),
+                ),
+            )
 
             allowPendingOriginClear()
             manager.requestSync()
@@ -316,6 +325,7 @@ class SyncManagerTest {
                     .entry.rangeStart,
             )
             assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+            assertEquals(1, resetAttempts.get())
         }
 
     @Test
@@ -327,6 +337,7 @@ class SyncManagerTest {
             val resetAttempted = CountDownLatch(1)
             val resetAttempts = AtomicInteger()
             queueRepository.setResetListener {
+                queueRepository.setPosition(42_000L)
                 resetAttempted.countDown()
                 if (resetAttempts.incrementAndGet() == 1) throw IllegalStateException("reconciliation failed")
             }
