@@ -2494,7 +2494,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    fun tappingASongWhileShuffledPlaysThatSong() {
+    fun tappingASongTurnsOffShuffleAndPlaysThatSong() {
         seedAlbum(5, sourceId = 1)
 
         controller.playAlbum(1, "al1", 0)
@@ -2509,12 +2509,14 @@ class PlaybackControllerTest {
         controller.playAlbum(1, "al1", 3)
         await {
             controller.state.value.item
-                ?.id == "s4"
+                ?.id == "s4" && !controller.state.value.shuffle
         }
 
         assertEquals("s4", handle.currentItem?.id)
-        val shuffled = runBlocking { queues.snapshot() }
-        assertEquals("s4", runBlocking { queues.itemAt(shuffled, controller.state.value.position!!)?.song?.id })
+        assertEquals(3L, controller.state.value.position)
+        val snapshot = runBlocking { queues.snapshot() }
+        assertFalse(snapshot.shuffled)
+        assertEquals("s4", runBlocking { queues.itemAt(snapshot, controller.state.value.position!!)?.song?.id })
     }
 
     @Test
@@ -2728,24 +2730,6 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id != first,
         )
-    }
-
-    @Test
-    fun playInOrderTurnsOffShuffle() {
-        seedAlbum(3, sourceId = 1)
-
-        controller.shuffleAlbum(1, "al1")
-        await { controller.state.value.shuffle }
-
-        controller.playAlbumInOrder(1, "al1")
-        await { !controller.state.value.shuffle }
-
-        assertEquals(
-            "s1",
-            controller.state.value.item
-                ?.id,
-        )
-        assertEquals(0L, controller.state.value.position)
     }
 
     @Test
