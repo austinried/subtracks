@@ -54,6 +54,7 @@ class LibraryRepositoryTest {
     private lateinit var db: SubtracksDatabase
     private lateinit var sourceRepository: SourceRepository
     private lateinit var repository: LibraryRepository
+    private lateinit var queues: QueueRepository
     private lateinit var scope: CoroutineScope
     private val messages = ArrayList<String>()
     private lateinit var resources: Resources
@@ -66,13 +67,14 @@ class LibraryRepositoryTest {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         sourceRepository =
             SourceRepository(db, OkHttpClient(), fakeUserPreferences(), ArtworkStore(File(context.cacheDir, "art")), scope = scope)
+        queues = QueueRepository(db)
         repository =
             LibraryRepository(
                 db,
                 sourceRepository,
                 NetworkServerActionSink(sourceRepository),
                 fakeUserPreferences(),
-                queueRepository = QueueRepository(db),
+                queueRepository = queues,
                 showMessage = { messages += it.resolve(resources) },
                 scope = scope,
             )
@@ -157,6 +159,26 @@ class LibraryRepositoryTest {
 
                 assertEquals(starredAt, starred())
                 assertEquals(listOf("Could not update star"), messages)
+            }
+        }
+
+    @Test
+    fun starringAMissingSongDoesNotResetTheStarredQueue() =
+        runBlocking {
+            withSource { server ->
+                val sourceId = sourceRepository.activeSourceIdOnce()!!
+                db.libraryDao().setSongStar(sourceId, "s1", 1)
+                queues.replace(listOf(queues.starredEntry(sourceId).copy(rangeStart = 0, rangeEnd = 0)))
+                val before = queues.snapshot()
+                server.enqueue(ok())
+
+                assertTrue(repository.setStar(StarType.Song, "pruned-id", true).isSuccess)
+
+                val after = queues.snapshot()
+                assertEquals(before.resetVersion, after.resetVersion)
+                assertEquals(before.entries.map { it.entry }, after.entries.map { it.entry })
+                assertNull(db.libraryDao().songOnce(sourceId, "pruned-id"))
+                assertEquals("/rest/star.view", server.takeRequest().requestUrl!!.encodedPath)
             }
         }
 

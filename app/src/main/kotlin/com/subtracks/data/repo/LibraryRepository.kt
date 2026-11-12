@@ -459,8 +459,9 @@ class LibraryRepository(
             val previous = song(sourceId, id).first()?.starred
             if (previous == starred) return
             val point = queueRepository.captureResetPoint()
-            dao.setSongStar(sourceId, id, starred)
-            queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Starred, sourceId, "")), point)
+            if (dao.setSongStar(sourceId, id, starred) > 0) {
+                queueRepository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Starred, sourceId, "")), point)
+            }
         } else {
             when (type) {
                 StarType.Album -> dao.setAlbumStar(sourceId, id, starred)

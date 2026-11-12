@@ -542,7 +542,7 @@ interface LibraryDao {
         sourceId: Long,
         id: String,
         starred: Long?,
-    )
+    ): Int
 
     @Query("SELECT id FROM artists WHERE sourceId = :sourceId")
     suspend fun artistIds(sourceId: Long): List<String>
