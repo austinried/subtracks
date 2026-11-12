@@ -2614,6 +2614,34 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aSongTappedWhileThePlayerConnectsKeepsItsOrder() {
+        seedAlbum(3, sourceId = 1)
+        val (slowPrefs, entered, gate) = gatedSongTapPreferences()
+        val slowController =
+            PlaybackController(
+                sources,
+                queues,
+                FakePlayerConnection(handle),
+                downloads,
+                slowPrefs,
+                scope = CoroutineScope(SupervisorJob() + dispatcher).also { extraScopes += it },
+            )
+
+        slowController.playAlbum(1, "al1", 0)
+        runBlocking { entered.await() }
+        slowController.playAlbum(1, "al1", 1)
+        gate.complete(Unit)
+        runBlocking { delay(1_000) }
+
+        assertEquals(
+            "s2",
+            slowController.state.value.item
+                ?.id,
+        )
+        assertEquals(1L, slowController.state.value.position)
+    }
+
+    @Test
     fun jumpingInTheQueueWhileShuffledKeepsTheOrder() {
         seedAlbum(5, sourceId = 1)
 

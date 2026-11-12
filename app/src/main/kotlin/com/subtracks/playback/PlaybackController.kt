@@ -992,29 +992,26 @@ class PlaybackController(
         }
         scope.launch {
             startLock.withLock {
-                startLocked(entry, startPosition, behavior ?: preferences.songTapBehavior().first())
+                startLocked(entry, startPosition, behavior)
             }
         }
     }
 
     private suspend fun startPending(pending: PendingPlay) {
-        start(pending.entry, pending.position, pending.behavior ?: preferences.songTapBehavior().first())
+        startLock.withLock {
+            startLocked(pending.entry, pending.position, pending.behavior)
+        }
     }
-
-    private suspend fun start(
-        entry: QueueEntry,
-        startPosition: Long,
-        behavior: SongTapBehavior,
-    ) = startLock.withLock { startLocked(entry, startPosition, behavior) }
 
     private suspend fun startLocked(
         entry: QueueEntry,
         startPosition: Long,
-        behavior: SongTapBehavior,
+        behavior: SongTapBehavior?,
     ) {
+        val resolved = behavior ?: preferences.songTapBehavior().first()
         val modes = queueRepository.modes()
         val shuffle =
-            when (behavior) {
+            when (resolved) {
                 SongTapBehavior.InOrder -> false
                 SongTapBehavior.KeepShuffle -> modes.shuffle
                 SongTapBehavior.Shuffle -> true
