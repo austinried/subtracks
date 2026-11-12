@@ -1075,17 +1075,11 @@ class PlaybackController(
             connect()
             return
         }
-        scope.launch {
-            startLock.withLock {
-                startLocked(entry, startPosition, behavior)
-            }
-        }
+        scope.launch { startLocked(entry, startPosition, behavior) }
     }
 
     private suspend fun startPending(pending: PendingPlay) {
-        startLock.withLock {
-            startLocked(pending.entry, pending.position, pending.behavior)
-        }
+        startLocked(pending.entry, pending.position, pending.behavior)
     }
 
     private suspend fun startLocked(
