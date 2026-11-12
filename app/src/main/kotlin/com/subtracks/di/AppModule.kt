@@ -128,7 +128,7 @@ fun appModule(
     single(createdAtStart = true) { DownloadNotifier(context.applicationContext, get(), scope = get()).also { it.start() } }
     single(createdAtStart = true) { SyncNotifier(context.applicationContext, get<SyncManager>().status, scope = get()).also { it.start() } }
     single<PlayerConnection> { MediaSessionConnection(context.applicationContext, get(), get()) }
-    single { PlaybackController(get(), get(), get(), get(), showMessage = toast, scope = get(named("playback"))) }
+    single { PlaybackController(get(), get(), get(), get(), get(), showMessage = toast, scope = get(named("playback"))) }
     single(createdAtStart = true) {
         val playback = get<PlaybackController>()
         Scrobbler(

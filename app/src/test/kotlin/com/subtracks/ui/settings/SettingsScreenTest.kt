@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.subtracks.data.prefs.SongTapBehavior
 import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.ui.theme.SubtracksTheme
@@ -82,10 +83,29 @@ class SettingsScreenTest {
         assertEquals(SortNameMode.SortName, requested)
     }
 
+    @Test
+    fun theSongTapBehaviorRowChangesTheSetting() {
+        var requested: SongTapBehavior? = null
+        renderSettings(
+            keepScreenOn = false,
+            onKeepScreenOnChange = {},
+            onSongTapBehaviorChange = { requested = it },
+            scrollTo = "New song tap behavior",
+        )
+
+        composeRule.onNodeWithText("New song tap behavior").performClick()
+        composeRule.onNodeWithText("Play and shuffle").performClick()
+        composeRule.onNodeWithText("Done").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(SongTapBehavior.Shuffle, requested)
+    }
+
     private fun renderSettings(
         keepScreenOn: Boolean,
         onKeepScreenOnChange: (Boolean) -> Unit,
         onSortNameModeChange: (SortNameMode) -> Unit = {},
+        onSongTapBehaviorChange: (SongTapBehavior) -> Unit = {},
         scrollTo: String = "Keep screen on",
     ) {
         composeRule.setContent {
@@ -110,6 +130,7 @@ class SettingsScreenTest {
                     onScrobblingChange = {},
                     onKeepScreenOnChange = onKeepScreenOnChange,
                     onSortNameModeChange = onSortNameModeChange,
+                    onSongTapBehaviorChange = onSongTapBehaviorChange,
                     onAddServer = {},
                     onOpenDownloads = {},
                     onOpenLicenses = {},

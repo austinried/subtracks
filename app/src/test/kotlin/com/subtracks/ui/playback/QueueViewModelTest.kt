@@ -83,7 +83,15 @@ class QueueViewModelTest {
                 artworkFetcher = { ByteArray(0) },
                 scope = repoScope,
             ).also { it.start() }
-        controller = PlaybackController(sources, queues, FakePlayerConnection(FakePlayerHandle()), downloads, scope = controllerScope)
+        controller =
+            PlaybackController(
+                sources,
+                queues,
+                FakePlayerConnection(FakePlayerHandle()),
+                downloads,
+                fakeUserPreferences(),
+                scope = controllerScope,
+            )
         viewModel = QueueViewModel(queues, controller, sources, downloads)
     }
 

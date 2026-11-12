@@ -94,7 +94,7 @@ class PlaylistDetailViewModel(
 
     fun playAll() {
         viewModelScope.launch {
-            playbackController.playPlaylist(sourceId.first(), playlistId, 0)
+            playbackController.playPlaylistInOrder(sourceId.first(), playlistId)
         }
     }
 

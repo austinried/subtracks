@@ -6,6 +6,8 @@ import com.subtracks.data.model.AudioEncoding
 import com.subtracks.data.model.CoverArtRef
 import com.subtracks.data.model.QueueEntry
 import com.subtracks.data.model.QueueKind
+import com.subtracks.data.prefs.SongTapBehavior
+import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueSnapshot
@@ -22,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -106,6 +109,7 @@ private data class ReloadUndo(
 private data class PendingPlay(
     val entry: QueueEntry,
     val position: Long,
+    val behavior: SongTapBehavior?,
 )
 
 class PlaybackController(
@@ -113,6 +117,7 @@ class PlaybackController(
     private val queueRepository: QueueRepository,
     private val connection: PlayerConnection,
     private val downloads: DownloadRepository,
+    private val preferences: UserPreferences,
     private val showMessage: (UiMessage) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 ) {
@@ -190,7 +195,7 @@ class PlaybackController(
                     val shuffle = pendingShuffle
                     pendingShuffle = null
                     when {
-                        pending != null -> start(pending.entry, pending.position)
+                        pending != null -> startPending(pending)
                         shuffle != null -> startShuffled(shuffle)
                         else -> restore()
                     }
@@ -238,6 +243,16 @@ class PlaybackController(
         sourceId: Long,
         startOrdinal: Long,
     ) = play(queueRepository.starredEntry(sourceId), startOrdinal)
+
+    fun playAlbumInOrder(
+        sourceId: Long,
+        albumId: String,
+    ) = play(queueRepository.albumEntry(sourceId, albumId), 0, SongTapBehavior.InOrder)
+
+    fun playPlaylistInOrder(
+        sourceId: Long,
+        playlistId: String,
+    ) = play(queueRepository.playlistEntry(sourceId, playlistId), 0, SongTapBehavior.InOrder)
 
     fun shuffleAlbum(
         sourceId: Long,
@@ -968,22 +983,35 @@ class PlaybackController(
     private fun play(
         entry: QueueEntry,
         startPosition: Long,
+        behavior: SongTapBehavior? = null,
     ) {
         if (player == null) {
-            pendingPlay = PendingPlay(entry, startPosition)
+            pendingPlay = PendingPlay(entry, startPosition, behavior)
             connect()
             return
         }
-        scope.launch { start(entry, startPosition) }
+        scope.launch { start(entry, startPosition, behavior ?: preferences.songTapBehavior().first()) }
+    }
+
+    private suspend fun startPending(pending: PendingPlay) {
+        val behavior = pending.behavior ?: preferences.songTapBehavior().first()
+        start(pending.entry, pending.position, behavior)
     }
 
     private suspend fun start(
         entry: QueueEntry,
         startPosition: Long,
+        behavior: SongTapBehavior,
     ) = startLock.withLock {
-        val snapshot = resetQueue(entry)
         val modes = queueRepository.modes()
-        shuffleEnabled = false
+        val shuffle =
+            when (behavior) {
+                SongTapBehavior.InOrder -> false
+                SongTapBehavior.KeepShuffle -> modes.shuffle
+                SongTapBehavior.Shuffle -> true
+            }
+        val snapshot = resetQueue(entry)
+        shuffleEnabled = shuffle
         repeatMode = modes.repeat.toRepeatMode()
         player?.setRepeatOne(repeatMode == RepeatMode.One)
         queueSourceId = entry.sourceId
@@ -991,7 +1019,14 @@ class PlaybackController(
             stopLocked()
             return@withLock
         }
-        val position = startPosition.coerceIn(0, snapshot.contextSize - 1)
+        val start = startPosition.coerceIn(0, snapshot.contextSize - 1)
+        val position =
+            if (shuffle) {
+                queueRepository.setShuffle(pinnedSeed(snapshot.contextSize, start))
+                0L
+            } else {
+                start
+            }
         queueRepository.setCursor(position)
         this.snapshot = readSnapshot()
         loadWindow(position, autoplay = true)

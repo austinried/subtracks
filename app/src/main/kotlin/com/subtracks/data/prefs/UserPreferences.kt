@@ -59,6 +59,8 @@ const val MAX_REPLAY_GAIN_PREAMP_DB = 15f
 
 enum class SyncMode { Off, WifiOnly, Always }
 
+enum class SongTapBehavior { InOrder, KeepShuffle, Shuffle }
+
 enum class ReplayGainMode { Off, Track, Album, Auto }
 
 data class ArtworkSeedValue(
@@ -128,6 +130,19 @@ class UserPreferences(
     }
 
     private val syncModeKey = stringPreferencesKey("sync_mode")
+
+    fun songTapBehavior(): Flow<SongTapBehavior> =
+        store.data.map { prefs ->
+            prefs[songTapBehaviorKey]?.let { stored ->
+                SongTapBehavior.entries.firstOrNull { it.name == stored }
+            } ?: SongTapBehavior.InOrder
+        }
+
+    suspend fun setSongTapBehavior(behavior: SongTapBehavior) {
+        store.edit { prefs -> prefs[songTapBehaviorKey] = behavior.name }
+    }
+
+    private val songTapBehaviorKey = stringPreferencesKey("song_tap_behavior")
 
     fun lastSyncAt(): Flow<Long> = store.data.map { prefs -> prefs[lastSyncAtKey] ?: 0L }
 

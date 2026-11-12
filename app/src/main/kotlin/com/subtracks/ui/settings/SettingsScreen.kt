@@ -74,6 +74,7 @@ import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.MAX_REPLAY_GAIN_PREAMP_DB
 import com.subtracks.data.prefs.MIN_REPLAY_GAIN_PREAMP_DB
 import com.subtracks.data.prefs.ReplayGainMode
+import com.subtracks.data.prefs.SongTapBehavior
 import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
@@ -103,6 +104,7 @@ private enum class SettingsDialog {
     ReplayGain,
     ReplayGainPreamp,
     SortNames,
+    SongTap,
 }
 
 @Composable
@@ -131,6 +133,7 @@ fun SettingsRoute(
     val replayGainMode by viewModel.replayGainMode.collectAsStateWithLifecycle()
     val replayGainPreamp by viewModel.replayGainPreamp.collectAsStateWithLifecycle()
     val sortNameMode by viewModel.sortNameMode.collectAsStateWithLifecycle()
+    val songTapBehavior by viewModel.songTapBehavior.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     SettingsScreen(
@@ -147,6 +150,7 @@ fun SettingsRoute(
         replayGainMode = replayGainMode,
         replayGainPreamp = replayGainPreamp,
         sortNameMode = sortNameMode,
+        songTapBehavior = songTapBehavior,
         keepScreenOn = keepScreenOn,
         offline = offline,
         verboseLogging = verboseLogging,
@@ -163,6 +167,7 @@ fun SettingsRoute(
         onReplayGainModeChange = viewModel::setReplayGainMode,
         onReplayGainPreampChange = viewModel::setReplayGainPreamp,
         onSortNameModeChange = viewModel::setSortNameMode,
+        onSongTapBehaviorChange = viewModel::setSongTapBehavior,
         onKeepScreenOnChange = viewModel::setKeepScreenOn,
         onOfflineChange = viewModel::setOfflineMode,
         onVerboseLoggingChange = viewModel::setVerboseLogging,
@@ -211,6 +216,7 @@ fun SettingsScreen(
     replayGainMode: ReplayGainMode = ReplayGainMode.Auto,
     replayGainPreamp: Float = 0f,
     sortNameMode: SortNameMode = SortNameMode.Name,
+    songTapBehavior: SongTapBehavior = SongTapBehavior.InOrder,
     onSelectSource: (Long) -> Unit,
     onEditServer: (Long) -> Unit,
     onWifiQualityChange: (StreamQuality) -> Unit,
@@ -224,6 +230,7 @@ fun SettingsScreen(
     onReplayGainModeChange: (ReplayGainMode) -> Unit = {},
     onReplayGainPreampChange: (Float) -> Unit = {},
     onSortNameModeChange: (SortNameMode) -> Unit = {},
+    onSongTapBehaviorChange: (SongTapBehavior) -> Unit = {},
     onKeepScreenOnChange: (Boolean) -> Unit = {},
     onOfflineChange: (Boolean) -> Unit = {},
     onVerboseLoggingChange: (Boolean) -> Unit = {},
@@ -418,6 +425,14 @@ fun SettingsScreen(
                         )
                     },
                     modifier = Modifier.clickable { onKeepScreenOnChange(!keepScreenOn) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_music_options_song_tap_title)) },
+                    supportingContent = { Text(songTapBehaviorLabel(LocalResources.current, songTapBehavior)) },
+                    modifier = Modifier.clickable { dialog = SettingsDialog.SongTap },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -627,6 +642,14 @@ fun SettingsScreen(
             )
         }
 
+        SettingsDialog.SongTap -> {
+            SongTapBehaviorDialog(
+                selected = songTapBehavior,
+                onSelect = onSongTapBehaviorChange,
+                onDismiss = { dialog = null },
+            )
+        }
+
         null -> {
             Unit
         }
@@ -808,6 +831,51 @@ private fun SortNameModeDialog(
             ChoiceGroup(
                 header = stringResource(R.string.settings_sort_names_prompt),
                 options = sortNameModeOptions.map { it to sortNameModeLabel(resources, it) },
+                selected = draft,
+                onSelect = { draft = it },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSelect(draft)
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.actions_cancel)) }
+        },
+    )
+}
+
+private val songTapBehaviorOptions = SongTapBehavior.entries
+
+private fun songTapBehaviorLabel(
+    resources: Resources,
+    behavior: SongTapBehavior,
+): String =
+    when (behavior) {
+        SongTapBehavior.InOrder -> resources.getString(R.string.settings_music_options_song_tap_in_order)
+        SongTapBehavior.KeepShuffle -> resources.getString(R.string.settings_music_options_song_tap_keep_shuffle)
+        SongTapBehavior.Shuffle -> resources.getString(R.string.settings_music_options_song_tap_shuffle)
+    }
+
+@Composable
+private fun SongTapBehaviorDialog(
+    selected: SongTapBehavior,
+    onSelect: (SongTapBehavior) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val resources = LocalResources.current
+    var draft by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_music_options_song_tap_title)) },
+        text = {
+            ChoiceGroup(
+                header = stringResource(R.string.settings_music_options_song_tap_prompt),
+                options = songTapBehaviorOptions.map { it to songTapBehaviorLabel(resources, it) },
                 selected = draft,
                 onSelect = { draft = it },
             )

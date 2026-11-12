@@ -59,6 +59,7 @@ class ViewModelRepositoryFixture {
             queueRepository,
             FakePlayerConnection(FakePlayerHandle()),
             downloadRepository,
+            fakeUserPreferences(),
             scope = controllerScope,
         )
     val libraryRepository =

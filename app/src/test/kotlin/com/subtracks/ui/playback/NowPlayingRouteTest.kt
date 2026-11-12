@@ -101,6 +101,7 @@ class NowPlayingRouteTest {
                 queues,
                 FakePlayerConnection(handle),
                 downloads,
+                prefs,
                 showMessage = {},
                 scope = controllerScope,
             )

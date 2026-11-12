@@ -6,6 +6,7 @@ import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
 import com.subtracks.data.prefs.DEFAULT_SYNC_INTERVAL_MINUTES
 import com.subtracks.data.prefs.ReplayGainMode
+import com.subtracks.data.prefs.SongTapBehavior
 import com.subtracks.data.prefs.SortNameMode
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.SyncMode
@@ -82,6 +83,11 @@ class SettingsViewModel(
             .sortNameMode()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SortNameMode.Name)
 
+    val songTapBehavior: StateFlow<SongTapBehavior> =
+        userPreferences
+            .songTapBehavior()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongTapBehavior.InOrder)
+
     val keepScreenOn: StateFlow<Boolean> =
         userPreferences
             .keepScreenOn()
@@ -152,5 +158,9 @@ class SettingsViewModel(
 
     fun setSortNameMode(mode: SortNameMode) {
         viewModelScope.launch { userPreferences.setSortNameMode(mode) }
+    }
+
+    fun setSongTapBehavior(behavior: SongTapBehavior) {
+        viewModelScope.launch { userPreferences.setSongTapBehavior(behavior) }
     }
 }

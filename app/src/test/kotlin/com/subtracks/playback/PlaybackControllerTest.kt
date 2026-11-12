@@ -26,6 +26,7 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
 import com.subtracks.data.net.NetworkMode
+import com.subtracks.data.prefs.SongTapBehavior
 import com.subtracks.data.prefs.StreamQuality
 import com.subtracks.data.prefs.UserPreferences
 import com.subtracks.data.prefs.fakeUserPreferences
@@ -113,6 +114,7 @@ class PlaybackControllerTest {
                 queues,
                 FakePlayerConnection(handle),
                 downloads,
+                prefs,
                 showMessage = { messages += it.resolve(resources) },
                 scope = controllerScope,
             )
@@ -2520,6 +2522,60 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun tappingASongCanKeepTheCurrentShuffleMode() {
+        seedAlbum(5, sourceId = 1)
+        runBlocking { prefs.setSongTapBehavior(SongTapBehavior.KeepShuffle) }
+
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        controller.toggleShuffle()
+        await { controller.state.value.shuffle }
+
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4" && controller.state.value.shuffle
+        }
+
+        assertEquals(0L, controller.state.value.position)
+        val snapshot = runBlocking { queues.snapshot() }
+        assertTrue(snapshot.shuffled)
+        assertEquals("s4", runBlocking { queues.itemAt(snapshot, controller.state.value.position!!)?.song?.id })
+    }
+
+    @Test
+    fun tappingASongCanStartShuffled() {
+        seedAlbum(5, sourceId = 1)
+        runBlocking { prefs.setSongTapBehavior(SongTapBehavior.Shuffle) }
+
+        controller.playAlbum(1, "al1", 3)
+        await {
+            controller.state.value.item
+                ?.id == "s4" && controller.state.value.shuffle
+        }
+
+        assertEquals(0L, controller.state.value.position)
+        assertTrue(runBlocking { queues.snapshot().shuffled })
+    }
+
+    @Test
+    fun playAllStartsInOrderRegardlessOfTheSongTapBehavior() {
+        seedAlbum(3, sourceId = 1)
+        runBlocking { prefs.setSongTapBehavior(SongTapBehavior.Shuffle) }
+
+        controller.playAlbumInOrder(1, "al1")
+        await {
+            controller.state.value.item
+                ?.id == "s1" && !controller.state.value.shuffle
+        }
+
+        assertEquals(0L, controller.state.value.position)
+    }
+
+    @Test
     fun jumpingInTheQueueWhileShuffledKeepsTheOrder() {
         seedAlbum(5, sourceId = 1)
 
@@ -3643,7 +3699,7 @@ class PlaybackControllerTest {
         handle: FakePlayerHandle,
     ): PlaybackController {
         val scope = CoroutineScope(SupervisorJob() + dispatcher).also { extraScopes += it }
-        return PlaybackController(sources, queues, FakePlayerConnection(handle), downloads, scope = scope)
+        return PlaybackController(sources, queues, FakePlayerConnection(handle), downloads, prefs, scope = scope)
     }
 
     private fun await(predicate: () -> Boolean) = awaitUntil("waiting for the expected playback state", predicate)

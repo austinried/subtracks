@@ -96,7 +96,7 @@ class AlbumDetailViewModel(
 
     fun playAll() {
         viewModelScope.launch {
-            playbackController.playAlbum(sourceId.first(), albumId, 0)
+            playbackController.playAlbumInOrder(sourceId.first(), albumId)
         }
     }
 

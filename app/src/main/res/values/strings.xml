@@ -83,6 +83,11 @@
     <string name="settings_music_name">Playback</string>
     <string name="settings_music_options_scrobble_description_on">Send now playing and play counts</string>
     <string name="settings_music_options_scrobble_title">Scrobble to server</string>
+    <string name="settings_music_options_song_tap_in_order">Play without shuffling</string>
+    <string name="settings_music_options_song_tap_keep_shuffle">Keep current shuffle mode</string>
+    <string name="settings_music_options_song_tap_prompt">When tapping a song in a list</string>
+    <string name="settings_music_options_song_tap_shuffle">Play and shuffle</string>
+    <string name="settings_music_options_song_tap_title">New song tap behavior</string>
     <string name="settings_replay_gain_mode_album">Album gain</string>
     <string name="settings_replay_gain_mode_auto">Auto</string>
     <string name="settings_replay_gain_mode_off">Off</string>
