@@ -509,6 +509,29 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun anUnrelatedOriginResetSkipsMovedSongsFromOtherPlaylistOccurrences() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(listOf(song("s0", "al1", track = 0, album = "First Album")))
+            setPlaylist("p2", "s4")
+            setPlaylist("p1", "s1", "s2", "s1")
+            val snapshot = repository.snapshotAfter(listOf(repository.playlistEntry(1, "p2"), repository.playlistEntry(1, "p1")))
+            repository.move(snapshot, from = 3, to = 1)
+            repository.setCursor(2)
+            repository.setPosition(42_000L)
+            val point = repository.captureResetPoint()
+
+            setPlaylist("p2", "s0", "s4")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p2")), point)
+
+            val updated = repository.snapshot()
+            assertEquals(listOf("s0", "s4", "s1", "s1", "s2"), resolveAll(updated))
+            assertEquals(3L, repository.remapPosition(updated, point.current!!))
+            assertEquals(3L, repository.cursor())
+            assertEquals(42_000L, repository.cursorPositionMs())
+        }
+
+    @Test
     fun aRemovedDuplicateOccurrenceDoesNotLeaveItsOffsetOnTheSurvivor() =
         runTest {
             seedLibrary()
@@ -611,6 +634,26 @@ class QueueRepositoryTest {
 
             assertEquals(3L, repository.cursor())
             assertEquals(3L, repository.snapshot().upNextAnchor)
+        }
+
+    @Test
+    fun aResetKeepsTheCapturedDuplicateGroupAfterReordering() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1"), repository.playlistEntry(1, "p1")))
+            repository.setCursor(3)
+            repository.setPosition(42_000L)
+            val point = repository.captureResetPoint()
+            repository.move(repository.snapshot(), from = 2, to = 0)
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            assertEquals(listOf("s1", "s2", "s1", "s2"), resolveAll(updated))
+            assertEquals(1L, repository.remapPosition(updated, point.current!!))
+            assertEquals(1L, repository.cursor())
+            assertEquals(42_000L, repository.cursorPositionMs())
         }
 
     @Test

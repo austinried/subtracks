@@ -169,6 +169,7 @@ data class QueueResetItem(
     val upNext: Boolean,
     val entryOccurrence: Int = 0,
     val occurrence: Long = 0,
+    val originEntryId: Long? = null,
 )
 
 data class QueueResetPoint(
@@ -720,7 +721,7 @@ class QueueRepository(
                 } else {
                     0L
                 }
-        return QueueResetItem(origin, resolvedSongId, position, upNext, entryOccurrence, occurrence)
+        return QueueResetItem(origin, resolvedSongId, position, upNext, entryOccurrence, occurrence, entry.originEntryId)
     }
 
     private data class OriginEntryKey(
@@ -797,6 +798,7 @@ class QueueRepository(
     }
 
     private data class OriginEntryGroup(
+        val key: OriginEntryKey,
         val starts: List<Long>,
         val entries: List<ResolvedQueueEntry>,
     )
@@ -814,7 +816,7 @@ class QueueRepository(
                 val index = groupIndices[key]
                 if (index == null) {
                     groupIndices[key] = groups.size
-                    groups += OriginEntryGroup(listOf(start), listOf(resolved))
+                    groups += OriginEntryGroup(key, listOf(start), listOf(resolved))
                 } else {
                     groups[index] =
                         groups[index].copy(
@@ -834,9 +836,15 @@ class QueueRepository(
     ): Long? {
         val entries = if (item.upNext) snapshot.upNext else snapshot.entries
         val groups = originEntryGroups(entries, item.origin)
-        val group = groups.getOrNull(item.entryOccurrence) ?: return null
+        val group =
+            if (item.originEntryId == null) {
+                groups.getOrNull(item.entryOccurrence)
+            } else {
+                groups.firstOrNull { it.key == OriginEntryKey(item.origin, item.originEntryId) }
+            } ?: return null
         for ((index, resolved) in group.entries.withIndex()) {
             val entry = resolved.entry
+            if (entry.originOccurrence != null && entry.originOccurrence != item.occurrence) continue
             val rank =
                 if (entry.kind == QueueKind.Playlist) {
                     val position = dao.playlistPositionForOccurrence(entry.sourceId, entry.refId, item.songId, item.occurrence)
