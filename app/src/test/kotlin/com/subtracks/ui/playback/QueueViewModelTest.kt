@@ -27,6 +27,7 @@ import com.subtracks.data.repo.setShuffle
 import com.subtracks.playback.FakePlayerConnection
 import com.subtracks.playback.FakePlayerHandle
 import com.subtracks.playback.PlaybackController
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -182,8 +183,9 @@ class QueueViewModelTest {
         val removePosition = (0 until before.size).first { it != currentPosition }
         val beforeIds = rowsSnapshot().map { it.song.song.id }
 
-        viewModel.remove(removePosition)
-        Thread.sleep(200)
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.remove(removePosition, completion::complete)
+        assertFalse(awaitCompletion(completion))
 
         assertEquals(before.contextSize, runBlocking { queues.snapshot() }.contextSize)
         assertEquals(beforeIds, rowsSnapshot().map { it.song.song.id })
@@ -293,7 +295,9 @@ class QueueViewModelTest {
         val from = rowsSnapshot()[10].position
         val to = rowsSnapshot()[13].position
         runOnMain { viewModel.reorder(10, 13) }
-        viewModel.move(from, to)
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.move(from, to, onComplete = completion::complete)
+        assertTrue(awaitCompletion(completion))
         await {
             rowsSnapshot().size == QUEUE_WINDOW_ROWS &&
                 rowsSnapshot().getOrNull(13)?.position == 233L
@@ -382,7 +386,9 @@ class QueueViewModelTest {
         viewModel.open()
         await { viewModel.ready }
 
-        viewModel.remove(2)
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.remove(2, completion::complete)
+        assertTrue(awaitCompletion(completion))
         await {
             val positions = rowsSnapshot().map { it.position }
             positions.isNotEmpty() && positions == (positions.first()..positions.last()).toList()
@@ -409,7 +415,9 @@ class QueueViewModelTest {
             rowsSnapshot()[30]
                 .song.song.id
 
-        viewModel.remove(rowsSnapshot()[30].position)
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.remove(rowsSnapshot()[30].position, completion::complete)
+        assertTrue(awaitCompletion(completion))
         await {
             rowsSnapshot().size == 60 &&
                 rowsSnapshot().firstOrNull()?.position == 70L &&
@@ -446,11 +454,69 @@ class QueueViewModelTest {
         resetAlbumWith("s0", 0)
         assertEquals("s2", rowsSnapshot()[1].song.song.id)
 
-        viewModel.remove(1)
-        Thread.sleep(200)
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.remove(1, completion::complete)
+        assertFalse(awaitCompletion(completion))
 
         assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
         assertEquals(listOf("s0", "s1", "s2"), rowsSnapshot().map { it.song.song.id })
+    }
+
+    @Test
+    fun removalWaitingForReconciliationKeepsTheCapturedRow() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        resetAlbumWith("s0", 0)
+        val selected = rowsSnapshot()[1]
+        assertEquals("s2", selected.song.song.id)
+
+        val completion = CompletableDeferred<Boolean>()
+        runOnMain {
+            viewModel.reconcile()
+            viewModel.remove(selected.position, completion::complete)
+        }
+        assertFalse(awaitCompletion(completion))
+
+        assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
+        assertEquals(listOf("s0", "s1", "s2"), rowsSnapshot().map { it.song.song.id })
+    }
+
+    @Test
+    fun rejectedSparseTailMoveRestoresTheVisibleOrder() {
+        openReconciledSparseOfflineQueue()
+        val canonical = resolvedQueueIds()
+        val before = rowsSnapshot()
+        val dragged = before[1]
+
+        val completion = CompletableDeferred<Boolean>()
+        runOnMain {
+            viewModel.reorder(1, 2)
+            val move = viewModel.rows.dropMoveFor(dragged.id)!!
+            assertTrue(viewModel.move(move.from, move.to, move.resetVersion, completion::complete))
+        }
+        assertFalse(awaitCompletion(completion))
+
+        assertEquals(canonical, resolvedQueueIds())
+        assertEquals(before.map { it.id }, rowsSnapshot().map { it.id })
+        assertEquals(before.map { it.position }, rowsSnapshot().map { it.position })
+    }
+
+    @Test
+    fun rejectedSparseTailRemovalRestoresTheVisibleOrder() {
+        openReconciledSparseOfflineQueue()
+        val canonical = resolvedQueueIds()
+        val before = rowsSnapshot()
+
+        val completion = CompletableDeferred<Boolean>()
+        viewModel.remove(before[1].position, completion::complete)
+        assertFalse(awaitCompletion(completion))
+
+        assertEquals(canonical, resolvedQueueIds())
+        assertEquals(before.map { it.id }, rowsSnapshot().map { it.id })
+        assertEquals(before.map { it.position }, rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -463,8 +529,9 @@ class QueueViewModelTest {
         resetAlbumWith("s0", 0)
         assertEquals("s2", rowsSnapshot()[1].song.song.id)
 
-        viewModel.move(1, 2)
-        Thread.sleep(200)
+        val completion = CompletableDeferred<Boolean>()
+        assertTrue(viewModel.move(1, 2, onComplete = completion::complete))
+        assertFalse(awaitCompletion(completion))
 
         assertEquals(listOf("s0", "s1", "s2", "s3"), resolvedQueueIds())
     }
@@ -477,7 +544,9 @@ class QueueViewModelTest {
         }
 
         viewModel.reorder(0, 1)
-        assertFalse(viewModel.move(0, 1))
+        val completion = CompletableDeferred<Boolean>()
+        assertFalse(viewModel.move(0, 1, onComplete = completion::complete))
+        assertFalse(awaitCompletion(completion))
         assertEquals(listOf(0L, 1L), rowsSnapshot().map { it.position })
     }
 
@@ -488,12 +557,19 @@ class QueueViewModelTest {
             viewModel.rows += row(3)
             viewModel.rows += row(5)
         }
-        val draggedId = viewModel.rows[0].id
-        viewModel.reorder(0, 1)
-        val move = viewModel.rows.dropMoveFor(draggedId)!!
+        val draggedId = rowsSnapshot()[0].id
+        runOnMain {
+            viewModel.reorder(0, 1)
+            viewModel.rows[2] = viewModel.rows[2].copy(resetVersion = 1)
+        }
+        val move = rowsSnapshot().dropMoveFor(draggedId)!!
 
         assertEquals(4L, move.to)
-        assertTrue(viewModel.move(move.from, move.to, move.resetVersion))
+        assertEquals(1L, move.resetVersion)
+        val completion = CompletableDeferred<Boolean>()
+        assertFalse(viewModel.move(move.from, move.to, move.resetVersion, completion::complete))
+        assertFalse(awaitCompletion(completion))
+        assertEquals(listOf(1L, 3L, 5L), rowsSnapshot().map { it.position })
     }
 
     @Test
@@ -516,6 +592,28 @@ class QueueViewModelTest {
                 ?.id,
         )
         assertEquals(3L, controller.state.value.position)
+    }
+
+    private fun openReconciledSparseOfflineQueue() {
+        runBlocking { seedSongs(901) }
+        markDownloaded(1, "s1")
+        markDownloaded(1, "s801")
+        markDownloaded(1, "s901")
+        setOffline()
+        controller.playAlbum(1, "al1", 0)
+        await {
+            controller.state.value.item
+                ?.id == "s1"
+        }
+        viewModel.open()
+        await { viewModel.ready }
+        viewModel.loadNewer()
+        await { rowsSnapshot().map { it.position } == listOf(0L, 800L, 900L) }
+
+        resetAlbumWith("s0", 0)
+        viewModel.reconcile()
+        await { rowsSnapshot().firstOrNull()?.resetVersion == 1L }
+        assertEquals(listOf(1L, 800L, 900L), rowsSnapshot().map { it.position })
     }
 
     private fun resetAlbumWith(
@@ -677,6 +775,9 @@ class QueueViewModelTest {
     private fun rowsSnapshot(): List<QueueRow> = runBlocking { withContext(dispatcher) { viewModel.rows.toList() } }
 
     private fun runOnMain(block: () -> Unit) = runBlocking { withContext(dispatcher) { block() } }
+
+    private fun awaitCompletion(completion: CompletableDeferred<Boolean>): Boolean =
+        runBlocking { withTimeout(TEST_TIMEOUT_MS) { completion.await() } }
 
     private fun await(predicate: () -> Boolean) = awaitUntil("waiting for the expected state", predicate)
 }
