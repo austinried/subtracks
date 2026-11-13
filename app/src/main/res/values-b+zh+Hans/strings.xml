@@ -47,4 +47,18 @@
     <string name="resources_album_name">专辑</string>
     <string name="resources_artist_name">歌手</string>
     <string name="resources_playlist_name">播放列表</string>
+    <string name="controls_shuffle_play">随机播放</string>
+    <string name="controls_play">播放</string>
+    <string name="controls_pause">暂停</string>
+    <string name="controls_next">下一首</string>
+    <string name="controls_previous">上一首</string>
+    <string name="controls_queue">队列</string>
+    <string name="controls_more">更多</string>
+    <string name="navigation_back">背 景</string>
+    <string name="settings_servers_actions_add">添加服务器</string>
+    <string name="settings_servers_actions_delete">删除服务器</string>
+    <string name="settings_servers_actions_edit">修改服务器</string>
+    <string name="settings_servers_actions_save">保存并同步</string>
+    <string name="settings_servers_fields_address">服务器地址</string>
+    <string name="settings_servers_name">服务器</string>
 </resources>
