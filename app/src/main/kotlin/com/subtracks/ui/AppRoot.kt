@@ -66,8 +66,6 @@ import com.subtracks.data.model.Song
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.LibraryRepository
 import com.subtracks.data.repo.SourceRepository
-import com.subtracks.data.sync.SyncManager
-import com.subtracks.data.sync.SyncStatus
 import com.subtracks.playback.PlaybackController
 import com.subtracks.ui.components.AlbumInfoDialog
 import com.subtracks.ui.components.ArtistChooserSheet
@@ -78,8 +76,6 @@ import com.subtracks.ui.components.LoadingState
 import com.subtracks.ui.components.MenuTarget
 import com.subtracks.ui.components.PlaylistInfoDialog
 import com.subtracks.ui.components.SongInfoDialog
-import com.subtracks.ui.components.rememberLocalNetworkGate
-import com.subtracks.ui.components.rememberNetworkRevision
 import com.subtracks.ui.components.statusBarScrim
 import com.subtracks.ui.downloads.DownloadsRoute
 import com.subtracks.ui.home.HomeListRequest
@@ -115,21 +111,6 @@ class RootViewModel(
             .activeSourceId()
             .map { it != null }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    val serverAddress =
-        sourceRepository
-            .activeConfig()
-            .map { it?.address }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    val activeSourceId =
-        sourceRepository
-            .activeSourceId()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    val offline = sourceRepository.offline
-
-    val offlineLoaded = sourceRepository.offlineLoaded
 }
 
 private const val NAVIGATION_DURATION_MS = 260
@@ -212,46 +193,6 @@ internal fun focusPops(
 
 @Composable
 fun SubtracksRoot(root: RootViewModel = koinViewModel()) {
-    val localNetworkGate = rememberLocalNetworkGate()
-    val syncManager = koinInject<SyncManager>()
-    val serverAddress by root.serverAddress.collectAsStateWithLifecycle()
-    val activeSourceId by root.activeSourceId.collectAsStateWithLifecycle()
-    val offline by root.offline.collectAsStateWithLifecycle()
-    val offlineLoaded by root.offlineLoaded.collectAsStateWithLifecycle()
-    val networkRevision = rememberNetworkRevision()
-    LaunchedEffect(serverAddress, activeSourceId, networkRevision, offline, offlineLoaded) {
-        if (!offlineLoaded) return@LaunchedEffect
-        if (offline) {
-            localNetworkGate.cancel()
-            return@LaunchedEffect
-        }
-        val promptedSourceId = activeSourceId
-        val statusBeforePrompt = syncManager.status.value
-        localNetworkGate.run(
-            address = serverAddress,
-            onGranted = {
-                val status = syncManager.status.value
-                val raced =
-                    when (status) {
-                        is SyncStatus.Running -> {
-                            syncManager.runningSource.value == promptedSourceId
-                        }
-
-                        is SyncStatus.Failed -> {
-                            statusBeforePrompt !is SyncStatus.Failed &&
-                                syncManager.failedSource.value == promptedSourceId
-                        }
-
-                        else -> {
-                            false
-                        }
-                    }
-                if (raced) syncManager.requestSync()
-            },
-            onNotNeeded = {},
-            automatic = true,
-        )
-    }
     when (val hasSource = root.hasSource.collectAsStateWithLifecycle().value) {
         null -> {
             LoadingState()

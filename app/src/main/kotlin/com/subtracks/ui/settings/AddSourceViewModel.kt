@@ -47,10 +47,6 @@ class AddSourceViewModel(
     private val _state = MutableStateFlow(AddSourceState(isEditing = sourceId != null))
     val state: StateFlow<AddSourceState> = _state
 
-    val offline: StateFlow<Boolean> = sourceRepository.offline
-
-    val offlineLoaded: StateFlow<Boolean> = sourceRepository.offlineLoaded
-
     init {
         sourceId?.let { id ->
             viewModelScope.launch {
@@ -122,12 +118,17 @@ class AddSourceViewModel(
         }
     }
 
-    fun save(onSaved: () -> Unit) {
+    fun validateSave(): Boolean {
         val validated = _state.value.validated()
         if (validated.nameError || validated.addressError) {
             _state.value = validated
-            return
+            return false
         }
+        return true
+    }
+
+    fun save(onSaved: () -> Unit) {
+        if (!validateSave()) return
         _state.update { it.copy(busy = true, message = null) }
         val current = _state.value
         viewModelScope.launch {

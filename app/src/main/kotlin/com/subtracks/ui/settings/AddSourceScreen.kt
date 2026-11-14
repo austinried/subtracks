@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.subtracks.R
 import com.subtracks.ui.components.DismissOnRequest
-import com.subtracks.ui.components.rememberLocalNetworkGate
+import com.subtracks.ui.components.rememberLocalNetworkRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,43 +63,36 @@ fun AddSourceRoute(
     viewModel: AddSourceViewModel = koinViewModel(key = sourceId?.toString() ?: "new") { parametersOf(sourceId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val offline by viewModel.offline.collectAsStateWithLifecycle()
-    val offlineLoaded by viewModel.offlineLoaded.collectAsStateWithLifecycle()
-    val localNetworkGate = rememberLocalNetworkGate()
-    var gatedBusy by remember { mutableStateOf(false) }
+    val requestLocalNetwork = rememberLocalNetworkRequest()
+    var checkingNetwork by remember { mutableStateOf(false) }
 
     fun runGated(
         onGranted: () -> Unit,
         onDenied: () -> Unit = onGranted,
     ) {
-        if (!offlineLoaded || gatedBusy) return
-        gatedBusy = true
+        if (checkingNetwork) return
+        checkingNetwork = true
         val address = state.address
 
         fun finish(action: () -> Unit) {
-            gatedBusy = false
+            checkingNetwork = false
             if (viewModel.state.value.address == address) action()
         }
 
-        if (offline) {
-            finish(onGranted)
-        } else {
-            localNetworkGate.run(
-                address = address,
-                onGranted = { finish(onGranted) },
-                onDenied = { finish(onDenied) },
-            )
-        }
+        requestLocalNetwork(address, { finish(onGranted) }, { finish(onDenied) })
     }
+
     AddSourceScreen(
-        state = if (gatedBusy || !offlineLoaded) state.copy(busy = true) else state,
+        state = if (checkingNetwork) state.copy(busy = true) else state,
         onNameChange = viewModel::setName,
         onAddressChange = viewModel::setAddress,
         onUsernameChange = viewModel::setUsername,
         onPasswordChange = viewModel::setPassword,
         onTokenAuthChange = viewModel::setTokenAuth,
         onTest = { runGated(viewModel::testConnection, viewModel::localNetworkPermissionDenied) },
-        onSave = { runGated({ viewModel.save(onSaved) }) },
+        onSave = {
+            if (viewModel.validateSave()) runGated({ viewModel.save(onSaved) })
+        },
         onDelete = { viewModel.delete(onSaved) },
         onBack = onBack,
         dismissals = dismissals,
@@ -239,6 +232,7 @@ fun AddSourceScreen(
             OutlinedTextField(
                 value = state.address,
                 onValueChange = onAddressChange,
+                enabled = !state.busy,
                 label = { Text(stringResource(R.string.settings_servers_fields_address)) },
                 placeholder = { Text(stringResource(R.string.server_address_placeholder)) },
                 singleLine = true,
