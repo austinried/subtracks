@@ -1,9 +1,15 @@
 package com.subtracks.data.db
 
+import android.content.Context
+import androidx.room3.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.model.QueueKind
+import com.subtracks.data.model.QueueOrigin
+import com.subtracks.data.repo.QueueRepository
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -480,6 +486,59 @@ class MigrationsTest {
                 assertEquals(0L, long(migrated, "SELECT albumCount FROM artists WHERE id = 'c1'"))
                 assertEquals(5L, long(migrated, "SELECT playCount FROM artists WHERE id = 'c1'"))
                 assertEquals(60L, long(migrated, "SELECT played FROM artists WHERE id = 'c1'"))
+            }
+        }
+
+    @Test
+    fun migratedFragmentedDuplicateEntriesAreLeftUnresetWhenTheirIdentityIsUnknown() =
+        runTest {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val name = "migration-38-queue-${System.nanoTime()}.db"
+            val databaseFile = context.getDatabasePath(name)
+            databaseFile.parentFile?.mkdirs()
+            driver.open(databaseFile.absolutePath).use { migrated ->
+                applySchema(migrated, 38)
+                migrated.execSQL("PRAGMA user_version = 38")
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 'server', 'http://localhost', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, title) VALUES " +
+                        "(1, 's1', 'One'), (1, 's2', 'Two'), (1, 's3', 'Three')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO playlist_songs (sourceId, playlistId, songId, position) VALUES " +
+                        "(1, 'p1', 's1', 0), (1, 'p1', 's2', 1), (1, 'p1', 's3', 2)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO queue_entries (position, sourceId, kind, refId, rangeStart, rangeEnd) VALUES " +
+                        "(0, 1, 'Playlist', 'p1', 0, 0), (1, 1, 'Playlist', 'p1', 2, 2), " +
+                        "(2, 1, 'Playlist', 'p1', 0, 0), (3, 1, 'Playlist', 'p1', 2, 2)",
+                )
+            }
+            val db =
+                Room
+                    .databaseBuilder<SubtracksDatabase>(context, name)
+                    .setDriver(driver)
+                    .addMigrations(MIGRATION_38_39)
+                    .build()
+            try {
+                val repository = QueueRepository(db)
+                val before = repository.snapshot()
+                val point = repository.captureResetPoint()
+
+                repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+                val after = repository.snapshot()
+                assertEquals(4, after.entries.size)
+                assertEquals(before.entries, after.entries)
+                assertEquals(
+                    listOf("s1", "s3", "s1", "s3"),
+                    (0 until after.size).map { repository.itemAt(after, it)?.song?.id },
+                )
+            } finally {
+                db.close()
+                context.deleteDatabase(name)
             }
         }
 

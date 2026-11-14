@@ -505,8 +505,8 @@ class QueueRepository(
         upNextAnchor: Long,
     ) {
         invalidateLibraryCache()
-        writeLocked(entries)
-        writeUpNextLocked(upNext)
+        writeLocked(withOriginEntryIds(entries))
+        writeUpNextLocked(withOriginEntryIds(upNext))
         setShuffleLocked(shuffleSeed)
         cursorMutex.withLock {
             dao.setCursor(cursorRow().copy(queuePosition = 0, positionMs = 0, upNextAnchor = upNextAnchor))
@@ -520,9 +520,12 @@ class QueueRepository(
         val loaded =
             db.useReaderConnection { transactor ->
                 transactor.deferredTransaction {
-                    val entries = withOriginEntryIds(dao.entries()).map { ResolvedQueueEntry(it, lengthOf(it, libraryRevision)) }
+                    val entries =
+                        withOriginEntryIds(dao.entries(), assignFragmentIds = false).map {
+                            ResolvedQueueEntry(it, lengthOf(it, libraryRevision))
+                        }
                     val upNext =
-                        withOriginEntryIds(dao.upNextEntries().map { it.toQueueEntry() }).map { entry ->
+                        withOriginEntryIds(dao.upNextEntries().map { it.toQueueEntry() }, assignFragmentIds = false).map { entry ->
                             ResolvedQueueEntry(entry, lengthOf(entry, libraryRevision))
                         }
                     val row = dao.cursor()
@@ -637,16 +640,10 @@ class QueueRepository(
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
                     dao.clear()
-                    dao.insert(
-                        withOriginEntryIds(entries).mapIndexed { index, entry ->
-                            entry.copy(id = 0, position = index.toLong())
-                        },
-                    )
+                    dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
                     dao.clearUpNext()
                     dao.insertUpNext(
-                        withOriginEntryIds(upNext).mapIndexed { index, entry ->
-                            UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
-                        },
+                        upNext.mapIndexed { index, entry -> UpNextEntry.from(entry).copy(id = 0, position = index.toLong()) },
                     )
                     dao.setCursor(
                         row.copy(
@@ -751,16 +748,23 @@ class QueueRepository(
         return kind == origin.kind && refId == origin.refId && rangeStart == null && rangeEnd == null
     }
 
-    private fun withOriginEntryIds(entries: List<QueueEntry>): List<QueueEntry> {
-        if (entries.all { it.originEntryId != null }) return entries
+    private fun QueueEntry.shouldAssignOriginEntryId(assignFragmentIds: Boolean) =
+        originEntryId == null && (assignFragmentIds || isWholeOrigin())
+
+    private fun withOriginEntryIds(
+        entries: List<QueueEntry>,
+        existingEntries: List<QueueEntry> = emptyList(),
+        assignFragmentIds: Boolean = true,
+    ): List<QueueEntry> {
+        if (entries.none { it.shouldAssignOriginEntryId(assignFragmentIds) }) return entries
         val nextIds = mutableMapOf<QueueOrigin, Long>()
-        for (entry in entries) {
+        for (entry in existingEntries + entries) {
             val id = entry.originEntryId ?: continue
             nextIds[entry.origin] = maxOf(nextIds[entry.origin] ?: 0L, id + 1)
         }
         val fragmentIds = mutableMapOf<QueueOrigin, Long>()
         return entries.map { entry ->
-            if (entry.originEntryId != null) return@map entry
+            if (!entry.shouldAssignOriginEntryId(assignFragmentIds)) return@map entry
             val origin = entry.origin
             val whole = entry.isWholeOrigin()
             val existingId = if (whole) null else fragmentIds[origin]
@@ -781,7 +785,7 @@ class QueueRepository(
         val reset = mutableSetOf<OriginEntryKey>()
         for (entry in entries) {
             val origin = entry.origin
-            if (origin !in changed) {
+            if (origin !in changed || entry.originEntryId == null) {
                 result += entry
             } else if (reset.add(entry.originEntryKey())) {
                 result +=
@@ -941,7 +945,8 @@ class QueueRepository(
                     list.size
                 }
             }.coerceIn(0, list.size)
-        list.add(insertIndex, entry.copy(id = 0, position = 0))
+        val newEntry = withOriginEntryIds(listOf(entry.copy(id = 0, position = 0)), list).single()
+        list.add(insertIndex, newEntry)
         val anchor =
             if (current.upNextSize == 0L) {
                 val play = current.anchorContextPlay(currentPosition)
@@ -1078,11 +1083,7 @@ class QueueRepository(
         db.useWriterConnection { transactor ->
             transactor.immediateTransaction {
                 dao.clear()
-                dao.insert(
-                    withOriginEntryIds(entries).mapIndexed { index, entry ->
-                        entry.copy(id = 0, position = index.toLong())
-                    },
-                )
+                dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
             }
         }
         queueVersion.incrementAndGet()
@@ -1093,9 +1094,7 @@ class QueueRepository(
             transactor.immediateTransaction {
                 dao.clearUpNext()
                 dao.insertUpNext(
-                    withOriginEntryIds(entries).mapIndexed { index, entry ->
-                        UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
-                    },
+                    entries.mapIndexed { index, entry -> UpNextEntry.from(entry).copy(id = 0, position = index.toLong()) },
                 )
             }
         }
