@@ -1778,6 +1778,25 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun stoppingWhileDetachedClearsItsIdentityAndLaterPosition() {
+        seedPlaylist(3)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s3")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.currentItem?.id == "s2" && handle.items.any { it.id == "s3" } }
+
+        controller.playAlbum(1, "missing", 0)
+        await { handle.operations.contains("clear") }
+        controller.cycleRepeat()
+        handle.emitEvents()
+
+        assertNull(controller.state.value.item)
+        assertNull(controller.state.value.position)
+    }
+
+    @Test
     fun restoringAQueueFromAnotherSourceStopsIt() {
         seedAlbum(3, sourceId = 1)
         seedAlbum(3, sourceId = 2)
@@ -3392,6 +3411,57 @@ class PlaybackControllerTest {
             controller.state.value.item
                 ?.id,
         )
+    }
+
+    @Test
+    fun offlineDetachedCurrentThatIsNotDownloadedMovesToTheSurvivor() {
+        seedPlaylist(3)
+        markDownloaded(1, "s3")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s3")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.currentItem?.id == "s2" && handle.items.any { it.id == "s3" } }
+
+        setOffline()
+
+        await { handle.currentItem?.id == "s3" }
+        assertEquals(1L, controller.state.value.position)
+    }
+
+    @Test
+    fun offlineDetachedCurrentWithoutADownloadedSurvivorStops() {
+        seedPlaylist(3)
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s3")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.currentItem?.id == "s2" && handle.items.any { it.id == "s3" } }
+
+        setOffline()
+
+        await { controller.state.value.item == null && handle.itemCount == 0 }
+    }
+
+    @Test
+    fun offlineDetachedCurrentThatWasDownloadedReplacesItsStreamUri() {
+        seedPlaylist(3)
+        markDownloaded(1, "s2")
+        markDownloaded(1, "s3")
+        controller.playPlaylist(1, "p1", 1)
+        await { handle.currentItem?.id == "s2" }
+        val point = runBlocking { queues.captureResetPoint() }
+        setPlaylist("s1", "s3")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+        await { handle.currentItem?.id == "s2" && handle.items.any { it.id == "s3" } }
+        handle.operations.clear()
+
+        setOffline()
+
+        await { handle.operations.contains("replaceItem(0, s2)") }
+        assertEquals("s2", handle.currentItem?.id)
     }
 
     @Test

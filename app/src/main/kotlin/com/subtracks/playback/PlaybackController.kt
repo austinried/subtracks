@@ -1192,6 +1192,7 @@ class PlaybackController(
         windowFiltered = false
         lastPosition = null
         lastEdit = null
+        clearDetached()
         player?.run {
             stop()
             clear()
@@ -1674,7 +1675,17 @@ class PlaybackController(
             if (snapshot.size == 0L) return@withMutationLock
             val current = currentQueuePosition() ?: return@withMutationLock
             val detached = detachedWindow && currentPosition() == null
+            val detachedItem = if (detached) player.currentItem else null
             windowJob?.cancel()
+            if (offline && detachedItem != null && downloads.localUri(detachedItem.id) == null) {
+                val target = downloadedAtOrAfter(snapshot, current)
+                if (target == null) {
+                    stopLocked()
+                } else {
+                    loadWindow(target, autoplay = player.playWhenReady, startPositionMs = 0)
+                }
+                return@withMutationLock
+            }
             val target =
                 if (offline) {
                     downloadedAtOrAfter(snapshot, current) ?: if (detached) {
@@ -1686,6 +1697,13 @@ class PlaybackController(
                 } else {
                     current
                 }
+            if (detachedItem != null) {
+                val isLocal = player.itemUris().getOrNull(player.currentIndex)?.startsWith(FILE_SCHEME) == true
+                if (!isLocal) {
+                    val replacement = queueItemAt(snapshot, current)?.takeIf { it.id == detachedItem.id } ?: detachedItem
+                    player.replaceItem(player.currentIndex, replacement)
+                }
+            }
             queueRepository.setCursor(target)
             if (preserveDetachedWindow(snapshot, target)) return@withMutationLock
             if (target == current) {
