@@ -49,6 +49,24 @@ data class QueueItem(
     val resetItem: QueueResetItem? = null,
 )
 
+private data class PlayerGeneration(
+    val itemId: String?,
+    val index: Int,
+    val resetItem: QueueResetItem?,
+) {
+    companion object {
+        fun from(player: PlayerHandle): PlayerGeneration {
+            val item = player.currentItem
+            return PlayerGeneration(item?.id, player.currentIndex, item?.resetItem)
+        }
+    }
+
+    fun matches(player: PlayerHandle): Boolean {
+        val item = player.currentItem
+        return item?.id == itemId && player.currentIndex == index && item?.resetItem == resetItem
+    }
+}
+
 enum class RepeatMode { Off, All, One }
 
 data class PlaybackState(
@@ -1450,6 +1468,7 @@ class PlaybackController(
         val player = player ?: return QueueResetPreparation(reset.snapshot)
         val previous = snapshot ?: return QueueResetPreparation(reset.snapshot)
         if (previous.version > reset.snapshot.version) return QueueResetPreparation(reset.snapshot)
+        val generation = PlayerGeneration.from(player)
         var current = reset.point.current
         val actualItem = player.currentItem
         val actualId = actualItem?.id
@@ -1484,7 +1503,7 @@ class PlaybackController(
             queueRepository.setCursor(position)
             if (detachedWindow && currentPosition() == null) {
                 val window = prepareDetachedWindow(updated, position)
-                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                return resetPreparation(updated, generation) { committed ->
                     beginLibraryResetPublication(committed)
                     publishDetachedSurvivors(player, committed, position, window)
                     refresh(position)
@@ -1495,28 +1514,32 @@ class PlaybackController(
             val index = ordered.indexOfFirst { it.position == position }
             if (index < 0) {
                 val prepared = prepareWindow(updated, position, player.playWhenReady, player.currentPositionMs)
-                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                return resetPreparation(updated, generation) { committed ->
                     beginLibraryResetPublication(committed)
                     if (prepared == null) stopLocked() else publishWindow(player, committed, prepared)
                     refresh(position)
                 }
             }
-            return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+            return resetPreparation(updated, generation) { committed ->
                 beginLibraryResetPublication(committed)
-                publishRebuiltWindow(player, committed, ordered, index, position)
+                publishWindow(
+                    player,
+                    committed,
+                    PreparedWindow(ordered, position, index, player.playWhenReady, player.currentPositionMs),
+                )
                 refresh(position)
             }
         }
 
         if (player.itemCount == 0) {
             if (updated.size == 0L) {
-                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                return resetPreparation(updated, generation) { committed ->
                     beginLibraryResetPublication(committed)
                     stopLocked()
                 }
             }
             val prepared = prepareWindow(updated, 0, autoplay = false, startPositionMs = 0)
-            return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+            return resetPreparation(updated, generation) { committed ->
                 beginLibraryResetPublication(committed)
                 if (prepared == null) stopLocked() else publishWindow(player, committed, prepared)
             }
@@ -1524,10 +1547,43 @@ class PlaybackController(
         val nearest = (current?.position ?: lastPosition ?: 0L).coerceIn(0, (updated.size - 1).coerceAtLeast(0))
         val window = prepareDetachedWindow(updated, nearest)
         queueRepository.setCursor(window.firstOrNull()?.position ?: 0L)
-        return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+        return resetPreparation(updated, generation) { committed ->
             beginLibraryResetPublication(committed)
             publishDetachedSurvivors(player, committed, nearest, window)
             refresh(lastPosition)
+        }
+    }
+
+    private fun resetPreparation(
+        updated: QueueSnapshot,
+        generation: PlayerGeneration,
+        publish: QueueMutationScope.(QueueSnapshot) -> Unit,
+    ) = QueueResetPreparation(
+        updated,
+        playbackDispatcher,
+        publish = { committed ->
+            if (generation.matches(requireNotNull(player))) {
+                publish(committed)
+            } else {
+                recoverLibraryReset()
+            }
+        },
+        recover = { recoverLibraryReset() },
+    )
+
+    private fun recoverLibraryReset() {
+        scope.launch {
+            queueRepository.withMutationLock {
+                val player = player ?: return@withMutationLock
+                val autoplay = player.playWhenReady
+                val latest = queueRepository.snapshot()
+                stopLocked()
+                this@PlaybackController.snapshot = latest
+                if (latest.size > 0L) {
+                    val position = queueRepository.cursor().coerceIn(0, latest.size - 1)
+                    loadWindow(position, autoplay = autoplay, startPositionMs = 0)
+                }
+            }
         }
     }
 

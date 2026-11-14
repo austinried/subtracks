@@ -474,6 +474,25 @@ class QueueRepositoryTest {
             repository.removeAt(snapshot, 0)
 
             assertEquals(listOf("s2", "s3"), resolveAll(repository.snapshot()))
+    fun aMatchingOriginStillPublishesWhenItsEntriesDoNotChange() =
+        runTest {
+            seedLibrary()
+            db.libraryDao().upsertSongs(listOf(song("s0", "al1", track = 0, album = "First Album")))
+            setPlaylist("p1", "s1", "s2", "s3")
+            repository.snapshotAfter(listOf(repository.playlistEntry(1, "p1")))
+            repository.setCursor(1)
+            val point = repository.captureResetPoint()
+            var resets = 0
+            repository.setResetListener {
+                resets++
+                QueueResetPreparation(it.snapshot)
+            }
+
+            setPlaylist("p1", "s0", "s1", "s2", "s3")
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            assertEquals(1, resets)
+            assertEquals(2L, repository.cursor())
         }
 
     @Test

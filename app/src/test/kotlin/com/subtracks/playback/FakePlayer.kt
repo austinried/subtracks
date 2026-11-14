@@ -49,6 +49,9 @@ class FakePlayerHandle : PlayerHandle {
     var beforeRemoveFirst: (() -> Unit)? = null
 
     @Volatile
+    var beforeCurrentItem: (() -> Unit)? = null
+
+    @Volatile
     var roundTripItemsThroughMedia3 = false
 
     private fun storedItem(item: QueueItem): QueueItem {
@@ -86,6 +89,7 @@ class FakePlayerHandle : PlayerHandle {
 
     override val currentItem: QueueItem?
         get() {
+            beforeCurrentItem?.invoke()
             checkThread()
             return items.getOrNull(index)
         }

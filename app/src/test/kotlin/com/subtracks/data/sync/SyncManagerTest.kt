@@ -388,6 +388,42 @@ class SyncManagerTest {
         }
 
     @Test
+    fun aPublicationFailureRecoversFromCommittedReset() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val before = queueRepository.snapshot()
+            val recoveries = AtomicInteger()
+            queueRepository.setResetListener { reset ->
+                QueueResetPreparation(
+                    reset.snapshot,
+                    publish = { throw IllegalStateException("publish failed") },
+                    recover = { published ->
+                        assertEquals(before.version + 1, published.version)
+                        assertEquals(before.resetVersion + 1, published.resetVersion)
+                        recoveries.incrementAndGet()
+                    },
+                )
+            }
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Success } }
+
+            assertEquals(1, recoveries.get())
+            assertNull(
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+            assertEquals(before.version + 1, queueRepository.contentVersion())
+            assertEquals(before.resetVersion + 1, queueRepository.snapshot().resetVersion)
+        }
+
+    @Test
     fun aQueueWriteFailureAfterPendingClearRollsBackWithoutPublishing() =
         runBlocking {
             server.dispatcher = healthyDispatcher()

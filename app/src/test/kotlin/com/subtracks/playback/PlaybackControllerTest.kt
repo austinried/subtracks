@@ -3599,6 +3599,36 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aTransitionBetweenResetPreparationAndPublicationRebuildsFromCommittedState() {
+        seedPlaylist(5)
+        seedSong("s0", "al1")
+        controller.playPlaylist(1, "p1", 2)
+        await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
+        val point = runBlocking { queues.captureResetPoint() }
+        var currentItemReads = 0
+        handle.beforeCurrentItem = {
+            currentItemReads++
+            if (currentItemReads == 2) {
+                handle.beforeCurrentItem = null
+                handle.advanceTo(3)
+            }
+        }
+        handle.beforeRemoveFirst = {
+            handle.beforeRemoveFirst = null
+            handle.advanceTo(3)
+        }
+
+        setPlaylist("s0", "s1", "s2", "s3", "s4", "s5")
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        await {
+            handle.currentItem?.id == "s4" && controller.state.value.position == 3L &&
+                handle.items.size == 5 && handle.items.distinctBy { it.id }.size == 5
+        }
+        assertEquals(listOf("s1", "s2", "s3", "s4", "s5"), handle.items.map { it.id })
+    }
+
+    @Test
     fun aSourceResetLetsTheRemovedCurrentFinishBeforeTheClampedTrack() {
         seedPlaylist(5)
         controller.playPlaylist(1, "p1", 2)
