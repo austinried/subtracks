@@ -1744,7 +1744,10 @@ class DownloadRepositoryTest {
                     queues.snapshot().resetVersion
                 }
             val firstReset = CountDownLatch(1)
-            queues.setResetListener { firstReset.countDown() }
+            queues.setResetListener {
+                firstReset.countDown()
+                QueueResetPreparation(it.snapshot)
+            }
             file(1, "s2").delete()
             file(1, "s3").delete()
             engine.beforeDownload = { engineId ->
@@ -1881,6 +1884,7 @@ class DownloadRepositoryTest {
             queues.setResetListener {
                 localUriAtReset.set(repository.localUri("s1"))
                 reset.countDown()
+                QueueResetPreparation(it.snapshot)
             }
             val reconciling = launch(Dispatchers.IO) { repository.reconcile() }
             assertTrue(reconciliationStarted.await(5, TimeUnit.SECONDS))
