@@ -119,7 +119,6 @@ class QueueScreenTest {
             id = 0,
             position = 0,
             song = song("s1", 1),
-            coverArt = null,
             upNext = upNext,
         )
 
@@ -129,7 +128,6 @@ class QueueScreenTest {
                 id = index.toLong(),
                 position = index.toLong(),
                 song = song("s$index", index.toLong()),
-                coverArt = null,
             )
         }
 
@@ -151,5 +149,6 @@ class QueueScreenTest {
             starred = null,
             genre = null,
         ),
+        coverArt = null,
     )
 }
