@@ -511,9 +511,7 @@ class SyncService(
         commitOrigins {
             db.useWriterConnection { connection ->
                 connection.immediateTransaction {
-                    val before = connection.totalChanges()
-                    db.libraryDao().deletePlaylistSongsFrom(source.id, playlistId, position)
-                    val changed = connection.totalChanges() != before
+                    val changed = db.libraryDao().deletePlaylistSongsFrom(source.id, playlistId, position) > 0
                     if (changed) {
                         changedOrigins += origin(QueueKind.Playlist, playlistId)
                         connection.persistPendingOrigins()

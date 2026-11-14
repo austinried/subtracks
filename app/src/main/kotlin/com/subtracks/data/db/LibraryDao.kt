@@ -629,7 +629,7 @@ interface LibraryDao {
         sourceId: Long,
         playlistId: String,
         position: Long,
-    )
+    ): Int
 
     @Query(
         "DELETE FROM playlist_songs WHERE sourceId = :sourceId " +
