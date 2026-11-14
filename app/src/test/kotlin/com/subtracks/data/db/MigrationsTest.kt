@@ -7,9 +7,12 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.repo.QueueRepository
+import com.subtracks.data.repo.removeAt
+import com.subtracks.data.repo.replace
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -524,23 +527,99 @@ class MigrationsTest {
                     .build()
             try {
                 val repository = QueueRepository(db)
-                val before = repository.snapshot()
                 val point = repository.captureResetPoint()
 
                 repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
 
                 val after = repository.snapshot()
                 assertEquals(4, after.entries.size)
-                assertEquals(before.entries, after.entries)
+                assertEquals(listOf(null, null, null, null), after.entries.map { it.entry.originEntryId })
                 assertEquals(
                     listOf("s1", "s3", "s1", "s3"),
                     (0 until after.size).map { repository.itemAt(after, it)?.song?.id },
+                )
+
+                repository.removeAt(after, 0)
+                repository.replace(after.entries.map { it.entry })
+                val undoPoint = repository.captureResetPoint()
+                repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), undoPoint)
+
+                val undone = repository.snapshot()
+                assertEquals(4, undone.entries.size)
+                assertEquals(
+                    listOf("s1", "s3", "s1", "s3"),
+                    (0 until undone.size).map { repository.itemAt(undone, it)?.song?.id },
                 )
             } finally {
                 db.close()
                 context.deleteDatabase(name)
             }
         }
+
+    @Test
+    fun aRetainedMigratedOriginStillRemapsAndPublishesWhenItsRowsChange() =
+        runTest {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val name = "migration-38-remap-${System.nanoTime()}.db"
+            databaseFile(context, name).parentFile?.mkdirs()
+            driver.open(databaseFile(context, name).absolutePath).use { migrated ->
+                applySchema(migrated, 38)
+                migrated.execSQL("PRAGMA user_version = 38")
+                migrated.execSQL(
+                    "INSERT INTO sources (id, name, address, isActive, createdAt) VALUES (1, 'server', 'http://localhost', 1, 0)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO songs (sourceId, id, title) VALUES " +
+                        "(1, 's0', 'Zero'), (1, 's1', 'One'), (1, 's2', 'Two'), (1, 's3', 'Three'), (1, 's4', 'Four')",
+                )
+                migrated.execSQL(
+                    "INSERT INTO playlist_songs (sourceId, playlistId, songId, position) VALUES " +
+                        "(1, 'p1', 's1', 0), (1, 'p1', 's2', 1), (1, 'p1', 's3', 2), (1, 'p1', 's4', 3)",
+                )
+                migrated.execSQL(
+                    "INSERT INTO queue_entries (position, sourceId, kind, refId, rangeStart, rangeEnd) VALUES " +
+                        "(0, 1, 'Playlist', 'p1', 0, 1), (1, 1, 'Playlist', 'p1', 2, 3)",
+                )
+            }
+            val db =
+                Room
+                    .databaseBuilder<SubtracksDatabase>(context, name)
+                    .setDriver(driver)
+                    .addMigrations(MIGRATION_38_39)
+                    .build()
+            try {
+                val repository = QueueRepository(db)
+                repository.setCursor(2)
+                val point = repository.captureResetPoint()
+                var resets = 0
+                repository.setResetListener { resets++ }
+                db.libraryDao().deletePlaylistSongsFrom(1, "p1", 0)
+                db.libraryDao().upsertPlaylistSongs(
+                    listOf(
+                        PlaylistSong(1, "p1", "s0", 0),
+                        PlaylistSong(1, "p1", "s1", 1),
+                        PlaylistSong(1, "p1", "s2", 2),
+                        PlaylistSong(1, "p1", "s3", 3),
+                        PlaylistSong(1, "p1", "s4", 4),
+                    ),
+                )
+
+                repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+                val snapshot = repository.snapshot()
+                assertEquals(1, resets)
+                assertEquals(3L, repository.cursor())
+                assertEquals("s3", repository.itemAt(snapshot, repository.cursor())?.song?.id)
+            } finally {
+                db.close()
+                context.deleteDatabase(name)
+            }
+        }
+
+    private fun databaseFile(
+        context: Context,
+        name: String,
+    ): File = context.getDatabasePath(name)
 
     private fun text(
         connection: SQLiteConnection,

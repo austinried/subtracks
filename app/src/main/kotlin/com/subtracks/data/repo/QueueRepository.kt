@@ -505,8 +505,8 @@ class QueueRepository(
         upNextAnchor: Long,
     ) {
         invalidateLibraryCache()
-        writeLocked(withOriginEntryIds(entries))
-        writeUpNextLocked(withOriginEntryIds(upNext))
+        writeLocked(withOriginEntryIds(entries, assignFragmentIds = false))
+        writeUpNextLocked(withOriginEntryIds(upNext, assignFragmentIds = false))
         setShuffleLocked(shuffleSeed)
         cursorMutex.withLock {
             dao.setCursor(cursorRow().copy(queuePosition = 0, positionMs = 0, upNextAnchor = upNextAnchor))
@@ -588,7 +588,9 @@ class QueueRepository(
             val before = snapshot()
             val entries = canonicalEntries(before.entries.map { it.entry }, changed)
             val upNext = canonicalEntries(before.upNext.map { it.entry }, changed)
-            if (entries == before.entries.map { it.entry } && upNext == before.upNext.map { it.entry }) return@withMutationLock
+            val matchingOrigin =
+                before.entries.any { it.entry.origin in changed } || before.upNext.any { it.entry.origin in changed }
+            if (!matchingOrigin) return@withMutationLock
             val updated = writeResetLocked(before, entries, upNext, point)
             resetListener?.invoke(this, QueueReset(point, updated))
         }
@@ -856,8 +858,14 @@ class QueueRepository(
                 } else {
                     resolverFor(entry.kind).rank(dao, entry, item.songId) ?: fallbackRank(entry, resolved.length, item.songId)
                 }
-            if (rank != null && rank >= entry.offset && rank < entry.offset + resolved.length) {
-                val flat = group.starts[index] + rank - entry.offset
+            if (rank != null) {
+                val insideEntry = rank >= entry.offset && rank < entry.offset + resolved.length
+                val flat =
+                    when {
+                        insideEntry -> group.starts[index] + rank - entry.offset
+                        entry.originEntryId == null -> rank
+                        else -> continue
+                    }
                 if (item.upNext) return snapshot.anchorPlay + 1 + flat
                 val play = snapshot.playContext(flat) ?: return null
                 return snapshot.combined(play)
