@@ -2035,6 +2035,54 @@ class SyncServiceTest {
         }
 
     @Test
+    fun songPresenceChangesBatchPlaylistMembershipQueries() =
+        runTest {
+            val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
+            val loggingDb = createTestDatabase(LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it })
+            try {
+                loggingDb.sourcesDao().upsertSource(
+                    Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+                )
+                val songs = listOf(song("s1"), song("s2"), song("s3"))
+                val source =
+                    FakeMusicSource(
+                        songs = songs,
+                        playlists = listOf(playlist("p1")),
+                        playlistSongs = songs.mapIndexed { index, song -> PlaylistSong(1, "p1", song.id, index.toLong()) },
+                    )
+
+                fun membershipQueryCount() =
+                    synchronized(executions) {
+                        executions.count {
+                            it.sql.startsWith("SELECT playlistId FROM playlist_songs WHERE sourceId = ? AND songId")
+                        }
+                    }
+
+                SyncService(loggingDb, source).sync()
+                val initialQueries = membershipQueryCount()
+                loggingDb.queueDao().clearPendingSyncOrigins(1)
+                synchronized(executions) { executions.clear() }
+
+                source.songs = emptyList()
+                val deleted = SyncService(loggingDb, source).sync()
+                val deletionQueries = membershipQueryCount()
+                assertTrue(deleted.changedOrigins.contains(QueueOrigin(QueueKind.Playlist, 1, "p1")))
+                assertTrue(loggingDb.queueDao().pendingSyncOrigins(1).any { it.kind == QueueKind.Playlist && it.refId == "p1" })
+                loggingDb.queueDao().clearPendingSyncOrigins(1)
+                synchronized(executions) { executions.clear() }
+
+                source.songs = songs
+                val restored = SyncService(loggingDb, source).sync()
+                val restorationQueries = membershipQueryCount()
+                assertTrue(restored.changedOrigins.contains(QueueOrigin(QueueKind.Playlist, 1, "p1")))
+                assertTrue(loggingDb.queueDao().pendingSyncOrigins(1).any { it.kind == QueueKind.Playlist && it.refId == "p1" })
+                assertEquals(listOf(1, 1, 1), listOf(initialQueries, deletionQueries, restorationQueries))
+            } finally {
+                loggingDb.close()
+            }
+        }
+
+    @Test
     fun downloadedSongSortChangesReportDownloadedOrigins() =
         runTest {
             insertSource()

@@ -219,6 +219,7 @@ class SyncService(
                         }
                     }
                     connection.upsertChanged("song_artists", songArtistKey, artists) { it.columns() }
+                    connection.recordPlaylistOrigins(batch.filter { previousStates[it.id] == null }.map { it.id })
                     batch.forEach { song ->
                         val previous = previousStates[song.id]
                         val next = nextStates.getValue(song.id)
@@ -242,7 +243,9 @@ class SyncService(
         ids.forEach { changedOrigins += origin(QueueKind.Song, it) }
         db.useWriterConnection { connection ->
             connection.immediateTransaction {
-                connection.storedSongSyncStates(ids.toList()).values.forEach { recordSongOrigins(it, null) }
+                val previousStates = connection.storedSongSyncStates(ids.toList())
+                connection.recordPlaylistOrigins(previousStates.keys)
+                previousStates.values.forEach { recordSongOrigins(it, null) }
                 if (connection.completedDownloadIds(ids.toList()).isNotEmpty()) changedOrigins += origin(QueueKind.Downloaded, "")
                 db.libraryDao().deleteSongs(source.id, ids)
                 connection.persistPendingOrigins()
@@ -250,18 +253,19 @@ class SyncService(
         }
     }
 
+    private suspend fun PooledConnection.recordPlaylistOrigins(songIds: Collection<String>) {
+        readSourceIds(
+            songIds,
+            { "SELECT playlistId FROM playlist_songs WHERE sourceId = ? AND songId IN ($it)" },
+        ) { statement ->
+            changedOrigins += origin(QueueKind.Playlist, statement.getText(0))
+        }
+    }
+
     private suspend fun PooledConnection.recordSongOrigins(
         previous: SongSyncState?,
         next: SongSyncState?,
     ) {
-        if ((previous == null) != (next == null)) {
-            val songId = (previous ?: next)!!.id
-            usePrepared("SELECT playlistId FROM playlist_songs WHERE sourceId = ? AND songId = ?") { statement ->
-                statement.bindLong(1, source.id)
-                statement.bindText(2, songId)
-                while (statement.step()) changedOrigins += origin(QueueKind.Playlist, statement.getText(0))
-            }
-        }
         val states = listOfNotNull(previous, next)
         states.mapTo(changedOrigins) { origin(QueueKind.Song, it.id) }
         states.mapNotNullTo(changedOrigins) { it.albumId?.let { id -> origin(QueueKind.Album, id) } }
