@@ -459,6 +459,18 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun aRemovalDoesNotReusePreEditKeysetRows() =
+        runTest {
+            seedLibrary()
+            val snapshot = repository.snapshotAfter(listOf(repository.albumEntry(1, "al1")))
+            assertEquals("s1", repository.itemAt(snapshot, 0)?.song?.id)
+
+            repository.removeAt(snapshot, 0)
+
+            assertEquals(listOf("s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
     fun anUnrelatedOriginResetRemapsWithinTheSecondUnchangedFragment() =
         runTest {
             seedLibrary()

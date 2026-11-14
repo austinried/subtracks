@@ -1094,6 +1094,7 @@ class QueueRepository(
                 dao.insert(entries.mapIndexed { index, entry -> entry.copy(id = 0, position = index.toLong()) })
             }
         }
+        keyCache.clear()
         queueVersion.incrementAndGet()
     }
 
@@ -1106,6 +1107,7 @@ class QueueRepository(
                 )
             }
         }
+        keyCache.clear()
         queueVersion.incrementAndGet()
     }
 
