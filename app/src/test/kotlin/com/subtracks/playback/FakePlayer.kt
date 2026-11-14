@@ -48,6 +48,15 @@ class FakePlayerHandle : PlayerHandle {
     @Volatile
     var beforeRemoveFirst: (() -> Unit)? = null
 
+    @Volatile
+    var roundTripItemsThroughMedia3 = false
+
+    private fun storedItem(item: QueueItem): QueueItem {
+        if (!roundTripItemsThroughMedia3) return item
+        val mediaItem = queueMediaItem(item, local = null, stream = "http://stream/${item.id}", transcode = false)
+        return queueItemFromMediaItem(mediaItem)
+    }
+
     private fun checkThread() {
         val expected = expectedThread ?: return
         check(Thread.currentThread() == expected) { "Expected $expected, was ${Thread.currentThread()}" }
@@ -92,7 +101,7 @@ class FakePlayerHandle : PlayerHandle {
         item: QueueItem,
     ) {
         operations += "replaceItem($index, ${item.id})"
-        if (index in items.indices) items[index] = item
+        if (index in items.indices) items[index] = storedItem(item)
     }
 
     override fun setWindow(
@@ -102,7 +111,7 @@ class FakePlayerHandle : PlayerHandle {
     ) {
         operations += "setWindow(size=${items.size}, start=$startIndex, position=$startPositionMs)"
         this.items.clear()
-        this.items += items
+        this.items += items.map(::storedItem)
         index = startIndex
         positionMs = startPositionMs
         idle = true
@@ -115,13 +124,13 @@ class FakePlayerHandle : PlayerHandle {
 
     override fun addFirst(item: QueueItem) {
         operations += "addFirst(${item.id})"
-        items.add(0, item)
+        items.add(0, storedItem(item))
         index++
     }
 
     override fun addLast(item: QueueItem) {
         operations += "addLast(${item.id})"
-        items += item
+        items += storedItem(item)
     }
 
     override fun insertAt(
@@ -129,7 +138,7 @@ class FakePlayerHandle : PlayerHandle {
         item: QueueItem,
     ) {
         operations += "insertAt($index, ${item.id})"
-        items.add(index, item)
+        items.add(index, storedItem(item))
         if (index <= this.index) this.index++
     }
 

@@ -3612,6 +3612,24 @@ class PlaybackControllerTest {
     }
 
     @Test
+    fun aResetKeepsAMovedSecondDuplicateContextEntryByDurableIdentity() {
+        handle.roundTripItemsThroughMedia3 = true
+        seedPlaylist(2)
+        runBlocking { queues.replace(listOf(queues.playlistEntry(1, "p1"), queues.playlistEntry(1, "p1"))) }
+        controller.connect()
+        await { controller.state.value.item != null }
+        controller.playAt(3)
+        await { handle.currentItem?.id == "s2" && controller.state.value.position == 3L }
+        runBlocking { controller.move(2, 0) }
+        val point = runBlocking { queues.captureResetPoint() }
+
+        runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
+
+        assertEquals(1L, controller.state.value.position)
+        assertEquals("s2", handle.currentItem?.id)
+    }
+
+    @Test
     fun repeatedResetsKeepTheSecondDuplicateUpNextEntry() {
         seedAlbum(3, sourceId = 1)
         setPlaylist("s1", "s2")

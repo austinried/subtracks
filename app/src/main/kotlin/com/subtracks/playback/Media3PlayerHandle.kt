@@ -266,6 +266,7 @@ internal fun MediaItem.resetItem(): QueueResetItem? {
         upNext = extras.getBoolean(EXTRA_RESET_UP_NEXT),
         entryOccurrence = extras.getInt(EXTRA_RESET_ENTRY_OCCURRENCE),
         occurrence = extras.getLong(EXTRA_RESET_OCCURRENCE),
+        originEntryId = extras.takeIf { it.containsKey(EXTRA_RESET_ORIGIN_ENTRY_ID) }?.getLong(EXTRA_RESET_ORIGIN_ENTRY_ID),
     )
 }
 
@@ -291,6 +292,7 @@ private const val EXTRA_RESET_POSITION = "resetPosition"
 private const val EXTRA_RESET_UP_NEXT = "resetUpNext"
 private const val EXTRA_RESET_ENTRY_OCCURRENCE = "resetEntryOccurrence"
 private const val EXTRA_RESET_OCCURRENCE = "resetOccurrence"
+private const val EXTRA_RESET_ORIGIN_ENTRY_ID = "resetOriginEntryId"
 
 internal fun MediaItem?.replayGain(): ReplayGain {
     val extras = this?.mediaMetadata?.extras ?: return ReplayGain()
@@ -348,6 +350,7 @@ internal fun queueMediaItem(
                         putBoolean(EXTRA_RESET_UP_NEXT, reset.upNext)
                         putInt(EXTRA_RESET_ENTRY_OCCURRENCE, reset.entryOccurrence)
                         putLong(EXTRA_RESET_OCCURRENCE, reset.occurrence)
+                        reset.originEntryId?.let { putLong(EXTRA_RESET_ORIGIN_ENTRY_ID, it) }
                     }
                 },
             ).build()

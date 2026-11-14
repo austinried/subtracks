@@ -106,7 +106,15 @@ class MediaItemTest {
     @Test
     fun theItemKeepsItsResetIdentity() {
         val resetItem =
-            QueueResetItem(QueueOrigin(QueueKind.Playlist, 1, "p1"), "s1", 2, upNext = false, entryOccurrence = 1, occurrence = 1)
+            QueueResetItem(
+                QueueOrigin(QueueKind.Playlist, 1, "p1"),
+                "s1",
+                2,
+                upNext = false,
+                entryOccurrence = 1,
+                occurrence = 1,
+                originEntryId = 7,
+            )
 
         val item = queueMediaItem(song.copy(resetItem = resetItem), local = null, stream = "http://server/stream?s=s1", transcode = false)
 
