@@ -4286,6 +4286,7 @@ class PlaybackControllerTest {
         runBlocking { queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point) }
         await { handle.items.map { it.id } == listOf("s2") && controller.state.value.position == null }
         controller.cycleRepeat()
+        assertNull(controller.state.value.position)
         assertEquals(RepeatMode.All, controller.state.value.repeat)
     }
 

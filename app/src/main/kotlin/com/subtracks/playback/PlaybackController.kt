@@ -1863,6 +1863,7 @@ class PlaybackController(
 
     private fun refresh(position: Long? = currentQueuePosition()) {
         val player = player ?: return
+        val publishedPosition = if (detachedWindow && currentPosition() == null) lastPosition ?: detachedPosition else position
         updateBuffering()
         val durationMs =
             player.durationMs.takeIf { it > 0 }
@@ -1871,8 +1872,8 @@ class PlaybackController(
         _state.value =
             PlaybackState(
                 item = player.currentItem,
-                context = contextAt(position),
-                position = position,
+                context = contextAt(publishedPosition),
+                position = publishedPosition,
                 isBuffering = showBuffering,
                 isPlaying = player.playWhenReady && !player.isIdle && !player.isEnded,
                 durationMs = durationMs,
