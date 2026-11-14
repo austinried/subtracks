@@ -490,10 +490,15 @@ fun QueueScreen(
                                             )
                                         },
                                     onClick = { onPlay(row.position) },
-                                    onRemove = {
-                                        onRemove(row.position)
-                                        showUndo(queueRemoved)
-                                    },
+                                    onRemove =
+                                        if (enabled) {
+                                            {
+                                                onRemove(row.position)
+                                                showUndo(queueRemoved)
+                                            }
+                                        } else {
+                                            null
+                                        },
                                 )
                             }
                         }
@@ -579,7 +584,7 @@ private fun QueueRowItem(
     coverArt: (String?, Boolean) -> CoverArtRef?,
     dragHandle: Modifier?,
     onClick: () -> Unit,
-    onRemove: () -> Unit,
+    onRemove: (() -> Unit)?,
 ) {
     SongRow(
         song = row.song.song,
@@ -588,12 +593,14 @@ private fun QueueRowItem(
         isPlaying = isPlaying,
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onRemove) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.queue_remove),
-                        modifier = Modifier.size(20.dp),
-                    )
+                if (onRemove != null) {
+                    IconButton(onClick = onRemove) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = stringResource(R.string.queue_remove),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
                 if (dragHandle != null) {
                     Box(modifier = Modifier.size(40.dp).then(dragHandle), contentAlignment = Alignment.Center) {
