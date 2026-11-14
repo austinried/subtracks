@@ -291,6 +291,17 @@ class DownloadRepository(
         }
     }
 
+    suspend fun remove(
+        sourceId: Long,
+        songIds: Collection<String>,
+    ) = withContext(dispatcher) {
+        val ids = songIds.toHashSet()
+        mutex.withLock {
+            removeRows(db.downloadDao().all().filter { it.sourceId == sourceId && it.songId in ids })
+            sweep(db.downloadDao().all())
+        }
+    }
+
     suspend fun cancel(
         sourceId: Long,
         songIds: Collection<String>,

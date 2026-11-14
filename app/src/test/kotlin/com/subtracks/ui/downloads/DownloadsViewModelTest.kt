@@ -7,17 +7,23 @@ import com.subtracks.data.model.DownloadList
 import com.subtracks.data.model.DownloadStatus
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
+import com.subtracks.data.repo.QueueResetPreparation
+import com.subtracks.data.repo.replace
 import com.subtracks.ui.ViewModelRepositoryFixture
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class DownloadsViewModelTest {
@@ -79,6 +85,58 @@ class DownloadsViewModelTest {
 
         assertNull(row("s1"))
         assertNotNull("an unnamed song should survive", row("s2"))
+    }
+
+    @Test
+    fun deletingSeveralSongsUsesOneResetPointForTheWholeBatch() {
+        sourceId =
+            runBlocking {
+                val id = sourceRepository.addSource("nav", "http://localhost/", "u", "p", false)
+                db.libraryDao().upsertSongs((1..5).map { song(id, "s$it", "al1") })
+                (1..5).forEach { track ->
+                    db.downloadDao().upsert(SongDownload(id, "s$track", DownloadStatus.Completed, downloadedAt = (6 - track).toLong()))
+                    val file = File(fixture.downloadsDir, "$id/s$track")
+                    file.parentFile?.mkdirs()
+                    file.writeBytes(byteArrayOf(1))
+                }
+                id
+            }
+        downloadRepository.start()
+        await { (1..5).all { downloadRepository.localUri("s$it") != null } }
+        runBlocking {
+            fixture.queueRepository.replace(listOf(fixture.queueRepository.downloadedEntry(sourceId)))
+            fixture.queueRepository.setCursor(2)
+        }
+        val beforeReset = runBlocking { fixture.queueRepository.snapshot().resetVersion }
+        val firstResetStarted = CountDownLatch(1)
+        val allowFirstReset = CountDownLatch(1)
+        var resets = 0
+        fixture.queueRepository.setResetListener {
+            resets++
+            if (resets == 1) {
+                firstResetStarted.countDown()
+                allowFirstReset.await(5, TimeUnit.SECONDS)
+            }
+            QueueResetPreparation(it.snapshot)
+        }
+
+        viewModel.deleteSongs(listOf("s2", "s3"))
+        assertTrue(firstResetStarted.await(5, TimeUnit.SECONDS))
+        allowFirstReset.countDown()
+        await { runBlocking { fixture.queueRepository.snapshot().resetVersion > beforeReset } }
+
+        val snapshot = runBlocking { fixture.queueRepository.snapshot() }
+        assertEquals(2L, runBlocking { fixture.queueRepository.cursor() })
+        assertEquals(
+            "s5",
+            runBlocking {
+                fixture.queueRepository
+                    .itemAt(snapshot, 2)
+                    ?.song
+                    ?.id
+            },
+        )
+        assertEquals(1, resets)
     }
 
     @Test

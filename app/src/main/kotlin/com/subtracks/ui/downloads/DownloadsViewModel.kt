@@ -78,7 +78,7 @@ class DownloadsViewModel(
     fun deleteSongs(songIds: List<String>) {
         viewModelScope.launch {
             val source = sourceId.first()
-            songIds.forEach { downloadRepository.remove(source, it) }
+            downloadRepository.remove(source, songIds)
             playbackController.refreshMediaItems()
         }
     }
