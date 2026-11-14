@@ -180,7 +180,7 @@ class QueueViewModel(
             rows.clear()
             return
         }
-        val start = (rows.minOfOrNull { it.position } ?: 0L).coerceIn(0, snapshot.size - 1)
+        val start = ((rows.minOfOrNull { it.position } ?: OLDER_LOAD.toLong()) - OLDER_LOAD.toLong()).coerceAtLeast(0)
         val rawEnd = (rows.maxOfOrNull { it.position } ?: (start + QUEUE_CHUNK - 1)).coerceIn(start, snapshot.size - 1)
         val end = rawEnd.coerceAtMost(start + MAX_SCAN_POSITIONS - 1)
         val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
