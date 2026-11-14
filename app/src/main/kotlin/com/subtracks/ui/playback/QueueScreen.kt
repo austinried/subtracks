@@ -180,12 +180,21 @@ class QueueViewModel(
             rows.clear()
             return
         }
-        val start = ((rows.minOfOrNull { it.position } ?: OLDER_LOAD.toLong()) - OLDER_LOAD.toLong()).coerceAtLeast(0)
+        val firstPosition = rows.minOfOrNull { it.position } ?: OLDER_LOAD.toLong()
+        val start = (firstPosition - OLDER_LOAD).coerceAtLeast(0)
         val rawEnd = (rows.maxOfOrNull { it.position } ?: (start + QUEUE_CHUNK - 1)).coerceIn(start, snapshot.size - 1)
         val end = rawEnd.coerceAtMost(start + MAX_SCAN_POSITIONS - 1)
         val loaded = queueRepository.range(snapshot, start, end).filter(::visible)
         val reused = reusedIds()
-        val updated = loaded.map { rowFor(it, reused, snapshot.resetVersion) }
+        val scanned = loaded.map { rowFor(it, reused, snapshot.resetVersion) }
+        val firstRow = rows.minByOrNull { it.position }
+        val windowStart =
+            if (firstRow == null) {
+                start
+            } else {
+                scanned.firstOrNull { it.id == firstRow.id && it.position < firstPosition }?.position ?: firstPosition
+            }
+        val updated = scanned.filter { it.position >= windowStart }
         if (end >= rawEnd) {
             if (updated.size == rows.size) {
                 updated.forEachIndexed { index, row -> if (rows[index] != row) rows[index] = row }
