@@ -51,6 +51,19 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
+private fun SongDownload.sameResetRelevantState(other: SongDownload): Boolean =
+    sourceId == other.sourceId && songId == other.songId && status == other.status && engineId == other.engineId &&
+        total == other.total && error == other.error && downloadedAt == other.downloadedAt
+
+private fun sameResetRelevantEmission(
+    previous: Pair<Long?, Map<String, SongDownload>>?,
+    sourceId: Long?,
+    rows: Map<String, SongDownload>,
+): Boolean {
+    if (previous == null || previous.first != sourceId || previous.second.size != rows.size) return false
+    return previous.second.all { (songId, row) -> rows[songId]?.let { row.sameResetRelevantState(it) } == true }
+}
+
 class DownloadRepository(
     private val db: SubtracksDatabase,
     private val sourceRepository: SourceRepository,
@@ -84,44 +97,66 @@ class DownloadRepository(
         downloadsDir.mkdirs()
         File(downloadsDir, NO_MEDIA).createNewFile()
         scope.launch {
-            var resetPoint = queueRepository.captureResetPoint()
-            downloadStates().collect { (sourceId, emittedRows) ->
-                statesFlow.value = emittedRows
-                if (sourceId != null) {
-                    mutex.withLock {
-                        val rows = db.downloadDao().downloadsOnce(sourceId).associateBy { it.songId }
-                        statesFlow.value = rows
-                        val completed = completedDownloads(sourceId)
-                        val completedRows = completedDownloadKeys(rows)
-                        completedBaselineMutex.withLock {
-                            val previous = completedBySource[sourceId]
-                            val previousRows = completedRowsBySource[sourceId]
-                            val pending = pendingResetPoints[sourceId]
-                            when {
-                                pending != null -> {
-                                    pendingResetPoints.remove(sourceId)
-                                    if (previous == null || completed != previous) {
-                                        queueRepository.resetChangedOrigins(
-                                            setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
-                                            pending,
-                                        )
-                                    }
-                                }
+            var resetPoint: QueueResetPoint? = null
+            var reconciled: Pair<Long?, Map<String, SongDownload>>? = null
+            while (true) {
+                try {
+                    if (resetPoint == null) resetPoint = queueRepository.captureResetPoint()
+                    downloadStates().collect { (sourceId, emittedRows) ->
+                        statesFlow.value = emittedRows
+                        val unchanged = sameResetRelevantEmission(reconciled, sourceId, emittedRows)
+                        val pending =
+                            unchanged && sourceId != null &&
+                                completedBaselineMutex.withLock { sourceId in pendingResetPoints }
+                        if (unchanged && !pending) {
+                            loaded.complete(Unit)
+                            return@collect
+                        }
+                        var rows = emittedRows
+                        if (sourceId != null) {
+                            mutex.withLock {
+                                rows = db.downloadDao().downloadsOnce(sourceId).associateBy { it.songId }
+                                statesFlow.value = rows
+                                val completed = completedDownloads(sourceId)
+                                val completedRows = completedDownloadKeys(rows)
+                                completedBaselineMutex.withLock {
+                                    val previous = completedBySource[sourceId]
+                                    val previousRows = completedRowsBySource[sourceId]
+                                    val pending = pendingResetPoints[sourceId]
+                                    when {
+                                        pending != null -> {
+                                            if (previous == null || completed != previous) {
+                                                queueRepository.resetChangedOrigins(
+                                                    setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
+                                                    pending,
+                                                )
+                                            }
+                                            pendingResetPoints.remove(sourceId)
+                                        }
 
-                                previous != null && completed != previous && completedRows != previousRows -> {
-                                    queueRepository.resetChangedOrigins(
-                                        setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
-                                        resetPoint,
-                                    )
+                                        previous != null && completed != previous && completedRows != previousRows -> {
+                                            queueRepository.resetChangedOrigins(
+                                                setOf(QueueOrigin(QueueKind.Downloaded, sourceId, "")),
+                                                resetPoint!!,
+                                            )
+                                        }
+                                    }
+                                    completedBySource[sourceId] = completed
+                                    completedRowsBySource[sourceId] = completedRows
                                 }
                             }
-                            completedBySource[sourceId] = completed
-                            completedRowsBySource[sourceId] = completedRows
                         }
+                        resetPoint = queueRepository.captureResetPoint()
+                        reconciled = sourceId to rows
+                        loaded.complete(Unit)
                     }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (failure: Exception) {
+                    Log.w("download", "state reconciliation failed; retrying", failure)
+                    loaded.complete(Unit)
+                    delay(POLL_MS)
                 }
-                resetPoint = queueRepository.captureResetPoint()
-                loaded.complete(Unit)
             }
         }
         scope.launch {
@@ -298,7 +333,6 @@ class DownloadRepository(
         val ids = songIds.toHashSet()
         mutex.withLock {
             removeRows(db.downloadDao().all().filter { it.sourceId == sourceId && it.songId in ids })
-            sweep(db.downloadDao().all())
         }
     }
 

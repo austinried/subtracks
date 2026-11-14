@@ -6,10 +6,13 @@ import android.net.Uri
 import androidx.room3.immediateTransaction
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
 import com.subtracks.cancelAndJoinBlocking
+import com.subtracks.data.db.LoggingSQLiteDriver
+import com.subtracks.data.db.SqlExecution
 import com.subtracks.data.db.SubtracksDatabase
 import com.subtracks.data.db.createTestDatabase
 import com.subtracks.data.download.ArtworkFetcher
@@ -41,6 +44,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -58,6 +62,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.IOException
+import java.util.Collections
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -78,6 +83,7 @@ class DownloadRepositoryTest {
     private val messages = CopyOnWriteArrayList<String>()
     private lateinit var resources: Resources
     private val requestedArt = CopyOnWriteArrayList<String>()
+    private val auxiliaryDbs = mutableListOf<SubtracksDatabase>()
     private val artFetchedAfterTheEngineRequest = CopyOnWriteArrayList<Boolean>()
     private var failArtworkFetch = false
     private val failingArtUrls = CopyOnWriteArrayList<String>()
@@ -117,6 +123,7 @@ class DownloadRepositoryTest {
     @After
     fun tearDown() {
         cancelAndJoinBlocking(scope)
+        auxiliaryDbs.forEach { it.close() }
         db.close()
         dir.deleteRecursively()
     }
@@ -1415,6 +1422,14 @@ class DownloadRepositoryTest {
             )
         }
 
+    private fun useLoggingDatabase(executions: MutableList<SqlExecution>) {
+        auxiliaryDbs += db
+        db = createTestDatabase(LoggingSQLiteDriver(BundledSQLiteDriver()) { executions += it })
+        sources = SourceRepository(db, OkHttpClient(), prefs, artwork, scope = scope)
+        queues = QueueRepository(db)
+        useRepository(scope, Dispatchers.Default)
+    }
+
     private fun useRepository(
         scope: CoroutineScope,
         dispatcher: CoroutineDispatcher,
@@ -1961,6 +1976,145 @@ class DownloadRepositoryTest {
                     .single()
                     .entry.rangeStart,
             )
+        }
+
+    @Test
+    fun aTransientResetFailureIsRetriedWithTheOriginalResetPoint() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            repository.start()
+            runBlocking {
+                repository.awaitLoaded()
+                repository.reconcile()
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 1)))
+                queues.setCursor(1)
+            }
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            val attempts = CopyOnWriteArrayList<QueueResetPoint>()
+            val secondAttempt = CountDownLatch(1)
+            queues.setResetListener { reset ->
+                attempts += reset.point
+                if (attempts.size == 1) throw IllegalStateException("reset failed")
+                secondAttempt.countDown()
+                QueueResetPreparation(reset.snapshot)
+            }
+
+            runBlocking { repository.remove(1, "s2") }
+
+            assertTrue(secondAttempt.await(5, TimeUnit.SECONDS))
+            await { runBlocking { queues.snapshot().resetVersion > beforeReset } }
+            assertEquals(2, attempts.size)
+            assertEquals(attempts[0], attempts[1])
+            val snapshot = runBlocking { queues.snapshot() }
+            assertNull(
+                snapshot.entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertEquals(1L, snapshot.size)
+            assertEquals(0L, runBlocking { queues.cursor() })
+        }
+
+    @Test
+    fun aFirstEmissionResetFailureCompletesLoadingAndRetries() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 0)))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            val beforeReset = runBlocking { queues.snapshot().resetVersion }
+            withBlockedCollector { releaseCollector ->
+                val attempts = CopyOnWriteArrayList<QueueResetPoint>()
+                val secondAttempt = CountDownLatch(1)
+                queues.setResetListener { reset ->
+                    attempts += reset.point
+                    if (attempts.size == 1) throw IllegalStateException("reset failed")
+                    secondAttempt.countDown()
+                    QueueResetPreparation(reset.snapshot)
+                }
+                repository.start()
+                runBlocking {
+                    repository.captureForReset(1)
+                    db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+                    repository.reconcile()
+                }
+                releaseCollector.countDown()
+
+                runBlocking { withTimeout(5_000) { repository.awaitLoaded() } }
+
+                assertTrue(secondAttempt.await(5, TimeUnit.SECONDS))
+                await { runBlocking { queues.snapshot().resetVersion > beforeReset } }
+                assertEquals(2, attempts.size)
+                assertEquals(attempts[0], attempts[1])
+                assertNull(
+                    runBlocking {
+                        queues
+                            .snapshot()
+                            .entries
+                            .single()
+                            .entry.rangeStart
+                    },
+                )
+            }
+        }
+
+    @Test
+    fun byteOnlyProgressSkipsDownloadResetQueries() =
+        runTest {
+            val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
+            useLoggingDatabase(executions)
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(
+                    SongDownload(1, "s1", DownloadStatus.Completed, bytes = 1, total = 10, downloadedAt = 1),
+                )
+            }
+            writeFile(1, "s1", "one")
+            repository.start()
+            runBlocking { repository.awaitLoaded() }
+            await { repository.localUri("s1") != null }
+            synchronized(executions) { executions.clear() }
+
+            runBlocking {
+                val row = db.downloadDao().find(1, "s1")!!
+                db.downloadDao().upsert(row.copy(bytes = 2))
+            }
+            await { repository.states().value["s1"]?.bytes == 2L }
+            Thread.sleep(300)
+
+            val queries = synchronized(executions) { executions.toList() }
+            assertEquals(1, queries.count { it.sql == "SELECT * FROM song_downloads WHERE sourceId = ?" })
+            assertTrue(queries.none { it.sql.contains("ORDER BY d.downloadedAt DESC") })
+        }
+
+    @Test
+    fun bulkRemoveSweepsArtworkOnce() =
+        runTest {
+            val executions = Collections.synchronizedList(mutableListOf<SqlExecution>())
+            useLoggingDatabase(executions)
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Completed, downloadedAt = 1))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            synchronized(executions) { executions.clear() }
+
+            runBlocking { repository.remove(1, listOf("s1", "s2")) }
+
+            val queries = synchronized(executions) { executions.toList() }
+            assertEquals(1, queries.count { it.sql.contains("AS albumRow") })
+            assertEquals(1, queries.count { it.sql.startsWith("SELECT DISTINCT ps.sourceId AS sourceId") })
         }
 
     private fun preparePrunedDownload(status: DownloadStatus): Long {
