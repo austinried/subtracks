@@ -474,6 +474,9 @@ class QueueRepositoryTest {
             repository.removeAt(snapshot, 0)
 
             assertEquals(listOf("s2", "s3"), resolveAll(repository.snapshot()))
+        }
+
+    @Test
     fun aMatchingOriginStillPublishesWhenItsEntriesDoNotChange() =
         runTest {
             seedLibrary()

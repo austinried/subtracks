@@ -11,6 +11,7 @@ import com.subtracks.data.model.PlaylistSong
 import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.repo.QueueRepository
+import com.subtracks.data.repo.QueueResetPreparation
 import com.subtracks.data.repo.removeAt
 import com.subtracks.data.repo.replace
 import kotlinx.coroutines.test.runTest
@@ -592,7 +593,10 @@ class MigrationsTest {
                 repository.setCursor(2)
                 val point = repository.captureResetPoint()
                 var resets = 0
-                repository.setResetListener { resets++ }
+                repository.setResetListener {
+                    resets++
+                    QueueResetPreparation(it.snapshot)
+                }
                 db.libraryDao().deletePlaylistSongsFrom(1, "p1", 0)
                 db.libraryDao().upsertPlaylistSongs(
                     listOf(

@@ -704,13 +704,13 @@ class QueueRepository(
                                 val positionMs = if (remappedCurrent != null && previousSongId == updatedSongId) row.positionMs else 0L
                                 dao.clear()
                                 dao.insert(
-                                    withOriginEntryIds(entries).mapIndexed { index, entry ->
+                                    withOriginEntryIds(entries, assignFragmentIds = false).mapIndexed { index, entry ->
                                         entry.copy(id = 0, position = index.toLong())
                                     },
                                 )
                                 dao.clearUpNext()
                                 dao.insertUpNext(
-                                    withOriginEntryIds(upNext).mapIndexed { index, entry ->
+                                    withOriginEntryIds(upNext, assignFragmentIds = false).mapIndexed { index, entry ->
                                         UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
                                     },
                                 )
@@ -831,7 +831,7 @@ class QueueRepository(
     }
 
     private fun QueueEntry.shouldAssignOriginEntryId(assignFragmentIds: Boolean) =
-        originEntryId == null && (assignFragmentIds || isWholeOrigin())
+        originEntryId == null && (assignFragmentIds || isWholeOrigin() || id == 0L)
 
     private fun withOriginEntryIds(
         entries: List<QueueEntry>,
