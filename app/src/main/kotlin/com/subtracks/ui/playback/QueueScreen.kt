@@ -194,13 +194,11 @@ class QueueViewModel(
                 rows.addAll(updated)
             }
         } else {
-            // Only the head of a sparse offline window was resolved; keep the tail on screen,
-            // dropping any tail row whose id was reused for a head row.
             val usedIds = updated.mapTo(HashSet()) { it.id }
-            val tail = rows.filter { it.position > end && it.id !in usedIds }
+            val unresolvedTail = rows.filter { it.id !in usedIds }
             rows.clear()
             rows.addAll(updated)
-            rows.addAll(tail)
+            rows.addAll(unresolvedTail)
         }
     }
 
@@ -307,11 +305,13 @@ class QueueViewModel(
         reorderPending = true
         viewModelScope.launch {
             try {
-                val applied = playbackController.move(from, to, resetVersion)
-                mutex.withLock {
-                    if (!applied) rollbackReorder(edit)
-                    reconcileLocked()
-                }
+                val applied =
+                    mutex.withLock {
+                        val applied = playbackController.move(from, to, resetVersion)
+                        if (!applied) rollbackReorder(edit)
+                        reconcileLocked()
+                        applied
+                    }
                 onComplete(applied)
             } finally {
                 reorderPending = false

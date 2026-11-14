@@ -510,6 +510,34 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun windowLoadingWaitsForRejectedMoveRollback() {
+        openReconciledSparseOfflineQueue()
+        markDownloaded(1, "s0")
+        val canonical = resolvedQueueIds()
+        val before = rowsSnapshot()
+        val dragged = before[1]
+        val paused = pauseQueueMutation()
+        val completion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.reorder(1, 2)
+                val move = viewModel.rows.dropMoveFor(dragged.id)!!
+                assertTrue(viewModel.move(move.from, move.to, move.resetVersion, completion::complete))
+                yield()
+                viewModel.loadOlder()
+                yield()
+            }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertFalse(awaitCompletion(completion))
+        assertEquals(canonical, resolvedQueueIds())
+        assertEquals(listOf("s0", "s1", "s801", "s901"), rowsSnapshot().map { it.song.song.id })
+        assertEquals(listOf(0L, 1L, 800L, 900L), rowsSnapshot().map { it.position })
+    }
+
+    @Test
     fun rejectedSparseTailRemovalRestoresTheVisibleOrder() {
         openReconciledSparseOfflineQueue()
         val canonical = resolvedQueueIds()
@@ -667,13 +695,13 @@ class QueueViewModelTest {
                 val secondMove = viewModel.rows.dropMoveFor(before[2].id)!!
                 assertFalse(viewModel.move(secondMove.from, secondMove.to, secondMove.resetVersion, secondCompletion::complete))
             }
-            await { rowsSnapshot().map { it.song.song.id } == expectedFirst }
         } finally {
             resumeQueueMutation(paused)
         }
 
         assertTrue(awaitCompletion(firstCompletion))
         assertFalse(awaitCompletion(secondCompletion))
+        assertEquals(expectedFirst, rowsSnapshot().map { it.song.song.id })
         assertEquals(expectedFirst, resolvedQueueIds().filter { it in visibleIds })
     }
 
@@ -697,6 +725,47 @@ class QueueViewModelTest {
         assertTrue(awaitCompletion(completion))
         assertEquals(listOf("s1", "s801"), rowsSnapshot().map { it.song.song.id })
         assertEquals(listOf("s1", "s801"), resolvedQueueIds().filter { it in setOf("s1", "s801", "s901") })
+    }
+
+    @Test
+    fun removalQueuedBehindMoveDoesNotUseItsOldPosition() {
+        runBlocking { seedSongs(3) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        val before = rowsSnapshot()
+        val paused = pauseQueueMutation()
+        val moveCompletion = CompletableDeferred<Boolean>()
+        val removalCompletion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                assertTrue(
+                    viewModel.move(
+                        before[0].position,
+                        before[2].position,
+                        before[0].resetVersion,
+                        moveCompletion::complete,
+                    ),
+                )
+                yield()
+                assertEquals(
+                    "s2",
+                    viewModel.rows[1]
+                        .song.song.id,
+                )
+                viewModel.remove(before[1].position, removalCompletion::complete)
+                yield()
+            }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertTrue(awaitCompletion(moveCompletion))
+        assertFalse(awaitCompletion(removalCompletion))
+        assertEquals(listOf("s2", "s3", "s1"), resolvedQueueIds())
+        assertEquals(listOf("s2", "s3", "s1"), rowsSnapshot().map { it.song.song.id })
+        assertEquals(listOf(0L, 1L, 2L), rowsSnapshot().map { it.position })
     }
 
     @Test
