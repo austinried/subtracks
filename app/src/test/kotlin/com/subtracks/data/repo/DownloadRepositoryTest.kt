@@ -3,6 +3,9 @@ package com.subtracks.data.repo
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
+import androidx.room3.immediateTransaction
+import androidx.room3.useReaderConnection
+import androidx.room3.useWriterConnection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
@@ -59,6 +62,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(AndroidJUnit4::class)
 class DownloadRepositoryTest {
@@ -367,6 +371,39 @@ class DownloadRepositoryTest {
                     .downloadedCoverArts
                     .isEmpty(),
             )
+        }
+
+    @Test
+    fun removingASourceBeyondTheSqliteBindLimitDeletesAllDownloads() =
+        runTest {
+            val count = runBlocking { sqliteVariableLimit() }
+            runBlocking {
+                db.sourcesDao().upsertSource(Source(1, "source", "http://localhost", isActive = true, createdAt = 0))
+                db.useWriterConnection { connection ->
+                    connection.immediateTransaction {
+                        connection.usePrepared(
+                            "WITH RECURSIVE ids(id) AS (SELECT 0 UNION ALL SELECT id + 1 FROM ids WHERE id + 1 < ?) " +
+                                "INSERT INTO songs (sourceId, id, title) SELECT 1, 's' || id, 'Song' FROM ids",
+                        ) { statement ->
+                            statement.bindLong(1, count.toLong())
+                            statement.step()
+                        }
+                        connection.usePrepared(
+                            "WITH RECURSIVE ids(id) AS (SELECT 0 UNION ALL SELECT id + 1 FROM ids WHERE id + 1 < ?) " +
+                                "INSERT INTO song_downloads (sourceId, songId, status, downloadedAt) " +
+                                "SELECT 1, 's' || id, 'Completed', id FROM ids",
+                        ) { statement ->
+                            statement.bindLong(1, count.toLong())
+                            statement.step()
+                        }
+                    }
+                }
+            }
+
+            assertEquals(count, allRows().size)
+            runBlocking { repository.removeSource(1) }
+
+            assertTrue(allRows().isEmpty())
         }
 
     @Test
@@ -1811,6 +1848,58 @@ class DownloadRepositoryTest {
         }
 
     @Test
+    fun aResetAfterAStaleEmissionObservesTheCompletedLocalFile() =
+        runTest {
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Running, engineId = 42, total = 10))
+                db.downloadDao().upsert(SongDownload(1, "s2", DownloadStatus.Completed, downloadedAt = 2))
+            }
+            writeFile(1, "s1", "one")
+            writeFile(1, "s2", "two")
+            engine.running(42, bytes = 1, total = 10)
+            repository.start()
+            await {
+                repository.states().value["s1"]?.status == DownloadStatus.Running && repository.localUri("s2") != null
+            }
+            runBlocking {
+                repository.awaitLoaded()
+                repository.reconcile()
+                queues.replace(listOf(queues.downloadedEntry(1).copy(rangeStart = 0, rangeEnd = 0)))
+            }
+            val reconciliationStarted = CountDownLatch(1)
+            val finishReconciliation = CountDownLatch(1)
+            val reconciliationTimedOut = AtomicReference(false)
+            engine.beforeDownload = { engineId ->
+                if (engineId == 42L) {
+                    reconciliationStarted.countDown()
+                    reconciliationTimedOut.set(!finishReconciliation.await(5, TimeUnit.SECONDS))
+                }
+            }
+            val reset = CountDownLatch(1)
+            val localUriAtReset = AtomicReference<String?>("not reset")
+            queues.setResetListener {
+                localUriAtReset.set(repository.localUri("s1"))
+                reset.countDown()
+            }
+            val reconciling = launch(Dispatchers.IO) { repository.reconcile() }
+            assertTrue(reconciliationStarted.await(5, TimeUnit.SECONDS))
+            runBlocking {
+                val running = db.downloadDao().find(1, "s1")!!
+                db.downloadDao().upsert(running.copy(bytes = 2))
+            }
+            await { repository.states().value["s1"]?.bytes == 2L }
+            assertFalse(reconciliationTimedOut.get())
+
+            engine.complete(42, total = 10)
+            finishReconciliation.countDown()
+            reconciling.join()
+
+            assertTrue(reset.await(5, TimeUnit.SECONDS))
+            assertNotNull(localUriAtReset.get())
+        }
+
+    @Test
     fun aPrunedDownloadCompletingDoesNotResetAnEditedDownloadedQueue() =
         runTest {
             val beforeReset = preparePrunedDownload(DownloadStatus.Running)
@@ -2002,6 +2091,18 @@ class DownloadRepositoryTest {
     ) = runBlocking { db.libraryDao().artistBioOnce(sourceId, artistId) }
 
     private fun allRows(): List<SongDownload> = runBlocking { db.downloadDao().all() }
+
+    private suspend fun sqliteVariableLimit(): Int =
+        db.useReaderConnection { connection ->
+            connection.usePrepared("PRAGMA compile_options") { statement ->
+                var limit = 32_766
+                while (statement.step()) {
+                    val option = statement.getText(0)
+                    if (option.startsWith("MAX_VARIABLE_NUMBER=")) limit = option.substringAfter('=').toInt()
+                }
+                limit
+            }
+        }
 
     private fun writeFile(
         sourceId: Long,

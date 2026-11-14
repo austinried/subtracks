@@ -56,6 +56,9 @@ interface DownloadDao {
     @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
     fun downloads(sourceId: Long): Flow<List<SongDownload>>
 
+    @Query("SELECT * FROM song_downloads WHERE sourceId = :sourceId")
+    suspend fun downloadsOnce(sourceId: Long): List<SongDownload>
+
     @Query(
         "SELECT d.* FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +

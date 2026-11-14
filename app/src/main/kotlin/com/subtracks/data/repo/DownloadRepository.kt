@@ -85,10 +85,12 @@ class DownloadRepository(
         File(downloadsDir, NO_MEDIA).createNewFile()
         scope.launch {
             var resetPoint = queueRepository.captureResetPoint()
-            downloadStates().collect { (sourceId, rows) ->
-                statesFlow.value = rows
+            downloadStates().collect { (sourceId, emittedRows) ->
+                statesFlow.value = emittedRows
                 if (sourceId != null) {
                     mutex.withLock {
+                        val rows = db.downloadDao().downloadsOnce(sourceId).associateBy { it.songId }
+                        statesFlow.value = rows
                         val completed = completedDownloads(sourceId)
                         val completedRows = completedDownloadKeys(rows)
                         completedBaselineMutex.withLock {
@@ -147,7 +149,11 @@ class DownloadRepository(
         songIds: Collection<String>,
     ) {
         if (songIds.isEmpty()) return
-        if (db.downloadDao().queueVisibleSongIds(sourceId, songIds).isNotEmpty()) {
+        val queueVisible =
+            songIds.asSequence().chunked(DELETE_CHUNK).any { ids ->
+                db.downloadDao().queueVisibleSongIds(sourceId, ids).isNotEmpty()
+            }
+        if (queueVisible) {
             captureForReset(sourceId)
         } else {
             completedBaselineMutex.withLock {
