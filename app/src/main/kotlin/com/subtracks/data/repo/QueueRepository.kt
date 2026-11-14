@@ -11,6 +11,7 @@ import com.subtracks.data.model.QueueKind
 import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.SongItem
 import com.subtracks.data.model.UpNextEntry
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 const val QUEUE_CHUNK = 60
 
@@ -187,8 +189,18 @@ data class QueueReset(
     val snapshot: QueueSnapshot,
 )
 
+data class QueueResetPreparation(
+    val snapshot: QueueSnapshot,
+    val publicationContext: CoroutineContext = EmptyCoroutineContext,
+    val publish: QueueRepository.QueueMutationScope.(QueueSnapshot) -> Unit = {},
+)
+
 private class CursorLockContext : AbstractCoroutineContextElement(CursorLockContext) {
     companion object Key : CoroutineContext.Key<CursorLockContext>
+}
+
+private class ResetPreparationContext : AbstractCoroutineContextElement(ResetPreparationContext) {
+    companion object Key : CoroutineContext.Key<ResetPreparationContext>
 }
 
 private interface QueueKindResolver {
@@ -396,9 +408,9 @@ class QueueRepository(
     private val resetVersion = AtomicLong()
     private val libraryVersion = AtomicLong()
     private val queueMutex = Mutex()
-    private var resetListener: (suspend QueueMutationScope.(QueueReset) -> Unit)? = null
+    private var resetListener: (suspend QueueMutationScope.(QueueReset) -> QueueResetPreparation)? = null
 
-    fun setResetListener(listener: suspend QueueMutationScope.(QueueReset) -> Unit) {
+    fun setResetListener(listener: suspend QueueMutationScope.(QueueReset) -> QueueResetPreparation) {
         resetListener = listener
     }
 
@@ -622,9 +634,7 @@ class QueueRepository(
             val entries = canonicalEntries(before.entries.map { it.entry }, changed)
             val upNext = canonicalEntries(before.upNext.map { it.entry }, changed)
             if (entries != before.entries.map { it.entry } || upNext != before.upNext.map { it.entry }) {
-                writeResetLocked(before, entries, upNext, point, pendingOriginSourceId) { updated ->
-                    resetListener?.invoke(this, QueueReset(point, updated))
-                }
+                writeResetLocked(before, entries, upNext, point, pendingOriginSourceId)
                 return
             }
         }
@@ -633,99 +643,91 @@ class QueueRepository(
 
     private suspend fun clearPendingSyncOriginsLocked(sourceId: Long) =
         withCursorLock {
-            db.useWriterConnection { connection ->
-                connection.immediateTransaction {
-                    dao.clearPendingSyncOrigins(sourceId)
-                }
-            }
+            dao.clearPendingSyncOrigins(sourceId)
         }
 
-    private suspend fun writeResetLocked(
+    private suspend fun QueueMutationScope.writeResetLocked(
         before: QueueSnapshot,
         entries: List<QueueEntry>,
         upNext: List<QueueEntry>,
         point: QueueResetPoint,
         pendingOriginSourceId: Long? = null,
-        onReset: suspend (QueueSnapshot) -> Unit,
     ) {
-        val resetSnapshot =
+        val preparation =
             withCursorLock {
-                db.useWriterConnection { connection ->
-                    connection.immediateTransaction {
-                        if (pendingOriginSourceId != null) dao.clearPendingSyncOrigins(pendingOriginSourceId)
-                        invalidateLibraryCache()
-                        val resolvedEntries = entries.map { ResolvedQueueEntry(it, it.resolvedLength()) }
-                        val resolvedUpNext = upNext.map { ResolvedQueueEntry(it, it.resolvedLength()) }
-                        val shuffle = before.shuffleSeed?.let { ShuffleState(it, resolvedEntries.sumOf { it.length }) }
-                        var updated =
-                            QueueSnapshot(
-                                entries = resolvedEntries,
-                                upNext = resolvedUpNext,
-                                shuffle = shuffle,
-                                upNextAnchor = before.upNextAnchor,
-                                version = queueVersion.get(),
-                                resetVersion = resetVersion.get(),
+                withContext(ResetPreparationContext()) {
+                    db.useWriterConnection { connection ->
+                        connection.immediateTransaction {
+                            if (pendingOriginSourceId != null) dao.clearPendingSyncOrigins(pendingOriginSourceId)
+                            val resolvedEntries = entries.map { ResolvedQueueEntry(it, it.resolvedLength()) }
+                            val resolvedUpNext = upNext.map { ResolvedQueueEntry(it, it.resolvedLength()) }
+                            val shuffle = before.shuffleSeed?.let { ShuffleState(it, resolvedEntries.sumOf { it.length }) }
+                            var updated =
+                                QueueSnapshot(
+                                    entries = resolvedEntries,
+                                    upNext = resolvedUpNext,
+                                    shuffle = shuffle,
+                                    upNextAnchor = before.upNextAnchor,
+                                    version = queueVersion.get() + 1,
+                                    resetVersion = resetVersion.get() + 1,
+                                )
+                            val anchorChanged = before.upNextSize > 0L && before.upNextAnchor != point.upNextAnchor
+                            val latestAnchor = if (anchorChanged) resetItemAt(before, before.anchorPlay) else null
+                            val anchor =
+                                if (anchorChanged) {
+                                    remapAnchor(updated, latestAnchor) ?: fallbackAnchor(updated, before.anchorPlay)
+                                } else {
+                                    remapAnchor(updated, point.anchor)
+                                        ?: fallbackAnchor(updated, point.anchor?.position ?: before.upNextAnchor)
+                                }
+                            updated = updated.copy(upNextAnchor = anchor)
+                            val row = cursorRow()
+                            val current = point.current ?: resetItemAt(before, row.queuePosition)
+                            val remappedCurrent = current?.let { remapPosition(updated, it) }
+                            val cursor =
+                                when {
+                                    updated.size == 0L -> 0L
+                                    remappedCurrent != null -> remappedCurrent.coerceIn(0, updated.size - 1)
+                                    current != null -> current.position.coerceIn(0, updated.size - 1)
+                                    else -> row.queuePosition.coerceIn(0, updated.size - 1)
+                                }
+                            val previousSongId = current?.songId
+                            val updatedSongId = itemAt(updated, cursor)?.song?.id
+                            val positionMs = if (remappedCurrent != null && previousSongId == updatedSongId) row.positionMs else 0L
+                            dao.clear()
+                            dao.insert(
+                                withOriginEntryIds(entries).mapIndexed { index, entry ->
+                                    entry.copy(id = 0, position = index.toLong())
+                                },
                             )
-                        val anchorChanged = before.upNextSize > 0L && before.upNextAnchor != point.upNextAnchor
-                        val latestAnchor = if (anchorChanged) resetItemAt(before, before.anchorPlay) else null
-                        val anchor =
-                            if (anchorChanged) {
-                                remapAnchor(updated, latestAnchor) ?: fallbackAnchor(updated, before.anchorPlay)
-                            } else {
-                                remapAnchor(updated, point.anchor)
-                                    ?: fallbackAnchor(updated, point.anchor?.position ?: before.upNextAnchor)
-                            }
-                        updated = updated.copy(upNextAnchor = anchor)
-                        val row = cursorRow()
-                        val current = point.current ?: resetItemAt(before, row.queuePosition)
-                        val remappedCurrent = current?.let { remapPosition(updated, it) }
-                        val cursor =
-                            when {
-                                updated.size == 0L -> 0L
-                                remappedCurrent != null -> remappedCurrent.coerceIn(0, updated.size - 1)
-                                current != null -> current.position.coerceIn(0, updated.size - 1)
-                                else -> row.queuePosition.coerceIn(0, updated.size - 1)
-                            }
-                        val previousSongId = current?.songId
-                        val updatedSongId = itemAt(updated, cursor)?.song?.id
-                        val positionMs = if (remappedCurrent != null && previousSongId == updatedSongId) row.positionMs else 0L
-                        dao.clear()
-                        dao.insert(
-                            withOriginEntryIds(entries).mapIndexed { index, entry ->
-                                entry.copy(id = 0, position = index.toLong())
-                            },
-                        )
-                        dao.clearUpNext()
-                        dao.insertUpNext(
-                            withOriginEntryIds(upNext).mapIndexed { index, entry ->
-                                UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
-                            },
-                        )
-                        dao.setCursor(
-                            row.copy(
-                                queuePosition = cursor,
-                                positionMs = positionMs,
-                                upNextAnchor = anchor,
-                                shuffleEnabled = shuffle != null,
-                                shuffleSeed = shuffle?.seed ?: 0L,
-                                shuffleSize = shuffle?.domain ?: 0L,
-                            ),
-                        )
-                        if (pendingOriginSourceId == null) {
-                            updated
-                        } else {
-                            queueVersion.incrementAndGet()
-                            resetVersion.incrementAndGet()
-                            onReset(updated.copy(version = queueVersion.get(), resetVersion = resetVersion.get()))
-                            null
+                            dao.clearUpNext()
+                            dao.insertUpNext(
+                                withOriginEntryIds(upNext).mapIndexed { index, entry ->
+                                    UpNextEntry.from(entry).copy(id = 0, position = index.toLong())
+                                },
+                            )
+                            dao.setCursor(
+                                row.copy(
+                                    queuePosition = cursor,
+                                    positionMs = positionMs,
+                                    upNextAnchor = anchor,
+                                    shuffleEnabled = shuffle != null,
+                                    shuffleSeed = shuffle?.seed ?: 0L,
+                                    shuffleSize = shuffle?.domain ?: 0L,
+                                ),
+                            )
+                            resetListener?.invoke(this@writeResetLocked, QueueReset(point, updated))
+                                ?: QueueResetPreparation(updated)
                         }
                     }
                 }
             }
-        if (resetSnapshot != null) {
-            queueVersion.incrementAndGet()
-            resetVersion.incrementAndGet()
-            onReset(resetSnapshot.copy(version = queueVersion.get(), resetVersion = resetVersion.get()))
+        invalidateLibraryCache()
+        queueVersion.incrementAndGet()
+        resetVersion.incrementAndGet()
+        val published = preparation.snapshot.copy(version = queueVersion.get(), resetVersion = resetVersion.get())
+        withContext(preparation.publicationContext + NonCancellable) {
+            preparation.publish(this@writeResetLocked, published)
         }
     }
 
@@ -1033,6 +1035,18 @@ class QueueRepository(
         return if (currentPosition >= current.anchorPlay + 1 + before) currentPosition + 1 else currentPosition
     }
 
+    private suspend fun reanchorForResetLocked(
+        snapshot: QueueSnapshot,
+        target: Long,
+    ): Reanchored {
+        if (snapshot.upNextSize == 0L || snapshot.isUpNext(target)) return Reanchored(target, false)
+        val play = snapshot.contextPlay(target)
+        val flat = snapshot.flatContext(play) ?: return Reanchored(target, false)
+        if (flat == snapshot.upNextAnchor) return Reanchored(target, false)
+        withCursorLock { dao.setCursor(cursorRow().copy(upNextAnchor = flat)) }
+        return Reanchored(play, true)
+    }
+
     private suspend fun reanchorForLocked(
         snapshot: QueueSnapshot,
         target: Long,
@@ -1198,6 +1212,11 @@ class QueueRepository(
             target: Long,
         ): Reanchored = reanchorForLocked(snapshot, target)
 
+        suspend fun reanchorForReset(
+            snapshot: QueueSnapshot,
+            target: Long,
+        ): Reanchored = reanchorForResetLocked(snapshot, target)
+
         suspend fun clearUpNext() = writeUpNextLocked(emptyList())
 
         suspend fun removeUpNextAt(
@@ -1342,7 +1361,8 @@ class QueueRepository(
             return resolverFor(entry.kind).rows(dao, entry, offset, limit).also { resolvedRowCount += it.size }
         }
         val ref = QueueOrigin(entry.kind, entry.sourceId, entry.refId)
-        val anchored = keyCache[ref]?.let { keyedRows(entry, offset, limit, it) }
+        val preparingReset = currentCoroutineContext()[ResetPreparationContext] != null
+        val anchored = if (preparingReset) null else keyCache[ref]?.let { keyedRows(entry, offset, limit, it) }
         if (anchored != null) {
             keysetSeeks++
             if (anchored.isNotEmpty()) remember(ref, offset, anchored)
@@ -1351,7 +1371,7 @@ class QueueRepository(
         }
         offsetSeeks++
         val fresh = resolverFor(entry.kind).rows(dao, entry, offset, limit)
-        if (fresh.isNotEmpty()) remember(ref, offset, fresh)
+        if (fresh.isNotEmpty() && !preparingReset) remember(ref, offset, fresh)
         resolvedRowCount += fresh.size
         return fresh
     }
@@ -1424,6 +1444,7 @@ class QueueRepository(
         entry: QueueEntry,
         version: Long,
     ): Long {
+        if (currentCoroutineContext()[ResetPreparationContext] != null) return entry.resolvedLength()
         val key = entry.lengthKey(version)
         lengthCache[key]?.let { return it }
         val length = entry.resolvedLength()

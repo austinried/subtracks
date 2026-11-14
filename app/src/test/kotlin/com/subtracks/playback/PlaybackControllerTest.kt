@@ -3726,14 +3726,6 @@ class PlaybackControllerTest {
         controller.playPlaylist(1, "p1", 2)
         await { handle.currentItem?.id == "s3" && controller.state.value.isPlaying }
         val point = runBlocking { queues.captureResetPoint() }
-        val initialId =
-            runBlocking {
-                db
-                    .queueDao()
-                    .entries()
-                    .single()
-                    .id
-            }
         val dispatcherBlocked = CountDownLatch(1)
         val releaseDispatcher = CountDownLatch(1)
         controllerScope.launch {
@@ -3745,22 +3737,10 @@ class PlaybackControllerTest {
         controller.seekTo(42_000L)
         setPlaylist("s1", "s2", "s4", "s5")
         val reset =
-            repoScope.launch {
+            repoScope.launch(start = CoroutineStart.UNDISPATCHED) {
                 queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
             }
-        try {
-            await {
-                runBlocking {
-                    db
-                        .queueDao()
-                        .entries()
-                        .single()
-                        .id != initialId
-                }
-            }
-        } finally {
-            releaseDispatcher.countDown()
-        }
+        releaseDispatcher.countDown()
         runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
         Thread.sleep(200)
 
@@ -3998,19 +3978,9 @@ class PlaybackControllerTest {
         assertTrue(dispatcherBlocked.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
         handle.advanceTo(handle.currentIndex + 1)
         val reset =
-            repoScope.launch {
+            repoScope.launch(start = CoroutineStart.UNDISPATCHED) {
                 queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
             }
-        await {
-            runBlocking {
-                db
-                    .queueDao()
-                    .upNextEntries()
-                    .single()
-                    .rangeStart == null
-            }
-        }
-
         releaseDispatcher.countDown()
         runBlocking { withTimeout(TEST_TIMEOUT_MS) { reset.join() } }
         Thread.sleep(200)

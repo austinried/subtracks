@@ -14,6 +14,7 @@ import com.subtracks.data.repo.QueueRepository
 import com.subtracks.data.repo.QueueRepository.QueueMutationScope
 import com.subtracks.data.repo.QueueReset
 import com.subtracks.data.repo.QueueResetItem
+import com.subtracks.data.repo.QueueResetPreparation
 import com.subtracks.data.repo.QueueSnapshot
 import com.subtracks.data.repo.QueueWindowItem
 import com.subtracks.data.repo.Shuffle
@@ -115,6 +116,14 @@ private data class PendingPlay(
     val behavior: SongTapBehavior?,
 )
 
+private data class PreparedWindow(
+    val items: List<QueueWindowItem>,
+    val actual: Long,
+    val startIndex: Int,
+    val autoplay: Boolean,
+    val startPositionMs: Long,
+)
+
 class PlaybackController(
     private val sourceRepository: SourceRepository,
     private val queueRepository: QueueRepository,
@@ -166,7 +175,7 @@ class PlaybackController(
     init {
         queueRepository.setResetListener { reset ->
             withContext(playbackDispatcher) {
-                reconcileLibraryResetLocked(reset)
+                prepareLibraryResetLocked(reset)
             }
         }
         scope.launch {
@@ -1209,42 +1218,58 @@ class PlaybackController(
     ) {
         val player = player ?: return
         val snapshot = snapshot ?: return
+        val prepared = prepareWindow(snapshot, position, autoplay, startPositionMs)
+        if (prepared == null) {
+            stopLocked()
+            return
+        }
+        publishWindow(player, snapshot, prepared)
+    }
+
+    private suspend fun prepareWindow(
+        snapshot: QueueSnapshot,
+        position: Long,
+        autoplay: Boolean,
+        startPositionMs: Long,
+    ): PreparedWindow? {
         val requested =
             if (offline) {
-                downloadedAtOrAfter(snapshot, position) ?: downloadedAtOrBefore(snapshot, position - 1) ?: run {
-                    stopLocked()
-                    return
-                }
+                downloadedAtOrAfter(snapshot, position) ?: downloadedAtOrBefore(snapshot, position - 1) ?: return null
             } else {
                 position
             }
         val raw = queueRepository.window(snapshot, requested, QUEUE_WINDOW_RADIUS)
         val window = if (offline) raw.filter { downloads.localUri(it.item.song.id) != null } else raw
-        if (window.isEmpty()) {
-            stopLocked()
-            return
-        }
+        if (window.isEmpty()) return null
         var startIndex = window.indexOfFirst { it.position == requested }
         if (startIndex < 0) {
             startIndex = window.indexOfFirst { it.position > requested }
             if (startIndex < 0) startIndex = window.lastIndex
         }
         val actual = window[startIndex].position
-        clearDetached()
-        windowPositions = LongArray(window.size) { window[it].position }
-        windowFiltered = offline
-        windowStart = window.first().position
-        windowEnd = window.last().position
-        lastPosition = actual
         if (actual != requested) queueRepository.setCursor(actual)
+        return PreparedWindow(window, actual, startIndex, autoplay, startPositionMs)
+    }
+
+    private fun publishWindow(
+        player: PlayerHandle,
+        snapshot: QueueSnapshot,
+        prepared: PreparedWindow,
+    ) {
+        clearDetached()
+        windowPositions = LongArray(prepared.items.size) { prepared.items[it].position }
+        windowFiltered = offline
+        windowStart = prepared.items.first().position
+        windowEnd = prepared.items.last().position
+        lastPosition = prepared.actual
         updating = true
-        player.setWindow(window.map { it.playerItem(snapshot) }, startIndex, startPositionMs)
+        player.setWindow(prepared.items.map { it.playerItem(snapshot) }, prepared.startIndex, prepared.startPositionMs)
         updating = false
-        if (autoplay) {
+        if (prepared.autoplay) {
             player.prepare()
             player.play()
         }
-        refresh(actual)
+        refresh(prepared.actual)
     }
 
     private suspend fun reloadQuality() =
@@ -1421,10 +1446,10 @@ class PlaybackController(
         lastPosition = target
     }
 
-    private suspend fun QueueMutationScope.reconcileLibraryResetLocked(reset: QueueReset) {
-        val player = player ?: return
-        val previous = snapshot ?: return
-        if (previous.version > reset.snapshot.version) return
+    private suspend fun QueueMutationScope.prepareLibraryResetLocked(reset: QueueReset): QueueResetPreparation {
+        val player = player ?: return QueueResetPreparation(reset.snapshot)
+        val previous = snapshot ?: return QueueResetPreparation(reset.snapshot)
+        if (previous.version > reset.snapshot.version) return QueueResetPreparation(reset.snapshot)
         var current = reset.point.current
         val actualItem = player.currentItem
         val actualId = actualItem?.id
@@ -1447,45 +1472,72 @@ class PlaybackController(
                         current?.copy(songId = actualId, position = actualPosition, upNext = upNext)
                     }
         }
-        lastEdit = null
-        windowJob?.cancel()
-        endedHandled = false
         var updated = reset.snapshot
-        shuffleEnabled = updated.shuffled
-        layoutVersion++
-        this@PlaybackController.snapshot = updated
         val target = current?.let { queueRepository.remapPosition(updated, it) }
         if (target != null) {
-            val anchor = reanchorFor(updated, target)
-            if (anchor.stale) return
+            val anchor = reanchorForReset(updated, target)
             if (anchor.changed) {
-                updated = snapshot()
-                this@PlaybackController.snapshot = updated
+                val flat = updated.flatContext(updated.contextPlay(target)) ?: updated.upNextAnchor
+                updated = updated.copy(upNextAnchor = flat)
             }
             val position = anchor.position.coerceIn(0, updated.size - 1)
             queueRepository.setCursor(position)
             if (detachedWindow && currentPosition() == null) {
-                rebuildDetachedSurvivors(updated, position)
-            } else {
-                clearDetached()
-                rebuildWindow(queueRepository.window(updated, position, QUEUE_WINDOW_RADIUS), position)
+                val window = prepareDetachedWindow(updated, position)
+                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                    beginLibraryResetPublication(committed)
+                    publishDetachedSurvivors(player, committed, position, window)
+                    refresh(position)
+                }
             }
-            refresh(position)
-            return
+            val raw = queueRepository.window(updated, position, QUEUE_WINDOW_RADIUS)
+            val ordered = if (offline) raw.filter { downloads.localUri(it.item.song.id) != null } else raw
+            val index = ordered.indexOfFirst { it.position == position }
+            if (index < 0) {
+                val prepared = prepareWindow(updated, position, player.playWhenReady, player.currentPositionMs)
+                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                    beginLibraryResetPublication(committed)
+                    if (prepared == null) stopLocked() else publishWindow(player, committed, prepared)
+                    refresh(position)
+                }
+            }
+            return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                beginLibraryResetPublication(committed)
+                publishRebuiltWindow(player, committed, ordered, index, position)
+                refresh(position)
+            }
         }
 
         if (player.itemCount == 0) {
             if (updated.size == 0L) {
-                stopLocked()
-            } else {
-                loadWindow(0, autoplay = false)
+                return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                    beginLibraryResetPublication(committed)
+                    stopLocked()
+                }
             }
-            return
+            val prepared = prepareWindow(updated, 0, autoplay = false, startPositionMs = 0)
+            return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+                beginLibraryResetPublication(committed)
+                if (prepared == null) stopLocked() else publishWindow(player, committed, prepared)
+            }
         }
         val nearest = (current?.position ?: lastPosition ?: 0L).coerceIn(0, (updated.size - 1).coerceAtLeast(0))
-        rebuildDetachedSurvivors(updated, nearest)
-        queueRepository.setCursor(lastPosition ?: 0L)
-        refresh(lastPosition)
+        val window = prepareDetachedWindow(updated, nearest)
+        queueRepository.setCursor(window.firstOrNull()?.position ?: 0L)
+        return QueueResetPreparation(updated, playbackDispatcher) { committed ->
+            beginLibraryResetPublication(committed)
+            publishDetachedSurvivors(player, committed, nearest, window)
+            refresh(lastPosition)
+        }
+    }
+
+    private fun beginLibraryResetPublication(updated: QueueSnapshot) {
+        lastEdit = null
+        windowJob?.cancel()
+        endedHandled = false
+        shuffleEnabled = updated.shuffled
+        layoutVersion++
+        snapshot = updated
     }
 
     private fun trimToCurrent(player: PlayerHandle) {
@@ -1554,6 +1606,16 @@ class PlaybackController(
             loadWindow(position, autoplay = player.playWhenReady, startPositionMs = player.currentPositionMs)
             return
         }
+        publishRebuiltWindow(player, snapshot, ordered, index, position)
+    }
+
+    private fun publishRebuiltWindow(
+        player: PlayerHandle,
+        snapshot: QueueSnapshot,
+        ordered: List<QueueWindowItem>,
+        index: Int,
+        position: Long,
+    ) {
         // A track downloaded while it was streaming still holds a stream URL; fix the current item's
         // source in place (without resetting the window) so an offline switch can play the local file.
         val current = ordered[index]
@@ -1594,11 +1656,27 @@ class PlaybackController(
         position: Long,
     ) {
         val player = player ?: return
+        val window = prepareDetachedWindow(snapshot, position)
+        publishDetachedSurvivors(player, snapshot, position, window)
+    }
+
+    private suspend fun prepareDetachedWindow(
+        snapshot: QueueSnapshot,
+        position: Long,
+    ): List<QueueWindowItem> {
         val nearest = position.coerceIn(0, (snapshot.size - 1).coerceAtLeast(0))
-        val window =
-            queueRepository
-                .range(snapshot, nearest, (nearest + QUEUE_WINDOW_RADIUS).coerceAtMost(snapshot.size - 1))
-                .filter { !offline || downloads.localUri(it.item.song.id) != null }
+        return queueRepository
+            .range(snapshot, nearest, (nearest + QUEUE_WINDOW_RADIUS).coerceAtMost(snapshot.size - 1))
+            .filter { !offline || downloads.localUri(it.item.song.id) != null }
+    }
+
+    private fun publishDetachedSurvivors(
+        player: PlayerHandle,
+        snapshot: QueueSnapshot,
+        position: Long,
+        window: List<QueueWindowItem>,
+    ) {
+        val nearest = position.coerceIn(0, (snapshot.size - 1).coerceAtLeast(0))
         trimToCurrent(player)
         updating = true
         try {

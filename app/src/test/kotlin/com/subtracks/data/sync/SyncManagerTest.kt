@@ -20,6 +20,7 @@ import com.subtracks.data.prefs.fakeUserPreferences
 import com.subtracks.data.repo.DownloadRepository
 import com.subtracks.data.repo.NetworkServerActionSink
 import com.subtracks.data.repo.QueueRepository
+import com.subtracks.data.repo.QueueResetPreparation
 import com.subtracks.data.repo.SourceRepository
 import com.subtracks.data.repo.replace
 import com.subtracks.data.repo.setShuffle
@@ -288,7 +289,10 @@ class SyncManagerTest {
             val before = queueRepository.snapshot()
             val cacheVersion = queueRepository.libraryCacheVersion()
             val resetAttempts = AtomicInteger()
-            queueRepository.setResetListener { resetAttempts.incrementAndGet() }
+            queueRepository.setResetListener { reset ->
+                resetAttempts.incrementAndGet()
+                QueueResetPreparation(reset.snapshot)
+            }
             failPendingOriginClear()
 
             manager.requestSync()
@@ -334,12 +338,15 @@ class SyncManagerTest {
             server.dispatcher = healthyDispatcher()
             sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
             queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val before = queueRepository.snapshot()
+            val cacheVersion = queueRepository.libraryCacheVersion()
             val resetAttempted = CountDownLatch(1)
             val resetAttempts = AtomicInteger()
-            queueRepository.setResetListener {
+            queueRepository.setResetListener { reset ->
                 queueRepository.setPosition(42_000L)
                 resetAttempted.countDown()
                 if (resetAttempts.incrementAndGet() == 1) throw IllegalStateException("reconciliation failed")
+                QueueResetPreparation(reset.snapshot)
             }
 
             manager.requestSync()
@@ -356,11 +363,72 @@ class SyncManagerTest {
                     .entry.rangeStart,
             )
             assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+            assertEquals(
+                listOf(before.version, before.resetVersion, cacheVersion, 0L),
+                listOf(
+                    queueRepository.contentVersion(),
+                    queueRepository.snapshot().resetVersion,
+                    queueRepository.libraryCacheVersion(),
+                    queueRepository.cursorPositionMs(),
+                ),
+            )
 
             manager.requestSync()
             withTimeout(TEST_TIMEOUT_MS) { manager.status.drop(1).first { it is SyncStatus.Success } }
 
             assertEquals(2, resetAttempts.get())
+            assertNull(
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isEmpty())
+        }
+
+    @Test
+    fun aQueueWriteFailureAfterPendingClearRollsBackWithoutPublishing() =
+        runBlocking {
+            server.dispatcher = healthyDispatcher()
+            sourceRepository.addSource("Local", server.url("/").toString(), "u", "p", useTokenAuth = false)
+            queueRepository.replace(listOf(queueRepository.albumEntry(1, "al1").copy(rangeStart = 0, rangeEnd = 0)))
+            val before = queueRepository.snapshot()
+            val cacheVersion = queueRepository.libraryCacheVersion()
+            val resetAttempts = AtomicInteger()
+            queueRepository.setResetListener { reset ->
+                resetAttempts.incrementAndGet()
+                QueueResetPreparation(reset.snapshot)
+            }
+            failQueueResetInsert()
+
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.first { it is SyncStatus.Failed } }
+
+            assertEquals(
+                0L,
+                queueRepository
+                    .snapshot()
+                    .entries
+                    .single()
+                    .entry.rangeStart,
+            )
+            assertTrue(db.queueDao().pendingSyncOrigins(1).isNotEmpty())
+            assertEquals(
+                listOf(0L, before.version, before.resetVersion, cacheVersion),
+                listOf(
+                    resetAttempts.get().toLong(),
+                    queueRepository.contentVersion(),
+                    queueRepository.snapshot().resetVersion,
+                    queueRepository.libraryCacheVersion(),
+                ),
+            )
+
+            allowQueueResetInsert()
+            manager.requestSync()
+            withTimeout(TEST_TIMEOUT_MS) { manager.status.drop(1).first { it is SyncStatus.Success } }
+
+            assertEquals(1, resetAttempts.get())
             assertNull(
                 queueRepository
                     .snapshot()
@@ -524,6 +592,21 @@ class SyncManagerTest {
     private suspend fun allowPendingOriginClear() {
         db.useWriterConnection { connection ->
             connection.usePrepared("DROP TRIGGER fail_pending_origin_clear") { it.step() }
+        }
+    }
+
+    private suspend fun failQueueResetInsert() {
+        db.useWriterConnection { connection ->
+            connection.usePrepared(
+                "CREATE TRIGGER fail_queue_reset_insert BEFORE INSERT ON queue_entries " +
+                    "BEGIN SELECT RAISE(FAIL, 'queue reset insert failed'); END",
+            ) { it.step() }
+        }
+    }
+
+    private suspend fun allowQueueResetInsert() {
+        db.useWriterConnection { connection ->
+            connection.usePrepared("DROP TRIGGER fail_queue_reset_insert") { it.step() }
         }
     }
 
