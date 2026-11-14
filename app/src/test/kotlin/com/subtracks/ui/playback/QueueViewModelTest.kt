@@ -814,7 +814,6 @@ class QueueViewModelTest {
 
         assertTrue(awaitCompletion(removalCompletion))
         assertFalse(awaitCompletion(moveCompletion))
-        println("DEBUG reverse rows=${rowsSnapshot().map { it.song.song.id to it.position }} queue=${resolvedQueueIds()}")
         assertEquals(listOf("s2", "s3", "s4"), resolvedQueueIds())
         assertEquals(listOf("s2", "s3", "s4"), rowsSnapshot().map { it.song.song.id })
         assertEquals(listOf(0L, 1L, 2L), rowsSnapshot().map { it.position })
