@@ -17,8 +17,12 @@ fun awaitUntil(
     predicate: () -> Boolean,
 ) {
     val deadline = System.nanoTime() + TEST_TIMEOUT_MS * 1_000_000
-    while (!predicate() && System.nanoTime() < deadline) Thread.sleep(10)
-    if (predicate()) return
+    var met = predicate()
+    while (!met && System.nanoTime() < deadline) {
+        Thread.sleep(10)
+        met = predicate()
+    }
+    if (met) return
     // A wall-clock wait that expires means something stalled rather than ran slow: the suite
     // finishes in milliseconds per test. Print every thread's stack in the failure message so the
     // stall is diagnosable from the CI log, which shows exception messages but not the test XML.
