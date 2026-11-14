@@ -553,6 +553,21 @@ class QueueViewModelTest {
     }
 
     @Test
+    fun reconciliationRemovesADeletedHeadRowFromSparseOfflineRows() {
+        openSparseOfflineQueue()
+        val point = runBlocking { queues.captureResetPoint() }
+        runBlocking {
+            db.libraryDao().deleteSongs(1, listOf("s1"))
+            queues.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Album, 1, "al1")), point)
+        }
+
+        viewModel.reconcile()
+
+        await { rowsSnapshot().map { it.song.song.id } == listOf("s801", "s901") }
+        assertEquals(listOf(800L, 900L), rowsSnapshot().map { it.position })
+    }
+
+    @Test
     fun staleRowMoveIsRejectedAfterControllerReconciliation() {
         runBlocking { seedSongs(3) }
         controller.playAlbum(1, "al1", 0)
@@ -765,6 +780,43 @@ class QueueViewModelTest {
         assertFalse(awaitCompletion(removalCompletion))
         assertEquals(listOf("s2", "s3", "s1"), resolvedQueueIds())
         assertEquals(listOf("s2", "s3", "s1"), rowsSnapshot().map { it.song.song.id })
+        assertEquals(listOf(0L, 1L, 2L), rowsSnapshot().map { it.position })
+    }
+
+    @Test
+    fun moveQueuedBehindRemovalRejectsItsInvalidatedPositions() {
+        runBlocking { seedSongs(4) }
+        controller.playAlbum(1, "al1", 0)
+        await { controller.state.value.position == 0L }
+        viewModel.open()
+        await { viewModel.ready }
+        val before = rowsSnapshot()
+        val paused = pauseQueueMutation()
+        val removalCompletion = CompletableDeferred<Boolean>()
+        val moveCompletion = CompletableDeferred<Boolean>()
+        try {
+            runOnMainSuspending {
+                viewModel.remove(before[0].position, removalCompletion::complete)
+                yield()
+                assertTrue(
+                    viewModel.move(
+                        before[1].position,
+                        before[2].position,
+                        before[1].resetVersion,
+                        moveCompletion::complete,
+                    ),
+                )
+                yield()
+            }
+        } finally {
+            resumeQueueMutation(paused)
+        }
+
+        assertTrue(awaitCompletion(removalCompletion))
+        assertFalse(awaitCompletion(moveCompletion))
+        println("DEBUG reverse rows=${rowsSnapshot().map { it.song.song.id to it.position }} queue=${resolvedQueueIds()}")
+        assertEquals(listOf("s2", "s3", "s4"), resolvedQueueIds())
+        assertEquals(listOf("s2", "s3", "s4"), rowsSnapshot().map { it.song.song.id })
         assertEquals(listOf(0L, 1L, 2L), rowsSnapshot().map { it.position })
     }
 

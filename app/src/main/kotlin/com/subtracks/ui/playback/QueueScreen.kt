@@ -195,7 +195,7 @@ class QueueViewModel(
             }
         } else {
             val usedIds = updated.mapTo(HashSet()) { it.id }
-            val unresolvedTail = rows.filter { it.id !in usedIds }
+            val unresolvedTail = rows.filter { it.position > end && it.id !in usedIds }
             rows.clear()
             rows.addAll(updated)
             rows.addAll(unresolvedTail)
@@ -302,12 +302,13 @@ class QueueViewModel(
         val resetVersion = rows.firstOrNull { it.position == from }?.resetVersion ?: return rejectMove(edit, onComplete)
         val targetResetVersion = targetResetVersion ?: rows.firstOrNull { it.position == to }?.resetVersion ?: resetVersion
         if (resetVersion != targetResetVersion) return rejectMove(edit, onComplete)
+        val expectedContentVersion = queueRepository.contentVersion()
         reorderPending = true
         viewModelScope.launch {
             try {
                 val applied =
                     mutex.withLock {
-                        val applied = playbackController.move(from, to, resetVersion)
+                        val applied = playbackController.move(from, to, resetVersion, expectedContentVersion)
                         if (!applied) rollbackReorder(edit)
                         reconcileLocked()
                         applied

@@ -586,6 +586,7 @@ class PlaybackController(
         from: Long,
         to: Long,
         resetVersion: Long? = null,
+        expectedContentVersion: Long? = null,
     ): Boolean {
         if (from == to) return false
         val requestedVersion = resetVersion ?: snapshot?.resetVersion ?: return false
@@ -593,6 +594,7 @@ class PlaybackController(
         queueRepository.withMutationLock {
             val snapshot = this@PlaybackController.snapshot ?: return@withMutationLock
             if (snapshot.resetVersion != requestedVersion) return@withMutationLock
+            if (expectedContentVersion != null && snapshot.version != expectedContentVersion) return@withMutationLock
             if (from !in 0 until snapshot.size || to !in 0 until snapshot.size) return@withMutationLock
             val player = player ?: return@withMutationLock
             val current = currentQueuePosition() ?: return@withMutationLock
