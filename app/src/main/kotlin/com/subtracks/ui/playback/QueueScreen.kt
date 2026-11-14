@@ -120,6 +120,7 @@ class QueueViewModel(
         private set
 
     private var reorderPending = false
+    private var olderLoadPending = false
     private var dragRollback: ReorderRollback? = null
 
     private var nextId = 0L
@@ -189,7 +190,7 @@ class QueueViewModel(
         val scanned = loaded.map { rowFor(it, reused, snapshot.resetVersion) }
         val firstRow = rows.minByOrNull { it.position }
         val windowStart =
-            if (firstRow == null) {
+            if (firstRow == null || olderLoadPending) {
                 start
             } else {
                 scanned.firstOrNull { it.id == firstRow.id && it.position < firstPosition }?.position ?: firstPosition
@@ -214,21 +215,26 @@ class QueueViewModel(
     fun loadOlder() {
         val top = rows.minOfOrNull { it.position } ?: return
         if (top <= 0L) return
+        olderLoadPending = true
         viewModelScope.launch {
-            mutex.withLock {
-                val first = rows.minOfOrNull { it.position } ?: return@withLock
-                if (first <= 0L) return@withLock
-                val snapshot = queueRepository.snapshot()
-                val collected = mutableListOf<QueueWindowItem>()
-                var end = first - 1
-                while (end >= 0L && collected.size < QUEUE_CHUNK) {
-                    val start = (end - QUEUE_CHUNK + 1).coerceAtLeast(0)
-                    collected.addAll(0, queueRepository.range(snapshot, start, end).filter(::visible))
-                    end = start - 1
+            try {
+                mutex.withLock {
+                    val first = rows.minOfOrNull { it.position } ?: return@withLock
+                    if (first <= 0L) return@withLock
+                    val snapshot = queueRepository.snapshot()
+                    val collected = mutableListOf<QueueWindowItem>()
+                    var end = first - 1
+                    while (end >= 0L && collected.size < QUEUE_CHUNK) {
+                        val start = (end - QUEUE_CHUNK + 1).coerceAtLeast(0)
+                        collected.addAll(0, queueRepository.range(snapshot, start, end).filter(::visible))
+                        end = start - 1
+                    }
+                    if (collected.isEmpty()) return@withLock
+                    rows.addAll(0, collected.map { newRow(it, snapshot.resetVersion) })
+                    while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(rows.size - 1)
                 }
-                if (collected.isEmpty()) return@withLock
-                rows.addAll(0, collected.map { newRow(it, snapshot.resetVersion) })
-                while (rows.size > QUEUE_WINDOW_ROWS) rows.removeAt(rows.size - 1)
+            } finally {
+                olderLoadPending = false
             }
         }
     }
