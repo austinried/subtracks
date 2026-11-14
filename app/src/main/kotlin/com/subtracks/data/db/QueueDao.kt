@@ -23,10 +23,12 @@ private const val ALBUM_SONGS_SQL = ALBUM_SONGS_SELECT + ALBUM_SONGS_ORDER
 private const val ARTIST_SONG_IDS =
     "(SELECT songId FROM ($CREDITED_SONG_ROWS) WHERE artistId = :artistId)"
 
-private const val ARTIST_SONGS_SELECT =
-    "SELECT songs.*, albums.coverArt AS coverArt FROM songs " +
+private const val ARTIST_SONGS_FROM =
+    "FROM songs " +
         "LEFT JOIN albums ON albums.sourceId = songs.sourceId AND albums.id = songs.albumId " +
         "WHERE songs.sourceId = :sourceId AND songs.id IN $ARTIST_SONG_IDS"
+
+private const val ARTIST_SONGS_SELECT = "SELECT songs.*, albums.coverArt AS coverArt $ARTIST_SONGS_FROM"
 
 private const val ARTIST_SONGS_ORDER =
     " ORDER BY albums.id IS NULL, albums.year DESC, albums.sortName COLLATE NOCASE, albums.id, songs.disc, songs.track, songs.id"
@@ -181,6 +183,17 @@ interface QueueDao {
         limit: Int,
     ): List<AlbumSongItem>
 
+    @Query(
+        "SELECT songRank FROM (" +
+            "SELECT songs.id AS songId, ROW_NUMBER() OVER ($ARTIST_SONGS_ORDER) - 1 AS songRank $ARTIST_SONGS_FROM" +
+            ") WHERE songId = :songId ORDER BY songRank LIMIT 1",
+    )
+    suspend fun artistRank(
+        sourceId: Long,
+        artistId: String,
+        songId: String,
+    ): Long?
+
     @Query("$SONG_SQL LIMIT :limit OFFSET :offset")
     suspend fun song(
         sourceId: Long,
@@ -309,6 +322,20 @@ interface QueueDao {
     ): List<AlbumSongItem>
 
     @Query(
+        "SELECT songRank FROM (" +
+            "SELECT songs.id AS songId, " +
+            "ROW_NUMBER() OVER (ORDER BY songs.sortName COLLATE NOCASE, songs.id) - 1 AS songRank " +
+            "FROM song_genres JOIN songs ON songs.sourceId = song_genres.sourceId AND songs.id = song_genres.songId " +
+            "WHERE song_genres.sourceId = :sourceId AND song_genres.genre = :genre" +
+            ") WHERE songId = :songId ORDER BY songRank LIMIT 1",
+    )
+    suspend fun genreRank(
+        sourceId: Long,
+        genre: String,
+        songId: String,
+    ): Long?
+
+    @Query(
         "SELECT COUNT(*) FROM song_downloads d " +
             "JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
             "WHERE d.sourceId = :sourceId AND d.status = 'Completed'",
@@ -342,4 +369,29 @@ interface QueueDao {
         offset: Long,
         limit: Int,
     ): List<AlbumSongItem>
+
+    @Query(
+        "SELECT songRank FROM (" +
+            "SELECT songs.id AS songId, " +
+            "ROW_NUMBER() OVER (ORDER BY songs.starred DESC, songs.sortName COLLATE NOCASE, songs.id) - 1 AS songRank " +
+            "FROM songs WHERE songs.sourceId = :sourceId AND songs.starred IS NOT NULL" +
+            ") WHERE songId = :songId ORDER BY songRank LIMIT 1",
+    )
+    suspend fun starredRank(
+        sourceId: Long,
+        songId: String,
+    ): Long?
+
+    @Query(
+        "SELECT songRank FROM (" +
+            "SELECT songs.id AS songId, " +
+            "ROW_NUMBER() OVER (ORDER BY d.downloadedAt DESC, songs.sortName COLLATE NOCASE, songs.id) - 1 AS songRank " +
+            "FROM song_downloads d JOIN songs ON songs.sourceId = d.sourceId AND songs.id = d.songId " +
+            "WHERE d.sourceId = :sourceId AND d.status = 'Completed'" +
+            ") WHERE songId = :songId ORDER BY songRank LIMIT 1",
+    )
+    suspend fun downloadedRank(
+        sourceId: Long,
+        songId: String,
+    ): Long?
 }

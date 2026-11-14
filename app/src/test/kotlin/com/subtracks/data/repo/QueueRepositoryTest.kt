@@ -15,6 +15,7 @@ import com.subtracks.data.model.QueueOrigin
 import com.subtracks.data.model.Song
 import com.subtracks.data.model.SongDownload
 import com.subtracks.data.model.Source
+import com.subtracks.data.model.UpNextEntry
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -439,6 +440,55 @@ class QueueRepositoryTest {
 
             repository.invalidateLibraryCache()
             assertEquals(4, repository.snapshot().size)
+        }
+
+    @Test
+    fun aLegacyContextFragmentDoesNotRemapIntoTheFollowingOrigin() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            db.queueDao().insert(
+                listOf(
+                    repository.playlistEntry(1, "p1").copy(position = 0, rangeStart = 0, rangeEnd = 0),
+                    repository.songEntry(1, "s4").copy(position = 1),
+                ),
+            )
+            repository.setCursor(0)
+            val point = repository.captureResetPoint()
+            setPlaylist("p1", "s3", "s1", "s2")
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            assertNull(repository.remapPosition(updated, point.current!!))
+            assertEquals(0L, repository.cursor())
+            assertEquals("s3", repository.itemAt(updated, 0)?.song?.id)
+            assertEquals("s4", repository.itemAt(updated, 1)?.song?.id)
+        }
+
+    @Test
+    fun aLegacyUpNextFragmentDoesNotRemapIntoTheFollowingOrigin() =
+        runTest {
+            seedLibrary()
+            setPlaylist("p1", "s1", "s2")
+            repository.replace(listOf(repository.albumEntry(1, "al1")))
+            db.queueDao().insertUpNext(
+                listOf(
+                    UpNextEntry.from(repository.playlistEntry(1, "p1").copy(rangeStart = 0, rangeEnd = 0)).copy(position = 0),
+                    UpNextEntry.from(repository.songEntry(1, "s4")).copy(position = 1),
+                ),
+            )
+            repository.setCursor(1)
+            val point = repository.captureResetPoint()
+            setPlaylist("p1", "s3", "s1", "s2")
+
+            repository.resetChangedOrigins(setOf(QueueOrigin(QueueKind.Playlist, 1, "p1")), point)
+
+            val updated = repository.snapshot()
+            assertNull(repository.remapPosition(updated, point.current!!))
+            assertEquals(1L, repository.cursor())
+            assertEquals("s3", repository.itemAt(updated, 1)?.song?.id)
+            assertEquals("s4", repository.itemAt(updated, 2)?.song?.id)
         }
 
     @Test
@@ -1450,6 +1500,18 @@ class QueueRepositoryTest {
         }
 
     @Test
+    fun artistRankLookupDoesNotResolveSongRows() = runTest { assertRankLookupDoesNotResolveSongRows(QueueKind.Artist) }
+
+    @Test
+    fun genreRankLookupDoesNotResolveSongRows() = runTest { assertRankLookupDoesNotResolveSongRows(QueueKind.Genre) }
+
+    @Test
+    fun downloadedRankLookupDoesNotResolveSongRows() = runTest { assertRankLookupDoesNotResolveSongRows(QueueKind.Downloaded) }
+
+    @Test
+    fun starredRankLookupDoesNotResolveSongRows() = runTest { assertRankLookupDoesNotResolveSongRows(QueueKind.Starred) }
+
+    @Test
     fun upNextCombinedIndexOfCountsFromTheAnchorIntoTheBlock() =
         runTest {
             seedLibrary()
@@ -1614,6 +1676,45 @@ class QueueRepositoryTest {
             repository.setRepeat(0)
             assertEquals(QueueModes(shuffle = false, repeat = 0), repository.modes())
         }
+
+    private suspend fun assertRankLookupDoesNotResolveSongRows(kind: QueueKind) {
+        db.sourcesDao().upsertSource(
+            Source(id = 1, name = "test", address = "http://localhost", isActive = true, createdAt = 0),
+        )
+        db.libraryDao().upsertAlbums(listOf(album("al1", "First Album", "Artist One")))
+        db.libraryDao().upsertSongs(
+            (1..62).map { index ->
+                val suffix = index.toString().padStart(2, '0')
+                song("s$suffix", "al1", index.toLong(), title = "Song $suffix", starred = (100 - index).toLong())
+            },
+        )
+        (1..62).forEach { index ->
+            val suffix = index.toString().padStart(2, '0')
+            insertGenre("s$suffix", "Rock")
+            db.downloadDao().upsert(
+                SongDownload(1, "s$suffix", DownloadStatus.Completed, downloadedAt = (100 - index).toLong()),
+            )
+        }
+        val entry =
+            when (kind) {
+                QueueKind.Artist -> repository.artistEntry(1, "ar1")
+                QueueKind.Genre -> repository.genreEntry(1, "Rock")
+                QueueKind.Downloaded -> repository.downloadedEntry(1)
+                QueueKind.Starred -> repository.starredEntry(1)
+                else -> error("Unsupported kind $kind")
+            }
+        val snapshot = repository.snapshotAfter(listOf(entry))
+        val resolvedBefore = repository.resolvedRowCount
+        val seeksBefore = repository.offsetSeeks
+        val origin = entry.origin
+
+        assertEquals(61L, repository.combinedContextIndexOf(snapshot, "s62"))
+        assertNull(repository.combinedContextIndexOf(snapshot, "missing"))
+        assertEquals(61L, repository.remapPosition(snapshot, QueueResetItem(origin, "s62", 0, upNext = false)))
+        assertNull(repository.remapPosition(snapshot, QueueResetItem(origin, "missing", 0, upNext = false)))
+        assertEquals(resolvedBefore, repository.resolvedRowCount)
+        assertEquals(seeksBefore, repository.offsetSeeks)
+    }
 
     private fun playlist(
         id: String,

@@ -356,6 +356,12 @@ private val queueKindResolvers =
                     offset: Long,
                     limit: Int,
                 ) = dao.artistSongs(entry.sourceId, entry.refId, offset, limit)
+
+                override suspend fun rank(
+                    dao: com.subtracks.data.db.QueueDao,
+                    entry: QueueEntry,
+                    songId: String,
+                ) = dao.artistRank(entry.sourceId, entry.refId, songId)
             },
         QueueKind.Genre to
             object : QueueKindResolver {
@@ -370,6 +376,12 @@ private val queueKindResolvers =
                     offset: Long,
                     limit: Int,
                 ) = dao.genreSongs(entry.sourceId, entry.refId, offset, limit)
+
+                override suspend fun rank(
+                    dao: com.subtracks.data.db.QueueDao,
+                    entry: QueueEntry,
+                    songId: String,
+                ) = dao.genreRank(entry.sourceId, entry.refId, songId)
             },
         QueueKind.Downloaded to
             object : QueueKindResolver {
@@ -384,6 +396,12 @@ private val queueKindResolvers =
                     offset: Long,
                     limit: Int,
                 ) = dao.downloadedSongs(entry.sourceId, offset, limit)
+
+                override suspend fun rank(
+                    dao: com.subtracks.data.db.QueueDao,
+                    entry: QueueEntry,
+                    songId: String,
+                ) = dao.downloadedRank(entry.sourceId, songId)
             },
         QueueKind.Starred to
             object : QueueKindResolver {
@@ -398,6 +416,12 @@ private val queueKindResolvers =
                     offset: Long,
                     limit: Int,
                 ) = dao.starredSongs(entry.sourceId, offset, limit)
+
+                override suspend fun rank(
+                    dao: com.subtracks.data.db.QueueDao,
+                    entry: QueueEntry,
+                    songId: String,
+                ) = dao.starredRank(entry.sourceId, songId)
             },
     )
 
@@ -936,14 +960,13 @@ class QueueRepository(
                     val position = dao.playlistPositionForOccurrence(entry.sourceId, entry.refId, item.songId, item.occurrence)
                     position?.let { dao.playlistRankAtPosition(entry.sourceId, entry.refId, it) }
                 } else {
-                    resolverFor(entry.kind).rank(dao, entry, item.songId) ?: fallbackRank(entry, resolved.length, item.songId)
+                    resolverFor(entry.kind).rank(dao, entry, item.songId)
                 }
             if (rank != null) {
                 val insideEntry = rank >= entry.offset && rank < entry.offset + resolved.length
                 val flat =
                     when {
                         insideEntry -> group.starts[index] + rank - entry.offset
-                        entry.originEntryId == null -> rank
                         else -> continue
                     }
                 if (item.upNext) return snapshot.anchorPlay + 1 + flat
@@ -1261,7 +1284,11 @@ class QueueRepository(
         for (resolved in entries) {
             val entry = resolved.entry
             val rank = resolverFor(entry.kind).rank(dao, entry, songId)
-            if (rank != null && rank >= entry.offset && rank < entry.offset + resolved.length) {
+            if (rank == null) {
+                start += resolved.length
+                continue
+            }
+            if (rank >= entry.offset && rank < entry.offset + resolved.length) {
                 return start + rank - entry.offset
             }
             val fallback = fallbackRank(entry, resolved.length, songId)
