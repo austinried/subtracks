@@ -128,6 +128,28 @@ class LocalNetworkAccessRobolectricTest {
             assertTrue(checker().requiresPermission("http://music.local"))
         }
 
+    @Test
+    fun skipsAnIpv6AddressThatIsUnreachableThroughTheVpn() =
+        runTest {
+            activateUnreachableIpv6Vpn()
+            assertFalse(checker().requiresPermission("http://[fd00::5]"))
+        }
+
+    @Test
+    fun skipsDotLocalWhenIpv6IsUnreachableThroughTheVpn() =
+        runTest {
+            activateUnreachableIpv6Vpn()
+            assertFalse(checker().requiresPermission("http://music.local"))
+        }
+
+    private fun activateUnreachableIpv6Vpn() {
+        addWifiNetwork("fd00::2", 64)
+        activateVpn(
+            route("0.0.0.0", 0),
+            route("::", 0, RouteInfo.RTN_UNREACHABLE),
+        )
+    }
+
     private fun activateWifi() = activate(ConnectivityManager.TYPE_WIFI, NetworkCapabilities.TRANSPORT_WIFI)
 
     private fun activateVpn(vararg routes: RouteInfo) =
@@ -150,10 +172,13 @@ class LocalNetworkAccessRobolectricTest {
         configure(manager().activeNetwork!!, transport, address, prefix, routes)
     }
 
-    private fun addWifiNetwork() {
+    private fun addWifiNetwork(
+        address: String = "10.0.0.2",
+        prefix: Int = 24,
+    ) {
         val network = ShadowNetwork.newInstance(7)
         shadowOf(manager()).addNetwork(network, info(ConnectivityManager.TYPE_WIFI))
-        configure(network, NetworkCapabilities.TRANSPORT_WIFI, "10.0.0.2", 24)
+        configure(network, NetworkCapabilities.TRANSPORT_WIFI, address, prefix)
     }
 
     private fun configure(

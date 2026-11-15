@@ -37,7 +37,7 @@ class LocalNetworkAccess(
                 vpnRoutes.mayFallThroughToLan(linkAddresses)
             } else {
                 resolved.any { candidate ->
-                    linkAddresses.any { it.contains(candidate) } && !vpnRoutes.routesThroughVpn(candidate)
+                    linkAddresses.any { it.contains(candidate) } && vpnRoutes.fallsThroughToLan(candidate)
                 }
             }
         }
@@ -65,17 +65,17 @@ internal fun isLocalHostname(host: String): Boolean {
 private fun LinkAddress.contains(address: InetAddress): Boolean = IpPrefix(this.address, prefixLength).contains(address)
 
 @RequiresApi(37)
-private fun List<RouteInfo>.routesThroughVpn(address: InetAddress): Boolean =
+private fun List<RouteInfo>.fallsThroughToLan(address: InetAddress): Boolean =
     filter { it.matches(address) }
         .maxByOrNull { it.destination.prefixLength }
-        ?.type == RouteInfo.RTN_UNICAST
+        ?.let { it.type == RouteInfo.RTN_THROW } ?: true
 
 @RequiresApi(37)
 private fun List<RouteInfo>.mayFallThroughToLan(linkAddresses: List<LinkAddress>): Boolean =
     any { route ->
-        route.type != RouteInfo.RTN_UNICAST &&
+        route.type == RouteInfo.RTN_THROW &&
             linkAddresses.any { link -> route.matches(link.address) || link.contains(route.destination.address) }
-    } || linkAddresses.any { !routesThroughVpn(it.address) }
+    } || linkAddresses.any { fallsThroughToLan(it.address) }
 
 private val NetworkCapabilities.isPhysicalLan: Boolean
     get() =
