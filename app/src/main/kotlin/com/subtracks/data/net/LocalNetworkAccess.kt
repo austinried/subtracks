@@ -9,7 +9,6 @@ import android.net.NetworkCapabilities
 import android.net.RouteInfo
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
@@ -43,8 +42,7 @@ class LocalNetworkAccess(
         }
     }
 
-    private fun granted(): Boolean =
-        ContextCompat.checkSelfPermission(context, LOCAL_NETWORK_PERMISSION) == PackageManager.PERMISSION_GRANTED
+    private fun granted(): Boolean = context.checkSelfPermission(LOCAL_NETWORK_PERMISSION) == PackageManager.PERMISSION_GRANTED
 
     private fun resolve(host: String): List<InetAddress> = runCatching { InetAddress.getAllByName(host).toList() }.getOrDefault(emptyList())
 
