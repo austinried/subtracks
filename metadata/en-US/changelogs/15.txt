@@ -1,0 +1,7 @@
+- Song tap behavior: disable shuffle (new default), keep current shuffle mode, or play and shuffle
+- Library updates preserve the current song and Up Next where possible
+- Large shuffled queues use less memory
+- Android 17 local-network support for testing or saving LAN servers
+- Updated translations: Chinese Simplified (thanks BonexP via Weblate!)
+
+Release notes: https://github.com/austinried/subtracks/releases/tag/v3.2.0
