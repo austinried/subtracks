@@ -49,4 +49,7 @@
     <string name="resources_album_name">Albums</string>
     <string name="resources_artist_name">Artistes</string>
     <string name="resources_playlist_name">Playlists</string>
+    <string name="app_name">subtracks</string>
+    <string name="download_channel_description">Progression pendant le téléchargement</string>
+    <string name="sync_notification_channel">Synchronisation</string>
 </resources>
