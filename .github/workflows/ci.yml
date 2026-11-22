@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -11,6 +12,10 @@ concurrency:
 
 jobs:
   ci:
+    # GitHub approves pull_request runs by the head repository, not the author, so a bot's
+    # branch in this repository runs CI like a maintainer's branch would. Skip bot-authored
+    # pull requests and dispatch the workflow on the branch when one needs CI.
+    if: github.event_name != 'pull_request' || github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     permissions:
