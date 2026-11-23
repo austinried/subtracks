@@ -39,6 +39,7 @@ import com.subtracks.data.model.artistImageKey
 import com.subtracks.data.model.coverArtKey
 import com.subtracks.data.prefs.fakeUserPreferences
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -583,6 +584,52 @@ class DownloadRepositoryTest {
             runBlocking { repository.reconcile() }
 
             assertEquals(DownloadStatus.Completed, row(1, "s2")?.status)
+        }
+
+    @Test
+    fun aFailedBookkeepingWriteDoesNotStopThePollingLoop() =
+        runTest {
+            useFailingArtistArtDatabase()
+            seedLibrary()
+            repository.start()
+            runBlocking {
+                repository.download(1, "s1")
+                repository.download(1, "s2")
+            }
+            val (first, second) = engine.requests.map { it.first }
+            engine.complete(first, total = 100)
+            writeFile(1, "s1", "audio")
+
+            await { row(1, "s1")?.status == DownloadStatus.Completed }
+
+            engine.complete(second, total = 100)
+            writeFile(1, "s2", "audio")
+
+            await { row(1, "s2")?.status == DownloadStatus.Completed }
+        }
+
+    @Test
+    fun cancellingOnOfflineContainsAFailedDelete() =
+        runTest {
+            val failures = CopyOnWriteArrayList<Throwable>()
+            val handled =
+                CoroutineScope(
+                    SupervisorJob() + Dispatchers.Default +
+                        CoroutineExceptionHandler { _, failure -> failures += failure },
+                )
+            useFailingDatabase("DELETE FROM song_downloads", handled)
+            seedLibrary()
+            runBlocking {
+                db.downloadDao().upsert(SongDownload(1, "s1", DownloadStatus.Running, engineId = 42, bytes = 1, total = 10))
+            }
+            engine.running(42, bytes = 1, total = 10)
+            repository.start()
+
+            runBlocking { sources.setOfflineMode(true) }
+            awaitUntil("waiting for the cancel") { engine.cancelCalls > 0 }
+            Thread.sleep(200)
+
+            assertEquals(emptyList<Throwable>(), failures.toList())
         }
 
     @Test
@@ -1458,9 +1505,15 @@ class DownloadRepositoryTest {
         useRepository(scope, Dispatchers.Default)
     }
 
-    private fun useFailingArtistArtDatabase() {
+    private fun useFailingArtistArtDatabase(scope: CoroutineScope = this.scope) =
+        useFailingDatabase("SET downloadedCoverArts = desired.downloadedCoverArts FROM desired", scope)
+
+    private fun useFailingDatabase(
+        marker: String,
+        scope: CoroutineScope = this.scope,
+    ) {
         auxiliaryDbs += db
-        db = createTestDatabase(FailingStatementDriver(BundledSQLiteDriver(), "downloadedCoverArts = desired.downloadedCoverArts"))
+        db = createTestDatabase(FailingStatementDriver(BundledSQLiteDriver(), marker))
         sources = SourceRepository(db, OkHttpClient(), prefs, artwork, scope = scope)
         queues = QueueRepository(db)
         useRepository(scope, Dispatchers.Default)

@@ -287,11 +287,12 @@ interface LibraryDao {
     )
     suspend fun recomputeAlbumPlayData(sourceId: Long)
 
-    // Room cannot tell that a @RawQuery writes, so it runs every raw statement on a reader
-    // connection opened with query_only (SQLITE_READONLY); a transaction supplies the writer.
     @RawQuery
     suspend fun recomputeArtistAggregates(query: RoomRawQuery): Int
 
+    // Room cannot tell that a @RawQuery writes, so it runs every raw statement on a reader
+    // connection opened with query_only (SQLITE_READONLY); each wrapper's transaction supplies the
+    // writer connection.
     @Transaction
     suspend fun recomputeArtistAggregates(sourceId: Long) {
         recomputeArtistAggregates(rawQuery(ARTIST_AGGREGATES_SQL, mapOf("sourceId" to sourceId)))

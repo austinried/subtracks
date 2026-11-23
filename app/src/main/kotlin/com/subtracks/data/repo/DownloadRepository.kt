@@ -723,7 +723,8 @@ class DownloadRepository(
             } catch (e: CancellationException) {
                 throw e
             } catch (failure: Exception) {
-                // A row's bookkeeping must not take the process down with it; the next tick retries.
+                // Rows still in flight are retried on the next tick; a completed row's artist art is
+                // recomputed by that artist's next download or the next sync.
                 Log.w("download", "reconcile failed for ${row.songId}; retrying", failure)
             }
         }
