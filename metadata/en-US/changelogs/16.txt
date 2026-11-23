@@ -1,0 +1,3 @@
+- Fixed a crash whenever a download finished in 3.2.0
+
+Release notes: https://github.com/austinried/subtracks/releases/tag/v3.2.1
