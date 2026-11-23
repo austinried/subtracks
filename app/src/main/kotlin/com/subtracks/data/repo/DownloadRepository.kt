@@ -160,13 +160,28 @@ class DownloadRepository(
             }
         }
         scope.launch {
-            sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
+            while (true) {
+                try {
+                    sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (failure: Exception) {
+                    Log.w("download", "reconciliation failed; retrying", failure)
+                    delay(POLL_MS)
+                }
+            }
         }
         scope.launch {
             sourceRepository.offline.collect { offline ->
                 if (offline) {
                     Log.i("download", "offline: cancelling active downloads")
-                    cancelActive()
+                    try {
+                        cancelActive()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (failure: Exception) {
+                        Log.w("download", "cancel on offline failed", failure)
+                    }
                 }
             }
         }
@@ -702,8 +717,15 @@ class DownloadRepository(
 
     private suspend fun reconcileRows(rows: List<SongDownload>) {
         rows.forEach { row ->
-            val state = row.engineId?.let(engine::download)
-            if (state == null) recover(row) else apply(row, state)
+            try {
+                val state = row.engineId?.let(engine::download)
+                if (state == null) recover(row) else apply(row, state)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (failure: Exception) {
+                // A row's bookkeeping must not take the process down with it; the next tick retries.
+                Log.w("download", "reconcile failed for ${row.songId}; retrying", failure)
+            }
         }
     }
 
@@ -852,19 +874,26 @@ class DownloadRepository(
                 while (true) {
                     delay(POLL_MS)
                     val promoted =
-                        mutex.withLock {
-                            // Reconcile every source's in-flight rows, not just the active one: the
-                            // engine reports status without a source, and a source switched away
-                            // from keeps downloading, so its rows must not freeze as Running.
-                            val active = db.downloadDao().all().filter { it.status.isActive }
-                            val sourceId = sourceRepository.activeSourceIdOnce()
-                            // Tick only while something can move: a row the engine owns, or the
-                            // active source's waiting rows, which promote hands over. An inactive
-                            // source's waiting rows never move, and ticking for them would keep this
-                            // loop and its per-second queries alive for the life of the process.
-                            if (active.none { it.engineId != null || it.sourceId == sourceId }) return@launch
-                            reconcileRows(active)
-                            promote()
+                        try {
+                            mutex.withLock {
+                                // Reconcile every source's in-flight rows, not just the active one: the
+                                // engine reports status without a source, and a source switched away
+                                // from keeps downloading, so its rows must not freeze as Running.
+                                val active = db.downloadDao().all().filter { it.status.isActive }
+                                val sourceId = sourceRepository.activeSourceIdOnce()
+                                // Tick only while something can move: a row the engine owns, or the
+                                // active source's waiting rows, which promote hands over. An inactive
+                                // source's waiting rows never move, and ticking for them would keep this
+                                // loop and its per-second queries alive for the life of the process.
+                                if (active.none { it.engineId != null || it.sourceId == sourceId }) return@launch
+                                reconcileRows(active)
+                                promote()
+                            }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (failure: Exception) {
+                            Log.w("download", "reconcile tick failed; retrying", failure)
+                            continue
                         }
                     // Fetching artwork here would hold up the next tick, and with it the progress
                     // the queue is mirrored from.

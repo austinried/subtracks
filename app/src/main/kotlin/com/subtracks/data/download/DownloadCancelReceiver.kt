@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.subtracks.data.repo.DownloadRepository
+import com.subtracks.log.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +28,10 @@ class DownloadCancelReceiver :
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 repository.cancelActive()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Exception) {
+                Log.w("download", "cancel from the notification failed", failure)
             } finally {
                 pending.finish()
             }

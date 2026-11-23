@@ -6,6 +6,9 @@ import android.net.Uri
 import androidx.room3.immediateTransaction
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.SQLiteDriver
+import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -555,6 +558,31 @@ class DownloadRepositoryTest {
 
             runBlocking { repository.remove(1, "s1") }
             assertEquals(emptyList<String>(), db.libraryDao().artistOnce(1, "ar1")!!.downloadedCoverArts)
+        }
+
+    @Test
+    fun aFailedBookkeepingWriteLeavesTheDownloadAndTheQueueAlone() =
+        runTest {
+            useFailingArtistArtDatabase()
+            seedLibrary()
+            runBlocking {
+                repository.download(1, "s1")
+                repository.download(1, "s2")
+            }
+            val (first, second) = engine.requests.map { it.first }
+            engine.complete(first, total = 100)
+            writeFile(1, "s1", "audio")
+
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Completed, row(1, "s1")?.status)
+            assertEquals(emptyList<String>(), db.libraryDao().artistOnce(1, "ar1")!!.downloadedCoverArts)
+
+            engine.complete(second, total = 100)
+            writeFile(1, "s2", "audio")
+            runBlocking { repository.reconcile() }
+
+            assertEquals(DownloadStatus.Completed, row(1, "s2")?.status)
         }
 
     @Test
@@ -1430,6 +1458,14 @@ class DownloadRepositoryTest {
         useRepository(scope, Dispatchers.Default)
     }
 
+    private fun useFailingArtistArtDatabase() {
+        auxiliaryDbs += db
+        db = createTestDatabase(FailingStatementDriver(BundledSQLiteDriver(), "downloadedCoverArts = desired.downloadedCoverArts"))
+        sources = SourceRepository(db, OkHttpClient(), prefs, artwork, scope = scope)
+        queues = QueueRepository(db)
+        useRepository(scope, Dispatchers.Default)
+    }
+
     private fun useRepository(
         scope: CoroutineScope,
         dispatcher: CoroutineDispatcher,
@@ -2278,5 +2314,29 @@ class DownloadRepositoryTest {
         const val ALBUM_ART = "art-al1"
         const val ARTIST_ART = "art-ar1"
         const val PLAYLIST_ART = "art-pl1"
+    }
+}
+
+private class FailingStatementDriver(
+    private val delegate: SQLiteDriver,
+    private val marker: String,
+) : SQLiteDriver by delegate {
+    override fun open(fileName: String): SQLiteConnection = FailingStatementConnection(delegate.open(fileName), marker)
+}
+
+private class FailingStatementConnection(
+    private val delegate: SQLiteConnection,
+    private val marker: String,
+) : SQLiteConnection by delegate {
+    override fun prepare(sql: String): SQLiteStatement = FailingStatement(delegate.prepare(sql), sql.contains(marker))
+}
+
+private class FailingStatement(
+    private val delegate: SQLiteStatement,
+    private val fail: Boolean,
+) : SQLiteStatement by delegate {
+    override fun step(): Boolean {
+        if (fail) throw IllegalStateException("simulated download bookkeeping failure")
+        return delegate.step()
     }
 }
