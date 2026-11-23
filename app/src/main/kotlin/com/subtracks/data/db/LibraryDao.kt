@@ -287,9 +287,12 @@ interface LibraryDao {
     )
     suspend fun recomputeAlbumPlayData(sourceId: Long)
 
+    // Room cannot tell that a @RawQuery writes, so it runs every raw statement on a reader
+    // connection opened with query_only (SQLITE_READONLY); a transaction supplies the writer.
     @RawQuery
     suspend fun recomputeArtistAggregates(query: RoomRawQuery): Int
 
+    @Transaction
     suspend fun recomputeArtistAggregates(sourceId: Long) {
         recomputeArtistAggregates(rawQuery(ARTIST_AGGREGATES_SQL, mapOf("sourceId" to sourceId)))
     }
@@ -297,6 +300,7 @@ interface LibraryDao {
     @RawQuery
     suspend fun recomputeArtistArt(query: RoomRawQuery): Int
 
+    @Transaction
     suspend fun recomputeArtistArt(sourceId: Long) {
         recomputeArtistArt(rawQuery(ARTIST_ART_UPDATE_SQL, mapOf("sourceId" to sourceId)))
     }
@@ -310,13 +314,14 @@ interface LibraryDao {
     ): Flow<List<String>> = artistCoverArts(rawQuery(ARTIST_COVER_ARTS_SQL, mapOf("sourceId" to sourceId, "artistId" to artistId)))
 
     @RawQuery
-    suspend fun recomputeDownloadedArtistArt(query: RoomRawQuery): Int
+    suspend fun downloadedArtistArtUpdate(query: RoomRawQuery): Int
 
+    @Transaction
     suspend fun recomputeDownloadedArtistArt(
         sourceId: Long,
         artistIds: List<String>,
     ) {
-        recomputeDownloadedArtistArt(downloadedArtistArtQuery(sourceId, artistIds))
+        downloadedArtistArtUpdate(downloadedArtistArtQuery(sourceId, artistIds))
     }
 
     @Query("UPDATE artists SET downloadedCoverArts = '' WHERE sourceId = :sourceId AND downloadedCoverArts != ''")
