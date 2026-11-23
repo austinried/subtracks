@@ -312,6 +312,8 @@ interface LibraryDao {
     @RawQuery
     suspend fun recomputeDownloadedArtistArt(query: RoomRawQuery): Int
 
+    // The raw statement writes, which Room cannot detect, so the transaction puts it on the writer.
+    @Transaction
     suspend fun recomputeDownloadedArtistArt(
         sourceId: Long,
         artistIds: List<String>,

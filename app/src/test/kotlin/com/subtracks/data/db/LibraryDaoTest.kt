@@ -1,8 +1,12 @@
 package com.subtracks.data.db
 
+import android.content.Context
 import androidx.paging.PagingSource
+import androidx.room3.Room
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.subtracks.awaitUntil
 import com.subtracks.data.model.Album
@@ -884,6 +888,49 @@ class LibraryDaoTest {
             dao.recomputeDownloadedArtistArt(sourceId, listOf("ar-1"))
 
             assertEquals(listOf("art-2", "art-1"), dao.artistOnce(sourceId, "ar-1")!!.downloadedCoverArts)
+        }
+
+    @Test
+    fun downloadedArtistArtRecomputeWritesThroughAPooledDatabase() =
+        runTest {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val name = "downloaded-artist-art-${System.nanoTime()}.db"
+            context.getDatabasePath(name).parentFile?.mkdirs()
+            val pooledDb =
+                Room
+                    .databaseBuilder<SubtracksDatabase>(context, name)
+                    .setDriver(BundledSQLiteDriver())
+                    .setMultipleConnectionPool(maxNumOfReaders = 4, maxNumOfWriters = 1)
+                    .addSubtracksDatabaseCallbacks()
+                    .build()
+            try {
+                val sourceId =
+                    pooledDb.sourcesDao().insertSource(
+                        Source(name = "Navidrome", address = "http://localhost", isActive = true, createdAt = 0),
+                    )
+                val dao = pooledDb.libraryDao()
+                dao.upsertArtists(listOf(artist(sourceId, "ar-1", "Artist", albumCount = 1)))
+                dao.upsertAlbums(
+                    listOf(
+                        album(sourceId, "al-1", "One", year = 2020, starred = null)
+                            .copy(artistId = "ar-1", coverArt = "art-1"),
+                    ),
+                )
+                dao.upsertSongs(
+                    listOf(
+                        song(sourceId, "s1", "One", starred = null).copy(albumId = "al-1", artistId = "ar-1"),
+                    ),
+                )
+                pooledDb.downloadDao().upsert(SongDownload(sourceId, "s1", DownloadStatus.Completed))
+                assertEquals(emptyList<String>(), dao.artistOnce(sourceId, "ar-1")!!.downloadedCoverArts)
+
+                dao.recomputeDownloadedArtistArt(sourceId, listOf("ar-1"))
+
+                assertEquals(listOf("art-1"), dao.artistOnce(sourceId, "ar-1")!!.downloadedCoverArts)
+            } finally {
+                pooledDb.close()
+                context.deleteDatabase(name)
+            }
         }
 
     @Test
