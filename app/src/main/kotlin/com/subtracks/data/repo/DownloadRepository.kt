@@ -160,7 +160,15 @@ class DownloadRepository(
             }
         }
         scope.launch {
-            sourceRepository.activeSourceId().distinctUntilChanged().collect { reconcile() }
+            sourceRepository.activeSourceId().distinctUntilChanged().collect {
+                try {
+                    reconcile()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (failure: Exception) {
+                    Log.w("download", "reconciliation failed; continuing", failure)
+                }
+            }
         }
         scope.launch {
             sourceRepository.offline.collect { offline ->
